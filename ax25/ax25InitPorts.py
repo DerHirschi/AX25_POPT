@@ -30,58 +30,52 @@ class RxEchoVars(object):
         self.tx_ports: {int: [str]} = {}
         self.tx_buff: [] = []
 
-    """
-    def buff_input(self, ax_frame, port_id: int):
-        if port_id != self.port_id:
-            self.tx_buff.append(ax_frame)
-    """
-
 
 class AX25PortHandler(object):
     def __init__(self):
+        self._logTag = "PH> "
         logger.info("PH: Init")
-        #################
+        ###########################
         # Init SQL-DB
-        self._db = None
         logger.info("PH: Database Init")
+        self._db = SQL_Database(self)
         try:
             self._init_DB()
         except SQLConnectionError:
             logger.error("PH: Database Init Error !! Can't start PoPT !")
             # print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
-        #################
+        ###########################
         self._start_time = datetime.datetime.now()
-        self.is_running = True
-        self._ph_end    = False
+        self.is_running  = True
+        self._ph_end     = False
         ###########################
         # Moduls
         # self.routingTable = None
-        self._gui = None
-        self._bbs = None
-        self.aprs_ais = None
-        self._scheduled_tasker = None
-        ###########################
+        self._gui               = None
+        self._bbs               = None
+        self.aprs_ais           = None
+        self._scheduled_tasker  = None
+        #######################################################
         # VARs
-        self.ax25_ports = {}
+        self.ax25_ports         = {}
         # self.ch_echo: {int:  [AX25Conn]} = {}
-        self.link_connections = {}  # {str: AX25Conn} UID Index
-        self.rx_echo = {}
-        self.rx_echo_on = False
-        ###########
-        self._monitor_buffer = []
-        self._dualPort_monitor_buffer = {}
+        self.link_connections   = {}  # {str: AX25Conn} UID Index
+        self.rx_echo            = {}
+        self.rx_echo_on         = False
+        #######################################################
+        self._monitor_buffer    = []
         #######################################################
         # Init UserDB
-        self._userDB = USER_DB
+        self._userDB            = USER_DB
         ########################################################
         # Init MH
-        self._mh = None
-        self._init_MH()
+        self._mh                = MH(self)
+        self._mh.set_DB(self._db)
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
-        self._mcast_server = ax25Multicast(self)
+        self._mcast_server      = ax25Multicast(self)
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
@@ -109,8 +103,8 @@ class AX25PortHandler(object):
         logger.info("PH: APRS-Client Init")
         self.init_aprs_ais()
         #######################################################
-        # PMS
-        logger.info("PH: PMS Init")
+        # BBS
+        logger.info("PH: BBS Init")
         self._init_bbs()
         #######################################################
         # GPIO
@@ -122,16 +116,15 @@ class AX25PortHandler(object):
             self._gpio = None
         #######################################################
         # Port Handler Tasker (threaded Loop)
-        # logger.info("PH: Tasker Init")
-        # 1Wire Thread
-        self._update_1wire_th = None
-        self._1wire_timer = time.time() + 10    # + 10 Sec, give some time to Init the rest
-        #
-        self._task_timer_05sec = time.time() + 0.5
-        self._task_timer_1sec = time.time() + 1
-        self._task_timer_2sec = time.time() + 2
         logger.info("PH: Tasker Init")
+        self._update_1wire_th   = None                # 1Wire Thread
+        #
+        self._1wire_timer       = time.time() + 10    # + 10 Sec, give some time to Init the rest
+        self._task_timer_05sec  = time.time() + 0.5
+        self._task_timer_1sec   = time.time() + 1
+        self._task_timer_2sec   = time.time() + 2
         self._init_PH_tasker()
+        #######################################################
         logger.info("PH: Init Complete")
 
 
@@ -184,10 +177,6 @@ class AX25PortHandler(object):
 
     #######################################################################
     # MH
-    def _init_MH(self):
-        self._mh = MH(self)
-        self._mh.set_DB(self._db)
-
     def _mh_task(self):
         self._mh.mh_task()
 
@@ -297,7 +286,6 @@ class AX25PortHandler(object):
         logger.info("PH: Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
         self._ph_end = True
-
 
     def close_port(self, port_id: int):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
@@ -724,7 +712,7 @@ class AX25PortHandler(object):
         )
         return True
 
-    ######################
+    ######################################
     # Monitor Buffer Stuff
     def update_monitor(self, ax25frame_conf: dict, port_conf: dict, tx=False):
         """ Called from AX25Conn """
@@ -741,6 +729,20 @@ class AX25PortHandler(object):
 
     ######################
     # RX-ECHO Handling
+    def rx_echo_input(self, ax_frame, receiving_port_id):
+        """Opt by Grok3-AI"""
+        from_call = ax_frame.from_call.call_str
+        for target_port_id in self.rx_echo.keys():
+            if target_port_id != receiving_port_id:
+                rx_echo_var = self.rx_echo[target_port_id]
+                if receiving_port_id in rx_echo_var.rx_ports:
+                    callsign_list = rx_echo_var.rx_ports[receiving_port_id]
+                    print(callsign_list)
+                    if not callsign_list or from_call in callsign_list:
+                        logger.debug(self._logTag +
+                            f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")
+                        rx_echo_var.tx_buff.append(ax_frame)
+    """
     def rx_echo_input(self, ax_frame, port_id):
         from_call = ax_frame.from_call.call_str
         for k in self.rx_echo.keys():
@@ -754,6 +756,7 @@ class AX25PortHandler(object):
                     else:
                         if k in self.rx_echo[port].tx_ports.keys():
                             rx_echo_var.tx_buff.append(ax_frame)
+    """
 
     ###################################################
     # Pipe-Tool
@@ -910,12 +913,6 @@ class AX25PortHandler(object):
             return port.get_dualPort_primary()
         return None
 
-    """
-    def update_dualPort_monitor(self, prim_port_id, prim_sec_port: bool, data: bytes, tx: bool):
-        if prim_port_id not in self._dualPort_monitor_buffer.keys():
-            self._dualPort_monitor_buffer[prim_port_id] = deque([], maxlen=100000)
-
-    """
     ##################################
     #
     def get_all_connections(self, with_null=False):
@@ -966,8 +963,31 @@ class AX25PortHandler(object):
     def get_all_port_ids(self):
         return list(self.ax25_ports.keys())
 
-    def get_bbs(self):
-        return self._bbs
+    def get_free_ssid_s_fm_call(self, call: str):
+        all_ownCalls = POPT_CFG.get_all_stationCalls()
+        if call not in all_ownCalls:
+            return []
+        res_ssid = list(range(16))
+        all_conn = self.get_all_connections()
+        for ch_id, conn in all_conn.items():
+            if str(conn.my_call) != call:
+                continue
+            try:
+                ssid = int(str(conn.my_call_str).split('-')[-1])
+            except ValueError:
+                ssid = 0
+            if ssid not in res_ssid:
+                logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
+                logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
+                continue
+            res_ssid.remove(ssid)
+        return res_ssid
+
+    def get_MH(self):
+        return self._mh
+
+    def get_stat_timer(self):
+        return self._start_time
 
     ###############################
     # BBS
@@ -978,12 +998,14 @@ class AX25PortHandler(object):
             except bbsInitError:
                 self._bbs = None
 
+    def get_bbs(self):
+        return self._bbs
+
     ###############################
     # SQL-DB
     def _init_DB(self):
         ###############
         # Init DB
-        self._db = SQL_Database(self)
         if not self._db.error:
             # DB.check_tables_exists('bbs')
             # TODO optional Moduls for minimum config
@@ -1007,13 +1029,8 @@ class AX25PortHandler(object):
     def get_userDB(self):
         return self._userDB
 
-    def get_MH(self):
-        return self._mh
-
-    def get_stat_timer(self):
-        return self._start_time
     #################################################
-    #
+    # Noty Icons
     def get_dxAlarm(self):
         if self._mh:
             return self._mh.dx_alarm_trigger

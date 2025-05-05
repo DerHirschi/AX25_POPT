@@ -3,9 +3,9 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
 
-class BBSSwapSettings(tk.Frame):
+class BBSSwapSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'BBS_SWAP_Settings: '
         self._root_win  = root_win

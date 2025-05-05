@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import convert_str_to_datetime
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
@@ -32,7 +33,7 @@ class PlotWindow(tk.Toplevel):
             pass
         ##############################
         self._root_win = root_cl
-        self._lang = root_cl.language
+        self._lang = POPT_CFG.get_guiCFG_language()
         self._mh = PORT_HANDLER.get_MH()
         ##################
         upper_frame = tk.Frame(self)

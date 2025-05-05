@@ -47,17 +47,17 @@ class APRS_ais(object):
         # self.aprs_wx_msg_pool = {}  # TO-DO > DB
         """ Beacon Tracer """
         # Param
-        self.be_tracer_interval = ais_cfg.get('be_tracer_interval', 5)
-        self.be_tracer_port = ais_cfg.get('be_tracer_port', 0)
-        self.be_tracer_station = ais_cfg.get('be_tracer_station', 'NOCALL')
-        self.be_tracer_via = ais_cfg.get('be_tracer_via', [])
-        self.be_tracer_wide = ais_cfg.get('be_tracer_wide', 1)
-        self.be_tracer_alarm_active = ais_cfg.get('be_tracer_alarm_active', False)
-        self.be_tracer_alarm_range = ais_cfg.get('be_tracer_alarm_range', 50)
-        self.be_auto_tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
+        self.be_tracer_interval         = ais_cfg.get('be_tracer_interval', 5)
+        self.be_tracer_port             = ais_cfg.get('be_tracer_port', 0)
+        self.be_tracer_station          = ais_cfg.get('be_tracer_station', 'NOCALL')
+        self.be_tracer_via              = ais_cfg.get('be_tracer_via', [])
+        self.be_tracer_wide             = ais_cfg.get('be_tracer_wide', 1)
+        self.be_tracer_alarm_active     = ais_cfg.get('be_tracer_alarm_active', False)
+        self.be_tracer_alarm_range      = ais_cfg.get('be_tracer_alarm_range', 50)
+        self.be_auto_tracer_duration    = ais_cfg.get('be_auto_tracer_duration', 60)
         # Packet Pool
-        self.be_tracer_traced_packets = ais_cfg.get('be_tracer_traced_packets', {})
-        self.be_tracer_alarm_hist = ais_cfg.get('be_tracer_alarm_hist', {})
+        self.be_tracer_traced_packets   = ais_cfg.get('be_tracer_traced_packets', {})
+        self.be_tracer_alarm_hist       = ais_cfg.get('be_tracer_alarm_hist', {})
         # Control vars
         # self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''

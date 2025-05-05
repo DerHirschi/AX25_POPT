@@ -7,9 +7,9 @@ from fnc.str_fnc import get_strTab
 from gui.bbs_gui.bbs_settings.guiBBS_H_Settings_add_rule import BBS_addRuleWinHold
 
 
-class BBSRejectSettings(tk.Frame):
+class BBSRejectSettings(ttk.Frame):
     def __init__(self, tabctl, root_win):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._logTag    = 'BBSRejectSettings: '
         self._root_win  = root_win
@@ -27,20 +27,20 @@ class BBSRejectSettings(tk.Frame):
         ###########################################
         ###########################################
         # Local
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
-        add_btn = tk.Button(btn_frame,
+        add_btn = ttk.Button(btn_frame,
                             text=self._getTabStr('new'),
                             command=lambda :self._add_rule_btn()
                             )
-        del_btn = tk.Button(btn_frame,
+        del_btn = ttk.Button(btn_frame,
                             text=self._getTabStr('delete'),
                             command=self._del_btn
                             )
         add_btn.pack(side=tk.LEFT, padx=30, pady=15)
         del_btn.pack(side=tk.LEFT, padx=30)
         ##########
-        cfg_tree_frame = tk.Frame(self)
+        cfg_tree_frame = ttk.Frame(self)
         cfg_tree_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=7, pady=10)
         col = (
             'c1',

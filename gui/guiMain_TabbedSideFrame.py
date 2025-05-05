@@ -4,9 +4,8 @@ from tkinter import ttk, TclError, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25dec_enc import PIDByte
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab
 from sound.popt_sound import SOUND
@@ -14,37 +13,38 @@ from sound.popt_sound import SOUND
 
 class SideTabbedFrame:  # TODO
     def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
-        self._main_win = main_cl
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self.style = main_cl.style
-        # self.ch_index = main_cl.channel_index
-        self._mh = self._main_win.mh
-        self._ch_is_disc = True
-
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._main_win      = main_cl
+        self.style          = self._main_win.style
+        self._get_colorMap  = lambda: COLOR_MAP.get(self._main_win.style_name, ('black', '#d9d9d9'))
+        ##########################################
+        self._mh            = self._main_win.mh
+        self._ch_is_disc    = True
+        ##########################################
         self._tabControl = ttk.Notebook(
             frame,
             height=300,
             # width=500
         )
         self._tabControl.bind('<<NotebookTabChanged>>', self.on_ch_stat_change)
-
-        tab1_kanal = tk.Frame(self._tabControl)
-        tab_connects = tk.Frame(self._tabControl)
-        tab2_mh = tk.Frame(self._tabControl)
-        tab4_settings = tk.Frame(self._tabControl)
+        ##########################################
+        tab1_kanal      = ttk.Frame(self._tabControl)
+        tab_connects    = ttk.Frame(self._tabControl)
+        tab2_mh         = ttk.Frame(self._tabControl)
+        tab4_settings   = ttk.Frame(self._tabControl)
         # self.tab5_ch_links = ttk.Frame(self._tabControl)  # TODO
-        tab6_monitor = tk.Frame(self._tabControl)
-        tab7_tracer = tk.Frame(self._tabControl)
+        tab6_monitor    = ttk.Frame(self._tabControl)
+        tab7_tracer     = ttk.Frame(self._tabControl)
         # self._path_plot = None
 
-        self._tabControl.add(tab1_kanal, text=get_strTab('channel', self._lang))
+        self._tabControl.add(tab1_kanal, text=self._getTabStr('channel'))
         # tab3 = ttk.Frame(self._tabControl)                         # TODO
         # self._tabControl.add(tab3, text='Ports')                   # TODO
         self._tabControl.add(tab4_settings, text='Global')
-        self._tabControl.add(tab_connects, text='Connects')
-        self._tabControl.add(tab6_monitor, text='Monitor')
-        self._tabControl.add(tab2_mh, text='MH')
-        self._tabControl.add(tab7_tracer, text='Tracer')
+        self._tabControl.add(tab_connects,  text='Connects')
+        self._tabControl.add(tab6_monitor,  text='Monitor')
+        self._tabControl.add(tab2_mh,       text='MH')
+        self._tabControl.add(tab7_tracer,   text='Tracer')
         if plot_frame:
             self._tabControl.add(plot_frame, text='BW-Plot')
         elif path_frame:
@@ -52,19 +52,13 @@ class SideTabbedFrame:  # TODO
             self._tabControl.add(path_frame, text='Pacman')
 
         self._tabControl.pack(expand=1, fill="both")
-        """
-        if plot_frame:
-            self._tabControl.select(plot_frame)
-        else:
-            self._tabControl.select(tab2_mh)
-        """
         ################################################
         # Kanal
         parm_y = 20
-        m_f_label = tk.Label(tab1_kanal, text='Max Pac:')
+        m_f_label = ttk.Label(tab1_kanal, text='Max Pac:')
         self._max_frame_var = tk.StringVar(tab1_kanal)
         self._max_frame_var.set('1')
-        self._max_frame = tk.Spinbox(tab1_kanal,
+        self._max_frame = ttk.Spinbox(tab1_kanal,
                                      from_=1,
                                      to=7,
                                      increment=1,
@@ -75,13 +69,13 @@ class SideTabbedFrame:  # TODO
         m_f_label.place(x=10, y=parm_y)
         self._max_frame.place(x=10 + 80, y=parm_y)
         parm_y = 55
-        p_l_label = tk.Label(tab1_kanal, text='Pac Len:')
+        p_l_label = ttk.Label(tab1_kanal, text='Pac Len:')
         self._pac_len_var = tk.IntVar(tab1_kanal)
         self._pac_len_var.set(128)
         vals = []
         for i in range(256):
             vals.append(str(i + 1))
-        self._pac_len = tk.ttk.Combobox(tab1_kanal,
+        self._pac_len = ttk.Combobox(tab1_kanal,
                                        width=4,
                                        textvariable=self._pac_len_var,
                                        values=vals,
@@ -91,7 +85,7 @@ class SideTabbedFrame:  # TODO
         self._pac_len.place(x=10 + 80, y=parm_y)
         # t2 Auto Checkbutton
         parm_y = 90
-        label = tk.Label(tab1_kanal, text='T2:')
+        label = ttk.Label(tab1_kanal, text='T2:')
         self._t2_var = tk.StringVar(tab1_kanal)
         self._t2_var.set(str(1700))
         val_list = []
@@ -110,7 +104,7 @@ class SideTabbedFrame:  # TODO
         self._t2.place(x=50, y=parm_y)
 
         self._t2_auto_var = tk.BooleanVar(tab1_kanal)
-        self._t2_auto = tk.Checkbutton(tab1_kanal,
+        self._t2_auto = ttk.Checkbutton(tab1_kanal,
                                        text='T2-Auto',
                                        variable=self._t2_auto_var,
                                        state='disabled',
@@ -122,7 +116,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 150
         self._rnr_var = tk.BooleanVar(tab1_kanal)
 
-        self._rnr = tk.Checkbutton(tab1_kanal,
+        self._rnr = ttk.Checkbutton(tab1_kanal,
                                    text='RNR',
                                    variable=self._rnr_var,
                                    state='disabled',
@@ -132,7 +126,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 200
         self._t2speech_var = tk.BooleanVar(tab1_kanal)
 
-        self.t2speech = tk.Checkbutton(tab1_kanal,
+        self.t2speech = ttk.Checkbutton(tab1_kanal,
                                        text='Sprachausgabe',
                                        variable=self._t2speech_var,
                                        command=self._chk_t2speech)
@@ -142,7 +136,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 225
         self._autoscroll_var = tk.BooleanVar(tab1_kanal)
 
-        autoscroll = tk.Checkbutton(tab1_kanal,
+        autoscroll = ttk.Checkbutton(tab1_kanal,
                                           text='Autoscroll',
                                           variable=self._autoscroll_var,
                                           command=self._chk_autoscroll
@@ -154,7 +148,7 @@ class SideTabbedFrame:  # TODO
         parm_y = 250
         self._cliRemote_var = tk.BooleanVar(tab1_kanal, value=True)
 
-        self._cliRemote = tk.Checkbutton(tab1_kanal,
+        self._cliRemote = ttk.Checkbutton(tab1_kanal,
                                          text='CLI/Remote',
                                          variable=self._cliRemote_var,
                                          state='disabled',
@@ -165,8 +159,8 @@ class SideTabbedFrame:  # TODO
         # Link Holder
         parm_y = 175
         # self.link_holder_var = tk.BooleanVar(tab1_kanal)
-        self._link_holder = tk.Checkbutton(tab1_kanal,
-                                           text=get_strTab('linkholder', self._lang),
+        self._link_holder = ttk.Checkbutton(tab1_kanal,
+                                           text=self._getTabStr('linkholder'),
                                            variable=self._main_win.link_holder_var,
                                            state='disabled',
                                            command=self._chk_link_holder
@@ -174,25 +168,25 @@ class SideTabbedFrame:  # TODO
         self._link_holder.place(x=10, y=parm_y)
 
         clear_ch_data_btn = ttk.Button(tab1_kanal,
-                                      text=get_strTab('clean_qso', self._lang),
+                                      text=self._getTabStr('clean_qso'),
                                       command=self._main_win.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 
         link_holder_settings_btn = ttk.Button(tab1_kanal,
-                                             text=get_strTab('linkholder', self._lang),
+                                             text=self._getTabStr('linkholder'),
                                              command=self._main_win.open_link_holder_sett
                                              )
         link_holder_settings_btn.place(x=140, y=165)
         # RTT
         self._rtt_worst_var = tk.StringVar(tab1_kanal)
-        self._rtt_avg_var = tk.StringVar(tab1_kanal)
-        self._rtt_last_var = tk.StringVar(tab1_kanal)
-        self._rtt_best_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._rtt_best_var).place(x=170, y=10)
-        tk.Label(tab1_kanal, textvariable=self._rtt_worst_var).place(x=170, y=35)
-        tk.Label(tab1_kanal, textvariable=self._rtt_avg_var).place(x=170, y=60)
-        tk.Label(tab1_kanal, textvariable=self._rtt_last_var).place(x=170, y=85)
+        self._rtt_avg_var   = tk.StringVar(tab1_kanal)
+        self._rtt_last_var  = tk.StringVar(tab1_kanal)
+        self._rtt_best_var  = tk.StringVar(tab1_kanal)
+        ttk.Label(tab1_kanal, textvariable=self._rtt_best_var).place(x=170, y=10)
+        ttk.Label(tab1_kanal, textvariable=self._rtt_worst_var).place(x=170, y=35)
+        ttk.Label(tab1_kanal, textvariable=self._rtt_avg_var).place(x=170, y=60)
+        ttk.Label(tab1_kanal, textvariable=self._rtt_last_var).place(x=170, y=85)
 
         ##########################################
         # Kanal Rechts / Status / FT
@@ -203,36 +197,40 @@ class SideTabbedFrame:  # TODO
         x = 290
         y = 20
         self._conn_durration_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._conn_durration_var).place(x=x, y=y)
+        ttk.Label(tab1_kanal, textvariable=self._conn_durration_var).place(x=x, y=y)
         self._conn_durration_var.set('--:--:--')
         #### conn_durration_var
         # TX Buffer
         x = 290
         y = 45
         self._tx_buff_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._tx_buff_var).place(x=x, y=y)
+        ttk.Label(tab1_kanal, textvariable=self._tx_buff_var).place(x=x, y=y)
         self._tx_buff_var.set('')
         # TX Gesamt
         x = 290
         y = 70
         self._tx_count_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._tx_count_var).place(x=x, y=y)
+        ttk.Label(tab1_kanal, textvariable=self._tx_count_var).place(x=x, y=y)
         self._tx_count_var.set('')
         # RX Gesamt
         x = 290
         y = 95
         self._rx_count_var = tk.StringVar(tab1_kanal)
-        tk.Label(tab1_kanal, textvariable=self._rx_count_var).place(x=x, y=y)
+        ttk.Label(tab1_kanal, textvariable=self._rx_count_var).place(x=x, y=y)
         self._rx_count_var.set('')
 
         # Status /Pipe/Link/File-RX/File-TX
         self._status_label_var = tk.StringVar(tab1_kanal)
-        status_label = tk.Label(tab1_kanal, fg='red', textvariable=self._status_label_var)
+        bg = self._get_colorMap()[1]
+        status_label = tk.Label(tab1_kanal,
+                                fg='red',
+                                bg=bg,
+                                textvariable=self._status_label_var)
         font = status_label.cget('font')
         status_label.configure(font=(font[0], 12))
         status_label.place(x=290, y=120)
         ######################
-        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=281, y=150, relheight=0.6, relwidth=0.9)
+        ttk.Separator(tab1_kanal, orient=tk.HORIZONTAL).place(x=285, y=150, relheight=0.6, relwidth=0.9)
         #####################
         # Progress bar
         # tk.Label(tab1_kanal, text='File Transfer').place(x=380, y=160)
@@ -247,11 +245,11 @@ class SideTabbedFrame:  # TODO
         self.ft_progress.bind('<Button-1>', self._main_win.open_ft_manager)
         self.ft_progress['value'] = 0
 
-        tk.Label(tab1_kanal, textvariable=self._main_win.ft_progress_var).place(x=x + 160, y=y)
-        tk.Label(tab1_kanal, textvariable=self._main_win.ft_size_var).place(x=x, y=y + 25)
-        tk.Label(tab1_kanal, textvariable=self._main_win.ft_duration_var).place(x=x, y=y + 50)
-        tk.Label(tab1_kanal, textvariable=self._main_win.ft_bps_var).place(x=x, y=y + 75)
-        tk.Label(tab1_kanal, textvariable=self._main_win.ft_next_tx_var).place(x=x + 160, y=y + 75)
+        ttk.Label(tab1_kanal, textvariable=self._main_win.ft_progress_var).place(x=x + 160, y=y)
+        ttk.Label(tab1_kanal, textvariable=self._main_win.ft_size_var).place(x=x, y=y + 25)
+        ttk.Label(tab1_kanal, textvariable=self._main_win.ft_duration_var).place(x=x, y=y + 50)
+        ttk.Label(tab1_kanal, textvariable=self._main_win.ft_bps_var).place(x=x, y=y + 75)
+        ttk.Label(tab1_kanal, textvariable=self._main_win.ft_next_tx_var).place(x=x + 160, y=y + 75)
         # self.ft_progress_var.set(f"--- %")
         # self.ft_size_var.set(f"Size: 10.000,0 / 20.00,0 kb")
         # self.ft_duration_var.set(f"Time: 00:00:00 / 00:00:00")
@@ -295,7 +293,7 @@ class SideTabbedFrame:  # TODO
         # self._update_side_mh()
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
-        btn_frame = tk.Frame(tab2_mh)
+        btn_frame = ttk.Frame(tab2_mh)
         btn_frame.grid(row=1, column=0, columnspan=2)
         ttk.Button(btn_frame,
                   text="MH",
@@ -308,27 +306,27 @@ class SideTabbedFrame:  # TODO
                   ).pack(side=tk.LEFT, padx=20)
         ttk.Button(btn_frame,
                   # text="Statistik",
-                  text=STR_TABLE['statistic'][self._lang],
+                  text=self._getTabStr('statistic'),
                   command=self._open_PortStat
                   ).pack(side=tk.LEFT, )
 
         #############################################################################
         # Global Settings ################################
         # Global Sound
-        tk.Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Sound",
                     variable=self._main_win.setting_sound,
                     command=self._chk_sound
                     ).place(x=10, y=10)
         # Bell
-        tk.Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Bell",
                     variable=self._main_win.setting_noty_bell,
                     command=self._main_win.set_noty_bell_active
                     ).place(x=150, y=10)
         # Global Sprech
-        sprech_btn = tk.Checkbutton(tab4_settings,
-                                 text=get_strTab('sprech', self._lang),
+        sprech_btn = ttk.Checkbutton(tab4_settings,
+                                 text=self._getTabStr('sprech'),
                                  variable=self._main_win.setting_sprech,
                                  command=self._chk_sprech_on
                                  )
@@ -336,13 +334,13 @@ class SideTabbedFrame:  # TODO
         if not is_linux():
             sprech_btn.configure(state='disabled')
         # Global Bake
-        tk.Checkbutton(tab4_settings,
-                    text=get_strTab('beacon', self._lang),
+        ttk.Checkbutton(tab4_settings,
+                    text=self._getTabStr('beacon'),
                     variable=self._main_win.setting_bake,
                     command=self._chk_beacon,
                     ).place(x=10, y=60)
         # DX Alarm  > dx_alarm_on
-        tk.Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="Tracer",
                     variable=self._main_win.setting_tracer,
                     command=self._chk_tracer,
@@ -352,21 +350,21 @@ class SideTabbedFrame:  # TODO
             True: 'disabled',
             False: 'normal'
         }.get(self._main_win.get_tracer(), 'disabled')
-        self._autotracer_chk_btn = tk.Checkbutton(tab4_settings,
+        self._autotracer_chk_btn = ttk.Checkbutton(tab4_settings,
                                                text="Auto-Tracer",
                                                variable=self._main_win.setting_auto_tracer,
                                                command=self._chk_auto_tracer,
                                                state=auto_tracer_state
                                                )
         self._autotracer_chk_btn.place(x=10, y=110)
-        tk.Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="DX-Alarm",
                     variable=self._main_win.setting_dx_alarm,
                     command=self._main_win.set_dx_alarm,
                     # state='disabled'
                     ).place(x=10, y=135)
         # RX ECHO
-        tk.Checkbutton(tab4_settings,
+        ttk.Checkbutton(tab4_settings,
                     text="RX-Echo",
                     variable=self._main_win.setting_rx_echo,
                     command=self._set_rx_echo
@@ -382,14 +380,14 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 10
         # self.to_add_var = tk.StringVar(tab6_monitor)
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['to'][self._lang]}:").place(x=x, y=y)
-        tk.Entry(tab6_monitor, textvariable=self._main_win.mon_to_add_var).place(x=x + 40, y=y)
+        ttk.Label(tab6_monitor, text=f"{self._getTabStr('to')}:").place(x=x, y=y)
+        ttk.Entry(tab6_monitor, textvariable=self._main_win.mon_to_add_var).place(x=x + 40, y=y)
 
         # CMD/RPT
         x = 10
         y = 80
         # self.cmd_var = tk.BooleanVar(tab6_monitor)
-        tk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_cmd_var,
                        text='CMD/RPT').place(x=x, y=y)
 
@@ -397,20 +395,20 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 105
         # self.poll_var = tk.BooleanVar(tab6_monitor)
-        tk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_poll_var,
                        text='Poll').place(x=x, y=y)
 
         # Port
         x = 40
         y = 140
-        tk.Label(tab6_monitor, text=f"{STR_TABLE['port'][self._lang]}:").place(x=x, y=y)
+        ttk.Label(tab6_monitor, text=f"{self._getTabStr('port')}:").place(x=x, y=y)
         # self.mon_port_var = tk.StringVar(tab6_monitor)
         # self._main_win.mon_port_var.set('0')
         vals = ['0']
         if PORT_HANDLER.get_all_ports().keys():
             vals = [str(x) for x in list(PORT_HANDLER.get_all_ports().keys())]
-        mon_port_ent = tk.ttk.Combobox(tab6_monitor,
+        mon_port_ent = ttk.Combobox(tab6_monitor,
                                        width=4,
                                        textvariable=self._main_win.mon_port_var,
                                        values=vals,
@@ -424,7 +422,7 @@ class SideTabbedFrame:  # TODO
         # vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
-        self._mon_call_ent = tk.ttk.Combobox(tab6_monitor,
+        self._mon_call_ent = ttk.Combobox(tab6_monitor,
                                              width=9,
                                              textvariable=self._main_win.mon_call_var,
                                              values=[],
@@ -435,40 +433,59 @@ class SideTabbedFrame:  # TODO
         x = 10
         y = 210
         # self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
-        tk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(tab6_monitor,
                        variable=self._main_win.mon_scroll_var,
-                       text=STR_TABLE['scrolling'][self._lang]).place(x=x, y=y)
+                       text=self._getTabStr('scrolling')).place(x=x, y=y)
 
         # Monitor APRS Decoding Output
         x = 10
         y = 235
         # self.mon_aprs_var = tk.BooleanVar(tab6_monitor)
         # self.mon_aprs_var.set(True)
-        tk.Checkbutton(tab6_monitor,
-                       variable=self._main_win.mon_aprs_var,
-                       text='APRS-Decoding').place(x=x, y=y)
+        ttk.Checkbutton(tab6_monitor,
+                       variable=self._main_win.mon_dec_aprs_var,
+                       text='APRS').place(x=x, y=y)
+        # Monitor NetRom Decoding Output
+        x = 10
+        y = 260
+        ttk.Checkbutton(tab6_monitor,
+                        variable=self._main_win.mon_dec_nr_var,
+                        text='NetRom').place(x=x, y=y)
+        # Monitor Distance Decoding Output
+        x = 10
+        y = 285
+        ttk.Checkbutton(tab6_monitor,
+                        variable=self._main_win.mon_dec_dist_var,
+                        text=self._getTabStr('distance')).place(x=x, y=y)
+        # Monitor Distance Decoding Output
+        x = 10
+        y = 310
+        ttk.Checkbutton(tab6_monitor,
+                        variable=self._main_win.mon_dec_hex_var,
+                        text='HEX').place(x=x, y=y)
 
         # Monitor Decoding
-        tk.Label(tab6_monitor, text='Decoding:').place(x=40, y=265)
+        ttk.Label(tab6_monitor, text='Decoding:').place(x=10, y=335)
         # self.mon_decoding_var.set(True)
         dec_val = ['Auto'] + list(ENCODINGS)
-        tk.ttk.Combobox(tab6_monitor,
+        ttk.Combobox(tab6_monitor,
                         width=9,
                         textvariable=self._main_win.setting_mon_encoding,
                         values=dec_val,
-                        ).place(x=135, y=265)
+                        ).place(x=115, y=335)
 
+        ##########################################################################
         # PID
 
         # self.mon_pid_var = tk.StringVar(tab6_monitor)
-        tk.Label(tab6_monitor, text='PID:').place(x=10, y=45)
+        ttk.Label(tab6_monitor, text='PID:').place(x=10, y=45)
         pid = PIDByte()  # TODO CONST PIDByte().pac_types
         pac_types = dict(pid.pac_types)
         vals = []
         for x in list(pac_types.keys()):
             pid.pac_types[int(x)]()
             vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
-        tk.ttk.Combobox(tab6_monitor,
+        ttk.Combobox(tab6_monitor,
                         width=20,
                         values=vals,
                         textvariable=self._main_win.mon_pid_var).place(x=50, y=45)
@@ -477,15 +494,17 @@ class SideTabbedFrame:  # TODO
         # Monitor RX-Filter Ports
         # self._mon_port_on_vars = {}
         all_ports = PORT_HANDLER.ax25_ports
+        i = 1
         for port_id in all_ports:
             # self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
-            x = 170
-            y = 80 + (25 * port_id)
-            tk.Checkbutton(tab6_monitor,
+            x = 190
+            y = 55 + (25 * i)
+            ttk.Checkbutton(tab6_monitor,
                            text=f"Port {port_id}",
                            variable=self._main_win.mon_port_on_vars[port_id],
                            command=self._chk_mon_port_filter
                            ).place(x=x, y=y)
+            i += 1
             # self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
 
         ######################################################################################
@@ -522,16 +541,22 @@ class SideTabbedFrame:  # TODO
         self._trace_tree_data = []
         self._trace_tree_data_old = {}
         self._update_side_trace()
-        btn_frame_tr = tk.Frame(tab7_tracer)
+        btn_frame_tr = ttk.Frame(tab7_tracer)
         btn_frame_tr.grid(row=1, column=0, columnspan=2)
-        tk.Button(btn_frame_tr,
+        ttk.Button(btn_frame_tr,
                   text="SEND",
                   command=self._tracer_send
                   ).pack(side=tk.LEFT)
-        tk.Button(btn_frame_tr,
+        ttk.Button(btn_frame_tr,
                   text="Tracer",
                   command=self._open_tracer
                   ).pack(side=tk.LEFT, padx=20)
+        """
+        tk.Button(btn_frame_tr,
+                  text=self._getTabStr('delete'),
+                  command=self._delete_tracer
+                  ).pack(side=tk.LEFT, padx=20)
+        """
 
         # tk.Button(tab7_tracer, text="SEND").grid(row=1, column=1, padx=10)
         #################################
@@ -600,10 +625,10 @@ class SideTabbedFrame:  # TODO
         # self._update_side_mh()
         self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
 
-        btn_frame3 = tk.Frame(root_frame)
+        btn_frame3 = ttk.Frame(root_frame)
         btn_frame3.grid(row=1, column=0, columnspan=2)
-        tk.Button(btn_frame3,
-                  text=STR_TABLE['disconnect_all'][self._lang],
+        ttk.Button(btn_frame3,
+                  text=self._getTabStr('disconnect_all'),
                   command=self._disco_all
                   ).pack(side=tk.LEFT)
         """
@@ -772,7 +797,7 @@ class SideTabbedFrame:  # TODO
         avg = ''
         last = ''
         status_text = ''
-        duration = f"{STR_TABLE['time_connected'][self._lang]}: --:--:--"
+        duration = f"{self._getTabStr('time_connected')}: --:--:--"
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
@@ -785,7 +810,7 @@ class SideTabbedFrame:  # TODO
             worst = "Worst: {:.1f}".format(station.RTT_Timer.rtt_worst)
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
-            duration = f"{STR_TABLE['time_connected'][self._lang]}: {get_time_delta(station.time_start)}"
+            duration = f"{self._getTabStr('time_connected')}: {get_time_delta(station.time_start)}"
             tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
@@ -1005,6 +1030,10 @@ class SideTabbedFrame:  # TODO
 
     def _open_tracer(self):
         self._main_win.open_be_tracer_win()
+    """
+    def _delete_tracer(self):
+        pass
+    """
 
     def _open_mh(self):
         self._main_win.open_MH_win()
@@ -1016,8 +1045,8 @@ class SideTabbedFrame:  # TODO
         self._main_win.open_window('ConnPathPlot')
 
     def _disco_all(self):
-        if messagebox.askokcancel(title=STR_TABLE.get('disconnect_all', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('disconnect_all_ask', ('', '', ''))[self._lang], parent=self._main_win.main_win):
+        if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
+                                  message=self._getTabStr('disconnect_all_ask'), parent=self._main_win.main_win):
             PORT_HANDLER.disco_all_Conn()
 
     def get_tab_index(self):

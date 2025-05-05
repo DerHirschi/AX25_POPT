@@ -7,8 +7,7 @@ from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
 from cfg.popt_config import POPT_CFG
 from fnc.file_fnc import get_bin_fm_file
-from fnc.str_fnc import tk_filter_bad_chars, zeilenumbruch
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import tk_filter_bad_chars, zeilenumbruch, get_strTab
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 
@@ -18,7 +17,7 @@ class BeaconTab:
         self._need_reinit = False
         self._tab_clt = tabclt
         self._root = root
-        self._lang = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
         self.schedule_config = self.beacon.get('scheduler_cfg', getNew_schedule_config())
@@ -27,16 +26,17 @@ class BeaconTab:
         # Von
         call_x = 10
         call_y = 20
-        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['from'][self._lang]}:")
+        call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('from')}:")
         call_label.place(x=call_x, y=call_y)
         self.from_select_var = tk.StringVar(self.own_tab)
         # from_opt = dict(PORT_HANDLER.ax25_stations_settings)
-        self.from_select_var.set(beacon.get('own_call', 'NOCALL'))  # default value
         opt = list(POPT_CFG.get_stat_CFG_keys())
         if not opt:
             opt = ['NOCALL']
-        from_call = tk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)
-        from_call.configure(width=8, height=1)
+        self.from_select_var.set(beacon.get('own_call', 'NOCALL'))  # default value
+        opt = [self.from_select_var.get()] + opt
+        from_call = ttk.OptionMenu(self.own_tab, self.from_select_var, *opt, command=self._cmd_fm_call_set)
+        #from_call.configure(width=8, height=1)
         from_call.place(x=call_x + 55, y=call_y - 5)
 
         #################
@@ -44,18 +44,18 @@ class BeaconTab:
         # An
         call_x = 220
         call_y = 20
-        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['to'][self._lang]}:")
+        call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('to')}:")
         call_label.place(x=call_x, y=call_y)
-        self.call = tk.Entry(self.own_tab, width=9)
+        self.call = ttk.Entry(self.own_tab, width=9)
         self.call.place(x=call_x + 35, y=call_y)
         self.call.insert(tk.END, beacon.get('dest_call', 'BEACON'))
         #################
         # VIA
         call_x = 370
         call_y = 20
-        call_label = tk.Label(self.own_tab, text='VIA:')
+        call_label = ttk.Label(self.own_tab, text='VIA:')
         call_label.place(x=call_x, y=call_y)
-        self.via = tk.Entry(self.own_tab, width=35)
+        self.via = ttk.Entry(self.own_tab, width=35)
         self.via.place(x=call_x + 40, y=call_y)
         vias = ' '.join(beacon.get('via_calls', []))
         self.via.insert(tk.END, vias)
@@ -65,12 +65,12 @@ class BeaconTab:
         call_x = 750
         call_y = 20
         self.aprs_check_var = tk.IntVar(self.own_tab)
-        self.aprs_check = tk.Checkbutton(self.own_tab,
+        self.aprs_check = ttk.Checkbutton(self.own_tab,
                                          text='CTL/RPT',
                                          variable=self.aprs_check_var)
         self.aprs_check.var = self.aprs_check_var
         if beacon.get('cmd_poll', (False, False))[0]:
-            self.aprs_check.select()
+            # self.aprs_check.select()
             self.aprs_check_var.set(1)
         self.aprs_check.place(x=call_x + 55, y=call_y)
         #################
@@ -78,12 +78,12 @@ class BeaconTab:
         call_x = 750
         call_y = 55
         self.pool_check_var = tk.IntVar(self.own_tab)
-        self.pool_check = tk.Checkbutton(self.own_tab,
+        self.pool_check = ttk.Checkbutton(self.own_tab,
                                          text='Poll',
                                          variable=self.pool_check_var)
         self.pool_check.var = self.pool_check_var
         if beacon.get('cmd_poll', (False, False))[1]:
-            self.pool_check.select()
+            # self.pool_check.select()
             self.pool_check_var.set(1)
         self.pool_check.place(x=call_x + 55, y=call_y)
         #################
@@ -91,41 +91,41 @@ class BeaconTab:
         # Port
         call_x = 10
         call_y = 55
-        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['port'][self._lang]}:")
+        call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('port')}:")
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
         self.port_select_var.set(str(beacon.get('port_id', 0)))  # default value
         opt = list(PORT_HANDLER.get_all_ports().keys())
         if not opt:
             opt = ['0']
-
-        port = tk.OptionMenu(self.own_tab,
+        opt = [self.port_select_var.get()] + opt
+        port = ttk.OptionMenu(self.own_tab,
                              self.port_select_var,
                              *opt,
                              )
-        port.configure(width=8, height=1)
+        #.configure(width=8, height=1)
         port.place(x=call_x + 55, y=call_y - 5)
         #################
         #################
         # Intervall
         call_x = 220
         call_y = 55
-        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['intervall'][self._lang]} (min):")
+        call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('intervall')} (min):")
         call_label.place(x=call_x, y=call_y)
         self.intervall_var = tk.StringVar(self.own_tab)
         self.intervall_var.set(str(int(self.schedule_config.get('repeat_min', 30))))
-        self._interv = tk.Entry(self.own_tab, width=4, textvariable=self.intervall_var)
+        self._interv = ttk.Entry(self.own_tab, width=4, textvariable=self.intervall_var)
         self._interv.place(x=call_x + 135, y=call_y)
         self._interv.bind('<KeyRelease>', self._set_need_reinit)
         #################
         # Versatz
         call_x = 420
         call_y = 55
-        move_label = tk.Label(self.own_tab, text=f"{STR_TABLE['versatz'][self._lang]} (s):")
+        move_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('versatz')} (s):")
         move_label.place(x=call_x, y=call_y)
         self.move_var = tk.StringVar(self.own_tab)
         self.move_var.set(str(self.schedule_config.get('move', 0)))
-        move = tk.Entry(self.own_tab, width=5, textvariable=self.move_var)
+        move = ttk.Entry(self.own_tab, width=5, textvariable=self.move_var)
         move.place(x=call_x + 135, y=call_y)
         move.bind('<KeyRelease>', self._set_need_reinit)
 
@@ -135,36 +135,37 @@ class BeaconTab:
         call_x = 750
         call_y = 90
         self.active_check_var = tk.IntVar(self.own_tab)
-        active_check = tk.Checkbutton(self.own_tab,
-                                      text=STR_TABLE['active'][self._lang],
+        active_check = ttk.Checkbutton(self.own_tab,
+                                      text=self._getTabStr('active'),
                                       variable=self.active_check_var,
                                       command=self._cmd_be_enabled)
         active_check.var = self.active_check_var
         active_check.place(x=call_x + 55, y=call_y)
         if beacon.get('is_enabled', False):
             self.active_check_var.set(1)
-            active_check.select()
+            # active_check.select()
 
         ########################
         # Typ TEXT/MH/File bla .. .
         call_x = 750
         call_y = 125
-        tk.Label(self.own_tab, text='Typ: ').place(x=call_x + 68, y=call_y)
-        _options = ["Text", "File", "MH"]
+        ttk.Label(self.own_tab, text='Typ: ').place(x=call_x + 68, y=call_y)
+        options = ["Text", "File", "MH"]
         self.beacon_type_var = tk.StringVar(self.own_tab)
         self.beacon_type_var.set(beacon.get('typ', 'Text'))
-        tk.OptionMenu(self.own_tab,
+        options = [self.beacon_type_var.get()] + options
+        ttk.OptionMenu(self.own_tab,
                       self.beacon_type_var,
                       command=self._cmd_be_change_typ,
-                      *_options
+                      *options
                       ).place(x=call_x + 125, y=call_y)
 
         ####################################################
         # Scheduler BTN
         call_x = 600
         call_y = 55
-        tk.Button(self.own_tab,
-                  text="Scheduler",
+        ttk.Button(self.own_tab,
+                  text=f"{self._getTabStr('scheduler')}",
                   command=self._open_schedWin
                   ).place(x=call_x + 55, y=call_y)
 
@@ -186,22 +187,22 @@ class BeaconTab:
         call_x = 10
         call_y = self._root.win_height - 180
         # call_y = 100
-        call_label = tk.Label(self.own_tab, text=f"{STR_TABLE['text_fm_file'][self._lang]}:")
+        call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('text_fm_file')}:")
         call_label.place(x=call_x, y=call_y)
         self.be_txt_filename_var = tk.StringVar(self.own_tab)
-        self._be_txt_filename = tk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
+        self._be_txt_filename = ttk.Entry(self.own_tab, textvariable=self.be_txt_filename_var, width=50)
         self._be_txt_filename.bind("<KeyRelease>", self._on_key_press_filename_ent)
         self._b_text_bg_color = self.b_text_ent.cget('background')
         self.be_txt_filename_var.set(beacon.get('text_filename', ''))
         self._be_txt_filename.place(x=call_x + 140, y=call_y)
-        be_txt_openfile_btn = tk.Button(self.own_tab, text=STR_TABLE['file_1'][self._lang], command=self._select_files)
+        be_txt_openfile_btn = ttk.Button(self.own_tab, text=self._getTabStr('file_1'), command=self._select_files)
         be_txt_openfile_btn.place(x=call_x + 710, y=call_y - 2)
         #################
         # Byte Zähler
         call_x = 885
         call_y = self._root.win_height - 185
         self._byte_count_var = tk.StringVar(self.own_tab, '')
-        tk.Label(self.own_tab,
+        ttk.Label(self.own_tab,
                  textvariable=self._byte_count_var,
                  font=(None, 9),
                  ).place(x=call_x, y=call_y)
@@ -348,33 +349,33 @@ class BeaconTab:
     def need_reinit(self):
         return self._need_reinit
 
-class BeaconSettings(tk.Frame):
+class BeaconSettings(ttk.Frame):
     def __init__(self, tabctl, main_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
+        self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._need_reinit = False
-        # self._main_cl = main_win
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self.win_height = 540
-        self.win_width = 1060
-
+        self.win_height   = 540
+        self.win_width    = 1060
         self.schedule_win = None
-        # self.attributes("-topmost", True)
         ####################################
         # New Station, Del Station Buttons
-        tk.Button(self,
-                  text=STR_TABLE['new_beacon'][self._lang],
+        ttk.Button(self,
+                  text=self._getTabStr('new_beacon'),
                   # font=("TkFixedFont", 15),
                   # bg="green",
-                  height=1,
+                  #height=1,
                   width=10,
                   command=self._new_beacon_btn_cmd).place(x=20, y=self.win_height - 530)
         tk.Button(self,
-                  text=STR_TABLE['delete'][self._lang],
+                  text=self._getTabStr('delete'),
                   # font=("TkFixedFont", 15),
                   bg="red3",
-                  height=1,
+                  #height=1,
                   width=10,
-                  command=self._del_beacon_btn_cmd).place(x=self.win_width - 141, y=self.win_height - 530)
+                  command=self._del_beacon_btn_cmd,
+                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                  highlightthickness=0,
+                  ).place(x=self.win_width - 141, y=self.win_height - 530)
 
         ############################################
         self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)

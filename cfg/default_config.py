@@ -236,7 +236,7 @@ def getNew_maniGUI_parm():
         gui_cfg_locator             = '',
         gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
-        gui_cfg_pacman_fix          = False,
+        gui_cfg_pacman_fix          = True,
         gui_cfg_sound               = False,
         gui_cfg_sprech              = False,
         gui_cfg_beacon              = True,
@@ -245,8 +245,14 @@ def getNew_maniGUI_parm():
         gui_cfg_auto_tracer         = False,
         gui_cfg_dx_alarm            = True,
         gui_cfg_noty_bell           = False,
+        gui_cfg_mon_dec_aprs        = True,
+        gui_cfg_mon_dec_nr          = True,
+        gui_cfg_mon_dec_hex         = False,
+        gui_cfg_mon_dec_distance    = True,
         gui_cfg_mon_encoding        = 'Auto',
+        gui_cfg_mon_scroll          = True,
         gui_cfg_rtab_index          = (None, None),
+        gui_cfg_txtWin_pos          = (0, 1, 2),
         #####################
         # Vorschreib Col
         gui_cfg_vor_col             = '#25db04',
@@ -263,8 +269,19 @@ def getNew_maniGUI_parm():
         guiMsgC_parm_text_size      = int(DEF_TEXTSIZE),
         #################
         # F-Texte
-        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)}
-
+        gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)},
+        #################
+        # Pan Pos
+        gui_parm_main_pan_pos       = 400,
+        gui_parm_side_pan_pos       = 300,
+        gui_parm_text_pan_pos       = (300, 300),
+        #################
+        # MAin GUI width and height
+        gui_parm_main_width        = 1400,
+        gui_parm_main_height       = 850,
+        #################
+        # Style name
+        gui_parm_style_name         = "classic"
     )
 
 

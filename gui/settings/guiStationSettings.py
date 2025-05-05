@@ -1,77 +1,79 @@
 import tkinter
-from tkinter import ttk as ttk
+from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
-from ax25.ax25InitPorts import PORT_HANDLER
-from cfg.constant import CFG_data_path, CFG_usertxt_path
+from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
-from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch
+from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch, get_strTab
 from gui.guiMsgBoxes import *
-from cfg.string_tab import STR_TABLE
 
 
 class StatSetTab:
-    def __init__(self, new_setting, tabclt: ttk.Notebook):
+    def __init__(self, new_setting, tabclt: ttk.Notebook, root):
         # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
         height = 600
-        width = 1059
-        self._root_win = tabclt
+        width  = 1059
+        self._root_win     = root
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._get_colorMap = lambda: COLOR_MAP.get(root.style_name, ('black', '#d9d9d9'))
         # self.style = main_stt_win.style
         self.own_tab = ttk.Frame(tabclt)
-        self._lang = POPT_CFG.get_guiCFG_language()
 
         self._new_station_setting = new_setting
         # self.station_setting = setting
         self._stat_call = self._new_station_setting.get('stat_parm_Call', 'NOCALL')
-        self._gui = PORT_HANDLER.get_gui()
         #################
         # Call
         call_x = 20
         call_y = 570
-        call_label = tk.Label(self.own_tab, text=f'{STR_TABLE["call"][self._lang]}:')
+        call_label = ttk.Label(self.own_tab, text=f'{self._getTabStr("call")}:')
         call_label.place(x=call_x, y=height - call_y)
-        self.call = tk.Entry(self.own_tab, width=10)
+        self.call = ttk.Entry(self.own_tab, width=10)
         self.call.place(x=call_x + 55, y=height - call_y)
         # self.call.insert(tk.END, self._stat_call)
         #################
         # CLI
         cli_x = 280
         cli_y = 570
-        cli_label = tk.Label(self.own_tab, text='CLI:')
+        cli_label = ttk.Label(self.own_tab, text='Station-Typ:')
         cli_label.place(x=cli_x, y=height - cli_y)
         self._cli_select_var = tk.StringVar(self.own_tab)
         self._cli_opt = CLI_OPT
         opt = list(self._cli_opt.keys())
-
-        cli = tk.OptionMenu(self.own_tab, self._cli_select_var, *opt, command=self.chk_CLI)
-        cli.configure(width=8, height=1)
-        cli.place(x=cli_x + 55, y=height - cli_y - 5)
+        opt = [self._cli_select_var.get()] + opt
+        cli = ttk.OptionMenu(self.own_tab, self._cli_select_var, *opt, command=self.chk_CLI)
+        # cli.configure(width=8, height=1)
+        cli.place(x=cli_x + 115, y=height - cli_y - 2)
 
         #################
         # MaxPac
         max_pac_x = 20
         max_pac_y = 500
-        max_pac_label = tk.Label(self.own_tab, text='Max-Pac:')
+        max_pac_label = ttk.Label(self.own_tab, text='Max-Pac:')
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         self._max_pac_select_var = tk.StringVar(self.own_tab)
-        opt = range(8)
         # self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
-        self._max_pac = tk.OptionMenu(self.own_tab, self._max_pac_select_var, *opt)
-        self._max_pac.configure(width=4, height=1)
+        self._max_pac = ttk.Spinbox(self.own_tab,
+                                    textvariable=self._max_pac_select_var,
+                                    from_=0,
+                                    to=7,
+                                    increment=1,
+                                    width=2)
+        # self._max_pac.configure(width=4, height=1)
         self._max_pac.place(x=max_pac_x + 78, y=height - max_pac_y - 5)
 
         #################
         # PacLen
         pac_len_x = 180
         pac_len_y = 500
-        pac_len_label = tk.Label(self.own_tab, text='Pac-Len:')
+        pac_len_label = ttk.Label(self.own_tab, text='Pac-Len:')
         pac_len_label.place(x=pac_len_x, y=height - pac_len_y)
-        self._pac_len = tk.Entry(self.own_tab, width=3)
+        self._pac_len = ttk.Entry(self.own_tab, width=3)
         self._pac_len.place(x=pac_len_x + 75, y=height - pac_len_y)
         # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
 
@@ -97,16 +99,16 @@ class StatSetTab:
         self.own_tab.columnconfigure(0, minsize=550, weight=0)
         self.own_tab.columnconfigure(1, weight=1)
         f_height = 135
-        r_side_frame = tk.Frame(self.own_tab, width=435, height=f_height)
-        r_side_frame.configure(bg='grey80')
+        r_side_frame = ttk.Frame(self.own_tab, width=435, height=f_height)
+        #r_side_frame.configure(bg='grey80')
         r_side_frame.grid(column=1, row=1)
         #################
         # Name
         name_x = 10
         name_y = 120
-        name_label = tk.Label(r_side_frame, text=f'{STR_TABLE["name"][self._lang]}:')
+        name_label = ttk.Label(r_side_frame, text=f'{self._getTabStr("name")}:')
         name_label.place(x=name_x, y=f_height - name_y)
-        self._name = tk.Entry(r_side_frame, width=15)
+        self._name = ttk.Entry(r_side_frame, width=15)
         self._name.place(x=name_x + 75, y=f_height - name_y)
         # self._name.insert(tk.END, str(self.station_setting.stat_parm_Name))
         #################
@@ -155,7 +157,7 @@ class StatSetTab:
         li_text = self._load_fm_file(self._stat_call + '.litx')
         a_text = self._load_fm_file(self._stat_call + '.atx')
         if c_text is None:
-            c_text = STR_TABLE['default_ctext'][self._lang]
+            c_text = self._getTabStr('default_ctext')
         if b_text is None:
             b_text = ''
         if i_text is None:
@@ -246,10 +248,10 @@ class StatSetTab:
         _x = 10
         _y = 10
 
-        tk.Label(tab_pipe, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
+        ttk.Label(tab_pipe, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
         self._loop_timer_var = tk.StringVar(tab_pipe)
         # self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
-        self._loop_timer = tk.Spinbox(tab_pipe,
+        self._loop_timer = ttk.Spinbox(tab_pipe,
                                       from_=5,
                                       to=360,
                                       increment=5,
@@ -263,28 +265,28 @@ class StatSetTab:
         # TX FILE
         _x = 10
         _y = 60
-        tk.Label(tab_pipe, text=f"{STR_TABLE['tx_file'][self._lang]}:").place(x=_x, y=_y)
+        ttk.Label(tab_pipe, text=f"{self._getTabStr('tx_file')}:").place(x=_x, y=_y)
         self._tx_filename_var = tk.StringVar(tab_pipe)
         # self._tx_filename_var.set(self.pipe.tx_filename)
-        self._tx_filename = tk.Entry(tab_pipe, textvariable=self._tx_filename_var, width=50)
+        self._tx_filename = ttk.Entry(tab_pipe, textvariable=self._tx_filename_var, width=50)
         # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self._tx_filename.place(x=_x + 140, y=_y)
-        tk.Button(tab_pipe,
-                  text=f"{STR_TABLE['file_1'][self._lang]}",
-                  command=lambda: self.select_files(tx=True)
+        ttk.Button(tab_pipe,
+                  text=f"{self._getTabStr('file_1')}",
+                  command=lambda: self.select_files(tx=True),
                   ).place(x=_x + 710, y=_y - 2)
         #################################
         # RX FILE
         _x = 10
         _y = 100
-        tk.Label(tab_pipe, text=f"{STR_TABLE['rx_file'][self._lang]}:").place(x=_x, y=_y)
+        ttk.Label(tab_pipe, text=f"{self._getTabStr('rx_file')}:").place(x=_x, y=_y)
         self._rx_filename_var = tk.StringVar(tab_pipe)
         # self.rx_filename_var.set(self.pipe.rx_filename)
-        self._rx_filename = tk.Entry(tab_pipe, textvariable=self._rx_filename_var, width=50)
+        self._rx_filename = ttk.Entry(tab_pipe, textvariable=self._rx_filename_var, width=50)
         # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
         self._rx_filename.place(x=_x + 140, y=_y)
-        tk.Button(tab_pipe,
-                  text=f"{STR_TABLE['file_1'][self._lang]}",
+        ttk.Button(tab_pipe,
+                  text=f"{self._getTabStr('file_1')}",
                   command=lambda: self.select_files(tx=False)
                   ).place(x=_x + 710, y=_y - 2)
 
@@ -298,13 +300,13 @@ class StatSetTab:
         self._color_example_text.place(x=200, y=10)
         self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
-        tk.Button(tab_colors,
+        ttk.Button(tab_colors,
                   text='TX-Text',
                   command=lambda: self._choose_color('tx_fg')
                   ).place(x=20, y=20)
 
         # BG
-        tk.Button(tab_colors,
+        ttk.Button(tab_colors,
                   text='BG',
                   command=lambda: self._choose_color('tx_bg')
                   ).place(x=20, y=100)
@@ -317,7 +319,7 @@ class StatSetTab:
         self._color_example_text_rx.place(x=200, y=130)
         self._color_example_text_rx.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
-        tk.Button(tab_colors,
+        ttk.Button(tab_colors,
                   text='RX-Text',
                   command=lambda: self._choose_color('rx_fg')
                   ).place(x=20, y=140)
@@ -328,13 +330,13 @@ class StatSetTab:
         self._qso_bg_tx = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
         self._qso_fg_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
 
-        self._textTab.add(tab_ctext, text=STR_TABLE['c_text'][self._lang])
-        self._textTab.add(tab_byetext, text=STR_TABLE['q_text'][self._lang])
-        self._textTab.add(tab_infotext, text=STR_TABLE['i_text'][self._lang])
-        self._textTab.add(tab_loinfotext, text=STR_TABLE['li_text'][self._lang])
-        self._textTab.add(tab_akttext, text=STR_TABLE['news_text'][self._lang])
+        self._textTab.add(tab_ctext, text=self._getTabStr('c_text'))
+        self._textTab.add(tab_byetext, text=self._getTabStr('q_text'))
+        self._textTab.add(tab_infotext, text=self._getTabStr('i_text'))
+        self._textTab.add(tab_loinfotext, text=self._getTabStr('li_text'))
+        self._textTab.add(tab_akttext, text=self._getTabStr('news_text'))
         self._textTab.add(tab_pipe, text='Pipe')
-        self._textTab.add(tab_colors, text=STR_TABLE['qso_win_color'][self._lang])
+        self._textTab.add(tab_colors, text=self._getTabStr('qso_win_color'))
 
         self._c_text_ent.bind("<KeyRelease>", self._chk_umbruch_ct)
         self._info_text_ent.bind("<KeyRelease>", self._chk_umbruch_it)
@@ -406,7 +408,7 @@ class StatSetTab:
         # self._main_cl.settings_win.lower()
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
-                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
+                           title=self._getTabStr('text_color'), parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -418,7 +420,7 @@ class StatSetTab:
             self._color_example_text.configure(fg=str(col[1]))
         elif fg_bg == 'tx_bg':
             col = askcolor(self._qso_bg_tx,
-                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
+                           title=self._getTabStr('text_color'), parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -431,7 +433,7 @@ class StatSetTab:
             self._color_example_text_rx.configure(bg=str(col[1]))
         elif fg_bg == 'rx_fg':
             col = askcolor(self._qso_fg_rx,
-                           title=STR_TABLE['text_color'][self._lang], parent=self._root_win)
+                           title=self._getTabStr('text_color'), parent=self._root_win)
             # self._main_cl.settings_win.lift()
             if not col:
                 # self._main_cl.settings_win.attributes("-topmost", True)
@@ -554,9 +556,9 @@ class StatSetTab:
         li_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.litx'))
         a_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.atx'))
         if not c_text:
-            c_text = zeilenumbruch_lines(STR_TABLE['default_ctext'][self._lang])
+            c_text = zeilenumbruch_lines(self._getTabStr('default_ctext'))
         if not b_text:
-            b_text = zeilenumbruch_lines(STR_TABLE['default_btext'][self._lang])
+            b_text = zeilenumbruch_lines(self._getTabStr('default_btext'))
 
         # C-Text
         self._c_text_ent.delete('1.0', tk.END)
@@ -702,30 +704,35 @@ class StatSetTab:
     def get_new_stat_sett(self):
         return self._new_station_setting
 
-class StationSettingsWin(tk.Frame):
+class StationSettingsWin(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         # self._root_win = main_cl
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self._old_cfg = self._get_config()
+        self._lang      = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._old_cfg   = self._get_config()
         self.win_height = 600
-        self.win_width = 1059
+        self.win_width  = 1059
+        self.style_name = root_win.style_name
         ####################################
         # New Station, Del Station Buttons
-        new_st_bt = tk.Button(self,
-                              text=STR_TABLE['new_stat'][self._lang],
+        new_st_bt = ttk.Button(self,
+                              text=self._getTabStr('new_stat'),
                               # font=("TkFixedFont", 15),
                               # bg="green",
-                              height=1,
+                              #height=1,
                               width=10,
                               command=self._new_stat_btn_cmd)
         del_st_bt = tk.Button(self,
-                              text=STR_TABLE['delete'][self._lang],
+                              text=self._getTabStr('delete'),
                               # font=("TkFixedFont", 15),
                               bg="red3",
-                              height=1,
+                              #height=1,
                               width=10,
-                              command=self._del_station_btn)
+                              command=self._del_station_btn,
+                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                              highlightthickness=0,
+                              )
 
         new_st_bt.place(x=20, y=self.win_height - 590)
         del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
@@ -741,7 +748,7 @@ class StationSettingsWin(tk.Frame):
         # Tab Frames ( Station Setting )
         new_stat_settings = POPT_CFG.get_stat_CFGs()
         for k, cfg in new_stat_settings.items():
-            tab = StatSetTab(cfg, self._tabControl)
+            tab = StatSetTab(cfg, self._tabControl, self)
             self._tab_list.append(tab)
             self._tabControl.add(tab.own_tab, text=k)
 
@@ -785,7 +792,7 @@ class StationSettingsWin(tk.Frame):
     def _new_stat_btn_cmd(self):
         # sett = DefaultStation()
         new_sett = getNew_station_cfg()
-        tab = StatSetTab(new_sett, self._tabControl)
+        tab = StatSetTab(new_sett, self._tabControl, self)
         self._tabControl.add(tab.own_tab, text=new_sett.get('stat_parm_Call', 'NOCALL'))
         self._tabControl.select(len(self._tab_list))
         self._tab_list.append(tab)
@@ -794,7 +801,7 @@ class StationSettingsWin(tk.Frame):
     def _del_station_btn(self):
         #self.settings_win.attributes("-topmost", False)
         # self.lower()
-        msg = AskMsg(titel=STR_TABLE['del_station_hint_1'][self._lang], message=STR_TABLE['del_station_hint_2'][self._lang], parent_win=self)
+        msg = AskMsg(titel=self._getTabStr('del_station_hint_1'), message=self._getTabStr('del_station_hint_2'), parent_win=self)
         # self.lift()
         # self.settings_win.lift()
         if msg:
@@ -811,10 +818,10 @@ class StationSettingsWin(tk.Frame):
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)
 
-                messagebox.showwarning(STR_TABLE['del_station_warning_1'][self._lang], STR_TABLE['del_station_warning_2'][self._lang], parent=self)
+                messagebox.showwarning(self._getTabStr('del_station_warning_1'), self._getTabStr('del_station_warning_2'), parent=self)
                 #self._root_win.sysMsg_to_monitor(STR_TABLE['del_station_hint'][self._lang])
         else:
-            messagebox.showinfo(STR_TABLE['aborted'][self._lang], STR_TABLE['lob3'][self._lang], parent=self)
+            messagebox.showinfo(self._getTabStr('aborted'), self._getTabStr('lob3'), parent=self)
             #self._root_win.sysMsg_to_monitor(STR_TABLE['hin2'][self._lang])
         #self.settings_win.lift()
         # self.settings_win.attributes("-topmost", True)

@@ -2,16 +2,22 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
+from cfg.constant import COLOR_MAP
+from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import get_strTab
+
 
 class LinkHolderSettings(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
         self.root_win = root
         self.root_win.settings_win = self
-        self.win_height = 285
+        self.win_height = 245
         self.win_width = 850
         self.style = self.root_win.style
-        self.title("Link Halter")
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._get_colorMap = lambda: COLOR_MAP.get(root.style_name, ('black', '#d9d9d9'))
+        self.title(self._getTabStr('linkholder'))
         self.geometry("{}x{}".format(self.win_width, self.win_height))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
@@ -24,21 +30,25 @@ class LinkHolderSettings(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ######################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ######################################
         # OK, Save, Cancel
-        ok_bt = tk.Button(self,
-                          text="Ok",
+        ok_bt = ttk.Button(main_f,
+                          text=self._getTabStr('ok'),
                           # font=("TkFixedFont", 15),
                           # bg="green",
-                          height=1,
+                          #height=1,
                           width=6,
                           command=self.ok_btn_cmd)
 
 
-        cancel_bt = tk.Button(self,
-                              text="Abbrechen",
+        cancel_bt = ttk.Button(main_f,
+                              text=self._getTabStr('cancel'),
                               # font=("TkFixedFont", 15),
                               # bg="green",
-                              height=1,
+                              #height=1,
                               width=8,
                               command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
@@ -48,17 +58,17 @@ class LinkHolderSettings(tk.Toplevel):
         _x = 20
         _y = 20
         self.l_holder_chk_var = tk.BooleanVar(self)
-        self.l_holder_chk = tk.Checkbutton(self,
-                                           text='Aktivieren',
+        self.l_holder_chk = ttk.Checkbutton(main_f,
+                                           text=self._getTabStr('activate'),
                                            variable=self.l_holder_chk_var
                                            )
 
         self.l_holder_chk.place(x=_x, y=_y)
 
         # Intervall
-        _x = 320
-        _y = 20
-        _label = tk.Label(self, text='Intervall (Minuten):')
+        x = 320
+        y = 20
+        label = ttk.Label(main_f, text=f"{self._getTabStr('intervall')} (Min):")
         self.intervall_var = tk.IntVar()
         self.intervall_var.set(30)
         val = []
@@ -66,21 +76,26 @@ class LinkHolderSettings(tk.Toplevel):
             if n and not n % 5:
                 val.append(str(n))
 
-        self.intervall = tk.ttk.Combobox(self,
+        self.intervall = ttk.Combobox(main_f,
                                          width=4,
                                          textvariable=self.intervall_var,
                                          values=val,
                                          )
-        _label.place(x=_x, y=_y)
-        self.intervall.place(x=_x + 180, y=_y)
+        label.place(x=x, y=y)
+        self.intervall.place(x=x + 180, y=y)
 
         # Text
-        _x = 20
-        _y = 60
-        self.text = tk.Text(self,
+        x = 20
+        y = 60
+        fg, bg = self._get_colorMap()
+        self.text = tk.Text(main_f,
                             width=80,
-                            height=5)
-        self.text.place(x=_x, y=_y)
+                            height=5,
+                            fg=fg,
+                            bg=bg,
+                            highlightthickness=0,
+                            )
+        self.text.place(x=x, y=y)
 
         self.conn = self.root_win.get_conn()
         if not self.conn:

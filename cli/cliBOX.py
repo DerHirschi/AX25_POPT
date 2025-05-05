@@ -2,13 +2,12 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
-from bbs.bbs_fnc import find_eol
 from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
 from fnc.ax25_fnc import validate_ax25Call
-from fnc.str_fnc import zeilenumbruch
+from fnc.str_fnc import zeilenumbruch, find_eol
 
 
 class BoxCLI(DefaultCLI):
@@ -116,6 +115,7 @@ class BoxCLI(DefaultCLI):
         if any((
                 not hasattr(bbs, 'get_new_pn_count_by_call'),
                 not hasattr(bbs, 'get_pms_cfg'),
+                not hasattr(bbs, 'send_sysop_msg'),
         )):
             logger.error(self._logTag + "_s0: No BBS !!")
             self.change_cli_state(2)
@@ -198,6 +198,8 @@ class BoxCLI(DefaultCLI):
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
+            if self._check_abort_cmd():
+                return ''
             self._input = self._raw_input
             self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
@@ -206,48 +208,6 @@ class BoxCLI(DefaultCLI):
     def _s2(self):
         """ Quit """
         return self._cmd_q()
-
-    def _s7(self):
-        """ Side Stop / Paging"""
-        if not self._tx_buffer:
-            logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
-            self.change_cli_state(1)
-            return
-        if not self._user_db_ent.cli_sidestop:
-            logger.warning(self._logTag + f"CLI: _s7: No UserOpt but in S7 !!")
-            self.change_cli_state(1)
-            return
-        if not self._raw_input:
-            return
-        if self._raw_input in [b'\r', b'\n']:
-            self._send_out_sidestop(self._tx_buffer)
-            return
-        if self._ss_state == 0:
-            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
-                self._tx_buffer = b''
-                self.send_prompt()
-                self.change_cli_state(1)
-                return
-            if self._raw_input in [b'o\r', b'O\r', b'o\n', b'O\n']:
-                self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
-                self._tx_buffer = b''
-                self.change_cli_state(1)
-                return
-        if self._ss_state == 1:
-            if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
-                self._tx_buffer = b''
-                self.send_prompt()
-                self.change_cli_state(1)
-                return
-
-            if self._raw_input.startswith(b'r') or self._raw_input.startswith(b'R'):
-                self._tx_buffer = b''
-                self.change_cli_state(1)
-                self._last_line = b''
-                self._input = self._raw_input
-                self._send_output(self._exec_cmd(), env_vars=False)
-                self._last_line = self._new_last_line
-                return
 
     def _s8(self):
         """ Send Message """

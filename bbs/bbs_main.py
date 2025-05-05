@@ -109,6 +109,7 @@ class BBS:
         self._build_fwd_port_vars()
         ####################
         # Tasker/crone
+        self._check_task_lock       = False
         self._new_man_FWD_wait_t    = time.time()   + 5
         # self._var_task_1sec = time.time()
         self._var_task_5sec         = time.time()   + 5
@@ -232,6 +233,10 @@ class BBS:
             self._var_task_fwdQ_timer = time.time() + 30  # Maybe 120 ?
 
     def _check_msg2fwd(self):
+        if self._check_task_lock:
+            return
+
+        self._check_task_lock = True
         if self._pms_cfg.get('enable_fwd', True):
             # BBS-Mode (S&F enabled)
             self._in_msg_fwd_check()
@@ -239,6 +244,8 @@ class BBS:
         self._build_new_fwd_Q()
         self._check_new_port_tasks()    # Check for new Port-Tasks
         self._exec_fwdQ()
+        self._check_task_lock = False
+
 
     ######################################
     # Add SYSOP-Msg (Noty) to the system

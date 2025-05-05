@@ -1,5 +1,5 @@
 from bbs.bbs_constant import GET_MSG_STRUC
-from bbs.bbs_fnc import find_eol
+from fnc.str_fnc import find_eol
 from cfg.constant import CFG_bbs_import_path, CFG_bbs_import_file
 from cfg.logger_config import BBS_LOG
 

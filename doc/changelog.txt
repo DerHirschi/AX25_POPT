@@ -1,4 +1,57 @@
 ###########################################################################################################
+# 2.118.x
+Fixes:
+- Scripterror in cliBOX.py
+- Scripterror in guiAPRSnewMSG.py beim Aufrufen
+- Scripterror in guiPipeToolSettings.py wenn versucht wird leere
+  Config zu löschen
+- BBS-Einstellungen - Routing: Zeigt werte für "BBS" und "THEME" nicht an
+- BBS-Einstellungen: Allgemeine Probleme mit der GUI
+  (Aktualisierung der Tabs, Fehler beim Anlegen neuer FWD-Partner)
+- Scripterror im Message-Center beim verändern der Textgröße. (STRG +/-)
+- Messagcenter, Textgröße der Forwardwarteschlange wird nicht verändert.
+- Numpad-Enter sendet Text ohne Zeilenumbruch
+- BBS/PMS-Einstellungen: Sysop-Call ist nicht auswählbar als BOX-Call (für PMS-Mode)
+- Unbekannte Distanz (-1) wird im Monitor angezeigt
+- USerDB: Filter wird resetet nach, löschen eines Eintrages.
+- Ausgewählter Text in Vorschreib-/QSO-/Monitorfenster wird nicht richtig
+  oder nur teilweise markiert.
+- RX-Echo Funktion
+
+Optimierung/Änderungen:
+- GUI: "Neue Verbindung" Fenster überarbeitet.
+- Pseudo TX-Delay für AXIP-Port aktiviert. (Bei Probleme mit BPQ)
+- AX25 Protokoll: Handling beim Empfangen eines DM-Frames bei
+  bestehender Verbindung.(Connection reset)
+- Main-GUI Statusleisten und Textfenster
+- NetRom Monitorausgabe
+- Monitorausgabe überarbeitet
+  - Optionales Decoding von:
+    - APRS
+    - NetRom
+    - Distanzen
+    - Hex-Ausgabe
+- Monitor Task Ressourcen optimiert (CPU-Last)
+- Monitor Auto Decoder
+
+Neue Implementierungen / Funktionen:
+- CLI CMD "A". Bricht alle aktuellen Aussendungen ab.
+- Mausklick bindings für "Alarm Leiste" (rechts oben)
+- awthemes support. Download: https://sourceforge.net/projects/tcl-awthemes/
+- Größe des Hauptfensters wird jetzt gespeichert
+- Größe der verschiedenen verschiebbaren Fenster wird jetzt gespeichert
+- Haupt-GUI: Rechtsklick-Menü
+- Message-Center: Rechtsklick-Menü
+- Message-Center: STRG-C Keybind
+- Neu PR-Mail GUI: Rechtsklick-Menü
+- Neu PR-Mail GUI: F-Text Keybindings (Shift+F1 - Shift+F12)
+- Anordnung des Vorschreib-/QSO-/Monitor-Fesnters konfigurierbar
+- UserDB: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
+- UserDB Tree: Rechtsklick-Menü und Möglichkeit mehrere Einträge zu löschen
+- Freie SSID kann bei Neuaufbau der Verbindung ausgewählt werden
+
+###########################################################################################################
+###########################################################################################################
 # 2.117.x
 Fixes:
 - PMS-Setting "AutoFWD" war ohne Funktion

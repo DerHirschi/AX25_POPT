@@ -18,13 +18,13 @@
     \__|yton   \______/ther\__|acket   \__|erminal
 
 ## Overview
-**PoPT** is a modern terminal program for AX.25 Packet Radio.
-It supports versatile connections such as KISS over TCP/Serial and AXIP over UDP.
+**PoPT** is a modern, multi-platform terminal program for AX.25 Packet Radio.
+It supports versatile connections such as KISS over TCP/Serial, AXIP over UDP and Linux AX.25 Devices.
 Currently under development, tested on Python 3.6 and 3.8, it runs on Windows, Linux, and 
 Raspberry Pi.
 
 ### Requirements
-- Python 3.6 or 3.8 (other versions such as 3.11 see below)
+- Python 3.6 or higher (other versions such as 3.11 see below)
 - Supported Platforms: Windows, Linux, Raspberry Pi
 
 ## Installation
@@ -46,6 +46,17 @@ $ pip install --break-system-packages playsound pyserial aprslib
 ``` sh
 $ sudo apt install python3-gst-1.0
 ```
+
+Optional: Install awthemes
+
+To enhance the visual appearance of PoPT, you can optionally install awthemes. Follow these steps:
+
+1. Download the awthemes-10.4.0 package from:
+   https://sourceforge.net/projects/tcl-awthemes/
+
+2. Extract the contents of awthemes-10.4.0.zip into the data/ folder of your PoPT installation.
+
+Note: Ensure the extracted files are placed directly in the data/ directory to be recognized by PoPT.
 
 ## Run
 ``` sh

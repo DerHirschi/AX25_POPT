@@ -7,9 +7,9 @@ from poptGPIO.gpio_fnc import is_gpio_init, get_gpio_val, is_gpio_device
 from poptGPIO.pinctl_fnc import is_pinctrl_device, get_pinctrl_val
 
 
-class GPIOSettings(tk.Frame):
+class GPIOSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         ################################
         # self._lang = POPT_CFG.get_guiCFG_language()
         ################################
@@ -22,17 +22,17 @@ class GPIOSettings(tk.Frame):
         self._rev_ent = False
         self.pin_setup_win = None
         ################################
-        upper_frame = tk.Frame(self)
+        upper_frame = ttk.Frame(self)
         upper_frame.pack(fill=tk.X)
         ################################
-        global_opt_frame = tk.Frame(upper_frame)
+        global_opt_frame = ttk.Frame(upper_frame)
         global_opt_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        tk.Button(global_opt_frame, text='Update', command=self._update_data_fm_cfg).pack(side=tk.LEFT, pady=15, padx=15)
-        tk.Button(global_opt_frame, text='Pin Setup', command=self._open_pin_setup).pack(side=tk.LEFT, padx=15)
+        ttk.Button(global_opt_frame, text='Update', command=self._update_data_fm_cfg).pack(side=tk.LEFT, pady=15, padx=15)
+        ttk.Button(global_opt_frame, text='Pin Setup', command=self._open_pin_setup).pack(side=tk.LEFT, padx=15)
         ################################
         ################################
-        lower_frame = tk.Frame(self)
+        lower_frame = ttk.Frame(self)
         lower_frame.pack(fill=tk.BOTH, expand=True)
         ##########################################################################################
         # TREE

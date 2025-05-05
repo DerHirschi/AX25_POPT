@@ -7,7 +7,7 @@ import copy
 import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
-from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR
+from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR, NetRom_decode_I
 from fnc.ax25_fnc import get_call_str, call_tuple_fm_call_str, reverse_uid
 
 
@@ -648,15 +648,13 @@ class AX25Frame:
                 self.to_call.dec_call(self.data_bytes[:7])
                 # print("ToCall > {}".format(self.hexstr[:7]))
             except IndexError:
-                logger.error("DEC: Index ERROR To Call!!!!!!!!!!")
-                # print("DEC: Index ERROR To Call!!!!!!!!!!")
+                logger.error("DEC: Index ERROR To Call !")
                 raise AX25DecodingERROR(self)
             try:
                 self.from_call.dec_call(self.data_bytes[7:14])
                 # print("FromCall > {}".format(self.hexstr[7:14]))
             except IndexError:
-                logger.error("DEC: Index ERROR From Call!!!!!!!!!!")
-                # print("Index ERROR From Call!!!!!!!!!!")
+                logger.error("DEC: Index ERROR From Call !")
                 raise AX25DecodingERROR(self)
             n = 2
             if not self.from_call.s_bit:
@@ -666,7 +664,7 @@ class AX25Frame:
                         tmp.dec_call(self.data_bytes[7 * n: 7 + 7 * n])
                         # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
                     except IndexError:
-                        logger.error("DEC: Index ERROR Via Call!!!!!!!!!!")
+                        logger.error("DEC: Index ERROR Via Call !")
                         # print("Index ERROR Via Call!!!!!!!!!!")
                         raise AX25DecodingERROR(self)
                     self.via_calls.append(tmp)
@@ -717,6 +715,12 @@ class AX25Frame:
 
     def _decode_netrom(self):
         if self.pid_byte.hex != 0xCF:
+            return
+        if self.ctl_byte.flag == 'I':
+            try:
+                self._netrom_cfg = NetRom_decode_I(ax25_payload=self.payload)
+            except Exception as e:
+                NetRomDecodingERROR(ax25_frame_conf=self.get_frame_conf(), e_text=f"{e}")
             return
         if self.ctl_byte.flag == 'UI':
             try:

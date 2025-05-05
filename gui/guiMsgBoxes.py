@@ -6,17 +6,44 @@ from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 
 
-def open_file_dialog():
-    name = filedialog.askopenfilename()
+def open_file_dialog(master_win=None):
+    filetypes = (
+        ('All files', '*.*'),
+        ('text files', '*.txt'),
+    )
+    try:
+        if master_win:
+            name = filedialog.askopenfilename(
+                defaultextension=".txt",
+                filetypes=filetypes,
+                parent=master_win)
+        else:
+            name = filedialog.askopenfilename(
+                defaultextension=".txt",
+                filetypes=filetypes)
+    except PermissionError:
+        return b''
     if name:
         with open(name, 'rb') as output:
             return output.read()
     return b''
 
 
-def save_file_dialog(data):
+def save_file_dialog(data, master_win=None):
+    filetypes = (
+        ('All files', '*.*'),
+        ('text files', '*.txt'),
+    )
     try:
-        f = filedialog.asksaveasfile(mode='w', defaultextension=".txt")
+        if master_win:
+            f = filedialog.asksaveasfile(mode='w',
+                                         defaultextension=".txt",
+                                         filetypes=filetypes,
+                                         parent=master_win)
+        else:
+            f = filedialog.asksaveasfile(mode='w',
+                                         defaultextension=".txt",
+                                         filetypes=filetypes)
     except PermissionError:
         return False
     if f is None:

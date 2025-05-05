@@ -18,7 +18,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1150x"
+        self.geometry(f"1190x"
                       f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
@@ -47,13 +47,13 @@ class BBS_fwd_Q(tk.Toplevel):
         # tk.Label(_frame, text='sags').grid(row=0, column=1)
         ##########################################################################################
         # Tab-ctl
-        root_frame   = tk.Frame(self, borderwidth=10)
+        root_frame   = ttk.Frame(self, borderwidth=10)
         root_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabctl = ttk.Notebook(root_frame)
         self._tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        tree_frame = tk.Frame(self._tabctl)
-        port_frame = tk.Frame(self._tabctl)
+        tree_frame = ttk.Frame(self._tabctl)
+        port_frame = ttk.Frame(self._tabctl)
         self._tabctl.add(tree_frame, text=self._getTabStr('fwd_list'))
         self._tabctl.add(port_frame, text="FWD-Ports")
         #tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -95,27 +95,27 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
         # self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
         ###
-        btn_frame = tk.Frame(tree_frame, width=150)
+        btn_frame = ttk.Frame(tree_frame, width=150)
         btn_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
-        tk.Button(btn_frame,
+        ttk.Button(btn_frame,
                   text=self._getTabStr('start_fwd'),
                   command=self._do_fwd
                   ).pack()
         ##########################################################################################
         # port_frame
-        # port_m_f = tk.Frame(port_frame)
+        # port_m_f = ttk.Frame(port_frame)
         # port_m_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self._port_tabctl = ttk.Notebook(port_frame)
         self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         for fwd_port_id, fwd_port_vars in self._bbs_obj.get_fwdPort_vars().items():
-            port_tab_f = tk.Frame(self._port_tabctl)
+            port_tab_f = ttk.Frame(self._port_tabctl)
             self._port_tabctl.add(port_tab_f, text=f"FWD-Port {fwd_port_id}")
             ###############
             # L/R Frames
-            l_frame = tk.Frame(port_tab_f, borderwidth=10)
-            r_frame = tk.Frame(port_tab_f, borderwidth=10)
+            l_frame = ttk.Frame(port_tab_f, borderwidth=10)
+            r_frame = ttk.Frame(port_tab_f, borderwidth=10)
 
             l_frame.pack(side=tk.LEFT, expand=False, fill=tk.Y, padx=10, pady=10)
             ttk.Separator(port_tab_f, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, expand=False, padx=10)
@@ -126,20 +126,20 @@ class BBS_fwd_Q(tk.Toplevel):
             block_byte_c_var    = tk.StringVar(self)
             block_fwd_tasks_var = tk.StringVar(self)
 
-            block_timer_f       = tk.Frame(l_frame)
-            block_byte_c_f      = tk.Frame(l_frame)
-            block_fwd_tasks_f   = tk.Frame(l_frame)
-            reset_btn_f         = tk.Frame(l_frame, borderwidth=10)
+            block_timer_f       = ttk.Frame(l_frame)
+            block_byte_c_f      = ttk.Frame(l_frame)
+            block_fwd_tasks_f   = ttk.Frame(l_frame)
+            reset_btn_f         = ttk.Frame(l_frame, borderwidth=10)
             block_timer_f.pack(    side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
             block_byte_c_f.pack(   side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
             block_fwd_tasks_f.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
             reset_btn_f.pack(      side=tk.TOP, expand=False, fill=tk.Y, )
 
-            tk.Label(block_timer_f,     textvariable=block_timer_var).pack(    anchor=tk.W)
-            tk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack(   anchor=tk.W)
-            tk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack(anchor=tk.W)
+            ttk.Label(block_timer_f,     textvariable=block_timer_var).pack(    anchor=tk.W)
+            ttk.Label(block_byte_c_f,    textvariable=block_byte_c_var).pack(   anchor=tk.W)
+            ttk.Label(block_fwd_tasks_f, textvariable=block_fwd_tasks_var).pack(anchor=tk.W)
 
-            tk.Button(reset_btn_f,
+            ttk.Button(reset_btn_f,
                       text="Reset Block",
                       command=lambda: self._do_block_reset(),
                       ).pack()
@@ -158,7 +158,7 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_var_port_id = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {}).get(bbs_call, {}).get('port_id', -1)
                 if bbs_var_port_id != fwd_port_id:
                     continue
-                bbs_tab_f = tk.Frame(bbs_tabctl)
+                bbs_tab_f = ttk.Frame(bbs_tabctl)
                 bbs_tabctl.add(bbs_tab_f, text=bbs_call)
 
                 bbs_byte_c_var  = tk.StringVar(self)
@@ -168,9 +168,9 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_q_done_var  = tk.StringVar(self)
                 bbs_next_q_var  = tk.StringVar(self)
 
-                frame_l  = tk.Frame(bbs_tab_f, borderwidth=5)
-                frame_m  = tk.Frame(bbs_tab_f, borderwidth=5)
-                frame_r  = tk.Frame(bbs_tab_f, borderwidth=5)
+                frame_l  = ttk.Frame(bbs_tab_f, borderwidth=5)
+                frame_m  = ttk.Frame(bbs_tab_f, borderwidth=5)
+                frame_r  = ttk.Frame(bbs_tab_f, borderwidth=5)
 
                 frame_l.pack(side=tk.LEFT)
                 frame_m.pack(side=tk.LEFT)
@@ -178,13 +178,13 @@ class BBS_fwd_Q(tk.Toplevel):
 
                 ###########
                 # frame_l
-                bbs_byte_c_f    = tk.Frame(frame_l)
-                bbs_error_c_f   = tk.Frame(frame_l)
-                bbs_timeout_f   = tk.Frame(frame_l)
-                bbs_q_f         = tk.Frame(frame_l)
-                bbs_q_done_f    = tk.Frame(frame_l)
-                bbs_next_q_f    = tk.Frame(frame_l)
-                fwd_btn_f       = tk.Frame(frame_l, borderwidth=10)
+                bbs_byte_c_f    = ttk.Frame(frame_l)
+                bbs_error_c_f   = ttk.Frame(frame_l)
+                bbs_timeout_f   = ttk.Frame(frame_l)
+                bbs_q_f         = ttk.Frame(frame_l)
+                bbs_q_done_f    = ttk.Frame(frame_l)
+                bbs_next_q_f    = ttk.Frame(frame_l)
+                fwd_btn_f       = ttk.Frame(frame_l, borderwidth=10)
 
                 bbs_byte_c_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 bbs_error_c_f.pack( side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
@@ -194,14 +194,14 @@ class BBS_fwd_Q(tk.Toplevel):
                 bbs_next_q_f.pack(  side=tk.TOP, expand=False, fill=tk.Y, anchor=tk.W)
                 fwd_btn_f.pack(     side=tk.TOP, expand=False, fill=tk.Y, )
 
-                tk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack(anchor=tk.W)
-                tk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack(anchor=tk.W)
-                tk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack(anchor=tk.W)
-                tk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack(anchor=tk.W)
-                tk.Label(bbs_q_done_f,  textvariable=bbs_q_done_var ).pack(anchor=tk.W)
-                tk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack(anchor=tk.W)
+                ttk.Label(bbs_byte_c_f,  textvariable=bbs_byte_c_var ).pack(anchor=tk.W)
+                ttk.Label(bbs_error_c_f, textvariable=bbs_error_c_var).pack(anchor=tk.W)
+                ttk.Label(bbs_timeout_f, textvariable=bbs_timeout_var).pack(anchor=tk.W)
+                ttk.Label(bbs_q_f,       textvariable=bbs_q_var      ).pack(anchor=tk.W)
+                ttk.Label(bbs_q_done_f,  textvariable=bbs_q_done_var ).pack(anchor=tk.W)
+                ttk.Label(bbs_next_q_f,  textvariable=bbs_next_q_var ).pack(anchor=tk.W)
 
-                tk.Button(fwd_btn_f,
+                ttk.Button(fwd_btn_f,
                           # text=self._getTabStr('start_fwd'),
                           text="Reset Timeout",
                           command=lambda: self._do_timeout_reset(),
@@ -209,7 +209,7 @@ class BBS_fwd_Q(tk.Toplevel):
 
                 ###########
                 # frame_m
-                tk.Label(frame_m, text='Next-Q').pack(pady=10)
+                ttk.Label(frame_m, text='Next-Q').pack(pady=10)
                 next_q_tree = ttk.Treeview(frame_m, columns=('bid',), show='headings', height=5)
                 next_q_tree.heading('bid', text='BID')
                 next_q_tree.column("bid", anchor=tk.W, stretch=tk.YES, width=160)
@@ -217,7 +217,7 @@ class BBS_fwd_Q(tk.Toplevel):
 
                 ###########
                 # frame_r
-                tk.Label(frame_r, text='FWD-Q').pack(pady=5)
+                ttk.Label(frame_r, text='FWD-Q').pack(pady=5)
                 fwd_q_tree = ttk.Treeview(frame_r, columns=('bid', 'typ', 'msgsize', 'tosend'), show='headings')
                 fwd_q_tree.heading('bid',    text='BID')
                 fwd_q_tree.heading('typ',    text='Typ')

@@ -3,9 +3,9 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.117.105'
+VER = '2.118.29'
 
-DEBUG_LOG       = False
+DEBUG_LOG       = True
 CONSOLE_LOG     = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
@@ -13,6 +13,7 @@ TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mod
 KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
 """"""
 MAX_PORTS           = 10       #
+MAX_SYSOP_CH        = 30       #
 SERVICE_CH_START    = 11       # Service Channels Start Channel
 MAX_MCAST_CH        = 30       # Max Virtual MCast Channels
 """ doc/PoPT/mysql_setup.txt """
@@ -183,26 +184,79 @@ ASCII_a = 97
 DEF_TEXTSIZE = 13
 FONT = "Courier"
 TEXT_SIZE_STATUS = 10
-TXT_INP_CURSOR_CLR = 'white'
+TXT_INP_CURSOR_CLR = '#ffffff'
 STAT_BAR_CLR = 'grey60'
-STAT_BAR_TXT_CLR = 'black'
+STAT_BAR_TXT_CLR = '#000000'
 FONT_STAT_BAR = 'Arial'
-PARAM_MAX_MON_LEN = 100000
+PARAM_MAX_QSO_LEN   = 50000     # TODO
+PARAM_MAX_MON_LEN   = 100000
+PARAM_MAX_MON_WIDTH = 100
 MON_SYS_MSG_CLR_FG = 'red'
-MON_SYS_MSG_CLR_BG = 'black'
+MON_SYS_MSG_CLR_BG = '#000000'
 CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
 GUI_DISABLED_CLR = '#b1b1b3'
 # Station Default
-DEF_STAT_QSO_TX_COL = 'white'
+DEF_STAT_QSO_TX_COL = '#ffffff'
 DEF_STAT_QSO_RX_COL = '#00ff06'
-DEF_STAT_QSO_BG_COL = 'black'
+DEF_STAT_QSO_BG_COL = '#000000'
 # QSO SysMSG
 DEF_QSO_SYSMSG_FG= '#fc7126'
 DEF_QSO_SYSMSG_BG= '#000000'
 # Port Default
 DEF_PORT_MON_TX_COL = 'medium violet red'
 DEF_PORT_MON_RX_COL = 'green'
-DEF_PORT_MON_BG_COL = 'black'
+DEF_PORT_MON_BG_COL = '#000000'
+
+# Built-in Styles
+STYLES_BULD_IN_LINUX = [
+            'default',
+            'alt',
+            'clam',
+            'classic',
+        ]
+STYLES_BULD_IN_WIN = [
+            'default',
+            'alt',
+            'aqua',             # Not with Linux
+            'clam',
+            'classic',
+            'vista',            # Not with Linux
+            'winnative',        # Not with Linux
+            'xpnative',         # Not with Linux
+        ]
+# awthems Styles
+STYLES_AWTHEMES_PATH = "data/awthemes-10.4.0"
+STYLES_AWTHEMES = [
+            #'awarc',            # Not with Linux
+            'awdark',
+            'awlight',
+            #'awbreeze',         # Not with Linux
+            #'awbreezedark',     # Not with Linux
+            #'awblack',          # Not with Linux
+            #'awclearlooks',     # Not with Linux
+            #'awwinxpblue',      # Not with Linux
+        ]
+# Style Color MAP
+COLOR_MAP = {
+            'default':  ('#000000',  '#d9d9d9'),
+            'alt':      ('#000000',  '#d9d9d9'),
+            'aqua':     ('#000000',  '#d9d9d9'),    # Not with Linux
+            'clam':     ('#000000',  '#d9d9d9'),
+            'classic':  ('#000000',  '#d9d9d9'),
+            'vista':    ('#000000',  '#d9d9d9'),    # Not with Linux
+            'winnative':('#000000',  '#d9d9d9'),    # Not with Linux
+            'xpnative': ('#000000',  '#d9d9d9'),    # Not with Linux
+            # AW
+            'awdark':        ('#ffffff',  '#33393B'),
+            'awlight':       ('#000000',  '#e8e8e7'),
+            # In Win ??
+            #'awarc':  ('#ffffff',  '#33393B'),
+            #'awbreeze':  ('#ffffff',  '#33393B'),
+            #'awbreezedark':  ('#ffffff',  '#33393B'),
+            #'awblack':  ('#ffffff',  '#33393B'),
+            #'awclearlooks':  ('#ffffff',  '#33393B'),
+            #'awwinxpblue':  ('#ffffff',  '#33393B'),
+        }
 # F Key Tab
 F_KEY_TAB_LINUX = {
     67: 1,  # F1

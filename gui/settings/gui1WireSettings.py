@@ -8,9 +8,9 @@ from cfg.popt_config import POPT_CFG
 from fnc.one_wire_fnc import is_1wire_device, get_all_1wire_paths, get_1wire_temperature, get_max_1wire
 
 
-class OneWireSettings(tk.Frame):
+class OneWireSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        tk.Frame.__init__(self, tabctl)
+        ttk.Frame.__init__(self, tabctl)
         ################################
         # self._lang = POPT_CFG.get_guiCFG_language()
         ################################
@@ -18,25 +18,27 @@ class OneWireSettings(tk.Frame):
         self._update_th = None
         self._sens_cfg: dict = dict(POPT_CFG.get_1wire_sensor_cfg())
         self._read_timer_var = tk.StringVar(self)
-        self._read_timer_var.set(str(POPT_CFG.get_1wire_loop_timer()))
 
         self._max_sensor_label = lambda x: f"Max {x} Sensors"
         self._max_sensors = int(get_max_1wire())
         self._max_sensor_label_var = tk.StringVar(self, value=self._max_sensor_label(self._max_sensors))
         # self._metric_var = tk.StringVar(self, value='Metrisch') # NEEEEEEE
         ################################
-        upper_frame = tk.Frame(self)
+        upper_frame = ttk.Frame(self)
         upper_frame.pack(fill=tk.X)
         ################################
-        global_opt_frame = tk.Frame(upper_frame)
+        global_opt_frame = ttk.Frame(upper_frame)
         global_opt_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         #
-        rt_opt_frame = tk.Frame(global_opt_frame)
+        rt_opt_frame = ttk.Frame(global_opt_frame)
         rt_opt_frame.pack(fill=tk.Y, padx=10, pady=10)
-        tk.Label(rt_opt_frame, text='Sensor Read Timer in s:').pack(side=tk.LEFT, padx=15)
+        ttk.Label(rt_opt_frame, text='Sensor Read Timer in s:').pack(side=tk.LEFT, padx=15)
+        self._read_timer_var.set(str(POPT_CFG.get_1wire_loop_timer()))
         opt = [x * 30 for x in range(1, 13)]
-        read_timer_menu = tk.OptionMenu(rt_opt_frame, self._read_timer_var, *opt)
+        opt = [self._read_timer_var.get()] + opt
+        read_timer_menu = ttk.OptionMenu(rt_opt_frame, self._read_timer_var, *opt)
         read_timer_menu.pack(side=tk.LEFT, padx=5)
+
         #
         """
         metric_opt_frame = tk.Frame(global_opt_frame)
@@ -47,16 +49,16 @@ class OneWireSettings(tk.Frame):
         metric_menu.pack(side=tk.LEFT, padx=5)
         """
         #
-        tk.Label(global_opt_frame, textvariable=self._max_sensor_label_var).pack()
-        tk.Button(global_opt_frame, text='Update', command=self._update_sensors).pack(pady=15)
+        ttk.Label(global_opt_frame, textvariable=self._max_sensor_label_var).pack()
+        ttk.Button(global_opt_frame, text='Update', command=self._update_sensors).pack(pady=15)
         ################################
-        wire_frame = tk.Frame(upper_frame)
+        wire_frame = ttk.Frame(upper_frame)
         wire_frame.pack(fill=tk.X, expand=True)
         #
-        tk.Label(wire_frame, text=ONE_WIRE_MAP, font=(FONT, 9)).pack(pady=10)
+        ttk.Label(wire_frame, text=ONE_WIRE_MAP, font=(FONT, 9)).pack(pady=10)
         ################################
         ################################
-        lower_frame = tk.Frame(self)
+        lower_frame = ttk.Frame(self)
         lower_frame.pack(fill=tk.BOTH, expand=True)
         ##########################################################################################
         # TREE

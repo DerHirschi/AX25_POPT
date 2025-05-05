@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -213,14 +213,22 @@ class DefaultCLI(object):
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
-    """
-    def send_2_gui(self, data):  
-        if data:
-            if type(data) != str:
-                data = data.decode(self.encoding[0], self.encoding[1])
-            # print(data + ' <CLI> ' + str(self._connection.ch_index))
-            self._gui.cli_echo(data, self._connection.ch_index)
-    """
+    def _abort_send_out(self):
+        self._tx_buffer = b''
+        self._connection.tx_buf_rawData = (f"\r\r # {self._getTabStr('aborted')} !\r"
+                                           + self.get_ts_prompt()).encode(self._encoding[0], 'ignore')
+
+    def _check_abort_cmd(self):
+        eol = find_eol(self._raw_input)
+        if (self._raw_input.upper() == b'A' + eol and
+            (self._connection.tx_buf_rawData
+            or self._tx_buffer)
+        ):
+            self._abort_send_out()
+            self._last_line = b''
+            return True
+        return False
+
 
     def change_cli_state(self, state: int):
         # print(f"CLI change state: {state} - {self._state_index}")
@@ -1368,14 +1376,8 @@ class DefaultCLI(object):
 
     ##############################################
     def cli_exec(self, inp=b''):
-        # print(f"cli_exec {self.cli_name}: {self._connection.uid} - SI: {self.state_index} - CSI: {self.crone_state_index}")
-        # print(f"cli_exec {self.cli_name}: {self._connection.uid} - raw-input: {inp}")
-        # if not self._connection.is_link:
-        # print(self._state_index)
-
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
-        # print(f"CLI: ret: {ret}")
         if ret:
             self._send_output(ret, env_vars=False)
 
@@ -1423,6 +1425,8 @@ class DefaultCLI(object):
         ########################
         # Check String Commands
         if not self._exec_str_cmd():
+            if self._check_abort_cmd():
+                return ''
             self._input = self._raw_input
             self._send_output(self._exec_cmd(), self._env_var_cmd)
         self._last_line = self._new_last_line
@@ -1527,6 +1531,11 @@ class DefaultCLI(object):
 
     def _s7(self):
         """ Side Stop / Paging"""
+        if not self._raw_input:
+            return
+        if self._check_abort_cmd():
+            self.change_cli_state(1)
+            return
         if not self._tx_buffer:
             logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
             self.change_cli_state(1)
@@ -1535,21 +1544,36 @@ class DefaultCLI(object):
             logger.warning(self._logTag + f"CLI: _s7: No UserOpt but in S7 !!")
             self.change_cli_state(1)
             return
-        if not self._raw_input:
-            return
-        if self._raw_input in [b'\r', b'\n']:
+        eol = find_eol(self._raw_input)
+        if self._raw_input in eol:
             self._send_out_sidestop(self._tx_buffer)
             return
-        if self._raw_input in [b'a\r', b'A\r', b'a\n', b'A\n']:
-            self._tx_buffer = b''
-            self.send_prompt()
-            self.change_cli_state(1)
-            return
-        if self._raw_input in [b'o\r', b'O\r', b'o\n', b'O\n']:
-            self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
-            self._tx_buffer = b''
-            self.change_cli_state(1)
-            return
+        if self._ss_state == 0:
+            if self._raw_input.upper() == b'A' + eol:
+                self._tx_buffer = b''
+                self.send_prompt()
+                self.change_cli_state(1)
+                return
+            if self._raw_input.upper() == b'O' + eol:
+                self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
+                self._tx_buffer = b''
+                self.change_cli_state(1)
+                return
+        if self._ss_state == 1:
+            if self._raw_input.upper() == b'A' + eol:
+                self._tx_buffer = b''
+                self.send_prompt()
+                self.change_cli_state(1)
+                return
+
+            if self._raw_input.upper().startswith(b'R'):
+                self._tx_buffer = b''
+                self.change_cli_state(1)
+                self._last_line = b''
+                self._input = self._raw_input
+                self._send_output(self._exec_cmd(), env_vars=False)
+                self._last_line = self._new_last_line
+                return
 
 
     @staticmethod

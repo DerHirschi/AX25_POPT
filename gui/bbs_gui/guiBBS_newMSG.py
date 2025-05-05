@@ -1,15 +1,19 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox
+from tkinter import ttk
+from tkinter import messagebox
 
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
-from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD
+from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP, F_KEY_TAB_LINUX, F_KEY_TAB_WIN
+from cli.StringVARS import replace_StringVARS
 from fnc.gui_fnc import get_typed, detect_pressed
+from fnc.os_fnc import is_linux
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
+from gui.guiRightClick_Menu import ContextMenu
 
 
 class BBS_newMSG(tk.Toplevel):
@@ -20,11 +24,12 @@ class BBS_newMSG(tk.Toplevel):
         self._root_win  = root_win
         self._bbs_obj   = PORT_HANDLER.get_bbs()
         self.text_size  = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self._lang      = POPT_CFG.get_guiCFG_language()
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         self.title(self._getTabStr('new_pr_mail'))
         self.style = self._root_win.style
+        style_name = self._root_win.style_name
+        self._get_colorMap = lambda: COLOR_MAP.get(style_name, ('black', '#d9d9d9'))
         if hasattr(self._root_win, 'main_win'):
             win = self._root_win.main_win
         else:
@@ -41,6 +46,7 @@ class BBS_newMSG(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ###################################
         ####################
         self._init_Menu()
         ####################
@@ -64,10 +70,10 @@ class BBS_newMSG(tk.Toplevel):
 
         ####################
         # Frames
-        frame_btn_oben  = tk.Frame(self, height=30)
-        frame_oben      = tk.Frame(self, height=200)
-        frame_unten     = tk.Frame(self)
-        footer_frame    = tk.Frame(self, height=20)
+        frame_btn_oben  = ttk.Frame(self, height=30)
+        frame_oben      = ttk.Frame(self, height=200)
+        frame_unten     = ttk.Frame(self)
+        footer_frame    = ttk.Frame(self, height=20)
 
         frame_btn_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         frame_oben.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
@@ -94,9 +100,45 @@ class BBS_newMSG(tk.Toplevel):
             self._init_data_f_reply()
         self.bind('<Key>',           self._update_msg_size)
         self.bind('<Control-c>',     lambda event: self._copy_select())
+        # self.bind('<Control-v>',     lambda event: self._clipboard_past())
         self.bind('<Control-x>',     lambda event: self._cut_select())
         self.bind('<Control-plus>',  lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        #####################
+        # F-TEXT
+        if is_linux():
+            r = 13
+        else:
+            r = 11
+        for fi in range(1, r):
+            self.bind(f'<Shift-F{fi}>', self._insert_ftext)
+        #####################
+        self._init_RClick_menu()
+
+    def _init_RClick_menu(self):
+        if self._text:
+            txt_men = ContextMenu(self._text)
+            txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
+            txt_men.add_separator()
+            txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+            txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+            txt_men.add_separator()
+            actions_submenu = txt_men.add_submenu("F-Text")
+            actions_submenu.add_command(label="F1", command=lambda: self._insert_ftext_fm_menu(1))
+            actions_submenu.add_command(label="F2", command=lambda: self._insert_ftext_fm_menu(2))
+            actions_submenu.add_command(label="F3", command=lambda: self._insert_ftext_fm_menu(3))
+            actions_submenu.add_command(label="F4", command=lambda: self._insert_ftext_fm_menu(4))
+            actions_submenu.add_command(label="F5", command=lambda: self._insert_ftext_fm_menu(5))
+            actions_submenu.add_command(label="F6", command=lambda: self._insert_ftext_fm_menu(6))
+            actions_submenu.add_command(label="F7", command=lambda: self._insert_ftext_fm_menu(7))
+            actions_submenu.add_command(label="F8", command=lambda: self._insert_ftext_fm_menu(8))
+            actions_submenu.add_command(label="F9", command=lambda: self._insert_ftext_fm_menu(9))
+            actions_submenu.add_command(label="F10", command=lambda: self._insert_ftext_fm_menu(10))
+            actions_submenu.add_command(label="F11", command=lambda: self._insert_ftext_fm_menu(11))
+            actions_submenu.add_command(label="F12", command=lambda: self._insert_ftext_fm_menu(12))
+
+            txt_men.add_separator()
+            txt_men.add_item(self._getTabStr('past_f_file'), self._insert_fm_file)
 
     def _on_key_release_inp_txt(self, event=None):
         ind2 = str(int(float(self._text.index(tk.INSERT)))) + '.0'
@@ -110,7 +152,7 @@ class BBS_newMSG(tk.Toplevel):
         # ### Mail
         MenuVerb = tk.Menu(menubar, tearoff=False)
         MenuVerb.add_command(
-            label='Senden',
+            label=self._getTabStr('send'),
             command=self._btn_send_msg,
         )
         menubar.add_cascade(label='Mail', menu=MenuVerb, underline=0)
@@ -125,58 +167,61 @@ class BBS_newMSG(tk.Toplevel):
         menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
 
     def _init_upper_btn_frame(self, root_frame):
-        tk.Button(root_frame,
-                  text='Senden',
+        ttk.Button(root_frame,
+                  text=self._getTabStr('send'),
                   command=self._btn_send_msg
                   ).pack(side=tk.LEFT, expand=False)
-        tk.Button(root_frame,
-                  text='Entwurf Speichern',
+        ttk.Button(root_frame,
+                  text=self._getTabStr('save_draft'),
                   command=self._btn_save_msg
                   ).pack(side=tk.LEFT, expand=False, padx=10)
-        tk.Button(root_frame,
-                  text='Verwerfen',
+        ttk.Button(root_frame,
+                  text=self._getTabStr('discard'),
                   command=self._btn_delete_all
                   ).pack(side=tk.RIGHT, expand=False, anchor='e')
 
     def _init_header_frame(self, root_frame):
-        from_frame  = tk.Frame(root_frame)
-        to_frame    = tk.Frame(root_frame)
-        subj_frame  = tk.Frame(root_frame)
+        from_frame  = ttk.Frame(root_frame)
+        to_frame    = ttk.Frame(root_frame)
+        subj_frame  = ttk.Frame(root_frame)
         from_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=10)
         to_frame.pack(side=tk.TOP,   expand=True, anchor='w', padx=10, pady=5, fill=tk.X)
         subj_frame.pack(side=tk.TOP, expand=True, anchor='w', padx=10, pady=5)
 
-        tk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
         stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
         opt      = list(stat_cfg.keys())
         if opt:
             self._from_call_var.set(opt[0])
-        tk.OptionMenu(from_frame,
+            opt = [opt[0]] + opt
+        else:
+            opt = ['', '']
+        ttk.OptionMenu(from_frame,
                  self._from_call_var,
                  *opt
                  ).pack(side=tk.LEFT, fill=tk.X, expand=False, padx=25)
 
-        typ_frame = tk.Frame(from_frame)
+        typ_frame = ttk.Frame(from_frame)
         typ_frame.pack(side=tk.LEFT, expand=True, padx=130)
-        tk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
-        opt = ['P', 'B']
-        tk.OptionMenu(typ_frame,
+        ttk.Label(typ_frame, text='Typ: ').pack(side=tk.LEFT, expand=False, )
+        opt = [self._msg_typ_var.get()] + ['P', 'B']
+        ttk.OptionMenu(typ_frame,
                       self._msg_typ_var,
                       *opt, ).pack(side=tk.LEFT, expand=False, )
 
 
-        tk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
-        opt = ['AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
+        ttk.Label(from_frame, text='FWD-BBS: ').pack(side=tk.LEFT, expand=False, padx=25)
+        opt = ['AUTO', 'AUTO'] + self._bbs_obj.get_pms_cfg().get('home_bbs', [])
         if opt:
             self._home_bbs_var.set(opt[0])
-        tk.OptionMenu(from_frame,
+        ttk.OptionMenu(from_frame,
                       self._home_bbs_var,
                       *opt, ).pack(side=tk.LEFT, expand=False)
 
 
-        tk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
-        self._to_call_ent = tk.Entry(to_frame,
+        ttk.Label(to_frame, text=f"{self._getTabStr('to')}: ").pack(side=tk.LEFT, expand=False)
+        self._to_call_ent = ttk.Entry(to_frame,
                                      textvariable=self._to_call_var,
                                      # highlightcolor='blue',
                                      # fg='white',
@@ -186,8 +231,8 @@ class BBS_newMSG(tk.Toplevel):
         self._to_call_ent.bind('<KeyRelease>',
                                lambda event: get_typed(event, self._chiefs, self._to_call_var, self._to_call_ent))
         self._to_call_ent.bind('<Key>', lambda event: detect_pressed(event, self._to_call_ent))
-        tk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
-        self._cc_entry = tk.Entry(to_frame,
+        ttk.Label(to_frame, text='CC: ').pack(side=tk.LEFT, expand=False, padx=20)
+        self._cc_entry = ttk.Entry(to_frame,
                                   textvariable=self._to_cc_call_var,
                                   width=40)
         self._cc_entry.pack(side=tk.LEFT, expand=False)
@@ -195,29 +240,39 @@ class BBS_newMSG(tk.Toplevel):
                             lambda event: get_typed(event, self._chiefs, self._to_cc_call_var, self._cc_entry))
         self._cc_entry.bind('<Key>', lambda event: detect_pressed(event, self._cc_entry))
 
-        tk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
-        tk.Entry(subj_frame,
+        ttk.Label(subj_frame, text=f"{self._getTabStr('subject')}: ").pack(side=tk.LEFT, expand=False)
+        ttk.Entry(subj_frame,
                  textvariable=self._subject_var,
                  width=91).pack(side=tk.LEFT, expand=False)
 
     def _init_txt_frame(self, root_frame):
-        frame = tk.Frame(root_frame)
+        frame = ttk.Frame(root_frame)
         frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self._text = scrolledtext.ScrolledText(frame,
-                                               font=(FONT, self.text_size),
-                                               bd=0,
-                                               height=3,
-                                               borderwidth=0,
-                                               background='black',
-                                               foreground='white',
-                                               insertbackground='white'
-                                               # state="disabled",
-                                               )
-        self._text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self._text = tk.Text(frame,
+                           font=(FONT, self.text_size),
+                           bd=0,
+                           height=3,
+                           borderwidth=0,
+                           background='black',
+                           foreground='white',
+                           insertbackground='white',
+                             relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                             highlightthickness=0,
+                           # state="disabled",
+                           )
+        scrollbar = ttk.Scrollbar(
+            frame,
+            orient=tk.VERTICAL,
+            command=self._text.yview
+        )
+        self._text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._text.config(yscrollcommand=scrollbar.set)
         self._text.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
     def _init_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
@@ -226,15 +281,20 @@ class BBS_newMSG(tk.Toplevel):
             *opt,
             # command=self._update_PN_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
@@ -308,15 +368,15 @@ class BBS_newMSG(tk.Toplevel):
     def _btn_save_msg(self, event=None):
         # self.lower()
         if self._save_msg():
-            messagebox.showinfo(title='Entwurf gespeichert! ', message='Nachricht wurde als Entwurf gespeichert.', parent=self)
+            messagebox.showinfo(title=self._getTabStr('save_draft_hint1'), message=self._getTabStr('save_draft_hint2'), parent=self)
         else:
-            messagebox.showerror(title='Entwurf nicht gespeichert! ',
-                                 message='Entwurf konnte nicht gespeichert werden.', parent=self)
+            messagebox.showerror(title=self._getTabStr('not_save_draft_hint1'),
+                                 message=self._getTabStr('not_save_draft_hint2'), parent=self)
         # self.lift()
 
     def _btn_delete_all(self, event=None):
         # self.lower()
-        if messagebox.askokcancel(title='Nachricht löschen? ', message='Nachricht wirklich verwerfen?', parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('del_message_hint1'), message=self._getTabStr('del_message_hint2'), parent=self):
             self._text.delete('1.0', tk.END)
             self._subject_var.set('')
             self._to_cc_call_var.set('')
@@ -447,10 +507,10 @@ class BBS_newMSG(tk.Toplevel):
             return False
         return True
 
-
     def _to_call_warning(self):
         self._to_call_ent.focus_set()
-        WarningMsg('Adresse nicht korrekt', 'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS')
+        WarningMsg(self._getTabStr('invalid_call_warning1'),
+                   self._getTabStr('invalid_call_warning2'))
         self.lift()
 
     def _update_msg_size(self, event=None):
@@ -469,8 +529,19 @@ class BBS_newMSG(tk.Toplevel):
             self.clipboard_append(self._text.selection_get())
             self._text.delete('sel.first', 'sel.last')
 
+    def _clipboard_past(self):
+        if not self._text:
+            return
+        try:
+            if not self._text.focus_get() == self._text:
+                return
+            clp_brd = self.clipboard_get()
+        except tk.TclError:
+            return
+        self._text.insert(tk.INSERT, clp_brd)
+
     def _insert_fm_file(self):
-        data = open_file_dialog()
+        data = open_file_dialog(self)
         self.lift()
         if data:
             if type(data) == bytes:
@@ -478,11 +549,58 @@ class BBS_newMSG(tk.Toplevel):
                 self._text.insert(tk.INSERT, data.decode(decoder, 'ignore'))
                 return
             self._text.insert(tk.INSERT, data)
+            self._text.see(tk.INSERT)
 
     def _save_to_file(self):
         data = self._text.get('1.0', tk.END)
-        save_file_dialog(data)
+        save_file_dialog(data, self)
         self.lift()
+
+    def _insert_ftext_fm_menu(self, f_nr: int):
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=f_nr)
+        except ValueError:
+            return
+        if not text:
+            return
+        decoder = self._var_encoding.get()
+        if any((decoder == enc, not decoder)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(decoder, 'ignore')
+        text = replace_StringVARS(input_string=text, port_handler=PORT_HANDLER)
+        text = zeilenumbruch_lines(text)
+        self._text.insert(tk.INSERT, text)
+        self._text.see(tk.INSERT)
+        return
+
+    def _insert_ftext(self, event=None):
+        # if not hasattr(event, 'keysym'):
+        if not hasattr(event, 'keycode'):
+            return
+        try:
+            if is_linux():
+                fi = int(F_KEY_TAB_LINUX[event.keycode])
+            else:
+                fi = int(F_KEY_TAB_WIN[event.keycode])
+        except (ValueError, KeyError):
+            return
+        try:
+            text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
+        except ValueError:
+            return
+        if not text:
+            return
+        ch_enc = self._var_encoding.get()
+        if any((ch_enc == enc, not ch_enc)):
+            text = text.decode(enc, 'ignore')
+        else:
+            text = text.decode(ch_enc, 'ignore')
+        text = replace_StringVARS(input_string=text, port_handler=PORT_HANDLER)
+        text = zeilenumbruch_lines(text)
+        self._text.insert(tk.INSERT, text)
+        self._text.see(tk.INSERT)
+        return
 
     def _close(self):
         # self._bbs_obj = None

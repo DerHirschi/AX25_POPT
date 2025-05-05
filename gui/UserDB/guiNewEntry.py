@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_ax25Call
@@ -26,21 +27,24 @@ class GUINewUserEntry(tk.Toplevel):
         self._lang = POPT_CFG.get_guiCFG_language()
         self.title(get_strTab(str_key='userdb_newUser', lang_index=self._lang))
         ################################################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ################################################################
         self._root_win = root_win
         self._ent_var = tk.StringVar(self, value='')
 
-        frame1 = tk.Frame(self)
+        frame1 = ttk.Frame(main_f)
         frame1.pack(expand=False, fill=tk.X, padx=30, pady=10)
-        self._call_ent = tk.Entry(frame1, textvariable=self._ent_var, width=10)
+        self._call_ent = ttk.Entry(frame1, textvariable=self._ent_var, width=10)
         self._call_ent.pack(expand=False, fill=tk.X)
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
+        btn_frame = ttk.Frame(main_f, height=50)
         btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang),
+        abort_btn = ttk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang),
                               command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 

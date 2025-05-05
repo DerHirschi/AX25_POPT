@@ -26,7 +26,8 @@ class SettingsMain(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width = 1200
         win_height = 660
-        self.style = root_win.style
+        self.style      = root_win.style
+        self.style_name = root_win.style_name
         self.geometry(f"{win_width}x"
                       f"{win_height}+"
                       f"{root_win.main_win.winfo_x()}+"
@@ -43,6 +44,9 @@ class SettingsMain(tk.Toplevel):
         self.title(get_strTab(str_key='settings', lang_index=self._lang))
         self._root_win = root_win
         self._root_win.settings_win = self
+        ######################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
         ###############################################################
         self._win_tab = {
             'general_settings'  : GeneralSettings,
@@ -71,7 +75,7 @@ class SettingsMain(tk.Toplevel):
         # Nix Tree
         style = ttk.Style(self)
         style.configure('lefttab.TNotebook', tabposition='wn')
-        self._tabControl = ttk.Notebook(self, style='lefttab.TNotebook')
+        self._tabControl = ttk.Notebook(main_f, style='lefttab.TNotebook')
         # self._tabControl.bind('<<NotebookTabChanged>>', self._tab_change)
         self._tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
         # Tab Vars
@@ -84,16 +88,16 @@ class SettingsMain(tk.Toplevel):
 
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
+        btn_frame = ttk.Frame(main_f, height=50)
         btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        ok_btn = tk.Button(btn_frame, text=' OK ', command=self._ok_btn)
+        ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._ok_btn)
         ok_btn.pack(side=tk.LEFT)
 
 
-        save_btn = tk.Button(btn_frame, text=get_strTab(str_key='save', lang_index=self._lang), command=self._save_btn)
+        save_btn = ttk.Button(btn_frame, text=get_strTab(str_key='save', lang_index=self._lang), command=self._save_btn)
         save_btn.pack(side=tk.LEFT)
 
-        abort_btn = tk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang), command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     ################################################

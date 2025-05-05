@@ -1,10 +1,8 @@
-from fnc.str_fnc import is_byte_ascii
+from cfg.constant import PARAM_MAX_MON_WIDTH
+from fnc.str_fnc import is_byte_ascii, find_eol
 from cfg.logger_config import logger
 
-
 # ======================== Exception's ==========================================
-
-
 class NetRomDecodingERROR(Exception):
     def __init__(self, ax25_frame_conf: dict, e_text=''):
         payload = ax25_frame_conf.get('payload', b'')
@@ -17,8 +15,6 @@ class NetRomDecodingERROR(Exception):
         logger.error(out_str)
 
 # ======================== Exception's End ==========================================
-
-
 def decode_ax25call(inp: b''):
     call = ''
     for c in inp[:-1]:
@@ -33,7 +29,6 @@ def decode_ax25call(inp: b''):
     if not ssid:
         return call
     return f"{call}-{ssid}"
-
 
 # ======================== UI ==========================================
 # Old netRom
@@ -80,27 +75,30 @@ def NetRom_decode_UI(ax25_frame_conf: dict):
     )
     return netrom_UI_cfg
 
-
-def NetRom_decode_UI_mon(ax25_frame_conf: dict):
+def NetRom_decode_UI_mon(netrom_cfg: dict):
     """ Old NetRom """
-    netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
-    call_of_sending_node = netrom_cfg.get('node_call', '')
-    id_of_sending_node = netrom_cfg.get('node_id', '')
-    node_nb_list = netrom_cfg.get('node_nb_list', {})
+    """ Monitor """
+    # netrom_cfg              = ax25_frame_conf.get('netrom_cfg', {})
+    call_of_sending_node    = netrom_cfg.get('node_call', '')
+    id_of_sending_node      = netrom_cfg.get('node_id', '')
+    node_nb_list            = netrom_cfg.get('node_nb_list', {})
 
-    monitor_str = f"NET/ROM Routing: {id_of_sending_node}:{call_of_sending_node}\n"
-    monitor_str += "Neighbors - Alias  - BestNeighbor - BestQual\n"
-
+    monitor_str = f"┌──┴─▶ NET/ROM Routing▽ {id_of_sending_node}:{call_of_sending_node}\n"
+    monitor_str += "├►Neighbors - Alias  - BestNeighbor - BestQual\n"
+    i = len(node_nb_list.keys())
     for de, item in node_nb_list.items():
         de_id = item.get('dest_id', '')
         best_nb = item.get('best_neighbor_call', '')
         qaul = item.get('qual', '')
-        monitor_str += f"{de.ljust(9)} - {de_id.ljust(6)} - {best_nb.ljust(12)} - {qaul}\n"
+        i -= 1
+        if i:
+            monitor_str += f"├►{de.ljust(9)} - {de_id.ljust(6)} - {best_nb.ljust(12)} - {qaul}\n"
+        else:
+            monitor_str += f"└►{de.ljust(9)} - {de_id.ljust(6)} - {best_nb.ljust(12)} - {qaul}\n"
     return monitor_str
 
 # ==================== UI-END ==========================================
-
-
+# ===========================================================================================
 def decode_opcode(opcode_byte):
     # Bit-Masken für die verschiedenen Bits im OpCode-Byte
     chock_flag = (opcode_byte & 0b10000) >> 4
@@ -117,10 +115,178 @@ def decode_opcode(opcode_byte):
         'OPT-OptCode-Val': optcode_value
     }
 
+def decode_INP_DHLC(ax25_payload: bytes) -> dict:
+    """Decode Inter-Node HDLC Frame and return decoded variables in a dictionary."""
+    # Information message
+    networkHeader   = ax25_payload[:15]
+    transportHeader = ax25_payload[15:20]
+    information     = ax25_payload[20:]
+    information     = information.replace(b'\r', b'')
+    capable_flags   = information.split(b'$')
+    information     = capable_flags[0]
+    capable_flags   = capable_flags[1:]
+    capable_flags   = [r for r in capable_flags]
+
+    # Network Header
+    call_from       = decode_ax25call(networkHeader[:7])
+    call_to         = decode_ax25call(networkHeader[7:14])
+    time_to_live    = networkHeader[-1]
+
+    # Transport Header
+    cir_index   = transportHeader[0]
+    cir_ID      = transportHeader[1]
+    tx_seq      = transportHeader[2]
+    rx_seq      = transportHeader[3]
+    op_code     = transportHeader[4]
+
+    # Opcode handling
+    opcodes = {
+        0x01: 'Connect Request',
+        0x02: 'Connect acknowledg',
+        0x03: 'Disconnect request',
+        0x04: 'Disconnect acknowledg',
+        0x05: 'Information',
+        0x06: 'Information acknowledg',
+    }.get(op_code, None)
+    dec_opt = decode_opcode(op_code)
+
+    # Prepare dictionary with all decoded variables
+    decoded_data = {
+        'call_from': call_from,
+        'call_to': call_to,
+        'time_to_live': time_to_live,
+        'cir_index': cir_index,
+        'cir_ID': cir_ID,
+        'tx_seq': tx_seq,
+        'rx_seq': rx_seq,
+        'op_code': op_code,
+        'opcodes': opcodes,
+        'dec_opt': dec_opt,
+        'capable_flags': capable_flags,
+        'information': information,
+    }
+
+    return decoded_data
+
+def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
+    """Build monitor string from decoded data dictionary."""
+    call_to = netrom_cfg['call_to']
+    if call_to == 'L3RTT':
+        # monitor_str = "Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame\n"
+        monitor_str = "┌──┴─▶ NET/ROM L3RTT▽\n"
+    else:
+        # monitor_str = "Net-Rom Inter-Node HDLC Frame\n"
+        monitor_str = f"┌──┴─▶ NET/ROM▽ {netrom_cfg['call_from']}->{call_to} ttl {netrom_cfg['time_to_live']}\n"
+
+    monitor_str += f"├►{netrom_cfg['opcodes']}({hex(netrom_cfg['op_code'])}): CID {netrom_cfg['cir_index']}/{netrom_cfg['cir_ID']} txseq {netrom_cfg['tx_seq']} rxseq {netrom_cfg['rx_seq']}\n"
+
+    if any((netrom_cfg['capable_flags'], netrom_cfg['information'])):
+        monitor_str += f"├►OPT: Chock({netrom_cfg['dec_opt']['OPT-Chock']}) NAK({netrom_cfg['dec_opt']['OPT-NAK']}) More({netrom_cfg['dec_opt']['OPT-More-Follows']}) Res({netrom_cfg['dec_opt']['OPT-Reserved']})\n"
+    else:
+        monitor_str += f"└►OPT: Chock({netrom_cfg['dec_opt']['OPT-Chock']}) NAK({netrom_cfg['dec_opt']['OPT-NAK']}) More({netrom_cfg['dec_opt']['OPT-More-Follows']}) Res({netrom_cfg['dec_opt']['OPT-Reserved']})\n"
+
+    if netrom_cfg['capable_flags']:
+        if netrom_cfg['information']:
+            monitor_str += f"├►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
+        else:
+            monitor_str += f"└►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
+    if netrom_cfg['information']:
+        if netrom_cfg['information']:
+            monitor_str += f"├────▶ Payload▽ (ASCII) len={len(netrom_cfg['information'])}\n"
+            eol             = find_eol(netrom_cfg['information'])
+            payload_lines   = netrom_cfg['information'].split(eol)
+            while '' in payload_lines:
+                payload_lines.remove('')
+            l_i = len(payload_lines)
+            for line in payload_lines:
+                while len(line) > PARAM_MAX_MON_WIDTH:
+                    monitor_str += f"├►{str(line[:PARAM_MAX_MON_WIDTH].decode('ASCII', 'ignore'))}\n"
+                    line = line[PARAM_MAX_MON_WIDTH:]
+                l_i -= 1
+                if line:
+                    if l_i:
+                        monitor_str += f"├►{str(line.decode('ASCII', 'ignore'))}\n"
+                    else:
+                        monitor_str += f"└►{str(line.decode('ASCII', 'ignore'))}\n"
+        else:
+            monitor_str += f"└────▶Payload (ASCII) len={len(netrom_cfg['information'])}\n"
+
+    if not monitor_str.endswith('\n'):
+        monitor_str += '\n'
+    return monitor_str
+
+def NetRom_decode_I(ax25_payload: bytes):
+    if not ax25_payload:
+        return ''
+    if len(ax25_payload) < 20:
+        # NetRom Minimum 20
+        return ''
+    #print('')
+    #print('==============================NEU========================================')
+    """
+    opcodes = {
+        0x00: 'EOP (End of Packet)',
+        0x01: 'IP (Information Packet)',
+        0x02: 'L3RTT (Layer 3 Round-Trip Time)',
+        0xff: 'RIF',
+    }.get(ax25_payload[0], None)
+    """
+    """
+    if opcodes:
+        print(f"OPT1: {opcodes}")
+    else:
+        print(f"OPT1-no Opt: {ax25_payload[0]}")
+    """
+
+    if int(ax25_payload[0]) == 0xFF:
+        # Routing Information Frame
+        print(f"RoutingFrame_raw: {ax25_payload}")
+        print(f"RoutingFrame_raw.hex: {ax25_payload.hex()}")
+        # Decodieren der Rohdaten-Payload
+        ########decoded_routes = decode_RIF(ax25_payload)
+
+        # Ausgabe der decodierten Routeninformationen
+        #print("INP Route Information Frame:")
+        #print("{:<15s} {:<8s} {:<8s}".format("Call", "Quality", "RTT"))
+        """
+        for route in decoded_routes:
+            print("{:<15s} {:<8d} {:<8d}".format(route[0], route[1], route[2]))
+        """
+        """
+        print('========RIP======')
+        dec_rip = decode_RIP(ax25_payload[1:])
+        for k in dec_rip.keys():
+            if k == 'rif_data':
+                print("RIF----")
+                for kk in dec_rip[k].keys():
+                    print(f"{kk}: {dec_rip[k][kk]}")
+            else:
+                print(f"{k}: {dec_rip[k]}")
+        """
+
+        """
+        monitor_str = "Net-Rom RIF\n"
+        monitor_str += f"Raw: {ax25_payload.hex()}\r"
+
+        for k in dec_rip.keys():
+            if k == 'rif_data':
+                monitor_str += "RIF----\r"
+                for kk in dec_rip[k].keys():
+                    monitor_str += f"{kk}: {dec_rip[k][kk]}\r"
+            else:
+                monitor_str += f"{k}: {dec_rip[k]}\r"
+        """
+
+        return ''
+
+    else:
+        # Inter-Node HDLC Frame
+        return decode_INP_DHLC(ax25_payload)
+
+# ============================= TODO: INP RIF/RIP ==============================================
 
 def decode_IP(ip_data: bytes):
     return int(ip_data[0]), int(ip_data[1]), int(ip_data[2]), int(ip_data[3]), int(ip_data[4]),
-
 
 def decode_RIF_old(rif_data: bytes):
     if not rif_data:
@@ -158,7 +324,6 @@ def decode_RIF_old(rif_data: bytes):
     print(f"RIF-fail {rif_data}")
     return {}
 
-
 def decode_RIP(rip_payload):
     call = decode_ax25call(rip_payload[:7])
     if not call:
@@ -178,8 +343,6 @@ def decode_RIP(rip_payload):
         opt_fields=opt_fields,
         rif_data=rif
     )
-
-
 
 def decode_RIF(payload_raw):
     # Liste zum Speichern der decodierten Routeninformationen
@@ -270,155 +433,4 @@ def decode_RIF(payload_raw):
                 break
 
     return route_info
-
-# ===========================================================================================
-
-
-def decode_INP_DHLC(ax25_payload: bytes):
-    """ Inter-Node HDLC Frame """
-    # Information message
-    networkHeader = ax25_payload[:15]
-    transportHeader = ax25_payload[15:20]
-    information = ax25_payload[20:]
-    information = information.replace(b'\r', b'')
-    capable_flags = information.split(b'$')
-    information = capable_flags[0]
-    capable_flags = capable_flags[1:]
-    capable_flags = [r for r in capable_flags]
-
-    # Network Header
-    call_from = decode_ax25call(networkHeader[:7])
-    call_to = decode_ax25call(networkHeader[7:14])
-    time_to_live = networkHeader[-1]
-
-    # Transport Header
-    cir_index = transportHeader[0]
-    cir_ID = transportHeader[1]
-    tx_seq = transportHeader[2]
-    rx_seq = transportHeader[3]
-    op_code = transportHeader[4]
-
-    if call_to == 'L3RTT':
-        #print(f"Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame")
-        monitor_str = "Net-Rom Inter-Node HDLC Frame - L3RTT RTT Frame\n"
-    else:
-        #print("Net-Rom Inter-Node HDLC Frame")
-        monitor_str = "Net-Rom Inter-Node HDLC Frame\n"
-    """
-    print(f"{call_from} > {call_to}")
-    print(f"TTL: {time_to_live} ")
-    print(f"Transport: {transportHeader} ")
-    print(f"Circuit Index: {cir_index} ")
-    print(f"Circuit ID: {cir_ID} ")
-    print(f"TX Seq: {tx_seq} ")
-    print(f"RX Seq: {rx_seq} ")
-    print(f"Opt: {op_code} - {hex(op_code)} ")
-    """
-    dec_opt = decode_opcode(op_code)
-    """
-    for k in dec_opt.keys():
-        print(f"{k}: {dec_opt[k]}")
-    """
-
-    opcodes = {
-        0x01: 'Connect Request',
-        0x02: 'Connect acknowledg',
-        0x03: 'Disconnect request',
-        0x04: 'Disconnect acknowledg',
-        0x05: 'Information',
-        0x06: 'Information acknowledg',
-    }.get(op_code, None)
-    """
-    if opcodes:
-        print(f"OPT: {opcodes}")
-    else:
-        print(f"OPT: {op_code} !!unknown!!")
-
-    print(f"C-Flags: {b' '.join(capable_flags)}")
-    print("Info: ")
-    print(information)
-    print(f"RAW in: {ax25_payload.hex()}")
-    """
-    monitor_str += f"{call_from} > {call_to}\n"
-    # monitor_str += f"Transport: {transportHeader}\r"
-    monitor_str += f"TTL: {time_to_live}\n"
-    monitor_str += f"Circuit Index: {cir_index}\n"
-    monitor_str += f"Circuit ID: {cir_ID}\n"
-    monitor_str += f"TX Seq: {tx_seq}\n"
-    monitor_str += f"RX Seq: {rx_seq}\n"
-    monitor_str += f"OPT-Byte: {hex(op_code)}/{opcodes}\n"
-    for k in dec_opt.keys():
-        monitor_str += f"{k}: {dec_opt[k]}\n"
-    monitor_str += f"C-Flags: {b' '.join(capable_flags)}\n"
-    monitor_str += f"Info: {information.decode('ASCII', 'ignore')}\n"
-    return monitor_str
-
-
-def NetRom_decode_I(ax25_payload: bytes):
-    if not ax25_payload:
-        return ''
-    if len(ax25_payload) < 20:
-        # NetRom Minimum 20
-        return ''
-    #print('')
-    #print('==============================NEU========================================')
-    opcodes = {
-        0x00: 'EOP (End of Packet)',
-        0x01: 'IP (Information Packet)',
-        0x02: 'L3RTT (Layer 3 Round-Trip Time)',
-        0xff: 'RIF',
-    }.get(ax25_payload[0], None)
-    """
-    if opcodes:
-        print(f"OPT1: {opcodes}")
-    else:
-        print(f"OPT1-no Opt: {ax25_payload[0]}")
-    """
-
-    if int(ax25_payload[0]) == 0xFF:
-        # Routing Information Frame
-        #print(f"RoutingFrame_raw: {ax25_payload}")
-        #print(f"RoutingFrame_raw.hex: {ax25_payload.hex()}")
-        # Decodieren der Rohdaten-Payload
-        decoded_routes = decode_RIF(ax25_payload)
-
-        # Ausgabe der decodierten Routeninformationen
-        #print("INP Route Information Frame:")
-        #print("{:<15s} {:<8s} {:<8s}".format("Call", "Quality", "RTT"))
-        """
-        for route in decoded_routes:
-            print("{:<15s} {:<8d} {:<8d}".format(route[0], route[1], route[2]))
-        """
-        """
-        print('========RIP======')
-        dec_rip = decode_RIP(ax25_payload[1:])
-        for k in dec_rip.keys():
-            if k == 'rif_data':
-                print("RIF----")
-                for kk in dec_rip[k].keys():
-                    print(f"{kk}: {dec_rip[k][kk]}")
-            else:
-                print(f"{k}: {dec_rip[k]}")
-        """
-
-        """
-        monitor_str = "Net-Rom RIF\n"
-        monitor_str += f"Raw: {ax25_payload.hex()}\r"
-
-        for k in dec_rip.keys():
-            if k == 'rif_data':
-                monitor_str += "RIF----\r"
-                for kk in dec_rip[k].keys():
-                    monitor_str += f"{kk}: {dec_rip[k][kk]}\r"
-            else:
-                monitor_str += f"{k}: {dec_rip[k]}\r"
-        """
-
-        return ''
-
-    else:
-        # Inter-Node HDLC Frame
-        return decode_INP_DHLC(ax25_payload)
-
-
 

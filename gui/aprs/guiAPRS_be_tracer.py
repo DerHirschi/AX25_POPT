@@ -19,7 +19,7 @@ class BeaconTracer(tk.Toplevel):
         self._lang = POPT_CFG.get_guiCFG_language()
         # self._ais_obj = PORT_HANDLER.get_aprs_ais()
         self.style = self._root_win.style
-        self.geometry(f"1300x"
+        self.geometry(f"1330x"
                       f"400+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
@@ -32,11 +32,14 @@ class BeaconTracer(tk.Toplevel):
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         self.lift()
-
-        upper_frame = tk.Frame(self)  # Setting
+        ##############################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ##############################################
+        upper_frame = ttk.Frame(main_f)  # Setting
         # upper_frame2 = tk.Frame(self)  # Setting
-        middle_frame = tk.Frame(self)  # Tree
-        lower_frame = tk.Frame(self)  # Selected Info
+        middle_frame = ttk.Frame(main_f)  # Tree
+        lower_frame = ttk.Frame(main_f)  # Selected Info
         upper_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
         # upper_frame2.pack(side=tk.TOP, fill=tk.BOTH, pady=10)
         middle_frame.pack(side=tk.TOP, fill=tk.BOTH, pady=10, expand=True)
@@ -44,13 +47,13 @@ class BeaconTracer(tk.Toplevel):
 
         ##########################
         # Upper Frame ( Settings )
-        frame_1_label = tk.Frame(upper_frame)
+        frame_1_label = ttk.Frame(upper_frame)
         frame_1_label.pack(side=tk.TOP)
-        tk.Label(frame_1_label, text='Beacon Setting').pack()
+        ttk.Label(frame_1_label, text='Beacon Setting').pack()
 
-        frame_2 = tk.Frame(upper_frame)
+        frame_2 = ttk.Frame(upper_frame)
         frame_2.pack(side=tk.TOP, fill=tk.BOTH)
-        frame_2_port = tk.Frame(upper_frame)
+        frame_2_port = ttk.Frame(upper_frame)
         frame_2_port.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
 
         # Port
@@ -60,41 +63,42 @@ class BeaconTracer(tk.Toplevel):
             self._be_port_var.set(options[PORT_HANDLER.get_aprs_ais().be_tracer_port])
         if not options:
             options = [0]
-        tk.Label(frame_2_port, text='Port ').pack(side=tk.LEFT, padx=5)
-        tk.OptionMenu(frame_2_port, self._be_port_var, *options, command=self._chk_port).pack(side=tk.LEFT, )
+        ttk.Label(frame_2_port, text='Port ').pack(side=tk.LEFT, padx=5)
+        options = [self._be_port_var.get()] + options
+        ttk.OptionMenu(frame_2_port, self._be_port_var, *options, command=self._chk_port).pack(side=tk.LEFT, )
 
         # Station / Call
-        frame_2_stat = tk.Frame(upper_frame)
+        frame_2_stat = ttk.Frame(upper_frame)
         frame_2_stat.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_stat_var = tk.StringVar(self)
         # options = list(PORT_HANDLER.ge)
         options = PORT_HANDLER.get_stat_calls_fm_port(PORT_HANDLER.get_aprs_ais().be_tracer_port)
 
         self._be_stat_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_station)
-        tk.Label(frame_2_stat, text='Station ').pack(side=tk.LEFT, )
-        self._be_stat_opt = tk.ttk.Combobox(frame_2_stat,
+        ttk.Label(frame_2_stat, text='Station ').pack(side=tk.LEFT, )
+        self._be_stat_opt = ttk.Combobox(frame_2_stat,
                                             width=10,
                                             textvariable=self._be_stat_var,
                                             values=options)
         self._be_stat_opt.pack(side=tk.LEFT, )
 
         # VIA
-        frame_2_via = tk.Frame(upper_frame)
+        frame_2_via = ttk.Frame(upper_frame)
         frame_2_via.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_via_var = tk.StringVar(self)
         path = ' '.join(PORT_HANDLER.get_aprs_ais().be_tracer_via)
         self._be_via_var.set(path)
-        tk.Label(frame_2_via, text='via ').pack(side=tk.LEFT, )
-        tk.Entry(frame_2_via, textvariable=self._be_via_var, width=25).pack(side=tk.LEFT, )
+        ttk.Label(frame_2_via, text='via ').pack(side=tk.LEFT, )
+        ttk.Entry(frame_2_via, textvariable=self._be_via_var, width=25).pack(side=tk.LEFT, )
 
         # WIDE
-        frame_2_wide = tk.Frame(upper_frame)
+        frame_2_wide = ttk.Frame(upper_frame)
         frame_2_wide.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_wide_var = tk.StringVar(self)
 
         self._be_wide_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_wide))
-        tk.Label(frame_2_wide, text='via WIDE ').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_2_wide,
+        ttk.Label(frame_2_wide, text='via WIDE ').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_2_wide,
                    from_=1,
                    to=7,
                    increment=1,
@@ -104,13 +108,13 @@ class BeaconTracer(tk.Toplevel):
                    ).pack(side=tk.LEFT, )
 
         # Interval
-        frame_2_interval = tk.Frame(upper_frame)
+        frame_2_interval = ttk.Frame(upper_frame)
         frame_2_interval.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_interval_var = tk.StringVar(self)
 
         self._be_interval_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_interval))
-        tk.Label(frame_2_interval, text='Interval ').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_2_interval,
+        ttk.Label(frame_2_interval, text='Interval ').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_2_interval,
                    from_=1,
                    to=60,
                    increment=1,
@@ -120,19 +124,19 @@ class BeaconTracer(tk.Toplevel):
                    ).pack(side=tk.LEFT, )
 
         # activ Checkbox
-        frame_2_active = tk.Frame(upper_frame)
+        frame_2_active = ttk.Frame(upper_frame)
         frame_2_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_active_var = tk.BooleanVar(self)
         self._be_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_active)
-        tk.Label(frame_2_active, text='Activate ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_2_active,
+        ttk.Label(frame_2_active, text='Activate ').pack(side=tk.LEFT, )
+        ttk.Checkbutton(frame_2_active,
                        variable=self._be_active_var,
                        command=self._chk_active
                        ).pack(side=tk.LEFT, )
 
         # Save Button
 
-        tk.Button(
+        ttk.Button(
             upper_frame,
             text='SAVE',
             command=self._save_btn
@@ -140,35 +144,35 @@ class BeaconTracer(tk.Toplevel):
 
         # Send Button
 
-        tk.Button(
+        ttk.Button(
             upper_frame,
             text='SEND',
             command=self._send_btn
         ).pack(side=tk.LEFT, fill=tk.BOTH, padx=20)
         # ALARM
-        frame_11_label = tk.Frame(lower_frame)
+        frame_11_label = ttk.Frame(lower_frame)
         frame_11_label.pack(side=tk.TOP)
-        tk.Label(frame_11_label, text='Alarm Setting').pack()
+        ttk.Label(frame_11_label, text='Alarm Setting').pack()
         ###
         # activ Checkbox
-        frame_21_active = tk.Frame(lower_frame)
+        frame_21_active = ttk.Frame(lower_frame)
         frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
         self._alarm_active_var = tk.BooleanVar(self)
         self._alarm_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active)
-        tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_21_active,
+        ttk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
+        ttk.Checkbutton(frame_21_active,
                        variable=self._alarm_active_var,
                        command=self._chk_alarm_active
                        ).pack(side=tk.LEFT, )
 
         # Alarm Distance
-        frame_21_distance = tk.Frame(lower_frame)
+        frame_21_distance = ttk.Frame(lower_frame)
         frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
         self._alarm_distance_var = tk.StringVar(self)
 
         self._alarm_distance_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range))
-        tk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_21_distance,
+        ttk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_21_distance,
                    from_=1,
                    to=20000,
                    increment=1,
@@ -179,7 +183,7 @@ class BeaconTracer(tk.Toplevel):
 
         ##########################
         # Middle Frame ( Treeview )
-        tree_Frame = tk.Frame(middle_frame)
+        tree_Frame = ttk.Frame(middle_frame)
         tree_Frame.pack(fill=tk.BOTH, expand=True)
         tree_Frame.grid_rowconfigure(0, weight=1)
         tree_Frame.grid_columnconfigure(0, weight=1)

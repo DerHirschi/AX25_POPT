@@ -54,14 +54,14 @@ Ideas/TODO's :
 - nötigen configs einheitlich in/exportierbar machen
 ✓ Port Configs/Inits aufräumen/optimieren
 ✓ Port Configs/Inits aufräumen/optimieren (Threading)
-- Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
+✓ Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
 
 - Soundsystem überarbeiten
   - Sprachausgabe überarbeiten
 
 ✓ Haupt GUI überarbeiten
   - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
-  - ttk Styles (AW-Themes)
+  ✓ ttk Styles (AW-Themes)
   ✓ Einstellung GUI überarbeiten (OnePager)
     ✓ Individuelle Farben (Vorschreib Fenster)
     - Individuelle Farben (PMS)
@@ -87,7 +87,7 @@ Ideas/TODO's :
     - Config / TX usw.
 
 - Telnet Port
-✓ TCP-Listen/Kiss Device Port (Pseudo TNC-EMU)
+✓ TCP-Server/Kiss Device Port (Pseudo TNC-EMU)
 ✓ TCP-Client/Kiss Device Port (Pseudo TNC-EMU)
 ✓ Linux AX25-Kernel Device
 ✓ "Dual-TNC/Dual-Port" 2 Ports zu einem zusammenfassen um z.B. RTX+SDR o. 2xRTX gleichzeitig auf einem Kanal betreiben zu können.
@@ -164,7 +164,7 @@ Ideas/TODO's :
     - Signatur
   - APRS
   ✓ BBS (Grundlegend)
-    - FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
+    ✓ FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
     ✓ Hold
     ✓ Reject
 
@@ -205,6 +205,7 @@ Ideas/TODO's :
     ✓ Mail Rejected by
     ✓ FWD Error by
   - BBS-Monitor
+  - Auto Path überarbeiten. Daten nur aus PM beziehen.
 
   - POP3/SMTP evtl. IMAP
   - NNTP
@@ -280,7 +281,7 @@ Ideas/TODO's :
 ✓ APRS Auto-Tracer nach DX-Alarm(MH-Liste)
 ✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
 - APRS Digi / I-Gate Funktion
-- Optionale zusätzliche Monitorausgabe als Hex
+✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
   ✓ PortFilter
   - Call-Filter

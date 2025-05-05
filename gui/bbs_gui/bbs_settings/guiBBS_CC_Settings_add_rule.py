@@ -24,6 +24,10 @@ class BBS_addRuleWinCC(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ###########################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ###########################
         self._lang          = POPT_CFG.get_guiCFG_language()
         self._getTabStr     = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win      = root_win
@@ -36,21 +40,21 @@ class BBS_addRuleWinCC(tk.Toplevel):
         self._cc_var        = tk.StringVar(self, value='')
 
         ##################################################
-        m_frame = tk.Frame(self)
+        m_frame = ttk.Frame(main_f)
         m_frame.pack(side=tk.TOP, expand=True, fill=tk.BOTH, padx=15, pady=7)
         com_box = ttk.Combobox(m_frame, textvariable=self._origin_var, width=20)
         com_box['values'] = list(self._cc_tab.keys())
         com_box.pack(side=tk.LEFT)
         #
-        cc_entry = tk.Entry(m_frame, textvariable=self._cc_var, width=20)
+        cc_entry = ttk.Entry(m_frame, textvariable=self._cc_var, width=20)
         cc_entry.pack(side=tk.LEFT, padx=12)
 
         ###########################################
         # BTN
-        btn_frame = tk.Frame(self, height=50)
-        btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
-        save_btn  = tk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
-        abort_btn = tk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
+        btn_frame = ttk.Frame(main_f)
+        btn_frame.pack(expand=True, fill=tk.X, padx=10, pady=10)
+        save_btn  = ttk.Button(btn_frame, text=self._getTabStr('save'),   command=self._save_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         save_btn.pack( side=tk.LEFT)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 

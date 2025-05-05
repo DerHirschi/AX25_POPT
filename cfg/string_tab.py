@@ -353,6 +353,8 @@ STR_TABLE = {
         '',
         ''),
 
+    #################################################
+    # guiUserDB.py
     'userdb_add_sysop_ent1': (
         'Informationen ergänzen?',
         'Add information?',
@@ -390,10 +392,10 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint1': (
-        'lösche',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} löschen ?',
+        'delete {}?',
+        '{} verwijderen ?',
+        '{} effacer ?',
         '',
         '',
         '',
@@ -402,10 +404,34 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint2': (
-        'löschen',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} wirklich löschen ?',
+        '{} really delete?',
+        '{} echt verwijderen?',
+        '{} vraiment supprimer ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_1': (
+        '{} Einträge löschen ?',
+        'Delete {} entries?',
+        '{} Items verwijderen?',
+        'Supprimer {} entrées ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_2': (
+        'Wirklich alle {} Einträge löschen ?',
+        'Really delete all {} entries?',
+        'Wilt u alle {} vermeldingen echt verwijderen?',
+        'Supprimer vraiment les {} entrées ?',
         '',
         '',
         '',
@@ -618,7 +644,7 @@ STR_TABLE = {
            ''),
 
     'no_port_typ': (
-'Hinweis: Kein Port-Typ ausgewählt. Port {}',
+           'Hinweis: Kein Port-Typ ausgewählt. Port {}',
            'Note: No port type selected. port {}',
            '-----------',
            'Note: Aucun type de port séléctionné port {}',
@@ -759,6 +785,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'delete_selected': (
+        'Auswahl löschen',
+        'Delete selection',
+        'Selectie verwijderen',
+        'Supprimer la sélection',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'activate': (
+        'Aktivieren',
+        'Activate',
+        'Activeren',
+        'Activer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_dx_history': (
         'DX-History Löschen',
         'Delete DX-History',
@@ -776,6 +826,18 @@ STR_TABLE = {
         'Delete all',
         'Verwijder alles',
         'Effacer tout',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'select_all': (
+        'Alles auswählen',
+        'Select all',
+        'Selecteer alles',
+        'Tout sélectionner',
         '',
         '',
         '',
@@ -908,6 +970,18 @@ STR_TABLE = {
         'Protocol:',
         'Protocol:',
         'Protocole:',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'distance': (
+        'Distanz',
+        'Distance',
+        'Afstand',
+        'Distance',
         '',
         '',
         '',
@@ -1071,6 +1145,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cut': (
+        'Ausschneiden',
+        'Cut out',
+        'Knip uit',
+        'Découper',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'past_f_file': (
         'Aus Datei einfügen',
         'Past from File',
@@ -1124,6 +1210,30 @@ STR_TABLE = {
         'Save Monitor to File',
         'Kopieer monitor naar bestand',
         'Enregistrer moniteur dans fichier',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'clean_prescription_win': (
+        'Vorschreibfenster löschen',
+        'Clear Prescription window',
+        'Voorschrijfvenster verwijderen',
+        'Effacer fenêtre préredaction',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'clean_just_qso_win': (
+        'QSO löschen',
+        'Clear QSO window',
+        'QSO verwijderen',
+        'Effacer QSO préredaction',
         '',
         '',
         '',
@@ -1586,6 +1696,20 @@ STR_TABLE = {
         '',
         ''),
 
+    ########################################################
+    # Settings
+    'text_winPos': (
+        'Textfenster Position (oben/mitte/unten)',
+        'Text window position (top/middle/bottom)',
+        'Positie van het tekstvenster (boven/midden/onder)',
+        'Position de la fenêtre de texte (haut/milieu/bas)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'qso_win_color': (
         'QSO Fenster Farben',
         'QSO Win Color',
@@ -1754,6 +1878,9 @@ STR_TABLE = {
         '',
         ''),
 
+    ##############################################
+    # guiBBS_newMSG.py
+
     'new_pr_mail': (
         'Neue PR-Mail',
         'New PR-Mail',
@@ -1766,6 +1893,139 @@ STR_TABLE = {
         '',
         ''),
 
+    'send': (
+        'Senden',
+        'Send',
+        'Versturen',
+        'Envoyer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft': (
+        'Entwurf Speichern',
+        'Save draft',
+        'Concept opslaan',
+        'Enregistrer le brouillon',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft_hint1': (
+        'Entwurf gespeichert!',
+        'Draft saved!',
+        'Concept opgeslagen!',
+        'Brouillon enregistré!',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft_hint2': (
+        'Nachricht wurde als Entwurf gespeichert.',
+        'Message was saved as a draft.',
+        'Bericht is opgeslagen als concept.',
+        'Le message a été enregistré comme brouillon.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_save_draft_hint1': (
+        'Entwurf nicht gespeichert!',
+        'Draft not saved!',
+        'Concept niet opgeslagen!',
+        'Brouillon non enregistré!',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_save_draft_hint2': (
+        'Entwurf konnte nicht gespeichert werden.',
+        'Draft could not be saved.',
+        'Concept kon niet worden opgeslagen.',
+        "Le brouillon n'a pas pu être enregistré.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_message_hint1': (
+        'Nachricht löschen?',
+        'Delete message?',
+        'Bericht verwijderen?',
+        'Supprimer le message ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_message_hint2': (
+        'Nachricht wirklich verwerfen?',
+        'Really delete message?',
+        'Bericht echt verwijderen?',
+        'Supprimer vraiment le message ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'discard': (
+        'Verwerfen',
+        'Discard',
+        'Weggooien',
+        'Jeter',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning1': (
+        'Adresse nicht korrekt',
+        'Address incorrect',
+        'Adres onjuist',
+        'Adresse incorrecte',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning2': (
+        'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS.',
+        "The recipient's address is incorrect. No BBS.",
+        'Het adres van de ontvanger is onjuist.   Geen BBS.',
+        "L'adresse du destinataire est incorrecte.   Pas de BBS.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    ##############################################
     'send_all_now': (
         'Alles sofort senden',
         'Send everything now',
@@ -1814,6 +2074,66 @@ STR_TABLE = {
         '',
         ''),
 
+'GPIO': (
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Digipeater': (
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'F-Text': (
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'MCast': (
+        'MCast',
+        'MCast',
+        'MCast',
+        'MCast',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'RX-Echo': (
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'new_stat': (
         'Neue Station',
         'New Station',
@@ -1825,6 +2145,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
 
     'txt_decoding': (
         'Umlautumwandlung',
@@ -2022,7 +2343,7 @@ STR_TABLE = {
         'Versatz',
         'Offset',
         'Verzet',
-        'offset',
+        'Offset',
         '',
         '',
         '',
@@ -3936,7 +4257,7 @@ STR_TABLE = {
         '',
         ''),
 
-'newcon_ziel': (
+    'newcon_ziel': (
         'Ziel:',
         'Target:',
         'streefcijfer:',
@@ -3950,10 +4271,253 @@ STR_TABLE = {
         ''),
 
     'newcon_history': (
-        'Geschichte',
-        'History:',
-        'Geschiedenis:',
+        'History',
+        'History',
+        'Geschiedenis',
         'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    #####################################################
+    # guiBeaconSettings.py
+
+    'scheduler': (
+        'Scheduler',
+        'Scheduler',
+        'Scheduler',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'type': (
+        'Typ:',
+        'Type:',
+        'Typ:',
+        'Type : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiPoPT_Scheduler.py
+
+    'week_day': (
+        'Wochen tage',
+        'Week days',
+        'Week dagen:',
+        'Jour de la semaine',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'month_day': (
+        'Monats Tage',
+        'Month days',
+        'Maand dagen:',
+        'Jour du mois',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    'intervall_mn': (
+        'Interval (mn): ',
+        'Intervall (mn): ',
+        'Interval (mn): ',
+        'Intervalle (mn) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'offset_sec': (
+        'Versatz (sek): ',
+        'Offset (sec): ',
+        'Offset (sec): ',
+        'Décalage (sec) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'reset': (
+        'Reset',
+        'Reset',
+        'Reset',
+        'Reset',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'scheduler_set': (
+        'Scheduler-Set',
+        'Scheduler set',
+        'Scheduler ingesteld',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiRxEchoSettings.py
+
+    'echo_warning': (
+        'Achtung! Diese Funktion ersetzt kein Digipeater!',
+        'Attention! This function does not replace a digipeater!',
+        'Let op! Deze functie vervangt geen digipeater!',
+        'Attention ! Cette fonction ne remplace pas un digipeater !',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiMain.py._monitor_start_msg
+    'mon_start_msg1': (
+        'Info: Stationsdaten {} erfolgreich geladen.',
+        'Info: Station data {} loaded successfully.',
+        'Info: Stationgegevens {} succesvol geladen.',
+        'Info: Les données de la station {} ont été chargées avec succès.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_start_msg2': (
+        'konnte nicht initialisiert werden!',
+        'could not be initialized!',
+        'kon niet worden geïnitialiseerd!',
+        "n'a pas pu être initialisé !",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_start_msg3': (
+        'erfolgreich initialisiert.',
+        'initialized successfully.',
+        'succesvol geïnitialiseerd.',
+        "initialisé avec succès.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_end_msg1': (
+        'PoPT wird beendet.',
+        'Quiting PoPT.',
+        'PoPT verlaten.',
+        "Quitter le PoPT.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    # guiMain Status-Bar
+    'ENDE': (
+        'ENDE',
+        'END',
+        'EINDE',
+        'FIN',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'FREI': (
+        'FREI',
+        'FREE',
+        'VRIJ',
+        'GRATUIT',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'AUFBAU': (
+        'AUFBAU',
+        'INITIALIZE',
+        'BOUW',
+        "INITIALISER",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'ABBAU': (
+        'ABBAU',
+        'DISCONNECT',
+        'VERBREKEN',
+        "DÉCONNEXION",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'BEREIT': (
+        'BEREIT',
+        'READY',
+        'KLAAR',
+        "PRÊT",
         '',
         '',
         '',

@@ -4,15 +4,15 @@ from tkinter import ttk, Menu, messagebox
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
-from cfg.string_tab import STR_TABLE
-from fnc.str_fnc import conv_time_DE_str
+from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import conv_time_DE_str, get_strTab
 
 
 class MHWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win = root_win
-        self._lang = root_win.language
+        self._root_win  = root_win
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.title("MyHEARD")
         self.style = self._root_win.style
         self.geometry(f"1250x"
@@ -32,14 +32,14 @@ class MHWin(tk.Toplevel):
         self._mh = PORT_HANDLER.get_MH()
         self._rev_ent = False
         # self._alarm_active_var = self._root_win.setting_dx_alarm
-        self._alarm_newCall_var = tk.BooleanVar(self)
-        self._alarm_seenSince_var = tk.StringVar(self)
-        self._alarm_distance_var = tk.StringVar(self)
-        # self._tracer_active_var = tk.BooleanVar(self)
-        self._tracer_duration_var = tk.StringVar(self)
+        self._alarm_newCall_var     = tk.BooleanVar(self)
+        self._alarm_seenSince_var   = tk.StringVar(self)
+        self._alarm_distance_var    = tk.StringVar(self)
+        # self._tracer_active_var   = tk.BooleanVar(self)
+        self._tracer_duration_var   = tk.StringVar(self)
         self._alarm_ports = []
-        _ports = list(PORT_HANDLER.get_all_ports().keys())
-        for _por_id in _ports:
+        ports = list(PORT_HANDLER.get_all_ports().keys())
+        for _por_id in ports:
             self._alarm_ports.append(tk.BooleanVar(self))
         self._get_vars()
         # ############################### Columns ############################
@@ -50,38 +50,38 @@ class MHWin(tk.Toplevel):
         self.grid_rowconfigure(3, weight=1)
         # ###################### DX Alarm Settings ######################
         # ALARM
-        lower_frame = tk.Frame(self)
+        lower_frame = ttk.Frame(self)
         lower_frame.grid(row=0, column=0, columnspan=2, sticky='nsew')
-        frame_11_label = tk.Frame(lower_frame)
+        frame_11_label = ttk.Frame(lower_frame)
         frame_11_label.pack(side=tk.TOP)
-        tk.Label(frame_11_label, text='DX-Alarm Setting').pack()
+        ttk.Label(frame_11_label, text='DX-Alarm Setting').pack()
         ###
         # activ Checkbox
-        frame_21_active = tk.Frame(lower_frame)
+        frame_21_active = ttk.Frame(lower_frame)
         frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_21_active,
+        ttk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
+        ttk.Checkbutton(frame_21_active,
                        variable=self._root_win.setting_dx_alarm,
                        # command=self._chk_alarm_active
                        ).pack(side=tk.LEFT, )
 
         # New Call in List Checkbox
-        frame_21_newCall = tk.Frame(lower_frame)
+        frame_21_newCall = ttk.Frame(lower_frame)
         frame_21_newCall.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_newCall, text='new Call ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_21_newCall,
+        ttk.Label(frame_21_newCall, text='new Call ').pack(side=tk.LEFT, )
+        ttk.Checkbutton(frame_21_newCall,
                        variable=self._alarm_newCall_var,
                        command=self._set_alarm_newCall
                        ).pack(side=tk.LEFT, )
 
         # Alarm seen since Days
-        frame_21_seen = tk.Frame(lower_frame)
+        frame_21_seen = ttk.Frame(lower_frame)
         frame_21_seen.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_seen, text='seen since (Days) (0 = off)').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_21_seen,
+        ttk.Label(frame_21_seen, text='seen since (Days) (0 = off)').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_21_seen,
                    from_=0,
                    to=365,
                    increment=1,
@@ -91,11 +91,11 @@ class MHWin(tk.Toplevel):
                    ).pack(side=tk.LEFT, )
 
         # Alarm Distance
-        frame_21_distance = tk.Frame(lower_frame)
+        frame_21_distance = ttk.Frame(lower_frame)
         frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_21_distance, text='Distance (0 = off)').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_21_distance,
+        ttk.Label(frame_21_distance, text='Distance (0 = off)').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_21_distance,
                    from_=0,
                    to=20000,
                    increment=1,
@@ -105,50 +105,50 @@ class MHWin(tk.Toplevel):
                    ).pack(side=tk.LEFT, )
 
         # ###################### Ports ############################
-        lower_frame_ports = tk.Frame(self)
+        lower_frame_ports = ttk.Frame(self)
         lower_frame_ports.grid(row=1, column=0, columnspan=2, sticky='nsew')
-        frame_13_label = tk.Frame(lower_frame_ports)
+        frame_13_label = ttk.Frame(lower_frame_ports)
         frame_13_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        tk.Label(frame_13_label, text='Ports: ').pack(side=tk.LEFT, )
-        _i = 0
-        for _port_id in _ports:
-            _frame = tk.Frame(lower_frame_ports)
-            _frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=7)
-            _text = f'{_port_id}'
-            tk.Label(_frame, text=_text, width=3).pack(side=tk.LEFT, padx=1)
-            tk.Checkbutton(_frame,
-                           variable=self._alarm_ports[_i],
+        ttk.Label(frame_13_label, text='Ports: ').pack(side=tk.LEFT, )
+        i = 0
+        for _port_id in ports:
+            frame = ttk.Frame(lower_frame_ports)
+            frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=7)
+            text = f'{_port_id}'
+            ttk.Label(frame, text=text, width=3).pack(side=tk.LEFT, padx=1)
+            ttk.Checkbutton(frame,
+                           variable=self._alarm_ports[i],
                            command=self._set_alarm_ports,
                            ).pack(side=tk.LEFT, padx=1)
-            _i += 1
+            i += 1
         # ###################### Auto Tracer ######################
         # Tracer
         auto_tracer_state = {
             True: 'disabled',
             False: 'normal'
         }.get(self._root_win.get_tracer(), 'disabled')
-        lower_frame_tracer = tk.Frame(self)
+        lower_frame_tracer = ttk.Frame(self)
         lower_frame_tracer.grid(row=2, column=0, columnspan=2, sticky='nsew')
-        frame_12_label = tk.Frame(lower_frame_tracer)
+        frame_12_label = ttk.Frame(lower_frame_tracer)
         frame_12_label.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
-        tk.Label(frame_12_label, text='Auto APRS-Tracer: ').pack(side=tk.LEFT, )
+        ttk.Label(frame_12_label, text='Auto APRS-Tracer: ').pack(side=tk.LEFT, )
         ###
         # activ Checkbox
-        frame_22_active = tk.Frame(lower_frame_tracer)
+        frame_22_active = ttk.Frame(lower_frame_tracer)
         frame_22_active.pack(side=tk.LEFT, fill=tk.BOTH, )
 
-        tk.Label(frame_22_active, text='Activate ').pack(side=tk.LEFT, )
-        tk.Checkbutton(frame_22_active,
+        ttk.Label(frame_22_active, text='Activate ').pack(side=tk.LEFT, )
+        ttk.Checkbutton(frame_22_active,
                        variable=self._root_win.setting_auto_tracer,
                        command=self._root_win.set_auto_tracer,
                        state=auto_tracer_state
                        ).pack(side=tk.LEFT, )
         # duration
-        frame_22_duration = tk.Frame(lower_frame_tracer)
+        frame_22_duration = ttk.Frame(lower_frame_tracer)
         frame_22_duration.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
 
-        tk.Label(frame_22_duration, text='Duration (min) ').pack(side=tk.LEFT, )
-        tk.Spinbox(frame_22_duration,
+        ttk.Label(frame_22_duration, text='Duration (min) ').pack(side=tk.LEFT, )
+        ttk.Spinbox(frame_22_duration,
                    from_=5,
                    to=1440,
                    increment=5,
@@ -214,9 +214,9 @@ class MHWin(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_mh_list)
+        MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._reset_mh_list)
         MenuVerb.add_separator()
-        MenuVerb.add_command(label=STR_TABLE['delete_dx_history'][self._lang], command=self._reset_dx_history)
+        MenuVerb.add_command(label=self._getTabStr('delete_dx_history'), command=self._reset_dx_history)
         menubar.add_cascade(label='MyHeard', menu=MenuVerb, underline=0)
 
     def _get_vars(self):
@@ -349,8 +349,8 @@ class MHWin(tk.Toplevel):
 
     def _reset_mh_list(self):
         # self.lower()
-        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang], parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('msg_box_mh_delete'),
+                                  message=self._getTabStr('msg_box_mh_delete_msg'), parent=self):
             mh = PORT_HANDLER.get_MH()
             mh.reset_mainMH()
             self._update_mh()
@@ -358,8 +358,8 @@ class MHWin(tk.Toplevel):
 
     def _reset_dx_history(self):
         # self.lower()
-        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_mh_delete', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_mh_delete_msg', ('', '', ''))[self._lang], parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('msg_box_mh_delete'),
+                                  message=self._getTabStr('msg_box_mh_delete_msg'), parent=self):
             mh = PORT_HANDLER.get_MH()
             mh.reset_dxHistory()
         # self.lift()

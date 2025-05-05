@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk
 
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
@@ -55,14 +55,14 @@ class MSG_Center_PMS(MSG_Center_base):
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         ################################################
         # ######### PMS/PN -----------------------------------
-        pn_pan_frame = tk.Frame(tab_PN_PMS)
+        pn_pan_frame = ttk.Frame(tab_PN_PMS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_pn        = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
 
-        top_f        = tk.Frame(pw_pn)
-        lower_f_main = tk.Frame(pw_pn)
-        lower_f_top  = tk.Frame(lower_f_main)
+        top_f        = ttk.Frame(pw_pn)
+        lower_f_main = ttk.Frame(pw_pn)
+        lower_f_top  = ttk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -84,19 +84,19 @@ class MSG_Center_PMS(MSG_Center_base):
 
         #################################################
         # ######### PMS/BL
-        pw_bl_hor       = tk.PanedWindow(tab_BL_PMS, orient=tk.HORIZONTAL)
+        pw_bl_hor       = ttk.PanedWindow(tab_BL_PMS, orient=tk.HORIZONTAL)
         pw_bl_hor.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        left_frame      = tk.Frame(pw_bl_hor)
-        bl_pan_frame    = tk.Frame(pw_bl_hor)
+        left_frame      = ttk.Frame(pw_bl_hor)
+        bl_pan_frame    = ttk.Frame(pw_bl_hor)
 
-        pw_bl_hor.add(left_frame, width=140)
-        pw_bl_hor.add(bl_pan_frame, )
+        pw_bl_hor.add(left_frame,   weight=0)
+        pw_bl_hor.add(bl_pan_frame, weight=1)
         ###################
         pw_bl           = ttk.PanedWindow(bl_pan_frame, orient=tk.VERTICAL)
-        top_f           = tk.Frame(pw_bl)
-        lower_f_main    = tk.Frame(pw_bl)
-        lower_f_lower   = tk.Frame(lower_f_main)
+        top_f           = ttk.Frame(pw_bl)
+        lower_f_main    = ttk.Frame(pw_bl)
+        lower_f_lower   = ttk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -123,13 +123,13 @@ class MSG_Center_PMS(MSG_Center_base):
 
         ######################################################
         # ######### PMS/OUT
-        out_pan_frame       = tk.Frame(tab_OUT_PMS)
+        out_pan_frame       = ttk.Frame(tab_OUT_PMS)
         out_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_out              = ttk.PanedWindow(out_pan_frame, orient=tk.VERTICAL)
-        top_f               = tk.Frame(pw_out)
-        lower_f_main        = tk.Frame(pw_out)
-        lower_f_top         = tk.Frame(lower_f_main)
+        top_f               = ttk.Frame(pw_out)
+        lower_f_main        = ttk.Frame(pw_out)
+        lower_f_top         = ttk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -150,13 +150,13 @@ class MSG_Center_PMS(MSG_Center_base):
         self._init_out_footer_frame(lower_f_top)
         ######################################################
         # ######### BBS/Drafts/Saved Msg
-        pn_pan_frame        = tk.Frame(tab_SAVE_PMS)
+        pn_pan_frame        = ttk.Frame(tab_SAVE_PMS)
         pn_pan_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         pw_pn               = ttk.PanedWindow(pn_pan_frame, orient=tk.VERTICAL)
-        top_f               = tk.Frame(pw_pn)
-        lower_f_main        = tk.Frame(pw_pn)
-        lower_f_top         = tk.Frame(lower_f_main)
+        top_f               = ttk.Frame(pw_pn)
+        lower_f_main        = ttk.Frame(pw_pn)
+        lower_f_top         = ttk.Frame(lower_f_main)
 
         top_f.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         lower_f_main.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -177,6 +177,15 @@ class MSG_Center_PMS(MSG_Center_base):
         self._init_sv_lower_frame(lower_f_top)
         self._init_sv_footer_frame(lower_f_top)
         # ---------------------------------------------
+        self._text_tab = {
+            0: self._pn_text,
+            1: self._bl_text,
+            2: self._out_text,
+            3: self._sv_text,
+        }
+        # ---------------------------------------------
+        self._init_RClick_menu()
+        # self.bind('<Control-c>', lambda event: self._copy_select())
         ###############################################
 
     def on_bbsTab_select(self, event=None):
@@ -252,64 +261,75 @@ class MSG_Center_PMS(MSG_Center_base):
         # self._pn_tree.get_children()
 
     def _init_pn_lower_frame(self, root_frame):
-        btn_frame       = tk.Frame(root_frame, height=30)
-        header_frame    = tk.Frame(root_frame, height=80)
+        btn_frame       = ttk.Frame(root_frame, height=30)
+        header_frame    = ttk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r     = tk.Frame(btn_frame)
-        btn_frame_l     = tk.Frame(btn_frame)
+        btn_frame_r     = ttk.Frame(btn_frame)
+        btn_frame_l     = ttk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
-        tk.Button(btn_frame_l,
+        ttk.Button(btn_frame_l,
                   text=self._getTabStr('new'),
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_PN_btn()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   # TODO cmd
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('forward'),
                   command=lambda: self._open_newMSG_win_forward('P')
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('answer'),
                   command=lambda: self._open_newMSG_win_reply('P'),
                   ).pack(side=tk.RIGHT, expand=False)
 
-        from_label      = tk.Label(header_frame, textvariable=self._var_pn_from_label)
-        to_label        = tk.Label(header_frame, textvariable=self._var_pn_to_label)
-        subject_label   = tk.Label(header_frame, textvariable=self._var_pn_subj_label)
-        time_label      = tk.Label(header_frame, textvariable=self._var_pn_time_label)
-        rx_time_label   = tk.Label(header_frame, textvariable=self._var_pn_rx_time_label)
-        bid_label       = tk.Label(header_frame, textvariable=self._var_pn_bid_label)
+        from_label      = ttk.Label(header_frame, textvariable=self._var_pn_from_label)
+        to_label        = ttk.Label(header_frame, textvariable=self._var_pn_to_label)
+        subject_label   = ttk.Label(header_frame, textvariable=self._var_pn_subj_label)
+        time_label      = ttk.Label(header_frame, textvariable=self._var_pn_time_label)
+        rx_time_label   = ttk.Label(header_frame, textvariable=self._var_pn_rx_time_label)
+        bid_label       = ttk.Label(header_frame, textvariable=self._var_pn_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
         time_label.place(relx=0.98, y=11, anchor=tk.E)
         rx_time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
+        text_f = ttk.Frame(root_frame)
+        text_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # ## lower_f_lower / Msg Text
-        self._pn_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self.text_size),
-                                                  bd=0,
-                                                  height=3,
-                                                  borderwidth=0,
-                                                  background='black',
-                                                  foreground='white',
-                                                  state="disabled",
-                                                  )
-        self._pn_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._pn_text = tk.Text(text_f,
+                              font=(FONT, self.text_size),
+                              bd=0,
+                              height=3,
+                              borderwidth=0,
+                              background='black',
+                              foreground='white',
+                              state="disabled",
+                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                highlightthickness=0,
+                              )
+        scrollbar = ttk.Scrollbar(
+            text_f,
+            orient=tk.VERTICAL,
+            command=self._pn_text.yview
+        )
+        self._pn_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._pn_text.config(yscrollcommand=scrollbar.set)
 
     def _init_pn_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         txt_encoding_ent = tk.OptionMenu(
             footer_frame,
@@ -317,15 +337,20 @@ class MSG_Center_PMS(MSG_Center_base):
             *ENCODINGS,
             command=self._update_PN_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_pn_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
@@ -385,7 +410,7 @@ class MSG_Center_PMS(MSG_Center_base):
         self._bl_cat_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._bl_cat_tree.column("#0", width=0, stretch=False)
-        self._bl_cat_tree.column("cat", anchor='w', stretch=True, width=0)
+        self._bl_cat_tree.column("cat", anchor='w', stretch=True, width=100)
 
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
@@ -393,52 +418,54 @@ class MSG_Center_PMS(MSG_Center_base):
         self._bl_cat_tree.bind('<<TreeviewSelect>>', self._CAT_entry_selected)
 
     def _init_bl_lower_frame(self, root_frame):
-        btn_frame = tk.Frame(root_frame, height=30)
-        header_frame = tk.Frame(root_frame, height=80)
+        btn_frame = ttk.Frame(root_frame, height=30)
+        header_frame = ttk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r = tk.Frame(btn_frame)
-        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_r = ttk.Frame(btn_frame)
+        btn_frame_l = ttk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
-        tk.Button(btn_frame_l,
+        ttk.Button(btn_frame_l,
                   text=self._getTabStr('new'),
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_BL_btn()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   # TODO cmd
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('forward'),
                   command=lambda: self._open_newMSG_win_forward('B')
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('answer'),
                   command=lambda: self._open_newMSG_win_reply('B'),
                   ).pack(side=tk.RIGHT, expand=False)
 
         # Header Frame
-        from_label      = tk.Label(header_frame, textvariable=self._var_bl_from_label)
-        to_label        = tk.Label(header_frame, textvariable=self._var_bl_to_label)
-        subject_label   = tk.Label(header_frame, textvariable=self._var_bl_subj_label)
-        time_label      = tk.Label(header_frame, textvariable=self._var_bl_time_label)
-        rx_time_label   = tk.Label(header_frame, textvariable=self._var_bl_rx_time_label)
-        bid_label       = tk.Label(header_frame, textvariable=self._var_bl_bid_label)
+        from_label      = ttk.Label(header_frame, textvariable=self._var_bl_from_label)
+        to_label        = ttk.Label(header_frame, textvariable=self._var_bl_to_label)
+        subject_label   = ttk.Label(header_frame, textvariable=self._var_bl_subj_label)
+        time_label      = ttk.Label(header_frame, textvariable=self._var_bl_time_label)
+        rx_time_label   = ttk.Label(header_frame, textvariable=self._var_bl_rx_time_label)
+        bid_label       = ttk.Label(header_frame, textvariable=self._var_bl_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
         time_label.place(relx=0.98, y=11, anchor=tk.E)
         rx_time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
+        text_f = ttk.Frame(root_frame)
+        text_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self._bl_text = scrolledtext.ScrolledText(root_frame,
+        self._bl_text = tk.Text(text_f,
                                                   font=(FONT, self.text_size),
                                                   bd=0,
                                                   height=3,
@@ -446,11 +473,20 @@ class MSG_Center_PMS(MSG_Center_base):
                                                   foreground='white',
                                                   borderwidth=0,
                                                   state="disabled",
+                                                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                  highlightthickness=0,
                                                   )
-        self._bl_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        scrollbar = ttk.Scrollbar(
+            text_f,
+            orient=tk.VERTICAL,
+            command=self._bl_text.yview
+        )
+        self._bl_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._bl_text.config(yscrollcommand=scrollbar.set)
 
     def _init_bl_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         txt_encoding_ent = tk.OptionMenu(
             footer_frame,
@@ -458,20 +494,25 @@ class MSG_Center_PMS(MSG_Center_base):
             *ENCODINGS,
             command=self._update_BL_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
             height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_bl_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
 
-    # OUT TAB
+    # OUT-TAB
     def _init_out_tree(self, root_frame):
         columns = (
             'gesendet',
@@ -519,60 +560,71 @@ class MSG_Center_PMS(MSG_Center_base):
         # self._out_tree.bind('<<TreeviewSelect>>', lambda event: print(event))
 
     def _init_out_lower_frame(self, root_frame):
-        btn_frame = tk.Frame(root_frame, height=30)
-        header_frame = tk.Frame(root_frame, height=80)
+        btn_frame = ttk.Frame(root_frame, height=30)
+        header_frame = ttk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r = tk.Frame(btn_frame)
-        btn_frame_l = tk.Frame(btn_frame)
+        btn_frame_r = ttk.Frame(btn_frame)
+        btn_frame_l = ttk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_l,
+        ttk.Button(btn_frame_l,
                   text='Start FWD',
                   command=lambda: self._do_pms_autoFWD()
                   ).pack(side=tk.LEFT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_OUT_btn()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('save'),
                   command=lambda: self._save_outMSG()
                   ).pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('forward'),
                   command=lambda: self._open_newMSG_win_forward('O')
                   ).pack(side=tk.RIGHT, expand=False)
         # tk.Button(btn_frame, text='Antworten').pack(side=tk.RIGHT, expand=False)
 
-        from_label      = tk.Label(header_frame, textvariable=self._var_out_from_label)
-        to_label        = tk.Label(header_frame, textvariable=self._var_out_to_label)
-        subject_label   = tk.Label(header_frame, textvariable=self._var_out_subj_label)
-        time_label      = tk.Label(header_frame, textvariable=self._var_out_time_label)
-        bid_label       = tk.Label(header_frame, textvariable=self._var_out_bid_label)
+        from_label      = ttk.Label(header_frame, textvariable=self._var_out_from_label)
+        to_label        = ttk.Label(header_frame, textvariable=self._var_out_to_label)
+        subject_label   = ttk.Label(header_frame, textvariable=self._var_out_subj_label)
+        time_label      = ttk.Label(header_frame, textvariable=self._var_out_time_label)
+        bid_label       = ttk.Label(header_frame, textvariable=self._var_out_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
         time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
+        text_f = ttk.Frame(root_frame)
+        text_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # ## lower_f_lower / Msg Text
-        self._out_text = scrolledtext.ScrolledText(root_frame,
-                                                   font=(FONT, self.text_size),
-                                                   bd=0,
-                                                   height=3,
-                                                   borderwidth=0,
-                                                   background='black',
-                                                   foreground='white',
-                                                   state="disabled",
-                                                   )
-        self._out_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._out_text = tk.Text(text_f,
+                               font=(FONT, self.text_size),
+                               bd=0,
+                               height=3,
+                               borderwidth=0,
+                               background='black',
+                               foreground='white',
+                               state="disabled",
+                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                               highlightthickness=0,
+                               )
+        scrollbar = ttk.Scrollbar(
+            text_f,
+            orient=tk.VERTICAL,
+            command=self._out_text.yview
+        )
+        self._out_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._out_text.config(yscrollcommand=scrollbar.set)
 
     def _init_out_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         txt_encoding_ent = tk.OptionMenu(
             footer_frame,
@@ -580,15 +632,20 @@ class MSG_Center_PMS(MSG_Center_base):
             *ENCODINGS,
             command=self._update_OUT_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_out_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
@@ -631,56 +688,67 @@ class MSG_Center_PMS(MSG_Center_base):
         self._sv_tree.bind('<<TreeviewSelect>>', self._SV_entry_selected)
 
     def _init_sv_lower_frame(self, root_frame):
-        btn_frame       = tk.Frame(root_frame, height=30)
-        header_frame    = tk.Frame(root_frame, height=80)
+        btn_frame       = ttk.Frame(root_frame, height=30)
+        header_frame    = ttk.Frame(root_frame, height=80)
         btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         header_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
 
-        btn_frame_r     = tk.Frame(btn_frame)
-        btn_frame_l     = tk.Frame(btn_frame)
+        btn_frame_r     = ttk.Frame(btn_frame)
+        btn_frame_l     = ttk.Frame(btn_frame)
         btn_frame_l.pack(side=tk.LEFT, fill=tk.X, expand=True, anchor='w')
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
-        tk.Button(btn_frame_l,
+        ttk.Button(btn_frame_l,
                   text=self._getTabStr('new'),
                   command=lambda: self._open_newMSG_win()
                   ).pack(side=tk.LEFT, expand=False)
-        # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        # ttk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_SV_btn()
                   ).pack(side=tk.RIGHT, expand=False)
-        # TODO ? tk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
-        tk.Button(btn_frame_r,
+        # TODO ? ttk.Button(btn_frame_r, text='Als Vorlage').pack(side=tk.RIGHT, expand=False)
+        ttk.Button(btn_frame_r,
                   text=self._getTabStr('edit'),
                   command=lambda: self._open_newMSG_win_reply('S'),
                   ).pack(side=tk.RIGHT, expand=False)
 
-        from_label      = tk.Label(header_frame, textvariable=self._var_sv_from_label)
-        to_label        = tk.Label(header_frame, textvariable=self._var_sv_to_label)
-        subject_label   = tk.Label(header_frame, textvariable=self._var_sv_subj_label)
-        time_label      = tk.Label(header_frame, textvariable=self._var_sv_time_label)
-        bid_label       = tk.Label(header_frame, textvariable=self._var_sv_bid_label)
+        from_label      = ttk.Label(header_frame, textvariable=self._var_sv_from_label)
+        to_label        = ttk.Label(header_frame, textvariable=self._var_sv_to_label)
+        subject_label   = ttk.Label(header_frame, textvariable=self._var_sv_subj_label)
+        time_label      = ttk.Label(header_frame, textvariable=self._var_sv_time_label)
+        bid_label       = ttk.Label(header_frame, textvariable=self._var_sv_bid_label)
         from_label.place(x=2, y=0)
         to_label.place(x=2, y=25)
         subject_label.place(x=2, y=50)
         time_label.place(relx=0.98, y=36, anchor=tk.E)
         bid_label.place(relx=0.98, y=61, anchor=tk.E)
+        text_f = ttk.Frame(root_frame)
+        text_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # ## lower_f_lower / Msg Text
-        self._sv_text = scrolledtext.ScrolledText(root_frame,
-                                                  font=(FONT, self.text_size),
-                                                  bd=0,
-                                                  height=3,
-                                                  borderwidth=0,
-                                                  background='black',
-                                                  foreground='white',
-                                                  state="disabled",
-                                                  )
-        self._sv_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self._sv_text = tk.Text(text_f,
+                              font=(FONT, self.text_size),
+                              bd=0,
+                              height=3,
+                              borderwidth=0,
+                              background='black',
+                              foreground='white',
+                              state="disabled",
+                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                              highlightthickness=0,
+                              )
+        scrollbar = ttk.Scrollbar(
+            text_f,
+            orient=tk.VERTICAL,
+            command=self._sv_text.yview
+        )
+        self._sv_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+        self._sv_text.config(yscrollcommand=scrollbar.set)
 
     def _init_sv_footer_frame(self, root_frame):
-        footer_frame = tk.Frame(root_frame, height=15)
+        footer_frame = ttk.Frame(root_frame, height=15)
         footer_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         txt_encoding_ent = tk.OptionMenu(
             footer_frame,
@@ -688,15 +756,20 @@ class MSG_Center_PMS(MSG_Center_base):
             *ENCODINGS,
             command=self._update_SV_msg
         )
+        fg, bg = self._get_colorMap()
         txt_encoding_ent.configure(
             font=(None, 6),
             border=0,
             borderwidth=0,
-            height=1
+            height=1,
+            fg=fg,
+            bg=bg,
+            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+            highlightthickness=0,
         )
         txt_encoding_ent.pack(side=tk.RIGHT, fill=tk.BOTH, expand=False)
 
-        tk.Label(footer_frame,
+        ttk.Label(footer_frame,
                  textvariable=self._var_sv_msg_size,
                  font=(None, 7),
                  ).pack(side=tk.LEFT, fill=tk.BOTH, expand=False)

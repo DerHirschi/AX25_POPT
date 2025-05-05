@@ -108,47 +108,46 @@ class AX25Conn:
         """ AX25 Connection class """
         # TODO: Cleanup
         """ Global Stuff """
-        self.own_port = port
-        self._port_handler = port.port_get_PH()
+        self.own_port           = port
+        self._port_handler      = port.port_get_PH()
         """ Port Config Parameter """
-        self.port_id: int = self.own_port.port_id
-        self._port_cfg :dict = POPT_CFG.get_port_CFG_fm_id(self.port_id)
+        self.port_id: int       = self.own_port.port_id
+        self._port_cfg :dict    = POPT_CFG.get_port_CFG_fm_id(self.port_id)
 
-        self.port_name: str =  self._port_cfg.get('parm_PortName', '')
-        self.parm_PacLen = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
-        self.parm_MaxFrame = self._port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
-        self._parm_TXD = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation !! Need to be high on AXIP for T1 calculation
-        self._parm_Kiss_TXD = 0
-        self._parm_Kiss_Tail = 0
+        self.port_name: str     = self._port_cfg.get('parm_PortName', '')
+        self.parm_PacLen        = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
+        self.parm_MaxFrame      = self._port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
+        self._parm_TXD          = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation !! Need to be high on AXIP for T1 calculation
+        self._parm_Kiss_TXD     = 0
+        self._parm_Kiss_Tail    = 0
         if self.own_port.kiss.is_enabled:
-            self._parm_Kiss_TXD = self._port_cfg.get('parm_kiss_TXD', 35)
-            self._parm_Kiss_Tail = self._port_cfg.get('parm_kiss_Tail', 15)
-        self._parm_T2 = int(self._port_cfg.get('parm_T2', 2888))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
-        self._parm_T3 = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
-        self.parm_N2 = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
-        self._parm_baud = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
+            self._parm_Kiss_TXD     = self._port_cfg.get('parm_kiss_TXD', 35)
+            self._parm_Kiss_Tail    = self._port_cfg.get('parm_kiss_Tail', 15)
+        self._parm_T2           = int(self._port_cfg.get('parm_T2', 2888))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
+        self._parm_T3           = self._port_cfg.get('parm_T3', 180)  # T3 (Inactive Link Timer)
+        self.parm_N2            = self._port_cfg.get('parm_N2', 20)  # Max Try   Default 20
+        self._parm_baud         = self._port_cfg.get('parm_baud', 1200)  # Baud for calculating Timer
         """ Config new Connection Address """
         #####################################
         ax25_conf = ax25_frame.get_frame_conf()
         self.axip_add = tuple(ax25_conf.get('axip_add', ()))
         if rx:
-            # TODO Clean up !!!
-            self.uid = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
-            self.to_call_str_add = str(ax25_conf.get('from_call_str', ''))
-            self.to_call_str = str(ax25_conf.get('from_call_str', ''))
-            self.my_call_str_add = str(ax25_conf.get('to_call_str', ''))
-            self.my_call_str = str(ax25_conf.get('to_call_str', ''))
-            self.my_call = str(ax25_conf.get('to_call', ''))
-            self.via_calls = list(ax25_conf.get('via_calls_str', []))
+            self.uid                = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
+            self.to_call_str_add    = str(ax25_conf.get('from_call_str', ''))
+            self.to_call_str        = str(ax25_conf.get('from_call_str', ''))
+            self.my_call_str_add    = str(ax25_conf.get('to_call_str', ''))
+            self.my_call_str        = str(ax25_conf.get('to_call_str', ''))
+            self.my_call            = str(ax25_conf.get('to_call', ''))
+            self.via_calls          = list(ax25_conf.get('via_calls_str', []))
             self.via_calls.reverse()
         else:
-            self.uid = str(ax25_conf.get('uid', ''))  # Unique ID for Connection
-            self.to_call_str_add = str(ax25_conf.get('to_call_str', ''))
-            self.to_call_str = str(ax25_conf.get('to_call_str', ''))
-            self.my_call_str_add = str(ax25_conf.get('from_call_str', ''))
-            self.my_call_str = str(ax25_conf.get('from_call_str', ''))
-            self.my_call = str(ax25_conf.get('from_call', ''))
-            self.via_calls = list(ax25_conf.get('via_calls_str', []))
+            self.uid                = str(ax25_conf.get('uid', ''))  # Unique ID for Connection
+            self.to_call_str_add    = str(ax25_conf.get('to_call_str', ''))
+            self.to_call_str        = str(ax25_conf.get('to_call_str', ''))
+            self.my_call_str_add    = str(ax25_conf.get('from_call_str', ''))
+            self.my_call_str        = str(ax25_conf.get('from_call_str', ''))
+            self.my_call            = str(ax25_conf.get('from_call', ''))
+            self.via_calls          = list(ax25_conf.get('via_calls_str', []))
         """ GUI Stuff"""
         self.ch_index: int = 0
         self._gui = self._port_handler.get_gui()
@@ -798,6 +797,7 @@ class AX25Conn:
         self.vs = 0
 
     def reset_conn(self):
+        # TODO .. Not Used anymore .. Delete ..
         # self._del_pipe()
         self._bbsFwd_disc()
         self.ft_queue = []
@@ -808,7 +808,7 @@ class AX25Conn:
         self.set_T1()
         self.vr = 0
         self.vs = 0
-        self._port_handler.reset_connection(connection=self)
+        self._port_handler.reset_connection(connection=self) # TODO .. Not Used anymore .. Delete ..
 
     def is_dico(self):
         if not self.zustand_exec:
@@ -1367,10 +1367,15 @@ class DefaultStat(object):
     def _rx_DM(self):
         # RESET !!!!!!!
         if self.stat_index:
+            """
             self._ax25conn.reset_conn() ####
             self._ax25conn.send_SABM()
             self._ax25conn.set_T1()
             self.change_state(2)
+            """
+            self._ax25conn.send_DISC()
+            self.S1_end_connection()
+
 
     def _rx_RR(self):
         pass

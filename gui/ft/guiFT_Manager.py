@@ -29,6 +29,10 @@ class FileTransferManager(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
+        ####################################
+        self._main_f = ttk.Frame(self)
+        self._main_f.pack(fill=tk.BOTH, expand=True)
+        ####################################
         self._update_tree_param = 3  # Sec
         self._update_tree_timer = 0
         self._progress_label_var = tk.StringVar(self)
@@ -92,7 +96,7 @@ class FileTransferManager(tk.Toplevel):
 
     def _create_widgets(self):
         # Create the overview frame
-        self.overview_frame = ttk.Frame(self)
+        self.overview_frame = ttk.Frame(self._main_f)
         self.overview_frame.pack(padx=10, pady=10)
 
         self.overview_frame.columnconfigure(0, minsize=5, weight=0)
@@ -128,15 +132,15 @@ class FileTransferManager(tk.Toplevel):
         ttk.Label(self.progress_bar_frame, textvariable=self._bps_label_var).pack(pady=1, anchor=tk.W)
         ttk.Label(self.progress_bar_frame, textvariable=self._dir_label_var).pack(pady=1, anchor=tk.W)
 
-        combobox_values = list(range(0, 361, 5))
-        combobox_values = [str(x) for x in combobox_values]
         tx_wait_frame = ttk.Frame(self.buttons_frame)
-        tk.Label(tx_wait_frame, text="TX-Wait: ").pack(side=tk.LEFT, padx=5)
+        ttk.Label(tx_wait_frame, text="TX-Wait: ").pack(side=tk.LEFT, padx=5)
 
-        self._combobox = ttk.Combobox(tx_wait_frame,
-                                      values=combobox_values,
+        self._combobox = ttk.Spinbox(tx_wait_frame,
                                       textvariable=self._tx_wait_var,
                                       width=4,
+                                      from_=0,
+                                      to=360,
+                                      increment=5,
                                       state='disabled')
         self._combobox.pack(padx=5)
         self._combobox.bind("<<ComboboxSelected>>", self._tx_wait_combox_cmd)
@@ -155,7 +159,7 @@ class FileTransferManager(tk.Toplevel):
         self._abort_button.pack(pady=5)
 
         # Create the top frame
-        top_frame = ttk.Frame(self)
+        top_frame = ttk.Frame(self._main_f)
         top_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         # Create the query list
@@ -181,7 +185,7 @@ class FileTransferManager(tk.Toplevel):
         self._treeview.configure(yscrollcommand=treeview_scrollbar.set)
         self._treeview.bind("<<TreeviewSelect>>", self._on_item_selected)
         # Create the bottom frame
-        bottom_frame = ttk.Frame(self)
+        bottom_frame = ttk.Frame(self._main_f)
         bottom_frame.pack(padx=10, pady=10)
 
         # Create the save and cancel buttons

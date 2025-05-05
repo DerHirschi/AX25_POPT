@@ -1,19 +1,21 @@
 import tkinter as tk
 from tkinter import ttk
-from cfg.string_tab import STR_TABLE
+
+from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import coordinates_to_locator, locator_to_coordinates, locator_distance
+from fnc.str_fnc import get_strTab
 
 
 class LocatorCalculator(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self.root = main_win
-        self.lang = main_win.language
-        self.title(STR_TABLE['locator_calc'][self.lang])
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self.title(self._getTabStr('locator_calc'))
 
         self.style = main_win.style
         self.win_height = 250
-        self.win_width = 800
+        self.win_width  = 800
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self.root.main_win.winfo_x()}+"
@@ -25,18 +27,22 @@ class LocatorCalculator(tk.Toplevel):
         except tk.TclError:
             pass
         self.lift()
-        self.loc_var_1 = tk.StringVar()
-        self.lat_var_1 = tk.StringVar()
-        self.lon_var_1 = tk.StringVar()
+        ###################################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        ###################################
+        self.loc_var_1 = tk.StringVar(self)
+        self.lat_var_1 = tk.StringVar(self)
+        self.lon_var_1 = tk.StringVar(self)
 
-        self.loc_var_2 = tk.StringVar()
-        self.lat_var_2 = tk.StringVar()
-        self.lon_var_2 = tk.StringVar()
+        self.loc_var_2 = tk.StringVar(self)
+        self.lat_var_2 = tk.StringVar(self)
+        self.lon_var_2 = tk.StringVar(self)
 
-        self.dist_var = tk.StringVar()
+        self.dist_var = tk.StringVar(self)
         self.dist_var.set('-- km')
         # Create frame for script info
-        script_info_frame = ttk.Frame(self)
+        script_info_frame = ttk.Frame(main_f)
         script_info_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         # Create label for script author
@@ -48,7 +54,7 @@ class LocatorCalculator(tk.Toplevel):
         repo_label.pack()
 
         # Create frame for left side
-        left_frame = ttk.Frame(self)
+        left_frame = ttk.Frame(main_f)
         left_frame.pack(side=tk.LEFT, padx=10, pady=10)
 
         # Create Locator entry field on left side
@@ -70,7 +76,7 @@ class LocatorCalculator(tk.Toplevel):
         longitude_entry_left.grid(row=2, column=1, padx=5, pady=5)
 
         # Create frame for right side
-        right_frame = ttk.Frame(self)
+        right_frame = ttk.Frame(main_f)
         right_frame.pack(side=tk.RIGHT, padx=10, pady=10)
 
         # Create Locator entry field on right side
@@ -92,30 +98,31 @@ class LocatorCalculator(tk.Toplevel):
         longitude_entry_right.grid(row=2, column=1, padx=5, pady=5)
 
         # Create label for result
-        result_label = ttk.Label(self, textvariable=self.dist_var)
+        result_label = ttk.Label(main_f, textvariable=self.dist_var)
         result_label.pack(pady=10)
 
 
         # Create frame for buttons
-        button_frame = ttk.Frame(self)
+        button_frame = ttk.Frame(main_f)
         button_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
 
         # Create Calculate button
-        calculate_button = ttk.Button(button_frame, text=STR_TABLE['go'][self.lang], command=self.calculate_coordinates)
+        calculate_button = ttk.Button(button_frame, text=self._getTabStr('go'), command=self.calculate_coordinates)
         calculate_button.pack(side=tk.LEFT, padx=5)
 
         # Create Close button
-        close_button = ttk.Button(button_frame, text=STR_TABLE['close'][self.lang], command=self.close_window)
+        close_button = ttk.Button(button_frame, text=self._getTabStr('close'), command=self.close_window)
         close_button.pack(side=tk.LEFT, padx=5)
 
         # Create frame for buttons
-        button_frame = ttk.Frame(self)
+        button_frame = ttk.Frame(main_f)
         button_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
 
         # Create Calculate button
-        calculate_button = ttk.Button(button_frame, text=STR_TABLE['delete'][self.lang], command=self.clean_vars)
+        calculate_button = ttk.Button(button_frame, text=self._getTabStr('delete'), command=self.clean_vars)
         calculate_button.pack(side=tk.LEFT, padx=5)
         main_win.locator_calc_window = self
+
     def clean_vars(self):
         self.loc_var_1.set('')
         self.lat_var_1.set('')

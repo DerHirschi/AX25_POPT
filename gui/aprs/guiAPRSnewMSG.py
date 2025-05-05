@@ -11,7 +11,7 @@ from cfg.string_tab import STR_TABLE
 
 class NewMessageWindow(tk.Toplevel):
     def __init__(self, root_win):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+        tk.Toplevel.__init__(self)
         self._aprs_root = root_win
         self._aprs_root._new_msg_win = self
         self.lang = POPT_CFG.get_guiCFG_language()
@@ -30,9 +30,12 @@ class NewMessageWindow(tk.Toplevel):
             pass
         self.lift()
         self.title(STR_TABLE['new_msg'][self.lang])
-
+        #######################
+        main_f = ttk.Frame(self)
+        main_f.pack(fill=tk.BOTH, expand=True)
+        #######################
         # Oberer Bereich: Dropdown-Menüs und Eingabefelder
-        top_frame = ttk.Frame(self)
+        top_frame = ttk.Frame(main_f)
         top_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         label1 = ttk.Label(top_frame, text="Port:")
@@ -59,7 +62,7 @@ class NewMessageWindow(tk.Toplevel):
                                  )
         dropdown2.pack(side=tk.LEFT, padx=5)
 
-        top_bottom_frame = ttk.Frame(self)
+        top_bottom_frame = ttk.Frame(main_f)
         top_bottom_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         label3 = ttk.Label(top_bottom_frame, text="To:   ")
@@ -68,7 +71,7 @@ class NewMessageWindow(tk.Toplevel):
         self.to_call_ent.pack(side=tk.LEFT, padx=5)
 
         # Mittlerer Bereich: Mehrzeiliges Eingabefeld
-        middle_frame = ttk.Frame(self)
+        middle_frame = ttk.Frame(main_f)
         middle_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         self.msg_entry = tk.Text(middle_frame,
@@ -91,7 +94,7 @@ class NewMessageWindow(tk.Toplevel):
 
 
         # Unterer Bereich: Button
-        bottom_frame = ttk.Frame(self)
+        bottom_frame = ttk.Frame(main_f)
         bottom_frame.pack(side=tk.TOP, padx=10, pady=10)
 
         button = ttk.Button(bottom_frame, text="Nachricht senden", command=self.send_message)
