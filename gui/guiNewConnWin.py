@@ -1,8 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from click import command
-
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG

@@ -4,6 +4,7 @@ import math
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import get_strTab
 
 
 class RxEchoSettings(ttk.Frame):
@@ -11,13 +12,15 @@ class RxEchoSettings(ttk.Frame):
         ttk.Frame.__init__(self, tabctl)
         # VARS
         n_ports = len(PORT_HANDLER.get_all_ports().keys())
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+
         self.win_height = 650
         self.win_width = 280 * max(math.ceil(n_ports / 2), 2)
         self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
         self.off_color = ''
         # Ports
         self.check_vars: {int: {int: [tk.BooleanVar, tk.BooleanVar, ttk.Checkbutton, ttk.Checkbutton, ttk.Label, ttk.Label, tk.StringVar, tk.StringVar]}} = {}
-        label = ttk.Label(self, text="Achtung! Diese Funktion ersetzt kein Digipeater!")
+        label = ttk.Label(self, text=self._getTabStr('echo_warning'))
         label.place(x=30, y=10)
         x = 30
         fg, bg = self._get_colorMap()

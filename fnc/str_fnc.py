@@ -194,8 +194,8 @@ def is_plausible_text(text: str) -> bool:
     # Anteil druckbarer Zeichen (ASCII, Buchstaben, Zahlen, Satzzeichen)
     printable_ratio = sum(c in string.printable for c in text) / len(text)
     # Anteil von Steuerzeichen (außer \n, \t, etc.)
-    control_chars = sum(1 for c in text if c < '\x20' and c not in '\n\r\t') / len(text)
-    return printable_ratio > 0.9 and control_chars < 0.05  # 90 % druckbar, wenige Steuerzeichen
+    control_chars = sum(1 for c in text if c < '\x20' and c not in '\n\r\täöpÄÖÜßéÉ<>-_#*+-/=|.,:' or c in 'Σⁿ▀▄Θ─α') / len(text)
+    return printable_ratio > 0.7 and control_chars < 0.05  # 90 % druckbar, wenige Steuerzeichen
 
 def try_decode(data: bytes, ignore: bool = False) -> (str, str):
     """By Grok3-AI"""
@@ -207,14 +207,7 @@ def try_decode(data: bytes, ignore: bool = False) -> (str, str):
         return f'<BIN> {len(data)}', "Auto: BIN"
 
     # Schritt 2: Probiere Kodierungen in der Reihenfolge
-    for encoding in (
-                    'UTF-8',  # Häufigste Kodierung zuerst
-                    'LATIN_1',
-                    'CP437',
-                    'ASCII',
-                    'KOI8-R',
-                    'KOI8-U',
-                ):
+    for encoding in ENCODINGS:
         try:
             decoded = data.decode(encoding)
             if is_plausible_text(decoded):
@@ -227,7 +220,7 @@ def try_decode(data: bytes, ignore: bool = False) -> (str, str):
         return data.decode('UTF-8', errors='ignore'), "Auto: UTF-8(ignore)"
 
     # Schritt 4: Rückgabe als Binärdaten, wenn nichts passt
-    return f'<BIN> {len(data)}', "Auto: BIN"
+    return f'<BIN> {len(data)}', "Auto: BIN-"
 
 
 def find_decoding(inp: b''):
