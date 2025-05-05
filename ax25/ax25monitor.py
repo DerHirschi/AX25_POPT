@@ -121,7 +121,7 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
                 payload = f'NET/ROM: <BIN> {payload_len} Bytes'
                 decoding = ''
             elif decoding == 'Auto':
-                payload = try_decode(payload)
+                payload, decoding = try_decode(payload)
             else:
                 if decoding in ENCODINGS:
                     try:

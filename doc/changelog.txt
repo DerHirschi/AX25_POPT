@@ -31,6 +31,8 @@ Optimierung/Änderungen:
     - NetRom
     - Distanzen
     - Hex-Ausgabe
+- Monitor Task Ressourcen optimiert (CPU-Last)
+- Monitor Auto Decoder
 
 Neue Implementierungen / Funktionen:
 - CLI CMD "A". Bricht alle aktuellen Aussendungen ab.

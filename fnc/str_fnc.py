@@ -1,7 +1,7 @@
 import random
 import time
 from datetime import datetime, timedelta
-
+import string
 from bbs.bbs_constant import EOL, CR
 from cfg.logger_config import logger
 from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
@@ -186,16 +186,48 @@ def format_number(number):
     return formatted_number
 
 
-def try_decode(data: b'', ignore=False):
-    for cd in ENCODINGS:
+def is_plausible_text(text: str) -> bool:
+    """By Grok3-AI"""
+    """Prüft, ob der Text sinnvoll aussieht (überwiegend druckbare Zeichen)."""
+    if not text:
+        return False
+    # Anteil druckbarer Zeichen (ASCII, Buchstaben, Zahlen, Satzzeichen)
+    printable_ratio = sum(c in string.printable for c in text) / len(text)
+    # Anteil von Steuerzeichen (außer \n, \t, etc.)
+    control_chars = sum(1 for c in text if c < '\x20' and c not in '\n\r\t') / len(text)
+    return printable_ratio > 0.9 and control_chars < 0.05  # 90 % druckbar, wenige Steuerzeichen
+
+def try_decode(data: bytes, ignore: bool = False) -> (str, str):
+    """By Grok3-AI"""
+    # Schritt 1: Prüfe, ob Daten wahrscheinlich binär sind
+    if not data:
+        return '<BIN> 0', "Auto: NO-DATA"
+    non_printable_ratio = sum(1 for b in data if b < 32 or b > 126) / len(data)
+    if non_printable_ratio > 0.5:  # Zu viele nicht-druckbare Bytes -> Binärdaten
+        return f'<BIN> {len(data)}', "Auto: BIN"
+
+    # Schritt 2: Probiere Kodierungen in der Reihenfolge
+    for encoding in (
+                    'UTF-8',  # Häufigste Kodierung zuerst
+                    'LATIN_1',
+                    'CP437',
+                    'ASCII',
+                    'KOI8-R',
+                    'KOI8-U',
+                ):
         try:
-            ret = data.decode(cd)
-            return ret
+            decoded = data.decode(encoding)
+            if is_plausible_text(decoded):
+                return decoded, f"Auto: {encoding}"
         except UnicodeDecodeError:
             pass
+
+    # Schritt 3: Wenn ignore=True, dekodiere mit UTF-8 und ignoriere Fehler
     if ignore:
-        return data.decode('UTF-8', 'ignore')
-    return f'<BIN> {len(data)}'
+        return data.decode('UTF-8', errors='ignore'), "Auto: UTF-8(ignore)"
+
+    # Schritt 4: Rückgabe als Binärdaten, wenn nichts passt
+    return f'<BIN> {len(data)}', "Auto: BIN"
 
 
 def find_decoding(inp: b''):
