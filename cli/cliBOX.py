@@ -221,7 +221,7 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', )), env_vars=False)
+                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self.get_ts_prompt()), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])

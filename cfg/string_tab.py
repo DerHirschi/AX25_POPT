@@ -3703,10 +3703,10 @@ STR_TABLE = {
 
     'box_cmd_sp_abort_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Nachricht fuer {} anulliert\r',
-        '\r # Message for {} canceled\r',
-        '\r # Bericht voor {} geannuleerd\r',
-        '\r # Message pour {} annulé\r',
+        '\r # Nachricht fuer {} anulliert\r\r',
+        '\r # Message for {} canceled\r\r',
+        '\r # Bericht voor {} geannuleerd\r\r',
+        '\r # Message pour {} annulé\r\r',
         '',
         '',
         '',

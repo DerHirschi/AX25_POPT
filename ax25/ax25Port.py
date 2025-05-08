@@ -1316,7 +1316,7 @@ class AXIP(AX25Port):
                 self._port_param = socket.gethostbyname(hostname), self._port_param[1]
             own_ipAddr = self._port_param[0]
             logger.info(f"Port {self.port_id}: AXIP bind on IP: {own_ipAddr}")
-            sock_timeout = 0.01
+            sock_timeout = 0.1
 
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
