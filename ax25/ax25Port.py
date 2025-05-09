@@ -441,6 +441,33 @@ class AX25Port(object):
         self._digi_buf.append(ax25frame)
 
     #################################################
+    def _process_rx_buf(self, buf):
+        self._set_TXD()
+        self._set_digi_TXD()
+        ax25frame = AX25Frame()
+        try:
+            ax25frame.decode_ax25frame(buf.raw_data)
+        except AX25DecodingERROR:
+            logger.warning("-------------------------------------------------------------------")
+            logger.warning(f'Port {self.port_id}: decoding: ')
+            logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
+            logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
+            logger.warning(f'Port {self.port_id}: kiss-org {buf.kiss_frame}')
+            logger.warning(f'Port {self.port_id}: kiss-hex {bytearray2hexstr(buf.kiss_frame)}')
+            logger.warning("-------------------------------------------------------------------")
+            return
+        ax25frame.axip_add = buf.axip_add
+        if not self._rx_dualPort_handler(ax25_frame=ax25frame):
+            ax25frame_conf = ax25frame.get_frame_conf()
+            self._gui_monitor(ax25frame=ax25frame, tx=False)
+            self._mh_input(ax25frame_conf, tx=False)
+            if hasattr(self._mcast_server, 'mcast_update_member_ip'):
+                self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
+            self.rx_handler(ax25frame)
+            if hasattr(self._mcast_server, 'mcast_rx'):
+                self._mcast_server.mcast_rx(ax25frame=ax25frame)
+        self._rx_echo(ax25_frame=ax25frame)
+
 
     def _rx_dualPort_handler(self, ax25_frame):
         if not self.dualPort_cfg:
@@ -944,83 +971,29 @@ class AX25Port(object):
 
     def port_tasker(self):
         """ Main Loop """
-        while self.loop_is_running:
-            self._tasks()
-            # time.sleep(0.03)
+        #while self.loop_is_running:
+        self._port_loop()
+        # time.sleep(0.03)
         # print(f"Loop Ends Port: {self.port_id}")
         logger.info(f"Port {self.port_id}: Loop End")
         self.close()
         self.device = None
         self.ende = True
 
-    def _tasks(self):
+    def _port_loop(self):
         while self.loop_is_running:
             try:
-                ##############################################
                 buf: RxBuf = self._rx()
-                ##############################################
+                if buf and buf.raw_data:
+                    self._process_rx_buf(buf)
             except (AX25DeviceERROR, AX25DeviceFAIL):
-                # print(e)
-                # time.sleep(0.05)
-                # self.close()
                 break
-            if not self.loop_is_running:
-                # self.close()
-                break
-            if buf is None:
-                # time.sleep(0.05)
-                break
-            if not buf.raw_data:  # RX ############
-                # time.sleep(0.05)
-                break
-            self._set_TXD()
-            self._set_digi_TXD()
-            ax25frame = AX25Frame()
-            try:
-                # Decoding
-                ax25frame.decode_ax25frame(buf.raw_data)
-            except AX25DecodingERROR:
-                logger.warning("-------------------------------------------------------------------")
-                logger.warning(f'Port {self.port_id}: decoding: ')
-                logger.warning(f'Port {self.port_id}: org {buf.raw_data}')
-                logger.warning(f'Port {self.port_id}: hex {bytearray2hexstr(buf.raw_data)}')
-                logger.warning(f'Port {self.port_id}: kiss-org {buf.kiss_frame}')
-                logger.warning(f'Port {self.port_id}: kiss-hex {bytearray2hexstr(buf.kiss_frame)}')
-                logger.warning("-------------------------------------------------------------------")
-                break
-            ######## if ax25frame.validate():
-            ax25frame.axip_add = buf.axip_add
-            # ######### RX #############
-            if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-                ax25frame_conf = ax25frame.get_frame_conf()
-                # Monitor # TODO handling via ax25frame_conf
-                self._gui_monitor(ax25frame=ax25frame, tx=False)
-                # MH / Port-Statistic
-                self._mh_input(ax25frame_conf, tx=False)
-                # MCast IP Update
-                if hasattr(self._mcast_server, 'mcast_update_member_ip'):
-                    self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
-                # RX Handler
-                self.rx_handler(ax25frame)
-                # MCast
-                if hasattr(self._mcast_server, 'mcast_rx'):
-                    self._mcast_server.mcast_rx(ax25frame=ax25frame)
-
-            # RX-ECHO
-            self._rx_echo(ax25_frame=ax25frame)
-
-            if self._port_cfg.get('parm_full_duplex', False):
-                break
-
-        if self.loop_is_running:
-            #############################################
-            # Crone
-            self._task_Port()
-            # if time.time() > self.TXD or self._port_cfg.parm_full_duplex:
+            # Führe andere Aufgaben aus
             if time.time() > self._TXD:
-                # ######### TX #############
                 self._tx_handler()
-        time.sleep(0.01)
+            self._task_Port()
+            # Kurzes Schlafen, um CPU zu entlasten
+            time.sleep(0.001)
 
     def port_get_PH(self):
         return self._port_handler
@@ -1317,7 +1290,7 @@ class AXIP(AX25Port):
                 self._port_param = socket.gethostbyname(hostname), self._port_param[1]
             own_ipAddr = self._port_param[0]
             logger.info(f"Port {self.port_id}: AXIP bind on IP: {own_ipAddr}")
-            sock_timeout = 0.1
+            # sock_timeout = 0.1
 
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
