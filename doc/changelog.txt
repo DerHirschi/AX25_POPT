@@ -3,8 +3,12 @@
 Fixes:
 
 Optimierung/Änderungen:
+- AXIP Port handling
+- Port Loop
+- Net/Rom decoder und Monitor Ausgabe
 
 Neue Implementierungen / Funktionen:
+- Net/Rom INP decoder
 
 ###########################################################################################################
 ###########################################################################################################
