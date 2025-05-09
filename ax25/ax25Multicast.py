@@ -14,6 +14,7 @@ TODO:
     ✓ Feste DN bevorzugen
     ✓ save configs wenn MCast beendet
 """
+import copy
 import time
 
 from ax25.ax25Error import AX25DeviceERROR, MCastInitError
@@ -352,21 +353,21 @@ class ax25Multicast:
         ip_list = []
         for member in member_list:
             member_ip = self._get_member_ip(member)
-            if all((
-                    member_ip,
-                    member_ip not in ip_list,
-                    member_ip != ip,
-                    hasattr(self._mcast_port, 'tx_multicast')
-            )):
-                frame.axip_add = tuple(member_ip)
-                ip_list.append(member_ip)
-                try:
-                    self._mcast_port.tx_multicast(frame)
-                    logger.debug(f"MCast: TX to: {member} - {member_ip}")
-                except AX25DeviceERROR:
-                    logger.error(f"MCast: AX25DeviceERROR - TX to {member_ip}")
-                    self._mcast_port = None
-                    return
+            if not member_ip:
+                logger.warning(f"MCast: Keine IP für {member}")
+                continue
+            if member_ip in ip_list or member_ip == ip:
+                continue
+            frame_copy = copy.deepcopy(frame)
+            frame_copy.axip_add = tuple(member_ip)
+            ip_list.append(member_ip)
+            try:
+                self._mcast_port.tx_multicast(frame_copy)
+                logger.debug(f"MCast: Gesendet an {member} - {member_ip}")
+            except AX25DeviceERROR:
+                logger.error(f"MCast: Fehler beim Senden an {member_ip}")
+                self._mcast_port = None
+                return
 
     #########################################################
     # Remote Stuff

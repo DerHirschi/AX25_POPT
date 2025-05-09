@@ -1020,6 +1020,7 @@ class AX25Port(object):
             if time.time() > self._TXD:
                 # ######### TX #############
                 self._tx_handler()
+        time.sleep(0.01)
 
     def port_get_PH(self):
         return self._port_handler
@@ -1320,7 +1321,10 @@ class AXIP(AX25Port):
 
             self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.device.settimeout(sock_timeout)
+            self.device.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
+            self.device.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+            self.device.setblocking(False)  # Nicht-blockierend
+            # self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self._port_param)
             except OSError as e:
@@ -1357,7 +1361,7 @@ class AXIP(AX25Port):
             # print("Try Close AXIP")
             logger.info(f"Port {self.port_id}: Try Close AXIP")
             self.device.close()
-        except (socket.error, AttributeError) as e:
+        except Exception as e:
             logger.error(f"Port {self.port_id}: Close AXIP except: {e}")
             # print(f"Try Close AXIP except: {e}")
         finally:
@@ -1371,13 +1375,6 @@ class AXIP(AX25Port):
         self.port_w_dog = time.time()
         try:
             udp_recv = self.device.recvfrom(800)
-
-            # self.device.settimeout(0.1)
-        # except socket.error:
-        # raise AX25DeviceERROR
-        except OSError:
-            return RxBuf()
-        else:
             recv_buff = udp_recv[0]
             to_call_ip_addr = udp_recv[1]
             ###################################
@@ -1392,6 +1389,12 @@ class AXIP(AX25Port):
                 ret.raw_data = pack
                 ret.kiss_frame = b''
             return ret
+        except BlockingIOError:
+            return RxBuf()  # Keine Daten verfügbar
+        except OSError as e:
+            logger.error(f"Port {self.port_id}: OSError in _rx: {e}")
+            return RxBuf()
+
 
     def _tx_device(self, frame, multicast=True):
         if not hasattr(frame, 'axip_add'):
