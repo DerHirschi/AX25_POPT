@@ -581,11 +581,11 @@ class AX25Conn:
 
     def ft_reset_timer(self, conn_uid: str):
         if self.ft_obj is not None:
-            print(f"ft_resetRNR: conn_uid {conn_uid}")
-            print(f"ft_resetRNR: rev conn_uid {reverse_uid(conn_uid)}")
-            print(f"ft_resetRNR: self.uid {self.uid}")
+            #print(f"ft_resetRNR: conn_uid {conn_uid}")
+            #print(f"ft_resetRNR: rev conn_uid {reverse_uid(conn_uid)}")
+            #print(f"ft_resetRNR: self.uid {self.uid}")
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
-                print(f"ft_resetRNR:SET! ")
+                #print(f"ft_resetRNR:SET! ")
 
                 self.ft_obj.ft_set_wait_timer()
 

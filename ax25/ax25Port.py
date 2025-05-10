@@ -616,7 +616,7 @@ class AX25Port(object):
 
     def _rx_echo(self, ax25_frame):
         if self._port_handler.rx_echo_on:
-            self._port_handler.rx_echo_input(ax_frame=ax25_frame, port_id=self.port_id)
+            self._port_handler.rx_echo_input(ax_frame=ax25_frame, receiving_port_id=self.port_id)
 
     ##########################################################
     # DualPort
