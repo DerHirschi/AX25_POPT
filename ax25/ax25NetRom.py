@@ -210,15 +210,18 @@ def decode_INP_DHLC(ax25_payload: bytes) -> dict:
             logger.warning("Payload too short for Connect Request")
     elif op_code == 0x02:  # Connect Acknowledge
         if len(ax25_payload) >= 25:  # Your Circuit Index (1) + Your Circuit ID (1) + My Circuit Index (1) + My Circuit ID (1) + Window Size (1)
-            decoded_data['your_cir_index'] = ax25_payload[20]
-            decoded_data['your_cir_ID'] = ax25_payload[21]
-            decoded_data['my_cir_index'] = ax25_payload[22]
-            decoded_data['my_cir_ID'] = ax25_payload[23]
-            decoded_data['window_size'] = ax25_payload[24]
+            decoded_data['your_cir_index']  = ax25_payload[20]
+            decoded_data['your_cir_ID']     = ax25_payload[21]
+            decoded_data['my_cir_index']    = ax25_payload[22]
+            decoded_data['my_cir_ID']       = ax25_payload[23]
+            decoded_data['window_size']     = ax25_payload[24]
             decoded_data['choke'] = dec_opt['Choke']
             payload_offset = 25
         else:
             logger.warning("Payload too short for Connect Acknowledge")
+            logger.warning(f"  len  : {len(ax25_payload)}")
+            logger.warning(f"  hex  : {ax25_payload.hex()}")
+            logger.warning(f"  [{min(20, len(ax25_payload))}:]: {ax25_payload[min(20, len(ax25_payload)):]}")
     elif call_to == 'L3RTT':  # L3RTT Frame
         information = ax25_payload[20:].decode('ASCII', 'ignore')
         decoded_data['information'] = information
@@ -242,24 +245,10 @@ def decode_INP_DHLC(ax25_payload: bytes) -> dict:
 
 def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
     if netrom_cfg.get('is_rif', False) or 'rif_data' in netrom_cfg:
-        rif_data = netrom_cfg.get('rif_data', [])
-        monitor_str = f"┌──┴─▶ NET/ROM RIF▽\n"
-        if netrom_cfg.get('inp_capable', False):
-            monitor_str += f"├►INP Capable: Yes\n"
-        if not rif_data:
-            monitor_str += f"├►Error: No valid RIP segments decoded\n"
-        for rip in rif_data:
-            call = rip['call'] if rip['call'] != "INVALID" else f"INVALID({rip.get('raw_call', 'unknown').hex()})"
-            monitor_str += f"├►RIP: Call={call} Hop={rip['hop_count']} RTT={rip['transport_time']}\n"
-            if 'alias' in rip['rif_data']:
-                monitor_str += f"├►  Alias: {rip['rif_data']['alias']}\n"
-            if 'ip' in rip['rif_data']:
-                monitor_str += f"├►  IP: {rip['rif_data']['ip']}\n"
-            for key, value in rip['rif_data'].items():
-                if key.startswith('unknown_'):
-                    monitor_str += f"├►  Unknown Option ({key}, length={value['length']}): {value['data']}\n"
-        monitor_str += "└──┐\n"
-        return monitor_str
+        """
+        
+        """
+        return NetRom_decode_RIF_mon(netrom_cfg)
 
     call_to = netrom_cfg.get('call_to', '')
     monitor_str = f"┌──┴─▶ NET/ROM▽ {netrom_cfg.get('call_from', '')}->{call_to} ttl {netrom_cfg.get('time_to_live', '')}\n"
@@ -294,7 +283,10 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
             monitor_str += f"├►OPT: Chock({netrom_cfg['dec_opt']['Choke']}) NAK({netrom_cfg['dec_opt']['NAK']}) More({netrom_cfg['dec_opt']['More-Follows']}) Res({netrom_cfg['dec_opt']['Reserved']})\n"
 
     if netrom_cfg.get('capable_flags'):
-        monitor_str += f"├►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
+        if netrom_cfg.get('information') and call_to != 'L3RTT':
+            monitor_str += f"├►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
+        else:
+            monitor_str += f"└►C-Flags: {b' '.join(netrom_cfg['capable_flags']).decode('ASCII', 'ignore')}\n"
     if netrom_cfg.get('information') and call_to != 'L3RTT':
         monitor_str += f"├────▶ Payload▽ (ASCII) len={len(netrom_cfg['information'])}\n"
         eol = find_eol(netrom_cfg['information'])
@@ -419,19 +411,35 @@ def decode_RIF(payload_raw: bytes) -> list:
             continue
     return route_info
 
-def NetRom_decode_RIF_mon(rif_data: list) -> str:
-    monitor_str = "┌──┴─▶ NET/ROM RIF▽\n"
+def NetRom_decode_RIF_mon(netrom_cfg: dict) -> str:
+    rif_data = netrom_cfg.get('rif_data', [])
+    monitor_str = f"┌──┴─▶ NET/ROM RIF▽\n"
+    max_Str_len = len(monitor_str)
+    if netrom_cfg.get('inp_capable', False):
+        new_str = f"├►INP Capable: Yes\n"
+        max_Str_len = max(max_Str_len, len(new_str))
+        monitor_str += new_str
     if not rif_data:
-        monitor_str += f"├►Error: No valid RIP segments decoded\n"
+        new_str = f"├►Error: No valid RIP segments decoded\n"
+        max_Str_len = max(max_Str_len, len(new_str))
+        monitor_str += new_str
     for rip in rif_data:
         call = rip['call'] if rip['call'] != "INVALID" else f"INVALID({rip.get('raw_call', 'unknown').hex()})"
-        monitor_str += f"├►RIP: Call={call} Hop={rip['hop_count']} RTT={rip['transport_time']}\n"
+        new_str = f"├►RIP: Call={call.ljust(9)} Hop={str(rip['hop_count']).ljust(2)} RTT={rip['transport_time']}\n"
+        max_Str_len = max(max_Str_len, len(new_str))
+        monitor_str += new_str
         if 'alias' in rip['rif_data']:
-            monitor_str += f"├►  Alias: {rip['rif_data']['alias']}\n"
+            new_str = f"├►  Alias: {rip['rif_data']['alias']}\n"
+            max_Str_len = max(max_Str_len, len(new_str))
+            monitor_str += new_str
         if 'ip' in rip['rif_data']:
-            monitor_str += f"├►  IP: {rip['rif_data']['ip']}\n"
+            new_str = f"├►  IP: {rip['rif_data']['ip']}\n"
+            max_Str_len = max(max_Str_len, len(new_str))
+            monitor_str += new_str
         for key, value in rip['rif_data'].items():
             if key.startswith('unknown_'):
-                monitor_str += f"├►  Unknown Option ({key}, length={value['length']}): {value['data']}\n"
-    monitor_str += "└──┐\n"
+                new_str = f"├►  Unknown Option ({key}, length={value['length']}): {value['data']}\n"
+                max_Str_len = max(max_Str_len, len(new_str))
+                monitor_str += new_str
+    monitor_str += f"└{'─' * (max_Str_len - 1)}┘\n"
     return monitor_str
