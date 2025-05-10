@@ -988,11 +988,10 @@ class AX25Port(object):
                     self._process_rx_buf(buf)
             except (AX25DeviceERROR, AX25DeviceFAIL):
                 break
-            # Führe andere Aufgaben aus
+            # Port Tasker
+            self._task_Port()
             if time.time() > self._TXD:
                 self._tx_handler()
-            self._task_Port()
-            # Kurzes Schlafen, um CPU zu entlasten
             time.sleep(0.001)
 
     def port_get_PH(self):
