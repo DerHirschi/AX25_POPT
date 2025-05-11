@@ -245,9 +245,6 @@ def decode_INP_DHLC(ax25_payload: bytes) -> dict:
 
 def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
     if netrom_cfg.get('is_rif', False) or 'rif_data' in netrom_cfg:
-        """
-        
-        """
         return NetRom_decode_RIF_mon(netrom_cfg)
 
     call_to = netrom_cfg.get('call_to', '')
@@ -311,14 +308,17 @@ def NetRom_decode_I_mon(netrom_cfg: dict) -> str:
 
 def NetRom_decode_I(ax25_payload: bytes):
     if not ax25_payload:
-        return {}
-    if len(ax25_payload) < 20:
+        logger.warning("Empty payload")
         return {}
     # Check for RIF format
-    if int(ax25_payload[0]) == 0xFF:
+    if len(ax25_payload) >= 1 and int(ax25_payload[0]) == 0xFF:
+        logger.debug(f"Detected RIF format, payload: {ax25_payload.hex()}")
         rif_data = decode_RIF(ax25_payload)
         return {'rif_data': rif_data, 'is_rif': True}
     # Decode as INP/DHLC
+    if len(ax25_payload) < 20:
+        logger.warning(f"Payload too short for INP/DHLC decoding: {len(ax25_payload)} bytes")
+        return {}
     decoded_data = decode_INP_DHLC(ax25_payload)
     if decoded_data.get('is_rif', False):
         rif_data = decode_RIF(ax25_payload[20:])  # Skip network/transport headers
@@ -327,61 +327,86 @@ def NetRom_decode_I(ax25_payload: bytes):
 
 # ======================== RIF/RIP Decoding =====================================
 def decode_RIP(rip_payload: bytes, start_index: int) -> dict:
-    if len(rip_payload) < 10:
+    if len(rip_payload) < 7:
         logger.error(f"Invalid RIP payload length: {len(rip_payload)} bytes, payload: {rip_payload.hex()}, start_index: {start_index}")
         return {}
+
+    rif_data = {}
+    index = 0
+
+    # Decode callsign (7 bytes)
     raw_call = rip_payload[:7]
     call = decode_ax25call(raw_call)
-    hop_count = int(rip_payload[7])
-    transport_time = int.from_bytes(rip_payload[8:10], byteorder='big')
-    if transport_time > 65535:  # Implausible RTT
-        logger.warning(f"Implausible transport time: {transport_time}, payload: {rip_payload.hex()}")
+    if call == "INVALID":
+        logger.warning(f"Invalid callsign at index {start_index}, payload: {raw_call.hex()}")
         return {}
-    rif_data = {}
-    index = 10
-    while index < len(rip_payload):
-        if rip_payload[index] == 0x00:  # EOP
-            index += 1
-            break
-        if index + 1 >= len(rip_payload):
-            logger.error(f"Incomplete option field at index {start_index + index}, payload: {rip_payload[index:].hex()}")
-            break
-        option_length = rip_payload[index]
-        if option_length < 2 or index + option_length > len(rip_payload):
-            logger.error(f"Invalid option length: {option_length} at index {start_index + index}, payload: {rip_payload[index:].hex()}")
-            break
-        option_type = rip_payload[index + 1]
-        option_data = rip_payload[index + 2:index + option_length]
-        if option_type == 0x00:  # Alias
-            try:
-                alias = option_data.decode('ASCII', 'ignore').strip()
-                if alias and all(32 <= ord(c) <= 127 for c in alias):  # Valid ASCII
-                    rif_data['alias'] = alias
-                else:
-                    logger.warning(f"Invalid alias characters: {alias}, payload: {option_data.hex()}")
-            except Exception as e:
-                logger.warning(f"Failed to decode alias: {str(e)}, payload: {option_data.hex()}")
-        elif option_type == 0x01:  # IP
-            if len(option_data) >= 5:
+    rif_data['call'] = call
+    rif_data['raw_call'] = raw_call
+    index += 7
+
+    # Check for short 12-byte frame (Callsign + Quality + Raw Data)
+    if len(rip_payload) >= 8:
+        quality = int(rip_payload[index])
+        rif_data['quality'] = quality
+        index += 1
+        # Store remaining bytes as raw data
+        if index < len(rip_payload):
+            rif_data['raw_data'] = rip_payload[index:].hex()
+            index = len(rip_payload)
+    else:
+        logger.warning(f"Payload too short for quality or data: {rip_payload.hex()}")
+        return {}
+
+    # Handle longer frames with hop count, transport time, and options
+    if len(rip_payload) >= 10:
+        hop_count = int(rip_payload[7])
+        transport_time = int.from_bytes(rip_payload[8:10], byteorder='big')
+        if transport_time > 65535:  # Implausible RTT
+            logger.warning(f"Implausible transport time: {transport_time}, payload: {rip_payload.hex()}")
+            return {}
+        rif_data['hop_count'] = hop_count
+        rif_data['transport_time'] = transport_time
+        index = 10
+        while index < len(rip_payload):
+            if rip_payload[index] == 0x00:  # EOP
+                index += 1
+                break
+            if index + 1 >= len(rip_payload):
+                logger.error(f"Incomplete option field at index {start_index + index}, payload: {rip_payload[index:].hex()}")
+                break
+            option_length = rip_payload[index]
+            if option_length < 2 or index + option_length > len(rip_payload):
+                logger.error(f"Invalid option length: {option_length} at index {start_index + index}, payload: {rip_payload[index:].hex()}")
+                break
+            option_type = rip_payload[index + 1]
+            option_data = rip_payload[index + 2:index + option_length]
+            if option_type == 0x00:  # Alias
                 try:
-                    ip = '.'.join(str(int(x)) for x in option_data[:4]) + f"/{int(option_data[4])}"
-                    rif_data['ip'] = ip
+                    alias = option_data.decode('ASCII', 'ignore').strip()
+                    if alias and all(32 <= ord(c) <= 127 for c in alias):  # Valid ASCII
+                        rif_data['alias'] = alias
+                    else:
+                        logger.warning(f"Invalid alias characters: {alias}, payload: {option_data.hex()}")
                 except Exception as e:
-                    logger.warning(f"Failed to decode IP: {str(e)}, payload: {option_data.hex()}")
+                    logger.warning(f"Failed to decode alias: {str(e)}, payload: {option_data.hex()}")
+            elif option_type == 0x01:  # IP
+                if len(option_data) >= 5:
+                    try:
+                        ip = '.'.join(str(int(x)) for x in option_data[:4]) + f"/{int(option_data[4])}"
+                        rif_data['ip'] = ip
+                    except Exception as e:
+                        logger.warning(f"Failed to decode IP: {str(e)}, payload: {option_data.hex()}")
+                else:
+                    logger.warning(f"Invalid IP option length: {len(option_data)}, payload: {option_data.hex()}")
             else:
-                logger.warning(f"Invalid IP option length: {len(option_data)}, payload: {option_data.hex()}")
-        else:
-            rif_data[f'unknown_0x{option_type:02x}'] = {
-                'length': option_length - 2,
-                'data': option_data.hex()
-            }
-            # logger.warning(f"Unknown option type: 0x{option_type:02x}, length: {option_length - 2}, payload: {option_data.hex()}")
-        index += option_length
+                rif_data[f'unknown_0x{option_type:02x}'] = {
+                    'length': option_length - 2,
+                    'data': option_data.hex()
+                }
+            index += option_length
+
+    logger.debug(f"Decoded RIP segment: {rif_data}, bytes consumed: {index}")
     return {
-        'call': call,
-        'raw_call': raw_call,
-        'hop_count': hop_count,
-        'transport_time': transport_time,
         'rif_data': rif_data,
         'bytes_consumed': index
     }
@@ -396,19 +421,20 @@ def decode_RIF(payload_raw: bytes) -> list:
     route_info = []
     i = 1  # Skip RIF signature (0xFF)
     while i < len(payload_raw):
-        if i + 10 > len(payload_raw):
-            logger.error(f"Incomplete RIP at index {i}, remaining length: {len(payload_raw) - i}, payload: {payload_raw[i:].hex()}")
-            break
         rip_data = decode_RIP(payload_raw[i:], i)
-        if rip_data and rip_data['call'] != "INVALID":
+        if rip_data and 'rif_data' in rip_data and rip_data['rif_data'].get('call', 'INVALID') != "INVALID":
             route_info.append(rip_data)
             i += rip_data['bytes_consumed']
         else:
-            logger.warning(f"Skipping invalid RIP segment at index {i}, payload: {payload_raw[i:i+10].hex()}")
-            i += 10
+            logger.warning(f"Skipping invalid RIP segment at index {i}, payload: {payload_raw[i:i+7].hex()}")
+            i += min(7, len(payload_raw) - i)  # Skip at least 7 bytes to avoid infinite loop
         if i < len(payload_raw) and payload_raw[i] == 0x00:
             i += 1
             continue
+    if i < len(payload_raw):
+        logger.warning(f"Excess bytes in RIF payload at index {i}: {payload_raw[i:].hex()}")
+        route_info.append({'rif_data': {'raw_data': payload_raw[i:].hex()}, 'bytes_consumed': len(payload_raw) - i})
+    logger.debug(f"Decoded RIF: {route_info}")
     return route_info
 
 def NetRom_decode_RIF_mon(netrom_cfg: dict) -> str:
@@ -424,19 +450,33 @@ def NetRom_decode_RIF_mon(netrom_cfg: dict) -> str:
         max_Str_len = max(max_Str_len, len(new_str))
         monitor_str += new_str
     for rip in rif_data:
-        call = rip['call'] if rip['call'] != "INVALID" else f"INVALID({rip.get('raw_call', 'unknown').hex()})"
-        new_str = f"├►RIP: Call={call.ljust(9)} Hop={str(rip['hop_count']).ljust(2)} RTT={rip['transport_time']}\n"
+        rif = rip['rif_data']
+        call = rif.get('call', 'INVALID')
+        if call == "INVALID":
+            call = f"INVALID({rif.get('raw_call', 'unknown').hex()})"
+        if 'hop_count' in rif and 'transport_time' in rif:
+            new_str = f"├►RIP: Call={call.ljust(9)} Hop={str(rif['hop_count']).ljust(2)} RTT={rif['transport_time']}\n"
+        else:
+            new_str = f"├►Node: {call.ljust(9)}\n"
         max_Str_len = max(max_Str_len, len(new_str))
         monitor_str += new_str
-        if 'alias' in rip['rif_data']:
-            new_str = f"├►  Alias: {rip['rif_data']['alias']}\n"
+        if 'quality' in rif:
+            new_str = f"├►  Quality: {rif['quality']}\n"
             max_Str_len = max(max_Str_len, len(new_str))
             monitor_str += new_str
-        if 'ip' in rip['rif_data']:
-            new_str = f"├►  IP: {rip['rif_data']['ip']}\n"
+        #if 'raw_data' in rif:
+        #    new_str = f"├►  Data: RAW({rif['raw_data']})\n"
+        #    max_Str_len = max(max_Str_len, len(new_str))
+        #    monitor_str += new_str
+        if 'alias' in rif:
+            new_str = f"├►  Alias: {rif['alias']}\n"
             max_Str_len = max(max_Str_len, len(new_str))
             monitor_str += new_str
-        for key, value in rip['rif_data'].items():
+        if 'ip' in rif:
+            new_str = f"├►  IP: {rif['ip']}\n"
+            max_Str_len = max(max_Str_len, len(new_str))
+            monitor_str += new_str
+        for key, value in rif.items():
             if key.startswith('unknown_'):
                 new_str = f"├►  Unknown Option ({key}, length={value['length']}): {value['data']}\n"
                 max_Str_len = max(max_Str_len, len(new_str))
