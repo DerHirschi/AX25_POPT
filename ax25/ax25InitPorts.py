@@ -4,7 +4,7 @@ import threading
 
 from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
-# from ax25.ax25RoutingTable import RoutingTable
+from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
@@ -28,7 +28,7 @@ class RxEchoVars(object):
         self.port_id = port_id
         self.rx_ports: {int: [str]} = {}
         self.tx_ports: {int: [str]} = {}
-        self.tx_buff: [] = []
+        self.tx_buff = []
 
 
 class AX25PortHandler(object):
@@ -73,6 +73,10 @@ class AX25PortHandler(object):
         self._mh                = MH(self)
         self._mh.set_DB(self._db)
         #######################################################
+        # Init Routing Table
+        logger.info("PH: Routing Table Init")
+        self._routingTable      = RoutingTable()
+        #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
         self._mcast_server      = ax25Multicast(self)
@@ -90,10 +94,6 @@ class AX25PortHandler(object):
         # Pipe-Tool Init
         logger.info("PH: Pipe-Tool Init")
         self._pipeTool_init()
-        #######################################################
-        # Init Routing Table
-        # logger.info("PH: Routing Table Init")
-        # self._init_RoutingTable()
         #######################################################
         # Scheduled Tasks
         logger.info("PH: Scheduled Tasks Init")
@@ -185,10 +185,10 @@ class AX25PortHandler(object):
     """
     def _init_RoutingTable(self):
         self.routingTable = RoutingTable(self)
-
-    def get_RoutingTable(self):
-        return self.routingTable
     """
+    def get_RoutingTable(self):
+        return self._routingTable
+
     #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
@@ -737,7 +737,7 @@ class AX25PortHandler(object):
                 rx_echo_var = self.rx_echo[target_port_id]
                 if receiving_port_id in rx_echo_var.rx_ports:
                     callsign_list = rx_echo_var.rx_ports[receiving_port_id]
-                    print(callsign_list)
+                    # print(callsign_list)
                     if not callsign_list or from_call in callsign_list:
                         logger.debug(self._logTag +
                             f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")

@@ -21,6 +21,7 @@ from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiRightClick_Menu import ContextMenu
+from gui.guiRoutingTab import RoutingTableWindow
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -255,6 +256,7 @@ class PoPT_GUI_Main:
         self.dualPort_settings_win  = None
         self.dualPortMon_win        = None
         self.conn_Path_plot_win     = None
+        self.routingTab_win         = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -418,6 +420,7 @@ class PoPT_GUI_Main:
             self.dualPort_settings_win,
             self.dualPortMon_win,
             self.conn_Path_plot_win,
+            self.routingTab_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -694,6 +697,10 @@ class PoPT_GUI_Main:
         MenuTools.add_separator()
         MenuTools.add_command(label='Dual-Port Monitor',
                               command=lambda: self.open_window('dualPort_monitor'),
+                              underline=0)
+        MenuTools.add_separator()
+        MenuTools.add_command(label='Routing-Tab Viewer',
+                              command=lambda: self.open_RoutingTab_win(),
                               underline=0)
         MenuTools.add_separator()
 
@@ -1768,6 +1775,8 @@ class PoPT_GUI_Main:
                 self._rx_beep_sound()
                 if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
+            if hasattr(self.routingTab_win, 'tasker'):
+                self.routingTab_win.tasker()
             """
             if self.MSG_Center is not None:
                 self.MSG_Center.tasker()
@@ -2173,6 +2182,7 @@ class PoPT_GUI_Main:
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
             'ConnPathPlot': (self.conn_Path_plot_win, ConnPathsPlot),
+
             # TODO .......
 
         }.get(win_key, None)
@@ -2216,6 +2226,19 @@ class PoPT_GUI_Main:
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
         self.tabbed_sideFrame2.reset_dx_alarm()
+
+    ##################
+    # Routing tab win
+    def open_RoutingTab_win(self):
+        if hasattr(self.routingTab_win, 'lift'):
+            self.routingTab_win.lift()
+            return
+        if not hasattr(self._port_handler, 'get_RoutingTable'):
+            if hasattr(self.routingTab_win, 'close'):
+                self.routingTab_win.close()
+                self.routingTab_win = None
+                return
+        self.routingTab_win = RoutingTableWindow(self, self._port_handler.get_RoutingTable())
 
     #######################################################
     """
@@ -2393,6 +2416,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
+        self.open_RoutingTab_win()
         #print(self._inp_txt.cget('height'))
         #print(self._pw.sashpos(0))
         #self._pw.sashpos(0, 20)

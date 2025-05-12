@@ -441,6 +441,19 @@ class AX25Port(object):
         self._digi_buf.append(ax25frame)
 
     #################################################
+    # Routing Tab
+    def _update_routingTab(self, ax25_conf: dict):
+        if not ax25_conf.get('netrom_cfg', {}):
+            return
+        if not hasattr(self._port_handler, 'get_RoutingTable'):
+            logger.error(f'Port {self.port_id}: port_handler AttributeError (get_RoutingTable)')
+            return
+        rTab = self._port_handler.get_RoutingTable()
+        rTab.update(ax25_conf)
+        # rTab.debug_out()
+        return
+
+    #################################################
     def _process_rx_buf(self, buf):
         self._set_TXD()
         self._set_digi_TXD()
@@ -456,9 +469,11 @@ class AX25Port(object):
             logger.warning(f'Port {self.port_id}: kiss-hex {bytearray2hexstr(buf.kiss_frame)}')
             logger.warning("-------------------------------------------------------------------")
             return
-        ax25frame.axip_add = buf.axip_add
+        ax25frame.axip_add          = buf.axip_add
+        ax25frame_conf              = ax25frame.get_frame_conf()
+        ax25frame_conf['port_id']   = int(self.port_id)     # TODO using port_id fm this cfg
+        self._update_routingTab(ax25frame_conf)
         if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-            ax25frame_conf = ax25frame.get_frame_conf()
             self._gui_monitor(ax25frame=ax25frame, tx=False)
             self._mh_input(ax25frame_conf, tx=False)
             if hasattr(self._mcast_server, 'mcast_update_member_ip'):
