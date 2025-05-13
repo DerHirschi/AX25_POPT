@@ -130,7 +130,7 @@ class RoutingTableWindow:
         ttk.Label(filter_frame, text=self._getTabStr("Port")).pack(side=tk.LEFT, padx=5)
         port_var = tk.StringVar()
         port_combo = ttk.Combobox(filter_frame, textvariable=port_var, values=['All'] + list(set(
-            port for node in self._routing_table.table['nodes'].values() for port in node['ports']
+            port for node in dict(self._routing_table.table['nodes']).values() for port in node['ports']
         )), width=10)
         port_combo.pack(side=tk.LEFT)
         port_combo.set('All')
@@ -148,7 +148,7 @@ class RoutingTableWindow:
     def _to_networkx(self, port_id=None, selected_iid=None):
         """Erstellt einen NetworkX-Graphen aus der RoutingTable."""
         G = nx.DiGraph()
-        table = self._routing_table.filter_by_port(port_id) if port_id is not None else self._routing_table.table
+        table = self._routing_table.filter_by_port(port_id) if port_id is not None else dict(self._routing_table.table)
 
         # Knoten hinzufügen
         for call in table['nodes']:
@@ -239,7 +239,7 @@ class RoutingTableWindow:
             self._tree.delete(item)
 
         # Daten filtern (falls port_id angegeben)
-        table = self._routing_table.filter_by_port(port_id) if port_id is not None else self._routing_table.table
+        table = self._routing_table.filter_by_port(port_id) if port_id is not None else dict(self._routing_table.table)
 
         # Knoten einfügen
         for call, node in table['nodes'].items():
@@ -256,7 +256,8 @@ class RoutingTableWindow:
             ), tags=tags)
 
         # Verbindungen einfügen
-        for (from_call, to_call), entries in table['connections'].items():
+        rTabConn = dict(table.get('connections', {}))
+        for (from_call, to_call), entries in rTabConn.items():
             for i, entry in enumerate(entries):
                 quality = entry['metrics'].get('quality', 255 - entry['metrics'].get('hop_counter', 0))
                 ttl = entry['metrics'].get('ttl', 255)
@@ -314,7 +315,7 @@ class RoutingTableWindow:
         details = ''
         if item_id.startswith('node_'):
             call = item_id[len('node_'):]
-            node = self._routing_table.table['nodes'].get(call, {})
+            node = dict(self._routing_table.table['nodes']).get(call, {})
             details = f"Node: {call}\n\n"
             for key, value in node.items():
                 if key == 'info_history':
@@ -330,7 +331,7 @@ class RoutingTableWindow:
         else:
             from_call, to_call, idx = item_id[len('conn_'):].rsplit('_', 2)
             idx = int(idx)
-            entries = self._routing_table.table['connections'].get((from_call, to_call), [])
+            entries = dict(self._routing_table.table['connections']).get((from_call, to_call), [])
             if idx < len(entries):
                 entry = entries[idx]
                 details = f"Connection: {from_call} -> {to_call}\n\n"

@@ -193,7 +193,7 @@ class RoutingTable:
             filtered_entries = [e for e in entries if e['metrics']['port_id'] == port_id]
             if filtered_entries:
                 filtered['connections'][key] = filtered_entries
-        return filtered
+        return dict(filtered)
 
     def debug_out(self, port_id=None):
         """
