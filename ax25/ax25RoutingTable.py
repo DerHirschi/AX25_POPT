@@ -1,3 +1,4 @@
+"""By Grok3-AI"""
 import time
 from cfg.logger_config import logger
 
@@ -58,7 +59,7 @@ class RoutingTable:
                     'type': 'neighbor',
                     'metrics': {
                         'quality': neighbor.get('qual', 0),
-                        'ttl': ax25frame_cfg.get('ttl', 255),
+                        'rtt': ax25frame_cfg.get('rtt', 0),
                         'port_id': port_id,
                         'digi_path': digi_path
                     },
@@ -144,7 +145,7 @@ class RoutingTable:
                     'metrics': {
                         'quality': rif.get('quality', 0),
                         'hop_counter': rif.get('hop_count', 0),
-                        'transport_time': rif.get('transport_time', 0),
+                        'rtt': rif.get('transport_time', 0),
                         'ttl': netRom_cfg.get('time_to_live', 255),
                         'port_id': port_id,
                         'digi_path': digi_path

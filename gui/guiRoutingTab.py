@@ -4,7 +4,7 @@ from tkinter import ttk
 from datetime import datetime
 import networkx as nx
 from gui import plt as plt
-from gui import FigureCanvasTkAgg
+from gui import FigureCanvasTkAgg, NavigationToolbar2Tk
 from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -15,29 +15,28 @@ class RoutingTableWindow:
     mit farblicher Hervorhebung, einem Detailfenster und einem NetworkX-Graphen.
     """
     def __init__(self, parent, routing_table):
+        self._root_win = parent
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._routing_table = routing_table
         self._window = tk.Toplevel(parent.main_win)
         self._window.title("Routing Table Viewer")
-        self._window.geometry(f"{1200}x"
-                      f"{600}+"
-                      f"{parent.main_win.winfo_x()}+"
-                      f"{parent.main_win.winfo_y()}")
+        self._window.geometry(f"{1200}x{600}+{parent.main_win.winfo_x()}+{parent.main_win.winfo_y()}")
         self._window.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self._get_colorMap = lambda: COLOR_MAP.get(parent.style_name, ('#000000', '#d9d9d9'))
         fg, bg = self._get_colorMap()
 
-        # Farbkonfiguration für Qualität und TTL
+        # Farbkonfiguration für Qualität und RTT
         self._quality_colors = {
             'high': ('#18cf00', 150),   # Grün für quality > 150
             'medium': ('#dec104', 50),  # Gelb für 50 <= quality <= 150
             'low': ('#e30e0e', 1),      # Rot für quality < 50, aber > 0
             'zero': (bg, 0)             # Dynamischer Hintergrund für quality = 0
         }
-        self._ttl_colors = {
-            'high': ('#18cf00', 100),   # Grün für ttl > 100
-            'medium': ('#dec104', 50),  # Gelb für 50 <= ttl <= 100
-            'low': ('#e30e0e', 0)       # Rot für ttl < 50
+        self._rtt_colors = {
+            'high': ('#18cf00', 1000),    # Grün für RTT ≤ 1000 (≤ 10 s)
+            'medium': ('#dec104', 5000),  # Gelb für RTT 1001–5000 (10–50 s)
+            'low': ('#e30e0e', 60000),    # Rot für RTT 5001–59999 (50–599,99 s)
+            'invalid': ('#808080', 0)     # Grau für RTT = 0 oder 60000
         }
 
         # Hauptbereich: PanedWindow für Treeview (links) und Details+Graph (rechts)
@@ -60,7 +59,7 @@ class RoutingTableWindow:
             ('protocol', self._getTabStr('Protocol'), 80),
             ('ports', self._getTabStr('Ports'), 60),
             ('quality', self._getTabStr('Quality'), 80),
-            ('ttl', self._getTabStr('TTL'), 60),
+            ('rtt', self._getTabStr('RTT'), 60),
             ('hop_count', self._getTabStr('Hops'), 60),
             ('timestamp', self._getTabStr('Timestamp'), 150)
         ]
@@ -69,11 +68,11 @@ class RoutingTableWindow:
             self._tree.heading(col_id, text=col_name, command=lambda c=col_id: self.sort_column(c))
             self._tree.column(col_id, width=width, anchor='w')
 
-        # Farb-Tags für Qualität und TTL
+        # Farb-Tags für Qualität und RTT
         for level, (color, _) in self._quality_colors.items():
             self._tree.tag_configure(f'quality_{level}', background=color)
-        for level, (color, _) in self._ttl_colors.items():
-            self._tree.tag_configure(f'ttl_{level}', background=color)
+        for level, (color, _) in self._rtt_colors.items():
+            self._tree.tag_configure(f'rtt_{level}', background=color)
 
         # Layout Treeview
         self._tree.grid(row=0, column=0, sticky='nsew')
@@ -109,6 +108,12 @@ class RoutingTableWindow:
         self._canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         self._canvas.get_tk_widget().configure(bg='black')
 
+        # Navigation Toolbar
+        self._toolbar_frame = ttk.Frame(self._graph_frame)
+        self._toolbar_frame.pack(fill=tk.X)
+        self._toolbar = NavigationToolbar2Tk(self._canvas, self._toolbar_frame)
+        self._toolbar.update()
+
         # ttk-Style für schwarzen Frame-Hintergrund
         style = ttk.Style()
         style.configure('Black.TFrame', background='black')
@@ -120,6 +125,11 @@ class RoutingTableWindow:
         self._sort_column_id = 'timestamp'
         self._sort_reverse = True  # Standard: Neueste zuerst
 
+        # Zoom-Variablen
+        self._initial_xlim = None
+        self._initial_ylim = None
+
+        self._root_win.routingTab_win = self
         # Initiale Daten laden
         self.update_treeview()
 
@@ -137,11 +147,12 @@ class RoutingTableWindow:
         port_combo.bind('<<ComboboxSelected>>', lambda e: self.update_treeview(
             port_id=int(port_var.get()) if port_var.get() != 'All' else None))
 
-    @staticmethod
-    def _get_color_tag(value, color_map, default='low'):
+    def _get_color_tag(self, value, color_map, default='low'):
         """Bestimmt den Farb-Tag basierend auf dem Wert."""
+        if value == 60000:  # Spezielle Behandlung für RTT = 60000 (nicht verfügbar)
+            return 'invalid'
         for level, (color, threshold) in color_map.items():
-            if value >= threshold:
+            if value <= threshold:
                 return level
         return default
 
@@ -212,12 +223,28 @@ class RoutingTableWindow:
         self._fig.tight_layout(pad=0)
         self._ax.set_position([0, 0, 1, 1])
 
+        # Zeichne den Graphen
         edge_colors = [data['color'] for _, _, data in G.edges(data=True)]
         edge_widths = [data['width'] for _, _, data in G.edges(data=True)]
         edge_styles_list = [edge_styles.get((u, v), [('latest', 'solid')])[-1][1] for u, v in G.edges()]
         nx.draw(G, pos, ax=self._ax, with_labels=True, node_color='blue', node_size=500,
                 font_size=8, font_color='white', edge_color=edge_colors, width=edge_widths,
                 style=edge_styles_list, arrows=True)
+
+        # Speichere initiale Achsengrenzen für Reset
+        if self._initial_xlim is None or self._initial_ylim is None:
+            x_coords = [pos[node][0] for node in G.nodes()]
+            y_coords = [pos[node][1] for node in G.nodes()]
+            if x_coords and y_coords:
+                margin = 0.1  # 10% Rand
+                x_min, x_max = min(x_coords), max(x_coords)
+                y_min, y_max = min(y_coords), max(y_coords)
+                x_range = x_max - x_min
+                y_range = y_max - y_min
+                self._initial_xlim = (x_min - x_range * margin, x_max + x_range * margin)
+                self._initial_ylim = (y_min - y_range * margin, y_max + y_range * margin)
+                self._ax.set_xlim(self._initial_xlim)
+                self._ax.set_ylim(self._initial_ylim)
 
         # Force Canvas-Update
         self._canvas.draw()
@@ -242,17 +269,30 @@ class RoutingTableWindow:
         table = self._routing_table.filter_by_port(port_id) if port_id is not None else dict(self._routing_table.table)
 
         # Knoten einfügen
-        for call, node in table['nodes'].items():
+        for call, node in dict(table['nodes']).items():
             ports = ','.join(map(str, node['ports'].keys()))
             timestamp = datetime.fromtimestamp(node['last_seen']).strftime('%Y-%m-%d %H:%M:%S')
             quality = 0
-            ttl = 255
+            rtt = 0
             hop_count = 0
-            tags = [f'quality_{self._get_color_tag(quality, self._quality_colors, "zero")}',
-                    f'ttl_{self._get_color_tag(ttl, self._ttl_colors)}']
+            for (from_c, to_c), entries in dict(table['connections']).items():
+                if to_c == call:
+                    for entry in entries:
+                        q = entry['metrics'].get('quality', 0)
+                        r = entry['metrics'].get('rtt', 0)
+                        h = entry['metrics'].get('hop_counter', 0)
+                        if q > quality:
+                            quality = q
+                        if r > 0 and (rtt == 0 or r < rtt):
+                            rtt = r
+                        if h > hop_count:
+                            hop_count = h
+            rtt_tag = f'rtt_{self._get_color_tag(rtt, self._rtt_colors, "invalid")}'
+            quality_tag = f'quality_{self._get_color_tag(quality, self._quality_colors, "zero")}' if quality > 0 else rtt_tag
+            tags = [quality_tag, rtt_tag]
             self._tree.insert('', 'end', iid=f'node_{call}', values=(
                 call, node['alias'], '', node['protocol'], ports,
-                quality, ttl, hop_count, timestamp
+                quality, rtt, hop_count, timestamp
             ), tags=tags)
 
         # Verbindungen einfügen
@@ -260,16 +300,17 @@ class RoutingTableWindow:
         for (from_call, to_call), entries in rTabConn.items():
             for i, entry in enumerate(entries):
                 quality = entry['metrics'].get('quality', 255 - entry['metrics'].get('hop_counter', 0))
-                ttl = entry['metrics'].get('ttl', 255)
+                rtt = entry['metrics'].get('rtt', 0)
                 hop_count = entry['metrics'].get('hop_counter', 0)
                 timestamp = datetime.fromtimestamp(entry['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
                 ports = str(entry['metrics']['port_id'])
-                tags = [f'quality_{self._get_color_tag(quality, self._quality_colors, "zero")}',
-                        f'ttl_{self._get_color_tag(ttl, self._ttl_colors)}']
+                rtt_tag = f'rtt_{self._get_color_tag(rtt, self._rtt_colors, "invalid")}'
+                quality_tag = f'quality_{self._get_color_tag(quality, self._quality_colors, "zero")}' if quality > 0 else rtt_tag
+                tags = [quality_tag, rtt_tag]
                 callsign = f"{from_call}->{to_call}" if from_call else to_call
                 self._tree.insert('', 'end', iid=f'conn_{from_call}_{to_call}_{i}', values=(
                     callsign, '', entry['type'], '', ports,
-                    quality, ttl, hop_count, timestamp
+                    quality, rtt, hop_count, timestamp
                 ), tags=tags)
 
         # Sortieren
@@ -292,7 +333,7 @@ class RoutingTableWindow:
         self._sort_reverse = reverse
 
         items = [(self._tree.set(item, col), item) for item in self._tree.get_children()]
-        if col in ['quality', 'ttl', 'hop_count']:
+        if col in ['quality', 'rtt', 'hop_count']:
             items.sort(key=lambda x: float(x[0]) if x[0] else 0, reverse=reverse)
         else:
             items.sort(key=lambda x: x[0].lower(), reverse=reverse)
@@ -353,6 +394,7 @@ class RoutingTableWindow:
         self._window.destroy()
 
     def close(self):
+        self._root_win.routingTab_win = None
         self._destroy_win()
 
     def tasker(self):

@@ -527,12 +527,12 @@ def decode_RIP(rip_payload: bytes, start_index: int) -> dict:
         return {}
     rif_data['call'] = call
     rif_data['raw_call'] = raw_call
-    index += 7
+    index = 7
 
     # Check for short 12-byte frame (Callsign + Quality + Raw Data)
     if len(rip_payload) >= 8:
-        quality = int(rip_payload[index])
-        rif_data['quality'] = quality
+        hop_count = int(rip_payload[7])
+        rif_data['hop_count'] = hop_count
         index += 1
         # Store remaining bytes as raw data
         if index < len(rip_payload):
@@ -544,12 +544,12 @@ def decode_RIP(rip_payload: bytes, start_index: int) -> dict:
 
     # Handle longer frames with hop count, transport time, and options
     if len(rip_payload) >= 10:
-        hop_count = int(rip_payload[7])
+        #hop_count = int(rip_payload[7])
         transport_time = int.from_bytes(rip_payload[8:10], byteorder='big')
         if transport_time > 65535:  # Implausible RTT
             logger.warning(f"Implausible transport time: {transport_time}, payload: {rip_payload.hex()}")
             return {}
-        rif_data['hop_count'] = hop_count
+        #rif_data['hop_count'] = hop_count
         rif_data['transport_time'] = transport_time
         index = 10
         while index < len(rip_payload):
@@ -645,10 +645,10 @@ def NetRom_decode_RIF_mon(netrom_cfg: dict) -> str:
             new_str = f"├►Node: {call.ljust(9)}\n"
         max_Str_len = max(max_Str_len, len(new_str))
         monitor_str += new_str
-        if 'quality' in rif:
-            new_str = f"├►  Quality: {rif['quality']}\n"
-            max_Str_len = max(max_Str_len, len(new_str))
-            monitor_str += new_str
+        #if 'quality' in rif:
+        #    new_str = f"├►  Quality: {rif['quality']}\n"
+        #    max_Str_len = max(max_Str_len, len(new_str))
+        #    monitor_str += new_str
         if 'alias' in rif:
             new_str = f"├►  Alias: {rif['alias']}\n"
             max_Str_len = max(max_Str_len, len(new_str))

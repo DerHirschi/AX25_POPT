@@ -2238,7 +2238,7 @@ class PoPT_GUI_Main:
                 self.routingTab_win.close()
                 self.routingTab_win = None
                 return
-        self.routingTab_win = RoutingTableWindow(self, self._port_handler.get_RoutingTable())
+        RoutingTableWindow(self, self._port_handler.get_RoutingTable())
 
     #######################################################
     """
