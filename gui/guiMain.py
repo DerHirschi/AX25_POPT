@@ -2,7 +2,7 @@ import datetime
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, PhotoImage
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -21,7 +21,7 @@ from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiRightClick_Menu import ContextMenu
-from gui.guiRoutingTab import RoutingTableWindow
+#from gui.guiRoutingTab import RoutingTableWindow
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -135,6 +135,7 @@ class PoPT_GUI_Main:
             self.main_win.iconbitmap("favicon.ico")
         except tk.TclError:
             logger.warning(logTag + f"Couldn't load favicon.ico ")
+            self.main_win.iconphoto(False, PhotoImage(file='favicon.png'))
             pass
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
@@ -699,9 +700,9 @@ class PoPT_GUI_Main:
                               command=lambda: self.open_window('dualPort_monitor'),
                               underline=0)
         MenuTools.add_separator()
-        MenuTools.add_command(label='Routing-Tab Viewer',
-                              command=lambda: self.open_RoutingTab_win(),
-                              underline=0)
+        #MenuTools.add_command(label='Routing-Tab Viewer',
+        #                      command=lambda: self.open_RoutingTab_win(),
+        #                      underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label='Kaffèmaschine',
@@ -2238,7 +2239,7 @@ class PoPT_GUI_Main:
                 self.routingTab_win.close()
                 self.routingTab_win = None
                 return
-        RoutingTableWindow(self, self._port_handler.get_RoutingTable())
+        #RoutingTableWindow(self, self._port_handler.get_RoutingTable())
 
     #######################################################
     """

@@ -4,7 +4,7 @@ import threading
 
 from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
-from ax25.ax25RoutingTable import RoutingTable
+# from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
@@ -75,7 +75,8 @@ class AX25PortHandler(object):
         #######################################################
         # Init Routing Table
         logger.info("PH: Routing Table Init")
-        self._routingTable      = RoutingTable()
+        # self._routingTable      = RoutingTable()
+        self._routingTable      = None
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")

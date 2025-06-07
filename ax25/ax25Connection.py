@@ -522,6 +522,7 @@ class AX25Conn:
         self.cli = NoneCLI(self)
         self.cli_type = ''
         self.pipe = pipe
+        return True
 
     def _del_pipe(self):
         if self.pipe:
