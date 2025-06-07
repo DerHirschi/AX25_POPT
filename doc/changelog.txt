@@ -1,6 +1,7 @@
 ###########################################################################################################
 # 2.119.x
 Fixes:
+- Script-Error wenn Port geschlossen wird (TNC an Seriellen Port)
 
 Optimierung/Änderungen:
 - AXIP Port handling

@@ -442,6 +442,7 @@ class AX25Port(object):
 
     #################################################
     # Routing Tab
+    """
     def _update_routingTab(self, ax25_conf: dict):
         if not ax25_conf.get('netrom_cfg', {}):
             return
@@ -452,6 +453,7 @@ class AX25Port(object):
         rTab.update(ax25_conf)
         # rTab.debug_out()
         return
+    """
 
     #################################################
     def _process_rx_buf(self, buf):
@@ -472,7 +474,7 @@ class AX25Port(object):
         ax25frame.axip_add          = buf.axip_add
         ax25frame_conf              = ax25frame.get_frame_conf()
         ax25frame_conf['port_id']   = int(self.port_id)     # TODO using port_id fm this cfg
-        self._update_routingTab(ax25frame_conf)
+        # self._update_routingTab(ax25frame_conf)
         if not self._rx_dualPort_handler(ax25_frame=ax25frame):
             self._gui_monitor(ax25frame=ax25frame, tx=False)
             self._mh_input(ax25frame_conf, tx=False)
@@ -1208,7 +1210,8 @@ class KISSSerial(AX25Port):
             """
             time.sleep(1)
             if is_linux():
-                logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
+                if hasattr(self.device, 'readall'):
+                    logger.info(self._logTag + f"TNC - REST: {self.device.readall()}")
             else:
                 if hasattr(self.device, 'flush'):
                     self.device.flush()
