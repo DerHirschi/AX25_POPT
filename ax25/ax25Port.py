@@ -1120,6 +1120,7 @@ class KissTCP(AX25Port):
                 return ret
             if self.kiss.unknown_kiss_frame(recv_buff):
                 return None
+            return None
         else:
             return None
 
@@ -1267,6 +1268,7 @@ class KISSSerial(AX25Port):
 
             else:
                 return None
+        return None
 
     def _tx_device(self, frame):
         if self.device is None:
@@ -1385,7 +1387,6 @@ class AXIP(AX25Port):
             logger.error(f"Port {self.port_id}: OSError in _rx: {e}")
             return RxBuf()
 
-
     def _tx_device(self, frame, multicast=True):
         if not hasattr(frame, 'axip_add'):
             return
@@ -1427,7 +1428,6 @@ class AXIP(AX25Port):
                )):
             self._mcast_server.mcast_tx(ax25frame=frame)
         """
-
 
     def tx_multicast(self, frame):
         try:
@@ -1538,6 +1538,7 @@ class AX25KernelDEV(AX25Port):
                 return ret
             if self.kiss.unknown_kiss_frame(recv_buff):
                 return None
+            return None
         else:
             return None
 
@@ -1660,7 +1661,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
                         self.set_kiss_parm()
                     except AX25DeviceFAIL as e:
                         raise e
-
+            return None
         else:
             while self.loop_is_running and self.device_is_running:
                 try:
@@ -1688,6 +1689,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
                         self._tnc_emu_connection.close()
                         self._tnc_emu_connection, self._tnc_emu_client_address = None, None
                     return None
+            return None
 
     def _tx_device(self, frame):
         if self._tnc_emu_connection is None:
@@ -1866,6 +1868,7 @@ class TNC_EMU_TCP_CL(AX25Port):
                     # self._tnc_emu_connection.close()
                     self._tnc_emu_connection = None
                 return None
+        return None
 
     def _tx_device(self, frame):
         try:

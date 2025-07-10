@@ -237,7 +237,7 @@ class PoPT_GUI_Main:
         # self._test_task_timer = time.time()
         ########################################
         ############################
-        # Windows
+        # Window
         self.new_conn_win           = None
         self.settings_win           = None
         self.mh_window              = None
@@ -1322,7 +1322,7 @@ class PoPT_GUI_Main:
                                  background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
         ##
-        self._mon_txt.configure(state="normal")
+        #self._mon_txt.configure(state="normal")
         self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_config("send",
                                  foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
