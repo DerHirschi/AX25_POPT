@@ -6,9 +6,6 @@ import crcmod
 
 from ax25.ax25UI_Pipe import AX25Pipe
 from fnc.os_fnc import is_linux
-
-crc_x25 = crcmod.predefined.mkCrcFun('x-25')
-
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
@@ -18,6 +15,18 @@ from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
 from fnc.socket_fnc import get_ip_by_hostname
+
+meshtastic_lib = False
+try:
+    from ax25.meshtastic_if import MeshDevice
+    meshtastic_lib = True
+    logger.info("Meshtastic Interface Modul successfully loaded.")
+except Exception as e:
+    logger.error(f"Meshtastic: {e}")
+    logger.info("No Meshtastic Interface available.")
+    meshtastic_lib = False
+
+crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
 class RxBuf:
@@ -1903,3 +1912,78 @@ AX25DeviceTAB = {
             'TNC-EMU-TCP-SRV': TNC_EMU_TCP_SRV,
             'TNC-EMU-TCP-CL': TNC_EMU_TCP_CL,
         }
+
+if meshtastic_lib:
+    class AX25Meshtastic(AX25Port):
+        def init(self):
+
+            if self.loop_is_running:
+                # print("AXIP Client INIT")
+                logger.info(f"Port {self.port_id}: Meshtastic-Device: INIT")
+
+                try:
+                    self.device = MeshDevice()
+                except Exception as ex:
+                    logger.error(f"Port {self.port_id}: Meshtastic-Device: {ex}")
+                    self.close_device()
+                    raise AX25DeviceFAIL
+
+                self.device_is_running = True
+
+        def __del__(self):
+            # self.device.shutdown(socket.SHUT_RDWR)
+            self.close_device()
+
+        def close_device(self):
+            self.loop_is_running = False
+            if self.device is None:
+                self.device_is_running = False
+                return
+            logger.info(f"Port {self.port_id}: Meshtastic-Device: Try closing Device")
+            self.device_is_running = False
+            if hasattr(self.device, 'close_interface'):
+                self.device.close_interface()
+            logger.info(f"Port {self.port_id}: Meshtastic-Device: Closing Device done.")
+
+        def _rx(self):
+            recv_buff = self.device.get_ax25_packet_fm_buff()
+            ret = RxBuf()
+            if not recv_buff:
+                return ret
+            ###################################
+            # CRC
+            crc  = recv_buff[-2:]
+            crc  = int(bytearray2hexstr(crc[::-1]), 16)
+            pack = recv_buff[:-2]
+            calc_crc = crc_x25(pack)
+            if calc_crc != crc:
+                logger.error(f"Port {self.port_id}: Meshtastic-Device: CRC Error")
+                return ret
+            ret.raw_data   = pack
+            ret.kiss_frame = b''
+            return ret
+
+        def _tx_device(self, frame):
+            ###################################
+            # CRC
+            calc_crc = crc_x25(frame.data_bytes)
+            calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
+            ###################################
+            try:
+                self.device.send_ax25_packet(frame.data_bytes + calc_crc)
+                # self.device.settimeout(0.1)
+
+            except Exception as ex:
+                logger.error(f"Port {self.port_id}: Meshtastic-Device: {ex}")
+                self.close_device()
+            """
+            if all((
+                    hasattr(self._mcast_server, 'mcast_tx'),
+                    multicast
+                   )):
+                self._mcast_server.mcast_tx(ax25frame=frame)
+            """
+
+
+
+    AX25DeviceTAB['MESHTASTIC_TCP'] = AX25Meshtastic

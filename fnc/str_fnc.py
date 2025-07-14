@@ -54,6 +54,9 @@ def conv_time_DE_str(dateti=None):
 def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')
 
+# get_full_timestamp = lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+get_timestamp      = lambda: datetime.now().strftime("%H:%M:%S")
+
 
 def get_timedelta_CLIstr(dateti: datetime.now(), r_just=True):
     time_delta = datetime.now() - dateti

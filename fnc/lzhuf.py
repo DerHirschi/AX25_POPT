@@ -8,16 +8,15 @@ import array
 
 class LZHUF_Comp:
     # Öffentliche Konstanten
-    N = 2048  # Puffergröße
-    F = 60  # Vorausschaupuffer
-    THRESHOLD = 2
-    NODE_NIL = N
-    N_CHAR = (256 - THRESHOLD) + F
-    T = (N_CHAR * 2) - 1
-    R = T - 1
-    MAX_FREQ = 0x8000
-    #TB_SIZE = N + F - 2
-    TB_SIZE = N + F - 1
+    N           = 2048  # Puffergröße
+    F           = 60  # Vorausschaupuffer
+    THRESHOLD   = 2
+    NODE_NIL    = N
+    N_CHAR      = (256 - THRESHOLD) + F
+    T           = (N_CHAR * 2) - 1
+    R           = T - 1
+    MAX_FREQ    = 0x8000
+    TB_SIZE     = N + F - 1
 
     # Öffentliche Tabellen für Positionscodierung/Dekodierung
     P_LEN = bytearray([0x03, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05, 0x05,
@@ -553,3 +552,10 @@ class LZHUF_Comp:
             i = ((i << 1) | self.get_bit()) & 0xFFFF
             j -= 1
         return c | (i & 0x3F)
+
+
+if __name__ == '__main__':
+    lzhuf = LZHUF_Comp()
+    comp = lzhuf.encode(b'1234567890abcdefghijklmnopqrstuvwxyz')
+    print(comp)
+    print(lzhuf.decode(comp))
