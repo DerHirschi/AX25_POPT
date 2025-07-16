@@ -35,7 +35,7 @@ def format_hexstr(inp):
         return '{:02x}'.format(inp)
     elif type(inp) is str:
         return '{:02x}'.format(int(inp, 16))
-
+    return str(inp)
 
 def decode_FRMR(ifield):
     if len(ifield) != 3:
@@ -444,8 +444,8 @@ class PIDByte:
         if int(in_byte) in self.pac_types.keys():
             self.pac_types[int(in_byte)]()
         else:
-            logger.debug("decode in_pid_bate hex: {}".format(hex(in_byte)))
-            logger.debug("decode in_pid_bate byte: {}".format(type(in_byte)))
+            logger.debug("decode in_pid_byte hex: {}".format(hex(in_byte)))
+            logger.debug("decode in_pid_byte byte: {}".format(type(in_byte)))
             #in_byte = int(in_byte, 16)
 
             bi = bin(in_byte)[2:].zfill(8)
@@ -524,9 +524,9 @@ class AX25Frame:
     def __init__(self, conf=None):
         if conf is None:
             conf = {}
-        self.addr_uid = conf.get('uid', '')                 # Unique ID/Address String
+        self.addr_uid  = conf.get('uid', '')                 # Unique ID/Address String
         self.from_call = Call(conf.get('from_call_str'))
-        self.to_call = Call(conf.get('to_call_str', ''))
+        self.to_call   = Call(conf.get('to_call_str', ''))
         self.via_calls = []
         for via_call_str in conf.get('via_calls', []):
             self.via_calls.append(Call(via_call_str))

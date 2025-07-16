@@ -30,9 +30,10 @@ crc_x25 = crcmod.predefined.mkCrcFun('x-25')
 
 
 class RxBuf:
-    axip_add = '', 0
-    raw_data = b''
-    kiss_frame = b''
+    axip_add    = '', 0
+    raw_data    = b''
+    kiss_frame  = b''
+    meshT_id    = ''
 
 
 class AX25Port(object):
@@ -85,6 +86,8 @@ class AX25Port(object):
         self.dualPort_monitor_buf = []
         """ MCast Server """
         self._mcast_server = None
+        """ Meshtastic """
+        self._meshID_tab = {}   # TODO save in UserDB
         ##############
         # AXIP VARs
         # self.axip_anti_spam = {}
@@ -465,7 +468,7 @@ class AX25Port(object):
     """
 
     #################################################
-    def _process_rx_buf(self, buf):
+    def _process_rx_buf(self, buf: RxBuf):
         self._set_TXD()
         self._set_digi_TXD()
         ax25frame = AX25Frame()
@@ -493,7 +496,17 @@ class AX25Port(object):
             if hasattr(self._mcast_server, 'mcast_rx'):
                 self._mcast_server.mcast_rx(ax25frame=ax25frame)
         self._rx_echo(ax25_frame=ax25frame)
-
+        #################################################
+        # Meshtastic ID-Tab
+        if buf.meshT_id:
+            sender_call = ax25frame_conf.get('from_call_str', '')
+            for via_call, c_bit in ax25frame_conf.get('via_calls_str_c_bit', []):
+                if c_bit:
+                    sender_call = via_call
+                else:
+                    break
+            self._meshID_tab[str(sender_call)] = str(buf.meshT_id)
+            logger.debug(f"Call <> Mesh-ID: {sender_call}<>{buf.meshT_id}")
 
     def _rx_dualPort_handler(self, ax25_frame):
         if not self.dualPort_cfg:
@@ -558,11 +571,11 @@ class AX25Port(object):
         tr = False
         for k in self.connections.keys():
             conn = self.connections[k]
-            if time.time() > conn.t2 and not tr:
+            if time.time() > conn.t2:
                 snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
-                conn.tx_buf_ctl = []
+                conn.tx_buf_ctl   = []
                 conn.tx_buf_2send = []
-                conn.REJ_is_set = False
+                conn.REJ_is_set   = False
                 for el in snd_buf:
                     # if el.digi_call and conn.is_link:
                     if conn.digi_call:
@@ -573,13 +586,13 @@ class AX25Port(object):
                         el.encode_ax25frame()
                     try:
                         self.tx(frame=el)
-                        tr = True
-                    except AX25DeviceFAIL as e:
-                        raise e
+                    except AX25DeviceFAIL as ex:
+                        raise ex
+                    tr = True
                     # Monitor
                     # self._gui_monitor(ax25frame=el, tx=True)
-            else:
-                tr = True
+                if tr:
+                    return tr
         return tr
 
     def _tx_pipe_buf(self):
@@ -1392,8 +1405,8 @@ class AXIP(AX25Port):
             return ret
         except BlockingIOError:
             return RxBuf()  # Keine Daten verfügbar
-        except OSError as e:
-            logger.error(f"Port {self.port_id}: OSError in _rx: {e}")
+        except OSError as ex:
+            logger.error(f"Port {self.port_id}: OSError in _rx: {ex}")
             return RxBuf()
 
     def _tx_device(self, frame, multicast=True):
@@ -1946,7 +1959,7 @@ if meshtastic_lib:
             logger.info(f"Port {self.port_id}: Meshtastic-Device: Closing Device done.")
 
         def _rx(self):
-            recv_buff = self.device.get_ax25_packet_fm_buff()
+            recv_buff, from_id = self.device.get_ax25_packet_fm_buff()
             ret = RxBuf()
             if not recv_buff:
                 return ret
@@ -1961,6 +1974,7 @@ if meshtastic_lib:
                 return ret
             ret.raw_data   = pack
             ret.kiss_frame = b''
+            ret.meshT_id   = from_id
             return ret
 
         def _tx_device(self, frame):
@@ -1969,9 +1983,15 @@ if meshtastic_lib:
             calc_crc = crc_x25(frame.data_bytes)
             calc_crc = bytes.fromhex(hex(calc_crc)[2:].zfill(4))[::-1]
             ###################################
+            to_call  = frame.to_call.call_str
+            for via_call in frame.via_calls:
+                if not via_call.c_bit:
+                    to_call = via_call.call_str
+                    break
+            to_meshID = self._meshID_tab.get(to_call, '')
+            logger.debug(f"AX-Mesh TX to Call: {to_call} - MeshID: {to_meshID}")
             try:
-                self.device.send_ax25_packet(frame.data_bytes + calc_crc)
-                # self.device.settimeout(0.1)
+                self.device.send_ax25_packet(frame.data_bytes, calc_crc, to_meshID)
 
             except Exception as ex:
                 logger.error(f"Port {self.port_id}: Meshtastic-Device: {ex}")

@@ -9,7 +9,7 @@ from meshtastic import tcp_interface, serial_interface
 from meshtastic.protobuf import portnums_pb2
 from pubsub import pub
 
-from cfg.constant import PARAM_MAX_MON_WIDTH
+from cfg.constant import PARAM_MAX_MON_WIDTH, MESH_PACK_LEN_UNPROTO, MESH_PACK_LEN_PROTO
 from cfg.logger_config import logger
 from fnc.lzhuf import LZHUF_Comp
 from fnc.str_fnc import get_timestamp
@@ -44,13 +44,17 @@ class MeshDevice:
         self._tx_thread     = None
         # RX
         self._monitor_buff: list[tuple[bool, str]]  = []
-        self._ax25_rx_buff: list[bytes]             = []
-        self._ax25_tx_buff: list[bytes]             = []
+        self._ax25_rx_buff: list[tuple[bytes, str]] = []
+        self._ax25_tx_buff: list[tuple[bytes, str]] = []
 
         self._main_thread   = threading.Thread(target=self._run_loop)
         self.is_runnig      = True
         self._interface     = None
         self._connect_to_device()
+        ###############
+        # Testing
+        #print("SEnd TEst PAck")
+        #self._send_packet_to(b't' * 220, '!849ae718', False, False)
 
     @staticmethod
     def _on_connection_established(interface, topic=pub.AUTO_TOPIC):
@@ -201,6 +205,9 @@ class MeshDevice:
             return False
 
     def close_interface(self):
+        if not self.is_runnig:
+            logger.warning("Meshtastic-Verbindung wird bereits geschlossen.")
+            return
         logger.info("Schließe Meshtastic-Verbindung...")
         self.is_runnig = False
         time.sleep(1)
@@ -426,7 +433,7 @@ class MeshDevice:
         decoded = packet.get("decoded", {})
         payload = decoded.get("payload", b"")
         #channel = packet.get("channel", -1)
-        #from_id = packet.get("fromId", packet.get("from", "UNKNOWN"))
+        from_id = packet.get("fromId", packet.get("from", "UNKNOWN"))
         #sender  = self._node_info_tab.get(from_id, {}).get('shortName', from_id)
         """
         try:
@@ -438,7 +445,7 @@ class MeshDevice:
             return
         """
 
-        self._ax25_rx_buff.append(payload)
+        self._ax25_rx_buff.append((payload, from_id))
 
     #############################
     # De/Compressing
@@ -648,7 +655,8 @@ class MeshDevice:
         else:
             rx = False
         self._monitor_buff.append((rx, mon_str))
-
+        #print(mon_str)
+        #print(from_id)
     ###########################
     # TX
     # UnProto
@@ -657,7 +665,7 @@ class MeshDevice:
         # comp_data_lzhuf = self._comp_lzhuf(data)
         # comp_data_lzma  = self._comp_lzma(data)
         comp_data_lzma = data
-        if len(comp_data_lzma) > 232:
+        if len(comp_data_lzma) > MESH_PACK_LEN_UNPROTO:
             logger.error(f"MeshDevice.send_packet()> Packet to big: {len(comp_data_lzma)} Bytes > 232")
             return
         try:
@@ -687,7 +695,14 @@ class MeshDevice:
                 return
         logger.info("Starte TX Thread")
         logger.debug(f"len _ax25_tx_buff: {len(self._ax25_tx_buff)}")
-        self._tx_thread     = threading.Thread(target=self._send_packet, args=(self._ax25_tx_buff[0], ))
+        ax25_packet, to_id = self._ax25_tx_buff[0]
+        #self._tx_thread = threading.Thread(target=self._send_packet, args=(ax25_packet,))
+
+        if not to_id:
+            self._tx_thread     = threading.Thread(target=self._send_packet, args=(ax25_packet, ))
+        else:
+            self._tx_thread     = threading.Thread(target=self._send_packet_to, args=(ax25_packet, to_id, True, False))
+
         self._tx_thread.start()
         self._ax25_tx_buff  = self._ax25_tx_buff[1:]
         # self._mesh_device.send_packet_to(msg, to_id=to_id)
@@ -695,6 +710,9 @@ class MeshDevice:
     # Proto
     def _send_packet_to(self, message: bytes, to_id: str, ack=True, re_send=True):
         # 220 Bytes len
+        if len(message) > MESH_PACK_LEN_PROTO:
+            logger.error(f"MeshDevice.send_packet()> Packet to big: {len(message)} > {MESH_PACK_LEN_PROTO}")
+            return False
         try:
 
             # Sende Nachricht mit wantAck=True
@@ -737,7 +755,8 @@ class MeshDevice:
         except (BrokenPipeError, ConnectionError, OSError) as e:
             logger.error(f"Verbindungsfehler beim Senden der Nachricht: {e}")
             self._reconnect()
-            raise e
+            # raise e
+            return False
         except Exception as e:
             logger.error(f"Fehler beim Senden der Nachricht: {e}")
             raise e
@@ -775,14 +794,15 @@ class MeshDevice:
     # AX25 Buffer
     def get_ax25_packet_fm_buff(self):
         if not self._ax25_rx_buff:
-            return b''
+            return b'', ''
         ret_pack = self._ax25_rx_buff[0]
         self._ax25_rx_buff = self._ax25_rx_buff[1:]
         return ret_pack
 
-    def send_ax25_packet(self, ax25_packet: bytes):
-        if ax25_packet in self._ax25_tx_buff:
+    def send_ax25_packet(self, ax25_packet: bytes, crc: bytes, to_id: str):
+        ax25_packet = ax25_packet + crc
+        if (ax25_packet, to_id) in self._ax25_tx_buff:
             logger.warning("Paket ist bereits im TX-Buffer und noch nicht gesendet.. Überspringe..")
             return
-        self._ax25_tx_buff.append(ax25_packet)
+        self._ax25_tx_buff.append((ax25_packet, to_id))
 

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.119.12'
+VER = '2.119.13'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -427,3 +427,9 @@ GPIO_RANGE = (1, 26)
 TASK_TYP_FWD    = 'FWD'
 TASK_TYP_BEACON = 'BEACON'
 TASK_TYP_MAIL   = 'AUTOMAIL'
+#######################################################
+# Meshtastic
+MESH_PACK_LEN_UNPROTO   = 232
+MESH_PACK_LEN_PROTO     = 220
+# MESH_PACK_LEN_PROTO - MAX AX25-Header
+MESH_AX25PACK_LEN_LIMIT = 146   # Max AX25 Payload Len for direct MSG
