@@ -48,8 +48,15 @@ def conv_time_US_str(dateti=None):
 def conv_time_DE_str(dateti=None):
     if not dateti:
         return datetime.now().strftime('%d/%m/%y %H:%M:%S')
-    return dateti.strftime('%d/%m/%y %H:%M:%S')
+    return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
 
+def str_to_datetime(date_str=None):
+    if not date_str:
+        return datetime.now()
+    try:
+        return datetime.strptime(date_str, '%d/%m/%y %H:%M:%S')
+    except ValueError:
+        return datetime.now()
 
 def get_file_timestamp():
     return datetime.now().strftime('%d%m/%y-%H%M')

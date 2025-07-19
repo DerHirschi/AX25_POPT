@@ -1896,13 +1896,3 @@ class TNC_EMU_TCP_CL(AX25Port):
             except AX25DeviceFAIL:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
                 raise AX25DeviceFAIL
-
-
-AX25DeviceTAB = {
-            'KISSTCP': KissTCP,
-            'KISSSER': KISSSerial,
-            'AXIP': AXIP,
-            'AX25KERNEL': AX25KernelDEV,
-            'TNC-EMU-TCP-SRV': TNC_EMU_TCP_SRV,
-            'TNC-EMU-TCP-CL': TNC_EMU_TCP_CL,
-        }

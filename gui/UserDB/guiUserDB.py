@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import ENCODINGS, STATION_TYPS
@@ -546,7 +545,7 @@ class UserDB(tk.Toplevel):
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
             )"""
-            self._last_edit_var.set(conv_time_DE_str(self._db_ent.last_edit))
+            self._last_edit_var.set(self._db_ent.last_edit)
             self._last_conn_var.set('---' if self._db_ent.last_conn is None else conv_time_DE_str(self._db_ent.last_conn))
             self._conn_count_var.set(str(self._db_ent.Connects))
 
@@ -666,7 +665,7 @@ class UserDB(tk.Toplevel):
             ]
             self._db_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
 
-            self._db_ent.last_edit = datetime.now()
+            self._db_ent.last_edit = conv_time_DE_str()
             self._db_ent.TYP = str(self._typ_var.get())
             if self._db_ent.TYP == 'SYSOP':
                 self._db_ent.Sysop_Call = ''

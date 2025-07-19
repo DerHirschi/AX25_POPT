@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -1070,7 +1070,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_name_set')}: {self._user_db_ent.Name}" \
                    "\r"
@@ -1089,7 +1089,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_qth_set')}: {self._user_db_ent.QTH}" \
                    "\r"
@@ -1110,7 +1110,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             # self._connection.set_distance()
             self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
@@ -1135,7 +1135,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_zip_set')}: {self._user_db_ent.ZIP}" \
                    "\r"
@@ -1154,7 +1154,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
                    "\r"
@@ -1173,7 +1173,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_email_set')}: {self._user_db_ent.Email}" \
                    "\r"
@@ -1192,7 +1192,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_http_set')}: {self._user_db_ent.HTTP}" \
                    "\r"

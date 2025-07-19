@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.119.11'
+VER = '2.119.12'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -29,6 +29,7 @@ CFG_logging_path        = 'data/logs/'
 CFG_usertxt_path        = 'userdata/'
 CFG_ft_downloads        = 'ft_downloads/'
 CFG_user_db             = 'data/UserDB.popt'
+CFG_user_db_json        = 'data/UserDB.json'
 CFG_mh_data_file        = 'data/mh_data.popt'
 CFG_port_stat_data_file = 'data/port_stat.popt'
 # BBS

@@ -1,15 +1,18 @@
 ###########################################################################################################
 # 2.119.x
 Fixes:
-- Script-Error wenn Port geschlossen wird (TNC an Seriellen Port)
+- Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
 
 Optimierung/Änderungen:
 - AXIP Port handling
 - Port Loop
+- Port Connection-TX-Spooler
 - Net/Rom decoder und Monitor Ausgabe
+- User-DB wird jetzt in json format gespeichert
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder
+- App-Icon für Linux. (Icon by Thomas D1TNE. Danke Thomas)
 
 ###########################################################################################################
 ###########################################################################################################
