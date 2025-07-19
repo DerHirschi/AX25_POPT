@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from UserDB.UserDBmain import USER_DB
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab
 from gui.guiMsgBoxes import AskMsg
@@ -29,7 +30,10 @@ class UserDBtreeview(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ############################################################
         self._sort_flag         = ''

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
+from cfg.logger_config import logger
 #from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 #from gui import FigureCanvasTkAgg
@@ -39,7 +40,10 @@ class ConnPathsPlot(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         #######################################################################
         self._seed = random.randint(1, 10000)
         self._path_data = {}

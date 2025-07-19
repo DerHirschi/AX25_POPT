@@ -5,6 +5,7 @@ from tkinter import ttk
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from cfg.constant import APRS_SW_ID
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 
@@ -27,7 +28,10 @@ class NewMessageWindow(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self.title(STR_TABLE['new_msg'][self.lang])
         #######################

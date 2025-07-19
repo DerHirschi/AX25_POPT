@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
@@ -34,7 +35,10 @@ class WXWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ##########################################################################################
         ##########################################################################################

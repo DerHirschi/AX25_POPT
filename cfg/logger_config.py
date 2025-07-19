@@ -19,8 +19,8 @@ dt_str = datetime.now().strftime('%y%m%d-%H%M')
 
 if DEBUG_LOG:
     log_level = logging.DEBUG
-    # log_format = "%(asctime)s - %(levelname)s - %(name)s: %(filename)s.%(funcName)s()> %(message)s"
-    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(message)s"
+    log_format = "%(asctime)s - %(levelname)s - %(name)s: %(filename)s.%(funcName)s()> %(message)s"
+    # log_format = "%(asctime)s - %(levelname)s - %(name)s: %(message)s"
     f_name = f'{CFG_logging_path}popt.log'
     f_mode = 'w'
 else:

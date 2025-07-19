@@ -92,13 +92,13 @@ class PoPT_GUI_Main:
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._logTag = 'GUI-Main> '
         logTag = self._logTag + 'Init: '
-        logger.info(logTag + 'start..')
+        logger.info('start..')
         guiCfg = POPT_CFG.load_guiPARM_main()
         ###########################################
         self.main_win   = tk.Tk()
         ###########################################
         self.style_name = guiCfg.get('gui_parm_style_name', 'default')
-        logger.info(logTag + f'loading Style: {self.style_name}')
+        logger.info(f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
 
         if self.style_name in STYLES_AWTHEMES:
@@ -109,12 +109,12 @@ class PoPT_GUI_Main:
                 self.style.tk.call('package', 'require', self.style_name)
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning(logTag + 'awthemes-10.4.0 not found in folder data')
-                logger.warning(logTag + '  1. If you want to use awthemes, download:')
-                logger.warning(logTag + '     https://sourceforge.net/projects/tcl-awthemes/')
-                logger.warning(logTag + '  2. Extract the contents of the file awthemes-10.4.0.zip')
-                logger.warning(logTag + '     into the data/ folder')
-                logger.warning(logTag + '')
+                logger.warning('awthemes-10.4.0 not found in folder data')
+                logger.warning('  1. If you want to use awthemes, download:')
+                logger.warning('     https://sourceforge.net/projects/tcl-awthemes/')
+                logger.warning('  2. Extract the contents of the file awthemes-10.4.0.zip')
+                logger.warning('     into the data/ folder')
+                logger.warning('')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
         else:
@@ -125,7 +125,7 @@ class PoPT_GUI_Main:
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
-        logger.info(logTag + f'Using style_name: {self.style_name}')
+        logger.info(f'Using style_name: {self.style_name}')
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
@@ -133,10 +133,13 @@ class PoPT_GUI_Main:
         # self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
-        except tk.TclError:
-            logger.warning(logTag + f"Couldn't load favicon.ico ")
-            self.main_win.iconphoto(False, PhotoImage(file='favicon.png'))
-            pass
+        except Exception as ex:
+            logger.warning(f"Couldn't load favicon.ico: {ex}")
+            logger.info("Try to load favicon.png.")
+            try:
+                self.main_win.iconphoto(False, PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(f"Couldn't load favicon.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
         self._port_handler = port_handler

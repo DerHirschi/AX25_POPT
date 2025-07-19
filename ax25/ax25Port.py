@@ -546,32 +546,35 @@ class AX25Port(object):
         return False
 
     def _tx_connection_buf(self):
-        tr = False
-        for k in self.connections.keys():
-            conn = self.connections[k]
-            if time.time() > conn.t2 and not tr:
+        for conn_id, conn in self.connections.items():
+            if time.time() > conn.t2:
                 snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
+                if not snd_buf:
+                    continue
                 conn.tx_buf_ctl = []
                 conn.tx_buf_2send = []
                 conn.REJ_is_set = False
                 for el in snd_buf:
                     # if el.digi_call and conn.is_link:
-                    if conn.digi_call:
-                        # TODO Just check for digi_call while encoding
-                        # print(conn.digi_call)
-                        el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
-                    else:
-                        el.encode_ax25frame()
+                    try:
+                        if conn.digi_call:
+                            # TODO Just check for digi_call while encoding
+                            # print(conn.digi_call)
+                            el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
+                        else:
+                            el.encode_ax25frame()
+                    except Exception as ex:
+                        logger.error(ex)
+                        continue
                     try:
                         self.tx(frame=el)
-                        tr = True
                     except AX25DeviceFAIL as e:
                         raise e
+                    return True
                     # Monitor
                     # self._gui_monitor(ax25frame=el, tx=True)
-            else:
-                tr = True
-        return tr
+
+        return False
 
     def _tx_pipe_buf(self):
         tr = False
@@ -1843,7 +1846,7 @@ class TNC_EMU_TCP_CL(AX25Port):
                 # if not recv_buff:
                 return None
             except ConnectionError as e:
-                print(f"TNC CL : ConnectionError: {e}")
+                logger.error(f"TNC CL : ConnectionError: {e}")
                 return None
             except OSError:
                 try:

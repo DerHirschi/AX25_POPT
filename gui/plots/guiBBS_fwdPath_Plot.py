@@ -3,6 +3,8 @@ from tkinter import ttk
 import random
 from datetime import datetime
 import networkx as nx
+
+from cfg.logger_config import logger
 #from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
@@ -49,7 +51,10 @@ class FwdGraph(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         #######################################################################
         self._db = PORT_HANDLER.get_database()
         self._user_DB = PORT_HANDLER.get_userDB()

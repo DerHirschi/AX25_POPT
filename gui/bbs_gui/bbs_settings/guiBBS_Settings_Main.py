@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.bbs_gui.bbs_settings.guiBBS_AutoMail_Settings import BBSAutoMailSettings
@@ -33,7 +34,10 @@ class BBSSettingsMain(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self._lang      = POPT_CFG.get_guiCFG_language()
         self._bbs_obj   = PORT_HANDLER.get_bbs()

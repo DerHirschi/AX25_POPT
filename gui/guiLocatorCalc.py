@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import coordinates_to_locator, locator_to_coordinates, locator_distance
 from fnc.str_fnc import get_strTab
@@ -25,7 +26,10 @@ class LocatorCalculator(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ###################################
         main_f = ttk.Frame(self)

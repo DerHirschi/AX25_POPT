@@ -3,6 +3,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.default_config import getNew_APRS_Station_cfg
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_to_coordinates, coordinates_to_locator
 from fnc.str_fnc import get_strTab
@@ -28,7 +29,10 @@ class APRSSettingsWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         #######################
         main_f = ttk.Frame(self)

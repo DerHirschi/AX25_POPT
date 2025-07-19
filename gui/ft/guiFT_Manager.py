@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk, Menu
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
@@ -27,7 +28,10 @@ class FileTransferManager(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ####################################
         self._main_f = ttk.Frame(self)

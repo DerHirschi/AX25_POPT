@@ -1,6 +1,8 @@
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
+
+from cfg.logger_config import logger
 from fnc.str_fnc import convert_str_to_datetime
 # Fixme: FigureCanvasTkAgg causing 10 or more threads
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -31,7 +33,10 @@ class WXPlotWindow(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self._wx_data = wx_data
         #################

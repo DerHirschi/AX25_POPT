@@ -3,6 +3,7 @@ from tkinter import ttk, Menu
 
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr
 from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
@@ -38,7 +39,10 @@ class NewConnWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         #################################################
         # Vars

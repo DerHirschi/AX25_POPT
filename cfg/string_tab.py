@@ -47,23 +47,23 @@ STR_TABLE = {
        '\n'),
         # NL
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= Welkom bij $ownCall ($distance km), =-\n'
-       '-= Op Terminal-Kanaal $channel <> Poort $portNr. =-\n'
-       '-= Dit is Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Laatste Login op: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= Welkom bij $ownCall ($distance km), =-\n'
+         '-= Op Terminal-Kanaal $channel <> Poort $portNr. =-\n'
+         '-= Dit is Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Laatste Login op: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # FR
         ('\n'
          '-= Bonjour $destName, =-\n'
          '-= bienvenue sur $ownCall ($distance km), =-\n'
          '-= sur le canal du terminal $channel <> Port $portNr. =-\n'
-         '-= C\'est votre connexion nÂ° $connNr. =-\n'
+         '-= C\'est votre connexion n° $connNr. =-\n'
          '-= $ver - Max-Frame : $parmMaxFrame - Pac-Len : $parmPacLen =-\n'
          '\n'
-         ' # DerniÃ¨re connexion le : $lastConnDate Ã  : $lastConnTime\n'
+         ' # Dernière connexion le : $lastConnDate à : $lastConnTime\n'
          '\n'),
         # FI
         ('\n'
@@ -142,7 +142,7 @@ STR_TABLE = {
     #################
     # BBS First user
     'bbs_new_user_reg0': (
-        'Bitte Sprache wÃ¤hlen.\r',
+        'Bitte Sprache wählen.\r',
         'Use this BBS as your home BBS? Y/N> ',
         'Deze BBS gebruiken als thuis-BBS? J/N> ',
         'Utiliser ce BBS comme BBS domestique ? O/N> ',
@@ -154,10 +154,10 @@ STR_TABLE = {
         ''),
 
     'bbs_new_user_reg_confirm': (
-        'Mit <Enter> bestÃ¤tigen oder neu eingeben um zu Ã¤ndern.\r> ',
+        'Mit <Enter> bestätigen oder neu eingeben um zu ändern.\r> ',
         'Press <Enter> to confirm or re-enter to change.\r>',
         'Druk op <Enter> om te bevestigen of druk nogmaals op enter om te wijzigen.\r>',
-        'Appuyez sur <EntrÃ©e> pour confirmer ou appuyez Ã  nouveau pour modifier.\r>',
+        'Appuyez sur <Entrée> pour confirmer ou appuyez à nouveau pour modifier.\r>',
         '',
         '',
         '',
@@ -188,12 +188,12 @@ STR_TABLE = {
          '\r'
          'Voornaam :'),
         ('\r'
-         "Il s'agit de la premiÃ¨re connexion Ã  ce systÃ¨me.\r"
-         "Avant de continuer, veuillez rÃ©pondre aux questions. MERCI!\r"
-         "Conseil : vous nâ€Ãªtes pas obligÃ© de vous infliger cela, il y a quelque chose qui\r"
+         "Il s'agit de la première connexion à ce système.\r"
+         "Avant de continuer, veuillez répondre aux questions. MERCI!\r"
+         "Conseil : vous n’êtes pas obligé de vous infliger cela, il y a quelque chose qui\r"
          "s'appelle Internet.\r"
          '\r'
-         'PrÃ©nom            :'),
+         'Prénom            :'),
         '',
         '',
         '',
@@ -257,8 +257,8 @@ STR_TABLE = {
          'QTH     : {}\r'
          'Locator : {}\r\r'),
         ('\rTu as bien fait !\r\r'
-         "DonnÃ©es utilisateur de $destCall:\r"
-         'PrÃ©nom      : {}\r'
+         "Données utilisateur de $destCall:\r"
+         'Prénom      : {}\r'
          'Accueil BBS : {}\r'
          'QTH         : {}\r'
          'Localisateur: {}\r\r'),
@@ -273,7 +273,7 @@ STR_TABLE = {
         '\r # Error, eingegebener Call ist keine BBS.\r # {} Typ ist als {} bekannt.\r # Bitte nochmal versuchen.\r\r',
         '\r # Error, entered call is not a BBS.\r # {} Type is known as {}.\r # Please try again.\r\r',
         '\r # Fout, ingevoerde oproep is geen BBS.\r # {} Type staat bekend als {}.\r # Probeer het opnieuw.\r\r',
-        "\r # Erreur, l'appel saisi n'est pas un BBS.\r # {} Le type est connu comme {}.\r # Veuillez rÃ©essayer.\r\r",
+        "\r # Erreur, l'appel saisi n'est pas un BBS.\r # {} Le type est connu comme {}.\r # Veuillez réessayer.\r\r",
         '',
         '',
         '',
@@ -297,7 +297,7 @@ STR_TABLE = {
         '{} hat sich soeben zum ersten mal auf {} connected.\nZeit: {}\n',
         '{} has just connected to {} for the first time.\nTime: {}\n',
         '{} heeft zojuist voor de eerste keer verbinding gemaakt met {}.\nTijd: {}\n',
-        '{} vient de se connecter Ã  {} pour la premiÃ¨re fois.\nHeure: {}\n',
+        '{} vient de se connecter à {} pour la première fois.\nHeure: {}\n',
         '',
         '',
         '',
@@ -321,7 +321,7 @@ STR_TABLE = {
         'Temperatur',
         'Temperature',
         'Temperatuur',
-        'TempÃ©rature',
+        'Température',
         '',
         '',
         '',
@@ -345,7 +345,7 @@ STR_TABLE = {
         'Luftfeuchtigkeit',
         'Humidity',
         'Vochtigheid',
-        'HumiditÃ©',
+        'Humidité',
         '',
         '',
         '',
@@ -353,8 +353,10 @@ STR_TABLE = {
         '',
         ''),
 
+    #################################################
+    # guiUserDB.py
     'userdb_add_sysop_ent1': (
-        'Informationen ergÃ¤nzen?',
+        'Informationen ergänzen?',
         'Add information?',
         'Informatie toevoegen?',
         'Ajouter information?',
@@ -366,7 +368,7 @@ STR_TABLE = {
         ''),
 
     'userdb_add_sysop_ent2': (
-        'EintrÃ¤ge vom Sysop ergÃ¤nzen ?',
+        'Einträge vom Sysop ergänzen ?',
         'Add information from the sysop?',
         'Informatie uit de sysop toevoegen?',
         'Ajouter information sur le sysop?',
@@ -378,10 +380,10 @@ STR_TABLE = {
         ''),
 
     'userdb_save_hint': (
-        'Info: User Daten fÃ¼r {} wurden gespeichert..',
+        'Info: User Daten für {} wurden gespeichert..',
         'Info: User data for {} has been saved.',
         'Info: gebruikersgegevens voor {} zijn opgeslagen.',
-        'DonnÃ©es utilisateur {} suvegardÃ©es',
+        'Données utilisateur {} suvegardées',
         '',
         '',
         '',
@@ -390,10 +392,10 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint1': (
-        'lÃ¶sche',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} löschen ?',
+        'delete {}?',
+        '{} verwijderen ?',
+        '{} effacer ?',
         '',
         '',
         '',
@@ -402,10 +404,34 @@ STR_TABLE = {
         ''),
 
     'userdb_del_hint2': (
-        'lÃ¶schen',
-        'delete',
-        'verwijderen',
-        'effacer',
+        '{} wirklich löschen ?',
+        '{} really delete?',
+        '{} echt verwijderen?',
+        '{} vraiment supprimer ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_1': (
+        '{} Einträge löschen ?',
+        'Delete {} entries?',
+        '{} Items verwijderen?',
+        'Supprimer {} entrées ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'userdb_del_hint2_2': (
+        'Wirklich alle {} Einträge löschen ?',
+        'Really delete all {} entries?',
+        'Wilt u alle {} vermeldingen echt verwijderen?',
+        'Supprimer vraiment les {} entrées ?',
         '',
         '',
         '',
@@ -417,7 +443,7 @@ STR_TABLE = {
         'Neuer Eintrag',
         'New entry',
         'Nieuwe invoer',
-        'Nouvelle entrÃ©e',
+        'Nouvelle entrée',
         '',
         '',
         '',
@@ -429,7 +455,7 @@ STR_TABLE = {
         'Vorschreibfenster',
         'Prewriting window',
         'Voorschrijfvenster',
-        'FenÃªtre de prÃ©Ã©criture',
+        'Fenêtre de préécriture',
         '',
         '',
         '',
@@ -450,10 +476,10 @@ STR_TABLE = {
         ''),
 
     'call_vali_warning_2': (
-        'Max 6 Zeichen nur GroÃbuchstaben und Zahlen.',
+        'Max 6 Zeichen nur Großbuchstaben und Zahlen.',
         'Max 6 characters only capital letters and numbers.',
-        'Max 6 karakters aleen Hoofdletters en nummers',
-        'Max 6 caractÃ¨res, lettres majuscules et chiffresuniquement',
+        '-----------',
+        'Max 6 caractères, lettres majuscules et chiffresuniquement',
         '',
         '',
         '',
@@ -462,10 +488,10 @@ STR_TABLE = {
         ''),
 
     'del_station_hint': (
-        'Hinweis: Station erfolgreich gelÃ¶scht.',
+        'Hinweis: Station erfolgreich gelöscht.',
         'Note: Station deleted successfully.',
         'Opmerking: Zender is succesvol verwijderd.',
-        'Note: station Ã©ffacÃ©e avec succÃ¨s',
+        'Note: station éffacée avec succès',
         '',
         '',
         '',
@@ -474,10 +500,10 @@ STR_TABLE = {
         ''),
 
     'del_station_warning_1': (
-        'Station gelÃ¶scht',
+        'Station gelöscht',
         'Station deleted',
         'Zender verwijderd',
-        'Station Ã©ffacÃ©e',
+        'Station éffacée',
         '',
         '',
         '',
@@ -489,7 +515,7 @@ STR_TABLE = {
         'Laufwerk C: wurde erfolgreich formatiert.',
         'Drive C: was successfully formatted.',
         'Schijf C: is succesvol geformatteerd.',
-        'Disque C a Ã©tÃ© formatÃ© avec succÃ¨s',
+        'Disque C a été formaté avec succès',
         '',
         '',
         '',
@@ -498,7 +524,7 @@ STR_TABLE = {
         ''),
 
     'del_station_hint_1': (
-        'lÃ¶sche Station',
+        'lösche Station',
         'delete Station',
         '-----------',
         'effacer station',
@@ -510,10 +536,10 @@ STR_TABLE = {
         ''),
 
     'del_station_hint_2': (
-        'Willst du diese Station wirklich lÃ¶schen? \nAlle Einstellungen sowie Texte gehen verloren !',
+        'Willst du diese Station wirklich löschen? \nAlle Einstellungen sowie Texte gehen verloren !',
         'Do you really want to delete this station? \nAll settings and texts will be lost!',
         'Wilt u deze zender echt verwijderen? \nAlle instellingen en teksten gaan verloren!',
-        'Voulez vous vraiment supprimer cette station\n Tous les paramÃ¨tres et textes seront perdus',
+        'Voulez vous vraiment supprimer cette station\n Tous les paramètres et textes seront perdus',
         '',
         '',
         '',
@@ -525,7 +551,7 @@ STR_TABLE = {
         'Stationen nicht disconnected',
         'Stations not disconnected',
         'Stations niet gedisconnect',
-        'Stations non dÃ©connectÃ©es',
+        'Stations non déconnectées',
         '',
         '',
         '',
@@ -537,7 +563,7 @@ STR_TABLE = {
         'Nicht alle Stationen disconnected!',
         'Not all stations are disconnected!',
         'Niet alle stations zijn gedisconnect',
-        'Toutes les stations n\'ont pas Ã©tÃ© dÃ©connectÃ©es',
+        'Toutes les stations n\'ont pas été déconnectées',
         '',
         '',
         '',
@@ -549,7 +575,7 @@ STR_TABLE = {
         'Stationen werden disconnected !',
         'Stations getting disconnected!',
         'Stations worden gedisconnect',
-        'Les stations se dÃ©connectent!',
+        'Les stations se déconnectent!',
         '',
         '',
         '',
@@ -561,7 +587,7 @@ STR_TABLE = {
         'Es werden alle Stationen disconnected',
         'All stations getting disconnected',
         'Alle stations worden gedisconnect',
-        'Toutes les stations sont dÃ©connectÃ©s',
+        'Toutes les stations sont déconnectés',
         '',
         '',
         '',
@@ -571,7 +597,7 @@ STR_TABLE = {
         ''),
 
     'close_port': (
-'Info: Versuche Port {} zu schlieÃen.',
+'Info: Versuche Port {} zu schließen.',
            'Info: Try to close Port {}.',
            'info probeer poort te sluiten',
            'Info: Tentative de fermeture du Port {}.',
@@ -586,7 +612,7 @@ STR_TABLE = {
 'Info: Port {} erfolgreich geschlossen.',
            'Info: Port {} closed successfully.',
            'info: poort goed gesloten',
-           'Info: Port {} fermÃ© avec succÃ¨s.',
+           'Info: Port {} fermé avec succès.',
            '',
            '',
            '',
@@ -598,7 +624,7 @@ STR_TABLE = {
 'Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..',
            'Note: Kiss parameters sent to TNC on port {}..',
            'Note: Kiss parameter gezonden naar TNC op poort{}..',
-            'Note: ParamÃ¨tres KISS envoyÃ©s au TNC port {}...',
+            'Note: Paramètres KISS envoyés au TNC port {}...',
            '',
            '',
            '',
@@ -609,7 +635,7 @@ STR_TABLE = {
     'port_in_use': ('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.',
            'Error: Port {} could not be initialized. Port is already in use.',
            'Fout:Poort {} kan niet initialized. Poort is al in gebruik',
-           'Erreur: Port {} ne peut Ãªtre initialisÃ©. Le port est dÃ©jÃ  en service',
+           'Erreur: Port {} ne peut être initialisé. Le port est déjà en service',
            '',
            '',
            '',
@@ -618,10 +644,10 @@ STR_TABLE = {
            ''),
 
     'no_port_typ': (
-'Hinweis: Kein Port-Typ ausgewÃ¤hlt. Port {}',
+           'Hinweis: Kein Port-Typ ausgewählt. Port {}',
            'Note: No port type selected. port {}',
            'Note: geen poort type geselecteerd.poort {}',
-           'Note: Aucun type de port sÃ©lÃ©ctionnÃ© port {}',
+           'Note: Aucun type de port séléctionné port {}',
            '',
            '',
            '',
@@ -644,7 +670,7 @@ STR_TABLE = {
         'Info: Port {} erfolgreich initialisiert.',
         'Info: Port {} initialized successfully.',
         'Info: Poort{} geinitalezeerd succesvol',
-        'Info: Port {} initialisÃ© avec succÃ¨s.',
+        'Info: Port {} initialisé avec succès.',
         '',
         '',
         '',
@@ -656,7 +682,7 @@ STR_TABLE = {
         'Info: {}-Einstellungen wurden gespeichert.',
         'Info: {}-Settings saved.',
         'instellingen opgeslagen',
-        'Info: {}-paramÃ¨tres sauvegardÃ©s',
+        'Info: {}-paramètres sauvegardés',
         '',
         '',
         '',
@@ -668,7 +694,7 @@ STR_TABLE = {
         'Info: Ports werden reinitialisiert.',
         'Info: Ports are reinitialized.',
         'Info: poort geinitaliseerd',
-        'Info: Ports rÃ©initialisÃ©s',
+        'Info: Ports réinitialisés',
         '',
         '',
         '',
@@ -680,7 +706,7 @@ STR_TABLE = {
         'Info: Port {} wird reinitialisiert.',
         'Info: Port {} is reinitialized.',
         'Info: Poort {}is geinitaliseerd',
-        'Info: Port {} rÃ©initialisÃ©.',
+        'Info: Port {} réinitialisé.',
         '',
         '',
         '',
@@ -692,7 +718,7 @@ STR_TABLE = {
         'Stationen werden disconnected !',
         'Stations are disconnected!',
         'Stations zijn losgekoppeld!',
-        'Les stations sont dÃ©connectÃ©es!',
+        'Les stations sont déconnectées!',
         '',
         '',
         '',
@@ -703,7 +729,7 @@ STR_TABLE = {
         'Es werden alle Stationen disconnected',
         'All stations are disconnected',
         'Alle stations zijn losgekoppeld',
-        'Toutes les stations sont dÃ©connectÃ©es',
+        'Toutes les stations sont déconnectées',
         '',
         '',
         '',
@@ -739,7 +765,7 @@ STR_TABLE = {
         'Abgebrochen',
         'Aborted',
         'Onderbroken',
-        'AnnulÃ©',
+        'Annulé',
         '',
         '',
         '',
@@ -748,7 +774,7 @@ STR_TABLE = {
         ''),
 
     'delete': (
-        'LÃ¶schen',
+        'Löschen',
         'Delete',
         'Verwijder',
         'Effacer',
@@ -759,8 +785,32 @@ STR_TABLE = {
         '',
         ''),
 
+    'delete_selected': (
+        'Auswahl löschen',
+        'Delete selection',
+        'Selectie verwijderen',
+        'Supprimer la sélection',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'activate': (
+        'Aktivieren',
+        'Activate',
+        'Activeren',
+        'Activer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_dx_history': (
-        'DX-History LÃ¶schen',
+        'DX-History Löschen',
         'Delete DX-History',
         'Verwijder DX-History',
         "Effacer l'historique DX",
@@ -772,10 +822,22 @@ STR_TABLE = {
         ''),
 
     'del_all': (
-        'Alles LÃ¶schen',
+        'Alles Löschen',
         'Delete all',
         'Verwijder alles',
         'Effacer tout',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'select_all': (
+        'Alles auswählen',
+        'Select all',
+        'Selecteer alles',
+        'Tout sélectionner',
         '',
         '',
         '',
@@ -796,7 +858,7 @@ STR_TABLE = {
         ''),
 
     'close': (
-        'SchlieÃen',
+        'Schließen',
         'Close',
         'Sluiten',
         'Fermer',
@@ -835,7 +897,7 @@ STR_TABLE = {
         'Antworten',
         'Answer',
         'Antwoord',
-        'RÃ©ponse',
+        'Réponse',
         '',
         '',
         '',
@@ -915,8 +977,20 @@ STR_TABLE = {
         '',
         ''),
 
+    'distance': (
+        'Distanz',
+        'Distance',
+        'Afstand',
+        'Distance',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'send_if_free': (
-        'Senden wenn Band frei fÃ¼r (sek.):',
+        'Senden wenn Band frei für (sek.):',
         'Send when band is free for (sec.):',
         'Zenden wanneer band vrij is',
         'Envoyer quand la bande est libre depuis (sec.):',
@@ -928,7 +1002,7 @@ STR_TABLE = {
         ''),
 
     'size': (
-        'GrÃ¶Ãe:',
+        'Größe:',
         'Size:',
         'Groot:',
         'Taille:',
@@ -1003,7 +1077,7 @@ STR_TABLE = {
         'Wirklich ALLE Stationen disconnecten ?',
         'Do you want to disconnect ALL stations?',
         'Wilt u ALLE stations verbreken?',
-        'Voulez vous dÃ©connecter toutes les sttions?',
+        'Voulez vous déconnecter toutes les sttions?',
         '',
         '',
         '',
@@ -1015,7 +1089,7 @@ STR_TABLE = {
         'Wetterstationen',
         'Weather Stations',
         'Weerstations',
-        'Stations mÃ©tÃ©os',
+        'Stations météos',
         '',
         '',
         '',
@@ -1050,7 +1124,7 @@ STR_TABLE = {
     'copy': (
         'Kopieren',
         'Copy',
-        'KopiÃ«ren',
+        'Kopiëren',
         'Copier',
         '',
         '',
@@ -1060,7 +1134,7 @@ STR_TABLE = {
         ''),
 
     'past': (
-        'EinfÃ¼gen',
+        'Einfügen',
         'Past',
         'Invoegen',
         'Coller',
@@ -1071,8 +1145,20 @@ STR_TABLE = {
         '',
         ''),
 
+    'cut': (
+        'Ausschneiden',
+        'Cut out',
+        'Knip uit',
+        'Découper',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'past_f_file': (
-        'Aus Datei einfÃ¼gen',
+        'Aus Datei einfügen',
         'Past from File',
         'invoegen uit bestand',
         'Coller depuis fichier',
@@ -1096,7 +1182,7 @@ STR_TABLE = {
         ''),
 
     'past_qso_f_file': (
-        'Aus Datei einfÃ¼gen',
+        'Aus Datei einfügen',
         'Past from File',
         'Invoegen uit bestand',
         'Coller dans fichier',
@@ -1131,11 +1217,35 @@ STR_TABLE = {
         '',
         ''),
 
+    'clean_prescription_win': (
+        'Vorschreibfenster löschen',
+        'Clear Prescription window',
+        'Voorschrijfvenster verwijderen',
+        'Effacer fenêtre préredaction',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'clean_just_qso_win': (
+        'QSO löschen',
+        'Clear QSO window',
+        'QSO verwijderen',
+        'Effacer QSO préredaction',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'clean_qso_win': (
-        'QSO/Vorschreibfenster lÃ¶schen',
+        'QSO/Vorschreibfenster löschen',
         'Clear QSO/Prescription window',
         'QSO verwijderen',
-        'Effacer QSO/fenÃªtre prÃ©redaction',
+        'Effacer QSO/fenêtre préredaction',
         '',
         '',
         '',
@@ -1144,10 +1254,10 @@ STR_TABLE = {
         ''),
 
     'clean_all_qso_win': (
-        'Alle QSO/Vorschreibfenster lÃ¶schen',
+        'Alle QSO/Vorschreibfenster löschen',
         'Clear all QSO/Prescription window',
         'Alle QSO verwijderen',
-        'Effacer tous QSO/fenÃªtres prÃ©redactions',
+        'Effacer tous QSO/fenêtres préredactions',
         '',
         '',
         '',
@@ -1156,7 +1266,7 @@ STR_TABLE = {
         ''),
 
     'clean_mon_win': (
-        'Monitor lÃ¶schen',
+        'Monitor löschen',
         'Clear Monitor',
         'Monitor wissen',
         'Effacer moniteur',
@@ -1203,7 +1313,7 @@ STR_TABLE = {
         '',
         ''),  #
     'clean_qso': (
-        'QSO lÃ¶schen',
+        'QSO löschen',
         'delete QSO',
         'QSO verwijderen',
         'Effacer QSO',
@@ -1302,7 +1412,7 @@ STR_TABLE = {
         'Einstellungen',
         'Settings',
         'Instellingen',
-        'ParamÃ¨tres',
+        'Paramètres',
         '',
         '',
         '',
@@ -1323,7 +1433,7 @@ STR_TABLE = {
         ''),
 
     'passwords': (
-        'PasswÃ¶rter',
+        'Passwörter',
         'Passwords',
         'Wachtwoord',
         'Mots de passe',
@@ -1359,10 +1469,10 @@ STR_TABLE = {
         ''),
 
     'fillchars': (
-        'AntwortlÃ¤nge:',
+        'Antwortlänge:',
         'Response length:',
         'Reactie lengte:',
-        'Longueur rÃ©ponse :',
+        'Longueur réponse :',
         '',
         '',
         '',
@@ -1407,7 +1517,7 @@ STR_TABLE = {
         ''),
 
     'about': (
-        'Ãber',
+        'Über',
         'About',
         'Over',
         'A propos',
@@ -1554,7 +1664,7 @@ STR_TABLE = {
         'FWD Starten',
         'FWD start',
         'Start FWD',
-        'DÃ©but FWD',
+        'Début FWD',
         '',
         '',
         '',
@@ -1566,7 +1676,7 @@ STR_TABLE = {
         'AutoFWD Start',
         'AutoFWD start',
         'Start AutoFWD',
-        'DÃ©but FWD auto',
+        'Début FWD auto',
         '',
         '',
         '',
@@ -1578,7 +1688,21 @@ STR_TABLE = {
         'Nachrichten Center',
         'Message Center',
         'Berichten Center',
-        'Centre des mÃ©ssages',
+        'Centre des méssages',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    ########################################################
+    # Settings
+    'text_winPos': (
+        'Textfenster Position (oben/mitte/unten)',
+        'Text window position (top/middle/bottom)',
+        'Positie van het tekstvenster (boven/midden/onder)',
+        'Position de la fenêtre de texte (haut/milieu/bas)',
         '',
         '',
         '',
@@ -1590,7 +1714,7 @@ STR_TABLE = {
         'QSO Fenster Farben',
         'QSO Win Color',
         'QSO Win Kleur',
-        'Couleur fenÃªtre QSO',
+        'Couleur fenêtre QSO',
         '',
         '',
         '',
@@ -1614,7 +1738,7 @@ STR_TABLE = {
         'Hintergrund Farben',
         'Backgrund Color',
         'BG kleur',
-        'Couleur arriÃ¨re plan',
+        'Couleur arrière plan',
         '',
         '',
         '',
@@ -1686,7 +1810,7 @@ STR_TABLE = {
         'News Text',
         'News Text',
         'Nieuws-Text',
-        'texte actualitÃ©s',
+        'texte actualités',
         '',
         '',
         '',
@@ -1698,7 +1822,7 @@ STR_TABLE = {
         'APRS-Einstellungen',
         'APRS-Settings',
         'APRS-instellingen',
-        'ParamÃ¨tres APRS',
+        'Paramètres APRS',
         '',
         '',
         '',
@@ -1710,7 +1834,7 @@ STR_TABLE = {
         'APRS Private Nachrichten',
         'APRS Private Messages',
         'APRS Prive berichten',
-        'Message APRS privÃ©s',
+        'Message APRS privés',
         '',
         '',
         '',
@@ -1722,7 +1846,7 @@ STR_TABLE = {
         'Private Nachrichten',
         'Private Messages',
         'Prive berichten',
-        'Messages privÃ©s',
+        'Messages privés',
         '',
         '',
         '',
@@ -1754,6 +1878,9 @@ STR_TABLE = {
         '',
         ''),
 
+    ##############################################
+    # guiBBS_newMSG.py
+
     'new_pr_mail': (
         'Neue PR-Mail',
         'New PR-Mail',
@@ -1766,6 +1893,139 @@ STR_TABLE = {
         '',
         ''),
 
+    'send': (
+        'Senden',
+        'Send',
+        'Versturen',
+        'Envoyer',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft': (
+        'Entwurf Speichern',
+        'Save draft',
+        'Concept opslaan',
+        'Enregistrer le brouillon',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft_hint1': (
+        'Entwurf gespeichert!',
+        'Draft saved!',
+        'Concept opgeslagen!',
+        'Brouillon enregistré!',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'save_draft_hint2': (
+        'Nachricht wurde als Entwurf gespeichert.',
+        'Message was saved as a draft.',
+        'Bericht is opgeslagen als concept.',
+        'Le message a été enregistré comme brouillon.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_save_draft_hint1': (
+        'Entwurf nicht gespeichert!',
+        'Draft not saved!',
+        'Concept niet opgeslagen!',
+        'Brouillon non enregistré!',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'not_save_draft_hint2': (
+        'Entwurf konnte nicht gespeichert werden.',
+        'Draft could not be saved.',
+        'Concept kon niet worden opgeslagen.',
+        "Le brouillon n'a pas pu être enregistré.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_message_hint1': (
+        'Nachricht löschen?',
+        'Delete message?',
+        'Bericht verwijderen?',
+        'Supprimer le message ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'del_message_hint2': (
+        'Nachricht wirklich verwerfen?',
+        'Really delete message?',
+        'Bericht echt verwijderen?',
+        'Supprimer vraiment le message ?',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'discard': (
+        'Verwerfen',
+        'Discard',
+        'Weggooien',
+        'Jeter',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning1': (
+        'Adresse nicht korrekt',
+        'Address incorrect',
+        'Adres onjuist',
+        'Adresse incorrecte',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_warning2': (
+        'Die Adresse des Empfängers ist nicht korrekt.   Keine BBS.',
+        "The recipient's address is incorrect. No BBS.",
+        'Het adres van de ontvanger is onjuist.   Geen BBS.',
+        "L'adresse du destinataire est incorrecte.   Pas de BBS.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    ##############################################
     'send_all_now': (
         'Alles sofort senden',
         'Send everything now',
@@ -1806,7 +2066,67 @@ STR_TABLE = {
         'Allgemein',
         'General',
         'Algemeen',
-        'GÃ©nÃ©ral',
+        'Général',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'GPIO': (
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        'GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Digipeater': (
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'F-Text': (
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        'F-Text',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'MCast': (
+        'MCast',
+        'MCast',
+        'MCast',
+        'MCast',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'RX-Echo': (
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
+        'RX-Echo',
         '',
         '',
         '',
@@ -1826,6 +2146,7 @@ STR_TABLE = {
         '',
         ''),
 
+
     'txt_decoding': (
         'Umlautumwandlung',
         'Text decoding',
@@ -1842,7 +2163,7 @@ STR_TABLE = {
         'Info: Station Einstellungen erfolgreich gespeichert.',
         'Info: Station setiings saved.'
         'Info: Gebruiker instellingen goed opgelsagen.',
-        'Infos : paramÃ¨tres station enregistrÃ©s',
+        'Infos : paramètres station enregistrés',
         '',
         '',
         '',
@@ -1854,7 +2175,7 @@ STR_TABLE = {
         'Lob: Das hast du sehr gut gemacht !!',
         'Praise: You did very well!!',
         'Dat heb je zeer goed gemaakt',
-        'Ãloge : Vous vous Ãªtes trÃ¨s bien dÃ©brouillÃ©s !',
+        'Éloge : Vous vous êtes très bien débrouillés !',
         '',
         '',
         '',
@@ -1866,7 +2187,7 @@ STR_TABLE = {
         'Lob: Das hast du gut gemacht !!',
         'Praise: You did well!!',
         'Dat heb je goed gemaakt ',
-        'Ãloge : Vous avez bien travaillÃ© !',
+        'Éloge : Vous avez bien travaillé !',
         '',
         '',
         '',
@@ -1878,7 +2199,7 @@ STR_TABLE = {
         'Lob: Das war eine gute Entscheidung. Mach weiter so. Das hast du gut gemacht.',
         'Praise: That was a good decision. Keep it up. You did well.',
         'Dat was een goede beslissing. Ga zo door. Dat heb je goed gemaakt.',
-        'Ãloge : C\'Ã©tait une bonne dÃ©cision. Continuez. Vous avez bien travaillÃ©,',
+        'Éloge : C\'était une bonne décision. Continuez. Vous avez bien travaillé,',
         '',
         '',
         '',
@@ -1890,7 +2211,7 @@ STR_TABLE = {
         'Lob: Du hast dir heute noch kein Lob verdient.',
         "Praise: You haven't earned any praise today.",
         'Je hebt vandaag geen lof verdiend.',
-        'Ãloges : Vous n\'avez pas mÃ©ritÃ© d\'Ãªtre fÃ©licitÃ© aujourd\'hui.',
+        'Éloges : Vous n\'avez pas mérité d\'être félicité aujourd\'hui.',
         '',
         '',
         '',
@@ -1899,10 +2220,10 @@ STR_TABLE = {
         ''),
 
     'lob5': (
-        'Es tut mir leid, Dave. Ich fÃ¼rchte, das kann ich nicht.',
+        'Es tut mir leid, Dave. Ich fürchte, das kann ich nicht.',
         "I'm sorry, Dave. I'm afraid I can't do that.",
         'Het spijt me, Dave. Ik ben bang dat ik dat niet kan.',
-        'Je suis dÃ©solÃ©, Dave. J\'ai bien peur de ne pas pouvoir le faire ',
+        'Je suis désolé, Dave. J\'ai bien peur de ne pas pouvoir le faire ',
         '',
         '',
         '',
@@ -1925,8 +2246,8 @@ STR_TABLE = {
     'hin2': (
         'Hinweis: Knack!! Abgebrochen..',
         'Note: Canceled !!',
-        'Geannuleerd!',
-        'Note : AnnulÃ©',
+        'geannuleerd!',
+        'Note : Annulé',
         '',
         '',
         '',
@@ -2022,7 +2343,7 @@ STR_TABLE = {
         'Versatz',
         'Offset',
         'Verzet',
-        'offset',
+        'Offset',
         '',
         '',
         '',
@@ -2046,7 +2367,7 @@ STR_TABLE = {
         'Aktiviert',
         'Activated',
         'Ingeschakeld',
-        'ActivÃ©',
+        'Activé',
         '',
         '',
         '',
@@ -2082,7 +2403,7 @@ STR_TABLE = {
         'Pipe-Tool Einstellungen',
         'Pipe-Tool Settings',
         'Pipe-Tool Instellingen',
-        'paramÃ¨tres Pipe-tools',
+        'paramètres Pipe-tools',
         '',
         '',
         '',
@@ -2106,7 +2427,7 @@ STR_TABLE = {
         'Pipe auf Verbindung',
         'Pipe on Connection',
         'Pipe op aansluiting',
-        'Pipe Ã  la connexion',
+        'Pipe à la connexion',
         '',
         '',
         '',
@@ -2142,7 +2463,7 @@ STR_TABLE = {
         'Standard Parameter. Werden genutzt wenn nirgendwo anders (Station/Client) definiert.',
         'Default parameters. Are used if not defined anywhere else (station/client).',
         'Standaardparameters. Worden gebruikt als ze nergens anders zijn gedefinieerd (station/client).',
-        'ParamÃ¨tres par dÃ©faut. UtilisÃ©s si non dÃ©finis (station/client)',
+        'Paramètres par défaut. Utilisés si non définis (station/client)',
         '',
         '',
         '',
@@ -2154,7 +2475,7 @@ STR_TABLE = {
         'Pseudo TX-Delay (Wartezeit zwischen TX und RX). Wird nicht als KISS Parameter am TNC gesetzt.',
         'Pseudo TX delay (waiting time between TX and RX). Is not set as a KISS parameter on the TNC.',
         'Pseudo TX-vertraging (wachttijd tussen TX en RX). Is op de TNC niet als KISS-parameter ingesteld.',
-        'Pseudo TX delay (attente entre TX et RX si non dÃ©fini dans les paramÃ¨tres KISS du TNC',
+        'Pseudo TX delay (attente entre TX et RX si non défini dans les paramètres KISS du TNC',
         '',
         '',
         '',
@@ -2163,7 +2484,7 @@ STR_TABLE = {
         ''),
 
     'port_cfg_pac_len': (
-        'Paket LÃ¤nge. 1 - 256',
+        'Paket Länge. 1 - 256',
         'Packet length. 1-256',
         'Pakket lengte. 1-256',
         'Longueur trame. 1-256',
@@ -2187,7 +2508,7 @@ STR_TABLE = {
         ''),
 
     'port_cfg_port_name': (
-        'Port Bezeichnung fÃ¼r MH und Monitor( Max: 4 ):',
+        'Port Bezeichnung für MH und Monitor( Max: 4 ):',
         'Port designation for MH and monitor (Max: 4):',
         'Poortaanduiding voor MH en monitor (Max: 4):',
         'Port pour MH dns le moniteur (Max: 4)',
@@ -2201,8 +2522,8 @@ STR_TABLE = {
     'port_cfg_not_init': (
         '!! Port ist nicht Initialisiert !!',
         '!! Port is not initialized!!',
-        '!! Poort is niet geÃ¯nitialiseerd!!',
-        '!! Port non initialisÃ©',
+        '!! Poort is niet geïnitialiseerd!!',
+        '!! Port non initialisé',
         '',
         '',
         '',
@@ -2226,7 +2547,7 @@ STR_TABLE = {
         'letztes Paket',
         'last packet',
         'laatste pakket',
-        'DerniÃ¨re trame',
+        'Dernière trame',
         '',
         '',
         '',
@@ -2238,7 +2559,7 @@ STR_TABLE = {
         'Auto Scrollen',
         'Auto scrolling',
         'Automatisch scrollen',
-        'DÃ©filement auto',
+        'Défilement auto',
         '',
         '',
         '',
@@ -2247,7 +2568,7 @@ STR_TABLE = {
         ''),
 
     'msg_box_mh_delete': (
-        'MH-Liste LÃ¶schen',
+        'MH-Liste Löschen',
         'Delete MH list',
         'Verwijder MH-lijst',
         'Effacer liste MH',
@@ -2259,10 +2580,10 @@ STR_TABLE = {
         ''),
 
     'msg_box_mh_delete_msg': (
-        'Komplette MH-Liste lÃ¶schen?',
+        'Komplette MH-Liste löschen?',
         'Delete entire MH list?',
         'Volledige MH-lijst verwijderen?',
-        'Supprimer la liste MH complÃ¨te',
+        'Supprimer la liste MH complète',
         '',
         '',
         '',
@@ -2271,10 +2592,10 @@ STR_TABLE = {
         ''),
 
     'msg_box_delete_data': (
-        'Daten LÃ¶schen',
+        'Daten Löschen',
         'Delete data',
         'Verwijder data',
-        'Effacer donnÃ©es',
+        'Effacer données',
         '',
         '',
         '',
@@ -2283,10 +2604,10 @@ STR_TABLE = {
         ''),
 
     'msg_box_delete_data_msg': (
-        'Alle Daten lÃ¶schen?',
+        'Alle Daten löschen?',
         'Delete all data?',
         'Alle gegevens verwijderen?',
-        'Effacer toutes les donnÃ©es',
+        'Effacer toutes les données',
         '',
         '',
         '',
@@ -2298,7 +2619,7 @@ STR_TABLE = {
         'Daten',
         'Data',
         'Gegevens',
-        'DonnÃ©es',
+        'Données',
         '',
         '',
         '',
@@ -2307,10 +2628,10 @@ STR_TABLE = {
         ''),
 
     'multicast_warning': (
-        'Vorsicht bei Nodenanbindungen wie TNN. Verlinkungen mehrerer Noden via Multicast kann zu Problemen fÃ¼hren!',
+        'Vorsicht bei Nodenanbindungen wie TNN. Verlinkungen mehrerer Noden via Multicast kann zu Problemen führen!',
         'Be careful with node connections like TNN. Linking multiple nodes via multicast can lead to problems!',
         'Voorzichtigmet nodeverbinding zoals TNN, verbinden meervoudige nodes via multicast kan leiden naar problemen!',
-        'Soyez prudent avec les connexions de node comme TNN. La liaison de plusieurs nodes via la multidiffusion peut entraÃ®ner des problÃ¨mes Â»,',
+        'Soyez prudent avec les connexions de node comme TNN. La liaison de plusieurs nodes via la multidiffusion peut entraîner des problèmes »,',
         '',
         '',
         '',
@@ -2322,7 +2643,7 @@ STR_TABLE = {
         'User Datenbank',
         'User Database',
         'Gebruikersdatabase',
-        'Base de donnÃ©es utilisateur',
+        'Base de données utilisateur',
         '',
         '',
         '',
@@ -2347,7 +2668,7 @@ STR_TABLE = {
         'Wetterstationen',
         'Weather stations',
         'Weerstations',
-        'Stations mÃ©tÃ©o',
+        'Stations météo',
         '',
         '',
         '',
@@ -2359,7 +2680,7 @@ STR_TABLE = {
         'Call DB Abfrage',
         'Get Call DB entry',
         'Ontvang gebruiker DB-invoer',
-        'Obtenir l\'entrÃ©e dans la bdd des appels',
+        'Obtenir l\'entrée dans la bdd des appels',
         '',
         '',
         '',
@@ -2455,7 +2776,7 @@ STR_TABLE = {
         ' # Eintag nicht in Benutzer Datenbank vorhanden!',
         ' # Entry not in user database!',
         ' # Invoer niet in gebruikersdatabase!',
-        ' # EntrÃ©e non trouvÃ© dans la BDD utilisateur!!',
+        ' # Entrée non trouvé dans la BDD utilisateur!!',
         '',
         '',
         '',
@@ -2467,7 +2788,7 @@ STR_TABLE = {
         ' # Name eingetragen',
         ' # Username is set',
         ' # Naam ingevoerd',
-        ' # Nom utilisateur dÃ©fini',
+        ' # Nom utilisateur défini',
         '',
         '',
         '',
@@ -2479,7 +2800,7 @@ STR_TABLE = {
         ' # QTH eingetragen',
         ' # QTH is set',
         ' # Locatie ingevoerd',
-        ' # QTH dÃ©fini',
+        ' # QTH défini',
         '',
         '',
         '',
@@ -2491,7 +2812,7 @@ STR_TABLE = {
         ' # Locator eingetragen',
         ' # Locator is set',
         ' # Locator ingevoerd',
-        ' # Locator dÃ©fini',
+        ' # Locator défini',
         '',
         '',
         '',
@@ -2503,7 +2824,7 @@ STR_TABLE = {
         ' # Postleitzahl eingetragen',
         ' # ZIP is set',
         ' # Postcode ingevoerd',
-        ' # CP dÃ©fini',
+        ' # CP défini',
         '',
         '',
         '',
@@ -2515,7 +2836,7 @@ STR_TABLE = {
         ' # PR-Mail Adresse eingetragen',
         ' # PR-Mail Address is set',
         ' # PR-Mail ingevoerd',
-        ' # Adresse PR-Mail dÃ©finie',
+        ' # Adresse PR-Mail définie',
         '',
         '',
         '',
@@ -2527,7 +2848,7 @@ STR_TABLE = {
         ' # E-Mail Adresse eingetragen',
         ' # E-Mail Address is set',
         ' # E-Mail ingevoerd',
-        ' # Adresse E-mail dÃ©finie',
+        ' # Adresse E-mail définie',
         '',
         '',
         '',
@@ -2539,7 +2860,7 @@ STR_TABLE = {
         ' # HTTP eingetragen',
         ' # HTTP is set',
         ' # HTTP ingevoerd',
-        ' # HTTP dÃ©fini',
+        ' # HTTP défini',
         '',
         '',
         '',
@@ -2548,10 +2869,10 @@ STR_TABLE = {
         ''),
 
     'cli_text_encoding_no_param': (
-        ' # Bitte ein Ã¤ senden. Bsp.: UM Ã¤.\r # Derzeitige Einstellung:',
-        ' # Please send an Ã¤. Example: UM Ã¤.\r # Current setting:',
-        ' # Stuur een  Ã¤. voorbeeld Ã¤.\r # Huidige instelling:',
-        ' # Veuillez envoyer un Ã¤. Exemple : UM Ã¤.\r # RÃ©glage actuel :',
+        ' # Bitte ein ä senden. Bsp.: UM ä.\r # Derzeitige Einstellung:',
+        ' # Please send an ä. Example: UM ä.\r # Current setting:',
+        ' # Stuur een  ä. voorbeeld ä.\r # Huidige instelling:',
+        ' # Veuillez envoyer un ä. Exemple : UM ä.\r # Réglage actuel :',
         '',
         '',
         '',
@@ -2575,7 +2896,7 @@ STR_TABLE = {
         ' # Umlaute/Text de/enkodierung erkannt und gesetzt auf:',
         " # Text de/encoding detected and set to:",
         ' # Tekstde/codering gedetecteerd en ingesteld op:',
-        'Encodage/decodage du texte dÃ©tectÃ© et paramÃ©trÃ© Ã  :',
+        'Encodage/decodage du texte détecté et paramétré à :',
         '',
         '',
         '',
@@ -2584,7 +2905,7 @@ STR_TABLE = {
         ''),
 
     'port_overview': (
-        'Port Ãbersicht',
+        'Port Übersicht',
         'Port Overview',
         'Poort overzicht',
         'Vue d\'ensemble Ports',
@@ -2611,7 +2932,7 @@ STR_TABLE = {
         'Connect Dauer',
         'Connect duration',
         'verbindingsduur',
-        'DurÃ©e connexion',
+        'Durée connexion',
         '',
         '',
         '',
@@ -2632,10 +2953,10 @@ STR_TABLE = {
         ''),
 
     'auto_text_encoding': (
-        'Automatisch Umlaut Erkennung. Ã¤ als Parameter. > UM Ã¤',
-        'Automatic detection of text encoding. Ã¤ as a parameter. > UM Ã¤',
-        'Automatische detectie van tekstcodering. Ã¤ als parameter. > UM Ã¤',
-        'DÃ©tection automatique de l\'encodage du texte. Ã¤ comme paramÃ¨tre. > UM Ã¤',
+        'Automatisch Umlaut Erkennung. ä als Parameter. > UM ä',
+        'Automatic detection of text encoding. ä as a parameter. > UM ä',
+        'Automatische detectie van tekstcodering. ä als parameter. > UM ä',
+        'Détection automatique de l\'encodage du texte. ä comme paramètre. > UM ä',
         '',
         '',
         '',
@@ -2644,10 +2965,10 @@ STR_TABLE = {
         ''),
 
     'cmd_help_lcstatus': (
-        'Verbundene TerminalkanÃ¤le anzeigen (ausfÃ¼hrliche Version)',
+        'Verbundene Terminalkanäle anzeigen (ausführliche Version)',
         'Show connected terminal channels (detailed version)',
         'Toon aangesloten terminalkanalen (gedetailleerde versie)',
-        'Afficher les terminal connectÃ©s (version dÃ©taillÃ©e)',
+        'Afficher les terminal connectés (version détaillée)',
         '',
         '',
         '',
@@ -2659,7 +2980,7 @@ STR_TABLE = {
         'Keine Wetterdaten vorhanden.',
         'No WX data available',
         'Geen WX beschikbaar.',
-        'Aucune donnÃ©es mÃ©tÃ©os disponnible',
+        'Aucune données météos disponnible',
         '',
         '',
         '',
@@ -2683,7 +3004,7 @@ STR_TABLE = {
         'Keine Tracerdaten vorhanden.',
         'No Tracer data available',
         'Geen tracergegevens beschikbaar.',
-        'Pas de donnÃ©es Tracer disponnibles',
+        'Pas de données Tracer disponnibles',
         '',
         '',
         '',
@@ -2692,7 +3013,7 @@ STR_TABLE = {
         ''),
 
     'cli_change_language': (
-        'Sprache Ã¤ndern.',
+        'Sprache ändern.',
         'Change language.',
         'Taal veranderen',
         'Modifier langue',
@@ -2704,10 +3025,10 @@ STR_TABLE = {
         ''),
 
     'cli_lang_set': (
-        'Sprache auf Deutsch geÃ¤ndert.',
+        'Sprache auf Deutsch geändert.',
         'Language changed to English.',
         'Taal veranderd naar Nederlands.',
-        'Lange changÃ© pour FranÃ§ais',
+        'Lange changé pour Français',
         '',
         '',
         '',
@@ -2716,7 +3037,7 @@ STR_TABLE = {
         ''),
 
     'cli_no_lang_param': (
-        'Sprache nicht erkannt! MÃ¶gliche Sprachen: ',
+        'Sprache nicht erkannt! Mögliche Sprachen: ',
         'Language not recognized! Possible languages: ',
         'Taal niet herkend! Mogelijke talen: ',
         'Langue non reconnue! Langues possibles',
@@ -2731,7 +3052,7 @@ STR_TABLE = {
         'Sysop wird gerufen !!',
         'Sysop is called!!',
         'Gebruiker wordt geroepen!!',
-        'Sysop appelÃ©',
+        'Sysop appelé',
         '',
         '',
         '',
@@ -2743,7 +3064,7 @@ STR_TABLE = {
         'Sysop wurde bereits gerufen..',
         'Sysop has already been called..',
         'Gebruiker is al geroepen..',
-        'Le Sysop a dÃ©jÃ  ete appelÃ©',
+        'Le Sysop a déjà ete appelé',
         '',
         '',
         '',
@@ -2776,7 +3097,7 @@ STR_TABLE = {
         ''),
 
     'cmd_c_badCall': (
-        '# UngÃ¼ltiger Ziel Call..',
+        '# Ungültiger Ziel Call..',
         '# Invalid destination call..',
         '# Ongeldige bestemmingsoproep..',
         '# indicatif de destinantion invalide..',
@@ -2787,7 +3108,7 @@ STR_TABLE = {
         '',
         ''),
     'cmd_c_badPort': (
-        '# UngÃ¼ltige Port Angabe..',
+        '# Ungültige Port Angabe..',
         '# Invalid port specification..',
         '# Ongeldige poortspecificatie..',
         '',
@@ -2799,7 +3120,7 @@ STR_TABLE = {
         ''),
 
     'cmd_c_noPort': (
-        '# UngÃ¼ltiger Port..',
+        '# Ungültiger Port..',
         '# Invalid port..',
         '# Ongeldige poort..',
         '# Port invalide..',
@@ -2838,7 +3159,7 @@ STR_TABLE = {
         ''),
 
     'cmd_help_mcast_channels': (
-        'MCast Kanal Ãbersicht',
+        'MCast Kanal Übersicht',
         'MCast channel overview',
         'MCast kanaaloverzicht',
         '',
@@ -2883,8 +3204,8 @@ STR_TABLE = {
          '-= You are on channel {} ({}) =-'),
         ('-= U bent succesvol geregistreerd op de MCast-server. =-\r'
          '-= Je bevindt je op kanaal {} ({}) =-'),
-        ('-= Vous avez Ã©tÃ© enregistrÃ© avec succÃ¨s sur le serveur MCast =-\r'
-         '-= Vous Ãªtes sur le canal {} ({}) =-'),
+        ('-= Vous avez été enregistré avec succès sur le serveur MCast =-\r'
+         '-= Vous êtes sur le canal {} ({}) =-'),
         ('\r'
          ''),
         ('\r'
@@ -2902,7 +3223,7 @@ STR_TABLE = {
         '-= {} hat den Kanal betreten =-',
         '-= {} has entered the channel =-',
         '-= {} is het kanaal binnengekomen =-',
-        '-= {} est arrivÃ© sur le canal =-',
+        '-= {} est arrivé sur le canal =-',
         '',
         '',
         '',
@@ -2915,7 +3236,7 @@ STR_TABLE = {
         '-= {} hat den Kanal verlassen =-',
         '-= {} has left the channel =-',
         '-= {} het kanaal verlaten =-',
-        '-= {} a quitÃ© le canal',
+        '-= {} a quité le canal',
         '',
         '',
         '',
@@ -2956,7 +3277,7 @@ STR_TABLE = {
         '<MSG#>: Liest die Nachricht mit der entspr. Nummer aus.',
         '<MSG#>: Reads the message with the corresponding number.',
         '<MSG#>: Leest het bericht met het bijbehorende nummer.',
-        '<MSG#>: lecture du message correspondant au numÃ©ro de message.',
+        '<MSG#>: lecture du message correspondant au numéro de message.',
         '',
         '',
         '',
@@ -2969,7 +3290,7 @@ STR_TABLE = {
         'SP <Call> @ <BBS>: Sendet eine persoenliche Nachricht an Rufzeichen',
         'SP <Call> @ <BBS>: Sends a personal message to call sign',
         'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
-        'SP <Call> @ <BBS>: Envoie un message personnel Ã  l\'indicatid',
+        'SP <Call> @ <BBS>: Envoie un message personnel à l\'indicatid',
         '',
         '',
         '',
@@ -2985,8 +3306,8 @@ STR_TABLE = {
          '              for multiple boxes in a region.'),
         ('SB <categorie> @ <distributie>: Stuurt een bulletin naar een categorie \r'
          '              voor meerdere dozen in een regio.'),
-        ('SB <CatÃ©gorie> @ <Distribution>: Envoie un bulletin a la categorie \r'
-         '              pour plusieurs boites dans une rÃ©gion.'),
+        ('SB <Catégorie> @ <Distribution>: Envoie un bulletin a la categorie \r'
+         '              pour plusieurs boites dans une région.'),
         '',
         '',
         '',
@@ -3025,7 +3346,7 @@ STR_TABLE = {
         '<Anzahl>: Listet die neuesten Nachrichten in der ang. Zahl.',
         '<Number>: Lists the latest news in the specified number.',
         '<nummer>: Geeft de laatste berichten in het opgegeven nummer weer.',
-        '<number>: RÃ©pertorie les derniers messages dans le numÃ©ro spÃ©cifiÃ©.',
+        '<number>: Répertorie les derniers messages dans le numéro spécifié.',
         '',
         '',
         '',
@@ -3038,7 +3359,7 @@ STR_TABLE = {
         '<CALL>: Listet Bulletins VON einem Rufzeichen.',
         '<CALL>: Lists bulletins FROM a callsign.',
         '<CALL>: Geeft een lijst met bulletins VAN een roepnaam.',
-        "<CALL>: RÃ©pertorie les bulletins Ã€ PARTIR d'un indicatif d'appel.",
+        "<CALL>: Répertorie les bulletins À PARTIR d'un indicatif d'appel.",
         '',
         '',
         '',
@@ -3051,7 +3372,7 @@ STR_TABLE = {
         '<CALL/RUBRIK>: Listet Nachrichten AN ein Rufzeichen oder Rubrik.',
         '<CALL/RUBRIK>: Lists messages TO a call sign or heading.',
         '<CALL/RUBRIK>: Geeft een lijst weer van berichten NAAR een roepnaam of kop.',
-        "<CALL/RUBRIK>: rÃ©pertorie les messages VERS un indicatif d'appel ou un titre.",
+        "<CALL/RUBRIK>: répertorie les messages VERS un indicatif d'appel ou un titre.",
         '',
         '',
         '',
@@ -3064,7 +3385,7 @@ STR_TABLE = {
         '<CALL>: Listet Bulletins VIA Verteiler.',
         '<CALL>: Lists bulletins VIA distribution.',
         '<CALL>: Geeft bulletins weer VIA distributielijst.',
-        "<CALL>: RÃ©pertorie les bulletins VIA de distribution.",
+        "<CALL>: Répertorie les bulletins VIA de distribution.",
         '',
         '',
         '',
@@ -3090,7 +3411,7 @@ STR_TABLE = {
         'Loescht alle pers. Nachrichten, die man bereits gelesen hat.',
         'Deletes all personal messages that you have already read.',
         'Verwijdert alle persoonlijke berichten die u al hebt gelezen.',
-        'Supprime tous les messages personnels que vous avez dÃ©jÃ  lus Â»,',
+        'Supprime tous les messages personnels que vous avez déjà lus »,',
         '',
         '',
         '',
@@ -3103,7 +3424,7 @@ STR_TABLE = {
         '<MSG#>: Loescht die Nachricht mit der entspr. Nummer.',
         '<MSG#>: Deletes the message with the corresponding number.',
         '<MSG#>: Verwijdert het bericht met het bijbehorende nummer.',
-        '<MSG#>: Supprime le message portant ce numÃ©ro',
+        '<MSG#>: Supprime le message portant ce numéro',
         '',
         '',
         '',
@@ -3129,7 +3450,7 @@ STR_TABLE = {
         '\r # (A)=Abbruch, (O)=weiter ohne Stop, (Return)=weiter -->',
         '\r # (A)=Cancel, (O)=continue without stopping, (Return)=continue -->',
         '\r # (A)=Annuleren, (O)=doorgaan zonder te stoppen, (Terug)=doorgaan -->',
-        '\r # (A)=Annuler, (O)=continuer sans arrÃªt, (Return)=continuer -->',
+        '\r # (A)=Annuler, (O)=continuer sans arrêt, (Return)=continuer -->',
         '',
         '',
         '',
@@ -3168,7 +3489,7 @@ STR_TABLE = {
         '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r\r',
         "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r\r",
         '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r\r',
-        "\r # Vous n'avez pas encore entrÃ© de BBS personnel. PR <CALL.Distribution>\r\r",
+        "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r\r",
         '',
         '',
         '',
@@ -3178,10 +3499,10 @@ STR_TABLE = {
 
     'box_cmd_op2': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # OP: Fehler, ungÃ¼ltiger Parameter.\r',
+        '\r # OP: Fehler, ungültiger Parameter.\r',
         '\r # OP : Error, Invalid Parameter.\r',
         '\r # OP: Fout, ongeldige parameter.\r',
-        '\r # OP : Erreur, ParamÃ¨tre Invalide.\r',
+        '\r # OP : Erreur, Paramètre Invalide.\r',
         '',
         '',
         '',
@@ -3233,7 +3554,7 @@ STR_TABLE = {
         '\r\r # Nachricht {} nicht gefunden ! \r\r',
         '\r\r # Message {} not found! \r\r',
         '\r\r # Bericht {} niet gevonden! \r\r',
-        '\r\r # Message {} non trouvÃ©! \r\r',
+        '\r\r # Message {} non trouvé! \r\r',
         '',
         '',
         '',
@@ -3243,10 +3564,10 @@ STR_TABLE = {
 
     'box_parameter_error': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Fehler, ungÃ¼ltiger Parameter.\r',
+        '\r # Fehler, ungültiger Parameter.\r',
         '\r # Error, Invalid Parameter.\r',
         '\r # Fout, ongeldige parameter.\r',
-        '\r # Erreur, ParamÃ¨tre invalide.\r',
+        '\r # Erreur, Paramètre invalide.\r',
         '',
         '',
         '',
@@ -3282,10 +3603,10 @@ STR_TABLE = {
 
     'box_msg_del': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Es wurden {} Nachrichten gelÃ¶scht.\r',
+        '\r # Es wurden {} Nachrichten gelöscht.\r',
         '\r # {} messages have been deleted.\r',
         '\r # {} berichten zijn verwijderd.\r',
-        '\r # {} messages ont Ã©tÃ© supprimÃ©s.\r',
+        '\r # {} messages ont été supprimés.\r',
         '',
         '',
         '',
@@ -3295,10 +3616,10 @@ STR_TABLE = {
 
     'box_msg_del_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Nachrichte(n) {} wurde(n) gelÃ¶scht.\r',
+        '\r # Nachrichte(n) {} wurde(n) gelöscht.\r',
         '\r # Message(s) {} have been deleted.\r',
         '\r # Berichte(n) {} zijn verwijderd.\r',
-        '\r # {} Message(s) supprimÃ©s.\r',
+        '\r # {} Message(s) supprimés.\r',
         '',
         '',
         '',
@@ -3308,10 +3629,10 @@ STR_TABLE = {
 
     'box_error_no_address': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Kein EmpfÃ¤nger angegeben. SP XX0XX oder SP XX0XX@XBBS0\r',
+        '\r # Kein Empfänger angegeben. SP XX0XX oder SP XX0XX@XBBS0\r',
         '\r # No recipient specified. SP XX0XX or SP XX0XX@XBBS0.\r',
         '\r # Geen ontvanger opgegeven. SP XX0XX of SP XX0XX@XBBS0.\r',
-        '\r # Pas de recipient specifiÃ©. SP XX0XX or SP XX0XX@XBBS0.\r',
+        '\r # Pas de recipient specifié. SP XX0XX or SP XX0XX@XBBS0.\r',
         '',
         '',
         '',
@@ -3382,10 +3703,10 @@ STR_TABLE = {
 
     'box_cmd_sp_abort_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Nachricht fuer {} anulliert\r',
-        '\r # Message for {} canceled\r',
-        '\r # Bericht voor {} geannuleerd\r',
-        '\r # Message pour {} annulÃ©\r',
+        '\r # Nachricht fuer {} anulliert\r\r',
+        '\r # Message for {} canceled\r\r',
+        '\r # Bericht voor {} geannuleerd\r\r',
+        '\r # Message pour {} annulé\r\r',
         '',
         '',
         '',
@@ -3401,7 +3722,7 @@ STR_TABLE = {
          '   via: {} Mid: {} Bytes: {}\r\r'),
         ('\r # Ok. Bericht wordt doorgestuurd naar adres {} @ {}\r'
          '   via: {} MID: {} Bytes: {}\r\r'),
-        ('\r # Ok. Message Ã  l\'adresse {} @ {} est en cours de forward\r'
+        ('\r # Ok. Message à l\'adresse {} @ {} est en cours de forward\r'
          '   via: {} Mid: {} Bytes: {}\r\r')
         ,
         '',
@@ -3417,9 +3738,9 @@ STR_TABLE = {
          '   MID: {} Bytes: {}\r\r'),
         ('\r # Ok. Message to address {} remains local.\r'
          '   MID: {} Bytes: {}\r\r'),
-        ('\r# OkÃ©. Bericht aan adres {} blijft lokaal.\r'
+        ('\r# Oké. Bericht aan adres {} blijft lokaal.\r'
          '   Mid: {} Bytes: {}\r\r'),
-        ('\r# Ok. message Ã  l\'adresse {} reste local.\r'
+        ('\r# Ok. message à l\'adresse {} reste local.\r'
          '   Mid: {} Bytes: {}\r\r')
         ,
         '',
@@ -3449,7 +3770,7 @@ STR_TABLE = {
         'Region',
         'Region',
         'Regio',
-        'RÃ©gion',
+        'Région',
         '',
         '',
         '',
@@ -3580,8 +3901,8 @@ STR_TABLE = {
     'allow_PN_FWD': (
         'Privat Mail FWD zulassen',
         'Allow private mail FWD',
-        'Sta het doorsturen van privÃ©mail toe',
-        'Autoriser FWD mails privÃ©s',
+        'Sta het doorsturen van privémail toe',
+        'Autoriser FWD mails privés',
         '',
         '',
         '',
@@ -3602,7 +3923,7 @@ STR_TABLE = {
         ''), #
 
     'conn_intervall': (
-        'AbstÃ¤nde zwischen Connects (Minuten): ',
+        'Abstände zwischen Connects (Minuten): ',
         'Intervals between connects (minutes): ',
         'Intervallen tussen verbindingen (minuten): ',
         'Intervalles entre les connexions (minutes): ',
@@ -3616,14 +3937,14 @@ STR_TABLE = {
     'fwd_autoPath_help': (
         ('0  = deaktiviert\n'
          '1  = am aktuellsten\n'
-         '2  = am besten (geringe SprÃ¼nge)'),
+         '2  = am besten (geringe Sprünge)'),
         ('0 = disabled\n'
          '1 = most recent\n'
          '2 = best (lowes hops)'),
         ('0 = uitgeschakeld\n'
          '1 = meest recente\n'
          '2 = beste (kleine sprongen)'),
-        ('0 = dÃ©sactivÃ©\n'
+        ('0 = désactivé\n'
          '1 = plus recent\n'
          '2 = Meilleurs (lowes hops)'),
         '',
@@ -3661,7 +3982,7 @@ STR_TABLE = {
         'Lokale Bulletin Themen',
         'Local Bulletin Themes',
         'Lokale Bulletin thema s',
-        'ThÃ©me bulletin local',
+        'Théme bulletin local',
         '',
         '',
         '',
@@ -3696,8 +4017,8 @@ STR_TABLE = {
     'bbs_sett_pn_bbs_out': (
         'Privat Mail > ausgehend',
         'Private mail > outgoing',
-        'PrivÃ©mail > uitgaand',
-        'Mail PrivÃ© > sortant',
+        'Privémail > uitgaand',
+        'Mail Privé > sortant',
         '',
         '',
         '',
@@ -3708,8 +4029,8 @@ STR_TABLE = {
     'bbs_sett_pn_bbs_in': (
         'Privat Mail > eingehend',
         'Private mail > incoming',
-        'PrivÃ©mail > inkomend',
-        'Mail PrivÃ© > entrant',
+        'Privémail > inkomend',
+        'Mail Privé > entrant',
         '',
         '',
         '',
@@ -3757,7 +4078,7 @@ STR_TABLE = {
         'Gesendet',
         'Sendet',
         'Verstuurd',
-        'EnvoyÃ©',
+        'Envoyé',
         '',
         '',
         '',
@@ -3781,7 +4102,7 @@ STR_TABLE = {
         'Gespeichert',
         'Saved',
         'Opgeslagen',
-        'EnregistrÃ©',
+        'Enregistré',
         '',
         '',
         '',
@@ -3793,7 +4114,7 @@ STR_TABLE = {
         'Privat',
         'Private',
         'Privaat',
-        'PrivÃ©',
+        'Privé',
         '',
         '',
         '',
@@ -3846,7 +4167,7 @@ STR_TABLE = {
         'ALT + D > Disconnect',
         'ALT + D > Disconnect',
         'ALT + D > Ontkoppelen',
-        'ALT + D > DÃ©connecter',
+        'ALT + D > Déconnecter',
         '',
         '',
         '',
@@ -3882,7 +4203,7 @@ STR_TABLE = {
         ''),
 
     'key_strgplus': (
-        'STRG + plus > TextgrÃ¶Ãe vergrÃ¶Ãern',
+        'STRG + plus > Textgröße vergrößern',
         'CTRL + plus > Increase text size',
         'CTRL + plus > Tekst vergroten',
         'CTRL + plus > Augmente taille du texte',
@@ -3895,10 +4216,10 @@ STR_TABLE = {
         ''),
 
     'key_strgminus': (
-        'STRG + minus > TextgrÃ¶Ãe verkleinern',
+        'STRG + minus > Textgröße verkleinern',
         'CTRL + minus > Reduce text size',
         'CTRL + min > Tekst verkleinen',
-        'CTRL + plus > RÃ©duit taille du texte',
+        'CTRL + plus > Réduit taille du texte',
         '',
         '',
         '',
@@ -3936,7 +4257,7 @@ STR_TABLE = {
         '',
         ''),
 
-'newcon_ziel': (
+    'newcon_ziel': (
         'Ziel:',
         'Target:',
         'streefcijfer:',
@@ -3950,10 +4271,253 @@ STR_TABLE = {
         ''),
 
     'newcon_history': (
-        'Geschichte',
-        'History:',
-        'Geschiedenis:',
+        'History',
+        'History',
+        'Geschiedenis',
         'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    #####################################################
+    # guiBeaconSettings.py
+
+    'scheduler': (
+        'Scheduler',
+        'Scheduler',
+        'Scheduler',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'type': (
+        'Typ:',
+        'Type:',
+        'Typ:',
+        'Type : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiPoPT_Scheduler.py
+
+    'week_day': (
+        'Wochen tage',
+        'Week days',
+        'Week dagen:',
+        'Jour de la semaine',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'month_day': (
+        'Monats Tage',
+        'Month days',
+        'Maand dagen:',
+        'Jour du mois',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    'intervall_mn': (
+        'Interval (mn): ',
+        'Intervall (mn): ',
+        'Interval (mn): ',
+        'Intervalle (mn) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'offset_sec': (
+        'Versatz (sek): ',
+        'Offset (sec): ',
+        'Offset (sec): ',
+        'Décalage (sec) : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'reset': (
+        'Reset',
+        'Reset',
+        'Reset',
+        'Reset',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'scheduler_set': (
+        'Scheduler-Set',
+        'Scheduler set',
+        'Scheduler ingesteld',
+        'Planificateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiRxEchoSettings.py
+
+    'echo_warning': (
+        'Achtung! Diese Funktion ersetzt kein Digipeater!',
+        'Attention! This function does not replace a digipeater!',
+        'Let op! Deze functie vervangt geen digipeater!',
+        'Attention ! Cette fonction ne remplace pas un digipeater !',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    #####################################################
+    # guiMain.py._monitor_start_msg
+    'mon_start_msg1': (
+        'Info: Stationsdaten {} erfolgreich geladen.',
+        'Info: Station data {} loaded successfully.',
+        'Info: Stationgegevens {} succesvol geladen.',
+        'Info: Les données de la station {} ont été chargées avec succès.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_start_msg2': (
+        'konnte nicht initialisiert werden!',
+        'could not be initialized!',
+        'kon niet worden geïnitialiseerd!',
+        "n'a pas pu être initialisé !",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_start_msg3': (
+        'erfolgreich initialisiert.',
+        'initialized successfully.',
+        'succesvol geïnitialiseerd.',
+        "initialisé avec succès.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'mon_end_msg1': (
+        'PoPT wird beendet.',
+        'Quiting PoPT.',
+        'PoPT verlaten.',
+        "Quitter le PoPT.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    # guiMain Status-Bar
+    'ENDE': (
+        'ENDE',
+        'END',
+        'EINDE',
+        'FIN',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'FREI': (
+        'FREI',
+        'FREE',
+        'VRIJ',
+        'GRATUIT',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'AUFBAU': (
+        'AUFBAU',
+        'INITIALIZE',
+        'BOUW',
+        "INITIALISER",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'ABBAU': (
+        'ABBAU',
+        'DISCONNECT',
+        'VERBREKEN',
+        "DÉCONNEXION",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'BEREIT': (
+        'BEREIT',
+        'READY',
+        'KLAAR',
+        "PRÊT",
         '',
         '',
         '',

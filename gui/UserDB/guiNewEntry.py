@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.str_fnc import get_strTab
@@ -22,7 +23,10 @@ class GUINewUserEntry(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self._lang = POPT_CFG.get_guiCFG_language()
         self.title(get_strTab(str_key='userdb_newUser', lang_index=self._lang))

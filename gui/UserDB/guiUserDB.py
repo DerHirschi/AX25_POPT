@@ -4,6 +4,7 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from cfg.constant import ENCODINGS, STATION_TYPS
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from gui.UserDB.guiNewEntry import GUINewUserEntry
@@ -30,7 +31,10 @@ class UserDB(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         # self.attributes("-topmost", True)
         ###############
