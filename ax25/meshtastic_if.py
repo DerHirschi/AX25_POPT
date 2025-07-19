@@ -1,5 +1,5 @@
 import json
-import lzma
+#import lzma
 import threading
 import time
 #from sys import stdout
@@ -11,7 +11,7 @@ from pubsub import pub
 
 from cfg.constant import PARAM_MAX_MON_WIDTH, MESH_PACK_LEN_UNPROTO, MESH_PACK_LEN_PROTO
 from cfg.logger_config import logger
-from fnc.lzhuf import LZHUF_Comp
+#from fnc.lzhuf import LZHUF_Comp
 from fnc.str_fnc import get_timestamp
 
 MESH_DEVICE_CFG = dict(
@@ -449,6 +449,7 @@ class MeshDevice:
 
     #############################
     # De/Compressing
+    """
     @staticmethod
     def _decomp_lzhuf(compressed_data: bytes):
         logTag       = "_decomp_lzhuf> "
@@ -508,7 +509,7 @@ class MeshDevice:
         logger.info(logTag + f"Rate:           {compression_ratio:.2f}:1")
 
         return compressed
-
+    """
     """
     def _recv_msg_fm_mesh(self, from_id: str, payload: bytes):
         shortName = self.get_shortName(from_id)
