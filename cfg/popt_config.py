@@ -4,7 +4,7 @@ from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
-from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
+from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
 
@@ -12,7 +12,6 @@ from cfg.logger_config import logger
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
-        self._config_filename = CFG_MAIN_data_file
         self._config = {}
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
@@ -123,9 +122,9 @@ class Main_CFG:
     ####################
     # File Fnc
     def _load_CFG_fm_file(self):
-        logger.info(f'Main CFG: Load from {self._config_filename}')
+        logger.info(f'Main CFG: Load from {CFG_MAIN_data_file}')
         # print(f'Main CFG: Load from {self._config_filename}')
-        config: dict = load_fm_file(self._config_filename)
+        config: dict = load_fm_pickle_file(CFG_MAIN_data_file)
         if config:
             """
             for cfg_name, cfg in config.items():
@@ -139,7 +138,7 @@ class Main_CFG:
         # self._config.read(self._config_filename)
 
     def save_MAIN_CFG_to_file(self):
-        logger.info(f'Main CFG: Config Saved to {self._config_filename}')
+        logger.info(f'Main CFG: Config Saved to {CFG_MAIN_data_file}')
         """
         if DEBUG_LOG:
             logger.debug(self._config['stat_cfgs'])
@@ -161,7 +160,7 @@ class Main_CFG:
             logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
             # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
 
-        save_to_file(self._config_filename, dict(self._config))
+        save_to_pickle_file(CFG_MAIN_data_file, dict(self._config))
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
         self._config['port_cfgs'] = tmp_port_cfgs

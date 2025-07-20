@@ -35,12 +35,12 @@ def format_hexstr(inp):
         return '{:02x}'.format(inp)
     elif type(inp) is str:
         return '{:02x}'.format(int(inp, 16))
-
+    return ''
 
 def decode_FRMR(ifield):
     if len(ifield) != 3:
         logger.error("decode_FRMR: Invalid I-Field length")
-        return '\nInvalid I-Field length\n'
+        return '\nInvalid I-Field length\n'.encode('ASCII', 'ignore')
 
     control_byte = ifield[0]
     pid_byte = ifield[1]
