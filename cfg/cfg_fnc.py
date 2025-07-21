@@ -133,6 +133,11 @@ def get_all_stat_CFGs():
                 logger.error(
                     f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
                 raise
+            """
+            with open(f'{call}_stat.json', 'w') as save_file:
+                json.dump(ret[call], save_file)
+            """
+
     return ret
 
 
@@ -232,6 +237,10 @@ def load_all_port_cfg_fm_file():
             logger.error(
                 f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
             raise
+        """
+        with open(f'{port_id}_port.json', 'w') as save_file:
+            json.dump(ret[port_id], save_file)
+        """
     return ret
 
 def save_all_port_cfg_to_file(configs: dict):

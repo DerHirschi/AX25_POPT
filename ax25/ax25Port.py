@@ -29,24 +29,25 @@ class RxBuf:
 class AX25Port(object):
     def __init__(self, port_id: int, port_handler):
         self._logTag = f"Port {port_id}: "
-        self.port_w_dog = time.time()   # Debuging
-        self._port_handler = port_handler
-        self.loop_is_running = self._port_handler.is_running
-        self.ende = False
-        self.device = None
-        self.device_is_running = False
-        self._tnc_emu_connection, self._tnc_emu_client_address = None, None
+        #self.port_w_dog = time.time()   # Debuging
+        self._port_handler              = port_handler
+        self._loop_is_running           = self._port_handler.is_running
+        self.ende                       = False
+        self.device                     = None
+        self.device_is_running          = False
+        self._tnc_emu_connection        = None
+        self._tnc_emu_client_address    = None
         ############
         # CONFIG
         self._port_cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id))
         if not self._port_cfg:
             logger.error(f"{self._logTag}No Config !!!")
             raise AX25DeviceFAIL(self)
-        self.kiss = Kiss(self._port_cfg)
-        self._port_param = self._port_cfg.get('parm_PortParm', ('', 0))
-        self.portname = self._port_cfg.get('parm_PortName', '')
-        self.port_typ = self._port_cfg.get('parm_PortTyp', '')
-        self.port_id = self._port_cfg.get('parm_PortNr', -1)
+        self.kiss           = Kiss(self._port_cfg)
+        self._port_param    = self._port_cfg.get('parm_PortParm', ('', 0))
+        self.portname       = self._port_cfg.get('parm_PortName', '')
+        self.port_typ       = self._port_cfg.get('parm_PortTyp', '')
+        self.port_id        = self._port_cfg.get('parm_PortNr', -1)
         # self._my_stations = port_cfg.get('parm_StationCalls', [])
         # self.parm_TXD = port_cfg.get('parm_TXD', 400)
         self._TXD = time.time()
@@ -55,27 +56,30 @@ class AX25Port(object):
         """ DIGI """
         # self.digi_calls = self._port_cfg.parm_Digi_calls
         self._parm_digi_TXD = self._port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
-        self._digi_TXD = time.time()
-        self._digi_buf = []         # RX/TX
+        self._digi_TXD      = time.time()
+        self._digi_buf      = []         # RX/TX
         """ """
-        self._digi_connections = {}
-        self._UI_buf = []           # TX
-        self.pipes = {}
-        self.connections = {}
+        self._digi_connections  = {}
+        self._unProto_buf       = []           # TX
+        self.pipes              = {}
+        self.connections        = {}
         #############
         # VARS
-        self.monitor_out = True
-        self._mh = self._port_handler.get_MH()
+        self.monitor_out    = True
+        self._mh            = self._port_handler.get_MH()
         #############
         """ Dual Port """
-        self.dualPort_primaryPort = None
+        self.dualPort_primaryPort   = None
         self.dualPort_secondaryPort = None
-        self.dualPort_lastRX = b''  # Prim
-        self.dualPort_echoFilter = []  # Prim
-        self.dualPort_cfg = {}
-        self.dualPort_monitor_buf = []
+        self.dualPort_lastRX        = b''  # Prim
+        self.dualPort_echoFilter    = []   # Prim
+        self.dualPort_cfg           = {}
+        self.dualPort_monitor_buf   = []
         """ MCast Server """
-        self._mcast_server = None
+        self._mcast_server          = None
+        """ Block incoming Connections """
+        # Blocking incoming connection until PoPT Init is Done...
+        self._block_incoming_conn   = 1     # 0 = no_blocking, 1 = ignore, 2 = reject, 3 = reject w msg.
         ##############
         # AXIP VARs
         # self.axip_anti_spam = {}
@@ -91,7 +95,7 @@ class AX25Port(object):
 
     def __del__(self):
         self.close()
-        # self.loop_is_running = False
+        # self._loop_is_running = False
 
     def set_kiss_parm(self):
         pass
@@ -105,7 +109,7 @@ class AX25Port(object):
         if self._mcast_server:
             self._mcast_server.del_mcast_port()
             self._mcast_server = None
-        self.loop_is_running = False
+        self._loop_is_running = False
         self.close_device()
         # if self.device is not None:
         # self.device.close()
@@ -275,13 +279,14 @@ class AX25Port(object):
         if ax25_frame.to_call.call_str in POPT_CFG.get_stationCalls_fm_port(self.port_id):
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
-                self.connections[uid] = AX25Conn(ax25_frame, port=self)
-                # try:
-                #     self.connections[uid] = AX25Conn(ax25_frame, port=self)
-                # except AX25ConnectionERROR:
-                #     return False
-                # self.connections[uid].handle_rx(ax25_frame=ax25_frame)
-                return True
+                if not self._block_incoming_conn:
+                    self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                    return True
+                elif self._block_incoming_conn == 1:    # Ignore incoming Conn
+                    return True
+                elif self._block_incoming_conn == 2:    # Reject incoming Conn
+                    self.send_DM_frame(ax25_frame_cfg=ax25_frame.get_frame_conf())
+                    return True
         return False
 
     ########################################################
@@ -394,7 +399,7 @@ class AX25Port(object):
             return False
         logger.debug(self._logTag + f"add_digi_conn +++ tx_uid  {tx_uid}")
         self._digi_connections[tx_uid] = digi_connection
-
+        return True
 
     def accept_digi_conn(self, uid: str):
         """
@@ -570,10 +575,9 @@ class AX25Port(object):
                         self.tx(frame=el)
                     except AX25DeviceFAIL as e:
                         raise e
-                    return True
+                    return True # CHECKME !!! Just one connection at fnc-call ??
                     # Monitor
                     # self._gui_monitor(ax25frame=el, tx=True)
-
         return False
 
     def _tx_pipe_buf(self):
@@ -592,7 +596,7 @@ class AX25Port(object):
 
     def _tx_UI_buf(self):
         tr = False
-        for fr in self._UI_buf:
+        for fr in self._unProto_buf:
             try:
                 self.tx(frame=fr)
                 tr = True
@@ -600,7 +604,7 @@ class AX25Port(object):
                 raise e
             # Monitor
             # self._gui_monitor(ax25frame=fr, tx=True)
-        self._UI_buf = []
+        self._unProto_buf = []
         return tr
 
     def _tx_digi_buf(self):
@@ -968,8 +972,35 @@ class AX25Port(object):
         except AX25EncodingERROR:
             return False
         else:
-            self._UI_buf.append(frame)
+            self._unProto_buf.append(frame)
             return True
+
+    def send_DM_frame(self,
+                      ax25_frame_cfg: dict
+                      ):
+        vias = list(ax25_frame_cfg.get('via_calls_str', []))
+        vias.reverse()
+        frame = AX25Frame(
+            dict(
+                from_call_str=str(ax25_frame_cfg.get('to_call_str', '')),
+                to_call_str=str(ax25_frame_cfg.get('from_call_str', '')),
+                via_calls=vias,
+                axip_add=tuple(ax25_frame_cfg.get('axip_add', ('', 0))),
+            )
+        )
+        frame.ctl_byte.DMcByte()
+
+        #frame.ctl_byte.cmd, frame.ctl_byte.pf = False, False
+        #frame.from_call.call_str = own_call
+        #frame.to_call.call_str = dest_call
+        try:
+            frame.encode_ax25frame()
+        except AX25EncodingERROR:
+            return False
+        else:
+            self._unProto_buf.append(frame)
+            return True
+
 
     def _reset_ft_wait_timer(self, ax25_frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
@@ -991,7 +1022,7 @@ class AX25Port(object):
 
     def port_tasker(self):
         """ Main Loop """
-        #while self.loop_is_running:
+        #while self._loop_is_running:
         self._port_loop()
         # time.sleep(0.03)
         # print(f"Loop Ends Port: {self.port_id}")
@@ -1001,7 +1032,7 @@ class AX25Port(object):
         self.ende = True
 
     def _port_loop(self):
-        while self.loop_is_running:
+        while self._loop_is_running:
             try:
                 buf: RxBuf = self._rx()
                 if buf and buf.raw_data:
@@ -1020,9 +1051,17 @@ class AX25Port(object):
     def port_get_port_cfg(self):
         return dict(self._port_cfg)
 
+    ################################
+    # Port Ctrl
+    def set_block_incoming_conn(self, state=0):
+        self._block_incoming_conn = state
+
+    def get_block_incoming_conn(self):
+        return self._block_incoming_conn
+
 class KissTCP(AX25Port):
     def init(self):
-        if self.loop_is_running:
+        if self._loop_is_running:
             # print("KISS TCP INIT")
             logger.info(f'Port {self.port_id}: KISS TCP INIT')
             sock_timeout = 0.2
@@ -1067,7 +1106,7 @@ class KissTCP(AX25Port):
         self.close_device()
 
     def close_device(self):
-        self.loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1106,7 +1145,7 @@ class KissTCP(AX25Port):
                 raise AX25DeviceFAIL
 
     def _rx(self):
-        self.port_w_dog = time.time()
+        #self.port_w_dog = time.time()
         try:
             recv_buff = self.device.recv(999)
         except socket.timeout:
@@ -1147,7 +1186,7 @@ class KissTCP(AX25Port):
 class KISSSerial(AX25Port):
 
     def init(self):
-        if self.loop_is_running:
+        if self._loop_is_running:
             logger.info("KISS Serial INIT")
             try:
                 self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.3)
@@ -1192,8 +1231,8 @@ class KISSSerial(AX25Port):
         self._close_dev()
 
     def _close_dev(self):
-        # self.loop_is_running = False
-        self.loop_is_running = False
+        # self._loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1239,8 +1278,8 @@ class KISSSerial(AX25Port):
 
     def _rx(self):
         recv_buff = b''
-        while self.loop_is_running and self.device_is_running:
-            self.port_w_dog = time.time()
+        while self._loop_is_running and self.device_is_running:
+            #self.port_w_dog = time.time()
             try:
                 recv_buff += self.device.read()
             except serial.SerialException:
@@ -1304,7 +1343,7 @@ class KISSSerial(AX25Port):
 class AXIP(AX25Port):
     def init(self):
 
-        if self.loop_is_running:
+        if self._loop_is_running:
             # print("AXIP Client INIT")
             logger.info(f"Port {self.port_id}: AXIP Client INIT")
             if not self._port_param[0]:
@@ -1348,7 +1387,7 @@ class AXIP(AX25Port):
 
     def close_device(self):
         # self._mcast_server = None
-        self.loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1367,7 +1406,7 @@ class AXIP(AX25Port):
             logger.info(f"Port {self.port_id}: Close AXIP done")
 
     def _rx(self):
-        self.port_w_dog = time.time()
+        #self.port_w_dog = time.time()
         try:
             udp_recv = self.device.recvfrom(800)
             recv_buff = udp_recv[0]
@@ -1448,7 +1487,7 @@ class AXIP(AX25Port):
 
 class AX25KernelDEV(AX25Port):
     def init(self):
-        if self.loop_is_running:
+        if self._loop_is_running:
             # print("KISS TCP INIT")
             logger.info(f'Port {self.port_id}: AX25-Kernel INIT')
             sock_timeout = 0.2
@@ -1458,7 +1497,7 @@ class AX25KernelDEV(AX25Port):
             except PermissionError as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
-                self.loop_is_running = False
+                self._loop_is_running = False
                 self.device = None
                 raise AX25DeviceFAIL
             try:
@@ -1483,7 +1522,7 @@ class AX25KernelDEV(AX25Port):
         self.close_device()
 
     def close_device(self):
-        self.loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1524,7 +1563,7 @@ class AX25KernelDEV(AX25Port):
                 raise AX25DeviceFAIL
 
     def _rx(self):
-        self.port_w_dog = time.time()
+        #self.port_w_dog = time.time()
         try:
             recv_buff = self.device.recv(999)
         except socket.timeout:
@@ -1559,7 +1598,7 @@ class AX25KernelDEV(AX25Port):
 
 class TNC_EMU_TCP_SRV(AX25Port):
     def init(self):
-        if self.loop_is_running:
+        if self._loop_is_running:
             logger.info(f'Port {self.port_id}: TNC-EMU-TCP-SRV INIT')
             sock_timeout = 1
             self.kiss.is_enabled = True
@@ -1570,7 +1609,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
             except PermissionError as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
-                self.loop_is_running = False
+                self._loop_is_running = False
                 self.device = None
                 raise AX25DeviceFAIL
             try:
@@ -1593,7 +1632,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
         self.close_device()
 
     def close_device(self):
-        self.loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1634,7 +1673,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
                 raise AX25DeviceFAIL
 
     def _rx(self):
-        self.port_w_dog = time.time()
+        #self.port_w_dog = time.time()
         recv_buff = b''
         if self._tnc_emu_connection is None:
             try:
@@ -1666,7 +1705,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
                         raise e
             return None
         else:
-            while self.loop_is_running and self.device_is_running:
+            while self._loop_is_running and self.device_is_running:
                 try:
                     recv_buff += self._tnc_emu_connection.recv(1)
                 except socket.timeout:
@@ -1718,7 +1757,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
 
 class TNC_EMU_TCP_CL(AX25Port):
     def init(self):
-        if self.loop_is_running:
+        if self._loop_is_running:
             logger.info(f'Port {self.port_id}: TNC-EMU-TCP-CLIENT INIT')
             self.kiss.is_enabled = True
             self.kiss.set_kiss_param = False
@@ -1728,7 +1767,7 @@ class TNC_EMU_TCP_CL(AX25Port):
             except PermissionError as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
-                self.loop_is_running = False
+                self._loop_is_running = False
                 self.device = None
                 raise AX25DeviceFAIL
 
@@ -1757,7 +1796,7 @@ class TNC_EMU_TCP_CL(AX25Port):
         self.close_device()
 
     def close_device(self):
-        self.loop_is_running = False
+        self._loop_is_running = False
         if self.device is None:
             self.device_is_running = False
             return
@@ -1800,7 +1839,7 @@ class TNC_EMU_TCP_CL(AX25Port):
                 raise AX25DeviceFAIL
 
     def _rx(self):
-        self.port_w_dog = time.time()
+        #self.port_w_dog = time.time()
         recv_buff = b''
         if self._tnc_emu_connection is None:
             try:
@@ -1839,7 +1878,7 @@ class TNC_EMU_TCP_CL(AX25Port):
                         raise e
 
 
-        while self.loop_is_running and self.device_is_running:
+        while self._loop_is_running and self.device_is_running:
             try:
                 recv_buff += self.device.recv(1)
             except socket.timeout:

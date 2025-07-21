@@ -1085,6 +1085,42 @@ STR_TABLE = {
         '',
         ''),
 
+    'port_unblock_all': (
+        'Eingehende Verbindungen zulassen (alle Ports)',
+        'Allow incoming connections (all ports)',
+        'Inkomende verbindingen toestaan (alle poorten)',
+        'Autoriser les connexions entrantes (tous les ports)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'port_block_ignore_all': (
+        'Eingehende Verbindungen ignorieren (alle Ports)',
+        'Ignore incoming connections (all ports)',
+        'Negeer binnenkomende verbindingen (alle poorten)',
+        'Ignorer les connexions entrantes (tous les ports)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'port_block_reject_all': (
+        'Eingehende Verbindungen ablehnen (alle Ports)',
+        'Reject incoming connections (all ports)',
+        'Inkomende verbindingen afwijzen (alle poorten)',
+        'Rejeter les connexions entrantes (tous les ports)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'wx_window': (
         'Wetterstationen',
         'Weather Stations',

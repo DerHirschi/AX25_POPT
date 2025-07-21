@@ -127,7 +127,7 @@ class PoPTSchedule_Tasker:
         #    return None
         if sched_conf:
             if not sched_conf.is_schedule():
-                return None
+                return
         bbs = self._port_handler.get_bbs()
         if hasattr(bbs, 'send_scheduled_mail'):
             bbs.send_scheduled_mail(conf=conf)

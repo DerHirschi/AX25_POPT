@@ -2,7 +2,7 @@ Ideas/TODO's :
 
 - Sysop-Nachricht an alle Kanäle senden
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
-- PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
+✓ PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
 - "Suspended" Filter
   - Call/Station ablehnen

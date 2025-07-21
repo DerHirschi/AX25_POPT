@@ -633,6 +633,13 @@ class PoPT_GUI_Main:
         MenuVerb.add_separator()
         MenuVerb.add_command(label=self._getTabStr('disconnect_all'), command=self._disco_all)
         MenuVerb.add_separator()
+        MenuVerb.add_command(label=self._getTabStr('port_unblock_all'),
+                             command=lambda: self._set_port_blocking(0) )
+        MenuVerb.add_command(label=self._getTabStr('port_block_ignore_all'),
+                             command=lambda: self._set_port_blocking(1))
+        MenuVerb.add_command(label=self._getTabStr('port_block_reject_all'),
+                             command=lambda: self._set_port_blocking(2))
+        MenuVerb.add_separator()
         MenuVerb.add_command(label=self._getTabStr('quit'), command=self._destroy_win)
         menubar.add_cascade(label=self._getTabStr('connections'), menu=MenuVerb, underline=0)
         #####################################################################
@@ -1816,12 +1823,15 @@ class PoPT_GUI_Main:
             self._port_handler.get_aprs_ais().aprs_wx_tree_task()
 
     def _AlarmIcon_tasker05(self):
-        if self._Alarm_Frame:
-            self._Alarm_Frame.AlarmIcon_tasker05()
+        if not self._Alarm_Frame:
+            return
+        self._Alarm_Frame.AlarmIcon_tasker05()
 
     def _AlarmIcon_tasker1(self):
-        if self._Alarm_Frame:
-            self._Alarm_Frame.AlarmIcon_tasker1()
+        if not self._Alarm_Frame:
+            return
+        self._Alarm_Frame.AlarmIcon_tasker1()
+        self._check_port_blocking_task()
 
     def _SideFrame_tasker(self):
         if self._flip05:
@@ -1831,6 +1841,12 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.tasker()
             self.tabbed_sideFrame2.on_ch_stat_change()
 
+    def _check_port_blocking_task(self):
+        if hasattr(self._port_handler, 'get_glb_port_blocking'):
+            if not self._port_handler.get_glb_port_blocking():
+                self._Alarm_Frame.set_PortBlocking(set_on=False)
+            else:
+                self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
     ###############################################################
     # QSO WIN
 
@@ -3096,3 +3112,7 @@ class PoPT_GUI_Main:
 
     def get_PH_manGUI(self):
         return self._port_handler
+
+    def _set_port_blocking(self, state=0):
+        if hasattr(self._port_handler, 'block_all_ports'):
+            self._port_handler.block_all_ports(state)

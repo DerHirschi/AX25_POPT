@@ -10,10 +10,14 @@ Optimierung/Änderungen:
 - Port Connection-TX-Spooler
 - Net/Rom decoder und Monitor Ausgabe
 - User-DB wird jetzt in json format gespeichert
+- Programm Initialisierungprozedur (Alle eingehenden Verbindungen werden
+  ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder
 - App-Icon für Linux. (Icon by Thomas D1TNE. Danke Thomas)
+- PoPT auf nicht empfangsbereit schalte. (Alle eingehenden Connects werden
+  ignoriert/abgewiesen)
 
 ###########################################################################################################
 ###########################################################################################################

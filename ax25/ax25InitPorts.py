@@ -46,9 +46,10 @@ class AX25PortHandler(object):
             # print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
         ###########################
-        self._start_time = datetime.datetime.now()
-        self.is_running  = True
-        self._ph_end     = False
+        self._start_time        = datetime.datetime.now()
+        self.is_running         = True
+        self._ph_end            = False
+        self._glb_port_blocking = 1
         ###########################
         # Moduls
         # self.routingTable = None
@@ -78,6 +79,10 @@ class AX25PortHandler(object):
         # self._routingTable      = RoutingTable()
         self._routingTable      = None
         #######################################################
+        # Scheduled Tasks
+        logger.info("PH: Scheduled Tasks Init")
+        self._init_SchedTasker()
+        #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
         self._mcast_server      = ax25Multicast(self)
@@ -95,10 +100,6 @@ class AX25PortHandler(object):
         # Pipe-Tool Init
         logger.info("PH: Pipe-Tool Init")
         self._pipeTool_init()
-        #######################################################
-        # Scheduled Tasks
-        logger.info("PH: Scheduled Tasks Init")
-        self._init_SchedTasker()
         #######################################################
         # APRS AIS Thread
         logger.info("PH: APRS-Client Init")
@@ -125,6 +126,9 @@ class AX25PortHandler(object):
         self._task_timer_1sec   = time.time() + 1
         self._task_timer_2sec   = time.time() + 2
         self._init_PH_tasker()
+        #######################################################
+        logger.info("PH: Unblocking Ports")
+        self.unblock_all_ports()
         #######################################################
         logger.info("PH: Init Complete")
 
@@ -251,6 +255,7 @@ class AX25PortHandler(object):
 
     def close_popt(self):
         logger.info("PH: Closing PoPT")
+        self.block_all_ports(1)
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
         self._close_aprs_ais()
@@ -401,8 +406,9 @@ class AX25PortHandler(object):
             return False
         port = self.get_port_by_index(port_id)
         if not hasattr(port, 'disco_all_conns'):
-            return
+            return False
         port.disco_all_conns()
+        return True
 
     """
     def save_all_port_cfgs(self):
@@ -410,7 +416,24 @@ class AX25PortHandler(object):
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
     """
+    def unblock_all_ports(self):
+        for port_id, port in self.ax25_ports.items():
+            if hasattr(port, 'set_block_incoming_conn'):
+                port.set_block_incoming_conn(0)
+        self._glb_port_blocking = 0
 
+    def block_all_ports(self, state=1):
+        # 0 = unblock incoming
+        # 1 = ignore incoming
+        # 2 = reject incoming
+        # 3 = reject incoming with msg
+        for port_id, port in self.ax25_ports.items():
+            if hasattr(port, 'set_block_incoming_conn'):
+                port.set_block_incoming_conn(state)
+        self._glb_port_blocking = state
+
+    def get_glb_port_blocking(self):
+        return self._glb_port_blocking
     ######################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
@@ -501,9 +524,9 @@ class AX25PortHandler(object):
                 return
 
     def accept_new_connection(self, connection):
-        call_str = str(connection.to_call_str)
-        ch_id = int(connection.ch_index)
-        path = list(connection.via_calls)
+        call_str    = str(connection.to_call_str)
+        ch_id       = int(connection.ch_index)
+        path        = list(connection.via_calls)
         if connection.is_incoming_connection():
             msg = f'*** Connected fm {call_str}'
             lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected fm {call_str}'
