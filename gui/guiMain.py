@@ -2253,7 +2253,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.reset_dx_alarm()
 
     ##################
-    # Block List Win
+    # Black List Win
     def open_BlockList_win(self):
         if hasattr(self.block_list_win, 'lift'):
             self.block_list_win.lift()

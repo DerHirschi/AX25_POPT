@@ -142,6 +142,7 @@ class GPIOSettings(ttk.Frame):
     def destroy_win(self):
         if hasattr(self.pin_setup_win, 'destroy_win'):
             self.pin_setup_win.destroy_win()
+        self.destroy()
 
     def get_gpio(self):
         return self._gpio

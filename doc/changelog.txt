@@ -3,6 +3,8 @@
 Fixes:
 - Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
 - FRMR Decoder gibt string als Payload zurück anstatt bytes. Verursacht Crash
+- Haupt-Einstellungen, GPIO-Einstellungen erscheinen mehrfach nach dem
+  Speichern
 
 Optimierung/Änderungen:
 - AXIP Port handling
