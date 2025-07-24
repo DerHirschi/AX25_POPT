@@ -18,6 +18,7 @@ Neue Implementierungen / Funktionen:
 - App-Icon für Linux. (Icon by Thomas D1TNE. Danke Thomas)
 - PoPT auf nicht empfangsbereit schalte. (Alle eingehenden Connects werden
   ignoriert/abgewiesen)
+- Black-List für eingehende Verbindungen.
 
 ###########################################################################################################
 ###########################################################################################################
