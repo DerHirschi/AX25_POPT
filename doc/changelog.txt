@@ -2,7 +2,7 @@
 # 2.119.x
 Fixes:
 - Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
-- FRMR Decoder gibt string als Payload zurück anstatt bytes. Verursacht Chrash
+- FRMR Decoder gibt string als Payload zurück anstatt bytes. Verursacht Crash
 
 Optimierung/Änderungen:
 - AXIP Port handling
@@ -10,7 +10,7 @@ Optimierung/Änderungen:
 - Port Connection-TX-Spooler
 - Net/Rom decoder und Monitor Ausgabe
 - User-DB wird jetzt in json format gespeichert
-- Programm Initialisierungprozedur (Alle eingehenden Verbindungen werden
+- Programm Initialisierungsprozedur (Alle eingehenden Verbindungen werden
   ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
 
 Neue Implementierungen / Funktionen:
@@ -18,7 +18,7 @@ Neue Implementierungen / Funktionen:
 - App-Icon für Linux. (Icon by Thomas D1TNE. Danke Thomas)
 - PoPT auf nicht empfangsbereit schalte. (Alle eingehenden Connects werden
   ignoriert/abgewiesen)
-- Black-List für eingehende Verbindungen.
+- Blacklist für eingehende Verbindungen.
 
 ###########################################################################################################
 ###########################################################################################################
