@@ -552,7 +552,7 @@ class BoxCLI(DefaultCLI):
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
                                           f"{str(data[1]).ljust(6)} "
-                                          f"{str(data[2]).ljust(6)}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
                                           f"{str(data[4]).ljust(6)} "
                                           f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
                                           f"{str(data[6])}"
@@ -644,7 +644,6 @@ class BoxCLI(DefaultCLI):
 
         return ret + '\r'
 
-
     def _cmd_box_lb(self):
         bbs = self._port_handler.get_bbs()
         if not hasattr(bbs, 'get_bl_msg_tabCLI'):
@@ -694,7 +693,7 @@ class BoxCLI(DefaultCLI):
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
                                           f"{str(data[1]).ljust(6)} "
-                                          f"{str(data[2]).ljust(6)}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
                                           f"{str(data[4]).ljust(6)} "
                                           f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
                                           f"{str(data[6])}"
@@ -726,7 +725,7 @@ class BoxCLI(DefaultCLI):
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
                                           f"{str(data[1]).ljust(6)} "
-                                          f"{str(data[2]).ljust(6)}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
                                           f"{str(data[4]).ljust(6)} "
                                           f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
                                           f"{str(data[6])}"
@@ -763,7 +762,7 @@ class BoxCLI(DefaultCLI):
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
                                           f"{str(data[1]).ljust(6)} "
-                                          f"{str(data[2]).ljust(6)}@{str(data[3]).ljust(6)} "
+                                          f"{str(data[2]).ljust(6)}@{str(data[3].split('.')[0]).ljust(6)} "
                                           f"{str(data[4]).ljust(6)} "
                                           f"{''.join(data[5].split(' ')[0].split('-')[1:])}/{''.join(data[5].split(' ')[1].split(':')[:-1])} "
                                           f"{str(data[6])}"

@@ -637,7 +637,7 @@ class Main_CFG:
         return self._config.get('block_list', {})
 
     def get_block_list_by_id(self, port_id: int):
-        return dict(self._config.get('block_list', {}).get(port_id, {}))
+        return self._config.get('block_list', {}).get(port_id, {})
 
     def set_block_list(self, block_tab: dict):
         self._config['block_list'] = block_tab

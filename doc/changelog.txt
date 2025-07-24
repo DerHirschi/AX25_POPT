@@ -5,6 +5,7 @@ Fixes:
 - FRMR Decoder gibt string als Payload zurück anstatt bytes. Verursacht Crash
 - Haupt-Einstellungen, GPIO-Einstellungen erscheinen mehrfach nach dem
   Speichern
+- BOX-CLI. Ausgabe Formatierung für LN, LM, LL, ...
 
 Optimierung/Änderungen:
 - AXIP Port handling
