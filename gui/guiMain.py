@@ -136,11 +136,11 @@ class PoPT_GUI_Main:
             self.main_win.iconbitmap("favicon.ico")
         except Exception as ex:
             logger.warning(f"Couldn't load favicon.ico: {ex}")
-            logger.info("Try to load favicon.png.")
+            logger.info("Try to load popt.png.")
             try:
-                self.main_win.iconphoto(False, PhotoImage(file='favicon.png'))
+                self.main_win.iconphoto(False, PhotoImage(file='popt.png'))
             except Exception as ex:
-                logger.warning(f"Couldn't load favicon.png: {ex}")
+                logger.warning(f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
         self._port_handler = port_handler

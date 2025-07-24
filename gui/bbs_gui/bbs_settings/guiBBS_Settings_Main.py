@@ -35,7 +35,7 @@ class BBSSettingsMain(tk.Toplevel):
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             try:
-                self.iconphoto(False, tk.PhotoImage(file='favicon.png'))
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
