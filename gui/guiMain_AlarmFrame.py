@@ -7,112 +7,87 @@ from ax25.ax25InitPorts import PORT_HANDLER
 class AlarmIconFrame(tk.Frame):
     def __init__(self, root, main_gui):
         tk.Frame.__init__(self, root, bg='#313336', height=15, width=50)
-        self.pack(fill=tk.X, pady=5, expand=False)
+        self.pack(fill='x', pady=5, expand=False)
 
         self._diesel_label = tk.Label(self, text='➿',
-                                      font=(None, 12,),
+                                      font=('', 12,),
                                       # state='disabled',
                                       background='#313336',
                                       foreground='orange')
-        self._diesel_label.pack(side=tk.LEFT, padx=5)
+        self._diesel_label.pack(side='left', padx=5)
 
         self._block_in_conn = tk.Label(self, text='⛝',
-                                  font=(None, 14),
+                                  font=('', 13),
                                   state='disabled',
                                   background='#313336',
                                   foreground='#fa2020')
-        self._block_in_conn.pack(side=tk.LEFT, padx=3)
-        # self._block_in_conn.bind('<Button-1>', lambda event: main_gui.open_MH_win())
+        self._block_in_conn.pack(side='left', padx=3)
+        self._block_in_conn.bind('<Button-1>', lambda event: main_gui.open_BlockList_win())
 
         self._mh_label = tk.Label(self, text='⊛',
-                                  font=(None, 14),
+                                  font=('', 14),
                                   state='disabled',
                                   background='#313336',
                                   foreground='#18e002')
-        self._mh_label.pack(side=tk.LEFT, padx=3)
+        self._mh_label.pack(side='left', padx=3)
         self._mh_label.bind('<Button-1>', lambda event: main_gui.open_MH_win())
 
         self._tracer_label = tk.Label(self, text='☈',
-                                      font=(None, 11),
+                                      font=('', 11),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
-        self._tracer_label.pack(side=tk.LEFT, padx=3)
+        self._tracer_label.pack(side='left', padx=3)
         self._tracer_label.bind('<Button-1>', lambda event: main_gui.open_be_tracer_win())
 
         self._beacon_label = tk.Label(self, text='⨀',
-                                      font=(None, 9),
+                                      font=('', 9),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
-        self._beacon_label.pack(side=tk.LEFT, padx=3)
+        self._beacon_label.pack(side='left', padx=3)
 
         self._rxEcho_label = tk.Label(self, text='⤨',
-                                      font=(None, 14),
+                                      font=('', 14),
                                       background='#313336',
                                       state='disabled',
                                       foreground='#18e002')
-        self._rxEcho_label.pack(side=tk.LEFT, padx=3)
+        self._rxEcho_label.pack(side='left', padx=3)
 
         self._pms_fwd_label = tk.Label(self, text='✉⇄',
-                                       font=(None, 15,),
+                                       font=('', 15,),
                                        background='#313336',
                                        state='disabled',
                                        foreground='#18e002')
-        self._pms_fwd_label.pack(side=tk.LEFT, padx=3)
+        self._pms_fwd_label.pack(side='left', padx=3)
         self._pms_fwd_label.bind('<Button-1>', lambda event: main_gui.open_window('pms_fwq_q'))
 
         self._pms_mail_label = tk.Label(self, text='✉',
-                                        font=(None, 15,),
+                                        font=('', 15,),
                                         background='#313336',
                                         state='disabled',
                                         foreground='#18e002')
-        self._pms_mail_label.pack(side=tk.LEFT, padx=3)
+        self._pms_mail_label.pack(side='left', padx=3)
         self._pms_mail_label.bind('<Button-1>', lambda event: main_gui.open_window('pms_msg_center'))
 
 
         self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
-                                         font=(None, 15,),
+                                         font=('', 15,),
                                          background='#313336',
                                          state='disabled',
                                          foreground='#18e002')
-        self._aprs_mail_label.pack(side=tk.LEFT, padx=3)
+        self._aprs_mail_label.pack(side='left', padx=3)
         self._aprs_mail_label.bind('<Button-1>', lambda event: main_gui.open_window('aprs_msg'))
 
         self._bell_label = tk.Label(self, text='☎',
-                                    font=(None, 11,),
+                                    font=('', 11,),
                                     background='#313336',
                                     state='disabled',
                                     foreground='#18e002')
-        self._bell_label.pack(side=tk.LEFT, padx=3)
+        self._bell_label.pack(side='left', padx=3)
 
-
-
-        self._05_blink = {
-            'diesel': 0,
-            'block_conn': 0,
-            'dx': 0,
-            'tracer': 0,
-            'beacon': 0,
-            'rxecho': 0,
-            'aprsmail': 0,
-            'pmsmail': 0,
-            'pmsfwd': 0,
-            'bell': 0,
-        }
-        self._1_blink = {
-            'diesel': 0,
-            'block_conn': 0,
-            'dx': 0,
-            'tracer': 0,
-            'beacon': 0,
-            'rxecho': 0,
-            'aprsmail': 0,
-            'pmsmail': 0,
-            'pmsfwd': 0,
-            'bell': 0,
-        }
-
+        ##############################
+        # Tasker
         self._alarm_labels = {
             'diesel':       self._diesel_label,
             'block_conn':   self._block_in_conn,
@@ -125,6 +100,15 @@ class AlarmIconFrame(tk.Frame):
             'pmsfwd':       self._pms_fwd_label,
             'bell':         self._bell_label,
         }
+        self._05_blink = {}
+        self._1_blink  = {}
+        for k in self._alarm_labels.keys():
+            self._05_blink[k] = 0
+            self._1_blink[k]  = 0
+
+        ##############################
+        # States
+        self._glb_port_blocking = False
 
     def AlarmIcon_tasker05(self):
         for k in list(self._05_blink.keys()):
@@ -180,16 +164,40 @@ class AlarmIconFrame(tk.Frame):
     #
     def set_PortBlocking(self, set_on=True, blinking=True):
         if set_on:
+            if self._glb_port_blocking:
+                return
+            if self._block_in_conn.cget('foreground') != '#fa2020':
+                self._block_in_conn.configure(foreground='#fa2020')
             if blinking:
                 self._add_blink_task('block_conn', -1, sec05=True)
             elif self._block_in_conn.cget('state') == 'disabled':
                 self._add_blink_task('block_conn', 3, sec05=True)
+            elif self._block_in_conn.cget('state') == 'normal':
+                self._add_blink_task('block_conn', 2, sec05=True)
+            self._glb_port_blocking = True
         elif not set_on:
+            if not self._glb_port_blocking:
+                return
             self._remove_blink_task('block_conn', sec05=True)
             if self._block_in_conn.cget('state') == 'normal':
                 self._add_blink_task('block_conn', 1, sec05=True)
+            self._glb_port_blocking = False
             #else:
             #    self._add_blink_task('block_conn', 2, sec05=True)
+
+    def set_PortBlocking_warning(self):
+        if self._glb_port_blocking:
+            return
+        if self._1_blink['block_conn']:
+            return
+        if self._block_in_conn.cget('foreground') != '#ecf70f':
+            self._block_in_conn.configure(foreground='#ecf70f')
+
+        if self._block_in_conn.cget('state') == 'disabled':
+            self._add_blink_task('block_conn', 4, sec05=False)
+        else:
+            self._add_blink_task('block_conn', 5, sec05=False)
+
 
     def set_dxAlarm(self, alarm_set=True):
         if alarm_set:

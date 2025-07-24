@@ -17,6 +17,7 @@ from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
+from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
@@ -260,7 +261,8 @@ class PoPT_GUI_Main:
         self.dualPort_settings_win  = None
         self.dualPortMon_win        = None
         self.conn_Path_plot_win     = None
-        self.routingTab_win         = None
+        self.block_list_win         = None
+        #self.routingTab_win         = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -424,7 +426,8 @@ class PoPT_GUI_Main:
             self.dualPort_settings_win,
             self.dualPortMon_win,
             self.conn_Path_plot_win,
-            self.routingTab_win,
+            self.block_list_win,
+            #self.routingTab_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -710,9 +713,9 @@ class PoPT_GUI_Main:
                               command=lambda: self.open_window('dualPort_monitor'),
                               underline=0)
         MenuTools.add_separator()
-        #MenuTools.add_command(label='Routing-Tab Viewer',
-        #                      command=lambda: self.open_RoutingTab_win(),
-        #                      underline=0)
+        MenuTools.add_command(label='Block List',
+                              command=lambda: self.open_BlockList_win(),
+                              underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label='Kaffèmaschine',
@@ -1786,8 +1789,10 @@ class PoPT_GUI_Main:
                 self._rx_beep_sound()
                 if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
+            """
             if hasattr(self.routingTab_win, 'tasker'):
                 self.routingTab_win.tasker()
+            """
             """
             if self.MSG_Center is not None:
                 self.MSG_Center.tasker()
@@ -2248,7 +2253,22 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.reset_dx_alarm()
 
     ##################
+    # Block List Win
+    def open_BlockList_win(self):
+        if hasattr(self.block_list_win, 'lift'):
+            self.block_list_win.lift()
+            return
+        if self.block_list_win is not None:
+            logger.error("self.block_list_win is not None. Try to close")
+            if hasattr(self.block_list_win, 'close'):
+                self.block_list_win.close()
+                self.block_list_win = None
+                return
+        self.block_list_win = BlockList(self)
+
+    ##################
     # Routing tab win
+    """
     def open_RoutingTab_win(self):
         if hasattr(self.routingTab_win, 'lift'):
             self.routingTab_win.lift()
@@ -2259,7 +2279,7 @@ class PoPT_GUI_Main:
                 self.routingTab_win = None
                 return
         #RoutingTableWindow(self, self._port_handler.get_RoutingTable())
-
+    """
     #######################################################
     """
     def gui_set_distance(self):
@@ -2436,7 +2456,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
-        self.open_RoutingTab_win()
+        # self.open_RoutingTab_win()
         #print(self._inp_txt.cget('height'))
         #print(self._pw.sashpos(0))
         #self._pw.sashpos(0, 20)
@@ -3097,6 +3117,9 @@ class PoPT_GUI_Main:
 
     def set_Beacon_icon(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
+
+    def set_port_block_warning(self):
+        self._Alarm_Frame.set_PortBlocking_warning()
 
     def chk_master_sprech_on(self):
         if self.setting_sprech.get():

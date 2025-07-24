@@ -14,7 +14,7 @@ from ax25.ax25Kiss import Kiss
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
-from cfg.logger_config import logger
+from cfg.logger_config import logger, LOG_BOOK
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL, MCastInitError
 from fnc.socket_fnc import get_ip_by_hostname
@@ -277,14 +277,36 @@ class AX25Port(object):
     def _rx_new_conn_handler(self, ax25_frame):
         # New Incoming Connection
         if ax25_frame.to_call.call_str in POPT_CFG.get_stationCalls_fm_port(self.port_id):
+            block_list  = POPT_CFG.get_block_list_by_id(self.port_id)
+            block_state = block_list.get(ax25_frame.from_call.call, 0)
+            gui = self._port_handler.get_gui()
+            if block_state == 1:
+                LOG_BOOK.info(f"*** Connection ignored (Block List)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                if hasattr(gui, 'set_port_block_warning'):
+                    gui.set_port_block_warning()
+                return True
+            elif block_state == 2:
+                LOG_BOOK.info(f"*** Connection rejected (Block List)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                if hasattr(gui, 'set_port_block_warning'):
+                    gui.set_port_block_warning()
+                self.send_DM_frame(ax25_frame_cfg=ax25_frame.get_frame_conf())
+                return True
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
                 if not self._block_incoming_conn:
                     self.connections[uid] = AX25Conn(ax25_frame, port=self)
                     return True
                 elif self._block_incoming_conn == 1:    # Ignore incoming Conn
+                    LOG_BOOK.info(
+                        f"*** Connection ignored (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                    if hasattr(gui, 'set_port_block_warning'):
+                        gui.set_port_block_warning()
                     return True
                 elif self._block_incoming_conn == 2:    # Reject incoming Conn
+                    LOG_BOOK.info(
+                        f"*** Connection rejected (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                    if hasattr(gui, 'set_port_block_warning'):
+                        gui.set_port_block_warning()
                     self.send_DM_frame(ax25_frame_cfg=ax25_frame.get_frame_conf())
                     return True
         return False
@@ -764,19 +786,6 @@ class AX25Port(object):
             )
         self.dualPort_primaryPort.dualPort_monitor_buf = self.dualPort_primaryPort.dualPort_monitor_buf[-10000:]
 
-    ##########################################################
-    # Port/Connection Tasker
-    def _task_Port(self):
-        """ Execute Port related Cronjob like Beacon sending"""
-        self._task_connections()
-        self._digi_task()
-
-    def _task_connections(self):
-        """ Execute Cronjob on all Connections"""
-        for uid, conn in dict(self.connections).items():
-            if conn:
-                conn.exec_cron()
-
     ############################################################
     # Pipe-Tool
     """
@@ -975,9 +984,7 @@ class AX25Port(object):
             self._unProto_buf.append(frame)
             return True
 
-    def send_DM_frame(self,
-                      ax25_frame_cfg: dict
-                      ):
+    def send_DM_frame(self, ax25_frame_cfg: dict):
         vias = list(ax25_frame_cfg.get('via_calls_str', []))
         vias.reverse()
         frame = AX25Frame(
@@ -1001,7 +1008,8 @@ class AX25Port(object):
             self._unProto_buf.append(frame)
             return True
 
-
+    #################################################
+    #
     def _reset_ft_wait_timer(self, ax25_frame):
         if ax25_frame.ctl_byte.flag in ['I', 'SABM', 'DM', 'DISC', 'REJ', 'UA', 'UI']:
             for uid, conn in self.connections.items():
@@ -1020,6 +1028,8 @@ class AX25Port(object):
         primary_port_id = self.dualPort_cfg.get('primary_port_id', -1)
         self._mh.mh_input(ax25frame_conf, self.port_id, tx=tx, primary_port_id=primary_port_id)
 
+    ###################################################
+    # Tasker
     def port_tasker(self):
         """ Main Loop """
         #while self._loop_is_running:
@@ -1045,6 +1055,20 @@ class AX25Port(object):
                 self._tx_handler()
             time.sleep(0.001)
 
+    ##########################################################
+    # Port/Connection Tasker
+    def _task_Port(self):
+        """ Execute Port related Cronjob like Beacon sending"""
+        self._task_connections()
+        self._digi_task()
+
+    def _task_connections(self):
+        """ Execute Cronjob on all Connections"""
+        for uid, conn in dict(self.connections).items():
+            if hasattr(conn, 'exec_cron'):
+                conn.exec_cron()
+    #########################################
+    #
     def port_get_PH(self):
         return self._port_handler
 

@@ -52,6 +52,7 @@ class Main_CFG:
             ##########################
             # -- PORT CFGs
             'port_cfgs': {},
+            'block_list': {},
             ##########################
             # -- MCast CFG
             'mcast_cfg': getNew_mcast_cfg,
@@ -629,6 +630,17 @@ class Main_CFG:
 
     def get_BBS_AutoMail_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()).get('auto_mail_tasks', []))
+
+    ###########################################
+    # Block List
+    def get_block_list(self):
+        return self._config.get('block_list', {})
+
+    def get_block_list_by_id(self, port_id: int):
+        return dict(self._config.get('block_list', {}).get(port_id, {}))
+
+    def set_block_list(self, block_tab: dict):
+        self._config['block_list'] = block_tab
 
 
 POPT_CFG = Main_CFG()

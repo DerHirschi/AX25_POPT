@@ -4,11 +4,11 @@ Ideas/TODO's :
 ✓ Alle bestehenden Verbindungen beenden. (alle Verbindungen Disco)
 ✓ PoPT auf nicht empfangsbereit schalte. (Alle connects werden abgewiesen)
   - Ausnahmen (Call-Filter)
-- "Suspended" Filter
-  - Call/Station ablehnen
-  - Call/Station ignorieren
+✓ "Suspended" Filter
+  ✓ Call/Station ablehnen
+  ✓ Call/Station ignorieren
   - MCast
-  - AXIP
+  - AXIP (IP-Filter)
 
 - ESC Befehle
 ✓ UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
