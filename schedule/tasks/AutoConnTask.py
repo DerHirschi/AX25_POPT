@@ -1,4 +1,4 @@
-from cfg.constant import SERVICE_CH_START
+from cfg.constant import SERVICE_CH_START, TASK_TYP_FWD
 from cfg.logger_config import logger
 from cli import NoneCLI
 
@@ -35,7 +35,7 @@ class AutoConnTask:
         self._state_exec        = None
         self.state_id           = 1
         self._state_tab = {
-            'FWD': {
+            TASK_TYP_FWD: {
                 0: self._end_connection,
                 1: self._PMS_send_fwd_cmd,
                 2: self._PMS_is_last_chars_in_rxbuff,
@@ -58,12 +58,12 @@ class AutoConnTask:
             self._connection.cli = NoneCLI(self._connection)
             self._connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
             # self.dest_station_id = self._connection.cli.stat_identifier
+            logger.debug("ConnTask connection: Start")
             self._set_state_exec(1)
 
     def crone(self):
         if self.e:
             self._ConnTask_ende()
-            return False
         if not self._is_connected():
             self._ConnTask_ende()
             return False
@@ -72,6 +72,7 @@ class AutoConnTask:
 
     def _set_state_exec(self, state_id):
         if self._state_tab:
+            logger.debug(f"AutoConn State change: {self.state_id} > {state_id}")
             self.state_id = state_id
             self._state_exec = self._state_tab[self.state_id]
 
@@ -104,28 +105,35 @@ class AutoConnTask:
         # 0
         if self._connection:
             self._connection.conn_disco()
-            self._connection = None
+            #self._connection = None
         self._set_state_exec(0)
-        self._ConnTask_ende()
+        # self._ConnTask_ende()
 
     ###############################################
     # PMS
     def _PMS_send_fwd_cmd(self):
         # 1
+        if not self._connection.cli.stat_identifier:
+            if not self._connection.cli.software_identifier():
+                logger.error(f"ConnTask connection: no stat_identifier found: {self._connection.cli.stat_identifier}")
+                #self._set_state_exec(0)
+                return
         if self._connection.cli.stat_identifier:
             if self._connection.cli.stat_identifier.typ != 'BBS':
                 self._set_state_exec(0)
+                logger.error(f"ConnTask connection: stat_identifier.typ: {self._connection.cli.stat_identifier.typ}")
                 return
             rev_cmd = self._connection.cli.stat_identifier.bbs_rev_fwd_cmd
             if rev_cmd:
                 self._connection.send_data(rev_cmd)
             self._set_state_exec(2)
             return
-
+        logger.error(f"ConnTask connection: no stat_identifier: {self._connection.cli.stat_identifier}")
         self._set_state_exec(0)
 
     def _PMS_is_last_chars_in_rxbuff(self):
         # 2
+        logger.debug(f"rx_buf_last_data> {self._connection.rx_buf_last_data}")
         if self._connection.rx_buf_last_data.endswith(b'>\r'):
             self._set_state_exec(3)
 

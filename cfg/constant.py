@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.119.18'
+VER = '2.119.19'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True

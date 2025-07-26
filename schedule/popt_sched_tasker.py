@@ -1,6 +1,7 @@
 import time
 
 from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
@@ -65,9 +66,9 @@ class PoPTSchedule_Tasker:
     def _AutoConn_tasker(self):
         for k in list(self.auto_connections.keys()):
             # print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
-            if self.auto_connections[k].state_id:
-                self.auto_connections[k].crone()
-            else:
+            if not self.auto_connections[k].crone():
+
+                logger.debug(f"_AutoConn_tasker del: {k}")
                 del self.auto_connections[k]
 
     def _is_AutoConn_maxConn(self, autoconn_cfg):

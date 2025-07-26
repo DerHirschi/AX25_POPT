@@ -124,7 +124,7 @@ class MCastCLI(DefaultCLI):
         return ''
 
     def _s1(self):
-        self._software_identifier()
+        self.software_identifier()
         ########################
         # Check String Commands
         if not self._exec_str_cmd():

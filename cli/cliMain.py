@@ -51,8 +51,8 @@ class DefaultCLI(object):
                 self._c_text          = str(self._user_db_ent.CText)
 
         self.stat_identifier    = get_station_id_obj(self._stat_identifier_str)
-        # print(f"CLI STST ID : {self.stat_identifier}")
-        # print(f"CLI STST str : {self.stat_identifier_str}")
+        print(f"CLI STST ID : {self.stat_identifier}")
+        print(f"CLI STST str : {self._stat_identifier_str}")
 
         self._c_text            = self._c_text.replace('\n', '\r')
 
@@ -337,7 +337,7 @@ class DefaultCLI(object):
             if not self._user_db_ent.TYP:
                 self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
-    def _software_identifier(self):
+    def software_identifier(self):
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
             # print(f"SW-ID flag: {self.stat_identifier.flags}")
@@ -349,6 +349,8 @@ class DefaultCLI(object):
                 self._encoding = self.stat_identifier.txt_encoding, 'ignore'
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
+            return True
+        return False
 
     def _send_name_cmd_back(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -364,6 +366,7 @@ class DefaultCLI(object):
     def _find_sw_identifier(self):
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
+            print(self._last_line + self._raw_input)
             inp_lines = self._last_line + self._raw_input
             inp_lines = inp_lines.replace(b'\n', b'\r')
             inp_lines = inp_lines.decode(self._encoding[0], 'ignore')
@@ -374,6 +377,7 @@ class DefaultCLI(object):
                 if temp_stat_identifier is not None:
                     self.stat_identifier = temp_stat_identifier
                     self._set_user_db_software_id()
+                    logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                     return True
         elif not self._last_line and self.stat_identifier:
             inp_lines = self._raw_input
@@ -387,6 +391,7 @@ class DefaultCLI(object):
                     if self.stat_identifier.id_str != temp_stat_identifier.id_str:
                         self.stat_identifier = temp_stat_identifier
                         self._set_user_db_software_id()
+                        logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                         return True
         return False
 
@@ -1411,8 +1416,8 @@ class DefaultCLI(object):
 
     def _s1(self):
         # print("CMD-Handler S1")
-        if not self.stat_identifier:
-            self._software_identifier()
+        # if not self.stat_identifier:
+        self.software_identifier()
         """
         BBS / evtl. NODE, MCAST
         if any((
@@ -1603,7 +1608,9 @@ class NoneCLI(DefaultCLI):
         self._commands_cfg = []
 
     def cli_exec(self, inp=b''):
-        pass
+        if self.stat_identifier is None:
+            self._raw_input += bytes(inp)
+            self.software_identifier()
 
     def _exec_cmd(self):
         return ''

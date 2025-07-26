@@ -91,7 +91,7 @@ class BBSConnection:
             cut_index = 0
             for line in list(tmp):
                 ret.append(line)
-                cut_index += len(line) + 1
+                cut_index += len(line) + len(CR)
                 if data in line:
                     break
             # if len(_tmp) > len(_ret):
@@ -185,6 +185,8 @@ class BBSConnection:
 
     def connection_rx(self, raw_data: b''):
         # self._debug_rx_buff += bytes(raw_data)
+        logger.debug(f"fwd-conn-RX: State:    {self._state}")
+        logger.debug(f"fwd-conn-RX: raw_data: {raw_data}")
         self._rx_buff += bytes(raw_data)
         if self._state in [11]:
             return False
@@ -232,7 +234,12 @@ class BBSConnection:
     # States
     def _wait_f_prompt(self):
         # 1
+        """
         if self._get_lines_fm_rx_buff('>', cut_rx_buff=True):
+            self._state = 2
+        """
+        if self._rx_buff.endswith(b'>\r'):
+            self._rx_buff = b''
             self._state = 2
 
     def _send_fwd_init_cmd(self):

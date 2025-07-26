@@ -1033,8 +1033,7 @@ class BBS:
             for to_bbs_call in list(port_tasks):
                 if port_conn_c >= conn_limit:
                     BBS_LOG.debug(log_tag + f"Port{port_id} connect limit: {port_conn_c} >= {conn_limit}")
-                    break
-
+                    continue
                 bbs_fwd_q_vars  = self._fwd_BBS_q.get(to_bbs_call, {})
                 fwd_bbs_cfg     = self._fwd_cfg.get(to_bbs_call, {})
                 bbs_fwd_error_c = bbs_fwd_q_vars.get('bbs_fwd_error_c', 0)
@@ -1136,6 +1135,7 @@ class BBS:
     # Man. FWD when already connected
     def init_rev_fwd_conn(self, ax25_conn):
         if ax25_conn.cli.stat_identifier is None:
+            logger.error("No ax25_conn.cli.stat_identifier")
             return None
         # if ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         conn = BBSConnection(self, ax25_conn)

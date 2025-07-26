@@ -6,6 +6,8 @@ Fixes:
 - Haupt-Einstellungen, GPIO-Einstellungen erscheinen mehrfach nach dem
   Speichern
 - BOX-CLI. Ausgabe Formatierung für LN, LM, LL, ...
+- BBS-Forwarding, Verbindung wird nicht beendet, wenn Fehler erkannt wird
+- BBS-Forwarding, Software Identifier wird beim Forwarding nicht ausgewertet
 
 Optimierung/Änderungen:
 - AXIP Port handling

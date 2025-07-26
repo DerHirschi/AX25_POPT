@@ -384,6 +384,7 @@ class AX25Conn:
             return
         """ BBS/PMS-FWD"""
         if self._bbsFwd_rx(data):
+            print("FWD RX")
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
@@ -393,6 +394,8 @@ class AX25Conn:
         else:
             self.rx_buf_last_data = data
         """ CLI """
+        #print(f"CLI RX: typ {self.cli_type}")
+        #print(f"CLI RX: data {data}")
         self.exec_cli(data)
         return
 
@@ -471,7 +474,7 @@ class AX25Conn:
         if self.bbs_connection is None:
             logger.error("PMS: bbs_connection is None")
             return False
-        # print("Done: bbsFwd_start_reverse")
+        logger.debug("PMS: Done: bbsFwd start")
         return True
 
     def _bbsFwd_cron(self):

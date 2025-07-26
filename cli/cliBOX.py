@@ -130,6 +130,7 @@ class BoxCLI(DefaultCLI):
                 self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys()
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
+            # self._software_identifier()
             self._send_output(ret + self.get_ts_prompt(), env_vars=True)
             return ''
 
@@ -180,11 +181,11 @@ class BoxCLI(DefaultCLI):
             self.change_cli_state(2)
             return "\r\r # BBS Error !! \r\r"
         # print("CMD-Handler S1")
-        if not self.stat_identifier:
-            self._software_identifier()
+        #if not self.stat_identifier:
+        self.software_identifier()
         ########################
         if self._connection.bbs_connection:
-            return
+            return ''
         pms_cfg: dict = bbs.get_pms_cfg()
         if self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys():
             self._connection.bbsFwd_start()
@@ -194,7 +195,7 @@ class BoxCLI(DefaultCLI):
                     self.stat_identifier.typ in ['BBS', 'NODE'],
                     self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
             )):
-                return
+                return ''
         ########################
         # Check String Commands
         if not self._exec_str_cmd():

@@ -835,7 +835,7 @@ class AX25Port(object):
     def build_new_connection(self,
                              own_call: str,
                              dest_call: str,
-                             via_calls: [str],
+                             via_calls: list,
                              axip_add: (str, int) = ('', 0),
                              link_conn=None,
                              # digi_conn=None
