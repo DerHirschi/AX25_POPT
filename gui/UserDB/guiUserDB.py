@@ -634,7 +634,8 @@ class UserDB(tk.Toplevel):
         self._user_db.set_distance_for_all()
         #self._update_tree()
         self._db_ent = db_entry
-        self._root_win.sysMsg_to_monitor(self._getTabStr('userdb_save_hint').format(self._db_ent.call_str))
+        if hasattr(self._db_ent, 'call_str'):
+            self._root_win.sysMsg_to_monitor(self._getTabStr('userdb_save_hint').format(self._db_ent.call_str))
         if self._db_ent is None:
             return
         self._set_var_to_ent()

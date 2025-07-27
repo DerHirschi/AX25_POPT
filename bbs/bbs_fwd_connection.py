@@ -8,7 +8,7 @@ from cfg.popt_config import POPT_CFG
 
 
 class BBSConnection:
-    def __init__(self, bbs_obj, ax25_connection):
+    def __init__(self, bbs_obj, ax25_connection, tx=True):
         self._ax25_conn      = ax25_connection
         self._ax25_port_id   = ax25_connection.port_id
         self._bbs            = bbs_obj
@@ -34,7 +34,10 @@ class BBSConnection:
         self._tx_msg_BIDs    = []
         self._tx_fs_list     = ''    # '++-='
         self._send_next_time = []
-        BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_stat_id.feat_flag}')
+        if hasattr(self._dest_stat_id, 'feat_flag'):
+            BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
+        else:
+            BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: No SW ID in User-DB')
 
         self._state_tab = {
             0: self._init_rev_fwd,
@@ -45,16 +48,21 @@ class BBSConnection:
             5: self._wait_f_accept_msg,
             10: self._send_ff,
             11: self._wait_fq,
+            20: self._wait_sw_id,
         }
-        self._state = 0
-        self.e = not self._check_feature_flags()
-        if self._dest_stat_id is None:
-            logger.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
-            BBS_LOG.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
-            self.e = True
-        if not self.e:
-            # self._ax25_conn.cli.change_cli_state(state=5)
-            self._check_msg_to_fwd()
+        if not tx:
+            self._state = 0
+            self.e = not self._check_feature_flags()
+            if self._dest_stat_id is None:
+                logger.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
+                BBS_LOG.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
+                self.e = True
+            if not self.e:
+                # self._ax25_conn.cli.change_cli_state(state=5)
+                self._check_msg_to_fwd()
+        else:
+            self._state = 20
+
 
     def init_incoming_conn(self):
         BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
@@ -128,6 +136,7 @@ class BBSConnection:
 
         # Binärmodus: FBB-Protokoll
         if SOH not in self._rx_buff:
+            logger.debug("no SOH")
             return b''
 
         start_idx = self._rx_buff.index(SOH)
@@ -136,13 +145,16 @@ class BBSConnection:
 
         # Header lesen
         if len(self._rx_buff) < 2:
+            logger.debug("Mindestens SOH + Länge benötigt")
             return b''  # Mindestens SOH + Länge benötigt
         if self._rx_buff[0] != SOH:
+            logger.debug("Index 0 != SOH")
             return b''
 
         header_length = self._rx_buff[1]
         header_end    = 2 + header_length
         if len(self._rx_buff) < header_end:
+            logger.debug("Nicht genug Daten für Header")
             return b''  # Nicht genug Daten für Header
 
         # Datenblöcke verarbeiten
@@ -151,6 +163,7 @@ class BBSConnection:
         while pos < len(self._rx_buff):
             if self._rx_buff[pos] == EOT:
                 if pos + 1 >= len(self._rx_buff):
+                    logger.debug("Keine Prüfsumme")
                     return b''  # Keine Prüfsumme
                 # Vollständige Nachricht gefunden
                 end_idx = pos + 2  # EOT + Prüfsumme
@@ -159,10 +172,12 @@ class BBSConnection:
                 return ret
             elif self._rx_buff[pos] != STX:
                 # Ungültiger Blockstart, warte auf mehr Daten oder Fehler
+                logger.debug("Ungültiger Blockstart, warte auf mehr Daten oder Fehler")
                 return b''
 
             pos += 1
             if pos >= len(self._rx_buff):
+                logger.debug("Keine Blockgröße")
                 return b''  # Keine Blockgröße
 
             block_size = self._rx_buff[pos]
@@ -172,15 +187,18 @@ class BBSConnection:
 
             block_end = pos + block_size
             if block_end > len(self._rx_buff):
+                logger.debug("Nicht genug Daten für Block")
                 return b''  # Nicht genug Daten für Block
             total_data_size += block_size
             pos = block_end
 
+        logger.debug("Kein EOT gefunden, warte auf mehr Daten")
         # Kein EOT gefunden, warte auf mehr Daten
         return b''
 
     def _connection_tx(self, raw_data: b''):
-        # print(f"_connection_tx: {raw_data}")
+        logger.debug(f"fwd-conn-TX: State:    {self._state}")
+        logger.debug(f"fwd-conn-TX: raw_data: {raw_data}")
         self._ax25_conn.send_data(data=raw_data)
 
     def connection_rx(self, raw_data: b''):
@@ -188,15 +206,23 @@ class BBSConnection:
         logger.debug(f"fwd-conn-RX: State:    {self._state}")
         logger.debug(f"fwd-conn-RX: raw_data: {raw_data}")
         self._rx_buff += bytes(raw_data)
-        if self._state in [11]:
+        if self._state == 11:
+            if raw_data == b'FF\r':
+                self._connection_tx(b'FQ\r')  # Sende FQ
+                # self.state = 12  # Nächster Zustand oder direkt _end_conn
+                self.end_conn()
+                return True
             return False
         return True
 
     def end_conn(self):
         logTag = self._logTag + 'End-Conn > '
-        if self._state in [0, 1, 2, 3, 4, 5]:
+
+        if self._state in [0, 1, 2, 3, 5, 20]:
             self._send_abort()
-        BBS_LOG.info(logTag + f'try to remove bbsConn > {self._dest_bbs_call}')
+        elif self._state == 4:
+            self._send_checksum_error()
+        BBS_LOG.info(logTag + f'try to remove bbsConn > {self._dest_bbs_call} - State: {self._state}')
         if not self._bbs.end_fwd_conn(self):
             BBS_LOG.error(logTag + f'Error, end_fwd_conn() - {self._dest_bbs_call}')
         # self._ax25_conn.cli.change_cli_state(state=1)
@@ -215,6 +241,9 @@ class BBSConnection:
     def _send_abort(self):
         self._connection_tx(b'*\r')
 
+    def _send_checksum_error(self):
+        self._connection_tx(b'*** Checksum error\r')
+
     def _send_my_bbs_flag(self):
         # print(f"_send_my_bbs_flag: {self._mybbs_flag}")
         self._connection_tx(self._mybbs_flag + CR)
@@ -223,6 +252,8 @@ class BBSConnection:
         # print(f"BBS-Conn Stat-Exec: {self._state}")
         return self._state_tab[self._state]()
 
+    ##################################################
+    # States
     def _init_rev_fwd(self):
         self._send_my_bbs_flag()
         if 'F' in self._feat_flag:
@@ -230,8 +261,7 @@ class BBSConnection:
         else:
             self._state = 1
         return True
-    ##################################################
-    # States
+
     def _wait_f_prompt(self):
         # 1
         """
@@ -241,9 +271,11 @@ class BBSConnection:
         if self._rx_buff.endswith(b'>\r'):
             self._rx_buff = b''
             self._state = 2
+            print("_wait_f_prompt True")
 
     def _send_fwd_init_cmd(self):
         # 2
+        print("_send_fwd_init_cmd")
         if self._is_fwd_q():
             tx = self._tx_msg_header + b'F>\r'
             self._connection_tx(tx)
@@ -256,25 +288,29 @@ class BBSConnection:
         # 3
         rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
         if rx_lines:
-            # print('FS')
+            print('FS')
             self._ack_out_msg()
             ret = self._parse_header(rx_lines)
             self._connection_tx(b'FS ' + ret[0].encode('ASCII', 'ignore') + b'\r')
             if ret[1]:
+                print('FS 4')
                 self._state = 4
             else:
+                print('FS 2')
                 self._state = 2
         elif self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
-            # print('FF')
+            print('FF')
             self._ack_out_msg()
             if self._is_fwd_q():
                 tx = self._tx_msg_header + b'F>\r'
                 self._connection_tx(tx)
+                print('FF 5')
                 self._state = 5
             else:
+                print('FF 10')
                 self._state = 10
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
-            # print('FQ')
+            print('FQ 11')
             self._state = 11
             # self.end_conn()
 
@@ -295,7 +331,7 @@ class BBSConnection:
                 result = decode_bin_mail(next_mail)
                 if not result:
                     BBS_LOG.error(self._logTag + f"Fehler beim Dekodieren der Binärnachricht für BID: {bid}")
-                    # TODO Error handling ( *** Checksum Error .. FBB-Docs))
+                    logger.error(self._logTag + f"Fehler beim Dekodieren der Binärnachricht für BID: {bid}")
                     self.end_conn()
                     return
                 self._rx_msg_header[bid]['subject'] = result.get('title', b'')
@@ -304,6 +340,12 @@ class BBSConnection:
                 self._parse_msg(next_mail)
         if not self._rx_msg_header:
             self._state = 2
+        if self._rx_buff:
+            logger.debug(f"bin: {bin_mode}")
+            logger.debug(f"rx_buff: {self._rx_buff}")
+            logger.debug(f"state: {self._state}")
+            logger.debug(f"next_mail: {next_mail}")
+
 
     def _wait_f_accept_msg(self):
         # 5
@@ -374,6 +416,28 @@ class BBSConnection:
         if self._get_lines_fm_rx_buff('F>', cut_rx_buff=False):
             self._state = 3
             return
+
+    def _wait_sw_id(self):
+        # 20
+        #print(self._rx_buff)
+        if self._ax25_conn.cli.cli_exec(bytes(self._rx_buff)): # If State ID
+            self._dest_stat_id = self._ax25_conn.cli.stat_identifier
+            if not self._check_feature_flags():
+                self.end_conn()
+                BBS_LOG.error(
+                    self._logTag + f'SW-ID not found> {self._dest_bbs_call}')
+                return
+            if hasattr(self._dest_stat_id, 'feat_flag'):
+                BBS_LOG.info(
+                    self._logTag + f'SW-ID found> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
+            self._init_rev_fwd()
+            if self._state == 1:
+                self._wait_f_prompt()
+
+            elif self._state == 2:
+                self._send_fwd_init_cmd()
+
+        self._rx_buff = b''
 
     ########################################################
     #
@@ -523,7 +587,7 @@ class BBSConnection:
     def _parse_msg(self, msg: bytes):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
-        # BBS_LOG.debug(logTag + f"msg: {msg}")
+        BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
         eol = find_eol(msg)
         header_eol = eol + eol
@@ -535,7 +599,7 @@ class BBSConnection:
             msg = subject + eol + msg
 
         lines       = msg.split(header_eol)
-        short = len(lines) < 3
+        short       = len(lines) < 3
 
         if not short:
             try:
@@ -706,7 +770,10 @@ class BBSConnection:
         self._rx_msg_header[bid]['path']          = path
         self._rx_msg_header[bid]['fwd_path']      = parse_fwd_paths(path) # TODO: get Time from Header timecode
         # 'R:230513/2210z @:CB0ESN.#E.W.DLNET.DEU.EU [E|JO31MK] obcm1.07b5 LT:007'
-        self._rx_msg_header[bid]['time']          = path_data[-1].get('time_stamp', '')
+        if path_data:
+            self._rx_msg_header[bid]['time']          = path_data[-1].get('time_stamp', '')
+        else:
+            self._rx_msg_header[bid]['time']          = ''
         self._rx_msg_header[bid]['subject']       = subject
         self._rx_msg_header[bid]['bid']           = bid
         if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):  # PMS Opt TODO GUI

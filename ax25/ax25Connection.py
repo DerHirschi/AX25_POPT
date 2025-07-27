@@ -384,7 +384,7 @@ class AX25Conn:
             return
         """ BBS/PMS-FWD"""
         if self._bbsFwd_rx(data):
-            print("FWD RX")
+            # print("FWD RX")
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
@@ -430,6 +430,18 @@ class AX25Conn:
 
     #############################
     # BBS_FWD Stuff
+    def bbsFwd_init(self):
+        bbs = self._port_handler.get_bbs()
+        if bbs is None:
+            logger.error("PMS: bbs is None")
+            return False
+        self.bbs_connection = bbs.init_tx_fwd(self)
+        if self.bbs_connection is None:
+            logger.error("PMS: bbs_connection is None")
+            return False
+        # print("Done: bbsFwd_start_reverse")
+        return True
+
     def bbsFwd_start_reverse(self):
         if self.cli.stat_identifier is None:
             logger.error("PMS: cli.stat_identifier is None")

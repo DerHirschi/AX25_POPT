@@ -59,7 +59,9 @@ class AutoConnTask:
             self._connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
             # self.dest_station_id = self._connection.cli.stat_identifier
             logger.debug("ConnTask connection: Start")
-            self._set_state_exec(1)
+            # self._set_state_exec(1)
+            logger.debug("ConnTask connection: _PMS_fwd_init")
+            self._PMS_fwd_init()
 
     def crone(self):
         if self.e:
@@ -98,8 +100,8 @@ class AutoConnTask:
         # print(f"ConnTask {self._conf.get('task_typ', '')} END")
         if self.state_id:
             self._set_state_exec(0)
-        # if self._connection:
-        #     self._end_connection()
+        #if self._connection:
+        #    self._end_connection()
 
     def _end_connection(self):
         # 0
@@ -111,6 +113,14 @@ class AutoConnTask:
 
     ###############################################
     # PMS
+    def _PMS_fwd_init(self):
+        if self._connection.bbsFwd_init():
+            self._set_state_exec(4)
+        else:
+            logger.error("_PMS_fwd_init > bbsFwd_init")
+            self._set_state_exec(0)
+
+
     def _PMS_send_fwd_cmd(self):
         # 1
         if not self._connection.cli.stat_identifier:

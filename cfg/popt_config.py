@@ -127,16 +127,17 @@ class Main_CFG:
         # print(f'Main CFG: Load from {self._config_filename}')
         config: dict = load_fm_pickle_file(CFG_MAIN_data_file)
         if config:
-            """
-            for cfg_name, cfg in config.items():
-                logger.debug(f"Main CFG:{cfg_name}> {cfg}")
-            """
             self._config = dict(config)
         else:
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             self._set_all_default_CFGs()
-
+        """
+        logger.debug('-----------------------------')
+        for cfg_name, cfg in self._config.get('bbs_main', {}).items():
+            logger.debug(f"bbs_main:{cfg_name}> {cfg}")
         # self._config.read(self._config_filename)
+        logger.debug('-----------------------------')
+        """
 
     def save_MAIN_CFG_to_file(self):
         logger.info(f'Main CFG: Config Saved to {CFG_MAIN_data_file}')
@@ -246,7 +247,7 @@ class Main_CFG:
         if def_cfg is not None:
             if callable(def_cfg):
                 return def_cfg()
-            return def_cfg
+        return def_cfg
 
     def get_CFG_by_key(self, cfg_key: str):
         if cfg_key not in self._config.keys():

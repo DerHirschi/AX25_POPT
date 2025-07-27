@@ -1132,6 +1132,15 @@ class BBS:
                 self._port_handler.del_SchedTask(autoconn_cfg)
 
     ###################################
+    def init_tx_fwd(self, ax25_conn):
+        bbs_conn = BBSConnection(self, ax25_conn)
+        if bbs_conn.e:
+            return None
+        self._fwd_connections.append(bbs_conn)
+        self._port_handler.set_pmsFwdAlarm(True)
+        return bbs_conn
+
+    ###################################
     # Man. FWD when already connected
     def init_rev_fwd_conn(self, ax25_conn):
         if ax25_conn.cli.stat_identifier is None:

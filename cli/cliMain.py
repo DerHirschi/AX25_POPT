@@ -338,10 +338,11 @@ class DefaultCLI(object):
                 self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def software_identifier(self):
+        #print("SW-ID")
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
-            # print(f"SW-ID flag: {self.stat_identifier.flags}")
-            # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
+            #print(f"SW-ID flag: {self.stat_identifier.feat_flag}")
+            #print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
                 if not self.stat_identifier.knows_me:
                     self._send_name_cmd_back()
@@ -349,7 +350,9 @@ class DefaultCLI(object):
                 self._encoding = self.stat_identifier.txt_encoding, 'ignore'
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
+            #print("SW ID True")
             return True
+        #print("SW ID False")
         return False
 
     def _send_name_cmd_back(self):
@@ -366,7 +369,7 @@ class DefaultCLI(object):
     def _find_sw_identifier(self):
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
-            print(self._last_line + self._raw_input)
+            # print(self._last_line + self._raw_input)
             inp_lines = self._last_line + self._raw_input
             inp_lines = inp_lines.replace(b'\n', b'\r')
             inp_lines = inp_lines.decode(self._encoding[0], 'ignore')
@@ -379,6 +382,7 @@ class DefaultCLI(object):
                     self._set_user_db_software_id()
                     logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                     return True
+            return False
         elif not self._last_line and self.stat_identifier:
             inp_lines = self._raw_input
             inp_lines = inp_lines.replace(b'\n', b'\r')
@@ -393,6 +397,7 @@ class DefaultCLI(object):
                         self._set_user_db_software_id()
                         logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                         return True
+                    return True
         return False
 
     def _find_cmd(self):
@@ -1608,9 +1613,12 @@ class NoneCLI(DefaultCLI):
         self._commands_cfg = []
 
     def cli_exec(self, inp=b''):
-        if self.stat_identifier is None:
-            self._raw_input += bytes(inp)
-            self.software_identifier()
+
+        self._raw_input += bytes(inp)
+        #if self.stat_identifier is None:
+        #    self._raw_input += bytes(inp)
+        return self.software_identifier()
+
 
     def _exec_cmd(self):
         return ''
