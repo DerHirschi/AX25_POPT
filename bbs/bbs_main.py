@@ -618,7 +618,9 @@ class BBS:
             if self._pms_cfg.get('bin_mode', True):
                 # Bin Mode
                 bin_mode = True
-                comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
+                # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
+                # FIXME: ??? double msg_sub in first lines ????
+                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
             to_send_len = len(comp_msg)
@@ -637,12 +639,13 @@ class BBS:
             except ValueError:
                 trys = 0
 
-            bid        = fwd_task[1]
-            from_call  = fwd_task[3]
-            to_call    = fwd_task[6]
-            to_bbs     = fwd_task[7]
-            typ        = fwd_task[12]
-            fwd_header = f"{typ} {from_call} {to_bbs} {to_call} {bid} {msg_size}"
+            bid         = fwd_task[1]
+            from_call   = fwd_task[3]
+            to_call     = fwd_task[6]
+            to_bbs      = fwd_task[7]
+            to_bbs_call = fwd_task[8]
+            typ         = fwd_task[12]
+            fwd_header  = f"{typ} {from_call} {to_bbs_call} {to_call} {bid} {msg_size}"
             msg_to_fwd = dict(
                 fwd_id=         fwd_task[0],
                 bid=            bid,
@@ -652,7 +655,7 @@ class BBS:
                 from_bbs_call=  fwd_task[5],
                 to_call=        to_call,
                 to_bbs=         to_bbs,
-                to_bbs_call=    fwd_task[8],
+                to_bbs_call=    to_bbs_call,
                 fwd_bbs_call=   fwd_task[9],
                 msg_size=       msg_size,
                 bytes_to_send=  to_send_len,
@@ -893,10 +896,10 @@ class BBS:
         log_tag = self._logTag + "Set BBS-TO> "
         if bbs_call not in self._fwd_BBS_q:
             BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_BBS_q")
-            return False
+            return
         if bbs_call not in self._fwd_cfg:
             BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_cfg")
-            return False
+            return
         self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time() + (self._fwd_cfg.get(bbs_call,{}).get('t_o_after_fail', 30) * 60)
         BBS_LOG.debug(
             log_tag + f"New Timeout({bbs_call}): {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")

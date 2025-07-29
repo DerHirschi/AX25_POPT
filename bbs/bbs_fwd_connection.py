@@ -207,11 +207,6 @@ class BBSConnection:
         logger.debug(f"fwd-conn-RX: raw_data: {raw_data}")
         self._rx_buff += bytes(raw_data)
         if self._state == 11:
-            if raw_data == b'FF\r':
-                self._connection_tx(b'FQ\r')  # Sende FQ
-                # self.state = 12  # Nächster Zustand oder direkt _end_conn
-                self.end_conn()
-                return True
             return False
         return True
 
@@ -271,11 +266,9 @@ class BBSConnection:
         if self._rx_buff.endswith(b'>\r'):
             self._rx_buff = b''
             self._state = 2
-            print("_wait_f_prompt True")
 
     def _send_fwd_init_cmd(self):
         # 2
-        print("_send_fwd_init_cmd")
         if self._is_fwd_q():
             tx = self._tx_msg_header + b'F>\r'
             self._connection_tx(tx)
@@ -288,31 +281,24 @@ class BBSConnection:
         # 3
         rx_lines = self._get_lines_fm_rx_buff('F>', cut_rx_buff=True)
         if rx_lines:
-            print('FS')
             self._ack_out_msg()
             ret = self._parse_header(rx_lines)
             self._connection_tx(b'FS ' + ret[0].encode('ASCII', 'ignore') + b'\r')
             if ret[1]:
-                print('FS 4')
                 self._state = 4
             else:
-                print('FS 2')
                 self._state = 2
         elif self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
-            print('FF')
             self._ack_out_msg()
             if self._is_fwd_q():
                 tx = self._tx_msg_header + b'F>\r'
                 self._connection_tx(tx)
-                print('FF 5')
                 self._state = 5
             else:
-                print('FF 10')
                 self._state = 10
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
-            print('FQ 11')
             self._state = 11
-            # self.end_conn()
+            self.end_conn()
 
     def _is_fwd_q(self):
         self._check_msg_to_fwd()
@@ -345,7 +331,6 @@ class BBSConnection:
             logger.debug(f"rx_buff: {self._rx_buff}")
             logger.debug(f"state: {self._state}")
             logger.debug(f"next_mail: {next_mail}")
-
 
     def _wait_f_accept_msg(self):
         # 5
@@ -410,6 +395,10 @@ class BBSConnection:
 
     def _wait_fq(self):
         # 11
+        if self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
+            self._connection_tx(b'FQ\r')
+            self.end_conn()
+            return
         if self._get_lines_fm_rx_buff('FQ', cut_rx_buff=True):
             self.end_conn()
             return

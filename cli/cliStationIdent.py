@@ -30,7 +30,7 @@ def get_station_id_obj(inp_line: str):
 
 def validate_id_str(inp: str):
     tmp = inp[1:-1].split('-')
-    if len(tmp) == 3:
+    if len(tmp) >= 3:
         if tmp[0] in STATION_ID_SYSOP + STATION_ID_NODE + STATION_ID_BBS + STATION_ID_MCAST:
             return tmp
         """
