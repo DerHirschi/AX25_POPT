@@ -399,6 +399,8 @@ class PoPT_GUI_Main:
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
         logger.info('GUI: Init Done')
+        logger.info("GUI: Unblocking Ports")
+        self._port_handler.unblock_all_ports()
         logger.info('GUI: Start Tasker')
         self.main_win.mainloop()
 

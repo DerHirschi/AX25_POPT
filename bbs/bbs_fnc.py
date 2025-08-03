@@ -122,7 +122,8 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
         new_header += MSG_H_FROM[0] + SP + from_address.encode('ASCII', 'ignore') + CR
         new_header += MSG_H_TO[1]   + SP + to_address.encode('ASCII', 'ignore') + CR
         if x_info:
-            new_header += MSG_XH_INFO + SP + x_info.encode('ASCII', 'ignore') + CR
+            enc_x_info = x_info.encode('ASCII', 'ignore')
+            new_header += MSG_XH_INFO + SP + enc_x_info + CR
         new_header += CR
 
     else:

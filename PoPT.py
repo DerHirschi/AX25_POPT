@@ -22,6 +22,8 @@ if __name__ == '__main__':
     import gui.guiMain
     logger.info(f"Starte GUI.")
     gui.guiMain.PoPT_GUI_Main(PORT_HANDLER)
+
+    # PORT_HANDLER.unblock_all_ports()
     # PORT_HANDLER.close_popt()
     logger.info(f"PoPT_{VER} beendet.")
     LOG_BOOK.info(f"PoPT_{VER} beendet.")

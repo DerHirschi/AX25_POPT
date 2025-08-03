@@ -127,8 +127,8 @@ class AX25PortHandler(object):
         self._task_timer_2sec   = time.time() + 2
         self._init_PH_tasker()
         #######################################################
-        logger.info("PH: Unblocking Ports")
-        self.unblock_all_ports()
+        #logger.info("PH: Unblocking Ports")
+        #self.unblock_all_ports()
         #######################################################
         logger.info("PH: Init Complete")
 

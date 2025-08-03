@@ -391,6 +391,8 @@ class BBSConnection:
     def _send_ff(self):
         # 10
         self._connection_tx(b'FF\r')
+        #self._connection_tx(b'FQ\r')
+        #self.end_conn()
         self._state = 11
 
     def _wait_fq(self):

@@ -1083,6 +1083,8 @@ class AX25Port(object):
     def get_block_incoming_conn(self):
         return self._block_incoming_conn
 
+
+
 class KissTCP(AX25Port):
     def init(self):
         if self._loop_is_running:
@@ -1096,7 +1098,7 @@ class KissTCP(AX25Port):
                 self.device.connect(self._port_param)
                 self.device_is_running = True
 
-            except (OSError, ConnectionRefusedError, ConnectionError) as e:
+            except Exception as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
                 # self.device.shutdown(socket.SHUT_RDWR)
@@ -1112,7 +1114,7 @@ class KissTCP(AX25Port):
                     try:
                         self.device.sendall(self.kiss.device_kiss_start_1())
                         # print(self.device.recv(999))
-                    except BrokenPipeError as e:
+                    except Exception as e:
                         # print('{}'.format(e))
                         logger.error(f'Port {self.port_id}: {e}')
                         # self.device.shutdown(socket.SHUT_RDWR)
@@ -1122,7 +1124,7 @@ class KissTCP(AX25Port):
                     else:
                         try:
                             self.set_kiss_parm()
-                        except AX25DeviceFAIL as e:
+                        except Exception as e:
                             raise e
 
     def __del__(self):
@@ -1142,28 +1144,29 @@ class KissTCP(AX25Port):
             """
             self.device.shutdown(socket.SHUT_RDWR)
             self.device.close()
-        except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+        except Exception as e:
             logger.error(f"Port {self.port_id}: Error while closing Port !")
             logger.error(f"Port {self.port_id}: {e}")
             self.device_is_running = False
             if self.device is not None:
                 try:
                     self.device.close()
-                except (OSError, ConnectionRefusedError, ConnectionError, AttributeError) as e:
+                except Exception as e:
                     logger.error(f"Port {self.port_id}: Error while closing Port !")
                     logger.error(f"Port {self.port_id}: {e}")
-                    return
+
         finally:
             self.device_is_running = False
             if self.device is not None:
                 self.device.close()
             # print("KISS TCP FINALLY")
+        #self.ende = True
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None and self.device_is_running:
             try:
                 self.device.sendall(self.kiss.set_all_parameter())
-            except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+            except Exception as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 logger.error('{}'.format(e))
                 raise AX25DeviceFAIL
@@ -1174,7 +1177,7 @@ class KissTCP(AX25Port):
             recv_buff = self.device.recv(999)
         except socket.timeout:
             return None
-        except OSError as e:
+        except Exception as e:
             raise AX25DeviceERROR(e, self)
 
         if recv_buff:
@@ -1194,13 +1197,14 @@ class KissTCP(AX25Port):
         try:
             self.device.sendall(self.kiss.kiss(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
-        except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
+        except Exception as e:
             logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self._port_param}')
             logger.error('{}'.format(e))
             try:
                 self.init()
-            except AX25DeviceFAIL:
+            except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                logger.error(f"Port {self.port_id}: Error: {e}")
                 raise AX25DeviceFAIL
         # else:
         #     self._mh.bw_mon_inp(frame, self.port_id)
@@ -1215,7 +1219,7 @@ class KISSSerial(AX25Port):
             try:
                 self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.3)
                 self.device_is_running = True
-            except (FileNotFoundError, serial.serialutil.SerialException) as e:
+            except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
                 logger.error('{}'.format(e))
                 self.close_device()
@@ -1233,7 +1237,7 @@ class KISSSerial(AX25Port):
                         self.device.write(self.kiss.device_kiss_start_1())
                         logger.info(f"Port {self.port_id}: TNC-MSG: {self.device.readall().decode('UTF-8', 'ignore')}")
                         self.set_kiss_parm()
-                    except (FileNotFoundError, serial.serialutil.SerialException, AX25DeviceFAIL) as e:
+                    except Exception as e:
                         logger.error(
                             f"Port {self.port_id}: Can not set Serial Device into KISS MODE")
                         logger.error(f"Port {self.port_id}: Device: {self._port_param}")
@@ -1248,7 +1252,8 @@ class KISSSerial(AX25Port):
         self._close_dev()
         try:
             self.init()
-        except AX25DeviceFAIL:
+        except Exception as e:
+            logger.error(f"Port {self.port_id}: Error: {e}")
             raise AX25DeviceFAIL
 
     def close_device(self):
@@ -1285,16 +1290,17 @@ class KISSSerial(AX25Port):
             if hasattr(self.device, 'close'):
                 self.device.close()
             # self.device_is_running = False
-        except (FileNotFoundError, serial.serialutil.SerialException, OSError, TypeError) as e:
+        except Exception as e:
             logger.warning(self._logTag + f"Error while closing: {e}")
         self.device_is_running = False
+        # self.ende = True
 
     def set_kiss_parm(self):
         if self.kiss.is_enabled and self.device is not None:
             try:
                 self.device.write(self.kiss.set_all_parameter())
             # except serial.portNotOpenError:
-            except serial.PortNotOpenError as e:
+            except Exception as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 self.device_is_running = False
                 self.close_device()
@@ -1310,15 +1316,16 @@ class KISSSerial(AX25Port):
                 # There is no new data from serial port
                 if not recv_buff:
                     return None
-            except TypeError as e:
+            except Exception as e:
                 logger.warning(f'Port {self.port_id}: Serial Device Error {e}')
                 try:
                     # self.init()
                     self._reinit()
                     return None
-                except AX25DeviceFAIL:
+                except Exception as e:
                     self.close_device()
                     logger.error(f"Port {self.port_id}: Reinit Failed !! {self._port_param}")
+                    logger.error(f"Port {self.port_id}: Error: {e}")
                     raise AX25DeviceERROR
 
             if recv_buff:
@@ -1341,8 +1348,9 @@ class KISSSerial(AX25Port):
             try:
                 # self.init()
                 self._reinit()
-            except AX25DeviceFAIL:
+            except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                logger.error(f"Port {self.port_id}: Error: {e}")
                 self.close_device()
                 raise AX25DeviceERROR
         if self.device is None:
@@ -1352,15 +1360,16 @@ class KISSSerial(AX25Port):
 
         try:
             self.device.write(self.kiss.kiss(frame.data_bytes))
-        except (FileNotFoundError, serial.serialutil.SerialException) as e:
+        except Exception as e:
             logger.warning(
                 f'Port {self.port_id}: Error. Cant send Packet to KISS Serial Device. Try Reinit Device {self._port_param}')
             logger.warning('{}'.format(e))
             try:
                 # self.init()
                 self._reinit()
-            except AX25DeviceFAIL:
+            except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                logger.error(f"Port {self.port_id}: Error: {e}")
                 self.close_device()
                 raise AX25DeviceERROR
 
@@ -1385,8 +1394,8 @@ class AXIP(AX25Port):
             # self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self._port_param)
-            except OSError as e:
-                logger.error(f"Port {self.port_id}: OSError {e}")
+            except Exception as e:
+                logger.error(f"Port {self.port_id}: Error {e}")
                 # self.device.shutdown(socket.SHUT_RDWR)
                 # self.device.close()
                 # self.device_is_running = False
@@ -1449,8 +1458,8 @@ class AXIP(AX25Port):
             return ret
         except BlockingIOError:
             return RxBuf()  # Keine Daten verfügbar
-        except OSError as e:
-            logger.error(f"Port {self.port_id}: OSError in _rx: {e}")
+        except Exception as e:
+            logger.error(f"Port {self.port_id}: Error in _rx: {e}")
             return RxBuf()
 
     def _tx_device(self, frame, multicast=True):
