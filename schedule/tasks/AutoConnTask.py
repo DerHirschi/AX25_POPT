@@ -37,9 +37,9 @@ class AutoConnTask:
         self._state_tab = {
             TASK_TYP_FWD: {
                 0: self._end_connection,
-                1: self._PMS_send_fwd_cmd,
-                2: self._PMS_is_last_chars_in_rxbuff,
-                3: self._PMS_start_rev_fwd,
+                #1: self._PMS_send_fwd_cmd,
+                #2: self._PMS_is_last_chars_in_rxbuff,
+                #3: self._PMS_start_rev_fwd,
                 4: self._PMS_wait_rev_fwd_ended,
             }
         }.get(self._conf.get('task_typ', ''), {})
@@ -120,7 +120,7 @@ class AutoConnTask:
             logger.error("_PMS_fwd_init > bbsFwd_init")
             self._set_state_exec(0)
 
-
+    """
     def _PMS_send_fwd_cmd(self):
         # 1
         if not self._connection.cli.stat_identifier:
@@ -149,26 +149,34 @@ class AutoConnTask:
 
     def _PMS_start_rev_fwd(self):
         # 3
-        """
-        if self._connection.bbs_connection:
-            self._set_state_exec(4)
-            return
-        """
+        
+        #if self._connection.bbs_connection:
+        #    self._set_state_exec(4)
+        #    return
+        
         # TODO if connection.rx:
         if self._connection.bbsFwd_start_reverse():
             self._set_state_exec(4)
         else:
             self._set_state_exec(0)
 
+    """
     def _PMS_wait_rev_fwd_ended(self):
         # 4
-        if not self._connection.bbs_connection:
+        if not hasattr(self._connection, 'bbs_connection') or\
+            not hasattr(self._connection, 'tx_buf_rawData'):
+            self._ConnTask_ende()
+            return
+        if self._connection.bbs_connection:
+            return
             # self._set_state_exec(0)
-            if self._connection:
-                # self._set_state_exec(0)
-                self._end_connection()
-            else:
-                self._ConnTask_ende()
+        if self._connection.tx_buf_rawData:
+            return
+        if self._connection:
+            # self._set_state_exec(0)
+            self._end_connection()
+        else:
+            self._ConnTask_ende()
 
     ##########################################
     #
