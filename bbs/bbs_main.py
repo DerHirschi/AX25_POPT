@@ -1465,30 +1465,37 @@ class BBS:
 
     # BL #######################################################
     def _get_fwd_bbs_bl(self, msg: dict):
-        log_tag     = self._logTag + 'Forward Lookup BL> '
-        mid         = msg.get('mid',            0)
-        path        = msg.get('path',           [])
-        topic       = msg.get('receiver',       '')
-        distributor = msg.get('recipient_bbs',  '')
-        rej_dist, rej_topic =  self._pms_cfg.get('reject_bbs', ''),  self._pms_cfg.get('reject_call', '')
+        log_tag             = self._logTag + 'Forward Lookup BL> '
+        mid                 = msg.get('mid', 0)
+        path                = msg.get('path', [])
+        topic               = msg.get('receiver', '')
+        distributor         = msg.get('recipient_bbs', '')
+        rej_dist, rej_topic = self._pms_cfg.get('reject_bbs', ''), self._pms_cfg.get('reject_call', '')
         BBS_LOG.info(log_tag + f"Msg: {mid} - {topic}@{distributor}")
+
+        # Global Reject Checks
         if distributor in rej_dist:
-            BBS_LOG.warning(log_tag +f"Msg: {mid} - Global Rule - Distributor-Rejected/Blocked: {distributor} global")
+            BBS_LOG.warning(log_tag + f"Msg: {mid} - Global Rule - Distributor-Rejected/Blocked: {distributor} global")
             return []
         if topic in rej_topic:
             BBS_LOG.warning(log_tag + f"Msg: {mid} - Global Rule - Topic-Rejected/Blocked: {topic} global")
             return []
 
-        path_list   = get_pathlist_fm_header(path)
-        ret         = []
+        path_list = get_pathlist_fm_header(path)
+        ret       = []
+
+        # Prüfen, ob irgendeine BBS-Konfiguration cfg_dist oder cfg_topic enthält
+        any_dist_configured  = any(fwd_cfg.get('bl_dist_out', []) for fwd_cfg in self._fwd_cfg.values())
+        any_topic_configured = any(fwd_cfg.get('bl_top_out',  []) for fwd_cfg in self._fwd_cfg.values())
+
         # FWD Config Lookup
         for fwd_bbs, fwd_cfg in self._fwd_cfg.items():
             fwd_cfg: dict
-            cfg_dist        = fwd_cfg.get('bl_dist_out',        [])
-            cfg_dist_block  = fwd_cfg.get('bl_dist_not_out',    [])
-            cfg_topic       = fwd_cfg.get('bl_top_out',         [])
-            cfg_topic_block = fwd_cfg.get('bl_top_not_out',     [])
-            cfg_bl_allowed  = fwd_cfg.get('bl_fwd',             True)
+            cfg_dist        = fwd_cfg.get('bl_dist_out', [])
+            cfg_dist_block  = fwd_cfg.get('bl_dist_not_out', [])
+            cfg_topic       = fwd_cfg.get('bl_top_out', [])
+            cfg_topic_block = fwd_cfg.get('bl_top_not_out', [])
+            cfg_bl_allowed  = fwd_cfg.get('bl_fwd', True)
 
             # BL FWD is not allowed to this BBS
             if not cfg_bl_allowed:
@@ -1496,35 +1503,33 @@ class BBS:
                 continue
             # BL Loop Check
             if fwd_bbs in path_list:
-                # TODO set Hold ?
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD to {fwd_bbs}. BBS already on Path.")
                 continue
-            # Topic BLock
+            # Topic Block
             if topic in cfg_topic_block:
                 BBS_LOG.warning(log_tag + f"Msg: {mid} - Rule - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
                 continue
-            # Distributor BLock
+            # Distributor Block
             if distributor in cfg_dist_block:
-                BBS_LOG.warning(log_tag + f"Msg: {mid} - Rule - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
+                BBS_LOG.warning(
+                    log_tag + f"Msg: {mid} - Rule - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
                 continue
+
             # Distributor Check
-            if any((
-                    not cfg_dist,
-                distributor in cfg_dist
-            )):
+            if distributor in cfg_dist or (not any_dist_configured and not any_topic_configured and distributor not in cfg_dist_block):
                 if fwd_bbs not in ret:
-                    BBS_LOG.info(log_tag + f"Msg: {mid} - Rule - Distributor-Check: {distributor} forward to {fwd_bbs}.")
+                    BBS_LOG.info(
+                        log_tag + f"Msg: {mid} - Rule - Distributor-Check: {distributor} forward to {fwd_bbs}.")
                     ret.append(fwd_bbs)
+
             # Topic Check
-            if any((
-                    not cfg_topic,
-                topic in cfg_topic
-            )):
+            if topic in cfg_topic or (not any_dist_configured and not any_topic_configured and topic not in cfg_topic_block):
                 if fwd_bbs not in ret:
                     BBS_LOG.info(log_tag + f"Msg: {mid} - Rule - Topic-Check: {topic} forward to {fwd_bbs}.")
                     ret.append(fwd_bbs)
+
         if not ret:
-            BBS_LOG.info(log_tag + f"Msg: {mid} - BBS to FWD found: {topic}@{distributor}")
+            BBS_LOG.info(log_tag + f"Msg: {mid} - No BBS to FWD found: {topic}@{distributor}")
         return ret
 
     ########################################################################

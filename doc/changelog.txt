@@ -8,6 +8,8 @@ Fixes:
 - BOX-CLI. Ausgabe Formatierung für LN, LM, LL, ...
 - BBS-Forwarding, Verbindung wird nicht beendet, wenn Fehler erkannt wird
 - BBS-Forwarding, Software Identifier wird beim Forwarding nicht ausgewertet
+- BBS-Routing, Routingregeln für Bulletin Nachrichten werden nicht richtig
+  abarbeitet
 
 Optimierung/Änderungen:
 - AXIP Port handling
