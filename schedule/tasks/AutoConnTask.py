@@ -108,7 +108,7 @@ class AutoConnTask:
         if self._connection:
             self._connection.conn_disco()
             #self._connection = None
-        self._set_state_exec(0)
+        # self._set_state_exec(0)
         # self._ConnTask_ende()
 
     ###############################################

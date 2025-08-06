@@ -812,6 +812,7 @@ class AX25Conn:
         self.vr = 0
         self.vs = 0
 
+    """
     def reset_conn(self):
         # TODO .. Not Used anymore .. Delete ..
         # self._del_pipe()
@@ -825,6 +826,7 @@ class AX25Conn:
         self.vr = 0
         self.vs = 0
         self._port_handler.reset_connection(connection=self) # TODO .. Not Used anymore .. Delete ..
+    """
 
     def is_dico(self):
         if not self.zustand_exec:

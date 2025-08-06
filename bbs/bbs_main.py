@@ -760,7 +760,7 @@ class BBS:
                 continue
             if self._is_bbs_connected(bbs_call):
                 BBS_LOG.debug(log_tag + f"{bbs_call} is connected.. Skipping.")
-                self._set_bbs_timeout(bbs_call)
+                self.set_bbs_timeout(bbs_call)
                 continue
             # Updating Next Q
             if all((
@@ -892,7 +892,7 @@ class BBS:
         BBS_LOG.debug(self._logTag + f"Set BBS Byte C - total:{round((self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] / 1024), 1)} kB")
         return True
 
-    def _set_bbs_timeout(self, bbs_call: str):
+    def set_bbs_timeout(self, bbs_call: str):
         log_tag = self._logTag + "Set BBS-TO> "
         if bbs_call not in self._fwd_BBS_q:
             BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_BBS_q")
@@ -900,7 +900,7 @@ class BBS:
         if bbs_call not in self._fwd_cfg:
             BBS_LOG.error(log_tag + f"{bbs_call} not in  self._fwd_cfg")
             return
-        self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time() + (self._fwd_cfg.get(bbs_call,{}).get('t_o_after_fail', 30) * 60)
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_timeout'] = time.time() + (self._fwd_cfg.get(bbs_call,{}).get('t_o_next_conn', 30) * 60)
         BBS_LOG.debug(
             log_tag + f"New Timeout({bbs_call}): {int(((self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_timeout', -1)) - time.time()) / 60)} Min.")
 
@@ -1049,7 +1049,7 @@ class BBS:
                     BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
                     continue
                 if self._is_bbs_connected(to_bbs_call):
-                    self._set_bbs_timeout(to_bbs_call)
+                    self.set_bbs_timeout(to_bbs_call)
                     BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
                     continue
 
@@ -1059,7 +1059,7 @@ class BBS:
                 via_calls = fwd_bbs_cfg.get('via_calls'),
                 axip_add  = fwd_bbs_cfg.get('axip_add'),
                 fwd_conn  = self._start_autoFwd(to_bbs_call)
-                self._set_bbs_timeout(to_bbs_call)
+                self.set_bbs_timeout(to_bbs_call)
                 if not fwd_conn:
                     bbs_fwd_error_c += 1
                     BBS_LOG.error(log_tag + f"fwd_conn Error: {to_bbs_call}")
@@ -1621,9 +1621,9 @@ class BBS:
         logTag = self._logTag + '_cc_msg()> '
         receiver_address = self._userDB.get_PRmail(receiver_call)
         if not receiver_address:
-            return False
+            return
         if not '@' in receiver_address:
-            return False
+            return
         receiver_bbs       = receiver_address.split('@')[-1]
         recipient_bbs_call = receiver_bbs.split('.')[0]
         new_subject        = f"CP {msg.get('receiver', '')}: " + msg.get('subject', '')
@@ -1734,7 +1734,15 @@ class BBS:
         return self._db.bbs_update_out_msg(msg_struc)
 
     ####################################################################################
+    def set_error(self, bbs_call: str):
+        bbs_fwd_error_c = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_error_c', 0)
+        bbs_fwd_error_c += 1
+
+    ####################################################################################
     # Get it
+    def get_fwdCfg(self, fwd_bbs_call: str):
+        return self._fwd_cfg.get(fwd_bbs_call, {})
+
     def get_bbsQ_vars(self):
         return self._fwd_BBS_q
 

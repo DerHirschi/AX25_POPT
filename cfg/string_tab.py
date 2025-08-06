@@ -3970,6 +3970,18 @@ STR_TABLE = {
         '',
         ''),  #
 
+    'conn_timeout': (
+        'Timeout (Minuten): ',
+        'Timeout (minutes): ',
+        'Timeout (minuten): ',
+        'Timeout (minutes): ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),  #
+
     'fwd_autoPath_help': (
         ('0  = deaktiviert\n'
          '1  = am aktuellsten\n'

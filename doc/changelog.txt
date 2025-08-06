@@ -26,6 +26,7 @@ Neue Implementierungen / Funktionen:
 - PoPT auf nicht empfangsbereit schalte. (Alle eingehenden Connects werden
   ignoriert/abgewiesen)
 - Blacklist für eingehende Verbindungen.
+- BBS-Forwarding: Timeout für tote Verbindung
 
 ###########################################################################################################
 ###########################################################################################################

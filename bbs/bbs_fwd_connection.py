@@ -27,7 +27,8 @@ class BBSConnection:
         self._feat_flag      = []
         self._is_bin_mode    = False
         self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
-        ###########
+        self._conn_to_timer  = time.time()
+        ################################
         self._rx_buff        = b''
         # self._debug_rx_buff  = b''
         self._rx_msg_header  = {}
@@ -40,7 +41,13 @@ class BBSConnection:
             BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
         else:
             BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: No SW ID in User-DB')
-
+        ################################
+        self._fwd_cfg: dict = self._bbs.get_fwdCfg(self._dest_bbs_call)
+        if not self._fwd_cfg:
+            BBS_LOG.error(f"No fwd_cfg found for {self._dest_bbs_call}")
+            logger.error(f"No fwd_cfg found for {self._dest_bbs_call}")
+            self.e = True
+        ################################
         self._state_tab = {
             0: self._init_rev_fwd,
             1: self._wait_f_prompt,
@@ -53,18 +60,24 @@ class BBSConnection:
             20: self._wait_sw_id,
             21: self.end_conn,
         }
+        ################################
         if not tx:
             self._state = 0
             self.e = not self._check_feature_flags()
             if self._dest_stat_id is None:
-                logger.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
-                BBS_LOG.error(self._logTag + f'Error Dest State Identy> {self._dest_stat_id}')
+                BBS_LOG.error(self._logTag + f'Error Dest Station Identy> {self._dest_stat_id}')
+                logger.error(self._logTag + f'Error Dest Station Identy> {self._dest_stat_id}')
                 self.e = True
-            if not self.e:
+                #self._state = 21
+            if self.e:
+                self.end_conn()
+            else:
                 # self._ax25_conn.cli.change_cli_state(state=5)
                 self._check_msg_to_fwd()
         else:
             self._state = 20
+            if self.e:
+                self.end_conn()
 
 
     def init_incoming_conn(self):
@@ -85,7 +98,8 @@ class BBSConnection:
         return True
 
     def connection_cron(self):
-        self.exec_state()
+        self._exec_state()
+        self._check_conn_timeout()
 
     def _get_lines_fm_rx_buff(self, data, cut_rx_buff=False):
         if type(data) is str:
@@ -203,8 +217,11 @@ class BBSConnection:
         logger.debug(f"fwd-conn-TX: State:    {self._state}")
         logger.debug(f"fwd-conn-TX: raw_data: {raw_data}")
         self._ax25_conn.send_data(data=raw_data)
+        self._reset_conn_timeout()
 
     def connection_rx(self, raw_data: b''):
+        if raw_data:
+            self._reset_conn_timeout()
         # self._debug_rx_buff += bytes(raw_data)
         logger.debug(f"fwd-conn-RX: State:    {self._state}")
         logger.debug(f"fwd-conn-RX: raw_data: {raw_data}")
@@ -219,16 +236,15 @@ class BBSConnection:
 
         if self._state in [0, 1, 2, 3, 5, 20]:
             self._send_abort()
+            self._bbs.set_error(self._dest_bbs_call)
         elif self._state == 4:
+            self._bbs.set_error(self._dest_bbs_call)
             self._send_checksum_error()
-        """   
-        while self._ax25_conn.tx_buf_rawData:
-            logger.debug("Wait for ax25conn")
-            time.sleep(0.3)
-        """
+
         BBS_LOG.info(logTag + f'try to remove bbsConn > {self._dest_bbs_call} - State: {self._state}')
         if not self._bbs.end_fwd_conn(self):
             BBS_LOG.error(logTag + f'Error, end_fwd_conn() - {self._dest_bbs_call}')
+        self._bbs.set_bbs_timeout(self._dest_bbs_call)
         # self._ax25_conn.cli.change_cli_state(state=1)
         self._ax25_conn.bbs_connection = None
         # Cleanup Wait MSG.
@@ -252,11 +268,29 @@ class BBSConnection:
         # print(f"_send_my_bbs_flag: {self._mybbs_flag}")
         self._connection_tx(self._mybbs_flag + CR)
 
-    def exec_state(self):
+    def _exec_state(self):
         # print(f"BBS-Conn Stat-Exec: {self._state}")
         return self._state_tab[self._state]()
 
-    ##################################################
+    def _check_conn_timeout(self):
+        if not self._fwd_cfg:
+            BBS_LOG.error(f"No fwd_cfg found for {self._dest_bbs_call}")
+            logger.error(f"No fwd_cfg found for {self._dest_bbs_call}")
+            self.end_conn()
+            return
+        timeout_var = self._fwd_cfg.get('t_o_dead_conn', 5) * 60
+        if not timeout_var:
+            return
+        if time.time() > timeout_var + self._conn_to_timer:
+            BBS_LOG.warning(f"Connection Timeout for {self._dest_bbs_call}. Dead Connection?")
+            logger.debug(f"Connection Timeout for {self._dest_bbs_call}. Dead Connection?")
+            self.end_conn()
+            return
+
+    def _reset_conn_timeout(self):
+        self._conn_to_timer = time.time()
+
+    ###########################
     # States
     def _init_rev_fwd(self):
         self._send_my_bbs_flag()

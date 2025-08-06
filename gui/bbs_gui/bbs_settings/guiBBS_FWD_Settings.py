@@ -84,7 +84,8 @@ class BBS_FWD_Settings(ttk.Frame):
         regio_var             = tk.StringVar(self, value=cfg.get('regio',                 ''))
         rev_fwd_var           = tk.BooleanVar(self, value=cfg.get('reverseFWD',           True))
         allow_rev_fwd_var     = tk.BooleanVar(self, value=cfg.get('allowRevFWD',          True))
-        conn_timeout_var      = tk.StringVar(self, value=cfg.get('t_o_after_fail',        '5'))
+        conn_timeout_var      = tk.StringVar(self, value=cfg.get('t_o_next_conn',        '5'))
+        dead_conn_timeout_var = tk.StringVar(self, value=cfg.get('t_o_dead_conn',        '5'))
 
         #pn_fwd_var            = tk.BooleanVar(self, value=cfg.get('pn_fwd',               True))
         #bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
@@ -175,6 +176,7 @@ class BBS_FWD_Settings(ttk.Frame):
         allow_pn_auto_path  = ttk.Frame(r_frame, borderwidth=10)
         allow_pn_alt_path   = ttk.Frame(r_frame, borderwidth=10)
         conn_timeout_f      = ttk.Frame(r_frame, borderwidth=10)
+        dead_conn_tout_f    = ttk.Frame(r_frame, borderwidth=10)
         # Pack it
         rev_fwd_frame.pack(     side=tk.TOP, expand=False, fill=tk.X)
         allow_rev_fwd.pack(     side=tk.TOP, expand=False, fill=tk.X)
@@ -183,6 +185,7 @@ class BBS_FWD_Settings(ttk.Frame):
         allow_pn_auto_path.pack(side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_alt_path.pack( side=tk.TOP, expand=False, fill=tk.X)
         conn_timeout_f.pack(    side=tk.TOP, expand=False, fill=tk.X)
+        dead_conn_tout_f.pack(  side=tk.TOP, expand=False, fill=tk.X)
         #################
         # rev_fwd_frame
         ttk.Checkbutton(rev_fwd_frame,
@@ -236,6 +239,17 @@ class BBS_FWD_Settings(ttk.Frame):
                    width=3
                    ).pack(side=tk.LEFT, expand=False)
 
+        #################
+        # dead_conn_tout_f
+        ttk.Label(dead_conn_tout_f, text=self._getTabStr('conn_timeout')).pack(side=tk.LEFT, expand=False)
+        ttk.Spinbox(dead_conn_tout_f,
+                    textvariable=dead_conn_timeout_var,
+                    from_=1,
+                    to=30,
+                    increment=1,
+                    width=3
+                    ).pack(side=tk.LEFT, expand=False)
+
 
         return {
             'port_id_var'           : port_id_var,
@@ -252,6 +266,7 @@ class BBS_FWD_Settings(ttk.Frame):
             #'pn_fwd_auto_path'      : pn_fwd_auto_path_var,
             'pn_fwd_alter_path'     : pn_fwd_alter_path_var,
             'conn_timeout_var'      : conn_timeout_var,
+            'dead_conn_timeout_var' : dead_conn_timeout_var,
         }
 
     def _del_homeBBS_tab(self):
@@ -337,6 +352,11 @@ class BBS_FWD_Settings(ttk.Frame):
                 conn_timeout        = int(self._bbs_vars[k]['conn_timeout_var'].get())
             except ValueError:
                 conn_timeout        = 5
+
+            try:
+                dead_conn_timeout        = int(self._bbs_vars[k]['dead_conn_timeout_var'].get())
+            except ValueError:
+                dead_conn_timeout        = 5
             fwd_bbs_cfg = self._get_fwdBBS_cfg(k)
             fwd_bbs_cfg['port_id']     = port_id
             fwd_bbs_cfg['regio']       = regio.upper()
@@ -350,7 +370,8 @@ class BBS_FWD_Settings(ttk.Frame):
             #fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd
             # fwd_bbs_cfg['pn_fwd_auto_path']    = pn_fwd_auto_path
             fwd_bbs_cfg['pn_fwd_alter_path']   = pn_fwd_alter_path
-            fwd_bbs_cfg['t_o_after_fail']      = conn_timeout
+            fwd_bbs_cfg['t_o_next_conn']       = conn_timeout
+            fwd_bbs_cfg['t_o_dead_conn']       = dead_conn_timeout
             if k != dest_call:
                 self._bbs_vars[dest_call] = dict(self._bbs_vars[k])
                 self._set_tab_name(dest_call)

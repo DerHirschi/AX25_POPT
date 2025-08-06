@@ -556,6 +556,7 @@ class AX25PortHandler(object):
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
 
+    """
     def reset_connection(self, connection):
         msg = f'*** Reset fm {connection.to_call_str}'
         lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Reset fm {connection.to_call_str}'
@@ -577,6 +578,7 @@ class AX25PortHandler(object):
 
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
+    """
 
     def end_connection(self, conn):
         call_str = str(conn.to_call_str)

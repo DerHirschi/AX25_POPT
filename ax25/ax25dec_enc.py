@@ -444,13 +444,16 @@ class PIDByte:
         if int(in_byte) in self.pac_types.keys():
             self.pac_types[int(in_byte)]()
         else:
-            logger.debug("decode in_pid_bate hex: {}".format(hex(in_byte)))
-            logger.debug("decode in_pid_bate byte: {}".format(type(in_byte)))
+            logger.debug("decode in_pid_byte hex: {}".format(hex(in_byte)))
+            logger.debug("decode in_pid_byte byte: {}".format(type(in_byte)))
             #in_byte = int(in_byte, 16)
 
             bi = bin(in_byte)[2:].zfill(8)
             if bi[2:5] in ['01', '10']:
-                self.ax25_l3(hex(int(in_byte)))
+                self.ax25_l3(in_byte)
+            else:
+                self.hex  = in_byte
+                self.flag = 'Unknown PID'
 
     def validate_pid(self):
         if self.hex == 0x00:
@@ -706,7 +709,7 @@ class AX25Frame:
             self._set_check_h_bits(dec=True)
             # Build address UID
             self._build_uid(dec=True)
-            if not self.validate():
+            if not self._validate():
                 raise AX25DecodingERROR(self)
 
             self._decode_netrom()
@@ -805,7 +808,7 @@ class AX25Frame:
         if self.ctl_byte.info:
             self.data_len = len(self.payload)
             self.data_bytes += self.payload
-        if not self.validate():
+        if not self._validate():
             logger.error('Encoding Error Validator')
             # print('Encoding Error Validator')
             raise AX25EncodingERROR
@@ -814,7 +817,7 @@ class AX25Frame:
         # Replace Kiss Flags with Kiss ESC ( C0 > DB DC )
         # self.hexstr = arschloch_kiss_frame(self.hexstr)
 
-    def validate(self):
+    def _validate(self):
         """
         :return: bool
         """
@@ -848,7 +851,7 @@ class AX25Frame:
                 # print('Validate Error: PID_Byte')
                 logger.error('Validate Error: PID_Byte')
                 AX25EncodingERROR(self)
-                return False
+                # return False
         return True
 
     #############
