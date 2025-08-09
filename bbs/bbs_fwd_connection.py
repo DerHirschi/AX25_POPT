@@ -4,6 +4,7 @@ from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     FWD_RESP_HLD, EOT, SOH, LF, STX
 from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail
+from cli.cliStationIdent import get_station_id_obj
 from fnc.str_fnc import find_eol
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
@@ -20,11 +21,13 @@ class BBSConnection:
         self.e               = False
         self._mybbs_flag     = self._bbs.bbs_id_flag
         self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
+        # self._dest_stat_id   = None
         # print(f"BBS-Conn : {self._dest_stat_id}")
         # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
         self._my_stat_id     = self._bbs.my_stat_id
         self._feat_flag      = []
+        self._handshake      = False
         self._is_bin_mode    = False
         self._logTag         = f"BBS-Conn ({self._dest_bbs_call}): "
         self._conn_to_timer  = time.time()
@@ -61,6 +64,7 @@ class BBSConnection:
             21: self.end_conn,
         }
         ################################
+
         if not tx:
             self._state = 0
             self.e = not self._check_feature_flags()
@@ -78,6 +82,7 @@ class BBSConnection:
             self._state = 20
             if self.e:
                 self.end_conn()
+                self._state = 21
 
 
     def init_incoming_conn(self):
@@ -315,6 +320,16 @@ class BBSConnection:
 
     def _send_fwd_init_cmd(self):
         # 2
+        if not self._handshake:
+            if 'F' not in self._feat_flag:
+                logger.error(f"Feat-Flag no mode F : {self._feat_flag}")
+                self.e      = True
+                self._state = 21
+                return
+
+            self._send_my_bbs_flag()
+            self._handshake = True
+
         if self._is_fwd_q():
             tx = self._tx_msg_header + b'F>\r'
             self._connection_tx(tx)
@@ -442,15 +457,6 @@ class BBSConnection:
         self._state = 3
         return True
 
-    """
-    def _send_ff(self):
-        # 10
-        self._connection_tx(b'FF\r')
-        #self._connection_tx(b'FQ\r')
-        #self.end_conn()
-        self._state = 11
-    """
-
     def _wait_fq(self):
         # 11
         if self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
@@ -465,29 +471,57 @@ class BBSConnection:
             return
 
     def _wait_sw_id(self):
-        # 20
-        #print(self._rx_buff)
-        if self._ax25_conn.cli.cli_exec(bytes(self._rx_buff)): # If State ID
-            self._dest_stat_id = self._ax25_conn.cli.stat_identifier
-            if not self._check_feature_flags():
-                self.end_conn()
-                BBS_LOG.error(
-                    self._logTag + f'SW-ID not found> {self._dest_bbs_call}')
-                return
-            if hasattr(self._dest_stat_id, 'feat_flag'):
-                BBS_LOG.info(
-                    self._logTag + f'SW-ID found> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
-            self._init_rev_fwd()
-            if self._state == 1:
-                #logger.debug(f"1>>>>>>>>>>> {self._rx_buff}")
-                self._wait_f_prompt()
+        # 20 Handshake
+        if not self._find_sw_identifier():
+            return
+        if not self._check_feature_flags():
+            BBS_LOG.error(self._logTag + f'SW-ID not found> {self._dest_bbs_call}')
+            self.end_conn()
+            self._state = 21
+            return
+        try:
+            BBS_LOG.info(self._logTag + f'SW-ID found> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
+        except Exception as ex:
+            BBS_LOG.error(self._logTag + f'SW-ID Error> {ex}')
+            self.end_conn()
+            self._state = 21
+            return
+        self._state = 1
+        self._wait_f_prompt()
 
-            elif self._state == 2:
-                #logger.debug(f"2>>>>>>>>>>> {self._rx_buff}")
-                self._send_fwd_init_cmd()
+        if self._state == 2:
+            self._send_fwd_init_cmd()
 
-        self._rx_buff = b''
+    #
+    def _find_sw_identifier(self):
+        inp_lines = bytes(self._rx_buff)
+        inp_lines = inp_lines.replace(b'\n', b'\r')
+        inp_lines = inp_lines.decode("ASCII", 'ignore')
+        inp_lines = inp_lines.split('\r')
+        for li in inp_lines:
+            temp_stat_identifier = get_station_id_obj(li)
+            if temp_stat_identifier is not None:
+                self._dest_stat_id = temp_stat_identifier
+                logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
+                self._set_user_db_software_id()
+                if self._dest_stat_id.typ != 'BBS':
+                    BBS_LOG.error("Gegenstation ist keine BBS !")
+                    logger.error("Gegenstation ist keine BBS !")
+                    self.e      = True
+                    self._state = 21
+                    return False
+                return True
+        return False
 
+    def _set_user_db_software_id(self):
+        userDB_ent = self._userDB.get_entry(self._dest_bbs_call)
+        try:
+            userDB_ent.software_str = str(self._dest_stat_id.id_str)
+            userDB_ent.Software     = str(self._dest_stat_id.software) + '-' + str(self._dest_stat_id.version)
+            userDB_ent.TYP          = str(self._dest_stat_id.typ)
+        except Exception as ex:
+            logger.error(ex)
+            BBS_LOG.error(ex)
     ########################################################
     #
     def _get_fwd_id(self, bid: str):
