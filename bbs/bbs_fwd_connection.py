@@ -348,7 +348,7 @@ class BBSConnection:
                 # self.end_conn()
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
             self._state = 21
-            #self.end_conn()
+            self.end_conn()
 
     def _is_fwd_q(self):
         self._check_msg_to_fwd()
@@ -363,7 +363,6 @@ class BBSConnection:
         next_mail  = self._get_next_mail_fm_rx_buff(bin_mode=bin_mode)
         if next_mail:
             if bin_mode:
-
                 result = decode_bin_mail(next_mail)
                 if not result:
                     BBS_LOG.error(self._logTag + f"Fehler beim Dekodieren der Binärnachricht für BID: {bid}")
@@ -442,10 +441,11 @@ class BBSConnection:
     def _wait_fq(self):
         # 11
         if self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
-            self._connection_tx(b'FQ\r')
+            # self._connection_tx(b'FQ\r')
             self.end_conn()
             return
         if self._get_lines_fm_rx_buff('FQ', cut_rx_buff=True):
+            self._state = 21
             self.end_conn()
             return
         if self._get_lines_fm_rx_buff('F>', cut_rx_buff=False):
@@ -459,14 +459,14 @@ class BBSConnection:
         if not self._check_feature_flags():
             BBS_LOG.error(self._logTag + f'SW-ID not found> {self._dest_bbs_call}')
             self.end_conn()
-            self._state = 21
+            # self._state = 21
             return
         try:
             BBS_LOG.info(self._logTag + f'SW-ID found> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
         except Exception as ex:
             BBS_LOG.error(self._logTag + f'SW-ID Error> {ex}')
             self.end_conn()
-            self._state = 21
+            # self._state = 21
             return
 
         if self._handshake: # RX

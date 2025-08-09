@@ -603,12 +603,15 @@ class BBS:
                 BBS_LOG.debug(log_tag + f"BID ({q_bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
                 continue
 
-            msg_sub      = out_msg[1]
+            msg_sub: str = out_msg[1]
             msg_header   = out_msg[2]
             msg_raw      = out_msg[3]
-            bin_mode     = False
 
-            text_msg = msg_header + msg_raw + CNTRL_Z + CR
+            bin_mode     = False
+            msg_header   = msg_header.replace(msg_sub.encode('ASCII', 'ignore') + CR, b'')
+            text_msg     = (msg_sub.encode('ASCII', 'ignore') +
+                            msg_header +
+                            msg_raw + CNTRL_Z + CR)
             """
             if all((
                self._pms_cfg.get('bin_mode', True),
@@ -619,8 +622,6 @@ class BBS:
                 # Bin Mode
                 bin_mode = True
                 # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
-                # FIXME: ??? double msg_sub in first lines ????
-                #  CHECKME: AX25-Kernel device BUG (ax25-tools) causing Error ???
                 comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
@@ -1603,7 +1604,7 @@ class BBS:
             sysop_call = self._pms_cfg.get('sysop', '')
             if sysop_call:
                 self._cc_msg(msg, sysop_call)
-                return
+                # return
         # print(cc_tab_cfg)
         for k, cc_s in cc_tab_cfg.items():
             if '@' in k:
@@ -1612,7 +1613,7 @@ class BBS:
                         #print(recv_call)
                         self._cc_msg(msg, recv_call)
                     return
-            if k in receiver:
+            if k == receiver:
                 for recv_call in cc_s:
                     self._cc_msg(msg, recv_call)
                     #print(recv_call)
@@ -1620,7 +1621,11 @@ class BBS:
 
     def _cc_msg(self, msg: dict, receiver_call: str):
         logTag = self._logTag + '_cc_msg()> '
-        receiver_address = self._userDB.get_PRmail(receiver_call)
+        if '@' in receiver_call:
+            receiver_address = receiver_call
+            receiver_call    = receiver_call.split('@')[0]
+        else:
+            receiver_address = self._userDB.get_PRmail(receiver_call)
         if not receiver_address:
             return
         if not '@' in receiver_address:
