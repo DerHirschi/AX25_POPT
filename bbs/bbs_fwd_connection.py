@@ -240,6 +240,9 @@ class BBSConnection:
         elif self._state == 4:
             self._bbs.set_error(self._dest_bbs_call)
             self._send_checksum_error()
+        elif self._state == 11:
+            """ F*** OpenBCM 1.08-6-g5b69 """
+            self._connection_tx(b'FQ\r')
 
         BBS_LOG.info(logTag + f'try to remove bbsConn > {self._dest_bbs_call} - State: {self._state}')
         if not self._bbs.end_fwd_conn(self):
@@ -330,8 +333,7 @@ class BBSConnection:
             if ret[1]:
                 self._state = 4
             else:
-                self._connection_tx(b'FF\r')
-                self._state = 11
+                self._state = 2
         elif self._get_lines_fm_rx_buff('FF', cut_rx_buff=True):
             self._ack_out_msg()
             if self._is_fwd_q():
@@ -339,12 +341,17 @@ class BBSConnection:
                 self._connection_tx(tx)
                 self._state = 5
             else:
+                """ 
+                # F*** OpenBCM 1.08-6-g5b69
                 self._connection_tx(b'FQ\r')
                 self._state = 21
+                """
+                self._connection_tx(b'FF\r')
+                self._state = 11
                 # self.end_conn()
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
-            self._state = 11
-            self.end_conn()
+            self._state = 21
+            #self.end_conn()
 
     def _is_fwd_q(self):
         self._check_msg_to_fwd()
@@ -472,9 +479,11 @@ class BBSConnection:
                     self._logTag + f'SW-ID found> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
             self._init_rev_fwd()
             if self._state == 1:
+                #logger.debug(f"1>>>>>>>>>>> {self._rx_buff}")
                 self._wait_f_prompt()
 
             elif self._state == 2:
+                #logger.debug(f"2>>>>>>>>>>> {self._rx_buff}")
                 self._send_fwd_init_cmd()
 
         self._rx_buff = b''

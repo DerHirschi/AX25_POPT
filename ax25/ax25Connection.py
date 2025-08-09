@@ -243,7 +243,7 @@ class AX25Conn:
             16: (S16sendREJbothNotReady, 'BOTH-RNR-REJ'),
         }
         """ File Transfer Stuff """
-        self.ft_queue: [FileTransport] = []
+        self.ft_queue = []
         self.ft_obj = None
         """ Pipe-Tool """
         self.pipe = None
@@ -1099,7 +1099,11 @@ class AX25Conn:
         if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
             # Process correct I-Frame
             self.vr = count_modulo(int(self.vr))
-            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            try:
+                self._recv_data(bytes(self.zustand_exec.frame.payload))
+            except Exception as ex:
+                logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
+                logger.error(f"Exception:  {ex}")
             return True
         else:
             return False

@@ -445,7 +445,6 @@ class PIDByte:
             self.pac_types[int(in_byte)]()
         else:
             logger.debug("decode in_pid_byte hex: {}".format(hex(in_byte)))
-            logger.debug("decode in_pid_byte byte: {}".format(type(in_byte)))
             #in_byte = int(in_byte, 16)
 
             bi = bin(in_byte)[2:].zfill(8)
