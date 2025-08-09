@@ -620,6 +620,7 @@ class BBS:
                 bin_mode = True
                 # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
                 # FIXME: ??? double msg_sub in first lines ????
+                #  CHECKME: AX25-Kernel device BUG (ax25-tools) causing Error ???
                 comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
@@ -1158,11 +1159,11 @@ class BBS:
         return conn
 
     def init_fwd_conn(self, ax25_conn):
-        if ax25_conn.cli.stat_identifier is None:
-            return None
+        #if ax25_conn.cli.stat_identifier is None:
+        #    return None
         # if ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
-        conn = BBSConnection(self, ax25_conn)
-        conn.init_incoming_conn()
+        conn = BBSConnection(self, ax25_conn, tx=False)
+        # conn.init_incoming_conn()
         conn.connection_rx(ax25_conn.rx_buf_last_data)
         if conn.e:
             return None

@@ -20,9 +20,8 @@ class BBSConnection:
         ###########
         self.e               = False
         self._mybbs_flag     = self._bbs.bbs_id_flag
-        self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
-        # self._dest_stat_id   = None
-        # print(f"BBS-Conn : {self._dest_stat_id}")
+        # self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
+        self._dest_stat_id   = None
         # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
         self._my_stat_id     = self._bbs.my_stat_id
@@ -33,17 +32,12 @@ class BBSConnection:
         self._conn_to_timer  = time.time()
         ################################
         self._rx_buff        = b''
-        # self._debug_rx_buff  = b''
         self._rx_msg_header  = {}
-        # tmp = self._bbs.build_fwd_header(self._dest_bbs_call)
         self._tx_msg_header  = b''
         self._tx_msg_BIDs    = []
         self._tx_fs_list     = ''    # '++-='
         self._send_next_time = []
-        if hasattr(self._dest_stat_id, 'feat_flag'):
-            BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: {self._dest_stat_id.feat_flag}')
-        else:
-            BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call}: No SW ID in User-DB')
+        BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call} - TX: {tx}')
         ################################
         self._fwd_cfg: dict = self._bbs.get_fwdCfg(self._dest_bbs_call)
         if not self._fwd_cfg:
@@ -58,27 +52,20 @@ class BBSConnection:
             3: self._wait_f_new_msg_header,
             4: self._get_msg,
             5: self._wait_f_accept_msg,
-            # 10: self._send_ff,
             11: self._wait_fq,
             20: self._wait_sw_id,
             21: self.end_conn,
         }
         ################################
-        if not tx:
-            self._state = 0
-            if self.e:
-                self.end_conn()
-                self._state = 21
-        else:
+        if not self.e:
             self._state = 20
-            if self.e:
-                self.end_conn()
-                self._state = 21
+            if not tx:
+                BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
+                self._handshake = True
+        else:
+            self.end_conn()
+            self._state = 21
 
-
-    def init_incoming_conn(self):
-        BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
-        self._state = 3
 
     def _check_feature_flags(self):
         for el in self._dest_stat_id.feat_flag:
@@ -190,7 +177,7 @@ class BBSConnection:
 
             pos += 1
             if pos >= len(self._rx_buff):
-                logger.debug("Keine Blockgröße")
+                #logger.debug("Keine Blockgröße")
                 return b''  # Keine Blockgröße
 
             block_size = self._rx_buff[pos]
@@ -200,12 +187,12 @@ class BBSConnection:
 
             block_end = pos + block_size
             if block_end > len(self._rx_buff):
-                logger.debug("Nicht genug Daten für Block")
+                #logger.debug("Nicht genug Daten für Block")
                 return b''  # Nicht genug Daten für Block
             total_data_size += block_size
             pos = block_end
 
-        logger.debug("Kein EOT gefunden, warte auf mehr Daten")
+        #logger.debug("Kein EOT gefunden, warte auf mehr Daten")
         # Kein EOT gefunden, warte auf mehr Daten
         return b''
 
@@ -293,6 +280,7 @@ class BBSConnection:
     # States
     def _init_rev_fwd(self):
         self._send_my_bbs_flag()
+        self._handshake = True
         self._state = 20
         """
         if 'F' in self._feat_flag:
@@ -389,11 +377,11 @@ class BBSConnection:
         if not self._rx_msg_header:
             self._connection_tx(b'FF\r')
             self._state = 11
-        if self._rx_buff:
-            logger.debug(f"bin: {bin_mode}")
-            logger.debug(f"rx_buff: {self._rx_buff}")
-            logger.debug(f"state: {self._state}")
-            logger.debug(f"next_mail: {next_mail}")
+        #if self._rx_buff:
+        #    logger.debug(f"bin: {bin_mode}")
+        #    logger.debug(f"rx_buff: {self._rx_buff}")
+        #    logger.debug(f"state: {self._state}")
+        #    logger.debug(f"next_mail: {next_mail}")
 
     def _wait_f_accept_msg(self):
         # 5
@@ -479,6 +467,10 @@ class BBSConnection:
             BBS_LOG.error(self._logTag + f'SW-ID Error> {ex}')
             self.end_conn()
             self._state = 21
+            return
+
+        if self._handshake: # RX
+            self._state = 3
             return
         self._state = 1
         self._wait_f_prompt()

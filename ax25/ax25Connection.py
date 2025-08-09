@@ -388,14 +388,10 @@ class AX25Conn:
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
-        # TODO !!!! Nicht sauber
-        if self._set_dest_call_fm_data_inp(data):
-            self.rx_buf_last_data = b''
-        else:
-            self.rx_buf_last_data = data
+        self._set_dest_call_fm_data_inp(data)
+        """ Save last Frame """
+        self.rx_buf_last_data = data
         """ CLI """
-        #print(f"CLI RX: typ {self.cli_type}")
-        #print(f"CLI RX: data {data}")
         self.exec_cli(data)
         return
 
@@ -465,6 +461,7 @@ class AX25Conn:
         return True
 
     def bbsFwd_start(self):
+        """
         if self.cli.stat_identifier is None:
             logger.error("PMS: cli.stat_identifier is None")
             return False
@@ -475,6 +472,7 @@ class AX25Conn:
             logger.error("PMS: cli.stat_identifier.e")
             logger.error(f"{self.cli.stat_identifier.typ}")
             return False
+        """
         bbs = self._port_handler.get_bbs()
         if bbs is None:
             logger.error("PMS: _bbs is None")

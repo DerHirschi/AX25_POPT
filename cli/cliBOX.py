@@ -179,16 +179,21 @@ class BoxCLI(DefaultCLI):
         )):
             logger.error(self._logTag + "_s1: No BBS !!")
             self.change_cli_state(2)
-            return "\r\r # BBS Error !! \r\r"
+            self._crone_state_index = 100  # Quit State
+            return "******* PoPT-BBS Error !! \r"
         # print("CMD-Handler S1")
         #if not self.stat_identifier:
-        self.software_identifier()
         ########################
         if self._connection.bbs_connection:
             return ''
         pms_cfg: dict = bbs.get_pms_cfg()
         if self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys():
-            self._connection.bbsFwd_start()
+            if self._connection.bbsFwd_start():
+                return ''
+            else:
+                self._crone_state_index = 100  # Quit State
+                return "******* PoPT-BBS Error !! \r"
+        self.software_identifier()
         if hasattr(self.stat_identifier, 'typ'):
             if any((
                 # Disabling Remote CMDs for non Sysop Stations
