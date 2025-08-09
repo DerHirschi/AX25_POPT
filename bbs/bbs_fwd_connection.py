@@ -64,20 +64,11 @@ class BBSConnection:
             21: self.end_conn,
         }
         ################################
-
         if not tx:
             self._state = 0
-            self.e = not self._check_feature_flags()
-            if self._dest_stat_id is None:
-                BBS_LOG.error(self._logTag + f'Error Dest Station Identy> {self._dest_stat_id}')
-                logger.error(self._logTag + f'Error Dest Station Identy> {self._dest_stat_id}')
-                self.e = True
-                #self._state = 21
             if self.e:
                 self.end_conn()
-            else:
-                # self._ax25_conn.cli.change_cli_state(state=5)
-                self._check_msg_to_fwd()
+                self._state = 21
         else:
             self._state = 20
             if self.e:
@@ -302,10 +293,13 @@ class BBSConnection:
     # States
     def _init_rev_fwd(self):
         self._send_my_bbs_flag()
+        self._state = 20
+        """
         if 'F' in self._feat_flag:
             self._state = 2
         else:
             self._state = 1
+        """
         return True
 
     def _wait_f_prompt(self):
@@ -316,7 +310,7 @@ class BBSConnection:
         """
         if self._rx_buff.endswith(b'>\r'):
             self._rx_buff = b''
-            self._state = 2
+            self._state   = 2
 
     def _send_fwd_init_cmd(self):
         # 2
