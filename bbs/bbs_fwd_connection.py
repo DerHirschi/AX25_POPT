@@ -653,13 +653,17 @@ class BBSConnection:
         # print(f"_msg_header.keys: {self._rx_msg_header.keys()}")
         return pn_check, trigger
 
-    def _parse_msg(self, msg: bytes):
+    def _parse_msg(self, msg: b''):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
         BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
+        #msg = msg.replace(b'\n', b'\r')
         eol = find_eol(msg)
-        header_eol = eol + eol
+        if len(eol) == 1:
+            header_eol = eol + eol
+        else:
+            header_eol = eol
         # BID und Binärmodus bestimmen
         bid = list(self._rx_msg_header.keys())[0]
         bin_mode = self._rx_msg_header.get(bid, {}).get('bin_mode', False)
@@ -671,6 +675,7 @@ class BBSConnection:
         short       = len(lines) < 3
 
         if not short:
+            logger.debug("Not Short <<<<<<<<<<<<<<<<<")
             try:
                 h1_lines        = lines[0].split(eol)
                 h2_lines        = lines[1].split(eol)
@@ -682,6 +687,7 @@ class BBSConnection:
                 BBS_LOG.error(logTag + f"IndexError: {lines}")
                 return
         else:
+            logger.debug("Short <<<<<<<<<<<<<<<<<")
             try:
                 h1_lines    = lines[0].split(eol)
                 h2_lines    = []
@@ -692,6 +698,14 @@ class BBSConnection:
             except IndexError:
                 BBS_LOG.error(logTag + f"IndexError: {lines}")
                 return
+        logger.debug("#########################################")
+        logger.debug(f"h1_lines : {h1_lines}")
+        logger.debug(f"h2_lines : {h2_lines}")
+        logger.debug(f"header   : {header}")
+        logger.debug(f"msg      : {msg}")
+        logger.debug(f"subject  : {subject}")
+        logger.debug(f"raw_stamps : {raw_stamps}")
+        logger.debug("#########################################")
         ####################################
         # Stamps   > R:
         bid         = ''
@@ -860,6 +874,12 @@ class BBSConnection:
         bbs_call        = bbs_call,
         bbs_address     = bbs_address,
         """
+        #########################
+        # Debuging
+        logger.debug('-----------------------------------------')
+        for k, v in self._rx_msg_header[bid].items():
+            logger.debug(f"{k}: {v}")
+        logger.debug('-----------------------------------------')
         #########################
         # User DB
         for stamp_ent in path_data:

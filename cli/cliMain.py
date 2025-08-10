@@ -51,8 +51,8 @@ class DefaultCLI(object):
                 self._c_text          = str(self._user_db_ent.CText)
 
         self.stat_identifier    = get_station_id_obj(self._stat_identifier_str)
-        print(f"CLI STST ID : {self.stat_identifier}")
-        print(f"CLI STST str : {self._stat_identifier_str}")
+        #print(f"CLI STST ID : {self.stat_identifier}")
+        #print(f"CLI STST str : {self._stat_identifier_str}")
 
         self._c_text            = self._c_text.replace('\n', '\r')
 

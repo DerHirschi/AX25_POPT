@@ -600,7 +600,7 @@ class BBS:
                 BBS_LOG.warning(log_tag + f"  skipping BID: {q_bid}")  # TODO Delete/Mark BID in db.fwd_q_tab
                 continue
             if q_bid in bbs_fwd_q:
-                BBS_LOG.debug(log_tag + f"BID ({q_bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
+                # BBS_LOG.debug(log_tag + f"BID ({q_bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
                 continue
 
             msg_sub: str = out_msg[1]
@@ -612,12 +612,7 @@ class BBS:
             text_msg     = (msg_sub.encode('ASCII', 'ignore') +
                             CR + msg_header + CR + CR +
                             msg_raw + CNTRL_Z + CR)
-            """
-            if all((
-               self._pms_cfg.get('bin_mode', True),
-               # fwd_cfg.get('bin_mode', True),
-            )):
-            """
+
             if self._pms_cfg.get('bin_mode', True):
                 # Bin Mode
                 bin_mode = True
@@ -1047,9 +1042,6 @@ class BBS:
                 #print(f"exec - {(bbs_fwd_timeout - time.time()) / 60}")
                 #print(f"exec - {bbs_fwd_timeout} - {time.time()}")
 
-                if noConnect:
-                    BBS_LOG.debug(log_tag + f"{to_bbs_call} no outgoing connect. Skipping.")
-                    continue
                 if self._is_bbs_connected(to_bbs_call):
                     self.set_bbs_timeout(to_bbs_call)
                     BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
@@ -1058,7 +1050,9 @@ class BBS:
                     # Timeout Check ..
                     BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
                     continue
-
+                if noConnect:
+                    BBS_LOG.debug(log_tag + f"{to_bbs_call} no outgoing connect. Skipping.")
+                    continue
                 # port_id = fwd_bbs_cfg.get('port_id'),
                 # own_call    = fwd_bbs_cfg.get('own_call'),
                 # dest_call   = fwd_bbs_cfg.get('dest_call'),
@@ -1164,11 +1158,7 @@ class BBS:
         return conn
 
     def init_fwd_conn(self, ax25_conn):
-        #if ax25_conn.cli.stat_identifier is None:
-        #    return None
-        # if ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         conn = BBSConnection(self, ax25_conn, tx=False)
-        # conn.init_incoming_conn()
         conn.connection_rx(ax25_conn.rx_buf_last_data)
         if conn.e:
             return None
@@ -1640,7 +1630,11 @@ class BBS:
 
         new_text           = f"Original to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}".encode('ASCII', 'ignore')
         new_text           = CR + CR + new_text + CR + CR + msg.get('msg', b'')
-
+        logger.debug("------------------------------------------")
+        logger.debug(f"new_subject: {new_subject}")
+        logger.debug(f"msg_subject: {msg.get('subject', '')}")
+        logger.debug(f"new_text   : {new_text}")
+        logger.debug("------------------------------------------")
         new_msg = GET_MSG_STRUC()
         new_msg.update(msg)
         new_msg['bid_mid']              = receiver_call
