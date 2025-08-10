@@ -610,7 +610,7 @@ class BBS:
             bin_mode     = False
             msg_header   = msg_header.replace(msg_sub.encode('ASCII', 'ignore') + CR, b'')
             text_msg     = (msg_sub.encode('ASCII', 'ignore') +
-                            msg_header +
+                            CR + msg_header + CR + CR +
                             msg_raw + CNTRL_Z + CR)
             """
             if all((
@@ -622,7 +622,7 @@ class BBS:
                 # Bin Mode
                 bin_mode = True
                 # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
-                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
+                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + CR + CR + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
             to_send_len = len(comp_msg)
