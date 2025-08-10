@@ -83,7 +83,7 @@ class BBS_FWD_Settings(ttk.Frame):
         dest_call_var         = tk.StringVar(self, value=cfg.get('dest_call',             'NOCALL'))
         regio_var             = tk.StringVar(self, value=cfg.get('regio',                 ''))
         rev_fwd_var           = tk.BooleanVar(self, value=cfg.get('reverseFWD',           True))
-        allow_rev_fwd_var     = tk.BooleanVar(self, value=cfg.get('allowRevFWD',          True))
+        noConnect_var         = tk.BooleanVar(self, value=cfg.get('noConnect',            False))
         conn_timeout_var      = tk.StringVar(self, value=cfg.get('t_o_next_conn',        '5'))
         dead_conn_timeout_var = tk.StringVar(self, value=cfg.get('t_o_dead_conn',        '5'))
 
@@ -170,7 +170,7 @@ class BBS_FWD_Settings(ttk.Frame):
         #################################################################
         # R Frame
         rev_fwd_frame       = ttk.Frame(r_frame, borderwidth=10)
-        allow_rev_fwd       = ttk.Frame(r_frame, borderwidth=10)
+        noConnect           = ttk.Frame(r_frame, borderwidth=10)
         #allow_pn_fwd        = ttk.Frame(r_frame, borderwidth=10)
         #allow_bl_fwd        = ttk.Frame(r_frame, borderwidth=10)
         allow_pn_auto_path  = ttk.Frame(r_frame, borderwidth=10)
@@ -179,7 +179,7 @@ class BBS_FWD_Settings(ttk.Frame):
         dead_conn_tout_f    = ttk.Frame(r_frame, borderwidth=10)
         # Pack it
         rev_fwd_frame.pack(     side=tk.TOP, expand=False, fill=tk.X)
-        allow_rev_fwd.pack(     side=tk.TOP, expand=False, fill=tk.X)
+        noConnect.pack(     side=tk.TOP, expand=False, fill=tk.X)
         #allow_pn_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
         #allow_bl_fwd.pack(      side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_auto_path.pack(side=tk.TOP, expand=False, fill=tk.X)
@@ -199,10 +199,10 @@ class BBS_FWD_Settings(ttk.Frame):
 
         #################
         # allow_rev_fwd
-        ttk.Checkbutton(allow_rev_fwd,
-                       variable=allow_rev_fwd_var,
-                       state='disabled',    # TODO
-                       text=self._getTabStr('allowRevFWD')).pack(side=tk.LEFT, expand=False)
+        ttk.Checkbutton(noConnect,
+                       variable=noConnect_var,
+                       state='Normal',
+                       text=self._getTabStr('noConnect')).pack(side=tk.LEFT, expand=False)
         #################
         #################
         # allow_pn_auto_path
@@ -259,7 +259,7 @@ class BBS_FWD_Settings(ttk.Frame):
             'axip_var'              : axip_var,
             'axip_port_var'         : axip_port_var,
             'rev_fwd_var'           : rev_fwd_var,
-            'allow_rev_fwd_var'     : allow_rev_fwd_var,
+            'noConnect_var'         : noConnect_var,
 
             #'bl_fwd'                : bl_fwd_var,
             #'pn_fwd'                : pn_fwd_var,
@@ -342,7 +342,7 @@ class BBS_FWD_Settings(ttk.Frame):
             via_calls           = str(self._bbs_vars[k]['via_calls_var'].get())
             axip_ip             = str(self._bbs_vars[k]['axip_var'].get())
             rev_fwd             = bool(self._bbs_vars[k]['rev_fwd_var'].get())
-            allow_rev_fwd       = bool(self._bbs_vars[k]['allow_rev_fwd_var'].get())
+            noConnect           = bool(self._bbs_vars[k]['noConnect_var'].get())
 
             #allow_bl_fwd        = bool(self._bbs_vars[k]['bl_fwd'].get())
             #allow_pn_fwd        = bool(self._bbs_vars[k]['pn_fwd'].get())
@@ -364,7 +364,7 @@ class BBS_FWD_Settings(ttk.Frame):
             fwd_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls.upper())
             fwd_bbs_cfg['axip_add']    = axip_ip, axip_port
             fwd_bbs_cfg['reverseFWD']  = rev_fwd
-            fwd_bbs_cfg['allowRevFWD'] = allow_rev_fwd
+            fwd_bbs_cfg['noConnect']   = noConnect
 
             #fwd_bbs_cfg['bl_fwd']              = allow_bl_fwd
             #fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd

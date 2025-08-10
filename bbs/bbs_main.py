@@ -770,7 +770,7 @@ class BBS:
                 bbs_fwd_q,
                 not bbs_call in updated,
             )):
-                self._process_bbs_next_fwd_q(bbs_call)
+                next_q = self._process_bbs_next_fwd_q(bbs_call)
             if not next_q:
                 # BBS_LOG.debug(log_tag + f"{bbs_call} No new Tasks.. Skipping.")
                 continue
@@ -788,25 +788,25 @@ class BBS:
         bbs_fwd_q_cfg   = self._fwd_BBS_q.get(bbs_call, {})
         if not bbs_fwd_q_cfg:
             BBS_LOG.error(log_tag + "No bbs_fwd_q_cfg")
-            return
+            return []
         bbs_fwd_q       = bbs_fwd_q_cfg.get('bbs_fwd_q',      {})
         if not bbs_fwd_q:
             BBS_LOG.debug(log_tag + "No Msg in BBS-FWD-Q")
-            return
+            return []
         bbs_fwd_next_q  = bbs_fwd_q_cfg.get('bbs_fwd_next_q', [])
         if len(bbs_fwd_next_q) >= 5:
             if len(bbs_fwd_next_q) == 5:
                 # Good Girl
                 BBS_LOG.debug(log_tag + "Next-Q full")
-                return
+                return []
             # Bad Girl
             BBS_LOG.warning(log_tag + f"Next-Q len > 5: len({len(bbs_fwd_next_q)})")
-            return
+            return []
         fwd_cfg         = self._fwd_cfg.get(bbs_call, {})
         fwd_port_id     = fwd_cfg.get('port_id', -1)
         if fwd_port_id == -1:
             BBS_LOG.error(log_tag + "No Port-ID or no fwd_cfg")
-            return
+            return []
         fwd_ports       = self._fwd_ports.get(fwd_port_id, {})
 
 
@@ -815,7 +815,7 @@ class BBS:
         # send_limit = fwd_port_cfg.get('send_limit', 1) * 1024
         if self._is_block_limit(fwd_port_id):
             BBS_LOG.debug(log_tag + f"Block-limit Port({fwd_port_id}) reached: {fwd_ports.get('block_byte_c', 0)} bytes")
-            return
+            return []
 
         pn_bid_s = []
         bl_bid_s = []
@@ -1043,16 +1043,20 @@ class BBS:
                 fwd_bbs_cfg     = self._fwd_cfg.get(to_bbs_call, {})
                 bbs_fwd_error_c = bbs_fwd_q_vars.get('bbs_fwd_error_c', 0)
                 bbs_fwd_timeout = bbs_fwd_q_vars.get('bbs_fwd_timeout', 0)
+                noConnect       = fwd_bbs_cfg.get('noConnect', False)
                 #print(f"exec - {(bbs_fwd_timeout - time.time()) / 60}")
                 #print(f"exec - {bbs_fwd_timeout} - {time.time()}")
 
-                if bbs_fwd_timeout > time.time():
-                    # Timeout Check ..
-                    BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
+                if noConnect:
+                    BBS_LOG.debug(log_tag + f"{to_bbs_call} no outgoing connect. Skipping.")
                     continue
                 if self._is_bbs_connected(to_bbs_call):
                     self.set_bbs_timeout(to_bbs_call)
                     BBS_LOG.info(log_tag + f"{to_bbs_call} is already connected.")
+                    continue
+                if bbs_fwd_timeout > time.time():
+                    # Timeout Check ..
+                    BBS_LOG.debug(log_tag + f"{to_bbs_call} wait for BBS-Timeout.")
                     continue
 
                 # port_id = fwd_bbs_cfg.get('port_id'),
@@ -1672,10 +1676,10 @@ class BBS:
     # FWD handling
     def get_bbs_next_fwd_header_fm_next_q(self, bbs_call: str, bin_mode=False):
         log_tag = self._logTag + f'Next FW-Header fm Next-Q({bbs_call})> '
-        self._process_bbs_next_fwd_q(bbs_call)
+        next_q    = self._process_bbs_next_fwd_q(bbs_call)
         bbs_q_cfg = self._fwd_BBS_q.get(bbs_call, {})
         bbs_q     = bbs_q_cfg.get('bbs_fwd_q', {})
-        next_q    = bbs_q_cfg.get('bbs_fwd_next_q', [])
+        # next_q    = bbs_q_cfg.get('bbs_fwd_next_q', [])
         BBS_LOG.debug(log_tag + f"bbs_q:  ({bbs_q.keys()}) ")
         BBS_LOG.debug(log_tag + f"next_q: ({next_q}) ")
         if not next_q:

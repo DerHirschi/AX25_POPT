@@ -3898,11 +3898,11 @@ STR_TABLE = {
         '',
         ''),
 
-    'allowRevFWD': (
-        'Erlaube Reverse-FWD',
-        'Allow Reverse-FWD',
-        'Sta Reverse-FWD toe',
-        'Autoriser reverse FWD',
+    'noConnect': (
+        'Kein ausgehender Connect',
+        'No outgoing connect',
+        'Aucune connexion sortante',
+        'AGeen uitgaande verbinding',
         '',
         '',
         '',

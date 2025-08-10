@@ -27,6 +27,7 @@ Neue Implementierungen / Funktionen:
   ignoriert/abgewiesen)
 - Blacklist für eingehende Verbindungen.
 - BBS-Forwarding: Timeout für tote Verbindung
+- BBS-Forwarding: Ausgehende Verbindungen deaktivierbar
 
 ###########################################################################################################
 ###########################################################################################################

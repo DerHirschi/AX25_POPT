@@ -115,7 +115,7 @@ def getNew_BBS_FWD_cfg():
         axip_add        = ('', 0),
         scheduler_cfg   = dict(getNew_schedule_config()),
         reverseFWD      = True,     # Scheduled FWD
-        allowRevFWD     = True,     # TODO
+        noConnect       = False,    # No outgoing connect
         t_o_dead_conn   = 5,        # Timeout Minutes,
         t_o_next_conn   = 5,        # Timeout Minutes,
         t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
