@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 
 from bbs.bbs_constant import GET_MSG_STRUC, STAMP, MSG_ID, STAMP_BID, STAMP_MSG_NUM, CR, MSG_H_TO, SP, MSG_H_FROM, \
-    SOH, NUL, EOT, STX, MSG_XH_INFO
+    SOH, NUL, EOT, STX, MSG_XH_INFO, LF
 from cfg.constant import BBS_SW_ID, VER, SQL_TIME_FORMAT
 from cfg.logger_config import logger
 from cfg.logger_config import BBS_LOG
@@ -113,23 +113,25 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
                   eol.join(header_lines[1:]))
     """
     if not old_header:
-        new_header = subject.encode('ASCII', 'ignore') + CR
+        new_header = subject.encode('ASCII', 'ignore') + CR + LF
         for line in old_path:
             if not line:
                 continue
-            new_header += line.encode('ASCII', 'ignore') + CR
-        new_header += CR
-        new_header += MSG_H_FROM[0] + SP + from_address.encode('ASCII', 'ignore') + CR
-        new_header += MSG_H_TO[1]   + SP + to_address.encode('ASCII', 'ignore') + CR
+            new_header += line.encode('ASCII', 'ignore') + CR + LF
+        new_header += CR + LF
+        new_header += MSG_H_FROM[0] + SP + from_address.encode('ASCII', 'ignore') + CR + LF
+        new_header += MSG_H_TO[1]   + SP + to_address.encode('ASCII', 'ignore') + CR + LF
         if x_info:
             enc_x_info = x_info.encode('ASCII', 'ignore')
-            new_header += MSG_XH_INFO + SP + enc_x_info + CR
-        new_header += CR
+            new_header += MSG_XH_INFO + SP + enc_x_info + CR + LF
+        new_header += CR + LF
+        logger.debug(f"new_header 1> : {new_header}")
 
     else:
         eol = find_eol(old_header)
         header_lines = old_header.split(eol)
-        #print(f"header_lines : {header_lines}")
+        logger.debug(f"header_lines : {header_lines}")
+        logger.debug(f"eol : {eol}")
         new_header = header_lines[0] + eol
         new_header += stamp.encode('ASCII', 'ignore') + eol
         new_header += eol.join(header_lines[1:])
@@ -139,10 +141,9 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
     msg_struc['path']   = old_path
     msg_struc['header'] = new_header
 
-    #print("build_fwd_msg_header ---RES------")
-    #print(f"eol : {eol}")
-    #print(f"Old Header : {old_header}")
-    #print(f"New Header : {new_header}")
+    logger.debug("build_fwd_msg_header ---RES------")
+    logger.debug(f"Old Header : {old_header}")
+    logger.debug(f"New Header : {new_header}")
 
     return msg_struc
 

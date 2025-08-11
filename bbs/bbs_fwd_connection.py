@@ -658,12 +658,9 @@ class BBSConnection:
         logTag  = self._logTag + f"MSG-Parser> "
         BBS_LOG.debug(logTag + f"msg: {msg}")
         # Find EOL Syntax
-        #msg = msg.replace(b'\n', b'\r')
         eol = find_eol(msg)
-        if len(eol) == 1:
-            header_eol = eol + eol
-        else:
-            header_eol = eol
+        header_eol = eol + eol
+        BBS_LOG.debug(logTag + f"header_eol: {header_eol}")
         # BID und Binärmodus bestimmen
         bid = list(self._rx_msg_header.keys())[0]
         bin_mode = self._rx_msg_header.get(bid, {}).get('bin_mode', False)

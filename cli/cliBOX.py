@@ -283,7 +283,7 @@ class BoxCLI(DefaultCLI):
                 self._send_msg_state = 0
                 self.change_cli_state(1)
                 self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
-                return False
+                return
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
             if ret is None:
@@ -293,7 +293,7 @@ class BoxCLI(DefaultCLI):
                 self._send_msg_state = 0
                 self.change_cli_state(1)
                 self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
-                return False
+                return
             bid, fwd_bbs_list = ret
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
             # ueber: MD2BOX MD2SAW  Mid: 24221-MD2BBS  Bytes: 5
@@ -565,7 +565,10 @@ class BoxCLI(DefaultCLI):
                                           )
         ret += BOX_MAIL_TAB_HEADER
         for el in msg_list:
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
     def _cmd_box_l_to(self):
@@ -605,8 +608,10 @@ class BoxCLI(DefaultCLI):
             #     flag += 'N'
             el = list(el)
             el.append(flag)
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
-
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
     def _cmd_box_l_at(self):
@@ -646,8 +651,10 @@ class BoxCLI(DefaultCLI):
             #     flag += 'N'
             el = list(el)
             el.append(flag)
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
-
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
     def _cmd_box_lb(self):
@@ -680,7 +687,11 @@ class BoxCLI(DefaultCLI):
             #     flag += 'N'
             el = list(el)
             el.append(flag)
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            print(el)
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
     def _cmd_box_ln(self):
@@ -712,7 +723,10 @@ class BoxCLI(DefaultCLI):
                 flag += 'N'
                 el = list(el)
                 el.append(flag)
-                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+                try:
+                    ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+                except IndexError:
+                    pass
         return ret + '\r'
 
     def _cmd_box_lm(self):
@@ -744,7 +758,10 @@ class BoxCLI(DefaultCLI):
                 flag += 'N'
             el = list(el)
             el.append(flag)
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
     def _cmd_box_ll(self):
@@ -780,7 +797,10 @@ class BoxCLI(DefaultCLI):
                 flag += 'N'
             el = list(el)
             el.append(flag)
-            ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            try:
+                ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
+            except IndexError:
+                pass
         return ret + '\r'
 
 

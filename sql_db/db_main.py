@@ -1,10 +1,11 @@
 import time
 from datetime import datetime, timezone
 
+from bbs.bbs_constant import CR, LF
 from cfg.logger_config import logger, BBS_LOG
 from cfg.constant import MYSQL, SQL_TIME_FORMAT, MYSQL_USER, MYSQL_PASS, MYSQL_HOST, MYSQL_DB
 from fnc.sql_fnc import search_sql_injections
-from fnc.str_fnc import convert_str_to_datetime
+from fnc.str_fnc import convert_str_to_datetime, find_eol
 from sql_db.sql_Error import SQLConnectionError, SQLSyntaxError
 from sql_db.sql_str import SQL_BBS_OUT_MAIL_TAB_IS_EMPTY, SQL_GET_LAST_MSG_ID, SQL_BBS_TABLES, \
     SQLITE_BBS_TABLES, USERDB_TABLES, SQLITE_USERDB_TABLES, APRS_TABLES, SQLITE_APRS_TABLES, PORT_STATISTIK_TAB, \
@@ -296,6 +297,7 @@ class SQL_Database:
         return bool(ret)
 
     def bbs_insert_msg_fm_fwd(self, msg_struc: dict):
+        eol = CR + LF
         # print("bbs_insert_msg_fm_fwd -------------")
         bid         = msg_struc.get('bid_mid', '')
         from_call   = msg_struc.get('sender', '')
@@ -306,8 +308,8 @@ class SQL_Database:
         to_call     = msg_struc.get('receiver', '')
         subject     = msg_struc.get('subject', '')
         path        = str(msg_struc.get('path', []))
-        msg         = msg_struc.get('msg', b'')
-        header      = msg_struc.get('header', b'')
+        msg         = msg_struc.get('msg', b'').replace(eol, LF)
+        header      = msg_struc.get('header', b'').replace(eol, LF)
         msg_size    = msg_struc.get('message_size', '')
         msg_time    = msg_struc.get('time', '')
         rx_time     = datetime.now().strftime(SQL_TIME_FORMAT)

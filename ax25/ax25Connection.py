@@ -1097,11 +1097,11 @@ class AX25Conn:
         if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
             # Process correct I-Frame
             self.vr = count_modulo(int(self.vr))
-            try:
-                self._recv_data(bytes(self.zustand_exec.frame.payload))
-            except Exception as ex:
-                logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
-                logger.error(f"Exception:  {ex}")
+            #try:
+            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            #except Exception as ex:
+            #    logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
+            #    logger.error(f"Exception:  {ex}")
             return True
         else:
             return False

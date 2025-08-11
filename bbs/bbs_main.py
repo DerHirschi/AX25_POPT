@@ -38,7 +38,7 @@ from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from UserDB.UserDBmain import USER_DB
-from fnc.str_fnc import format_number
+from fnc.str_fnc import format_number, find_eol
 
 
 class BBS:
@@ -608,16 +608,17 @@ class BBS:
             msg_raw      = out_msg[3]
 
             bin_mode     = False
-            msg_header   = msg_header.replace(msg_sub.encode('ASCII', 'ignore') + CR, b'')
+            eol = find_eol(msg_header)
+            msg_header   = msg_header.replace(msg_sub.encode('ASCII', 'ignore') + eol, b'')
             text_msg     = (msg_sub.encode('ASCII', 'ignore') +
-                            CR + msg_header + CR + CR +
+                            eol + msg_header +
                             msg_raw + CNTRL_Z + CR)
 
             if self._pms_cfg.get('bin_mode', True):
                 # Bin Mode
                 bin_mode = True
                 # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
-                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + CR + CR + msg_raw), title=msg_sub))
+                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
             to_send_len = len(comp_msg)
@@ -1629,7 +1630,7 @@ class BBS:
         new_subject        = f"CP {msg.get('receiver', '')}: " + msg.get('subject', '')
 
         new_text           = f"Original to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}".encode('ASCII', 'ignore')
-        new_text           = CR + CR + new_text + CR + CR + msg.get('msg', b'')
+        new_text           = new_text + CR + CR + msg.get('msg', b'')
         logger.debug("------------------------------------------")
         logger.debug(f"new_subject: {new_subject}")
         logger.debug(f"msg_subject: {msg.get('subject', '')}")
