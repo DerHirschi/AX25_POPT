@@ -27,24 +27,24 @@ STR_TABLE = {
     'default_ctext': (
         # GER
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # ENG
         ('\n'
-       '-= Hello $destName, =-\n' 
-       '-= welcome to $ownCall ($distance km), =-\n'
-       '-= on Terminal-Channel $channel <> Port $portNr. =-\n'
-       "-= That's your connect No. $connNr. =-\n"
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Last Login at: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hello $destName, =-\n'
+         '-= welcome to $ownCall ($distance km), =-\n'
+         '-= on Terminal-Channel $channel <> Port $portNr. =-\n'
+         "-= That's your connect No. $connNr. =-\n"
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Last Login at: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # NL
         ('\n'
          '-= Hallo $destName, =-\n'
@@ -67,64 +67,64 @@ STR_TABLE = {
          '\n'),
         # FI
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # PL
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # PT
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # IT
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       'v'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         'v'),
         # ??????
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
         # ??????
         ('\n'
-       '-= Hallo $destName, =-\n' 
-       '-= willkommen bei $ownCall ($distance km), =-\n'
-       '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
-       '-= Das ist Connect Nr. $connNr. =-\n'
-       '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
-       '\n'
-       ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
-       '\n'),
+         '-= Hallo $destName, =-\n'
+         '-= willkommen bei $ownCall ($distance km), =-\n'
+         '-= auf Terminal-Kanal $channel <> Port $portNr. =-\n'
+         '-= Das ist Connect Nr. $connNr. =-\n'
+         '-= $ver - Max-Frame: $parmMaxFrame - Pac-Len: $parmPacLen =-\n'
+         '\n'
+         ' # Letzer Login am: $lastConnDate um: $lastConnTime\n'
+         '\n'),
     ),
 
     'default_btext': (
@@ -174,12 +174,12 @@ STR_TABLE = {
          '\r'
          'Vorname            :'),
         ('\r'
-        'This is the first connection to this system.\r'
-        'Before we continue, please answer the questions. THANK YOU!\r'
-        "Tip: You don't have to put yourself through this, there's something called\r"
-        'the Internet.\r'
-        '\r'
-        'First Name:'),
+         'This is the first connection to this system.\r'
+         'Before we continue, please answer the questions. THANK YOU!\r'
+         "Tip: You don't have to put yourself through this, there's something called\r"
+         'the Internet.\r'
+         '\r'
+         'First Name:'),
         ('\r'
          'Dit is de eerste verbinding met dit systeem.\r'
          'Voordat we verdergaan, wilt u alstublieft de vragen beantwoorden? BEDANKT!\r'
@@ -205,7 +205,7 @@ STR_TABLE = {
         'Ist {}\rnoch deine aktuelle Heimat-BBS ? J/N> ',
         'Is {}\rstill your current home BBS? Y/N> ',
         'Is {}\rnog steeds uw huidige thuis-BBS? J/N> ',
-        'Est-ce que {}\rest toujours votre BBS personnel actuel? O/N> ',
+        'Est-ce que {}\rest toujours votre BBS personnelle actuelle? O/N> ',
         '',
         '',
         '',
@@ -217,7 +217,7 @@ STR_TABLE = {
         'Dies BBS als Heimat-BBS Nutzen ? J/N> ',
         'Use this BBS as your home BBS? Y/N> ',
         'Deze BBS gebruiken als thuis-BBS? J/N> ',
-        'Utiliser ce BBS comme BBS domestique ? O/N> ',
+        'Utiliser cette BBS comme BBS domestique ? O/N> ',
         '',
         '',
         '',
@@ -245,11 +245,11 @@ STR_TABLE = {
          'QTH       : {}\r'
          'Locator   : {}\r\r'),
         ('\rYou did well!\r\r'
-            'User data of $destCall:\r'
-            'First name: {}\r'
-            'Home BBS  : {}\r'
-            'QTH       : {}\r'
-            'Locator   : {}\r\r'),
+         'User data of $destCall:\r'
+         'First name: {}\r'
+         'Home BBS  : {}\r'
+         'QTH       : {}\r'
+         'Locator   : {}\r\r'),
         ('Je hebt het goed gedaan!'
          'Gebruikersgegevens van $destCall:\r'
          'Voornaam: {}\r'
@@ -273,7 +273,7 @@ STR_TABLE = {
         '\r # Error, eingegebener Call ist keine BBS.\r # {} Typ ist als {} bekannt.\r # Bitte nochmal versuchen.\r\r',
         '\r # Error, entered call is not a BBS.\r # {} Type is known as {}.\r # Please try again.\r\r',
         '\r # Fout, ingevoerde oproep is geen BBS.\r # {} Type staat bekend als {}.\r # Probeer het opnieuw.\r\r',
-        "\r # Erreur, l'appel saisi n'est pas un BBS.\r # {} Le type est connu comme {}.\r # Veuillez réessayer.\r\r",
+        "\r # Erreur, l'indicatif saisi n'est pas une BBS.\r # {} Le type est connu comme {}.\r # Veuillez réessayer.\r\r",
         '',
         '',
         '',
@@ -479,7 +479,7 @@ STR_TABLE = {
         'Max 6 Zeichen nur Großbuchstaben und Zahlen.',
         'Max 6 characters only capital letters and numbers.',
         '-----------',
-        'Max 6 caractères, lettres majuscules et chiffresuniquement',
+        'Max 6 caractères, lettres majuscules et chiffres uniquement',
         '',
         '',
         '',
@@ -527,7 +527,7 @@ STR_TABLE = {
         'lösche Station',
         'delete Station',
         '-----------',
-        'effacer station',
+        'éffacer station',
         '',
         '',
         '',
@@ -597,63 +597,64 @@ STR_TABLE = {
         ''),
 
     'close_port': (
-'Info: Versuche Port {} zu schließen.',
-           'Info: Try to close Port {}.',
-           'info probeer poort te sluiten',
-           'Info: Tentative de fermeture du Port {}.',
-           '',
-           '',
-           '',
-           '',
-           '',
-           ''),
+        'Info: Versuche Port {} zu schließen.',
+        'Info: Try to close Port {}.',
+        'info probeer poort te sluiten',
+        'Info: Tentative de fermeture du Port {}.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'port_closed': (
-'Info: Port {} erfolgreich geschlossen.',
-           'Info: Port {} closed successfully.',
-           'info: poort goed gesloten',
-           'Info: Port {} fermé avec succès.',
-           '',
-           '',
-           '',
-           '',
-           '',
-           ''),
+        'Info: Port {} erfolgreich geschlossen.',
+        'Info: Port {} closed successfully.',
+        'info: poort goed gesloten',
+        'Info: Port {} fermé avec succès.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'send_kiss_parm': (
-'Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..',
-           'Note: Kiss parameters sent to TNC on port {}..',
-           'Note: Kiss parameter gezonden naar TNC op poort{}..',
-            'Note: Paramètres KISS envoyés au TNC port {}...',
-           '',
-           '',
-           '',
-           '',
-           '',
-           ''),
+        'Hinweis: Kiss-Parameter an TNC auf Port {} gesendet..',
+        'Note: Kiss parameters sent to TNC on port {}..',
+        'Note: Kiss parameter gezonden naar TNC op poort{}..',
+        'Note: Paramètres KISS envoyés au TNC port {}...',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
-    'port_in_use': ('Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.',
-           'Error: Port {} could not be initialized. Port is already in use.',
-           'Fout:Poort {} kan niet initialized. Poort is al in gebruik',
-           'Erreur: Port {} ne peut être initialisé. Le port est déjà en service',
-           '',
-           '',
-           '',
-           '',
-           '',
-           ''),
+    'port_in_use': (
+        'Error: Port {} konnte nicht initialisiert werden. Port wird bereits benutzt.',
+        'Error: Port {} could not be initialized. Port is already in use.',
+        'Fout:Poort {} kan niet initialized. Poort is al in gebruik',
+        'Erreur: Port {} ne peut être initialisé. Le port est déjà en service',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'no_port_typ': (
-           'Hinweis: Kein Port-Typ ausgewählt. Port {}',
-           'Note: No port type selected. port {}',
-           'Note: geen poort type geselecteerd.poort {}',
-           'Note: Aucun type de port séléctionné port {}',
-           '',
-           '',
-           '',
-           '',
-           '',
-           ''),
+        'Hinweis: Kein Port-Typ ausgewählt. Port {}',
+        'Note: No port type selected. port {}',
+        'Note: geen poort type geselecteerd.poort {}',
+        'Note: Aucun type de port séléctionné port {}',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 
     'port_not_init': (
         'Error: Port {} konnte nicht initialisiert werden.',
@@ -945,7 +946,7 @@ STR_TABLE = {
         'Locator Rechner',
         'Locator Calculator',
         'Lokatie berekenen',
-        '',
+        'Calculateur locator',
         '',
         '',
         '',
@@ -1077,7 +1078,7 @@ STR_TABLE = {
         'Wirklich ALLE Stationen disconnecten ?',
         'Do you want to disconnect ALL stations?',
         'Wilt u ALLE stations verbreken?',
-        'Voulez vous déconnecter toutes les sttions?',
+        'Voulez vous déconnecter toutes les stations?',
         '',
         '',
         '',
@@ -1185,7 +1186,7 @@ STR_TABLE = {
         'Ausschneiden',
         'Cut out',
         'Knip uit',
-        'Découper',
+        'Couper',
         '',
         '',
         '',
@@ -2110,7 +2111,7 @@ STR_TABLE = {
         '',
         ''),
 
-'GPIO': (
+    'GPIO': (
         'GPIO',
         'GPIO',
         'GPIO',
@@ -2122,7 +2123,7 @@ STR_TABLE = {
         '',
         ''),
 
-'Digipeater': (
+    'Digipeater': (
         'Digipeater',
         'Digipeater',
         'Digipeater',
@@ -2134,7 +2135,7 @@ STR_TABLE = {
         '',
         ''),
 
-'F-Text': (
+    'F-Text': (
         'F-Text',
         'F-Text',
         'F-Text',
@@ -2181,7 +2182,6 @@ STR_TABLE = {
         '',
         '',
         ''),
-
 
     'txt_decoding': (
         'Umlautumwandlung',
@@ -2932,7 +2932,7 @@ STR_TABLE = {
         ' # Umlaute/Text de/enkodierung erkannt und gesetzt auf:',
         " # Text de/encoding detected and set to:",
         ' # Tekstde/codering gedetecteerd en ingesteld op:',
-        'Encodage/decodage du texte détecté et paramétré à :',
+        ' # Encodage/decodage du texte détecté et paramétré à :',
         '',
         '',
         '',
@@ -2980,7 +2980,7 @@ STR_TABLE = {
         'Dieses Kommando ist dem System nicht bekannt !',
         'The system does not know this command !',
         'Het systeem kent deze opdracht niet !',
-        '',
+        'Le système ne reconnait pas cette commande',
         '',
         '',
         '',
@@ -3028,7 +3028,7 @@ STR_TABLE = {
         'Keine Daten vorhanden.',
         'No data available.',
         'Geen gegevens beschikbaar.',
-        '',
+        'Pas de données disponnibles',
         '',
         '',
         '',
@@ -3076,7 +3076,7 @@ STR_TABLE = {
         'Sprache nicht erkannt! Mögliche Sprachen: ',
         'Language not recognized! Possible languages: ',
         'Taal niet herkend! Mogelijke talen: ',
-        'Langue non reconnue! Langues possibles',
+        'Langue non reconnue! Langues possibles : ',
         '',
         '',
         '',
@@ -3088,7 +3088,7 @@ STR_TABLE = {
         'Sysop wird gerufen !!',
         'Sysop is called!!',
         'Gebruiker wordt geroepen!!',
-        'Sysop appelé',
+        'Sysop appelé!!',
         '',
         '',
         '',
@@ -3100,7 +3100,7 @@ STR_TABLE = {
         'Sysop wurde bereits gerufen..',
         'Sysop has already been called..',
         'Gebruiker is al geroepen..',
-        'Le Sysop a déjà ete appelé',
+        'Le Sysop a déjà été appelé..',
         '',
         '',
         '',
@@ -3147,7 +3147,7 @@ STR_TABLE = {
         '# Ungültige Port Angabe..',
         '# Invalid port specification..',
         '# Ongeldige poortspecificatie..',
-        '',
+        '# Spécification de port invalide',
         '',
         '',
         '',
@@ -3198,7 +3198,7 @@ STR_TABLE = {
         'MCast Kanal Übersicht',
         'MCast channel overview',
         'MCast kanaaloverzicht',
-        '',
+        'Aperçu canal MCAST',
         '',
         '',
         '',
@@ -3388,7 +3388,7 @@ STR_TABLE = {
         '',
         '',
         '',
-        ''), #
+        ''),  #
 
     'cmd_l_from': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -3824,7 +3824,7 @@ STR_TABLE = {
         '',
         '',
         '',
-        ''), #
+        ''),  #
 
     'fwd_port_settings': (
         'FWD-Port',
@@ -3901,8 +3901,8 @@ STR_TABLE = {
     'noConnect': (
         'Kein ausgehender Connect',
         'No outgoing connect',
-        'Aucune connexion sortante',
         'AGeen uitgaande verbinding',
+        'Aucune connexion sortante',
         '',
         '',
         '',
@@ -3956,7 +3956,7 @@ STR_TABLE = {
         '',
         '',
         '',
-        ''), #
+        ''),  #
 
     'conn_intervall': (
         'Abstände zwischen Connects (Minuten): ',
@@ -4500,7 +4500,7 @@ STR_TABLE = {
         'PoPT wird beendet.',
         'Quiting PoPT.',
         'PoPT verlaten.',
-        "Quitter le PoPT.",
+        "Quitter PoPT.",
         '',
         '',
         '',

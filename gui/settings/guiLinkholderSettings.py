@@ -40,7 +40,7 @@ class LinkHolderSettings(tk.Toplevel):
         ######################################
         # OK, Save, Cancel
         ok_bt = ttk.Button(main_f,
-                          text=self._getTabStr('ok'),
+                          text=self._getTabStr('Ok'),
                           # font=("TkFixedFont", 15),
                           # bg="green",
                           #height=1,
