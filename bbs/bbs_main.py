@@ -611,14 +611,14 @@ class BBS:
             eol = find_eol(msg_header)
             msg_header   = msg_header.replace(msg_sub.encode('ASCII', 'ignore') + eol, b'')
             text_msg     = (msg_sub.encode('ASCII', 'ignore') +
-                            eol + msg_header +
+                            CR + LF + msg_header + CR + LF + CR + LF +
                             msg_raw + CNTRL_Z + CR)
 
             if self._pms_cfg.get('bin_mode', True):
                 # Bin Mode
                 bin_mode = True
                 # comp_msg = bytes(encode_fa_header(mail_content=msg_raw, title=msg_sub))
-                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + msg_raw), title=msg_sub))
+                comp_msg = bytes(encode_fa_header(mail_content=(msg_header + CR + LF + CR + LF + msg_raw), title=msg_sub))
             else:
                 comp_msg = text_msg
             to_send_len = len(comp_msg)
