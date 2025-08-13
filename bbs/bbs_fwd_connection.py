@@ -374,13 +374,20 @@ class BBSConnection:
             else:
                 self._parse_msg(next_mail)
         if not self._rx_msg_header:
-            self._connection_tx(b'FF\r')
-            self._state = 11
-        #if self._rx_buff:
-        #    logger.debug(f"bin: {bin_mode}")
-        #    logger.debug(f"rx_buff: {self._rx_buff}")
-        #    logger.debug(f"state: {self._state}")
-        #    logger.debug(f"next_mail: {next_mail}")
+            #    self._connection_tx(b'FF\r')
+            #    self._state = 11
+            if self._is_fwd_q():
+                tx = self._tx_msg_header + b'F>\r'
+                self._connection_tx(tx)
+                self._state = 5
+            else:
+                self._connection_tx(b'FF\r')
+                self._state = 11
+            #if self._rx_buff:
+            #    logger.debug(f"bin: {bin_mode}")
+            #    logger.debug(f"rx_buff: {self._rx_buff}")
+            #    logger.debug(f"state: {self._state}")
+            #    logger.debug(f"next_mail: {next_mail}")
 
     def _wait_f_accept_msg(self):
         # 5

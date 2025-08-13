@@ -794,10 +794,10 @@ class BBS:
             if len(bbs_fwd_next_q) == 5:
                 # Good Girl
                 BBS_LOG.debug(log_tag + "Next-Q full")
-                return []
+                return bbs_fwd_next_q
             # Bad Girl
             BBS_LOG.warning(log_tag + f"Next-Q len > 5: len({len(bbs_fwd_next_q)})")
-            return []
+            return bbs_fwd_next_q[:5]
         fwd_cfg         = self._fwd_cfg.get(bbs_call, {})
         fwd_port_id     = fwd_cfg.get('port_id', -1)
         if fwd_port_id == -1:
