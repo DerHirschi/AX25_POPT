@@ -683,7 +683,8 @@ class SQL_Database:
     #######################
     # FWD
     def pms_get_active_fwd_q_for_GUI(self):
-        query = ("SELECT BID, "
+        query = ("SELECT FWDID, "
+                  "BID, "
                   "from_call, "
                   "from_bbs_call, "
                   "to_call, "

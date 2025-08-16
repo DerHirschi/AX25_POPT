@@ -36,19 +36,14 @@ class BBS_fwd_Q(tk.Toplevel):
         self.lift()
         #########################################
         # Vars
-        self._port_vars = {}
-        self._bbs_vars  = {}
-        self._tree_data = []
-        self._data      = []
-        self._rev_ent   = False
-
-        # ############################### Columns ############################
-        # _frame = tk.Frame(self, background='red')
-        # _frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        # _frame.columnconfigure(0, weight=1, minsize=1000)
-        # _frame.columnconfigure(1, weight=0, minsize=150)
-        # _frame.rowconfigure(0, weight=0)
-        # tk.Label(_frame, text='sags').grid(row=0, column=1)
+        self._port_vars      = {}
+        self._bbs_vars       = {}
+        self._tree_data      = []
+        self._data           = []
+        self._rev_ent        = False
+        self._last_sort      = ''
+        self._selected_bbs   = []
+        self._selected_fwdid = []
         ##########################################################################################
         # Tab-ctl
         root_frame   = ttk.Frame(self, borderwidth=10)
@@ -67,6 +62,7 @@ class BBS_fwd_Q(tk.Toplevel):
         # TREE
 
         columns = (
+            'FWDID',
             'BID',
             'from',
             'to',
@@ -83,6 +79,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
+        self._tree.heading('FWDID', text='FWD-ID', command=lambda: self._sort_entry('FWDID'))
         self._tree.heading('BID', text='BID', command=lambda: self._sort_entry('BID'))
         self._tree.heading('from', text=self._getTabStr('from'), command=lambda: self._sort_entry('from'))
         self._tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to'))
@@ -90,14 +87,15 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
         self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry('sub'))
         self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry('size'))
-        self._tree.column("BID", anchor=tk.CENTER, stretch=tk.YES, width=130)
-        self._tree.column("from", anchor=tk.CENTER, stretch=tk.YES, width=190)
-        self._tree.column("to", anchor=tk.CENTER, stretch=tk.YES, width=190)
-        self._tree.column("fwd_bbs_call", anchor=tk.CENTER, stretch=tk.YES, width=90)
+        self._tree.column("FWDID", anchor=tk.W, stretch=tk.YES, width=170)
+        self._tree.column("BID", anchor=tk.W, stretch=tk.YES, width=130)
+        self._tree.column("from", anchor=tk.W, stretch=tk.YES, width=190)
+        self._tree.column("to", anchor=tk.W, stretch=tk.YES, width=190)
+        self._tree.column("fwd_bbs_call", anchor=tk.W, stretch=tk.YES, width=90)
         self._tree.column("type", anchor=tk.CENTER, stretch=tk.YES, width=60)
-        self._tree.column("sub", anchor=tk.CENTER, stretch=tk.YES, width=150)
-        self._tree.column("size", anchor=tk.CENTER, stretch=tk.YES, width=60)
-        # self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
+        self._tree.column("sub", anchor=tk.W, stretch=tk.YES, width=150)
+        self._tree.column("size", anchor=tk.W, stretch=tk.YES, width=60)
+        self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
         ###
         btn_frame = ttk.Frame(tree_frame, width=150)
         btn_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
@@ -105,10 +103,12 @@ class BBS_fwd_Q(tk.Toplevel):
                   text=self._getTabStr('start_fwd'),
                   command=self._do_fwd
                   ).pack()
+        ttk.Button(btn_frame,
+                   text=self._getTabStr('delete'),
+                   command=self._del_fwd_id
+                   ).pack()
         ##########################################################################################
         # port_frame
-        # port_m_f = ttk.Frame(port_frame)
-        # port_m_f.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self._port_tabctl = ttk.Notebook(port_frame)
         self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -249,11 +249,10 @@ class BBS_fwd_Q(tk.Toplevel):
         self.tasker()
 
     def tasker(self):
-        self._get_data()
-        self._format_tree_data()
-        self._update_tree()
+        self._update_fwdQ_tree()
         self._update_port_vars()
         self._update_bbs_vars()
+
 
     def _update_port_vars(self):
         fwd_port_cfgs = POPT_CFG.get_BBS_cfg().get('fwd_port_cfg', {})
@@ -365,33 +364,75 @@ class BBS_fwd_Q(tk.Toplevel):
         for ret_ent in self._tree_data:
             self._tree.insert('', tk.END, values=ret_ent)
 
-    def _get_data(self):
-        self._data = list(self._bbs_obj.get_active_fwd_q_tab())
+    def _update_fwdQ_tree(self):
+        data = list(self._bbs_obj.get_active_fwd_q_tab())
+        if self._data != data:
+            self._data = data
+            self._format_tree_data()
+            self._update_tree()
+            if self._last_sort:
+                self._rev_ent = not self._rev_ent
+                self._sort_entry(self._last_sort)
 
     def _format_tree_data(self):
         self._tree_data = []
         for el in self._data:
-            from_call = f"{el[1]}@{el[2]}"
-            to_call = f"{el[3]}@{el[4]}"
+            from_call = f"{el[2]}@{el[3]}"
+            to_call = f"{el[4]}@{el[5]}"
             self._tree_data.append((
                 f'{el[0]}',
+                f'{el[1]}',
                 f'{from_call}',
                 f'{to_call}',
-                f'{el[5]}',  # fwd BBS
-                f'{el[6]}',  # typ
-                f'{el[7]}',  # sub
-                f'{el[8]}',  # size
+                f'{el[6]}',  # fwd BBS
+                f'{el[7]}',  # typ
+                f'{el[8]}',  # sub
+                f'{el[9]}',  # size
             ))
 
     def _sort_entry(self, col):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
+        self._last_sort = col
         tmp = [(self._tree.set(k, col), k) for k in self._tree.get_children('')]
         tmp.sort(reverse=self._rev_ent)
         self._rev_ent = not self._rev_ent
         for index, (val, k) in enumerate(tmp):
             self._tree.move(k, '', int(index))
 
+    def _entry_selected(self, event=None):
+        self._selected_bbs     = []
+        self._selected_fwdid = []
+        for selected_item in self._tree.selection():
+            item = self._tree.item(selected_item)
+            fwd_id   = item['values'][0]
+            bbs_call = item['values'][4]
+            if fwd_id not in self._selected_fwdid:
+                self._selected_fwdid.append(fwd_id)
+            if bbs_call not in self._selected_bbs:
+                self._selected_bbs.append(bbs_call)
+
+    def _del_fwd_id(self):
+        if not self._selected_fwdid:
+            return
+        self._bbs_obj.del_fwd_q_by_FWD_ID(self._selected_fwdid)
+        check = []
+        for bbs_call in self._selected_bbs:
+            if bbs_call in check:
+                continue
+            self._bbs_obj.del_bbs_fwdQ(bbs_call)
+            check.append(bbs_call)
+        self._selected_fwdid = []
+        self._selected_bbs   = []
+        self._update_fwdQ_tree()
+
     def _do_fwd(self):
+        if not self._selected_bbs:
+            self._do_fwd_all()
+            return
+        for bbs_call in self._selected_bbs:
+            self._bbs_obj.start_autoFwd(bbs_call)
+
+    def _do_fwd_all(self):
         self._bbs_obj.start_man_autoFwd()
 
     def _do_timeout_reset(self):

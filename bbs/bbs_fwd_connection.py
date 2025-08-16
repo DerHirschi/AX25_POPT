@@ -555,6 +555,7 @@ class BBSConnection:
         if len(self._tx_fs_list) != len(self._tx_msg_BIDs):
             BBS_LOG.error(self._logTag + '_ack_out_msg: len(self._tx_fs_list) != len(self._tx_msg_BIDs)')
             BBS_LOG.error(self._logTag + f'_ack_out_msg: {len(self._tx_fs_list)} != {len(self._tx_msg_BIDs)}')
+            self.end_conn()
             return
         for bid in list(self._tx_msg_BIDs):
             fwd_id  = self._get_fwd_id(bid)

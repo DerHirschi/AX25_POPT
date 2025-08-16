@@ -10,6 +10,10 @@ Fixes:
 - BBS-Forwarding, Software Identifier wird beim Forwarding nicht ausgewertet
 - BBS-Routing, Routingregeln für Bulletin Nachrichten werden nicht richtig
   abarbeitet
+- Sortierung der Forward-Warteschlange geht verloren nach update (Änderungen der
+  Warteschlange)
+- FWD-Warteschlange wird nicht aktualisiert wenn Nachricht aus Warteschlange
+  gelöscht wurde
 
 Optimierung/Änderungen:
 - AXIP Port handling
@@ -19,6 +23,7 @@ Optimierung/Änderungen:
 - User-DB wird jetzt in json format gespeichert
 - Programm Initialisierungsprozedur (Alle eingehenden Verbindungen werden
   ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
+- Unnötige updates der Forward-Warteschlange
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder
@@ -28,6 +33,9 @@ Neue Implementierungen / Funktionen:
 - Blacklist für eingehende Verbindungen.
 - BBS-Forwarding: Timeout für tote Verbindung
 - BBS-Forwarding: Ausgehende Verbindungen deaktivierbar
+- BBS Forward-Warteschlange: Wenn Einträge ausgewählt sind, wird der FWD an
+  die ausgewähle(n) BBS angestoßen. Wenn kein Eintrag ausgweählt wird der
+  sofortige FWD zu allen Konfigurierten BBS angestoßen.
 
 ###########################################################################################################
 ###########################################################################################################

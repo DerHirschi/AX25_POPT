@@ -191,6 +191,7 @@ class MSG_Center_BBS(MSG_Center_base):
         self._fwdQ_tree_data    = []
         self._fwdQ_data         = []
         self._fwdQ_selected     = []
+        self._selected_bbs      = []
         self._update_fwdQ_tree_data()
         ########################
         # ## lower_f_top / MSG Header ect.
@@ -683,10 +684,12 @@ class MSG_Center_BBS(MSG_Center_base):
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        """
         ttk.Button(btn_frame_l,
                   text='Start FWD',
                   command=lambda: self._do_pms_autoFWD()
                   ).pack(side=tk.LEFT, expand=False)
+        """
         ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_OUT_btn()
@@ -842,10 +845,12 @@ class MSG_Center_BBS(MSG_Center_base):
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        """
         ttk.Button(btn_frame_l,
                   text='Start FWD',
                   command=lambda: self._do_pms_autoFWD()
                   ).pack(side=tk.LEFT, expand=False)
+        """
         ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_fwdQ()
@@ -1671,9 +1676,13 @@ class MSG_Center_BBS(MSG_Center_base):
     def _fwdQ_entry_selected(self, event=None):
         bid = ''
         self._fwdQ_selected = []
+        self._selected_bbs  = []
         for selected_item in self._fwdQ_tree.selection():
             item = self._fwdQ_tree.item(selected_item)
             self._fwdQ_selected.append(item['tags'][1])
+            bbs_call = item['values'][5]
+            if bbs_call not in self._selected_bbs:
+                self._selected_bbs.append(bbs_call)
             bid  = item['tags'][2]
         if bid:
             self._fwdQ_show_msg_fm_BID(bid)
@@ -1736,8 +1745,15 @@ class MSG_Center_BBS(MSG_Center_base):
     def _delete_fwdQ(self):
         if not self._fwdQ_selected:
             return
-        self._bbs_obj.del_fwd_q_by_MID(self._fwdQ_selected)
+        self._bbs_obj.del_fwd_q_by_FWD_ID(self._fwdQ_selected)
+        check = []
+        for bbs_call in self._selected_bbs:
+            if bbs_call in check:
+                continue
+            self._bbs_obj.del_bbs_fwdQ(bbs_call)
+            check.append(bbs_call)
         self._fwdQ_selected = []
+        self._selected_bbs  = []
         self._update_fwdQ_tree_data()
 
     ####################

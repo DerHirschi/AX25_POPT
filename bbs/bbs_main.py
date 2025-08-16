@@ -551,6 +551,14 @@ class BBS:
                 continue
             BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ}")
 
+    def del_bbs_fwdQ(self, bbs_call: str):
+        if bbs_call not in self._fwd_BBS_q:
+            BBS_LOG.debug(f"Error bbs_call not in self._fwd_BBS_q: {bbs_call}")
+            return
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_q']      = {}
+        self._fwd_BBS_q[bbs_call]['bbs_fwd_next_q'] = []
+        self._build_new_fwd_Q()
+
     def _build_new_fwd_Q(self):
         """
         Get active Fwd-Msg fm DB and prepare them for BBS-FWD-Q (self._fwd_cfg[bbs_call])
@@ -1059,7 +1067,7 @@ class BBS:
                 # dest_call   = fwd_bbs_cfg.get('dest_call'),
                 via_calls = fwd_bbs_cfg.get('via_calls'),
                 axip_add  = fwd_bbs_cfg.get('axip_add'),
-                fwd_conn  = self._start_autoFwd(to_bbs_call)
+                fwd_conn  = self.start_autoFwd(to_bbs_call)
                 self.set_bbs_timeout(to_bbs_call)
                 if not fwd_conn:
                     bbs_fwd_error_c += 1
@@ -1185,7 +1193,7 @@ class BBS:
 
     ###################################
     # Auto FWD
-    def _start_autoFwd(self, fwd_bbs: str):
+    def start_autoFwd(self, fwd_bbs: str):
         fwd_bbs_cfg = self._fwd_cfg.get(fwd_bbs, {})
         if not fwd_bbs_cfg:
             BBS_LOG.error(f"AutoFWD start: No cfg for {fwd_bbs}")
@@ -2021,7 +2029,7 @@ class BBS:
     def del_sv_by_MID(self, mid):
         return self._db.bbs_del_sv_msg_by_MID(mid)
 
-    def del_fwd_q_by_MID(self, fwdid_list: list):
+    def del_fwd_q_by_FWD_ID(self, fwdid_list: list):
         return self._db.bbs_del_fwdQ_by_FWDID(fwdid_list)
 
     def unhold_msg_by_BID(self, bid_list: list):
