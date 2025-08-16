@@ -288,7 +288,7 @@ class BBSAutoMailSettings(ttk.Frame):
                 from_add, from_bbs = form_add_tmp
             else:
                 from_add = form_add_tmp[0]
-                from_bbs = ''
+                from_bbs = f"{self._pms_cfg.get('user')}.{self._pms_cfg.get('regio')}"
             to_add_tmp = to_add.split('@')
             if len(to_add_tmp) == 2:
                 to_add, to_bbs = to_add_tmp

@@ -20,6 +20,7 @@ from fnc.str_fnc import get_timedelta_CLIstr
     $connNr = Connect Nr
     $parmMaxFrame = Max Frame Einstellungen     - Bake
     $parmPacLen = Pakete Länge Einstellungen    - Bake
+    $fwdPartner = Pakete Länge Einstellungen    - Bake
     
     - Raspberry 1Wire Sensoren                  - Bake
 """
@@ -190,6 +191,15 @@ def get_lastConnTime(port=None,
     dt_time = connection.last_connect.strftime('%H:%M:%S')
     return str(dt_time)
 
+def get_fwdPartner(port=None,
+                     port_handler=None,
+                     connection=None,
+                     user_db=None):
+    ret = ''
+    fwd_cfg = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {})
+    for bbs_call, bbs_cfg in fwd_cfg.items():
+        ret += f"{bbs_call}.{bbs_cfg.get('regio', '')}\n"
+    return ret
 
 STRING_VARS = {
     '$ver': get_ver,
@@ -207,6 +217,7 @@ STRING_VARS = {
     '$connNr': get_connNr,
     '$parmMaxFrame': get_MaxFrame,
     '$parmPacLen': get_PacLen,
+    '$fwdPartner': get_fwdPartner,
 }
 
 

@@ -1159,11 +1159,11 @@ class DefaultCLI(object):
                 return f"\r # PR-Mail: {self._user_db_ent.PRmail}\r"
             return "\r # USER-DB Error !\r"
         if self._user_db_ent:
-            self._user_db_ent.PRmail = self._parameter[0] \
+            self._user_db_ent.PRmail = (self._parameter[0] \
                 .decode(self._encoding[0], self._encoding[1]). \
                 replace(' ', ''). \
                 replace('\n', ''). \
-                replace('\r', '')
+                replace('\r', '')).upper()
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_prmail_set')}: {self._user_db_ent.PRmail}" \

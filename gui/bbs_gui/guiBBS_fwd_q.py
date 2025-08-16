@@ -20,7 +20,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self.style = self._root_win.style
         # self.geometry("1250x700")
         self.geometry(f"1190x"
-                      f"400+"
+                      f"420+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
@@ -210,7 +210,10 @@ class BBS_fwd_Q(tk.Toplevel):
                           text="Reset Timeout",
                           command=lambda: self._do_timeout_reset(),
                           ).pack()
-
+                ttk.Button(fwd_btn_f,
+                           text=self._getTabStr('start_fwd'),
+                           command=self._do_fwd_to
+                           ).pack()
                 ###########
                 # frame_m
                 ttk.Label(frame_m, text='Next-Q').pack(pady=10)
@@ -424,6 +427,32 @@ class BBS_fwd_Q(tk.Toplevel):
         self._selected_fwdid = []
         self._selected_bbs   = []
         self._update_fwdQ_tree()
+
+    def _do_fwd_to(self):
+        try:
+            ind = self._port_tabctl.tab('current')
+        except tk.TclError:
+            return
+        ind = str(ind['text']).replace('FWD-Port ', '')
+        try:
+            current_port_id = int(ind)
+        except ValueError:
+            return
+
+        gui_port_var = self._port_vars.get(current_port_id, {})
+        if not gui_port_var:
+            return
+        bbs_tabctl = gui_port_var.get('bbs_tabctl', None)
+        if not hasattr(bbs_tabctl, 'tab'):
+            return
+        try:
+            bbs_ind = bbs_tabctl.tab('current')
+        except tk.TclError:
+            return
+        bbs_call = bbs_ind['text']
+        if bbs_call not in self._bbs_vars:
+            return
+        self._bbs_obj.start_autoFwd(bbs_call)
 
     def _do_fwd(self):
         if not self._selected_bbs:

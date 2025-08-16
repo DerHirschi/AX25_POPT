@@ -14,6 +14,7 @@ Fixes:
   Warteschlange)
 - FWD-Warteschlange wird nicht aktualisiert wenn Nachricht aus Warteschlange
   gelöscht wurde
+- BBS-Auto-Mail: keine Absender-BBS.
 
 Optimierung/Änderungen:
 - AXIP Port handling
@@ -34,8 +35,11 @@ Neue Implementierungen / Funktionen:
 - BBS-Forwarding: Timeout für tote Verbindung
 - BBS-Forwarding: Ausgehende Verbindungen deaktivierbar
 - BBS Forward-Warteschlange: Wenn Einträge ausgewählt sind, wird der FWD an
-  die ausgewähle(n) BBS angestoßen. Wenn kein Eintrag ausgweählt wird der
+- BBS Forward-Warteschlange: FWD-Start Knopf in BBS Warteschlangen Übersicht
+  die ausgewählte BBS angestoßen. Wenn kein Eintrag ausgewählt wird der
   sofortige FWD zu allen Konfigurierten BBS angestoßen.
+- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  - $fwdPartner = Listet Forward-Partner auf - Bake
 
 ###########################################################################################################
 ###########################################################################################################
