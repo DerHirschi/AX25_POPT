@@ -3012,6 +3012,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_ch': (
+        'Kurze Nachricht an Kanal senden. CH <Kanal> Nachricht',
+        'Send short message to channel. CH <Channel> Message',
+        'Stuur een kort bericht naar het kanaal. CH <Kanaal> Bericht',
+        'Envoyer un court message au canal. CH <Canal> Message',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cli_no_wx_data': (
         'Keine Wetterdaten vorhanden.',
         'No WX data available',
@@ -3167,6 +3179,53 @@ STR_TABLE = {
         '',
         ''),
 
+    'ch_cmd_param_error': (
+        '# Ungültige Parameter. CH <Kanal> Nachricht',
+        '# Invalid parameters. CH <Channel> Message',
+        '# Ongeldige parameters. CH <Kanaal> Bericht',
+        '# Paramètres non valides. Message CH <Channel>',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'ch_cmd_empty_ch': (
+        '# Ungültiger Kanal. Kanal nicht verbunden.',
+        '# Invalid channel. Channel not connected.',
+        '# Ongeldig kanaal. Kanaal niet verbonden.',
+        '# Chaîne invalide. Chaîne non connectée.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'ch_cmd_own_ch': (
+        '# Kann keine Nachricht an eigenen Kanal senden.',
+        '# Cannot send message to own channel.',
+        '# Kan geen bericht naar eigen kanaal sturen.',
+        "# Impossible d'envoyer un message à sa propre chaîne.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'ch_cmd_send': (
+        '# Nachricht an Kanal {} ({}) gesendet.\r',
+        '# Message sent to channel {} ({}).\r',
+        '# Bericht verzonden naar kanaal {} ({}).\r',
+        "# Message envoyé au canal {} ({}).\r",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     #####################################################
     # MCast
 

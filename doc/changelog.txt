@@ -40,6 +40,8 @@ Neue Implementierungen / Funktionen:
   sofortige FWD zu allen Konfigurierten BBS angestoßen.
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $fwdPartner = Listet Forward-Partner auf - Bake
+- CLI-CMD "CH" - sendet kurzen Text an Kanal.
+  CH <Kanal-NR> Nachricht (ein Zeile)
 
 ###########################################################################################################
 ###########################################################################################################

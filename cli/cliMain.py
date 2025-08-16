@@ -96,6 +96,7 @@ class DefaultCLI(object):
             'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
             'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
             'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr('cmd_help_lcstatus'), False),
+            'CH':       (2, self._cmd_ch,                   self._getTabStr('cmd_help_ch'), False),
             # APRS Stuff
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
             'WX':       (0, self._cmd_wx,                   self._getTabStr('cmd_help_wx'), False),
@@ -1278,6 +1279,67 @@ class DefaultCLI(object):
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
         return ret + "\r"
+        """ Long Connect-Status """
+        ret = '\r'
+        ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
+        all_conn = self._port_handler.get_all_connections()
+        for k in all_conn.keys():
+            ch = k
+            conn = all_conn[k]
+            time_start = conn.time_start  # TODO DateSTR
+            port_id = conn.own_port.port_id
+            my_call = conn.my_call_str
+            to_call = conn.to_call_str
+            db_ent = conn.user_db_ent
+            name = ''
+            loc = ''
+            qth = ''
+            if db_ent:
+                name = db_ent.Name
+                loc = db_ent.LOC
+                qth = db_ent.QTH
+            if self._connection.ch_index == ch:
+                ret += ">"
+            else:
+                ret += " "
+
+            ret += f" {str(ch).ljust(3)} " \
+                   f"{str(port_id).ljust(3)}   " \
+                   f"{my_call.ljust(9)} " \
+                   f"{to_call.ljust(9)} " \
+                   f"{name.ljust(13)[:13]} " \
+                   f"{loc.ljust(6)[:6]} " \
+                   f"{qth.ljust(13)[:13]} " \
+                   f"{time_start.strftime('%H:%M:%S')}\r"
+
+        return ret + "\r"
+
+    def _cmd_ch(self):
+        if not self._parameter:
+            return self._getTabStr('ch_cmd_param_error')
+        if len(self._parameter) > 1:
+            param = [self._parameter[0], b' '.join(self._parameter[1:])]
+        else:
+            param: b'' = self._parameter[0]
+            param = param.split(b' ', maxsplit=1)
+        if len(param) < 2:
+            return self._getTabStr('ch_cmd_param_error')
+        try:
+            ch_id = int(param[0])
+        except ValueError:
+            return self._getTabStr('ch_cmd_param_error')
+
+        all_conn = self._port_handler.get_all_connections()
+        if ch_id not in all_conn:
+            return self._getTabStr('ch_cmd_empty_ch')
+        if ch_id == self._connection.ch_index:
+            return self._getTabStr('ch_cmd_own_ch')
+
+        to_conn = all_conn[ch_id]
+        to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')
+        to_send += param[1] + b'\r'
+        to_conn.send_data(to_send)
+        return self._getTabStr('ch_cmd_send').format(ch_id, to_conn.to_call_str)
 
     def _cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"

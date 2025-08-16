@@ -20,6 +20,7 @@ class UserCLI(DefaultCLI):
                                'ECHO',
                                'CONNECT',
                                'C!',
+                               'CH',
                                'PORT',
                                'MH',
                                'LMH',

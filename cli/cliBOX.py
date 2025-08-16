@@ -62,6 +62,7 @@ class BoxCLI(DefaultCLI):
         })
         self._commands_cfg = ['QUIT',
                               'BYE',
+                              'CH',
                               'LCSTATUS',
                               ## APRS
                               # 'ATR',
