@@ -124,18 +124,23 @@ def build_msg_header(msg_struc: dict, fwd_bbs_address: str):
         if x_info:
             enc_x_info = x_info.encode('ASCII', 'ignore')
             new_header += MSG_XH_INFO + SP + enc_x_info + CR + LF
-        new_header += CR + LF
+        #new_header += CR + LF
         logger.debug(f"new_header 1> : {new_header}")
 
     else:
+
+        logger.debug(f"Old Header : {old_header}")
         eol = find_eol(old_header)
+        old_header = old_header.replace(eol, CR + LF)
+        eol = CR + LF
         header_lines = old_header.split(eol)
         logger.debug(f"header_lines : {header_lines}")
         logger.debug(f"eol : {eol}")
         new_header = header_lines[0] + eol
         new_header += stamp.encode('ASCII', 'ignore') + eol
-        new_header += eol.join(header_lines[1:])
-
+        new_header += b''.join([line + eol for line in header_lines[1:]])
+        #new_header += CR + LF
+        logger.debug(f"New Header : {new_header}")
 
 
     msg_struc['path']   = old_path

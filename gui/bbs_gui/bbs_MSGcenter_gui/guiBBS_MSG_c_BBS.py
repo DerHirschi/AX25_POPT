@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from bbs.bbs_constant import CR
+from bbs.bbs_constant import CR, LF
 from cfg.constant import FONT, ENCODINGS
 from fnc.str_fnc import format_number
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_base import MSG_Center_base
@@ -1351,12 +1351,13 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_call     = db_data['to_call']  # Cat
                 to_bbs      = db_data['to_bbs']  # Verteiler
                 subj        = db_data['subject']
-                msg         = db_data['header'] + CR + CR + db_data['msg']
+                msg         = db_data['header'] + LF + LF + db_data['msg']
                 msg_time    = db_data['time']
                 rx_time     = db_data['rx-time']
                 size        = format_number(len(msg))
+                msg         = msg.replace(CR + LF, LF)
+                msg         = msg.replace(CR, LF)
                 msg         = msg.decode(enc, 'ignore')
-                msg         = str(msg).replace('\r', '\n')
                 if from_bbs:
                     from_call   = from_call + ' @ ' + from_bbs
                 if to_bbs:
@@ -1471,13 +1472,14 @@ class MSG_Center_BBS(MSG_Center_base):
                 to_call     = db_data['to_call']  # Cat
                 to_bbs      = db_data['to_bbs']  # Verteiler
                 subj        = db_data['subject']
-                msg         = db_data['header'] + CR + CR + db_data['msg']
+                msg         = db_data['header'] + LF + LF + db_data['msg']
                 # _path = _db_data[9]
                 msg_time    = db_data['time']
                 rx_time     = db_data['rx-time']
                 size        = format_number(len(msg))
+                msg         = msg.replace(CR + LF, LF)
+                msg         = msg.replace(CR, LF)
                 msg         = msg.decode(enc, 'ignore')
-                msg         = str(msg).replace('\r', '\n')
                 if from_bbs:
                     from_call = from_call + ' @ ' + from_bbs
                 if to_bbs:
