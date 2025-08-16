@@ -523,7 +523,12 @@ class BBS:
                 if not fwd_bbs_call:
                     if fwd_bbs_call is not None:
                         BBS_LOG.error(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
-                        self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - PN")
+                        self.send_sysop_msg('NO ROUTE', "*** No BBS to FWD ***\r"
+                                                        f"Msg    : {msg_id}\r"
+                                                        f"Typ    : P\r"
+                                                        f"BID    : {bid}\r"
+                                                        f"To     : {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}\r"
+                                                        f"Subject: {msg.get('subject', '')}\r")
                     continue
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
                 msg['fwd_bbs_call'] = fwd_bbs_call
@@ -537,7 +542,7 @@ class BBS:
                 fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=msg)
                 if not fwd_bbs_list:
                     BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - BL")
-                    self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - BL")
+                    #self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {msg_id} - {bid}: No BBS to FWD - BL")
                     continue
                 BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid}: BL FWD to {fwd_bbs_list}")
                 mid = self._db.bbs_insert_incoming_msg_to_fwd(msg)
@@ -1472,10 +1477,12 @@ class BBS:
     def _get_fwd_bbs_bl(self, msg: dict):
         log_tag             = self._logTag + 'Forward Lookup BL> '
         mid                 = msg.get('mid', 0)
+        subj                = msg.get('subject', '')
         path                = msg.get('path', [])
         topic               = msg.get('receiver', '')
         distributor         = msg.get('recipient_bbs', '')
         rej_dist, rej_topic = self._pms_cfg.get('reject_bbs', ''), self._pms_cfg.get('reject_call', '')
+        no_route_msg        = True
         BBS_LOG.info(log_tag + f"Msg: {mid} - {topic}@{distributor}")
 
         # Global Reject Checks
@@ -1504,20 +1511,24 @@ class BBS:
 
             # BL FWD is not allowed to this BBS
             if not cfg_bl_allowed:
-                BBS_LOG.warning(log_tag + f"Msg: {mid} - Bulletin Forward not enabled for {fwd_bbs}.")
+                BBS_LOG.info(log_tag + f"Msg: {mid} - Bulletin Forward not enabled for {fwd_bbs}.")
+                no_route_msg = False
                 continue
             # BL Loop Check
             if fwd_bbs in path_list:
-                BBS_LOG.warning(log_tag + f"Msg: {mid} - No FWD to {fwd_bbs}. BBS already on Path.")
+                BBS_LOG.info(log_tag + f"Msg: {mid} - No FWD to {fwd_bbs}. BBS already on Path.")
+                no_route_msg = False
                 continue
             # Topic Block
             if topic in cfg_topic_block:
-                BBS_LOG.warning(log_tag + f"Msg: {mid} - Rule - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
+                BBS_LOG.info(log_tag + f"Msg: {mid} - Rule - Topic-Rejected/Blocked: {topic} for {fwd_bbs}.")
+                no_route_msg = False
                 continue
             # Distributor Block
             if distributor in cfg_dist_block:
-                BBS_LOG.warning(
+                BBS_LOG.info(
                     log_tag + f"Msg: {mid} - Rule - Distributor-Rejected/Blocked: {distributor} for {fwd_bbs}.")
+                no_route_msg = False
                 continue
 
             # Distributor Check
@@ -1535,6 +1546,14 @@ class BBS:
 
         if not ret:
             BBS_LOG.info(log_tag + f"Msg: {mid} - No BBS to FWD found: {topic}@{distributor}")
+        else:
+            no_route_msg = False
+        if no_route_msg:
+            self.send_sysop_msg('NO ROUTE', "*** No BBS to FWD ***\r"
+                                            f"Msg    : {mid}\r"
+                                            f"Typ    : B\r"
+                                            f"To     : {topic}@{distributor}\r"
+                                            f"Subject: {subj}\r")
         return ret
 
     ########################################################################

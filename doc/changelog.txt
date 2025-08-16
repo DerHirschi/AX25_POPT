@@ -15,6 +15,7 @@ Fixes:
 - FWD-Warteschlange wird nicht aktualisiert wenn Nachricht aus Warteschlange
   gelöscht wurde
 - BBS-Auto-Mail: keine Absender-BBS.
+- BBS: falsche *** No Route *** Nachricht werden an den Sysop gesendet
 
 Optimierung/Änderungen:
 - AXIP Port handling
