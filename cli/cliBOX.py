@@ -831,7 +831,7 @@ class BoxCLI(DefaultCLI):
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()
-        if not hasattr(bbs, 'get_pn_msg_tab_by_call'):
+        if not hasattr(bbs, 'get_pn_msg_by_id') or not hasattr(bbs, 'get_bl_msg_by_id') :
             logger.error(self._logTag + "_cmd_box_r: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         try:
@@ -870,13 +870,13 @@ class BoxCLI(DefaultCLI):
             new, \
             flag, \
                 typ = msg_tpl
-        except (TypeError, ValueError) as e:
+        except Exception as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
             return self._getTabStr('box_msg_error')
         stat = str(typ)
         if new:
-            stat += 'N'
+            stat += '/N'
         ret = '\r'
         ret += f"{str(self._getTabStr('from')).ljust(13)}: {from_call}@{from_bbs}\r"
         ret += f"{str(self._getTabStr('to')).ljust(13)}: {to_call}@{to_bbs}\r"

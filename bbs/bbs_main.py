@@ -95,11 +95,8 @@ class BBS:
         # New Msg Noty/Alarm
         ####################
         # Local User
-        # self._local_user          = []   # TODO fm UserDB
         ####################
-        # CTL & Auto Connection
-
-        self._fwd_conn_task_q       = []   # Local FWD Q ## OLD TODO Cleanup/Check
+        # CTL / CONN / FWD-Q
         self._fwd_connections       = []   # Connects using FWD Port
         self._incoming_fwd_bids     = []   # Incoming FWD BIDs
 
@@ -153,7 +150,6 @@ class BBS:
             self._build_fwd_BBSq_vars()
             self._pms_cfg_hasChanged = False
             if not self._pms_cfg.get('enable_fwd', True):
-                # TODO PMS Mode
                 BBS_LOG.info(self._logTag + "ReInit: FWD is disabled. BBS is in PMS Mode")
             BBS_LOG.info(self._logTag + 'ReInit: Auto Mail Tasks')
             self._reinit_scheduled_tasks()
@@ -945,10 +941,10 @@ class BBS:
             return
         if bbs_call not in self._fwd_BBS_q:
             BBS_LOG.error(log_tag + f"bbs_call not in self._fwd_BBS_q")
-            return False
+            return
         if bid not in self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}):
             BBS_LOG.error(log_tag + f"bid not in ..")
-            return False
+            return
         bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
         self._fwd_ports[port_id]['block_byte_c'] = max(0, (self._fwd_ports[port_id]['block_byte_c'] - int(bytes_send)))
 
@@ -1703,8 +1699,13 @@ class BBS:
         recipient_bbs       = msg.get('recipient_bbs',      '')
         recipient_bbs_call  = msg.get('recipient_bbs_call', '')
         db_user_ent         = self._userDB.get_entry(receiver, add_new=True)
-        if not db_user_ent.PRmail:
-            db_user_ent.PRmail = f"{receiver}@{recipient_bbs}"
+        if not db_user_ent:
+            return msg
+        if hasattr(db_user_ent, 'PRmail'):
+            if not db_user_ent.PRmail:
+                db_user_ent.PRmail = f"{receiver}@{recipient_bbs}"
+                return msg
+        else:
             return msg
         db_bbs_addr = str(db_user_ent.PRmail).split('@')[-1].upper()
         db_bbs_call = str(db_bbs_addr).split('.')[0].upper()
