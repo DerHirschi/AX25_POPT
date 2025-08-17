@@ -45,6 +45,10 @@ Neue Implementierungen / Funktionen:
   - $fwdPartner = Listet Forward-Partner auf - Bake
 - CLI-CMD "CH" - sendet kurzen Text an Kanal.
   CH <Kanal-NR> Nachricht (ein Zeile)
+- BBS: Redirect Check für PM's an lokale BBS. Es wird überprüft, ob die
+  lokale BBS mit der Heimat-BBS in der User-DB übereinstimmt. Wenn das
+  nicht der Fall sein sollte wird die Mail an die in der User-DB hinterlegte
+  Heimat-BBS weitergeleitet und mit einem Vermerk versehen.
 
 ###########################################################################################################
 ###########################################################################################################

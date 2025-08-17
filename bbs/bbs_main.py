@@ -235,8 +235,8 @@ class BBS:
     def _check_msg2fwd(self):
         if self._check_task_lock:
             return
-
         self._check_task_lock = True
+
         if self._pms_cfg.get('enable_fwd', True):
             # BBS-Mode (S&F enabled)
             self._in_msg_fwd_check()
@@ -357,9 +357,11 @@ class BBS:
 
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
-            BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
-            self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
-            return True
+            new_msg = self._check_redir_hbbs(msg=new_msg)
+            if self._is_fwd_local(msg=new_msg):
+                BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
+                self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
+                return True
 
         # Private Mails
         if msg_typ == 'P':
@@ -418,21 +420,20 @@ class BBS:
 
         # Local CC-List
         if cc_check:
-            print("cc-check add_cli")
             self._check_cc_tab(new_msg)
         # Local BBS
         if self._is_fwd_local(msg=new_msg):
-            BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
-            self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
-            return bid, []
+            new_msg = self._check_redir_hbbs(msg=new_msg)
+            if self._is_fwd_local(msg=new_msg):
+                BBS_LOG.info(log_tag + f"Msg: {mid} is Local. No Forwarding needed")
+                self._db.bbs_insert_msg_fm_fwd(msg_struc=new_msg)
+                return bid, []
 
         # Private Mails
         if msg_typ == 'P':
             # Forwarding BBS
             fwd_bbs_call = self._get_fwd_bbs_pn(msg=new_msg)
             if not fwd_bbs_call:
-                # logger.error(self._logTag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
-                # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id PN")
                 if fwd_bbs_call is not None:
                     BBS_LOG.info(log_tag + f"Msg: {mid}: No BBS to FWD - PN")
                     self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - PN")
@@ -448,7 +449,6 @@ class BBS:
         if msg_typ == 'B':
             fwd_bbs_list: list = self._get_fwd_bbs_bl(msg=new_msg)
             if not fwd_bbs_list:
-                # BBS_LOG.error(log_tag + "Error no BBS to FWD: add_msg_to_fwd_by_id BL")
                 BBS_LOG.error(log_tag + f"Msg: {mid}: No BBS to FWD - BL")
                 self.send_sysop_msg('NO ROUTE', log_tag + f"Msg: {mid}: No BBS to FWD - BL")
                 return None
@@ -511,8 +511,10 @@ class BBS:
 
             # Local BBS
             if self._is_fwd_local(msg=msg):
-                BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid} is Local. No Forwarding needed")
-                continue
+                msg = self._check_redir_hbbs(msg=msg)
+                if self._is_fwd_local(msg=msg):
+                    BBS_LOG.info(log_tag + f"Msg: {msg_id} - {bid} is Local. No Forwarding needed")
+                    continue
 
             msg = build_msg_header(msg, self._own_bbs_address)
 
@@ -556,6 +558,7 @@ class BBS:
                 continue
             BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ}")
 
+    ################
     def del_bbs_fwdQ(self, bbs_call: str):
         if bbs_call not in self._fwd_BBS_q:
             BBS_LOG.debug(f"Error bbs_call not in self._fwd_BBS_q: {bbs_call}")
@@ -1658,11 +1661,11 @@ class BBS:
 
         new_text           = f"Original to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}".encode('ASCII', 'ignore')
         new_text           = new_text + CR + CR + msg.get('msg', b'')
-        logger.debug("------------------------------------------")
-        logger.debug(f"new_subject: {new_subject}")
-        logger.debug(f"msg_subject: {msg.get('subject', '')}")
-        logger.debug(f"new_text   : {new_text}")
-        logger.debug("------------------------------------------")
+        #logger.debug("------------------------------------------")
+        #logger.debug(f"new_subject: {new_subject}")
+        #logger.debug(f"msg_subject: {msg.get('subject', '')}")
+        #logger.debug(f"new_text   : {new_text}")
+        #logger.debug("------------------------------------------")
         new_msg = GET_MSG_STRUC()
         new_msg.update(msg)
         new_msg['bid_mid']              = receiver_call
@@ -1693,6 +1696,78 @@ class BBS:
         BBS_LOG.debug(logTag + f"Nachricht BID: {bid}")
         BBS_LOG.debug(logTag + f"fm {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
         BBS_LOG.debug(logTag + f"CC an: {receiver_address}")
+
+    # Home-BBS Check and redirecting
+    def _check_redir_hbbs(self, msg: dict):
+        receiver            = msg.get('receiver',           '')
+        recipient_bbs       = msg.get('recipient_bbs',      '')
+        recipient_bbs_call  = msg.get('recipient_bbs_call', '')
+        db_user_ent         = self._userDB.get_entry(receiver, add_new=True)
+        if not db_user_ent.PRmail:
+            db_user_ent.PRmail = f"{receiver}@{recipient_bbs}"
+            return msg
+        db_bbs_addr = str(db_user_ent.PRmail).split('@')[-1].upper()
+        db_bbs_call = str(db_bbs_addr).split('.')[0].upper()
+        if db_bbs_call != recipient_bbs_call:
+            BBS_LOG.info("---- Msg redirected to other HomeBBS ----")
+            BBS_LOG.info(f"Msg     : {msg.get('bid_mid', '')}")
+            BBS_LOG.info(f"Receiver: {receiver}")
+            BBS_LOG.info(f"BBS     : {recipient_bbs}")
+            BBS_LOG.info(f"to BBS  : {db_bbs_addr}")
+            new_text =  f"Original   to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}\r".encode('ASCII', 'ignore')
+            new_text += f"Redirected to {msg.get('receiver', '')}@{db_bbs_addr}\r".encode('ASCII', 'ignore')
+            new_text = new_text + CR + CR + msg.get('msg', b'')
+            msg['recipient_bbs_call']   = db_bbs_call
+            msg['recipient_bbs']        = db_bbs_addr
+            msg['msg']                  = new_text
+            self._redir_msg(msg)
+
+        return msg
+
+    def _redir_msg(self, msg: dict):
+        receiver                = msg.get('receiver', '')
+        recipient_bbs           = msg.get('recipient_bbs', '')
+        sender                  = msg.get('sender', '')
+        sender_bbs              = msg.get('sender_bbs', '')
+        sender_bbs_call         = msg.get('sender_bbs_call', '')
+        subj                    = msg.get('subject', '')
+
+        new_subject = f"*** Redirected to {recipient_bbs}"
+        new_text  = f"*** This is a automated Mail fm {self._pms_cfg.get('user', '')} PoPT-BOX\r\r"
+        new_text += f"Message subject: {subj}\r"
+        new_text += f"Message to {receiver}@{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}\r"
+        new_text += f"is redirected to {msg.get('receiver', '')}@{msg.get('recipient_bbs', '')}.\r"
+
+        new_msg = GET_MSG_STRUC()
+        # new_msg.update(msg)
+        new_msg['bid_mid'] = self._pms_cfg.get('user', '')
+        new_msg['sender'] = self._pms_cfg.get('user', '')
+        new_msg['sender_bbs'] = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
+        new_msg['receiver'] = sender
+        new_msg['recipient_bbs'] = sender_bbs
+        new_msg['recipient_bbs_call'] = sender_bbs_call
+        new_msg['tx-time'] = datetime.now().strftime(SQL_TIME_FORMAT)
+        new_msg['subject'] = new_subject[:80]
+        new_msg['msg'] = new_text.encode('ASCII', 'ignore')
+        new_msg['message_type'] = 'P'
+        new_msg['flag'] = '$'
+        #########################
+        # SQL
+        mid = self.new_msg(new_msg)
+        if not mid:
+            BBS_LOG.error(f"Nachricht BID: {msg.get('bid_mid', '')}")
+            BBS_LOG.error(f"to {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
+            BBS_LOG.error("konnte nicht in die DB geschrieben werden. Keine MID")
+            return
+        res = self.add_cli_msg_to_fwd_by_id(mid, cc_check=False)
+        if not res:
+            BBS_LOG.error(f"Nachricht BID: {msg.get('bid_mid', '')}")
+            BBS_LOG.error(f"to {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
+            BBS_LOG.error(f"konnte nicht in die DB geschrieben werden. Keine BID: {res}")
+            return
+        bid = res[0]
+        BBS_LOG.debug(f"REDIR Nachricht BID: {bid}")
+        BBS_LOG.debug(f"to {msg.get('sender', '')}@{msg.get('sender_bbs', '')}")
 
     ########################################################################
     # FWD handling
