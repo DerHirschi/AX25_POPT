@@ -138,8 +138,10 @@ class BBSSettingsMain(tk.Toplevel):
 
     ################################################
     def set_fwdBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
+        old_cfg = list(self._pms_cfg['fwd_bbs_cfg'].keys())
         self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
-        self._reinit_fwdBBS_tabs()
+        if old_cfg != list(self._pms_cfg['fwd_bbs_cfg'].keys()):
+            self._reinit_fwdBBS_tabs()
 
     def del_fwdBBS_cfg(self, pms_cfg_k: str):
         if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
@@ -159,7 +161,7 @@ class BBSSettingsMain(tk.Toplevel):
             del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
         POPT_CFG.set_BBS_cfg(self._pms_cfg)
         if not self._bbs_obj:
-            return False
+            return
         self._bbs_obj.set_pms_cfg()
     ################################################
     def _ok_btn(self):
