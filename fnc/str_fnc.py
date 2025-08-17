@@ -46,9 +46,18 @@ def conv_time_US_str(dateti=None):
 
 
 def conv_time_DE_str(dateti=None):
-    if not dateti:
-        return datetime.now().strftime('%d/%m/%y %H:%M:%S')
-    return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
+    if type(dateti) == str:
+        logger.warning(f"conv_time_DE_str: is str !!!!")
+        logger.warning(f"conv_time_DE_str: {dateti}")
+        return dateti
+    try:
+        if not dateti:
+            return datetime.now().strftime('%d/%m/%y %H:%M:%S')
+        return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
+    except Exception as ex:
+        logger.error(f"conv_time_DE_str: {ex}")
+        logger.error(f"conv_time_DE_str: {dateti}")
+        return '---'
 
 def str_to_datetime(date_str=None):
     if not date_str:
