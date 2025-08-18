@@ -2,6 +2,7 @@ import datetime
 import random
 import time
 import tkinter as tk
+import traceback
 from tkinter import ttk, messagebox, PhotoImage
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
@@ -1816,7 +1817,13 @@ class PoPT_GUI_Main:
                 if self._init_state == 2:
                     self.reset_diesel()
             #####################
-            self._update_bw_mon()
+            try:
+                self._update_bw_mon()
+            except Exception as ex:
+                logger.error(
+                    f"Fehler in GUI tasker: {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                traceback.print_exc()
+                raise ex
             self._aprs_wx_tree_task()
             #####################
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer

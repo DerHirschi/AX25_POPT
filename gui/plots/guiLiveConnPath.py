@@ -2,9 +2,12 @@
 TODO:
     - Port 0 (Monitor) MH-Plot
 """
-
+import threading
 import tkinter as tk
+import traceback
 from tkinter import ttk
+
+from cfg.logger_config import logger
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #import matplotlib as mpl
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FIGc
@@ -211,8 +214,14 @@ class LiveConnPath(ttk.Frame):
         self._connected_path[ch_id] = ['HOME']
 
     def update_plot_f_ch(self, ch_id):
-        self._channel_id = int(ch_id)
-        self._update_Graph(ch_id)
+        try:
+            self._channel_id = int(ch_id)
+            self._update_Graph(ch_id)
+        except Exception as ex:
+            logger.error(
+                f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+            traceback.print_exc()
+            raise ex
 
     def save_path_data(self):
         POPT_CFG.set_pacman_data(dict(self._path_data))
