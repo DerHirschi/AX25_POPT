@@ -1,6 +1,7 @@
 import datetime
 import time
 import threading
+import traceback
 
 from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
@@ -511,7 +512,14 @@ class AX25PortHandler(object):
                     logger.warning("PH: Channel Index != Real Index !!!")
                     new_conn.ch_index = int(k)
                     if self._gui:
-                        self._gui.conn_btn_update()
+                        try:
+                            self._gui.conn_btn_update()
+                        except Exception as ex:
+                            logger.error("!!!!!!!!! PH insert_new_connection_PH 1 !!!!!!!!!!!!!")
+                            logger.error(
+                                f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                            traceback.print_exc()
+                            raise ex
                     return
 
         while True:
@@ -520,7 +528,14 @@ class AX25PortHandler(object):
             else:
                 new_conn.ch_index = int(ind)
                 if self._gui:
-                    self._gui.conn_btn_update()
+                    try:
+                        self._gui.conn_btn_update()
+                    except Exception as ex:
+                        logger.error("!!!!!!!!! PH insert_new_connection_PH 2 !!!!!!!!!!!!!")
+                        logger.error(
+                            f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                        traceback.print_exc()
+                        raise ex
                 return
 
     def accept_new_connection(self, connection):
@@ -538,23 +553,30 @@ class AX25PortHandler(object):
         LOG_BOOK.info(lb_msg_1)
         if self._gui:
             # TODO GUI Stuff > guiMain
-            if not connection.LINK_Connection:
-                # TODO: Trigger here, UserDB-Conn C
+            try:
+                if not connection.LINK_Connection:
+                    # TODO: Trigger here, UserDB-Conn C
 
-                self._gui.sysMsg_to_qso(
-                    data=msg,
-                    ch_index=ch_id
-                )
-                if 0 < ch_id < SERVICE_CH_START:
-                    SOUND.new_conn_sound()
-                    speech = ' '.join(call_str.replace('-', ' '))
-                    SOUND.sprech(speech)
+                    self._gui.sysMsg_to_qso(
+                        data=msg,
+                        ch_index=ch_id
+                    )
+                    if 0 < ch_id < SERVICE_CH_START:
+                        SOUND.new_conn_sound()
+                        speech = ' '.join(call_str.replace('-', ' '))
+                        SOUND.sprech(speech)
 
-            self._gui.add_LivePath_plot(node=call_str,
-                                        ch_id=ch_id,
-                                        path=path)
-            self._gui.ch_status_update()
-            self._gui.conn_btn_update()
+                self._gui.add_LivePath_plot(node=call_str,
+                                            ch_id=ch_id,
+                                            path=path)
+                self._gui.ch_status_update()
+                self._gui.conn_btn_update()
+            except Exception as ex:
+                logger.error("!!!!!!!!! PH accept_new_connection !!!!!!!!!!!!!")
+                logger.error(
+                    f"Fehler in: {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                traceback.print_exc()
+                raise ex
 
     """
     def reset_connection(self, connection):
@@ -591,18 +613,24 @@ class AX25PortHandler(object):
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
+            try:
+                self._gui.sysMsg_to_qso(
+                    data=msg,
+                    ch_index=ch_id)
 
-            self._gui.sysMsg_to_qso(
-                data=msg,
-                ch_index=ch_id)
-
-            if 0 < ch_id < SERVICE_CH_START:
-                SOUND.disco_sound()
-            self._gui.resetHome_LivePath_plot(ch_id=ch_id)
-            self._gui.ch_status_update()
-            self._gui.conn_btn_update()
-            if conn.noty_bell:
-                self.reset_noty_bell_PH()
+                if 0 < ch_id < SERVICE_CH_START:
+                    SOUND.disco_sound()
+                self._gui.resetHome_LivePath_plot(ch_id=ch_id)
+                self._gui.ch_status_update()
+                self._gui.conn_btn_update()
+                if conn.noty_bell:
+                    self.reset_noty_bell_PH()
+            except Exception as ex:
+                logger.error("!!!!!!!!! PH end_connection !!!!!!!!!!!!!")
+                logger.error(
+                    f"Fehler in: {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                traceback.print_exc()
+                raise ex
 
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():

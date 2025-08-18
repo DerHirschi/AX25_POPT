@@ -1,3 +1,6 @@
+import threading
+import traceback
+
 from cfg.constant import SERVICE_CH_START, TASK_TYP_FWD
 from cfg.logger_config import logger
 from cli import NoneCLI
@@ -63,13 +66,19 @@ class AutoConnTask:
             # self._PMS_fwd_init()
 
     def crone(self):
-        if self.e:
-            self._ConnTask_ende()
-        if not self._is_connected():
-            self._ConnTask_ende()
-            return False
-        self._exec_state_tab()
-        return True
+        try:
+            if self.e:
+                self._ConnTask_ende()
+            if not self._is_connected():
+                self._ConnTask_ende()
+                return False
+            self._exec_state_tab()
+            return True
+        except Exception as ex:
+            logger.error(
+                f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+            traceback.print_exc()
+            raise ex
 
     def _set_state_exec(self, state_id):
         if self._state_tab:

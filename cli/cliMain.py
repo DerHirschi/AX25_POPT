@@ -1,3 +1,5 @@
+import threading
+import traceback
 from datetime import datetime
 
 from cfg import constant
@@ -1522,7 +1524,13 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self._gui:
-                self._gui.on_channel_status_change()
+                try:
+                    self._gui.on_channel_status_change()
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                    traceback.print_exc()
+                    raise ex
             self.change_cli_state(1)
             return ''
         res = self._sys_login.step(inp)
@@ -1533,7 +1541,13 @@ class DefaultCLI(object):
                 # print("Priv: Failed !")
                 logger.warning("Priv: Failed !")
                 if self._gui:
-                    self._gui.on_channel_status_change()
+                    try:
+                        self._gui.on_channel_status_change()
+                    except Exception as ex:
+                        logger.error(
+                            f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                        traceback.print_exc()
+                        raise ex
                 self.change_cli_state(1)
             return ""
         if self._sys_login.attempt_count == self._sys_login.attempts:
@@ -1542,7 +1556,13 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self._gui:
-                self._gui.on_channel_status_change()
+                try:
+                    self._gui.on_channel_status_change()
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                    traceback.print_exc()
+                    raise ex
             self.change_cli_state(1)
         return res
 
@@ -1573,7 +1593,13 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self._gui:
-                self._gui.on_channel_status_change()
+                try:
+                    self._gui.on_channel_status_change()
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                    traceback.print_exc()
+                    raise ex
             self.change_cli_state(1)
             return ''
         res = self._sys_login.step(inp)
@@ -1585,7 +1611,13 @@ class DefaultCLI(object):
                 # print("Priv: Failed !")
                 logger.warning(self._logTag + "Priv: Failed !")
                 if self._gui:
-                    self._gui.on_channel_status_change()
+                    try:
+                        self._gui.on_channel_status_change()
+                    except Exception as ex:
+                        logger.error(
+                            f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                        traceback.print_exc()
+                        raise ex
                 self.change_cli_state(1)
 
             # print("----")
@@ -1597,7 +1629,13 @@ class DefaultCLI(object):
             # print("END")
             self.sysop_priv = True
             if self._gui:
-                self._gui.on_channel_status_change()
+                try:
+                    self._gui.on_channel_status_change()
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                    traceback.print_exc()
+                    raise ex
             self.change_cli_state(1)
         return res
 

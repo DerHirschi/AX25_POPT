@@ -2031,7 +2031,7 @@ class PoPT_GUI_Main:
         if not data:
             return
         if 1 > ch_index > SERVICE_CH_START - 1:
-            return False
+            return
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)

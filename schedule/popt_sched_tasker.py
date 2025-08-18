@@ -1,4 +1,6 @@
+import threading
 import time
+import traceback
 
 from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL
 from cfg.logger_config import logger
@@ -69,7 +71,13 @@ class PoPTSchedule_Tasker:
             if not self.auto_connections[k].crone():
 
                 logger.debug(f"_AutoConn_tasker del: {k}")
-                del self.auto_connections[k]
+                try:
+                    del self.auto_connections[k]
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                    traceback.print_exc()
+                    raise ex
 
     def _is_AutoConn_maxConn(self, autoconn_cfg):
         max_conn = autoconn_cfg.get('max_conn', 0)
