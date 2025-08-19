@@ -75,7 +75,7 @@ class PoPTSchedule_Tasker:
                     del self.auto_connections[k]
                 except Exception as ex:
                     logger.error(
-                        f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                        f"Fehler in _AutoConn_tasker: {ex}, Thread: {threading.current_thread().name}")
                     traceback.print_exc()
                     raise ex
 

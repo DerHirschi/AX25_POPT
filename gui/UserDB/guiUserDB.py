@@ -1,6 +1,4 @@
-import threading
 import tkinter as tk
-import traceback
 from tkinter import ttk
 
 from UserDB.UserDBmain import USER_DB
@@ -634,14 +632,9 @@ class UserDB(tk.Toplevel):
         self._save_vars()
         self._user_db.save_data()
 
-        # self._select_entry()
-        try:
-            self._root_win.update_station_info()
-        except Exception as ex:
-            logger.error(
-                f"Fehler in: {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
-            traceback.print_exc()
-            raise ex
+
+        self._root_win.update_station_info()
+
         self._user_db.set_distance_for_all()
         #self._update_tree()
         self._db_ent = db_entry

@@ -76,7 +76,7 @@ class AutoConnTask:
             return True
         except Exception as ex:
             logger.error(
-                f"Fehler in : {ex}, Thread: {threading.current_thread().name}, Channel: {self._channel}")
+                f"Fehler in AutoConnTask crone: {ex}, Thread: {threading.current_thread().name}")
             traceback.print_exc()
             raise ex
 
