@@ -887,7 +887,7 @@ class AX25Conn:
                 self.zustand_exec.change_state(new_state)
 
     def _send_gui_QSObuf_tx(self, data):
-        # TODO send to GUI Buffer
+        # TODO send direct to GUI Buffer
         if self.ft_obj:
             return
         if self.pipe:

@@ -1752,7 +1752,8 @@ class PoPT_GUI_Main:
     def _tasker_queue(self):
         if not self._tasker_q:
             return False
-        while self._tasker_q:
+        n = 10
+        while self._tasker_q and n:
             task, arg       = self._tasker_q[0]
             self._tasker_q  = self._tasker_q[1:]
             if task == 'conn_btn_update':
@@ -1770,6 +1771,47 @@ class PoPT_GUI_Main:
             elif task == 'sysMsg_to_qso':
                 data, ch_index = arg
                 self._sysMsg_to_qso_task(data, ch_index)
+            elif task == 'dx_alarm':
+                self._dx_alarm_task()
+            elif task == 'tracer_alarm':
+                self._tracer_alarm_task()
+            elif task == 'reset_tracer_alarm':
+                self._reset_tracer_alarm_task()
+            elif task == 'reset_dx_alarm':
+                self._reset_dx_alarm_task()
+            elif task == 'pmsMail_alarm':
+                self._pmsMail_alarm_task()
+            elif task == 'reset_pmsMail_alarm':
+                self._reset_pmsMail_alarm_task()
+            elif task == 'pmsFwd_alarm':
+                self._pmsFwd_alarm_task()
+            elif task == 'reset_pmsFwd_alarm':
+                self._reset_pmsFwd_alarm_task()
+            elif task == 'set_diesel':
+                self._set_diesel_task()
+            elif task == 'reset_diesel':
+                self._reset_diesel_task()
+            elif task == 'set_rxEcho_icon':
+                alarm_set = arg
+                self._set_rxEcho_icon_task(alarm_set)
+            elif task == 'set_Beacon_icon':
+                alarm_set = arg
+                self._set_Beacon_icon_task(alarm_set)
+            elif task == 'set_port_block_warning':
+                self._set_port_block_warning_task()
+            elif task == 'reset_noty_bell_alarm':
+                self._reset_noty_bell_alarm_task()
+            elif task == 'set_noty_bell':
+                ch_id, msg = arg
+                self._set_noty_bell_task(ch_id, msg)
+            elif task == 'set_noty_bell_active':
+                self._set_noty_bell_active_task()
+            elif task == 'set_aprsMail_alarm':
+                self._set_aprsMail_alarm_task()
+            elif task == 'reset_aprsMail_alarm':
+                self._reset_aprsMail_alarm_task()
+
+            n -= 1
         return True
 
 
@@ -2616,11 +2658,11 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
         self.ch_status_update()
         self.conn_btn_update()
-        self.reset_noty_bell()
+        self._reset_noty_bell()
         self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
-    def reset_noty_bell(self):
+    def _reset_noty_bell(self):
         conn = self.get_conn(self.channel_index)
         if not conn:
             return
@@ -2629,10 +2671,24 @@ class PoPT_GUI_Main:
             self.reset_noty_bell_alarm()
 
     def reset_noty_bell_alarm(self):
+        if 'reset_noty_bell_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_noty_bell_alarm", None)
+        )
+
+    def _reset_noty_bell_alarm_task(self):
         self._Alarm_Frame.set_Bell_alarm(False)
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
+        if 'set_noty_bell' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_noty_bell", (ch_id, msg))
+        )
+
+    def _set_noty_bell_task(self, ch_id, msg=''):
         conn = self.get_conn(ch_id)
         if not conn:
             return
@@ -2655,13 +2711,14 @@ class PoPT_GUI_Main:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):
+        if 'set_noty_bell_active' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_noty_bell_active", None)
+        )
+
+    def _set_noty_bell_active_task(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
-
-    def set_aprsMail_alarm(self):
-        self._Alarm_Frame.set_aprsMail_alarm(True)
-
-    def reset_aprsMail_alarm(self):
-        self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def _ch_btn_status_update(self):
         # TODO Call just if necessary
@@ -2691,9 +2748,9 @@ class PoPT_GUI_Main:
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'green2':
                             self._con_btn_dict[i][0].configure(bg='green2')
-                        self.set_ch_new_data_tr(i, False)
+                        self._set_ch_new_data_tr(i, False)
                 else:
-                    if self.get_ch_new_data_tr(i):
+                    if self._get_ch_new_data_tr(i):
                         if is_link:
                             if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i][0].configure(bg='SteelBlue4')
@@ -2722,7 +2779,7 @@ class PoPT_GUI_Main:
                     # self.con_btn_dict[i].configure(text=str(i))
                     self._con_btn_dict[i][1].set(str(i))
 
-                if not self.get_ch_new_data_tr(i):
+                if not self._get_ch_new_data_tr(i):
                     if i == self.channel_index:
                         if self._con_btn_dict[i][0].cget('bg') != 'red2':
                             self._con_btn_dict[i][0].configure(bg='red2')
@@ -2733,7 +2790,7 @@ class PoPT_GUI_Main:
                     if i == self.channel_index:
                         if self._con_btn_dict[i][0].cget('bg') != 'red2':
                             self._con_btn_dict[i][0].configure(bg='red2')
-                        self.set_ch_new_data_tr(i, False)
+                        self._set_ch_new_data_tr(i, False)
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'yellow':
                             self._con_btn_dict[i][0].configure(bg='yellow')
@@ -3061,10 +3118,10 @@ class PoPT_GUI_Main:
                 ret.append(ch_id)
         return ret
 
-    def get_ch_new_data_tr(self, ch_id):
+    def _get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
-    def set_ch_new_data_tr(self, ch_id, state: bool):
+    def _set_ch_new_data_tr(self, ch_id, state: bool):
         self.get_ch_var(ch_index=ch_id).new_data_tr = state
 
     ##########################################
@@ -3087,11 +3144,13 @@ class PoPT_GUI_Main:
             return bool(ais_obj.be_tracer_active)
         return False
 
+    """
     def get_auto_tracer(self):
         ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             return bool(ais_obj.be_auto_tracer_active)
         return False
+    """
 
     def set_tracer_fm_aprs(self):
         ais_obj = self._port_handler.get_aprs_ais()
@@ -3131,6 +3190,7 @@ class PoPT_GUI_Main:
                 self.set_auto_tracer()
 
     def set_dx_alarm(self, event=None):
+        # TODO tasker-q
         dx_alarm = bool(self.setting_dx_alarm.get())
         if not dx_alarm:
             self.setting_auto_tracer.set(False)
@@ -3142,59 +3202,171 @@ class PoPT_GUI_Main:
         return bool(self.setting_dx_alarm.get())
 
     ######################################################################
+    # Alarm/Icon Frame
+    def set_aprsMail_alarm(self):
+        if 'set_aprsMail_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_aprsMail_alarm", None)
+        )
+
+    def _set_aprsMail_alarm_task(self):
+        self._Alarm_Frame.set_aprsMail_alarm(True)
+
+    def reset_aprsMail_alarm(self):
+        if 'reset_aprsMail_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_aprsMail_alarm", None)
+        )
+
+    def _reset_aprsMail_alarm_task(self):
+        self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def dx_alarm(self):
+        if 'dx_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("dx_alarm", None)
+        )
+
+    def _dx_alarm_task(self):
         """ Alarm when new User in MH List """
         if self.setting_dx_alarm.get():
             self._Alarm_Frame.set_dxAlarm(True)
 
     def tracer_alarm(self):
+        if 'tracer_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("tracer_alarm", None)
+        )
+
+    def _tracer_alarm_task(self):
         """ Tracer Alarm """
         self._tracer_alarm = True
         self._Alarm_Frame.set_tracerAlarm(True)
 
     def reset_tracer_alarm(self):
+        if 'reset_tracer_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_tracer_alarm", None)
+        )
+
+    def _reset_tracer_alarm_task(self):
         """ Tracer Alarm """
         if self._tracer_alarm:
             self._Alarm_Frame.set_tracerAlarm(False)
             self._tracer_alarm = False
 
     def reset_dx_alarm(self):
+        if 'reset_dx_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_dx_alarm", None)
+        )
+
+    def _reset_dx_alarm_task(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
         self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
 
     def pmsMail_alarm(self):
+        if 'pmsMail_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("pmsMail_alarm", None)
+        )
+
+    def _pmsMail_alarm_task(self):
         if self.MSG_Center_win:
             return
         self._Alarm_Frame.set_pmsMailAlarm(True)
 
     def reset_pmsMail_alarm(self):
+        if 'reset_pmsMail_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_pmsMail_alarm", None)
+        )
+
+    def _reset_pmsMail_alarm_task(self):
         self._Alarm_Frame.set_pmsMailAlarm(False)
 
     def pmsFwd_alarm(self):
+        if 'pmsFwd_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("pmsFwd_alarm", None)
+        )
+
+    def _pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(True)
 
     def reset_pmsFwd_alarm(self):
+        if 'reset_pmsFwd_alarm' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_pmsFwd_alarm", None)
+        )
+
+    def _reset_pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(False)
         if self.MSG_Center_win:
             self.MSG_Center_win.tree_update_task()
 
     def set_diesel(self):
+        if 'set_diesel' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_diesel", None)
+        )
+
+    def _set_diesel_task(self):
         self._Alarm_Frame.set_diesel(True)
         self._init_state = 0
 
     def reset_diesel(self):
+        if 'reset_diesel' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("reset_diesel", None)
+        )
+
+    def _reset_diesel_task(self):
         self._Alarm_Frame.set_diesel(False)
 
     def set_rxEcho_icon(self, alarm_set=True):
+        if 'set_rxEcho_icon' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_rxEcho_icon", alarm_set)
+        )
+
+    def _set_rxEcho_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_rxEcho_icon(alarm_set=alarm_set)
 
     def set_Beacon_icon(self, alarm_set=True):
+        if 'set_Beacon_icon' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_Beacon_icon", alarm_set)
+        )
+
+    def _set_Beacon_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
 
     def set_port_block_warning(self):
+        if 'set_port_block_warning' in self._tasker_q:
+            return
+        self._tasker_q.append(
+            ("set_port_block_warning", None)
+        )
+
+    def _set_port_block_warning_task(self):
         self._Alarm_Frame.set_PortBlocking_warning()
 
+    #####################################
     def chk_master_sprech_on(self):
         if self.setting_sprech.get():
             SOUND.master_sprech_on = True
