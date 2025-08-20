@@ -1067,8 +1067,7 @@ class PortSettingsWin(ttk.Frame):
         self._tab_list[prt_id] = tab
 
     def _del_port_btn_cmd(self):
-        msg = AskMsg(titel='lösche Port', message="Willst du diesen Port wirklich löschen? \n"
-                                                  "Alle Einstellungen gehen verloren !", parent_win=self)
+        msg = AskMsg(titel=get_strTab('losche_Port',self._lang), message=get_strTab('losche_Port_msg', self._lang), parent_win=self)
         if msg:
             try:
                 tab_ind = self._tabControl.index('current')
@@ -1087,15 +1086,14 @@ class PortSettingsWin(ttk.Frame):
                 if POPT_CFG.del_port_CFG_fm_id(ind):
                     del self._tab_list[ind]
                     self._tabControl.forget(tab_ind)
-                    messagebox.showinfo('Port gelöscht', 'Das Internet wurde erfolgreich gelöscht.', parent=self)
+                    messagebox.showinfo(get_strTab('Port_gelöscht', self._lang), get_strTab('Port_gelöscht_msg', self._lang), parent=self)
                     #self._main_class.sysMsg_to_monitor('Info: Port erfolgreich gelöscht.')
                     self._need_GUI_reinit = True    # Reinit SettingsGUI Tabs
                 else:
                     logger.error(f'Port {ind} konnte nicht gelöscht werden')
                     #self._main_class.sysMsg_to_monitor(f'Port {ind} konnte nicht gelöscht werden')
         else:
-            messagebox.showinfo('Abgebrochen', 'Das war eine sehr gute Entscheidung. '
-                                   'Das hast du gut gemacht, mach weiter so. ', parent=self)
+            messagebox.showinfo(get_strTab('Abgebrochen', self._lang), get_strTab('Abgebrochen_msg', self._lang), parent=self)
             #self._main_class.sysMsg_to_monitor('Hinweis: Irgendetwas ist abgebrochen !?!')
 
     @staticmethod

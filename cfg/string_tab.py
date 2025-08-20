@@ -4633,4 +4633,90 @@ STR_TABLE = {
         '',
         ''),
 
+    'Abgebrochen': (
+        'Abgebrochen',
+        'Discontinued',
+        'Afgebroken',
+        "Abandon",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Abgebrochen_msg': (
+        ('Das war eine sehr gute Entscheidung. \n'
+        'Das hast du gut gemacht, mach weiter so. '),
+        ('That was a very good decision. \n'
+         'You did well, keep it up.'),
+        ('Dat was een heel goede beslissing. \n'
+        'Dat heb je goed gedaan, ga zo door.'),
+        ('C\'était une très bonne décision. \n'
+        'Tu as bien fait, continue comme ça. '),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Port_gelöscht': (
+        'Port gelöscht',
+        'Port deleted',
+        'Poort verwijderd',
+        "Port supprimé",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'Port_gelöscht_msg': (
+        'Das Internet wurde erfolgreich gelöscht.',
+        'The Internet has been successfully deleted.',
+        'Het internet is succesvol verwijderd.',
+        'L\'Internet a été supprimé avec succès.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'losche_Port': (
+        'lösche Port',
+        'delete port',
+        'verwijder poort',
+        'supprimer port',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+'losche_Port_msg': (
+        ('Willst du diesen Port wirklich löschen? \n'
+        'Alle Einstellungen gehen verloren !'),
+        ('Are you sure you want to delete this port? \n'
+         'All settings will be lost!'),
+        ('Wil je deze poort echt verwijderen? \n'
+        'Alle instellingen gaan verloren!'),
+        ('Voulez-vous vraiment supprimer ce port? \n'
+         'Tous les réglages seront perdus! '),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
 }
