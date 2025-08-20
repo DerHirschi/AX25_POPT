@@ -782,7 +782,7 @@ class AX25Conn:
         if self.tx_buf_ctl:
             #logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
-        if all((self.rx_tx_buf_guiData, self._gui)):
+        if self.rx_tx_buf_guiData:
             #logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
