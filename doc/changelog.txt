@@ -12,12 +12,13 @@ Fixes:
   abarbeitet
 - Sortierung der Forward-Warteschlange geht verloren nach update (Änderungen der
   Warteschlange)
-- FWD-Warteschlange wird nicht aktualisiert wenn Nachricht aus Warteschlange
+- FWD-Warteschlange wird nicht aktualisiert, wenn Nachricht aus Warteschlange
   gelöscht wurde
 - BBS-Auto-Mail: keine Absender-BBS.
 - BBS: falsche *** No Route *** Nachricht werden an den Sysop gesendet
 - BBS-Einstellungen > Routing: Einstellungen für
   PN-Prio/PN-AutoPath/PN-Erlauben/BL-Erlauben wurden nicht gespeichert.
+- Programm-Crash aufgrund Threading Probleme
 
 Optimierung/Änderungen:
 - AXIP Port handling
