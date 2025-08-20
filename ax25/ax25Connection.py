@@ -150,12 +150,7 @@ class AX25Conn:
             self.via_calls          = list(ax25_conf.get('via_calls_str', []))
         """ GUI Stuff"""
         self.ch_index: int = 0
-        self._gui = self._port_handler.get_gui()
-        if self._gui:
-            self._my_locator = self._gui.own_loc
-        else:
-            self._my_locator = ''
-        # self.ChVars = None
+        self._my_locator = POPT_CFG.get_guiCFG_locator()
         """ Station CFG Parameter """
         self._stat_cfg = {}
         self.set_station_cfg()  # Station Individual Parameter
@@ -952,14 +947,16 @@ class AX25Conn:
             lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
             LOG_BOOK.info(lb_msg)
             LOG_BOOK.info(lb_msg_1)
-            if self._gui:
+            gui = self._port_handler.get_gui()
+
+            if hasattr(gui, 'add_LivePath_plot') and hasattr(gui, 'on_channel_status_change'):
                 # TODO
                 speech = ' '.join(self.to_call_str.replace('-', ' '))
                 SOUND.sprech(speech)
 
-                self._gui.add_LivePath_plot(node=str(self.to_call_str),
+                gui.add_LivePath_plot(node=str(self.to_call_str),
                                             ch_id=int(self.ch_index))
-                self._gui.on_channel_status_change()
+                gui.on_channel_status_change()
             # Maybe it's better to look at the whole string (include last frame)?
             return True
         return False
