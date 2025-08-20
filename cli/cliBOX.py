@@ -57,6 +57,7 @@ class BoxCLI(DefaultCLI):
             'R':  (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
             'SP': (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
             'SB': (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
+            'SR': (2, self._cmd_box_sr,     self._getTabStr('cmd_sr'),      False),
             'KM': (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
             'K':  (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
         })
@@ -92,6 +93,7 @@ class BoxCLI(DefaultCLI):
                               'R',
                               'SP',
                               'SB',
+                              'SR',
                               'KM',
                               'K',
                               # CLI OPT
@@ -1009,6 +1011,68 @@ class BoxCLI(DefaultCLI):
         else:
             ret  = self._getTabStr('box_cmd_sp_routing_to').format(bbs_addr, call)
         return ret
+
+    def _cmd_box_sr(self):
+        bbs = self._port_handler.get_bbs()
+        if not hasattr(bbs, 'get_pn_msg_by_id') or not hasattr(bbs, 'get_bl_msg_by_id'):
+            logger.error(self._logTag + "_cmd_box_r: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        try:
+            msg_id = int(self._parameter[0])
+        except (ValueError, IndexError):
+            return self._getTabStr('box_parameter_error')
+        msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
+        if msg:
+            return self._fnc_box_r(msg)
+        msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
+        if not msg:
+            return self._getTabStr('box_r_no_msg_found').format(msg_id)
+        ####################
+        #
+        try:
+            msg_tpl = msg[0]
+        except IndexError as e:
+            logger.error(self._logTag + f"_fnc_box_r: raw_msg: {msg}")
+            logger.error(self._logTag + f"{e}")
+            return self._getTabStr('box_msg_error')
+        try:
+            MSGID, \
+            BID, \
+            from_call, \
+            from_bbs, \
+            to_call, \
+            to_bbs, \
+            size, \
+            subject, \
+            header, \
+            msg, \
+            path, \
+            msg_time, \
+            rx_time, \
+            new, \
+            flag, \
+                typ = msg_tpl
+        except Exception as e:
+            logger.error(self._logTag + f"_fnc_box_r: raw_msg: {msg}")
+            logger.error(self._logTag + f"{e}")
+            return self._getTabStr('box_msg_error')
+        ##############
+        self._input   = b''
+        self._out_msg = GET_MSG_STRUC()
+        self._out_msg.update(dict(
+            message_type='P',
+            sender=str(self._to_call),
+            sender_bbs=str(self._bbs_address),
+            receiver=str(from_call),
+            recipient_bbs=str(from_bbs),
+            subject=f"Re: {subject}"
+        ))
+        self.change_cli_state(8)
+        self._send_msg_state = 1
+        ret_msg = self._getTabStr('box_cmd_sr_enter_msg').format(f"{from_call}@{from_bbs}") + self._getTabStr('box_cmd_sp_enter_msg')
+        return ret_msg
+
+
 
     ########################################################################
 

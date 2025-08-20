@@ -3410,6 +3410,23 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_sr': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        ('SR <Msg#> : Sendet eine Antwort zurueck an den Absender\r'
+         '              der <Msg#> = Nachricht Nummer (Send Reply).'),
+        ('SR <Msg#> : Sends a reply back to the sender\r'
+         '              of <Msg#> = message number (Send Reply).'),
+        ('SR <Msg#> : Stuurt een antwoord terug naar de afzender\r'
+         '              van <Msg#> = berichtnummer (Send Reply).'),
+        ("SR <Msg#>: renvoie une réponse à l'expéditeur\r"
+         "              de <Msg#> = numéro de message (Send Reply)."),
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_ln': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Listet alle eigenen neuen Nachrichten auf.',
@@ -3776,6 +3793,19 @@ STR_TABLE = {
         ('\r # Message local.\r'
          'Titre du message pour {}:\r')
         ,
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_sr_enter_msg': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Die Antwort geht an {}.\r',
+        'The answer goes to {}\r',
+        'Het antwoord gaat naar {}\r',
+        'La réponse va à {}\r',
         '',
         '',
         '',
@@ -4632,7 +4662,7 @@ STR_TABLE = {
         '',
         '',
         ''),
-
+    #####################################
     'Abgebrochen': (
         'Abgebrochen',
         'Discontinued',
@@ -4646,7 +4676,7 @@ STR_TABLE = {
         '',
         ''),
 
-'Abgebrochen_msg': (
+    'Abgebrochen_msg': (
         ('Das war eine sehr gute Entscheidung. \n'
         'Das hast du gut gemacht, mach weiter so. '),
         ('That was a very good decision. \n'
@@ -4663,7 +4693,7 @@ STR_TABLE = {
         '',
         ''),
 
-'Port_gelöscht': (
+    'Port_gelöscht': (
         'Port gelöscht',
         'Port deleted',
         'Poort verwijderd',
@@ -4676,7 +4706,7 @@ STR_TABLE = {
         '',
         ''),
 
-'Port_gelöscht_msg': (
+    'Port_gelöscht_msg': (
         'Das Internet wurde erfolgreich gelöscht.',
         'The Internet has been successfully deleted.',
         'Het internet is succesvol verwijderd.',
@@ -4689,7 +4719,7 @@ STR_TABLE = {
         '',
         ''),
 
-'losche_Port': (
+    'losche_Port': (
         'lösche Port',
         'delete port',
         'verwijder poort',
@@ -4702,7 +4732,7 @@ STR_TABLE = {
         '',
         ''),
 
-'losche_Port_msg': (
+    'losche_Port_msg': (
         ('Willst du diesen Port wirklich löschen? \n'
         'Alle Einstellungen gehen verloren !'),
         ('Are you sure you want to delete this port? \n'

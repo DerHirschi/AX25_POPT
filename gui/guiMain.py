@@ -1753,6 +1753,9 @@ class PoPT_GUI_Main:
         if not self._tasker_q:
             return False
         n = 10
+        if len(self._tasker_q) > 10:
+            logger.warning(self._logTag + f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
+            logger.warning(self._logTag + f"self._tasker_q: {self._tasker_q}")
         while self._tasker_q and n:
             task, arg       = self._tasker_q[0]
             self._tasker_q  = self._tasker_q[1:]

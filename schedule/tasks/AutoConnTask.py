@@ -32,8 +32,6 @@ class AutoConnTask:
         )
         # print(self.connection)
         self._connection        = None
-        # self.conn_state         = None
-        # self.dest_station_id    = None
         self.e                  = False
         self._state_exec        = None
         self.state_id           = 1
@@ -41,29 +39,22 @@ class AutoConnTask:
             TASK_TYP_FWD: {
                 0: self._end_connection,
                 1: self._PMS_fwd_init,
-                #2: self._PMS_is_last_chars_in_rxbuff,
-                #3: self._PMS_start_rev_fwd,
                 4: self._PMS_wait_rev_fwd_ended,
             }
         }.get(self._conf.get('task_typ', ''), {})
         if not self._state_tab:
             self.e = True
-            # print(f"Error ConnTask no state_tab Typ: {self._conf}")
             logger.error(f"Error ConnTask no state_tab Typ: {self._conf}")
             self._set_state_exec(0)
         if not connection[0]:
             self.e = True
-            # print(f"Error ConnTask connection: {connection[1]}")
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
         else:
             self._connection = connection[0]
-            # self.dest_station_id = self._connection.cli.stat_identifier
             logger.debug("ConnTask connection: Start")
             self._set_state_exec(1)
             self._exec_state_tab()
-            # logger.debug("ConnTask connection: _PMS_fwd_init")
-            # self._PMS_fwd_init()
 
     def crone(self):
         try:
@@ -108,8 +99,6 @@ class AutoConnTask:
         # print(f"ConnTask {self._conf.get('task_typ', '')} END")
         if self.state_id:
             self._set_state_exec(0)
-        #if self._connection:
-        #    self._end_connection()
 
     def _end_connection(self):
         # 0
@@ -118,13 +107,11 @@ class AutoConnTask:
         if not self._connection.is_buffer_empty():
             return
         self._connection.conn_disco()
-        #self._connection = None
-        # self._set_state_exec(0)
-        # self._ConnTask_ende()
 
     ###############################################
     # PMS
     def _PMS_fwd_init(self):
+        # 1
         self._connection.cli      = NoneCLI(self._connection)
         self._connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
         if self._connection.bbsFwd_init():
@@ -133,47 +120,6 @@ class AutoConnTask:
             logger.error("_PMS_fwd_init > bbsFwd_init")
             self._set_state_exec(0)
 
-    """
-    def _PMS_send_fwd_cmd(self):
-        # 1
-        if not self._connection.cli.stat_identifier:
-            if not self._connection.cli.software_identifier():
-                logger.error(f"ConnTask connection: no stat_identifier found: {self._connection.cli.stat_identifier}")
-                #self._set_state_exec(0)
-                return
-        if self._connection.cli.stat_identifier:
-            if self._connection.cli.stat_identifier.typ != 'BBS':
-                self._set_state_exec(0)
-                logger.error(f"ConnTask connection: stat_identifier.typ: {self._connection.cli.stat_identifier.typ}")
-                return
-            rev_cmd = self._connection.cli.stat_identifier.bbs_rev_fwd_cmd
-            if rev_cmd:
-                self._connection.send_data(rev_cmd)
-            self._set_state_exec(2)
-            return
-        logger.error(f"ConnTask connection: no stat_identifier: {self._connection.cli.stat_identifier}")
-        self._set_state_exec(0)
-
-    def _PMS_is_last_chars_in_rxbuff(self):
-        # 2
-        logger.debug(f"rx_buf_last_data> {self._connection.rx_buf_last_data}")
-        if self._connection.rx_buf_last_data.endswith(b'>\r'):
-            self._set_state_exec(3)
-
-    def _PMS_start_rev_fwd(self):
-        # 3
-        
-        #if self._connection.bbs_connection:
-        #    self._set_state_exec(4)
-        #    return
-        
-        # TODO if connection.rx:
-        if self._connection.bbsFwd_start_reverse():
-            self._set_state_exec(4)
-        else:
-            self._set_state_exec(0)
-
-    """
     def _PMS_wait_rev_fwd_ended(self):
         # 4
         if not hasattr(self._connection, 'bbs_connection') or\
@@ -182,11 +128,9 @@ class AutoConnTask:
             return
         if self._connection.bbs_connection:
             return
-            # self._set_state_exec(0)
         if self._connection.tx_buf_rawData:
             return
         if self._connection:
-            # self._set_state_exec(0)
             self._end_connection()
         else:
             self._ConnTask_ende()

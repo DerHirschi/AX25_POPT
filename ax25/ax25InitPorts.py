@@ -170,6 +170,7 @@ class AX25PortHandler(object):
     def _05sec_task(self):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
+            self._Sched_task()
             self._aprs_task()
             self._gpio_task()
             self._task_timer_05sec = time.time() + 0.5
@@ -177,7 +178,6 @@ class AX25PortHandler(object):
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
-            self._Sched_task()
             self._mh_task()
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1

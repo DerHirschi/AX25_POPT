@@ -29,6 +29,7 @@ Optimierung/Änderungen:
 - Programm Initialisierungsprozedur (Alle eingehenden Verbindungen werden
   ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
 - Unnötige updates der Forward-Warteschlange
+- Fehlende Übersetzungen verfollständigt by ClaudeMa
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder
@@ -50,6 +51,7 @@ Neue Implementierungen / Funktionen:
   lokale BBS mit der Heimat-BBS in der User-DB übereinstimmt. Wenn das
   nicht der Fall sein sollte wird die Mail an die in der User-DB hinterlegte
   Heimat-BBS weitergeleitet und mit einem Vermerk versehen.
+- CLI-CMD: SR (Sendet Antwort auf Mail / Send Reply)
 
 ###########################################################################################################
 ###########################################################################################################
