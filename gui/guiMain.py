@@ -1814,7 +1814,6 @@ class PoPT_GUI_Main:
             n -= 1
         return True
 
-
     def _tasker_prio(self):
         """ Prio Tasks every Irritation flip flop """
         """
@@ -1897,6 +1896,14 @@ class PoPT_GUI_Main:
         return False
 
     # END TASKER
+    ######################################################################
+    def _add_tasker_q(self, fnc: str, arg):
+        if fnc in self._tasker_q:
+            return
+        self._tasker_q.append(
+            (fnc, arg)
+        )
+
     ######################################################################
     def _aprs_wx_tree_task(self):
         if self._port_handler.get_aprs_ais() is not None:
@@ -2100,11 +2107,7 @@ class PoPT_GUI_Main:
             #self._ts_box_box.configure(bg=bg)
 
     def sysMsg_to_qso(self, data, ch_index):
-        if 'sysMsg_to_qso' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("sysMsg_to_qso", (data, ch_index))
-        )
+        self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
 
     def _sysMsg_to_qso_task(self, data, ch_index):
         if not data:
@@ -2515,11 +2518,7 @@ class PoPT_GUI_Main:
     #######################################################################
     # Conn Path Plot
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
-        if 'add_LivePath_plot' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("add_LivePath_plot", (node, ch_id, path))
-        )
+        self._add_tasker_q("add_LivePath_plot", (node, ch_id, path))
 
     def _add_LivePath_plot_task(self, node: str, ch_id: int, path=None):
         if path is None:
@@ -2533,11 +2532,8 @@ class PoPT_GUI_Main:
                 self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
-        if 'resetHome_LivePath_plot' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("resetHome_LivePath_plot", ch_id)
-        )
+        self._add_tasker_q("resetHome_LivePath_plot", ch_id)
+
 
     def _resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
@@ -2621,11 +2617,7 @@ class PoPT_GUI_Main:
         self._port_handler.accept_new_connection
         self._port_handler.end_connection
         """
-        if 'conn_btn_update' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("conn_btn_update", None)
-        )
+        self._add_tasker_q("conn_btn_update", None)
 
     def _conn_btn_update_task(self):
         conn = self.get_conn(self.channel_index)
@@ -2638,11 +2630,7 @@ class PoPT_GUI_Main:
 
     def ch_status_update(self):
         """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
-        if 'ch_status_update' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("ch_status_update", None)
-        )
+        self._add_tasker_q("ch_status_update", None)
 
     def _ch_status_update_task(self):
         self._ch_btn_status_update()
@@ -2671,22 +2659,14 @@ class PoPT_GUI_Main:
             self.reset_noty_bell_alarm()
 
     def reset_noty_bell_alarm(self):
-        if 'reset_noty_bell_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_noty_bell_alarm", None)
-        )
+        self._add_tasker_q("reset_noty_bell_alarm", None)
 
     def _reset_noty_bell_alarm_task(self):
         self._Alarm_Frame.set_Bell_alarm(False)
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
-        if 'set_noty_bell' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_noty_bell", (ch_id, msg))
-        )
+        self._add_tasker_q("set_noty_bell", (ch_id, msg))
 
     def _set_noty_bell_task(self, ch_id, msg=''):
         conn = self.get_conn(ch_id)
@@ -2711,11 +2691,7 @@ class PoPT_GUI_Main:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):
-        if 'set_noty_bell_active' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_noty_bell_active", None)
-        )
+        self._add_tasker_q("set_noty_bell_active", None)
 
     def _set_noty_bell_active_task(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
@@ -2808,11 +2784,7 @@ class PoPT_GUI_Main:
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
-        if 'on_channel_status_change' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("on_channel_status_change", None)
-        )
+        self._add_tasker_q("on_channel_status_change", None)
 
     def _on_channel_status_change_task(self):
         self.tabbed_sideFrame.on_ch_stat_change()
@@ -3190,7 +3162,6 @@ class PoPT_GUI_Main:
                 self.set_auto_tracer()
 
     def set_dx_alarm(self, event=None):
-        # TODO tasker-q
         dx_alarm = bool(self.setting_dx_alarm.get())
         if not dx_alarm:
             self.setting_auto_tracer.set(False)
@@ -3204,31 +3175,19 @@ class PoPT_GUI_Main:
     ######################################################################
     # Alarm/Icon Frame
     def set_aprsMail_alarm(self):
-        if 'set_aprsMail_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_aprsMail_alarm", None)
-        )
+        self._add_tasker_q("set_aprsMail_alarm", None)
 
     def _set_aprsMail_alarm_task(self):
         self._Alarm_Frame.set_aprsMail_alarm(True)
 
     def reset_aprsMail_alarm(self):
-        if 'reset_aprsMail_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_aprsMail_alarm", None)
-        )
+        self._add_tasker_q("reset_aprsMail_alarm", None)
 
     def _reset_aprsMail_alarm_task(self):
         self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def dx_alarm(self):
-        if 'dx_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("dx_alarm", None)
-        )
+        self._add_tasker_q("dx_alarm", None)
 
     def _dx_alarm_task(self):
         """ Alarm when new User in MH List """
@@ -3236,11 +3195,7 @@ class PoPT_GUI_Main:
             self._Alarm_Frame.set_dxAlarm(True)
 
     def tracer_alarm(self):
-        if 'tracer_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("tracer_alarm", None)
-        )
+        self._add_tasker_q("tracer_alarm", None)
 
     def _tracer_alarm_task(self):
         """ Tracer Alarm """
@@ -3248,11 +3203,7 @@ class PoPT_GUI_Main:
         self._Alarm_Frame.set_tracerAlarm(True)
 
     def reset_tracer_alarm(self):
-        if 'reset_tracer_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_tracer_alarm", None)
-        )
+        self._add_tasker_q("reset_tracer_alarm", None)
 
     def _reset_tracer_alarm_task(self):
         """ Tracer Alarm """
@@ -3261,22 +3212,14 @@ class PoPT_GUI_Main:
             self._tracer_alarm = False
 
     def reset_dx_alarm(self):
-        if 'reset_dx_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_dx_alarm", None)
-        )
+        self._add_tasker_q("reset_dx_alarm", None)
 
     def _reset_dx_alarm_task(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
         self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
 
     def pmsMail_alarm(self):
-        if 'pmsMail_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("pmsMail_alarm", None)
-        )
+        self._add_tasker_q("pmsMail_alarm", None)
 
     def _pmsMail_alarm_task(self):
         if self.MSG_Center_win:
@@ -3284,31 +3227,19 @@ class PoPT_GUI_Main:
         self._Alarm_Frame.set_pmsMailAlarm(True)
 
     def reset_pmsMail_alarm(self):
-        if 'reset_pmsMail_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_pmsMail_alarm", None)
-        )
+        self._add_tasker_q("reset_pmsMail_alarm", None)
 
     def _reset_pmsMail_alarm_task(self):
         self._Alarm_Frame.set_pmsMailAlarm(False)
 
     def pmsFwd_alarm(self):
-        if 'pmsFwd_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("pmsFwd_alarm", None)
-        )
+        self._add_tasker_q("pmsFwd_alarm", None)
 
     def _pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(True)
 
     def reset_pmsFwd_alarm(self):
-        if 'reset_pmsFwd_alarm' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_pmsFwd_alarm", None)
-        )
+        self._add_tasker_q("reset_pmsFwd_alarm", None)
 
     def _reset_pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(False)
@@ -3316,52 +3247,32 @@ class PoPT_GUI_Main:
             self.MSG_Center_win.tree_update_task()
 
     def set_diesel(self):
-        if 'set_diesel' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_diesel", None)
-        )
+        self._add_tasker_q("set_diesel", None)
 
     def _set_diesel_task(self):
         self._Alarm_Frame.set_diesel(True)
         self._init_state = 0
 
     def reset_diesel(self):
-        if 'reset_diesel' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("reset_diesel", None)
-        )
+        self._add_tasker_q("reset_diesel", None)
 
     def _reset_diesel_task(self):
         self._Alarm_Frame.set_diesel(False)
 
     def set_rxEcho_icon(self, alarm_set=True):
-        if 'set_rxEcho_icon' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_rxEcho_icon", alarm_set)
-        )
+        self._add_tasker_q("set_rxEcho_icon", alarm_set)
 
     def _set_rxEcho_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_rxEcho_icon(alarm_set=alarm_set)
 
     def set_Beacon_icon(self, alarm_set=True):
-        if 'set_Beacon_icon' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_Beacon_icon", alarm_set)
-        )
+        self._add_tasker_q("set_Beacon_icon", alarm_set)
 
     def _set_Beacon_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
 
     def set_port_block_warning(self):
-        if 'set_port_block_warning' in self._tasker_q:
-            return
-        self._tasker_q.append(
-            ("set_port_block_warning", None)
-        )
+        self._add_tasker_q("set_port_block_warning", None)
 
     def _set_port_block_warning_task(self):
         self._Alarm_Frame.set_PortBlocking_warning()
