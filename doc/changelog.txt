@@ -19,6 +19,8 @@ Fixes:
 - BBS-Einstellungen > Routing: Einstellungen für
   PN-Prio/PN-AutoPath/PN-Erlauben/BL-Erlauben wurden nicht gespeichert.
 - Programm-Crash aufgrund Threading Probleme
+- Im Monitor-Mode lässt sich eine Verbindung auf Kanal 0 aufbauen.
+  (Kanal 0 ist Monitor-Kanal)
 
 Optimierung/Änderungen:
 - AXIP Port handling
@@ -41,7 +43,7 @@ Neue Implementierungen / Funktionen:
 - BBS-Forwarding: Ausgehende Verbindungen deaktivierbar
 - BBS Forward-Warteschlange: Wenn Einträge ausgewählt sind, wird der FWD an
 - BBS Forward-Warteschlange: FWD-Start Knopf in BBS Warteschlangen Übersicht
-  die ausgewählte BBS angestoßen. Wenn kein Eintrag ausgewählt wird der
+  die ausgewählte BBS angestoßen. Wenn kein Eintrag ausgewählt ist, wird der
   sofortige FWD zu allen Konfigurierten BBS angestoßen.
 - UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
   - $fwdPartner = Listet Forward-Partner auf - Bake

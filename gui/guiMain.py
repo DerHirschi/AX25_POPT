@@ -3079,6 +3079,8 @@ class PoPT_GUI_Main:
     ##########################################
     #
     def get_free_channel(self, start_channel=1):
+        if not start_channel:
+            start_channel = 1
         if not self.get_conn(con_ind=start_channel):
             return start_channel
         for ch_id in range(1, MAX_SYSOP_CH):
