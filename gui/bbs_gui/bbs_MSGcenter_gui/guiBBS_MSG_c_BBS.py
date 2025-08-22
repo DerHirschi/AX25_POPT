@@ -1565,6 +1565,7 @@ class MSG_Center_BBS(MSG_Center_base):
         if msg:
             enc = self._var_encoding.get()
             self._selected_msg['O']['enc'] = enc
+            msg = msg.replace(CR + LF, LF)
             msg = msg.decode(enc, 'ignore')
             msg = str(msg).replace('\r', '\n')
             self._out_text.configure(state='normal')
@@ -1592,6 +1593,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 # _path = _db_data[9]
                 msg_time        = db_data['tx-time']
                 size            = format_number(len(msg))
+                msg             = msg.replace(CR + LF, LF)
                 msg             = msg.decode(enc, 'ignore')
                 msg             = str(msg).replace('\r', '\n')
                 if from_bbs:
@@ -1695,6 +1697,7 @@ class MSG_Center_BBS(MSG_Center_base):
         if msg:
             enc = self._var_encoding.get()
             self._selected_msg['F']['enc'] = enc
+            msg = msg.replace(CR + LF, LF)
             msg = msg.decode(enc, 'ignore')
             msg = str(msg).replace('\r', '\n')
             self._fwdQ_text.configure(state='normal')
@@ -1722,6 +1725,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 # _path = _db_data[9]
                 msg_time                = db_data['tx-time']
                 size                    = format_number(len(msg))
+                msg                     = msg.replace(CR + LF, LF)
                 msg                     = msg.decode(enc, 'ignore')
                 msg                     = str(msg).replace('\r', '\n')
                 if from_bbs:
@@ -1831,6 +1835,7 @@ class MSG_Center_BBS(MSG_Center_base):
         if msg:
             enc = self._var_encoding.get()
             self._selected_msg['H']['enc'] = enc
+            msg = msg.replace(CR + LF, LF)
             msg = msg.decode(enc, 'ignore')
             msg = str(msg).replace('\r', '\n')
             self._hold_text.configure(state='normal')
@@ -1858,6 +1863,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 # _path = _db_data[9]
                 msg_time = db_data['rx-time']
                 size = format_number(len(msg))
+                msg = msg.replace(CR + LF, LF)
                 msg = msg.decode(enc, 'ignore')
                 msg = str(msg).replace('\r', '\n')
                 if from_bbs:
@@ -1976,6 +1982,7 @@ class MSG_Center_BBS(MSG_Center_base):
         if msg:
             enc = self._var_encoding.get()
             self._selected_msg['H']['enc'] = enc
+            msg = msg.replace(CR + LF, LF)
             msg = msg.decode(enc, 'ignore')
             msg = str(msg).replace('\r', '\n')
             self._trash_text.configure(state='normal')
@@ -2007,6 +2014,7 @@ class MSG_Center_BBS(MSG_Center_base):
                 # _path = _db_data[9]
                 msg_time = db_data['rx-time']
                 size = format_number(len(msg))
+                msg = msg.replace(CR + LF, LF)
                 msg = msg.decode(enc, 'ignore')
                 msg = str(msg).replace('\r', '\n')
                 if from_bbs:
