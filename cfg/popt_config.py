@@ -626,6 +626,13 @@ class Main_CFG:
     def get_BBS_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()))
 
+    def get_BBS_FWD_cfg(self, bbs_call: str):
+        return copy.deepcopy(self._config
+                             .get('bbs_main', getNew_BBS_cfg())
+                             .get('fwd_bbs_cfg', {})
+                             .get(bbs_call, {})
+        )
+
     def set_BBS_cfg(self, bbs_cfg: dict):
         self._config['bbs_main'] = dict(bbs_cfg)
 

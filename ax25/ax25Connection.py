@@ -169,9 +169,9 @@ class AX25Conn:
         self.tx_buf_2send = []         # Buffer for Sending. Will be processed in ax25PortHandler
         self.tx_buf_unACK = {}                  # Buffer for UNACK I-Frames
         self._rx_buf_last_frame = ax25_frame    # Buffers for last Frame !?!
-        self.rx_buf_last_data = b''             # Buffers for last Frame !?!
+        self.rx_buf_last_data = b''             # Buffers for last Frame
         """ IO Buffer For GUI / CLI """
-        self.rx_buf_rawData = b''           # Buffer RX fm connection
+        self.rx_buf_rawData = b''           # Buffer RX QSO for AutoConnTask
         self.tx_buf_rawData = b''           # Buffer for TX RAW Data that is not packed yet into a Frame
         self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
@@ -951,8 +951,8 @@ class AX25Conn:
             else:
                 self.to_call_str = tmp_data.replace(' ', '')
                 self._to_call_alias = ''
-            self.tx_byte_count = 0
-            self.rx_byte_count = 0
+            self.tx_byte_count  = 0
+            self.rx_byte_count  = 0
             self.rx_buf_rawData = b''
             self._set_user_db_ent()
             self._set_packet_param()

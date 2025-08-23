@@ -3,7 +3,8 @@ import time
 import traceback
 
 from cfg.constant import SERVICE_CH_START, TASK_TYP_FWD
-from cfg.logger_config import logger
+from cfg.logger_config import logger, BBS_LOG
+from cfg.popt_config import POPT_CFG
 from cli import NoneCLI
 
 
@@ -70,6 +71,10 @@ class AutoConnTask:
             self._connection            = connection[0]
             self._connection.cli        = NoneCLI(self._connection)
             self._connection.cli_type   = f"Task: {self._conf.get('task_typ', '-')}"
+            self._get_call              = lambda : self._connection.to_call_str.split('-')[0]
+            # If task_typ == : ...... or dict for getting Param
+            self._conn_script_to_param  = POPT_CFG.get_BBS_FWD_cfg(self._conf.get('dest_call')).get('t_o_dead_conn', 5) * 60
+            self._conn_script_to        = time.time() + self._conn_script_to_param
             logger.debug("ConnTask connection: Start")
             if self._conf.get('conn_script', []):
                 self._set_state_exec(1)
@@ -156,24 +161,39 @@ class AutoConnTask:
                     cmd += '\r'
                     cmd = cmd.encode('UTF-8', 'ignore')
                     self._connection.tx_buf_rawData += cmd
-                    self._conn_script_w_state = True
+                    self._conn_script_w_state        = True
+                    self._conn_script_to             = time.time() + self._conn_script_to_param
                     if wait:
                         self._conn_script_w_timer = time.time() + wait
                 else:
                     if time.time() < self._conn_script_w_timer:
                         return
-                    conn_dest_call = self._connection.to_call_str.split('-')[0]
+                    conn_dest_call = self._get_call()
                     if dest_call == conn_dest_call or wait:
+                        self._conn_script_to      = time.time() + self._conn_script_to_param
                         self._conn_script_i      += 1
                         self._conn_script_w_state = False
                         if self._conn_script_i == len(self._conf.get('conn_script', [])):
                             if self._conf.get('dest_call') != conn_dest_call:
+                                BBS_LOG.warning("Conn-Script Dest-Call != BBS Dest-Call")
+                                BBS_LOG.warning(f"  Dest-Call: {conn_dest_call}")
+                                BBS_LOG.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
                                 logger.warning("Conn-Script Dest-Call != BBS Dest-Call")
                                 logger.warning(f"  Dest-Call: {conn_dest_call}")
                                 logger.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
                             # BBS-FWD Init
                             self._set_state_exec(2)
                         return
+
+            if time.time() > self._conn_script_to:
+                BBS_LOG.error(f"Connect Script Timeout: {self._conf.get('dest_call')}")
+                BBS_LOG.error(f"  Current Call: {self._get_call()}")
+                BBS_LOG.error("  Disconnecting....")
+                logger.error(f"Connect Script Timeout: {self._conf.get('dest_call')}")
+                logger.error(f"  Current Call: {self._get_call()}")
+                logger.error("  Disconnecting....")
+                self._set_state_exec(4)
+                self._exec_state_tab()
 
     ###############################################
     # PMS
