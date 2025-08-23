@@ -24,7 +24,6 @@ class AutoConnTask:
         #    {'cmd': 'm', 'dest_call': 'CE0BBS', 'wait': 0}
         #]
         self._conf = conf
-        print(self._conf.get('conn_script', []))
 
         if not self._conf.get('conn_script', {}):
             dest_call = self._conf.get('dest_call')
@@ -134,7 +133,6 @@ class AutoConnTask:
     ###############################################
     def _conn_script(self):
         # 1
-        print("_conn_script")
         try:
             step: dict = self._conf.get('conn_script', [])[self._conn_script_i]
         except Exception as ex:
@@ -166,7 +164,6 @@ class AutoConnTask:
                         return
                     conn_dest_call = self._connection.to_call_str.split('-')[0]
                     if dest_call == conn_dest_call or wait:
-                        print(f'Conn to {conn_dest_call}')
                         self._conn_script_i      += 1
                         self._conn_script_w_state = False
                         if self._conn_script_i == len(self._conf.get('conn_script', [])):
@@ -174,7 +171,6 @@ class AutoConnTask:
                                 logger.warning("Conn-Script Dest-Call != BBS Dest-Call")
                                 logger.warning(f"  Dest-Call: {conn_dest_call}")
                                 logger.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
-                            print("FWD Init")
                             # BBS-FWD Init
                             self._set_state_exec(2)
                         return
