@@ -21,6 +21,7 @@ Fixes:
 - Programm-Crash aufgrund Threading Probleme
 - Im Monitor-Mode lässt sich eine Verbindung auf Kanal 0 aufbauen.
   (Kanal 0 ist Monitor-Kanal)
+- GUI BBS-Forwardrouten: Eigene BBS wird nicht als Startknoten angezeigt.
 
 Optimierung/Änderungen:
 - AXIP Port handling

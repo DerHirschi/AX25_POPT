@@ -220,9 +220,10 @@ class SQL_Database:
                 self.error = True
                 self.db = None
                 self._access = False
-                return
+                return None
             self._access = False
             return ret
+        return None
 
     def _send_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
@@ -240,6 +241,7 @@ class SQL_Database:
                 return None
             self._access = False
             return ret
+        return None
 
     def _commit_query(self, query):
         # print(f"Query commit: {query}")
@@ -260,6 +262,7 @@ class SQL_Database:
                 self.db.commit_query()
                 self._access = False
                 return ret
+        return None
 
     def _commit_query_bin(self, query, data: tuple):
         # print("Query <<BIN>>")
@@ -279,6 +282,7 @@ class SQL_Database:
                 self.db.commit_query()
                 self._access = False
                 return ret
+        return None
 
     ############################################################
     # BBS - PMS
