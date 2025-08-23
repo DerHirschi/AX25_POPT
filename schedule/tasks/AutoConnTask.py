@@ -1,4 +1,5 @@
 import threading
+import time
 import traceback
 
 from cfg.constant import SERVICE_CH_START, TASK_TYP_FWD
@@ -15,22 +16,37 @@ class AutoConnTask:
             'own_call': 'MD2SAW',
             'dest_call': 'DBO527',
             'via_calls': ['DNX527-1'],
-            # 'axip_add': ('192.168.178.160', 8093),
-            'silent_conn': True,
+            'axip_add': ('192.168.178.160', 8093),
         }
         """
+        #conf['conn_script'] = [
+        #    {'cmd': 'c celle', 'dest_call': 'CEN0DE', 'wait': 0},
+        #    {'cmd': 'm', 'dest_call': 'CE0BBS', 'wait': 0}
+        #]
         self._conf = conf
+        print(self._conf.get('conn_script', []))
+
+        if not self._conf.get('conn_script', {}):
+            dest_call = self._conf.get('dest_call')
+            via_calls = self._conf.get('via_calls')
+        else:
+            dest_call = self._conf.get('via_calls')[0]
+            via_calls = []
+
         connection = port_handler.new_outgoing_connection(
-            dest_call=  self._conf.get('dest_call'),
+            dest_call=  dest_call,
             own_call=   self._conf.get('own_call'),
-            via_calls=  self._conf.get('via_calls'),          # Auto lookup in MH if not exclusive Mode
+            via_calls=  via_calls,                            # Auto lookup in MH if not exclusive Mode
             port_id=    self._conf.get('port_id', -1),        # -1 Auto lookup in MH list
             axip_add=   self._conf.get('axip_add', ('', 0)),  # AXIP Adress
             exclusive=  True,                                 # True = no lookup in MH list
             link_conn=  None,                                 # Linked Connection AX25Conn
             channel=    SERVICE_CH_START,                     # GUI Channel
         )
-        # print(self.connection)
+
+        self._conn_script_i       = 0
+        self._conn_script_w_state = False
+        self._conn_script_w_timer = 0
         self._connection        = None
         self.e                  = False
         self._state_exec        = None
@@ -38,7 +54,8 @@ class AutoConnTask:
         self._state_tab = {
             TASK_TYP_FWD: {
                 0: self._end_connection,
-                1: self._PMS_fwd_init,
+                1: self._conn_script,
+                2: self._PMS_fwd_init,
                 4: self._PMS_wait_rev_fwd_ended,
             }
         }.get(self._conf.get('task_typ', ''), {})
@@ -51,9 +68,15 @@ class AutoConnTask:
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
         else:
-            self._connection = connection[0]
+            self._connection            = connection[0]
+            self._connection.cli        = NoneCLI(self._connection)
+            self._connection.cli_type   = f"Task: {self._conf.get('task_typ', '-')}"
             logger.debug("ConnTask connection: Start")
-            self._set_state_exec(1)
+            if self._conf.get('conn_script', []):
+                self._set_state_exec(1)
+            else:
+                self._set_state_exec(2)
+
             self._exec_state_tab()
 
     def crone(self):
@@ -109,12 +132,60 @@ class AutoConnTask:
         self._connection.conn_disco()
 
     ###############################################
+    def _conn_script(self):
+        # 1
+        print("_conn_script")
+        try:
+            step: dict = self._conf.get('conn_script', [])[self._conn_script_i]
+        except Exception as ex:
+            logger.error(f"Connect Script       : {ex}")
+            logger.error(f"  conn_script conf   : {self._conf.get('conn_script', [])}")
+            logger.error(f"  conn_script_i      : {self._conn_script_i}")
+            logger.error(f"  conn_script_w_state: {self._conn_script_w_state}")
+            logger.error(f"  conn_script_w_timer: {self._conn_script_w_timer}")
+            self.e = True
+            self._set_state_exec(0)
+        else:
+            cmd         = step.get('cmd', '')
+            dest_call   = step.get('dest_call', '')
+            wait        = step.get('wait', 0)
+
+            if self._is_connected():
+                state_index = self._connection.get_state()
+                if state_index != 5:
+                    return
+                if not self._conn_script_w_state:
+                    cmd += '\r'
+                    cmd = cmd.encode('UTF-8', 'ignore')
+                    self._connection.tx_buf_rawData += cmd
+                    self._conn_script_w_state = True
+                    if wait:
+                        self._conn_script_w_timer = time.time() + wait
+                else:
+                    if time.time() < self._conn_script_w_timer:
+                        return
+                    conn_dest_call = self._connection.to_call_str.split('-')[0]
+                    if dest_call == conn_dest_call or wait:
+                        print(f'Conn to {conn_dest_call}')
+                        self._conn_script_i      += 1
+                        self._conn_script_w_state = False
+                        if self._conn_script_i == len(self._conf.get('conn_script', [])):
+                            if self._conf.get('dest_call') != conn_dest_call:
+                                logger.warning("Conn-Script Dest-Call != BBS Dest-Call")
+                                logger.warning(f"  Dest-Call: {conn_dest_call}")
+                                logger.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
+                            print("FWD Init")
+                            # BBS-FWD Init
+                            self._set_state_exec(2)
+                        return
+
+    ###############################################
     # PMS
     def _PMS_fwd_init(self):
-        # 1
-        self._connection.cli      = NoneCLI(self._connection)
-        self._connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
+        # 2
         if self._connection.bbsFwd_init():
+            if self._conf.get('conn_script', []):
+                self._connection.bbs_connection.connection_rx(self._connection.rx_buf_rawData)
             self._set_state_exec(4)
         else:
             logger.error("_PMS_fwd_init > bbsFwd_init")

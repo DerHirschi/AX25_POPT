@@ -171,6 +171,7 @@ class AX25Conn:
         self._rx_buf_last_frame = ax25_frame    # Buffers for last Frame !?!
         self.rx_buf_last_data = b''             # Buffers for last Frame !?!
         """ IO Buffer For GUI / CLI """
+        self.rx_buf_rawData = b''           # Buffer RX fm connection
         self.tx_buf_rawData = b''           # Buffer for TX RAW Data that is not packed yet into a Frame
         self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
@@ -302,13 +303,17 @@ class AX25Conn:
         self.cli_type = str(cli_key)
 
     def _reinit_cli(self):
-        if not self.pipe:
-            self._init_cli()
-            if hasattr(self.user_db_ent, 'sys_pw_autologin'):
-                if self.user_db_ent.sys_pw_autologin :
-                    self.cli.change_cli_state(state=6)
-                    return
-            self.cli.change_cli_state(state=1)
+        if self.cli_type == 'Task: FWD':
+            #self.bbsFwd_init()
+            return
+        if self.pipe:
+            return
+        self._init_cli()
+        if hasattr(self.user_db_ent, 'sys_pw_autologin'):
+            if self.user_db_ent.sys_pw_autologin :
+                self.cli.change_cli_state(state=6)
+                return
+        self.cli.change_cli_state(state=1)
 
     def set_station_cfg(self):
         stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
@@ -386,6 +391,7 @@ class AX25Conn:
         self._set_dest_call_fm_data_inp(data)
         """ Save last Frame """
         self.rx_buf_last_data = data
+        self.rx_buf_rawData  += data
         """ CLI """
         self.exec_cli(data)
         return
@@ -422,6 +428,8 @@ class AX25Conn:
     #############################
     # BBS_FWD Stuff
     def bbsFwd_init(self):
+        if self.bbs_connection:
+            return False
         bbs = self._port_handler.get_bbs()
         if bbs is None:
             logger.error("PMS: bbs is None")
@@ -470,16 +478,21 @@ class AX25Conn:
         """
         bbs = self._port_handler.get_bbs()
         if bbs is None:
-            logger.error("PMS: _bbs is None")
+            logger.error("BBS: _bbs is None")
             return False
         if self.bbs_connection:
-            logger.warning("PMS: bbs_connection not None. Manual Rev FWD Triggered ?")
+            logger.warning("BBS: bbs_connection not None. Manual Rev FWD Triggered ?")
             return False
+        """
+        if self.cli_type == "Task: FWD":
+            logger.debug("BBS: Task Connection, no FWD Init needed.")
+            return False
+        """
         self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
-            logger.error("PMS: bbs_connection is None")
+            logger.error("BBS: bbs_connection is None")
             return False
-        logger.debug("PMS: Done: bbsFwd start")
+        logger.debug("BBS: Done: bbsFwd start")
         return True
 
     def _bbsFwd_cron(self):
@@ -940,6 +953,7 @@ class AX25Conn:
                 self._to_call_alias = ''
             self.tx_byte_count = 0
             self.rx_byte_count = 0
+            self.rx_buf_rawData = b''
             self._set_user_db_ent()
             self._set_packet_param()
             self._reinit_cli()

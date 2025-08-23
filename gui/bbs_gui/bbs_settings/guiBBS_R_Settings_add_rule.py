@@ -32,8 +32,7 @@ class BBS_addRuleWin(tk.Toplevel):
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
         #########################
-        self._lang          = POPT_CFG.get_guiCFG_language()
-        self._getTabStr     = lambda str_k: get_strTab(str_k, self._lang)
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._root_win      = root_win
         self._root_win.add_win = self
         self.title(f"Add Rule - {dest_call}")

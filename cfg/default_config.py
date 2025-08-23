@@ -113,6 +113,7 @@ def getNew_BBS_FWD_cfg():
         dest_call       = 'NOCALL',
         via_calls       = [],
         axip_add        = ('', 0),
+        conn_script     = [],
         scheduler_cfg   = dict(getNew_schedule_config()),
         reverseFWD      = True,     # Scheduled FWD
         noConnect       = False,    # No outgoing connect

@@ -1130,10 +1130,12 @@ class BBS:
                 'dest_call':    cfg.get('dest_call'),
                 'via_calls':    cfg.get('via_calls'),
                 'axip_add':     cfg.get('axip_add'),
+                'conn_script':  cfg.get('conn_script', []),
             }
             self._port_handler.insert_SchedTask(sched_cfg, autoconn_cfg)
 
     def _del_all_pms_fwd_schedule(self):
+        """
         for h_bbs_k, cfg in self._fwd_cfg.items():
             if cfg:
                 autoconn_cfg = {
@@ -1144,12 +1146,14 @@ class BBS:
                     'dest_call':    cfg.get('dest_call'),
                     'via_calls':    cfg.get('via_calls'),
                     'axip_add':     cfg.get('axip_add'),
+                    'conn_script':  cfg.get('conn_script', []),
                 }
-                self._port_handler.del_SchedTask(autoconn_cfg)
+        """
+        self._port_handler.del_SchedTask_by_typ(TASK_TYP_FWD)
 
     ###################################
     def init_tx_fwd(self, ax25_conn):
-        bbs_conn = BBSConnection(self, ax25_conn)
+        bbs_conn = BBSConnection(self, ax25_conn, tx=True)
         if bbs_conn.e:
             return None
         self._fwd_connections.append(bbs_conn)
@@ -1210,6 +1214,7 @@ class BBS:
             'dest_call':    fwd_bbs_cfg.get('dest_call'),
             'via_calls':    fwd_bbs_cfg.get('via_calls'),
             'axip_add':     fwd_bbs_cfg.get('axip_add'),
+            'conn_script':  fwd_bbs_cfg.get('conn_script', []),
         }
         return self._port_handler.start_SchedTask_man(autoconn_cfg)
 
@@ -1233,6 +1238,7 @@ class BBS:
                     'dest_call':    fwd_bbs_cfg.get('dest_call'),
                     'via_calls':    fwd_bbs_cfg.get('via_calls'),
                     'axip_add':     fwd_bbs_cfg.get('axip_add'),
+                    'conn_script': fwd_bbs_cfg.get('conn_script', []),
                 }
                 self._port_handler.start_SchedTask_man(autoconn_cfg)
 

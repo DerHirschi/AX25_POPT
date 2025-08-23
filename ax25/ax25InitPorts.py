@@ -211,10 +211,15 @@ class AX25PortHandler(object):
     def insert_SchedTask(self, sched_cfg, conf):
         if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
             self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
-
+    """
     def del_SchedTask(self, conf):
         if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
             self._scheduled_tasker.del_scheduler_Task(conf)
+    """
+
+    def del_SchedTask_by_typ(self, typ: str):
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task_by_Typ'):
+            self._scheduled_tasker.del_scheduler_Task_by_Typ(typ)
 
     def start_SchedTask_man(self, conf):
         if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):

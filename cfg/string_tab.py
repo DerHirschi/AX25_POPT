@@ -798,6 +798,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'add': (
+        'Hinzufügen',
+        'Add',
+        'Toevoegen',
+        'Ajouter',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'activate': (
         'Aktivieren',
         'Activate',
@@ -1019,6 +1031,18 @@ STR_TABLE = {
         'New',
         'Nieuw',
         'Nouveau',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'wait': (
+        'Warten',
+        'Wait',
+        'Wachten',
+        'Attendez',
         '',
         '',
         '',
@@ -1541,6 +1565,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'command': (
+        'Befehl',
+        'Command',
+        'Commando',
+        'Commande',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'keybind': (
         'Tastaturbelegung',
         'Keyboard layout',
@@ -2055,6 +2091,31 @@ STR_TABLE = {
         "The recipient's address is incorrect. No BBS.",
         'Het adres van de ontvanger is onjuist.   Geen BBS.',
         "L'adresse du destinataire est incorrecte.   Pas de BBS.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    ##############################################
+    'invalid_axcall_warning1': (
+        'Call nicht korrekt',
+        'Call incorrect',
+        'Call onjuist',
+        'Call incorrecte',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_axcall_warning2': (
+        'Der eingegebene Call ist nicht korrekt.',
+        "The call you entered is incorrect.",
+        'Het ingevoerde Call is onjuist.',
+        "L'appel Call est incorrect.",
         '',
         '',
         '',
@@ -4394,11 +4455,11 @@ STR_TABLE = {
         '',
         ''),
 
-    'newcon_ziel': (
-        'Ziel:',
-        'Target:',
-        'streefcijfer:',
-        'Cible :',
+    'ziel': (
+        'Ziel',
+        'Destination',
+        'streefcijfer',
+        'Cible ',
         '',
         '',
         '',

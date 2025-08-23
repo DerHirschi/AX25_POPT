@@ -63,8 +63,8 @@ class BBSConnection:
                 BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
                 self._handshake = True
         else:
-            self.end_conn()
             self._state = 21
+            self.end_conn()
 
 
     def _check_feature_flags(self):
@@ -245,7 +245,7 @@ class BBSConnection:
         """
 
     def _send_abort(self):
-        self._connection_tx(b'*\r')
+        self._connection_tx(b'**\r')
 
     def _send_checksum_error(self):
         self._connection_tx(b'*** Checksum error\r')
@@ -347,6 +347,11 @@ class BBSConnection:
                 self._state = 11
                 # self.end_conn()
         elif self._get_lines_fm_rx_buff('FQ', cut_rx_buff=False):
+            self._state = 21
+            self.end_conn()
+        elif self._get_lines_fm_rx_buff('**', cut_rx_buff=False):
+            self.e = True
+            BBS_LOG.error(f"{self._dest_bbs_call} is sending Error: {self._rx_buff}")
             self._state = 21
             self.end_conn()
 
@@ -458,8 +463,15 @@ class BBSConnection:
         if self._get_lines_fm_rx_buff('F>', cut_rx_buff=False):
             self._state = 3
             return
+        if self._get_lines_fm_rx_buff('**', cut_rx_buff=False):
+            self.e = True
+            BBS_LOG.error(f"{self._dest_bbs_call} is sending Error: {self._rx_buff}")
+            self._state = 21
+            self.end_conn()
+            return
 
     def _wait_sw_id(self):
+        #self._get_lines_fm_rx_buff('*** ', cut_rx_buff=True)
         # 20 Handshake
         if not self._find_sw_identifier():
             return
@@ -478,7 +490,9 @@ class BBSConnection:
 
         if self._handshake: # RX
             self._state = 3
+            print(3)
             return
+        print(1)
         self._state = 1
         self._wait_f_prompt()
 
@@ -491,7 +505,9 @@ class BBSConnection:
         inp_lines = inp_lines.replace(b'\n', b'\r')
         inp_lines = inp_lines.decode("ASCII", 'ignore')
         inp_lines = inp_lines.split('\r')
+        i = 0
         for li in inp_lines:
+            i += len(li) + 1
             temp_stat_identifier = get_station_id_obj(li)
             if temp_stat_identifier is not None:
                 self._dest_stat_id = temp_stat_identifier
@@ -503,6 +519,7 @@ class BBSConnection:
                     self.e      = True
                     self._state = 21
                     return False
+                self._rx_buff = self._rx_buff[i:]
                 return True
         return False
 
@@ -586,7 +603,7 @@ class BBSConnection:
             except UnicodeDecodeError as e:
                 # Error
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
-                pn_check += FWD_RESP_REJ
+                #pn_check += FWD_RESP_REJ
                 continue
             # if el[:2] == 'FB':
             if el[:2] in ['FB', 'FA']:

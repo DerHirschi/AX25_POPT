@@ -54,6 +54,15 @@ Neue Implementierungen / Funktionen:
   nicht der Fall sein sollte wird die Mail an die in der User-DB hinterlegte
   Heimat-BBS weitergeleitet und mit einem Vermerk versehen.
 - CLI-CMD: SR (Sendet Antwort auf Mail / Send Reply)
+- BBS: "Connection Script". Route zum FWD-Partner wird Schritt für Schritt
+  aufgebaut, in dem Terminal Befehle für den jeweiligen Verbindungsaufbau
+  gesendet werden.
+  Z.B.: DX0SAW - c DX0SAW
+        DX0BBS - m
+  Der nächste Schritt wird durch jeweilige Flag "*** Connected to <CALL>"
+  erkannt. Es kann alternativ ein Timer gesetzt werden, wie lange bis zum
+  nächsten Schritt (senden des Befehls) gewartet werden soll. Bei gesetzten
+  Timer wird die "*** Connected to <CALL>" Flag ignoriert.
 
 ###########################################################################################################
 ###########################################################################################################

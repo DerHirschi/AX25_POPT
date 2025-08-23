@@ -92,7 +92,7 @@ class NewConnWin(tk.Toplevel):
 
 
         call_label = ttk.Label(dest_call_frame,
-                              text=self._getTabStr('newcon_ziel'),
+                              text=f"{self._getTabStr('ziel')}:",
                               foreground='black',
                               font=("TkFixedFont", 11),
                               # height=1,
