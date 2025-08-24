@@ -1727,7 +1727,8 @@ class BBS:
             msg['recipient_bbs_call']   = db_bbs_call
             msg['recipient_bbs']        = db_bbs_addr
             msg['msg']                  = new_text
-            self._redir_msg(msg)
+            # TODO: optional
+            # self._redir_msg(msg)
 
         return msg
 

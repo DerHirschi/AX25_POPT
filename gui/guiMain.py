@@ -1052,6 +1052,7 @@ class PoPT_GUI_Main:
                                         foreground=fg,
                                         variable=self._rx_beep_var,
                                         command=self._chk_rx_beep,
+
                                            border=False,
                                            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                            highlightthickness=0,
@@ -2096,10 +2097,12 @@ class PoPT_GUI_Main:
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
-            self._rx_beep_box.select()
+            self._rx_beep_var.set(1)
+            #self._rx_beep_box.select()
             self._rx_beep_box.configure(bg='green')
         else:
-            self._rx_beep_box.deselect()
+            self._rx_beep_var.set(0)
+            #self._rx_beep_box.deselect()
             self._rx_beep_box.configure(bg=bg)
 
         if ch_vars.timestamp_opt and self.channel_index:
