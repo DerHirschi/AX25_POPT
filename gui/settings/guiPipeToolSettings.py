@@ -288,7 +288,10 @@ class PipeToolSettings(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ##########################
         main_f = ttk.Frame(self)

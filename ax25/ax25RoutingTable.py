@@ -1,189 +1,222 @@
-""" Ich hab absolut kein Plan was ich hier mache .. Aber wird schon .. :D"""
+"""By Grok3-AI"""
+import time
 from cfg.logger_config import logger
-
-
-def getNew_DE_list_entry(netrom_cfg: dict):
-    node_call = netrom_cfg.get('node_call', '')
-    node_id = netrom_cfg.get('node_id', '')
-    return dict(
-        next_de='',
-        prev_de='',
-        active_route_to_de=False,
-        de_id=node_id,
-        de_call=node_call,
-        route_select=1,
-        num_routes=1,
-        route_1=[node_call, 255, 0],
-        route_2=[],
-        route_3=[],
-        de_info=dict(
-            first_info=dict(netrom_cfg),
-            last_info=dict(netrom_cfg),
-        ),
-    )
-
-
-def getNew_NB_list_entry(ax25frame_cfg: dict):
-    # node_call = netrom_cfg.get('node_call', '')
-    port_id = ax25frame_cfg.get('port_id', -1)
-    digi_path = ax25frame_cfg.get('digi_path', [])
-    return dict(
-        next_nb='',
-        prev_nb='',
-        nb_call='',
-        digi_path=digi_path,
-        port_id=port_id,
-        path_qual=255,
-        my_qual=255,
-        his_qual=255,
-        locked=False,
-        used=True,
-        num_routes=1,
-        primary={},     # self ?
-        maxtime=0,
-        link_table_ent=''
-    )
-
-
-class Node:
-    def __init__(self, no_id='', ssid_high=0):
-        self.no_id = no_id
-        self.ssid_high = ssid_high
-
-
-class Peer:
-    def __init__(self,
-                 used=False,
-                 routes=None,
-                 typ='',
-                 quality=0,
-                 my_quality=0,
-                 his_quality=0,
-                 locked=False,
-                 num_routes=0,
-                 primary=None,
-                 maxtime=0,
-                 constatus=1):
-        self.used = used
-        self.routes = routes if routes is not None else []
-        self.typ = typ
-        self.quality = quality
-        self.my_quality = my_quality
-        self.his_quality = his_quality
-        self.locked = locked
-        self.num_routes = num_routes
-        self.primary = primary
-        self.maxtime = maxtime
-        self.constatus = constatus
-
 
 class RoutingTable:
     """
-    NO = Node
-    NB = Neighbor
-    DE = Destination
-
-    DE-TAB:
-    dict(
-        port_id=dict(
-            node_call=dict(get_DE_list_entry())
-        )
-    )
+    Globale Routingtabelle zur Analyse von NET/ROM- und INP-Daten (Layer-3).
+    Speichert Knoten und Verbindungen mit port-spezifischen Metriken.
+    Für Analysezwecke optimiert, aber erweiterbar für Layer-4.
     """
+    def __init__(self):
+        self.table = {
+            'nodes': {},       # Knoten: Callsign -> Informationen
+            'connections': {}  # Verbindungen: (from_call, to_call) -> Liste von Einträgen
+        }
+        self.max_history = 100  # Maximale Anzahl gespeicherter Frames pro Knoten
 
-    def __init__(self, port_handler, max_nodes=100, max_peers=100):
-        logger.info("RoutingTable Init")
-        self._port_handler = port_handler
-        self.nodetab = [Node() for n in range(max_nodes)]
-        self.nodelis = []
-        self.peertab = [Peer() for n in range(max_peers)]
-        self.num_nodes = 0
-        self.num_peers = 0
-        self.num_routes = 0
-        self.max_nodes = max_nodes
-        self.max_peers = max_peers
-        self.typ = 'N'
-        self.my_quality = 0
+    def update(self, ax25frame_cfg: dict):
+        """
+        Aktualisiert die Tabelle mit dekodierten Daten.
+        """
+        netRom_cfg = ax25frame_cfg.get('netrom_cfg', {})
+        if not netRom_cfg:
+            return
+        current_time    = time.time()
+        port_id         = ax25frame_cfg.get('port_id', -1)
+        digi_path       = ax25frame_cfg.get('digi_path', [])
 
+        # UI-Frames (NET/ROM Nachbarinformationen)
+        if 'node_call' in netRom_cfg:
+            node_call = netRom_cfg['node_call']
+            if node_call not in self.table['nodes']:
+                self.table['nodes'][node_call] = {
+                    'alias': netRom_cfg.get('node_id', ''),
+                    'ip': netRom_cfg.get('ip', ''),
+                    'protocol': 'NET/ROM',
+                    'ports': {port_id: {'digi_path': digi_path, 'last_seen': current_time}},
+                    'first_seen': current_time,
+                    'last_seen': current_time,
+                    'info_history': [netRom_cfg]
+                }
+            else:
+                node = self.table['nodes'][node_call]
+                node['alias'] = netRom_cfg.get('node_id', node['alias'])
+                node['ip'] = netRom_cfg.get('ip', node['ip'])
+                node['ports'][port_id] = {'digi_path': digi_path, 'last_seen': current_time}
+                node['last_seen'] = current_time
+                node['info_history'].append(netRom_cfg)
+                if len(node['info_history']) > self.max_history:
+                    node['info_history'] = node['info_history'][-self.max_history:]
 
-        self._NB_tab = {}
-        self._DE_tab = {}
-        self._active_port_ids = lambda: list(self._port_handler.get_all_ports().keys())
+            neighbors = netRom_cfg.get('node_nb_list', {})
+            for neighbor in neighbors.values():
+                nb_call = neighbor['best_neighbor_call']
+                key = (node_call, nb_call)
+                if key not in self.table['connections']:
+                    self.table['connections'][key] = []
+                self.table['connections'][key].append({
+                    'type': 'neighbor',
+                    'metrics': {
+                        'quality': neighbor.get('qual', 0),
+                        'rtt': ax25frame_cfg.get('rtt', 0),
+                        'port_id': port_id,
+                        'digi_path': digi_path
+                    },
+                    'timestamp': current_time
+                })
 
-    def register_peer(self):
-        for pp in self.peertab:
-            if not pp.used:
-                pp.used = True
-                pp.routes = [[] for n in range(self.max_nodes)]     # ######
-                pp.quality = 0
-                pp.my_quality = 0
-                pp.his_quality = 0
-                pp.locked = False
-                pp.num_routes = 0
-                pp.primary = pp
-                pp.maxtime = 0
-                pp.constatus = 1
-                self.num_peers += 1
-                return pp
-        return None
+        # I-Frames (INP Route Records)
+        elif 'inp_route' in netRom_cfg:
+            route = netRom_cfg['inp_route']
+            for i, (node_call, hop_counter, marker) in enumerate(route):
+                if node_call not in self.table['nodes']:
+                    self.table['nodes'][node_call] = {
+                        'alias': '',
+                        'ip': '',
+                        'protocol': 'INP',
+                        'ports': {port_id: {'digi_path': digi_path, 'last_seen': current_time}},
+                        'first_seen': current_time,
+                        'last_seen': current_time,
+                        'info_history': [netRom_cfg]
+                    }
+                else:
+                    node = self.table['nodes'][node_call]
+                    node['ports'][port_id] = {'digi_path': digi_path, 'last_seen': current_time}
+                    node['last_seen'] = current_time
+                    node['info_history'].append(netRom_cfg)
+                    if len(node['info_history']) > self.max_history:
+                        node['info_history'] = node['info_history'][-self.max_history:]
 
-    def NetRom_UI_rx(self, ax25frame_cfg: dict):
-        print("NetRom_UI_rx")
-        port_id = ax25frame_cfg.get('port_id', -1)
-        netrom_cfg = ax25frame_cfg.get('netrom_cfg', {})
-        de_call = netrom_cfg.get('node_call', '')
-        if not netrom_cfg or not de_call:
-            print(f"NetRom_UI_rx: Cfg Error: NetRom: {port_id} - de_call: {de_call}")
-            logger.warning(f"NetRom_UI_rx: Cfg Error: NetRom: {port_id} - de_call: {de_call}")
-            return False
-        if port_id not in self._active_port_ids():
-            print(f"NetRom_UI_rx: Port not active. Port {port_id}")
-            logger.warning(f"NetRom_UI_rx: Port not active. Port {port_id}")
-            return False
-        via_path = ax25frame_cfg.get('via_calls_str_c_bit', [])
-        digi_path = []
-        for call_str, c_bit in via_path:
-            if c_bit:
-                digi_path.append(call_str)
-        if len(digi_path) > 2:
-            print("NetRom_UI_rx: Digi-Path > 2")
-            logger.warning("NetRom_UI_rx: Digi-Path > 2")
-            return False
-        ax25frame_cfg['digi_path'] = tuple(digi_path)
-        # ==== Peer - TAB
-        nbTab = self.get_NB_tab_ent(de_call)
+            for i in range(len(route) - 1):
+                from_call = route[i][0]
+                to_call = route[i + 1][0]
+                hop_counter = route[i + 1][1]
+                marker = route[i + 1][2]
+                key = (from_call, to_call)
+                if key not in self.table['connections']:
+                    self.table['connections'][key] = []
+                self.table['connections'][key].append({
+                    'type': 'route',
+                    'metrics': {
+                        'hop_counter': hop_counter,
+                        'marker': marker,
+                        'ttl': netRom_cfg.get('time_to_live', 255),
+                        'ci_id': f"{netRom_cfg.get('cir_index', 0):02x}/{netRom_cfg.get('cir_ID', 0):02x}",
+                        'port_id': port_id,
+                        'digi_path': digi_path
+                    },
+                    'timestamp': current_time
+                })
 
-        if not nbTab:
-            nbTab = getNew_NB_list_entry(ax25frame_cfg)
-        self._NB_tab[de_call] = nbTab
-        # ==== DE - TAB
-        deTab = self.get_DE_tab_ent(de_call)
-        if not deTab:
-            deTab = getNew_DE_list_entry(netrom_cfg)
-        self._DE_tab[de_call] = deTab
-        # ===========================
-        self.debug_out()
+        # RIF/RIP-Frames
+        elif 'rif_data' in netRom_cfg:
+            for rip in netRom_cfg['rif_data']:
+                rif = rip['rif_data']
+                call = rif.get('call', 'INVALID')
+                if call == 'INVALID':
+                    continue
+                if call not in self.table['nodes']:
+                    self.table['nodes'][call] = {
+                        'alias': rif.get('alias', ''),
+                        'ip': rif.get('ip', ''),
+                        'protocol': 'RIF/RIP',
+                        'ports': {port_id: {'digi_path': digi_path, 'last_seen': current_time}},
+                        'first_seen': current_time,
+                        'last_seen': current_time,
+                        'info_history': [netRom_cfg]
+                    }
+                else:
+                    node = self.table['nodes'][call]
+                    node['alias'] = rif.get('alias', node['alias'])
+                    node['ip'] = rif.get('ip', node['ip'])
+                    node['ports'][port_id] = {'digi_path': digi_path, 'last_seen': current_time}
+                    node['last_seen'] = current_time
+                    node['info_history'].append(netRom_cfg)
+                    if len(node['info_history']) > self.max_history:
+                        node['info_history'] = node['info_history'][-self.max_history:]
 
-    def debug_out(self):
-        print('')
-        print("------- NB-TAB -------")
-        for de_call, de_tab in self._NB_tab.items():
-            print(f"-- Dest: {de_call}")
-            for k, val in de_tab.items():
-                print(f"- {k}: {val}")
-            print('')
-        print('')
+                from_call = netRom_cfg.get('call_from', '')
+                key = (from_call, call)
+                if key not in self.table['connections']:
+                    self.table['connections'][key] = []
+                self.table['connections'][key].append({
+                    'type': 'metric_update',
+                    'metrics': {
+                        'quality': rif.get('quality', 0),
+                        'hop_counter': rif.get('hop_count', 0),
+                        'rtt': rif.get('transport_time', 0),
+                        'ttl': netRom_cfg.get('time_to_live', 255),
+                        'port_id': port_id,
+                        'digi_path': digi_path
+                    },
+                    'timestamp': current_time
+                })
 
-        print("------- DE-TAB -------")
-        for de_call, de_tab in self._DE_tab.items():
-            print(f"-- Dest: {de_call}")
-            for k, val in de_tab.items():
-                print(f"- {k}: {val}")
-            print('')
+        logger.debug(f"Nodes: {len(self.table['nodes'])}, Connections: {len(self.table['connections'])}")
 
-    def get_NB_tab_ent(self, de_call: str):
-        return self._NB_tab.get(de_call, {})
+    def get_routes_for_de(self, de_call, max_routes=3, port_id=None):
+        """
+        Konvertiert Verbindungen in ein route_1, route_2, route_3-Format.
+        Optional nach port_id filtern.
+        """
+        routes = []
+        for (from_call, to_call), entries in self.table['connections'].items():
+            if to_call == de_call:
+                for entry in entries:
+                    if port_id is None or entry['metrics']['port_id'] == port_id:
+                        quality = entry['metrics'].get('quality', 0)
+                        hop_counter = entry['metrics'].get('hop_counter', 0)
+                        routes.append({
+                            'route': [from_call, to_call],
+                            'quality': quality,
+                            'hop_counter': hop_counter
+                        })
+        routes = sorted(routes, key=lambda x: x['quality'], reverse=True)[:max_routes]
+        result = {}
+        for i, route in enumerate(routes, 1):
+            result[f'route_{i}'] = route['route'] + [route['quality']] if route else []
+        for i in range(1, max_routes + 1):
+            if f'route_{i}' not in result:
+                result[f'route_{i}'] = []
+        return result
 
-    def get_DE_tab_ent(self, de_call: str):
-        return self._DE_tab.get(de_call, {})
+    def filter_by_port(self, port_id):
+        """
+        Gibt eine gefilterte Tabelle mit Daten für einen bestimmten Port zurück.
+        """
+        filtered = {'nodes': {}, 'connections': {}}
+        for call, node in self.table['nodes'].items():
+            if port_id in node['ports']:
+                filtered['nodes'][call] = node.copy()
+                filtered['nodes'][call]['ports'] = {port_id: node['ports'][port_id]}
+        for key, entries in self.table['connections'].items():
+            filtered_entries = [e for e in entries if e['metrics']['port_id'] == port_id]
+            if filtered_entries:
+                filtered['connections'][key] = filtered_entries
+        return dict(filtered)
 
+    def debug_out(self, port_id=None):
+        """
+        Gibt die Tabelle aus, optional gefiltert nach port_id.
+        """
+        table = self.filter_by_port(port_id) if port_id is not None else self.table
+        print("------- Routing Table -------")
+        print("Nodes:")
+        for call, node in table['nodes'].items():
+            print(f"-- {call}:")
+            for key, value in node.items():
+                if key == 'info_history':
+                    print(f"- {key}: {len(value)} entries")
+                elif key == 'ports':
+                    print(f"- {key}: {list(value.keys())}")
+                else:
+                    print(f"- {key}: {value}")
+        print("\nConnections:")
+        for (from_call, to_call), entries in table['connections'].items():
+            print(f"-- {from_call} -> {to_call}:")
+            for entry in entries:
+                print(f"- Type: {entry['type']}")
+                print(f"  Metrics: {entry['metrics']}")
+                print(f"  Timestamp: {entry['timestamp']}")
+        print("----------------------------")

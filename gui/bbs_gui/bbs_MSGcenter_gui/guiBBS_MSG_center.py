@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_c_BBS import MSG_Center_BBS
@@ -35,7 +36,10 @@ class MSG_Center(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ######################################################################
         # APRS/BBS TABS

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from cfg.constant import VER
+from cfg.logger_config import logger
 
 
 class About(tk.Toplevel):
@@ -21,7 +22,10 @@ class About(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ##########################
         main_f = ttk.Frame(self)

@@ -1,5 +1,10 @@
-from cfg.constant import SERVICE_CH_START
-from cfg.logger_config import logger
+import threading
+import time
+import traceback
+
+from cfg.constant import SERVICE_CH_START, TASK_TYP_FWD
+from cfg.logger_config import logger, BBS_LOG
+from cfg.popt_config import POPT_CFG
 from cli import NoneCLI
 
 
@@ -12,67 +17,91 @@ class AutoConnTask:
             'own_call': 'MD2SAW',
             'dest_call': 'DBO527',
             'via_calls': ['DNX527-1'],
-            # 'axip_add': ('192.168.178.160', 8093),
-            'silent_conn': True,
+            'axip_add': ('192.168.178.160', 8093),
         }
         """
+        #conf['conn_script'] = [
+        #    {'cmd': 'c celle', 'dest_call': 'CEN0DE', 'wait': 0},
+        #    {'cmd': 'm', 'dest_call': 'CE0BBS', 'wait': 0}
+        #]
         self._conf = conf
+
+        if not self._conf.get('conn_script', {}):
+            dest_call = self._conf.get('dest_call')
+            via_calls = self._conf.get('via_calls')
+        else:
+            dest_call = self._conf.get('via_calls')[0]
+            via_calls = []
+
         connection = port_handler.new_outgoing_connection(
-            dest_call=  self._conf.get('dest_call'),
+            dest_call=  dest_call,
             own_call=   self._conf.get('own_call'),
-            via_calls=  self._conf.get('via_calls'),          # Auto lookup in MH if not exclusive Mode
+            via_calls=  via_calls,                            # Auto lookup in MH if not exclusive Mode
             port_id=    self._conf.get('port_id', -1),        # -1 Auto lookup in MH list
             axip_add=   self._conf.get('axip_add', ('', 0)),  # AXIP Adress
             exclusive=  True,                                 # True = no lookup in MH list
             link_conn=  None,                                 # Linked Connection AX25Conn
             channel=    SERVICE_CH_START,                     # GUI Channel
         )
-        # print(self.connection)
+
+        self._conn_script_i       = 0
+        self._conn_script_w_state = False
+        self._conn_script_w_timer = 0
         self._connection        = None
-        # self.conn_state         = None
-        # self.dest_station_id    = None
-        self.e                  = None
+        self.e                  = False
         self._state_exec        = None
         self.state_id           = 1
         self._state_tab = {
-            'FWD': {
+            TASK_TYP_FWD: {
                 0: self._end_connection,
-                1: self._PMS_send_fwd_cmd,
-                2: self._PMS_is_last_chars_in_rxbuff,
-                3: self._PMS_start_rev_fwd,
+                1: self._conn_script,
+                2: self._PMS_fwd_init,
                 4: self._PMS_wait_rev_fwd_ended,
             }
         }.get(self._conf.get('task_typ', ''), {})
         if not self._state_tab:
             self.e = True
-            # print(f"Error ConnTask no state_tab Typ: {self._conf}")
             logger.error(f"Error ConnTask no state_tab Typ: {self._conf}")
             self._set_state_exec(0)
         if not connection[0]:
             self.e = True
-            # print(f"Error ConnTask connection: {connection[1]}")
             logger.error(f"Error ConnTask connection: {connection[1]}")
             self._set_state_exec(0)
         else:
-            self._connection = connection[0]
-            self._connection.cli = NoneCLI(self._connection)
-            self._connection.cli_type = f"Task: {self._conf.get('task_typ', '-')}"
-            # self.dest_station_id = self._connection.cli.stat_identifier
-            self._set_state_exec(1)
+            self._connection            = connection[0]
+            self._connection.cli        = NoneCLI(self._connection)
+            self._connection.cli_type   = f"Task: {self._conf.get('task_typ', '-')}"
+            self._get_call              = lambda : self._connection.to_call_str.split('-')[0]
+            # If task_typ == : ...... or dict for getting Param
+            self._conn_script_to_param  = POPT_CFG.get_BBS_FWD_cfg(self._conf.get('dest_call')).get('t_o_dead_conn', 5) * 60
+            self._conn_script_to        = time.time() + self._conn_script_to_param
+            logger.debug("ConnTask connection: Start")
+            if self._conf.get('conn_script', []):
+                self._set_state_exec(1)
+            else:
+                self._set_state_exec(2)
+
+            self._exec_state_tab()
 
     def crone(self):
-        if self.e:
-            self._ConnTask_ende()
-            return False
-        if not self._is_connected():
-            self._ConnTask_ende()
-            return False
-        self._exec_state_tab()
-        return True
+        try:
+            if self.e:
+                self._ConnTask_ende()
+            if not self._is_connected():
+                self._ConnTask_ende()
+                return False
+            self._exec_state_tab()
+            return True
+        except Exception as ex:
+            logger.error(
+                f"Fehler in AutoConnTask crone: {ex}, Thread: {threading.current_thread().name}")
+            traceback.print_exc()
+            raise ex
 
     def _set_state_exec(self, state_id):
         if self._state_tab:
-            self.state_id = state_id
+            logger.debug(f"AutoConn State change: {self.state_id} > {state_id}")
+            self.state_id    = state_id
             self._state_exec = self._state_tab[self.state_id]
 
     def _exec_state_tab(self):
@@ -97,60 +126,101 @@ class AutoConnTask:
         # print(f"ConnTask {self._conf.get('task_typ', '')} END")
         if self.state_id:
             self._set_state_exec(0)
-        # if self._connection:
-        #     self._end_connection()
 
     def _end_connection(self):
         # 0
-        if self._connection:
-            self._connection.conn_disco()
-            self._connection = None
-        self._set_state_exec(0)
-        self._ConnTask_ende()
+        if not self._connection:
+            return
+        if not self._connection.is_buffer_empty():
+            return
+        self._connection.conn_disco()
+
+    ###############################################
+    def _conn_script(self):
+        # 1
+        try:
+            step: dict = self._conf.get('conn_script', [])[self._conn_script_i]
+        except Exception as ex:
+            logger.error(f"Connect Script       : {ex}")
+            logger.error(f"  conn_script conf   : {self._conf.get('conn_script', [])}")
+            logger.error(f"  conn_script_i      : {self._conn_script_i}")
+            logger.error(f"  conn_script_w_state: {self._conn_script_w_state}")
+            logger.error(f"  conn_script_w_timer: {self._conn_script_w_timer}")
+            self.e = True
+            self._set_state_exec(0)
+        else:
+            cmd         = step.get('cmd', '')
+            dest_call   = step.get('dest_call', '')
+            wait        = step.get('wait', 0)
+
+            if self._is_connected():
+                state_index = self._connection.get_state()
+                if state_index != 5:
+                    return
+                if not self._conn_script_w_state:
+                    cmd += '\r'
+                    cmd = cmd.encode('UTF-8', 'ignore')
+                    self._connection.tx_buf_rawData += cmd
+                    self._conn_script_w_state        = True
+                    self._conn_script_to             = time.time() + self._conn_script_to_param
+                    if wait:
+                        self._conn_script_w_timer = time.time() + wait
+                else:
+                    if time.time() < self._conn_script_w_timer:
+                        return
+                    conn_dest_call = self._get_call()
+                    if dest_call == conn_dest_call or wait:
+                        self._conn_script_to      = time.time() + self._conn_script_to_param
+                        self._conn_script_i      += 1
+                        self._conn_script_w_state = False
+                        if self._conn_script_i == len(self._conf.get('conn_script', [])):
+                            if self._conf.get('dest_call') != conn_dest_call:
+                                BBS_LOG.warning("Conn-Script Dest-Call != BBS Dest-Call")
+                                BBS_LOG.warning(f"  Dest-Call: {conn_dest_call}")
+                                BBS_LOG.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
+                                logger.warning("Conn-Script Dest-Call != BBS Dest-Call")
+                                logger.warning(f"  Dest-Call: {conn_dest_call}")
+                                logger.warning(f"  BBS -Call: {self._conf.get('dest_call')}")
+                            # BBS-FWD Init
+                            self._set_state_exec(2)
+                        return
+
+            if time.time() > self._conn_script_to:
+                BBS_LOG.error(f"Connect Script Timeout: {self._conf.get('dest_call')}")
+                BBS_LOG.error(f"  Current Call: {self._get_call()}")
+                BBS_LOG.error("  Disconnecting....")
+                logger.error(f"Connect Script Timeout: {self._conf.get('dest_call')}")
+                logger.error(f"  Current Call: {self._get_call()}")
+                logger.error("  Disconnecting....")
+                self._set_state_exec(4)
+                self._exec_state_tab()
 
     ###############################################
     # PMS
-    def _PMS_send_fwd_cmd(self):
-        # 1
-        if self._connection.cli.stat_identifier:
-            if self._connection.cli.stat_identifier.typ != 'BBS':
-                self._set_state_exec(0)
-                return
-            rev_cmd = self._connection.cli.stat_identifier.bbs_rev_fwd_cmd
-            if rev_cmd:
-                self._connection.send_data(rev_cmd)
-            self._set_state_exec(2)
-            return
-
-        self._set_state_exec(0)
-
-    def _PMS_is_last_chars_in_rxbuff(self):
+    def _PMS_fwd_init(self):
         # 2
-        if self._connection.rx_buf_last_data.endswith(b'>\r'):
-            self._set_state_exec(3)
-
-    def _PMS_start_rev_fwd(self):
-        # 3
-        """
-        if self._connection.bbs_connection:
-            self._set_state_exec(4)
-            return
-        """
-        # TODO if connection.rx:
-        if self._connection.bbsFwd_start_reverse():
+        if self._connection.bbsFwd_init():
+            if self._conf.get('conn_script', []):
+                self._connection.bbs_connection.connection_rx(self._connection.rx_buf_rawData)
             self._set_state_exec(4)
         else:
+            logger.error("_PMS_fwd_init > bbsFwd_init")
             self._set_state_exec(0)
 
     def _PMS_wait_rev_fwd_ended(self):
         # 4
-        if not self._connection.bbs_connection:
-            # self._set_state_exec(0)
-            if self._connection:
-                # self._set_state_exec(0)
-                self._end_connection()
-            else:
-                self._ConnTask_ende()
+        if not hasattr(self._connection, 'bbs_connection') or\
+            not hasattr(self._connection, 'tx_buf_rawData'):
+            self._ConnTask_ende()
+            return
+        if self._connection.bbs_connection:
+            return
+        if self._connection.tx_buf_rawData:
+            return
+        if self._connection:
+            self._end_connection()
+        else:
+            self._ConnTask_ende()
 
     ##########################################
     #

@@ -4,6 +4,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import get_list_fm_viaStr
@@ -28,7 +29,10 @@ class BeaconTracer(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         self.lift()

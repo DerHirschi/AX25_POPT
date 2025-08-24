@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.constant import WEEK_DAYS_GE
+from cfg.logger_config import logger
 from schedule.popt_sched import getNew_schedule_config
 from fnc.str_fnc import get_strTab
 from cfg.popt_config import POPT_CFG
@@ -70,7 +71,10 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ######################################
         main_f = ttk.Frame(self)

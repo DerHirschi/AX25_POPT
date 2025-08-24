@@ -21,6 +21,7 @@ class NodeCLI(DefaultCLI):
                                'ECHO',
                                'CONNECT',
                                'C!',
+                               'CH',
                                'PORT',
                                'MH',
                                'LMH',

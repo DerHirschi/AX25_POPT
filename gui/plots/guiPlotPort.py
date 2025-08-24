@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.string_tab import STR_TABLE
 from fnc.str_fnc import convert_str_to_datetime
@@ -30,7 +31,10 @@ class PlotWindow(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         ##############################
         self._root_win = root_cl
         self._lang = POPT_CFG.get_guiCFG_language()

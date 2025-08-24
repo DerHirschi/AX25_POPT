@@ -2,7 +2,7 @@ import datetime
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, PhotoImage
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -17,10 +17,12 @@ from gui.aprs.guiAPRS_Settings import APRSSettingsWin
 from gui.aprs.guiAPRS_be_tracer import BeaconTracer
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
+from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiRightClick_Menu import ContextMenu
+#from gui.guiRoutingTab import RoutingTableWindow
 from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
@@ -91,13 +93,13 @@ class PoPT_GUI_Main:
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._logTag = 'GUI-Main> '
         logTag = self._logTag + 'Init: '
-        logger.info(logTag + 'start..')
+        logger.info('start..')
         guiCfg = POPT_CFG.load_guiPARM_main()
         ###########################################
         self.main_win   = tk.Tk()
         ###########################################
         self.style_name = guiCfg.get('gui_parm_style_name', 'default')
-        logger.info(logTag + f'loading Style: {self.style_name}')
+        logger.info(f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
 
         if self.style_name in STYLES_AWTHEMES:
@@ -108,12 +110,12 @@ class PoPT_GUI_Main:
                 self.style.tk.call('package', 'require', self.style_name)
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning(logTag + 'awthemes-10.4.0 not found in folder data')
-                logger.warning(logTag + '  1. If you want to use awthemes, download:')
-                logger.warning(logTag + '     https://sourceforge.net/projects/tcl-awthemes/')
-                logger.warning(logTag + '  2. Extract the contents of the file awthemes-10.4.0.zip')
-                logger.warning(logTag + '     into the data/ folder')
-                logger.warning(logTag + '')
+                logger.warning('awthemes-10.4.0 not found in folder data')
+                logger.warning('  1. If you want to use awthemes, download:')
+                logger.warning('     https://sourceforge.net/projects/tcl-awthemes/')
+                logger.warning('  2. Extract the contents of the file awthemes-10.4.0.zip')
+                logger.warning('     into the data/ folder')
+                logger.warning('')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
         else:
@@ -124,7 +126,7 @@ class PoPT_GUI_Main:
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
-        logger.info(logTag + f'Using style_name: {self.style_name}')
+        logger.info(f'Using style_name: {self.style_name}')
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
@@ -132,9 +134,13 @@ class PoPT_GUI_Main:
         # self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
-        except tk.TclError:
-            logger.warning(logTag + f"Couldn't load favicon.ico ")
-            pass
+        except Exception as ex:
+            logger.warning(f"Couldn't load favicon.ico: {ex}")
+            logger.info("Try to load popt.png.")
+            try:
+                self.main_win.iconphoto(False, PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
         self._port_handler = port_handler
@@ -175,14 +181,14 @@ class PoPT_GUI_Main:
         self.own_loc = ''
         self.own_qth = ''
         # Stat INFO (Name,QTH usw)
-        self.stat_info_name_var     = tk.StringVar(self.main_win)
-        self.stat_info_qth_var      = tk.StringVar(self.main_win)
-        self.stat_info_loc_var      = tk.StringVar(self.main_win)
-        self.stat_info_typ_var      = tk.StringVar(self.main_win)
-        self.stat_info_sw_var       = tk.StringVar(self.main_win)
-        self.stat_info_timer_var    = tk.StringVar(self.main_win)
-        self.stat_info_encoding_var = tk.StringVar(self.main_win)
-        self.stat_info_status_var   = tk.StringVar(self.main_win)
+        self._stat_info_name_var     = tk.StringVar(self.main_win)
+        self._stat_info_qth_var      = tk.StringVar(self.main_win)
+        self._stat_info_loc_var      = tk.StringVar(self.main_win)
+        self._stat_info_typ_var      = tk.StringVar(self.main_win)
+        self._stat_info_sw_var       = tk.StringVar(self.main_win)
+        self._stat_info_timer_var    = tk.StringVar(self.main_win)
+        self._stat_info_encoding_var = tk.StringVar(self.main_win)
+        self._stat_info_status_var   = tk.StringVar(self.main_win)
         # Tabbed SideFrame FT
         self.ft_progress_var        = tk.StringVar(self.main_win)
         self.ft_size_var            = tk.StringVar(self.main_win)
@@ -213,7 +219,7 @@ class PoPT_GUI_Main:
         # Controlling
         self._ch_alarm      = False
         self.channel_index  = 1
-        self.mon_mode       = 0
+        self._mon_mode      = 0
         self._quit          = False
         self._init_state    = 0
         self._tracer_alarm  = False
@@ -230,12 +236,14 @@ class PoPT_GUI_Main:
         self._non_prio_task_timer               = time.time()
         self._non_non_prio_task_timer           = time.time()
         self._non_non_non_prio_task_timer       = time.time()
+        # Tasker Q
+        self._tasker_q                          = []
         # #### Tester
         # self._parm_test_task_timer = 60  # 5        # s
         # self._test_task_timer = time.time()
         ########################################
         ############################
-        # Windows
+        # Window
         self.new_conn_win           = None
         self.settings_win           = None
         self.mh_window              = None
@@ -255,6 +263,8 @@ class PoPT_GUI_Main:
         self.dualPort_settings_win  = None
         self.dualPortMon_win        = None
         self.conn_Path_plot_win     = None
+        self.block_list_win         = None
+        #self.routingTab_win         = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -391,6 +401,8 @@ class PoPT_GUI_Main:
         # LOOP LOOP LOOP
         self.main_win.after(self._loop_delay, self._tasker)
         logger.info('GUI: Init Done')
+        logger.info("GUI: Unblocking Ports")
+        self._port_handler.unblock_all_ports()
         logger.info('GUI: Start Tasker')
         self.main_win.mainloop()
 
@@ -418,6 +430,8 @@ class PoPT_GUI_Main:
             self.dualPort_settings_win,
             self.dualPortMon_win,
             self.conn_Path_plot_win,
+            self.block_list_win,
+            #self.routingTab_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -573,7 +587,7 @@ class PoPT_GUI_Main:
             i += 1
 
     def _save_pw_pos(self):
-        if self.mon_mode:
+        if self._mon_mode:
             return
         text_pan_pos_cfg = []
         for pan_id in range(2):
@@ -625,6 +639,13 @@ class PoPT_GUI_Main:
         MenuVerb.add_command(label=self._getTabStr('disconnect'), command=self._disco_conn)
         MenuVerb.add_separator()
         MenuVerb.add_command(label=self._getTabStr('disconnect_all'), command=self._disco_all)
+        MenuVerb.add_separator()
+        MenuVerb.add_command(label=self._getTabStr('port_unblock_all'),
+                             command=lambda: self._set_port_blocking(0) )
+        MenuVerb.add_command(label=self._getTabStr('port_block_ignore_all'),
+                             command=lambda: self._set_port_blocking(1))
+        MenuVerb.add_command(label=self._getTabStr('port_block_reject_all'),
+                             command=lambda: self._set_port_blocking(2))
         MenuVerb.add_separator()
         MenuVerb.add_command(label=self._getTabStr('quit'), command=self._destroy_win)
         menubar.add_cascade(label=self._getTabStr('connections'), menu=MenuVerb, underline=0)
@@ -694,6 +715,10 @@ class PoPT_GUI_Main:
         MenuTools.add_separator()
         MenuTools.add_command(label='Dual-Port Monitor',
                               command=lambda: self.open_window('dualPort_monitor'),
+                              underline=0)
+        MenuTools.add_separator()
+        MenuTools.add_command(label='Block List',
+                              command=lambda: self.open_BlockList_win(),
                               underline=0)
         MenuTools.add_separator()
 
@@ -1027,6 +1052,7 @@ class PoPT_GUI_Main:
                                         foreground=fg,
                                         variable=self._rx_beep_var,
                                         command=self._chk_rx_beep,
+
                                            border=False,
                                            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                            highlightthickness=0,
@@ -1099,20 +1125,20 @@ class PoPT_GUI_Main:
         fg, bg = self._get_colorMap()
 
         name_label = ttk.Label(name_f,
-                              textvariable=self.stat_info_name_var,
-                              # bg=STAT_BAR_CLR,
-                              #height=1,
-                              borderwidth=0,
-                              border=0,
-                              #fg=fg,
-                              #bg=bg,
-                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS, 'bold')
+                               textvariable=self._stat_info_name_var,
+                               # bg=STAT_BAR_CLR,
+                               #height=1,
+                               borderwidth=0,
+                               border=0,
+                               #fg=fg,
+                               #bg=bg,
+                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS, 'bold')
 
-                              )
+                               )
         name_label.pack()
         name_label.bind('<Button-1>', self.open_user_db_win)
         qth_label = tk.Label(qth_f,
-                             textvariable=self.stat_info_qth_var,
+                             textvariable=self._stat_info_qth_var,
                              bg=bg,
                              fg=fg,
                              height=1,
@@ -1123,7 +1149,7 @@ class PoPT_GUI_Main:
         qth_label.bind('<Button-1>', self.open_user_db_win)
         qth_label.pack()
         loc_label = tk.Label(loc_f,
-                             textvariable=self.stat_info_loc_var,
+                             textvariable=self._stat_info_loc_var,
                              bg=bg,
                              fg=fg,
                              height=1,
@@ -1137,7 +1163,7 @@ class PoPT_GUI_Main:
         opt = list(STATION_TYPS)
         stat_typ = tk.OptionMenu(
             typ_f,
-            self.stat_info_typ_var,
+            self._stat_info_typ_var,
             *opt,
             command=self._set_stat_typ,
         )
@@ -1155,7 +1181,7 @@ class PoPT_GUI_Main:
         stat_typ.pack(fill=tk.X, expand=True, padx=6)
 
         tk.Label(sw_f,
-                 textvariable=self.stat_info_sw_var,
+                 textvariable=self._stat_info_sw_var,
                  #width=18,
                  bg="#ffd444",
                  # fg="red3",
@@ -1168,7 +1194,7 @@ class PoPT_GUI_Main:
                  ).pack(fill=tk.X, expand=True, padx=6)
 
         self.status_label = tk.Label(stat_f,
-                                     textvariable=self.stat_info_status_var,
+                                     textvariable=self._stat_info_status_var,
                                      bg=STAT_BAR_CLR,
                                      fg="red3",
                                      height=1,
@@ -1183,19 +1209,19 @@ class PoPT_GUI_Main:
         self.status_label.bind('<Button-1>', self.do_priv)
 
         ttk.Label(time_f,
-                 textvariable=self.stat_info_timer_var,
-                 #width=6,
-                 # height=1,
-                 borderwidth=0,
-                 border=0,
-                 # bg="steel blue",
-                 # fg="red3",
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
-                 ).pack(fill=tk.X, expand=True)
+                  textvariable=self._stat_info_timer_var,
+                  #width=6,
+                  # height=1,
+                  borderwidth=0,
+                  border=0,
+                  # bg="steel blue",
+                  # fg="red3",
+                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
+                  ).pack(fill=tk.X, expand=True)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
             enc_f,
-            self.stat_info_encoding_var,
+            self._stat_info_encoding_var,
             *opt,
             command=self._change_txt_encoding
         )
@@ -1314,7 +1340,7 @@ class PoPT_GUI_Main:
                                  background=MON_SYS_MSG_CLR_BG)
         self._mon_txt.configure(state="disabled")
         ##
-        self._mon_txt.configure(state="normal")
+        #self._mon_txt.configure(state="normal")
         self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_config("send",
                                  foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
@@ -1409,7 +1435,7 @@ class PoPT_GUI_Main:
             return
         if not text:
             return
-        ch_enc = self.stat_info_encoding_var.get()
+        ch_enc = self._stat_info_encoding_var.get()
         if any((ch_enc == enc, not ch_enc)):
             text = text.decode(enc, 'ignore')
         else:
@@ -1428,7 +1454,7 @@ class PoPT_GUI_Main:
             return
         if not text:
             return
-        ch_enc = self.stat_info_encoding_var.get()
+        ch_enc = self._stat_info_encoding_var.get()
         if any((ch_enc == enc, not ch_enc)):
             text = text.decode(enc, 'ignore')
         else:
@@ -1537,7 +1563,7 @@ class PoPT_GUI_Main:
         data = open_file_dialog(self.main_win)
         if not data:
             return
-        ch_enc = self.stat_info_encoding_var.get()
+        ch_enc = self._stat_info_encoding_var.get()
         if not ch_enc:
             data = data.decode('UTF-8', 'ignore')
         else:
@@ -1708,10 +1734,13 @@ class PoPT_GUI_Main:
         if self._quit:
             self._tasker_quit()
         else:
-            prio = self._tasker_prio()
+            prio     = self._tasker_prio()
+            q_tasker = self._tasker_queue()
             if not self._tasker_05_sec():
                 if not self._tasker_1_sec():
-                    if not self._tasker_5_sec() and not prio:
+                    if all((not self._tasker_5_sec(),
+                            not prio,
+                            not q_tasker)):
                         self.main_win.update_idletasks()
             # self._tasker_tester()
         self.main_win.after(self._loop_delay, self._tasker)
@@ -1720,6 +1749,74 @@ class PoPT_GUI_Main:
         if self._port_handler.check_all_ports_closed():
             self._port_handler.close_gui()
             logger.info('GUI: Closing GUI: _tasker_quit Done.')
+
+    def _tasker_queue(self):
+        if not self._tasker_q:
+            return False
+        n = 10
+        if len(self._tasker_q) > 10:
+            logger.warning(self._logTag + f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
+            logger.warning(self._logTag + f"self._tasker_q: {self._tasker_q}")
+        while self._tasker_q and n:
+            task, arg       = self._tasker_q[0]
+            self._tasker_q  = self._tasker_q[1:]
+            if task == 'conn_btn_update':
+                self._conn_btn_update_task()
+            elif task == 'ch_status_update':
+                self._ch_status_update_task()
+            elif task == 'on_channel_status_change':
+                self._on_channel_status_change_task()
+            elif task == 'add_LivePath_plot':
+                node, ch_id, path = arg
+                self._add_LivePath_plot_task(node, ch_id, path)
+            elif task == 'resetHome_LivePath_plot':
+                ch_id = arg
+                self._resetHome_LivePath_plot_task(ch_id)
+            elif task == 'sysMsg_to_qso':
+                data, ch_index = arg
+                self._sysMsg_to_qso_task(data, ch_index)
+            elif task == 'dx_alarm':
+                self._dx_alarm_task()
+            elif task == 'tracer_alarm':
+                self._tracer_alarm_task()
+            elif task == 'reset_tracer_alarm':
+                self._reset_tracer_alarm_task()
+            elif task == 'reset_dx_alarm':
+                self._reset_dx_alarm_task()
+            elif task == 'pmsMail_alarm':
+                self._pmsMail_alarm_task()
+            elif task == 'reset_pmsMail_alarm':
+                self._reset_pmsMail_alarm_task()
+            elif task == 'pmsFwd_alarm':
+                self._pmsFwd_alarm_task()
+            elif task == 'reset_pmsFwd_alarm':
+                self._reset_pmsFwd_alarm_task()
+            elif task == 'set_diesel':
+                self._set_diesel_task()
+            elif task == 'reset_diesel':
+                self._reset_diesel_task()
+            elif task == 'set_rxEcho_icon':
+                alarm_set = arg
+                self._set_rxEcho_icon_task(alarm_set)
+            elif task == 'set_Beacon_icon':
+                alarm_set = arg
+                self._set_Beacon_icon_task(alarm_set)
+            elif task == 'set_port_block_warning':
+                self._set_port_block_warning_task()
+            elif task == 'reset_noty_bell_alarm':
+                self._reset_noty_bell_alarm_task()
+            elif task == 'set_noty_bell':
+                ch_id, msg = arg
+                self._set_noty_bell_task(ch_id, msg)
+            elif task == 'set_noty_bell_active':
+                self._set_noty_bell_active_task()
+            elif task == 'set_aprsMail_alarm':
+                self._set_aprsMail_alarm_task()
+            elif task == 'reset_aprsMail_alarm':
+                self._reset_aprsMail_alarm_task()
+
+            n -= 1
+        return True
 
     def _tasker_prio(self):
         """ Prio Tasks every Irritation flip flop """
@@ -1730,6 +1827,8 @@ class PoPT_GUI_Main:
            
         self._prio_task_flip = not self._prio_task_flip
         """
+        if hasattr(self._port_handler, 'tasker_gui_th'):
+            self._port_handler.tasker_gui_th()
         return self._monitor_task()
 
     def _tasker_05_sec(self):
@@ -1769,6 +1868,10 @@ class PoPT_GUI_Main:
                 if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
             """
+            if hasattr(self.routingTab_win, 'tasker'):
+                self.routingTab_win.tasker()
+            """
+            """
             if self.MSG_Center is not None:
                 self.MSG_Center.tasker()
             """
@@ -1798,17 +1901,28 @@ class PoPT_GUI_Main:
 
     # END TASKER
     ######################################################################
+    def _add_tasker_q(self, fnc: str, arg):
+        if fnc in self._tasker_q:
+            return
+        self._tasker_q.append(
+            (fnc, arg)
+        )
+
+    ######################################################################
     def _aprs_wx_tree_task(self):
         if self._port_handler.get_aprs_ais() is not None:
             self._port_handler.get_aprs_ais().aprs_wx_tree_task()
 
     def _AlarmIcon_tasker05(self):
-        if self._Alarm_Frame:
-            self._Alarm_Frame.AlarmIcon_tasker05()
+        if not self._Alarm_Frame:
+            return
+        self._Alarm_Frame.AlarmIcon_tasker05()
 
     def _AlarmIcon_tasker1(self):
-        if self._Alarm_Frame:
-            self._Alarm_Frame.AlarmIcon_tasker1()
+        if not self._Alarm_Frame:
+            return
+        self._Alarm_Frame.AlarmIcon_tasker1()
+        self._check_port_blocking_task()
 
     def _SideFrame_tasker(self):
         if self._flip05:
@@ -1818,6 +1932,12 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.tasker()
             self.tabbed_sideFrame2.on_ch_stat_change()
 
+    def _check_port_blocking_task(self):
+        if hasattr(self._port_handler, 'get_glb_port_blocking'):
+            if not self._port_handler.get_glb_port_blocking():
+                self._Alarm_Frame.set_PortBlocking(set_on=False)
+            else:
+                self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
     ###############################################################
     # QSO WIN
 
@@ -1977,10 +2097,12 @@ class PoPT_GUI_Main:
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
-            self._rx_beep_box.select()
+            self._rx_beep_var.set(1)
+            #self._rx_beep_box.select()
             self._rx_beep_box.configure(bg='green')
         else:
-            self._rx_beep_box.deselect()
+            self._rx_beep_var.set(0)
+            #self._rx_beep_box.deselect()
             self._rx_beep_box.configure(bg=bg)
 
         if ch_vars.timestamp_opt and self.channel_index:
@@ -1991,11 +2113,13 @@ class PoPT_GUI_Main:
             #self._ts_box_box.configure(bg=bg)
 
     def sysMsg_to_qso(self, data, ch_index):
-        # FIXME: Wait for spooler (async)
+        self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
+
+    def _sysMsg_to_qso_task(self, data, ch_index):
         if not data:
             return
         if 1 > ch_index > SERVICE_CH_START - 1:
-            return False
+            return
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)
@@ -2173,6 +2297,7 @@ class PoPT_GUI_Main:
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
             'ConnPathPlot': (self.conn_Path_plot_win, ConnPathsPlot),
+
             # TODO .......
 
         }.get(win_key, None)
@@ -2217,6 +2342,34 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.reset_dx_alarm()
         self.tabbed_sideFrame2.reset_dx_alarm()
 
+    ##################
+    # Black List Win
+    def open_BlockList_win(self):
+        if hasattr(self.block_list_win, 'lift'):
+            self.block_list_win.lift()
+            return
+        if self.block_list_win is not None:
+            logger.error("self.block_list_win is not None. Try to close")
+            if hasattr(self.block_list_win, 'close'):
+                self.block_list_win.close()
+                self.block_list_win = None
+                return
+        self.block_list_win = BlockList(self)
+
+    ##################
+    # Routing tab win
+    """
+    def open_RoutingTab_win(self):
+        if hasattr(self.routingTab_win, 'lift'):
+            self.routingTab_win.lift()
+            return
+        if not hasattr(self._port_handler, 'get_RoutingTable'):
+            if hasattr(self.routingTab_win, 'close'):
+                self.routingTab_win.close()
+                self.routingTab_win = None
+                return
+        #RoutingTableWindow(self, self._port_handler.get_RoutingTable())
+    """
     #######################################################
     """
     def gui_set_distance(self):
@@ -2261,7 +2414,7 @@ class PoPT_GUI_Main:
                 else:
                     ind = '1.0'
 
-                txt_enc = self.stat_info_encoding_var.get()
+                txt_enc = self._stat_info_encoding_var.get()
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
@@ -2371,6 +2524,9 @@ class PoPT_GUI_Main:
     #######################################################################
     # Conn Path Plot
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
+        self._add_tasker_q("add_LivePath_plot", (node, ch_id, path))
+
+    def _add_LivePath_plot_task(self, node: str, ch_id: int, path=None):
         if path is None:
             path = []
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
@@ -2382,6 +2538,10 @@ class PoPT_GUI_Main:
                 self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
+        self._add_tasker_q("resetHome_LivePath_plot", ch_id)
+
+
+    def _resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
         if ch_id == self.channel_index:
@@ -2393,6 +2553,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
+        # self.open_RoutingTab_win()
         #print(self._inp_txt.cget('height'))
         #print(self._pw.sashpos(0))
         #self._pw.sashpos(0, 20)
@@ -2427,16 +2588,16 @@ class PoPT_GUI_Main:
 
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
-        if self.mon_mode:
+        if self._mon_mode:
             # self.channel_index = int(self.mon_mode)
-            self._ch_btn_clk(int(self.mon_mode))
-            self.mon_mode = 0
+            self._ch_btn_clk(int(self._mon_mode))
+            self._mon_mode = 0
             self._mon_btn.configure(bg='yellow')
             self.ch_status_update()
             self._load_pw_pos()
             return
 
-        self.mon_mode = int(self.channel_index)
+        self._mon_mode = int(self.channel_index)
         self._ch_btn_clk(0)
         self._mon_btn.configure(bg='green')
         self.ch_status_update()
@@ -2446,8 +2607,8 @@ class PoPT_GUI_Main:
         if not ch_ind:
             self._switch_monitor_mode()
         else:
-            if self.mon_mode:
-                self.mon_mode = int(ch_ind)
+            if self._mon_mode:
+                self._mon_mode = int(ch_ind)
                 self._switch_monitor_mode()
             else:
                 self._ch_btn_clk(ch_ind)
@@ -2462,6 +2623,9 @@ class PoPT_GUI_Main:
         self._port_handler.accept_new_connection
         self._port_handler.end_connection
         """
+        self._add_tasker_q("conn_btn_update", None)
+
+    def _conn_btn_update_task(self):
         conn = self.get_conn(self.channel_index)
         if conn:
             if self._conn_btn.cget('bg') != "red":
@@ -2472,6 +2636,9 @@ class PoPT_GUI_Main:
 
     def ch_status_update(self):
         """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
+        self._add_tasker_q("ch_status_update", None)
+
+    def _ch_status_update_task(self):
         self._ch_btn_status_update()
         self.on_channel_status_change()
 
@@ -2485,11 +2652,11 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
         self.ch_status_update()
         self.conn_btn_update()
-        self.reset_noty_bell()
+        self._reset_noty_bell()
         self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
-    def reset_noty_bell(self):
+    def _reset_noty_bell(self):
         conn = self.get_conn(self.channel_index)
         if not conn:
             return
@@ -2498,10 +2665,16 @@ class PoPT_GUI_Main:
             self.reset_noty_bell_alarm()
 
     def reset_noty_bell_alarm(self):
+        self._add_tasker_q("reset_noty_bell_alarm", None)
+
+    def _reset_noty_bell_alarm_task(self):
         self._Alarm_Frame.set_Bell_alarm(False)
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
+        self._add_tasker_q("set_noty_bell", (ch_id, msg))
+
+    def _set_noty_bell_task(self, ch_id, msg=''):
         conn = self.get_conn(ch_id)
         if not conn:
             return
@@ -2524,13 +2697,10 @@ class PoPT_GUI_Main:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):
+        self._add_tasker_q("set_noty_bell_active", None)
+
+    def _set_noty_bell_active_task(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
-
-    def set_aprsMail_alarm(self):
-        self._Alarm_Frame.set_aprsMail_alarm(True)
-
-    def reset_aprsMail_alarm(self):
-        self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def _ch_btn_status_update(self):
         # TODO Call just if necessary
@@ -2560,9 +2730,9 @@ class PoPT_GUI_Main:
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'green2':
                             self._con_btn_dict[i][0].configure(bg='green2')
-                        self.set_ch_new_data_tr(i, False)
+                        self._set_ch_new_data_tr(i, False)
                 else:
-                    if self.get_ch_new_data_tr(i):
+                    if self._get_ch_new_data_tr(i):
                         if is_link:
                             if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
                                 self._con_btn_dict[i][0].configure(bg='SteelBlue4')
@@ -2591,7 +2761,7 @@ class PoPT_GUI_Main:
                     # self.con_btn_dict[i].configure(text=str(i))
                     self._con_btn_dict[i][1].set(str(i))
 
-                if not self.get_ch_new_data_tr(i):
+                if not self._get_ch_new_data_tr(i):
                     if i == self.channel_index:
                         if self._con_btn_dict[i][0].cget('bg') != 'red2':
                             self._con_btn_dict[i][0].configure(bg='red2')
@@ -2602,7 +2772,7 @@ class PoPT_GUI_Main:
                     if i == self.channel_index:
                         if self._con_btn_dict[i][0].cget('bg') != 'red2':
                             self._con_btn_dict[i][0].configure(bg='red2')
-                        self.set_ch_new_data_tr(i, False)
+                        self._set_ch_new_data_tr(i, False)
                     else:
                         if self._con_btn_dict[i][0].cget('bg') != 'yellow':
                             self._con_btn_dict[i][0].configure(bg='yellow')
@@ -2620,6 +2790,9 @@ class PoPT_GUI_Main:
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
+        self._add_tasker_q("on_channel_status_change", None)
+
+    def _on_channel_status_change_task(self):
         self.tabbed_sideFrame.on_ch_stat_change()
         self.tabbed_sideFrame2.on_ch_stat_change()
         self.update_station_info()
@@ -2628,10 +2801,10 @@ class PoPT_GUI_Main:
         conn = self.get_conn()
         if conn is not None:
             if hasattr(conn, 'cli'):
-                self.stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
+                self._stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
                 return
-        if self.stat_info_timer_var.get() != '--:--:--':
-            self.stat_info_timer_var.set('--:--:--')
+        if self._stat_info_timer_var.get() != '--:--:--':
+            self._stat_info_timer_var.set('--:--:--')
 
     def update_station_info(self):
         name = '-------'
@@ -2661,18 +2834,18 @@ class PoPT_GUI_Main:
                 enc = db_ent.Encoding
             if conn.is_link:
                 status = 'DIGI'
-                if self.stat_info_status_var.get() != status:
-                    self.stat_info_status_var.set(status)
+                if self._stat_info_status_var.get() != status:
+                    self._stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )
             elif conn.pipe is not None:
                 status = 'PIPE'
-                if self.stat_info_status_var.get() != status:
-                    self.stat_info_status_var.set(status)
+                if self._stat_info_status_var.get() != status:
+                    self._stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )
             elif conn.ft_obj is not None:
                 status = f'{conn.ft_obj.dir} FILE'
-                if self.stat_info_status_var.get() != status:
-                    self.stat_info_status_var.set(status)
+                if self._stat_info_status_var.get() != status:
+                    self._stat_info_status_var.set(status)
                     # self.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
                     self.status_label.bind('<Button-1>', self.open_ft_manager)
             else:
@@ -2690,11 +2863,11 @@ class PoPT_GUI_Main:
                 else:
                     status += '-'
                 status += '----'
-                if self.stat_info_status_var.get() != status:
-                    self.stat_info_status_var.set(status)
+                if self._stat_info_status_var.get() != status:
+                    self._stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', self.do_priv)
-        elif self.stat_info_status_var.get() != status:
-            self.stat_info_status_var.set(status)
+        elif self._stat_info_status_var.get() != status:
+            self._stat_info_status_var.set(status)
             self.status_label.bind('<Button-1>', )
         """
         if _dist:
@@ -2702,18 +2875,18 @@ class PoPT_GUI_Main:
         """
         # if self.stat_info_status_var.get() != _status:
         #     self.stat_info_status_var.set(_status)
-        if self.stat_info_name_var.get() != name:
-            self.stat_info_name_var.set(name)
-        if self.stat_info_qth_var.get() != qth:
-            self.stat_info_qth_var.set(qth)
-        if self.stat_info_loc_var.get() != loc:
-            self.stat_info_loc_var.set(loc)
-        if self.stat_info_typ_var.get() != typ:
-            self.stat_info_typ_var.set(typ)
-        if self.stat_info_sw_var.get() != sw:
-            self.stat_info_sw_var.set(sw)
-        if self.stat_info_encoding_var.get() != enc:
-            self.stat_info_encoding_var.set(enc)
+        if self._stat_info_name_var.get() != name:
+            self._stat_info_name_var.set(name)
+        if self._stat_info_qth_var.get() != qth:
+            self._stat_info_qth_var.set(qth)
+        if self._stat_info_loc_var.get() != loc:
+            self._stat_info_loc_var.set(loc)
+        if self._stat_info_typ_var.get() != typ:
+            self._stat_info_typ_var.set(typ)
+        if self._stat_info_sw_var.get() != sw:
+            self._stat_info_sw_var.set(sw)
+        if self._stat_info_encoding_var.get() != enc:
+            self._stat_info_encoding_var.set(enc)
 
     def _update_ft_info(self):
         prog_val = 0
@@ -2831,7 +3004,7 @@ class PoPT_GUI_Main:
 
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
-        if self.mon_mode:
+        if self._mon_mode:
             try:
                 if txtWin_pos_cfg == (1, 0, 2):
                     self._pw.remove(self._TXT_lower_frame)
@@ -2891,9 +3064,9 @@ class PoPT_GUI_Main:
         if conn is not None:
             db_ent = conn.user_db_ent
             if db_ent:
-                db_ent.TYP = self.stat_info_typ_var.get()
+                db_ent.TYP = self._stat_info_typ_var.get()
         else:
-            self.stat_info_typ_var.set('-----')
+            self._stat_info_typ_var.set('-----')
 
     def _change_txt_encoding(self, event=None, enc=''):
         conn = self.get_conn()
@@ -2901,14 +3074,16 @@ class PoPT_GUI_Main:
             db_ent = conn.user_db_ent
             if db_ent:
                 if not enc:
-                    enc = self.stat_info_encoding_var.get()
+                    enc = self._stat_info_encoding_var.get()
                 db_ent.Encoding = enc
         else:
-            self.stat_info_encoding_var.set('')
+            self._stat_info_encoding_var.set('')
 
     ##########################################
     #
     def get_free_channel(self, start_channel=1):
+        if not start_channel:
+            start_channel = 1
         if not self.get_conn(con_ind=start_channel):
             return start_channel
         for ch_id in range(1, MAX_SYSOP_CH):
@@ -2923,10 +3098,10 @@ class PoPT_GUI_Main:
                 ret.append(ch_id)
         return ret
 
-    def get_ch_new_data_tr(self, ch_id):
+    def _get_ch_new_data_tr(self, ch_id):
         return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
 
-    def set_ch_new_data_tr(self, ch_id, state: bool):
+    def _set_ch_new_data_tr(self, ch_id, state: bool):
         self.get_ch_var(ch_index=ch_id).new_data_tr = state
 
     ##########################################
@@ -2949,11 +3124,13 @@ class PoPT_GUI_Main:
             return bool(ais_obj.be_tracer_active)
         return False
 
+    """
     def get_auto_tracer(self):
         ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
             return bool(ais_obj.be_auto_tracer_active)
         return False
+    """
 
     def set_tracer_fm_aprs(self):
         ais_obj = self._port_handler.get_aprs_ais()
@@ -3004,56 +3181,111 @@ class PoPT_GUI_Main:
         return bool(self.setting_dx_alarm.get())
 
     ######################################################################
+    # Alarm/Icon Frame
+    def set_aprsMail_alarm(self):
+        self._add_tasker_q("set_aprsMail_alarm", None)
+
+    def _set_aprsMail_alarm_task(self):
+        self._Alarm_Frame.set_aprsMail_alarm(True)
+
+    def reset_aprsMail_alarm(self):
+        self._add_tasker_q("reset_aprsMail_alarm", None)
+
+    def _reset_aprsMail_alarm_task(self):
+        self._Alarm_Frame.set_aprsMail_alarm(False)
 
     def dx_alarm(self):
+        self._add_tasker_q("dx_alarm", None)
+
+    def _dx_alarm_task(self):
         """ Alarm when new User in MH List """
         if self.setting_dx_alarm.get():
             self._Alarm_Frame.set_dxAlarm(True)
 
     def tracer_alarm(self):
+        self._add_tasker_q("tracer_alarm", None)
+
+    def _tracer_alarm_task(self):
         """ Tracer Alarm """
         self._tracer_alarm = True
         self._Alarm_Frame.set_tracerAlarm(True)
 
     def reset_tracer_alarm(self):
+        self._add_tasker_q("reset_tracer_alarm", None)
+
+    def _reset_tracer_alarm_task(self):
         """ Tracer Alarm """
         if self._tracer_alarm:
             self._Alarm_Frame.set_tracerAlarm(False)
             self._tracer_alarm = False
 
     def reset_dx_alarm(self):
+        self._add_tasker_q("reset_dx_alarm", None)
+
+    def _reset_dx_alarm_task(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
         self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
 
     def pmsMail_alarm(self):
+        self._add_tasker_q("pmsMail_alarm", None)
+
+    def _pmsMail_alarm_task(self):
         if self.MSG_Center_win:
             return
         self._Alarm_Frame.set_pmsMailAlarm(True)
 
     def reset_pmsMail_alarm(self):
+        self._add_tasker_q("reset_pmsMail_alarm", None)
+
+    def _reset_pmsMail_alarm_task(self):
         self._Alarm_Frame.set_pmsMailAlarm(False)
 
     def pmsFwd_alarm(self):
+        self._add_tasker_q("pmsFwd_alarm", None)
+
+    def _pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(True)
 
     def reset_pmsFwd_alarm(self):
+        self._add_tasker_q("reset_pmsFwd_alarm", None)
+
+    def _reset_pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(False)
         if self.MSG_Center_win:
             self.MSG_Center_win.tree_update_task()
 
     def set_diesel(self):
+        self._add_tasker_q("set_diesel", None)
+
+    def _set_diesel_task(self):
         self._Alarm_Frame.set_diesel(True)
         self._init_state = 0
 
     def reset_diesel(self):
+        self._add_tasker_q("reset_diesel", None)
+
+    def _reset_diesel_task(self):
         self._Alarm_Frame.set_diesel(False)
 
     def set_rxEcho_icon(self, alarm_set=True):
+        self._add_tasker_q("set_rxEcho_icon", alarm_set)
+
+    def _set_rxEcho_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_rxEcho_icon(alarm_set=alarm_set)
 
     def set_Beacon_icon(self, alarm_set=True):
+        self._add_tasker_q("set_Beacon_icon", alarm_set)
+
+    def _set_Beacon_icon_task(self, alarm_set=True):
         self._Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
 
+    def set_port_block_warning(self):
+        self._add_tasker_q("set_port_block_warning", None)
+
+    def _set_port_block_warning_task(self):
+        self._Alarm_Frame.set_PortBlocking_warning()
+
+    #####################################
     def chk_master_sprech_on(self):
         if self.setting_sprech.get():
             SOUND.master_sprech_on = True
@@ -3068,3 +3300,7 @@ class PoPT_GUI_Main:
 
     def get_PH_manGUI(self):
         return self._port_handler
+
+    def _set_port_blocking(self, state=0):
+        if hasattr(self._port_handler, 'block_all_ports'):
+            self._port_handler.block_all_ports(state)

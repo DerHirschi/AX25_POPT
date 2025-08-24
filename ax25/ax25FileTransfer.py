@@ -336,6 +336,7 @@ class FileTransport(object):
             if self.dir != 'TX':
                 self.ft_rnr()
             return self.class_protocol.crone_mode()
+        return False
 
     def ft_rnr(self):
         if self.connection is not None:

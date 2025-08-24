@@ -9,7 +9,7 @@ from cfg.constant import STATION_ID_ENCODING_REV
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -51,8 +51,8 @@ class DefaultCLI(object):
                 self._c_text          = str(self._user_db_ent.CText)
 
         self.stat_identifier    = get_station_id_obj(self._stat_identifier_str)
-        # print(f"CLI STST ID : {self.stat_identifier}")
-        # print(f"CLI STST str : {self.stat_identifier_str}")
+        #print(f"CLI STST ID : {self.stat_identifier}")
+        #print(f"CLI STST str : {self._stat_identifier_str}")
 
         self._c_text            = self._c_text.replace('\n', '\r')
 
@@ -96,6 +96,7 @@ class DefaultCLI(object):
             'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
             'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
             'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr('cmd_help_lcstatus'), False),
+            'CH':       (2, self._cmd_ch,                   self._getTabStr('cmd_help_ch'), False),
             # APRS Stuff
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
             'WX':       (0, self._cmd_wx,                   self._getTabStr('cmd_help_wx'), False),
@@ -337,11 +338,12 @@ class DefaultCLI(object):
             if not self._user_db_ent.TYP:
                 self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
-    def _software_identifier(self):
+    def software_identifier(self):
+        #print("SW-ID")
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
-            # print(f"SW-ID flag: {self.stat_identifier.flags}")
-            # print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
+            #print(f"SW-ID flag: {self.stat_identifier.feat_flag}")
+            #print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
                 if not self.stat_identifier.knows_me:
                     self._send_name_cmd_back()
@@ -349,6 +351,10 @@ class DefaultCLI(object):
                 self._encoding = self.stat_identifier.txt_encoding, 'ignore'
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
+            #print("SW ID True")
+            return True
+        #print("SW ID False")
+        return False
 
     def _send_name_cmd_back(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -364,6 +370,7 @@ class DefaultCLI(object):
     def _find_sw_identifier(self):
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
         if self.stat_identifier is None:
+            # print(self._last_line + self._raw_input)
             inp_lines = self._last_line + self._raw_input
             inp_lines = inp_lines.replace(b'\n', b'\r')
             inp_lines = inp_lines.decode(self._encoding[0], 'ignore')
@@ -374,7 +381,9 @@ class DefaultCLI(object):
                 if temp_stat_identifier is not None:
                     self.stat_identifier = temp_stat_identifier
                     self._set_user_db_software_id()
+                    logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                     return True
+            return False
         elif not self._last_line and self.stat_identifier:
             inp_lines = self._raw_input
             inp_lines = inp_lines.replace(b'\n', b'\r')
@@ -387,7 +396,9 @@ class DefaultCLI(object):
                     if self.stat_identifier.id_str != temp_stat_identifier.id_str:
                         self.stat_identifier = temp_stat_identifier
                         self._set_user_db_software_id()
+                        logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                         return True
+                    return True
         return False
 
     def _find_cmd(self):
@@ -1070,7 +1081,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_name_set')}: {self._user_db_ent.Name}" \
                    "\r"
@@ -1089,7 +1100,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_qth_set')}: {self._user_db_ent.QTH}" \
                    "\r"
@@ -1110,7 +1121,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             # self._connection.set_distance()
             self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
@@ -1135,7 +1146,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_zip_set')}: {self._user_db_ent.ZIP}" \
                    "\r"
@@ -1149,12 +1160,12 @@ class DefaultCLI(object):
                 return f"\r # PR-Mail: {self._user_db_ent.PRmail}\r"
             return "\r # USER-DB Error !\r"
         if self._user_db_ent:
-            self._user_db_ent.PRmail = self._parameter[0] \
+            self._user_db_ent.PRmail = (self._parameter[0] \
                 .decode(self._encoding[0], self._encoding[1]). \
                 replace(' ', ''). \
                 replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+                replace('\r', '')).upper()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
                    "\r"
@@ -1173,7 +1184,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_email_set')}: {self._user_db_ent.Email}" \
                    "\r"
@@ -1192,7 +1203,7 @@ class DefaultCLI(object):
                 replace(' ', ''). \
                 replace('\n', ''). \
                 replace('\r', '')
-            self._user_db_ent.last_edit = datetime.now()
+            self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr('cli_http_set')}: {self._user_db_ent.HTTP}" \
                    "\r"
@@ -1268,6 +1279,67 @@ class DefaultCLI(object):
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
         return ret + "\r"
+        """ Long Connect-Status """
+        ret = '\r'
+        ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
+        all_conn = self._port_handler.get_all_connections()
+        for k in all_conn.keys():
+            ch = k
+            conn = all_conn[k]
+            time_start = conn.time_start  # TODO DateSTR
+            port_id = conn.own_port.port_id
+            my_call = conn.my_call_str
+            to_call = conn.to_call_str
+            db_ent = conn.user_db_ent
+            name = ''
+            loc = ''
+            qth = ''
+            if db_ent:
+                name = db_ent.Name
+                loc = db_ent.LOC
+                qth = db_ent.QTH
+            if self._connection.ch_index == ch:
+                ret += ">"
+            else:
+                ret += " "
+
+            ret += f" {str(ch).ljust(3)} " \
+                   f"{str(port_id).ljust(3)}   " \
+                   f"{my_call.ljust(9)} " \
+                   f"{to_call.ljust(9)} " \
+                   f"{name.ljust(13)[:13]} " \
+                   f"{loc.ljust(6)[:6]} " \
+                   f"{qth.ljust(13)[:13]} " \
+                   f"{time_start.strftime('%H:%M:%S')}\r"
+
+        return ret + "\r"
+
+    def _cmd_ch(self):
+        if not self._parameter:
+            return self._getTabStr('ch_cmd_param_error')
+        if len(self._parameter) > 1:
+            param = [self._parameter[0], b' '.join(self._parameter[1:])]
+        else:
+            param: b'' = self._parameter[0]
+            param = param.split(b' ', maxsplit=1)
+        if len(param) < 2:
+            return self._getTabStr('ch_cmd_param_error')
+        try:
+            ch_id = int(param[0])
+        except ValueError:
+            return self._getTabStr('ch_cmd_param_error')
+
+        all_conn = self._port_handler.get_all_connections()
+        if ch_id not in all_conn:
+            return self._getTabStr('ch_cmd_empty_ch')
+        if ch_id == self._connection.ch_index:
+            return self._getTabStr('ch_cmd_own_ch')
+
+        to_conn = all_conn[ch_id]
+        to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')
+        to_send += param[1] + b'\r'
+        to_conn.send_data(to_send)
+        return self._getTabStr('ch_cmd_send').format(ch_id, to_conn.to_call_str)
 
     def _cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"
@@ -1411,8 +1483,8 @@ class DefaultCLI(object):
 
     def _s1(self):
         # print("CMD-Handler S1")
-        if not self.stat_identifier:
-            self._software_identifier()
+        # if not self.stat_identifier:
+        self.software_identifier()
         """
         BBS / evtl. NODE, MCAST
         if any((
@@ -1451,6 +1523,7 @@ class DefaultCLI(object):
             self.sysop_priv = True
             if self._gui:
                 self._gui.on_channel_status_change()
+
             self.change_cli_state(1)
             return ''
         res = self._sys_login.step(inp)
@@ -1462,6 +1535,7 @@ class DefaultCLI(object):
                 logger.warning("Priv: Failed !")
                 if self._gui:
                     self._gui.on_channel_status_change()
+
                 self.change_cli_state(1)
             return ""
         if self._sys_login.attempt_count == self._sys_login.attempts:
@@ -1471,6 +1545,7 @@ class DefaultCLI(object):
             self.sysop_priv = True
             if self._gui:
                 self._gui.on_channel_status_change()
+
             self.change_cli_state(1)
         return res
 
@@ -1502,6 +1577,7 @@ class DefaultCLI(object):
             self.sysop_priv = True
             if self._gui:
                 self._gui.on_channel_status_change()
+
             self.change_cli_state(1)
             return ''
         res = self._sys_login.step(inp)
@@ -1514,6 +1590,7 @@ class DefaultCLI(object):
                 logger.warning(self._logTag + "Priv: Failed !")
                 if self._gui:
                     self._gui.on_channel_status_change()
+
                 self.change_cli_state(1)
 
             # print("----")
@@ -1526,6 +1603,7 @@ class DefaultCLI(object):
             self.sysop_priv = True
             if self._gui:
                 self._gui.on_channel_status_change()
+
             self.change_cli_state(1)
         return res
 
@@ -1603,7 +1681,12 @@ class NoneCLI(DefaultCLI):
         self._commands_cfg = []
 
     def cli_exec(self, inp=b''):
-        pass
+
+        self._raw_input += bytes(inp)
+        #if self.stat_identifier is None:
+        #    self._raw_input += bytes(inp)
+        return self.software_identifier()
+
 
     def _exec_cmd(self):
         return ''

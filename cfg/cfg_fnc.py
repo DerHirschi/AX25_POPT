@@ -1,3 +1,4 @@
+import json
 import pickle
 import os
 
@@ -47,8 +48,8 @@ def cleanup_obj_dict(inp_dict: dict):
     return tmp
 
 
-def save_to_file(filename: str, data):
-    old_cfg = load_fm_file(filename)
+def save_to_pickle_file(filename: str, data):
+    old_cfg = load_fm_pickle_file(filename)
 
     try:
         with open(CFG_data_path + filename, 'wb') as file:
@@ -63,11 +64,10 @@ def save_to_file(filename: str, data):
         # print(f"save_to_file Error: {data}")
         if old_cfg:
             logger.info(f"save_to_file Error: Backup old CFG")
-            save_to_file(filename, old_cfg)
+            save_to_pickle_file(filename, old_cfg)
 
 
-
-def load_fm_file(filename: str):
+def load_fm_pickle_file(filename: str):
     try:
         with open(CFG_data_path + filename, 'rb') as inp:
             return pickle.load(inp)
@@ -77,6 +77,42 @@ def load_fm_file(filename: str):
         logger.error(
             f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
         raise
+
+def save_to_json_file(filename: str, data):
+    try:
+        old_cfg = load_fm_json_file(filename)
+    except Exception as e:
+        logger.warning(f"Konnte alte CFG nicht laden: {e}")
+        old_cfg = None
+    try:
+        with open(CFG_data_path + filename, 'w') as file:
+            json.dump(data, file)
+    except FileNotFoundError:
+        with open(CFG_data_path + filename, 'x') as file:
+            json.dump(data, file)
+    except Exception as e:
+        # print(f"save_to_file Error: {e}")
+        logger.error(f"save_to_file Error: {e}")
+        #logger.error(f"save_to_file Error: {data}")
+        # print(f"save_to_file Error: {data}")
+        if old_cfg:
+            logger.info(f"save_to_file Error: Backup old CFG")
+            save_to_json_file(filename, old_cfg)
+        raise e
+
+
+def load_fm_json_file(filename: str):
+    try:
+        with open(CFG_data_path + filename, 'rb') as inp:
+            return json.load(inp)
+    except (FileNotFoundError, EOFError):
+        return ''
+    except ImportError:
+        logger.error(
+            f"CFG: Falsche Version der CFG Datei. Bitte {CFG_data_path + filename} löschen und PoPT neu starten!")
+        raise
+
+
 
 def get_all_stat_CFGs():
     stat_cfg_path = CFG_data_path + CFG_usertxt_path
@@ -97,6 +133,11 @@ def get_all_stat_CFGs():
                 logger.error(
                     f"Station CFG: Falsche Version der CFG Datei. Bitte {folder + '/stat' + call + '.popt'} löschen und PoPT neu starten!")
                 raise
+            """
+            with open(f'{call}_stat.json', 'w') as save_file:
+                json.dump(ret[call], save_file)
+            """
+
     return ret
 
 
@@ -111,7 +152,7 @@ def save_station_CFG_to_file(conf: dict):
     exist_userpath(conf.get('stat_parm_Call', ''))
     file = '{1}{0}/stat{0}.popt'.format(conf.get('stat_parm_Call', ''), CFG_usertxt_path)
 
-    save_to_file(file, conf)
+    save_to_pickle_file(file, conf)
     return True
 
 
@@ -196,6 +237,10 @@ def load_all_port_cfg_fm_file():
             logger.error(
                 f"Port CFG: Falsche Version der CFG Datei. Bitte {file} löschen und PoPT neu starten!")
             raise
+        """
+        with open(f'{port_id}_port.json', 'w') as save_file:
+            json.dump(ret[port_id], save_file)
+        """
     return ret
 
 def save_all_port_cfg_to_file(configs: dict):
@@ -207,7 +252,7 @@ def save_all_port_cfg_to_file(configs: dict):
                  cfg.get('parm_PortNr', -1) != port_id)):
             continue
         file = f'port{port_id}.popt'
-        save_to_file(file, cfg)
+        save_to_pickle_file(file, cfg)
     return True
 
 def del_port_data(port_id):

@@ -4,6 +4,7 @@ from tkinter import ttk, Menu, messagebox
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab
 
@@ -25,7 +26,10 @@ class MHWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ###################################
         # Vars

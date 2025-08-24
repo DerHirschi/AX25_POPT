@@ -3,6 +3,9 @@ from tkinter import ttk
 import random
 from datetime import datetime
 import networkx as nx
+
+from cfg.logger_config import logger
+from cfg.popt_config import POPT_CFG
 #from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
@@ -49,7 +52,10 @@ class FwdGraph(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         #######################################################################
         self._db = PORT_HANDLER.get_database()
         self._user_DB = PORT_HANDLER.get_userDB()
@@ -202,10 +208,14 @@ class FwdGraph(tk.Toplevel):
             return
         self._path_data = {}
 
-        # print(db_raw)
+        # Angenommen, die eigene Mailbox wird über PORT_HANDLER abgerufen
+        own_call = POPT_CFG.get_BBS_cfg().get('user', 'MYBBS')  # Methode muss existieren oder durch Konfigurationswert ersetzt werden
+
         for el in self._db_raw:
+            original_path = el[0].split('>')
+            full_path = [own_call] + original_path
             self._path_data[el[1]] = dict(
-                path=el[0].split('>'),
+                path=full_path,
                 fromBBS=el[1],
                 toBBS=el[2],
                 hops=el[3],

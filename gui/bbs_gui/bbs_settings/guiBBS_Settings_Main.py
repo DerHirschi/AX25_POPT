@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
 from gui.bbs_gui.bbs_settings.guiBBS_AutoMail_Settings import BBSAutoMailSettings
@@ -33,7 +34,10 @@ class BBSSettingsMain(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self._lang      = POPT_CFG.get_guiCFG_language()
         self._bbs_obj   = PORT_HANDLER.get_bbs()
@@ -134,8 +138,10 @@ class BBSSettingsMain(tk.Toplevel):
 
     ################################################
     def set_fwdBBS_cfg(self, pms_cfg_k: str, bbs_cfg: dict):
+        old_cfg = list(self._pms_cfg['fwd_bbs_cfg'].keys())
         self._pms_cfg['fwd_bbs_cfg'][pms_cfg_k] = dict(bbs_cfg)
-        self._reinit_fwdBBS_tabs()
+        if old_cfg != list(self._pms_cfg['fwd_bbs_cfg'].keys()):
+            self._reinit_fwdBBS_tabs()
 
     def del_fwdBBS_cfg(self, pms_cfg_k: str):
         if pms_cfg_k in self._pms_cfg['fwd_bbs_cfg'].keys():
@@ -155,7 +161,7 @@ class BBSSettingsMain(tk.Toplevel):
             del self._pms_cfg['fwd_bbs_cfg']['NOCALL']
         POPT_CFG.set_BBS_cfg(self._pms_cfg)
         if not self._bbs_obj:
-            return False
+            return
         self._bbs_obj.set_pms_cfg()
     ################################################
     def _ok_btn(self):

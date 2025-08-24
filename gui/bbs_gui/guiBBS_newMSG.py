@@ -44,7 +44,10 @@ class BBS_newMSG(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ###################################
         ####################
@@ -390,6 +393,8 @@ class BBS_newMSG(tk.Toplevel):
             return False
         regio_add = self._bbs_obj.get_pms_cfg().get('regio', '').upper()
         bbs_call  = self._bbs_obj.get_pms_cfg().get('user', '').upper()
+        sender_bbs = bbs_call + '.' + regio_add
+
         if any((not regio_add, not bbs_call)):
             logger.error(f"PMS-newMSG: regio_add/bbs_call: {regio_add}/{bbs_call}")
             return False
@@ -416,14 +421,19 @@ class BBS_newMSG(tk.Toplevel):
             return False
         if typ == 'P':
             if not recv_bbs:
+                """
                 pr_mail_add = USER_DB.get_PRmail(sender)
                 bbs_add = pr_mail_add.split('@')[-1]
                 if '.' in bbs_add:
                     recv_bbs = bbs_add
+                """
+                recv_bbs = sender_bbs
             if not '.' in recv_bbs:
                 #print('No----')
                 #print(f'No: {recv_bbs}')
-                recv_bbs = USER_DB.get_PRmail(recv_bbs)
+                tmp_bbs = USER_DB.get_PRmail(recv_bbs)
+                if tmp_bbs:
+                    recv_bbs = tmp_bbs
                 #print(f'No: {recv_bbs}')
 
 
@@ -434,7 +444,6 @@ class BBS_newMSG(tk.Toplevel):
         msg_text    = msg_text.replace('\n', '\r')
         msg_text    = msg_text.encode(enc, 'ignore')
 
-        sender_bbs = bbs_call + '.' + regio_add
         self._msg_data = GET_MSG_STRUC()
         self._msg_data.update({
             'sender':        sender,

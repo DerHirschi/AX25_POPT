@@ -150,12 +150,7 @@ class AX25Conn:
             self.via_calls          = list(ax25_conf.get('via_calls_str', []))
         """ GUI Stuff"""
         self.ch_index: int = 0
-        self._gui = self._port_handler.get_gui()
-        if self._gui:
-            self._my_locator = self._gui.own_loc
-        else:
-            self._my_locator = ''
-        # self.ChVars = None
+        self._my_locator = POPT_CFG.get_guiCFG_locator()
         """ Station CFG Parameter """
         self._stat_cfg = {}
         self.set_station_cfg()  # Station Individual Parameter
@@ -174,8 +169,9 @@ class AX25Conn:
         self.tx_buf_2send = []         # Buffer for Sending. Will be processed in ax25PortHandler
         self.tx_buf_unACK = {}                  # Buffer for UNACK I-Frames
         self._rx_buf_last_frame = ax25_frame    # Buffers for last Frame !?!
-        self.rx_buf_last_data = b''             # Buffers for last Frame !?!
+        self.rx_buf_last_data = b''             # Buffers for last Frame
         """ IO Buffer For GUI / CLI """
+        self.rx_buf_rawData = b''           # Buffer RX QSO for AutoConnTask
         self.tx_buf_rawData = b''           # Buffer for TX RAW Data that is not packed yet into a Frame
         self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
@@ -243,7 +239,7 @@ class AX25Conn:
             16: (S16sendREJbothNotReady, 'BOTH-RNR-REJ'),
         }
         """ File Transfer Stuff """
-        self.ft_queue: [FileTransport] = []
+        self.ft_queue = []
         self.ft_obj = None
         """ Pipe-Tool """
         self.pipe = None
@@ -307,13 +303,17 @@ class AX25Conn:
         self.cli_type = str(cli_key)
 
     def _reinit_cli(self):
-        if not self.pipe:
-            self._init_cli()
-            if hasattr(self.user_db_ent, 'sys_pw_autologin'):
-                if self.user_db_ent.sys_pw_autologin :
-                    self.cli.change_cli_state(state=6)
-                    return
-            self.cli.change_cli_state(state=1)
+        if self.cli_type == 'Task: FWD':
+            #self.bbsFwd_init()
+            return
+        if self.pipe:
+            return
+        self._init_cli()
+        if hasattr(self.user_db_ent, 'sys_pw_autologin'):
+            if self.user_db_ent.sys_pw_autologin :
+                self.cli.change_cli_state(state=6)
+                return
+        self.cli.change_cli_state(state=1)
 
     def set_station_cfg(self):
         stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
@@ -384,14 +384,14 @@ class AX25Conn:
             return
         """ BBS/PMS-FWD"""
         if self._bbsFwd_rx(data):
+            # print("FWD RX")
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
-        # TODO !!!! Nicht sauber
-        if self._set_dest_call_fm_data_inp(data):
-            self.rx_buf_last_data = b''
-        else:
-            self.rx_buf_last_data = data
+        self._set_dest_call_fm_data_inp(data)
+        """ Save last Frame """
+        self.rx_buf_last_data = data
+        self.rx_buf_rawData  += data
         """ CLI """
         self.exec_cli(data)
         return
@@ -427,6 +427,20 @@ class AX25Conn:
 
     #############################
     # BBS_FWD Stuff
+    def bbsFwd_init(self):
+        if self.bbs_connection:
+            return False
+        bbs = self._port_handler.get_bbs()
+        if bbs is None:
+            logger.error("PMS: bbs is None")
+            return False
+        self.bbs_connection = bbs.init_tx_fwd(self)
+        if self.bbs_connection is None:
+            logger.error("PMS: bbs_connection is None")
+            return False
+        # print("Done: bbsFwd_start_reverse")
+        return True
+
     def bbsFwd_start_reverse(self):
         if self.cli.stat_identifier is None:
             logger.error("PMS: cli.stat_identifier is None")
@@ -450,6 +464,7 @@ class AX25Conn:
         return True
 
     def bbsFwd_start(self):
+        """
         if self.cli.stat_identifier is None:
             logger.error("PMS: cli.stat_identifier is None")
             return False
@@ -460,18 +475,24 @@ class AX25Conn:
             logger.error("PMS: cli.stat_identifier.e")
             logger.error(f"{self.cli.stat_identifier.typ}")
             return False
+        """
         bbs = self._port_handler.get_bbs()
         if bbs is None:
-            logger.error("PMS: _bbs is None")
+            logger.error("BBS: _bbs is None")
             return False
         if self.bbs_connection:
-            logger.warning("PMS: bbs_connection not None. Manual Rev FWD Triggered ?")
+            logger.warning("BBS: bbs_connection not None. Manual Rev FWD Triggered ?")
             return False
+        """
+        if self.cli_type == "Task: FWD":
+            logger.debug("BBS: Task Connection, no FWD Init needed.")
+            return False
+        """
         self.bbs_connection = bbs.init_fwd_conn(self)
         if self.bbs_connection is None:
-            logger.error("PMS: bbs_connection is None")
+            logger.error("BBS: bbs_connection is None")
             return False
-        # print("Done: bbsFwd_start_reverse")
+        logger.debug("BBS: Done: bbsFwd start")
         return True
 
     def _bbsFwd_cron(self):
@@ -522,6 +543,7 @@ class AX25Conn:
         self.cli = NoneCLI(self)
         self.cli_type = ''
         self.pipe = pipe
+        return True
 
     def _del_pipe(self):
         if self.pipe:
@@ -581,11 +603,11 @@ class AX25Conn:
 
     def ft_reset_timer(self, conn_uid: str):
         if self.ft_obj is not None:
-            print(f"ft_resetRNR: conn_uid {conn_uid}")
-            print(f"ft_resetRNR: rev conn_uid {reverse_uid(conn_uid)}")
-            print(f"ft_resetRNR: self.uid {self.uid}")
+            #print(f"ft_resetRNR: conn_uid {conn_uid}")
+            #print(f"ft_resetRNR: rev conn_uid {reverse_uid(conn_uid)}")
+            #print(f"ft_resetRNR: self.uid {self.uid}")
             if conn_uid != self.uid and reverse_uid(conn_uid) != self.uid:
-                print(f"ft_resetRNR:SET! ")
+                #print(f"ft_resetRNR:SET! ")
 
                 self.ft_obj.ft_set_wait_timer()
 
@@ -771,10 +793,10 @@ class AX25Conn:
         # self.bbsFwd_disc()
 
         if self.tx_buf_ctl:
-            logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
+            #logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
-        if all((self.rx_tx_buf_guiData, self._gui)):
-            logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
+        if self.rx_tx_buf_guiData:
+            #logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self._bbsFwd_disc()
@@ -796,6 +818,7 @@ class AX25Conn:
         self.vr = 0
         self.vs = 0
 
+    """
     def reset_conn(self):
         # TODO .. Not Used anymore .. Delete ..
         # self._del_pipe()
@@ -809,6 +832,7 @@ class AX25Conn:
         self.vr = 0
         self.vs = 0
         self._port_handler.reset_connection(connection=self) # TODO .. Not Used anymore .. Delete ..
+    """
 
     def is_dico(self):
         if not self.zustand_exec:
@@ -871,7 +895,7 @@ class AX25Conn:
                 self.zustand_exec.change_state(new_state)
 
     def _send_gui_QSObuf_tx(self, data):
-        # TODO send to GUI Buffer
+        # TODO send direct to GUI Buffer
         if self.ft_obj:
             return
         if self.pipe:
@@ -927,8 +951,9 @@ class AX25Conn:
             else:
                 self.to_call_str = tmp_data.replace(' ', '')
                 self._to_call_alias = ''
-            self.tx_byte_count = 0
-            self.rx_byte_count = 0
+            self.tx_byte_count  = 0
+            self.rx_byte_count  = 0
+            self.rx_buf_rawData = b''
             self._set_user_db_ent()
             self._set_packet_param()
             self._reinit_cli()
@@ -936,14 +961,16 @@ class AX25Conn:
             lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
             LOG_BOOK.info(lb_msg)
             LOG_BOOK.info(lb_msg_1)
-            if self._gui:
+            gui = self._port_handler.get_gui()
+
+            if hasattr(gui, 'add_LivePath_plot') and hasattr(gui, 'on_channel_status_change'):
                 # TODO
                 speech = ' '.join(self.to_call_str.replace('-', ' '))
                 SOUND.sprech(speech)
 
-                self._gui.add_LivePath_plot(node=str(self.to_call_str),
+                gui.add_LivePath_plot(node=str(self.to_call_str),
                                             ch_id=int(self.ch_index))
-                self._gui.on_channel_status_change()
+                gui.on_channel_status_change()
             # Maybe it's better to look at the whole string (include last frame)?
             return True
         return False
@@ -1081,7 +1108,11 @@ class AX25Conn:
         if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
             # Process correct I-Frame
             self.vr = count_modulo(int(self.vr))
-            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            try:
+                self._recv_data(bytes(self.zustand_exec.frame.payload))
+            except Exception as ex:
+                logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
+                logger.error(f"Exception:  {ex}")
             return True
         else:
             return False

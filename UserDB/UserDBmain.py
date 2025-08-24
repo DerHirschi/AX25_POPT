@@ -2,17 +2,18 @@
 TODO: Cleanup/Again/Crap
 """
 import sys
-import datetime
+# import datetime
 import os
 import pickle
+import json
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
 from fnc.loc_fnc import locator_to_coordinates, locator_distance
-from fnc.str_fnc import conv_time_for_sorting
-from cfg.constant import CFG_user_db, MH_BEACON_FILTER
+from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str, str_to_datetime
+from cfg.constant import CFG_user_db, MH_BEACON_FILTER, CFG_user_db_json
 
 
 class Client(object):
@@ -41,8 +42,8 @@ class Client(object):
     Other = []
     Sysop_Call = ''
 
-    via_NODE_HF = ''
-    via_NODE_AXIP = ''
+    #via_NODE_HF = ''
+    #via_NODE_AXIP = ''
     AXIP = '', 0
     QRG1 = ''  # 27.235FM-1200-AD/AI/FX
     QRG2 = ''
@@ -51,7 +52,7 @@ class Client(object):
     QRG5 = ''
     Software = ''
 
-    last_edit = datetime.datetime.now()
+    last_edit = conv_time_DE_str()
     # last_seen = datetime.datetime.now() # TODO Get from MH
     last_conn       = None
     Connects        = 0
@@ -105,40 +106,56 @@ class UserDB:
         ]
         self.db = {}
         db_load = {}
-        logger.info(f"User-DB: loading UserDB fm {CFG_user_db} ")
+        logger.info(f"User-DB: loading UserDB fm {CFG_user_db_json} ")
         try:
-            with open(CFG_user_db, 'rb') as inp:
-                db_load = pickle.load(inp)
+            with open(CFG_user_db_json, 'rb') as inp:
+                db_load = json.load(inp)
             """
             for ke in self.db.keys():
                 print(ke)
             """
         except FileNotFoundError:
-            logger.warning(f"User-DB: {CFG_user_db} not found. Creating new User-DB !")
-            if 'linux' in sys.platform:
-                os.system('touch {}'.format(CFG_user_db))
-            default_client = Client()
-            # default_client.is_new = False
-            default_client.call_str = 'ALL'
-            default_client.call = 'ALL'
-            default_client.SSID = 0
-            default_client.name = 'Beacon'
-            default_client.typ = 'BEACON'
-            self.db = {
-                'ALL': default_client
-            }
-        except EOFError:
-            logger.warning(f"User-DB: Can't open {CFG_user_db} !!!")
-        except ImportError:
-            logger.error(f"User-DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
-            raise
+            logger.warning(f"Error while loading USER-DB json format.")
+            logger.warning(f"Try to load USER-DB with old pickle format.")
+            try:
+                with open(CFG_user_db, 'rb') as inp:
+                    db_load = pickle.load(inp)
+            except ImportError:
+                logger.error(
+                    f"User-DB: Falsche Version der DB Datei. Bitte {CFG_user_db} löschen und PoPT neu starten!")
+                raise
+            except Exception as ex:
+                logger.error(f"User-DB: Error while loading: {ex}")
+            except FileNotFoundError:
+                logger.warning(f"User-DB: {CFG_user_db_json} not found. Creating new User-DB !")
+                if 'linux' in sys.platform:
+                    os.system('touch {}'.format(CFG_user_db_json))
 
+        except EOFError:
+            logger.warning(f"User-DB: Can't open {CFG_user_db_json} !!!")
+        except ImportError:
+            logger.error(f"User-DB: Falsche Version der DB Datei. Bitte {CFG_user_db_json} löschen und PoPT neu starten!")
+            raise
+        except Exception as ex:
+            logger.error(f"User-DB: Error while loading: {ex}")
+
+        default_client = Client()
+        # default_client.is_new = False
+        default_client.call_str = 'ALL'
+        default_client.call = 'ALL'
+        default_client.SSID = 0
+        default_client.name = 'Beacon'
+        default_client.typ = 'BEACON'
+        self.db = {
+            'ALL': default_client
+        }
         for k in list(db_load.keys()):
             client_obj = Client()
             if type(db_load[k]) is dict:
                 self.db[k] = set_obj_att_fm_dict(new_obj=client_obj, input_obj=db_load[k])
             else:
                 self.db[k] = set_obj_att(new_obj=client_obj, input_obj=db_load[k])
+
             # "Repair old Data" TODO . CLEANUP
             if k != self.db[k].Call:
                 if type(self.db[k].call_str) is str:
@@ -149,7 +166,13 @@ class UserDB:
                     self.db[k].call_str = str(k)
                     self.db[k].Call = str(k)
                     self.db[k].SSID = 0
-
+        ########################
+        # Convert fm old USer-DB
+        for k, db_entry in self.db.items():
+            if type(db_entry.last_edit) != str:
+                db_entry.last_edit = conv_time_DE_str(db_entry.last_edit)
+            if type(db_entry.last_conn) == str:
+                db_entry.last_conn = str_to_datetime(db_entry.last_conn)
         logger.info("User-DB: Init complete")
 
     def get_entry(self, call_str: str, add_new=True):
@@ -407,13 +430,18 @@ class UserDB:
     def save_data(self):
         # print('Save Client DB')
         logger.info('User-DB: Save User-DB')
+        for k, db_entry in self.db.items():
+            if type(db_entry.last_conn) != str:
+                db_entry.last_conn = conv_time_DE_str(db_entry.last_conn)
         tmp = cleanup_obj_dict(self.db)
         try:
-            with open(CFG_user_db, 'wb') as outp:
-                pickle.dump(tmp, outp, pickle.HIGHEST_PROTOCOL)
+            with open(CFG_user_db_json, 'w') as savefile:
+                json.dump(tmp, savefile)
         except FileNotFoundError as e:
             # print("ERROR SAVE ClientDB: " + str(e))
             logger.error("User-DB: Save User-DB > " + str(e))
+        except Exception as e:
+            logger.error(f"User-DB: Save User-DB > {e}")
 
 
 USER_DB = UserDB()

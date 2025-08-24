@@ -1,6 +1,9 @@
+import threading
 import time
+import traceback
 
 from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
@@ -65,10 +68,16 @@ class PoPTSchedule_Tasker:
     def _AutoConn_tasker(self):
         for k in list(self.auto_connections.keys()):
             # print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
-            if self.auto_connections[k].state_id:
-                self.auto_connections[k].crone()
-            else:
-                del self.auto_connections[k]
+            if not self.auto_connections[k].crone():
+
+                logger.debug(f"_AutoConn_tasker del: {k}")
+                try:
+                    del self.auto_connections[k]
+                except Exception as ex:
+                    logger.error(
+                        f"Fehler in _AutoConn_tasker: {ex}, Thread: {threading.current_thread().name}")
+                    traceback.print_exc()
+                    raise ex
 
     def _is_AutoConn_maxConn(self, autoconn_cfg):
         max_conn = autoconn_cfg.get('max_conn', 0)
@@ -127,7 +136,7 @@ class PoPTSchedule_Tasker:
         #    return None
         if sched_conf:
             if not sched_conf.is_schedule():
-                return None
+                return
         bbs = self._port_handler.get_bbs()
         if hasattr(bbs, 'send_scheduled_mail'):
             bbs.send_scheduled_mail(conf=conf)

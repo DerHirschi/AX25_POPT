@@ -18,7 +18,7 @@ from ax25.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from ax25.ax25Port import AX25DeviceTAB
+from ax25 import AX25DeviceTAB
 from cfg.constant import MAX_PORTS, SERVICE_CH_START
 from sql_db.sql_Error import SQLConnectionError
 
@@ -28,11 +28,11 @@ class RxEchoVars(object):
         self.port_id = port_id
         self.rx_ports: {int: [str]} = {}
         self.tx_ports: {int: [str]} = {}
-        self.tx_buff: [] = []
+        self.tx_buff = []
 
 
 class AX25PortHandler(object):
-    def __init__(self):
+    def __init__(self, gui_app=True):
         self._logTag = "PH> "
         logger.info("PH: Init")
         ###########################
@@ -46,9 +46,10 @@ class AX25PortHandler(object):
             # print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
         ###########################
-        self._start_time = datetime.datetime.now()
-        self.is_running  = True
-        self._ph_end     = False
+        self._start_time        = datetime.datetime.now()
+        self.is_running         = True
+        self._ph_end            = False
+        self._glb_port_blocking = 1
         ###########################
         # Moduls
         # self.routingTable = None
@@ -73,6 +74,15 @@ class AX25PortHandler(object):
         self._mh                = MH(self)
         self._mh.set_DB(self._db)
         #######################################################
+        # Init Routing Table
+        logger.info("PH: Routing Table Init")
+        # self._routingTable      = RoutingTable()
+        self._routingTable      = None
+        #######################################################
+        # Scheduled Tasks
+        logger.info("PH: Scheduled Tasks Init")
+        self._init_SchedTasker()
+        #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
         self._mcast_server      = ax25Multicast(self)
@@ -90,14 +100,6 @@ class AX25PortHandler(object):
         # Pipe-Tool Init
         logger.info("PH: Pipe-Tool Init")
         self._pipeTool_init()
-        #######################################################
-        # Init Routing Table
-        # logger.info("PH: Routing Table Init")
-        # self._init_RoutingTable()
-        #######################################################
-        # Scheduled Tasks
-        logger.info("PH: Scheduled Tasks Init")
-        self._init_SchedTasker()
         #######################################################
         # APRS AIS Thread
         logger.info("PH: APRS-Client Init")
@@ -123,7 +125,11 @@ class AX25PortHandler(object):
         self._task_timer_05sec  = time.time() + 0.5
         self._task_timer_1sec   = time.time() + 1
         self._task_timer_2sec   = time.time() + 2
-        self._init_PH_tasker()
+        if not gui_app:
+            self._init_PH_tasker()
+        #######################################################
+        #logger.info("PH: Unblocking Ports")
+        #self.unblock_all_ports()
         #######################################################
         logger.info("PH: Init Complete")
 
@@ -148,6 +154,14 @@ class AX25PortHandler(object):
                 return
             time.sleep(0.25)
 
+    def tasker_gui_th(self):
+        if not self.is_running:
+            return
+        # self._prio_task()
+        self._05sec_task()
+        self._1sec_task()
+        self._2sec_task()
+
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
         # self._mh_task()
@@ -156,6 +170,7 @@ class AX25PortHandler(object):
     def _05sec_task(self):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
+            self._Sched_task()
             self._aprs_task()
             self._gpio_task()
             self._task_timer_05sec = time.time() + 0.5
@@ -163,7 +178,6 @@ class AX25PortHandler(object):
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
-            self._Sched_task()
             self._mh_task()
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
@@ -185,10 +199,10 @@ class AX25PortHandler(object):
     """
     def _init_RoutingTable(self):
         self.routingTable = RoutingTable(self)
-
-    def get_RoutingTable(self):
-        return self.routingTable
     """
+    def get_RoutingTable(self):
+        return self._routingTable
+
     #######################################################################
     # scheduled Tasks
     def _init_SchedTasker(self):
@@ -197,10 +211,15 @@ class AX25PortHandler(object):
     def insert_SchedTask(self, sched_cfg, conf):
         if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
             self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
-
+    """
     def del_SchedTask(self, conf):
         if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
             self._scheduled_tasker.del_scheduler_Task(conf)
+    """
+
+    def del_SchedTask_by_typ(self, typ: str):
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task_by_Typ'):
+            self._scheduled_tasker.del_scheduler_Task_by_Typ(typ)
 
     def start_SchedTask_man(self, conf):
         if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
@@ -250,6 +269,7 @@ class AX25PortHandler(object):
 
     def close_popt(self):
         logger.info("PH: Closing PoPT")
+        self.block_all_ports(1)
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
         self._close_aprs_ais()
@@ -400,8 +420,9 @@ class AX25PortHandler(object):
             return False
         port = self.get_port_by_index(port_id)
         if not hasattr(port, 'disco_all_conns'):
-            return
+            return False
         port.disco_all_conns()
+        return True
 
     """
     def save_all_port_cfgs(self):
@@ -409,7 +430,24 @@ class AX25PortHandler(object):
         for port_id in self.ax25_ports.keys():
             self.ax25_ports[port_id].port_cfg.save_to_pickl()
     """
+    def unblock_all_ports(self):
+        for port_id, port in self.ax25_ports.items():
+            if hasattr(port, 'set_block_incoming_conn'):
+                port.set_block_incoming_conn(0)
+        self._glb_port_blocking = 0
 
+    def block_all_ports(self, state=1):
+        # 0 = unblock incoming
+        # 1 = ignore incoming
+        # 2 = reject incoming
+        # 3 = reject incoming with msg
+        for port_id, port in self.ax25_ports.items():
+            if hasattr(port, 'set_block_incoming_conn'):
+                port.set_block_incoming_conn(state)
+        self._glb_port_blocking = state
+
+    def get_glb_port_blocking(self):
+        return self._glb_port_blocking
     ######################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
@@ -490,19 +528,16 @@ class AX25PortHandler(object):
                         self._gui.conn_btn_update()
                     return
 
-        while True:
-            if ind in list(all_conn.keys()):
-                ind += 1
-            else:
-                new_conn.ch_index = int(ind)
-                if self._gui:
-                    self._gui.conn_btn_update()
-                return
+        while ind in list(all_conn.keys()):
+            ind += 1
+        new_conn.ch_index = int(ind)
+        if self._gui:
+            self._gui.conn_btn_update()
 
     def accept_new_connection(self, connection):
-        call_str = str(connection.to_call_str)
-        ch_id = int(connection.ch_index)
-        path = list(connection.via_calls)
+        call_str    = str(connection.to_call_str)
+        ch_id       = int(connection.ch_index)
+        path        = list(connection.via_calls)
         if connection.is_incoming_connection():
             msg = f'*** Connected fm {call_str}'
             lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected fm {call_str}'
@@ -532,6 +567,8 @@ class AX25PortHandler(object):
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
 
+
+    """
     def reset_connection(self, connection):
         msg = f'*** Reset fm {connection.to_call_str}'
         lb_msg_1 = f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Reset fm {connection.to_call_str}'
@@ -553,6 +590,7 @@ class AX25PortHandler(object):
 
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
+    """
 
     def end_connection(self, conn):
         call_str = str(conn.to_call_str)
@@ -565,7 +603,6 @@ class AX25PortHandler(object):
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C
-
             self._gui.sysMsg_to_qso(
                 data=msg,
                 ch_index=ch_id)
@@ -737,7 +774,7 @@ class AX25PortHandler(object):
                 rx_echo_var = self.rx_echo[target_port_id]
                 if receiving_port_id in rx_echo_var.rx_ports:
                     callsign_list = rx_echo_var.rx_ports[receiving_port_id]
-                    print(callsign_list)
+                    # print(callsign_list)
                     if not callsign_list or from_call in callsign_list:
                         logger.debug(self._logTag +
                             f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")

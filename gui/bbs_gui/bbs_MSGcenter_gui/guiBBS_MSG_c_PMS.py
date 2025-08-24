@@ -571,10 +571,12 @@ class MSG_Center_PMS(MSG_Center_base):
         btn_frame_r.pack(side=tk.LEFT, expand=False, anchor='e')
 
         # tk.Button(btn_frame, text='Speichern').pack(side=tk.RIGHT, expand=False)
+        """
         ttk.Button(btn_frame_l,
                   text='Start FWD',
                   command=lambda: self._do_pms_autoFWD()
                   ).pack(side=tk.LEFT, expand=False)
+        """
         ttk.Button(btn_frame_r,
                   text=self._getTabStr('delete'),
                   command=lambda: self._delete_OUT_btn()

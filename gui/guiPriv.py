@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from cfg.constant import COLOR_MAP
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
@@ -29,7 +30,10 @@ class PrivilegWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         # self.attributes("-topmost", True)
         ##########################

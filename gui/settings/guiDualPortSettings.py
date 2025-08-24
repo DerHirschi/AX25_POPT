@@ -3,6 +3,7 @@ from tkinter import ttk, Menu
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import DUALPORT_TX_MODE
 from cfg.default_config import getNew_dualPort_cfg
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
@@ -98,7 +99,10 @@ class DualPortSettingsWin(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         self.title('DualPort-Settings')
         self._root_win.dualPort_settings_win = self

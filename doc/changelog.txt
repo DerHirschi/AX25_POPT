@@ -1,4 +1,72 @@
 ###########################################################################################################
+# 2.119.x
+Fixes:
+- Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
+- FRMR Decoder gibt string als Payload zurück anstatt bytes. Verursacht Crash
+- Haupt-Einstellungen, GPIO-Einstellungen erscheinen mehrfach nach dem
+  Speichern
+- BOX-CLI. Ausgabe Formatierung für LN, LM, LL, ...
+- BBS-Forwarding, Verbindung wird nicht beendet, wenn Fehler erkannt wird
+- BBS-Forwarding, Software Identifier wird beim Forwarding nicht ausgewertet
+- BBS-Routing, Routingregeln für Bulletin Nachrichten werden nicht richtig
+  abarbeitet
+- Sortierung der Forward-Warteschlange(GUI) geht verloren nach update (Änderungen der
+  Warteschlange)
+- FWD-Warteschlange wird nicht aktualisiert, wenn Nachricht aus Warteschlange
+  gelöscht wurde
+- BBS-Auto-Mail: keine Absender-BBS.
+- BBS: falsche *** No Route *** Nachricht werden an den Sysop gesendet
+- BBS-Einstellungen > Routing: Einstellungen für
+  PN-Prio/PN-AutoPath/PN-Erlauben/BL-Erlauben wurden nicht gespeichert.
+- Programm-Crash aufgrund Threading Probleme
+- Im Monitor-Mode lässt sich eine Verbindung auf Kanal 0 aufbauen.
+  (Kanal 0 ist Monitor-Kanal)
+- GUI BBS-Forwardrouten: Eigene BBS wird nicht als Startknoten angezeigt.
+
+Optimierung/Änderungen:
+- AXIP Port handling
+- Port Loop
+- Port Connection-TX-Spooler
+- Net/Rom decoder und Monitor Ausgabe
+- User-DB wird jetzt in json format gespeichert
+- Programm Initialisierungsprozedur (Alle eingehenden Verbindungen werden
+  ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
+- Unnötige updates der Forward-Warteschlange
+- Fehlende Übersetzungen vervollständigt by ClaudeMa
+
+Neue Implementierungen / Funktionen:
+- Net/Rom INP decoder
+- App-Icon für Linux. (Icon by Thomas D1TNE. Danke Thomas)
+- PoPT auf nicht empfangsbereit schalte. (Alle eingehenden Connects werden
+  ignoriert/abgewiesen)
+- Blacklist für eingehende Verbindungen.
+- BBS-Forwarding: Timeout für tote Verbindung
+- BBS-Forwarding: Ausgehende Verbindungen deaktivierbar
+- BBS Forward-Warteschlange: Wenn Einträge ausgewählt sind, wird der FWD an
+- BBS Forward-Warteschlange: FWD-Start Knopf in BBS Warteschlangen Übersicht
+  die ausgewählte BBS angestoßen. Wenn kein Eintrag ausgewählt ist, wird der
+  sofortige FWD zu allen Konfigurierten BBS angestoßen.
+- UmgebungVARS für C-Text/Bye-Text/Info-Text/LangInfo/News/Bake
+  - $fwdPartner = Listet Forward-Partner auf - Bake
+- CLI-CMD "CH" - sendet kurzen Text an Kanal.
+  CH <Kanal-NR> Nachricht (ein Zeile)
+- BBS: Redirect Check für PM's an lokale BBS. Es wird überprüft, ob die
+  lokale BBS mit der Heimat-BBS in der User-DB übereinstimmt. Wenn das
+  nicht der Fall sein sollte wird die Mail an die in der User-DB hinterlegte
+  Heimat-BBS weitergeleitet und mit einem Vermerk versehen.
+- CLI-CMD: SR (Sendet Antwort auf Mail / Send Reply)
+- BBS: "Connection Script". Route zum FWD-Partner wird Schritt für Schritt
+  aufgebaut, in dem Terminal Befehle für den jeweiligen Verbindungsaufbau
+  gesendet werden.
+  Z.B.: DX0SAW - c DX0SAW
+        DX0BBS - m
+  Der nächste Schritt wird durch jeweilige Flag "*** Connected to <CALL>"
+  erkannt. Es kann alternativ ein Timer gesetzt werden, wie lange bis zum
+  nächsten Schritt (senden des Befehls) gewartet werden soll. Bei gesetzten
+  Timer wird die "*** Connected to <CALL>" Flag ignoriert.
+
+###########################################################################################################
+###########################################################################################################
 # 2.118.x
 Fixes:
 - Scripterror in cliBOX.py
@@ -8,7 +76,7 @@ Fixes:
 - BBS-Einstellungen - Routing: Zeigt werte für "BBS" und "THEME" nicht an
 - BBS-Einstellungen: Allgemeine Probleme mit der GUI
   (Aktualisierung der Tabs, Fehler beim Anlegen neuer FWD-Partner)
-- Scripterror im Message-Center beim verändern der Textgröße. (STRG +/-)
+- Scripterror im Message-Center beim Verändern der Textgröße. (STRG +/-)
 - Messagcenter, Textgröße der Forwardwarteschlange wird nicht verändert.
 - Numpad-Enter sendet Text ohne Zeilenumbruch
 - BBS/PMS-Einstellungen: Sysop-Call ist nicht auswählbar als BOX-Call (für PMS-Mode)

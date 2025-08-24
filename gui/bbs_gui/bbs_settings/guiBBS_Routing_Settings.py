@@ -51,7 +51,7 @@ class BBSRoutingSettings(ttk.Frame):
         bl_fwd_var            = tk.BooleanVar(self, value=cfg.get('bl_fwd',               True))
         pn_fwd_auto_path_var  = tk.BooleanVar(self, value=cfg.get('pn_fwd_auto_path',     True))
         pn_fwd_prio_var       = tk.BooleanVar(self, value=cfg.get('pn_prio',              True))
-
+        # pn_fwd_prio_var.trace_add('write', lambda *args: print(f"pn_fwd_prio_var changed to: {pn_fwd_prio_var.get()}"))
         ###########################################
         # Root Frame
         tab_frame   = ttk.Frame(self._tabctl)
@@ -100,8 +100,10 @@ class BBSRoutingSettings(ttk.Frame):
         #################
         # allow_pn_auto_path
         ttk.Checkbutton(btn_frame_r,
-                       variable=pn_fwd_prio_var,
-                       text="PN-Mail Prio").pack(side=tk.TOP, expand=False, anchor=tk.W)
+                        variable=pn_fwd_prio_var,
+                        onvalue=True,
+                        offvalue=False,
+                        text="PN-Mail Prio").pack(side=tk.TOP, expand=False, anchor=tk.W)
 
         ##########
         tabctl = ttk.Notebook(tab_frame)
@@ -375,7 +377,6 @@ class BBSRoutingSettings(ttk.Frame):
             dest_call = fwd_cfg.get('dest_call', 'NOCALL')
             if dest_call in self._routing_trees:
                 logger.warning(self._logTag + f"Duplicate dest_call: {dest_call}")
-
             self._routing_trees[fwd_cfg.get('dest_call', 'NOCALL')] = self._add_fwdBBS_pn_out_tab(fwd_cfg)
 
     ####################################

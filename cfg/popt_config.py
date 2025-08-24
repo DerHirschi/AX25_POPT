@@ -4,7 +4,7 @@ from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
-from cfg.cfg_fnc import load_fm_file, save_to_file, get_all_stat_CFGs, del_user_data, \
+from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
 
@@ -12,7 +12,6 @@ from cfg.logger_config import logger
 class Main_CFG:
     def __init__(self):
         logger.info('Main CFG: Init')
-        self._config_filename = CFG_MAIN_data_file
         self._config = {}
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
@@ -53,6 +52,7 @@ class Main_CFG:
             ##########################
             # -- PORT CFGs
             'port_cfgs': {},
+            'block_list': {},
             ##########################
             # -- MCast CFG
             'mcast_cfg': getNew_mcast_cfg,
@@ -123,23 +123,24 @@ class Main_CFG:
     ####################
     # File Fnc
     def _load_CFG_fm_file(self):
-        logger.info(f'Main CFG: Load from {self._config_filename}')
+        logger.info(f'Main CFG: Load from {CFG_MAIN_data_file}')
         # print(f'Main CFG: Load from {self._config_filename}')
-        config: dict = load_fm_file(self._config_filename)
+        config: dict = load_fm_pickle_file(CFG_MAIN_data_file)
         if config:
-            """
-            for cfg_name, cfg in config.items():
-                logger.debug(f"Main CFG:{cfg_name}> {cfg}")
-            """
             self._config = dict(config)
         else:
             logger.warning("Main CFG: MainConfig wasn't found. Generating new Default Configs !! ")
             self._set_all_default_CFGs()
-
+        """
+        logger.debug('-----------------------------')
+        for cfg_name, cfg in self._config.get('bbs_main', {}).items():
+            logger.debug(f"bbs_main:{cfg_name}> {cfg}")
         # self._config.read(self._config_filename)
+        logger.debug('-----------------------------')
+        """
 
     def save_MAIN_CFG_to_file(self):
-        logger.info(f'Main CFG: Config Saved to {self._config_filename}')
+        logger.info(f'Main CFG: Config Saved to {CFG_MAIN_data_file}')
         """
         if DEBUG_LOG:
             logger.debug(self._config['stat_cfgs'])
@@ -161,7 +162,7 @@ class Main_CFG:
             logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
             # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
 
-        save_to_file(self._config_filename, dict(self._config))
+        save_to_pickle_file(CFG_MAIN_data_file, dict(self._config))
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
         self._config['port_cfgs'] = tmp_port_cfgs
@@ -246,7 +247,7 @@ class Main_CFG:
         if def_cfg is not None:
             if callable(def_cfg):
                 return def_cfg()
-            return def_cfg
+        return def_cfg
 
     def get_CFG_by_key(self, cfg_key: str):
         if cfg_key not in self._config.keys():
@@ -625,11 +626,29 @@ class Main_CFG:
     def get_BBS_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()))
 
+    def get_BBS_FWD_cfg(self, bbs_call: str):
+        return copy.deepcopy(self._config
+                             .get('bbs_main', getNew_BBS_cfg())
+                             .get('fwd_bbs_cfg', {})
+                             .get(bbs_call, {})
+        )
+
     def set_BBS_cfg(self, bbs_cfg: dict):
         self._config['bbs_main'] = dict(bbs_cfg)
 
     def get_BBS_AutoMail_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()).get('auto_mail_tasks', []))
+
+    ###########################################
+    # Block List
+    def get_block_list(self):
+        return self._config.get('block_list', {})
+
+    def get_block_list_by_id(self, port_id: int):
+        return self._config.get('block_list', {}).get(port_id, {})
+
+    def set_block_list(self, block_tab: dict):
+        self._config['block_list'] = block_tab
 
 
 POPT_CFG = Main_CFG()

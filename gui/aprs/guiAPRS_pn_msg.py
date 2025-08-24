@@ -5,6 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import COLOR_MAP
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars
 from gui.aprs.guiAPRSnewMSG import NewMessageWindow
@@ -34,7 +35,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
-            pass
+            try:
+                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
+            except Exception as ex:
+                logger.warning(ex)
         self.lift()
         ##########################
         main_f = ttk.Frame(self)

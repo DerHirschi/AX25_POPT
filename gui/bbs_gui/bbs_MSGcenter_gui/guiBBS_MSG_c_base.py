@@ -335,6 +335,7 @@ class MSG_Center_base(ttk.Frame):
     def _delete_PN(self, bid: str):
         if bid:
             return self._bbs_obj.del_in_by_BID(bid)
+        return False
 
     def _delete_PN_btn(self):
         # for bid in self._hold_selected:
@@ -348,6 +349,7 @@ class MSG_Center_base(ttk.Frame):
     def _delete_BL(self, bid: str):
         if bid:
             return self._bbs_obj.del_in_by_BID(bid)
+        return False
 
     def _delete_BL_btn(self):
         # for bid in self._hold_selected:
@@ -361,6 +363,7 @@ class MSG_Center_base(ttk.Frame):
     def _delete_OUT(self, bid: str):
         if bid:
             return self._bbs_obj.del_out_by_BID(bid)
+        return False
 
     def _delete_OUT_btn(self):
         # for bid in self._hold_selected:
@@ -374,6 +377,7 @@ class MSG_Center_base(ttk.Frame):
     def _delete_SV(self, bid: str):
         if bid:
             return self._bbs_obj.del_sv_by_MID(bid)
+        return False
 
     def _PN_show_msg_fm_BID(self, mid):
         pass
