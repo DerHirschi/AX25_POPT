@@ -1,4 +1,13 @@
 ###########################################################################################################
+# 2.120.x
+Fixes:
+
+Optimierung/Änderungen:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.119.x
 Fixes:
 - Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
@@ -33,6 +42,7 @@ Optimierung/Änderungen:
   ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
 - Unnötige updates der Forward-Warteschlange
 - Fehlende Übersetzungen vervollständigt by ClaudeMa
+- Fehlende Übersetzungen vervollständigt by Patric (NL1NOD)
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder

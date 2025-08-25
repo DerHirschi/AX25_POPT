@@ -411,7 +411,10 @@ class PoPT_GUI_Main:
         pass
 
     def _destroy_win(self):
-        self.sysMsg_to_monitor(self._getTabStr('mon_end_msg1'))
+        if self._quit:
+            return
+        self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self._quit = True
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
@@ -438,17 +441,17 @@ class PoPT_GUI_Main:
             if hasattr(wn, 'destroy'):
                 wn.destroy()
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
+        self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
         self._save_pw_pos()
         self._save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
+        self._sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._port_handler.close_popt).start()
-        logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
-        self._quit = True
         self.main_win.update_idletasks()
-        self._loop_delay = 800
-        logger.info('GUI: Closing GUI: Done')
+        #self._loop_delay = 800
+        #logger.info('GUI: Closing GUI: Done')
 
     def save_GUIvars(self):
         #########################
@@ -1475,23 +1478,23 @@ class PoPT_GUI_Main:
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
-            self.sysMsg_to_monitor(el)
-        self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
+            self._sysMsg_to_monitor_task(el)
+        self._sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
-            self.sysMsg_to_monitor(self._getTabStr('mon_start_msg1').format(stat))
+            self._sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
         all_ports = self._port_handler.ax25_ports
         for port_k in all_ports.keys():
             msg = self._getTabStr('mon_start_msg2')
             if all_ports[port_k].device_is_running:
                 msg = self._getTabStr('mon_start_msg3')
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
-            self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
+            self._sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortName', ''),
                                            port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
-            self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
+            self._sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortParm', ('', 0))[0],
                                            port_cfg.get('parm_PortParm', ('', 0))[1],
@@ -1731,11 +1734,11 @@ class PoPT_GUI_Main:
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
+        q_tasker = self._tasker_queue()
         if self._quit:
             self._tasker_quit()
         else:
             prio     = self._tasker_prio()
-            q_tasker = self._tasker_queue()
             if not self._tasker_05_sec():
                 if not self._tasker_1_sec():
                     if all((not self._tasker_5_sec(),
@@ -1746,9 +1749,14 @@ class PoPT_GUI_Main:
         self.main_win.after(self._loop_delay, self._tasker)
 
     def _tasker_quit(self):
-        if self._port_handler.check_all_ports_closed():
-            self._port_handler.close_gui()
-            logger.info('GUI: Closing GUI: _tasker_quit Done.')
+        if not self._port_handler.get_ph_end():
+            return
+        if self._tasker_q:
+            logger.info('GUI: Still jobs in _tasker_q')
+            return
+        self._port_handler.close_gui()
+        # logger.info('GUI: Closing GUI: _tasker_quit Done.')
+        logger.info('GUI: Closing GUI: Done')
 
     def _tasker_queue(self):
         if not self._tasker_q:
@@ -1814,6 +1822,8 @@ class PoPT_GUI_Main:
                 self._set_aprsMail_alarm_task()
             elif task == 'reset_aprsMail_alarm':
                 self._reset_aprsMail_alarm_task()
+            elif task == 'sysMsg_to_monitor':
+                self._sysMsg_to_monitor_task(arg)
 
             n -= 1
         return True
@@ -1902,7 +1912,7 @@ class PoPT_GUI_Main:
     # END TASKER
     ######################################################################
     def _add_tasker_q(self, fnc: str, arg):
-        if fnc in self._tasker_q:
+        if fnc in self._tasker_q and arg is None:
             return
         self._tasker_q.append(
             (fnc, arg)
@@ -2156,6 +2166,9 @@ class PoPT_GUI_Main:
     # Monitor WIN
 
     def sysMsg_to_monitor(self, var: str):
+        self._add_tasker_q("sysMsg_to_monitor", var)
+
+    def _sysMsg_to_monitor_task(self, var: str):
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
         ind = str(self._mon_txt.index(tk.INSERT))
@@ -2551,7 +2564,7 @@ class PoPT_GUI_Main:
     #######################################################################
 
     def _kaffee(self):
-        self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
+        self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         # self.open_RoutingTab_win()
         #print(self._inp_txt.cget('height'))

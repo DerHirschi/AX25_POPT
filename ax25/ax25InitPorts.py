@@ -272,23 +272,30 @@ class AX25PortHandler(object):
         self.block_all_ports(1)
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
+        self.sysmsg_to_gui("Closing APRS-Client")
         self._close_aprs_ais()
         if hasattr(self._gpio, 'close_gpio_pins'):
             logger.info("PH: Closing GPIO")
+            self.sysmsg_to_gui("Closing GPIO")
             self._gpio.close_gpio_pins()
 
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
+            self.sysmsg_to_gui(f"Closing Port {k}")
             self.close_port(k)
         if hasattr(self._bbs, 'close'):
             logger.info("PH: Closing BBS")
+            self.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
         if self._mh:
             logger.info("PH: Saving MH-Data")
+            self.sysmsg_to_gui("Saving MH-Data")
             self._mh.save_mh_data()
             logger.info("PH: Saving Port Statistic-Data")
+            self.sysmsg_to_gui("Saving Port Statistic-Data")
             self._mh.save_PortStat()
         if self._update_1wire_th is not None:
+            self.sysmsg_to_gui("Closing 1-Wire Thread")
             n = 0
             while self._update_1wire_th.is_alive():
                 logger.info("PH: Warte auf 1-Wire Thread")
@@ -298,14 +305,22 @@ class AX25PortHandler(object):
                     break
                 time.sleep(0.5)
         logger.info("PH: Saving User-DB Data")
+        self.sysmsg_to_gui("Saving User-DB Data")
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")
+        self.sysmsg_to_gui("Closing User-DB")
         self.close_DB()
         logger.info("PH: Saving MCast-Data")
+        self.sysmsg_to_gui("Saving MCast-Data")
         self._mcast_server.mcast_save_cfgs()
         logger.info("PH: Saving MainCFG")
+        self.sysmsg_to_gui("Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        time.sleep(0.5)
         self._ph_end = True
+
+    def get_ph_end(self):
+        return self._ph_end
 
     def close_port(self, port_id: int):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
@@ -497,7 +512,8 @@ class AX25PortHandler(object):
             self._gui = gui
 
     def sysmsg_to_gui(self, msg: str = ''):
-        if self._gui and self.is_running:
+        #if self._gui and self.is_running:
+        if hasattr(self._gui, 'sysMsg_to_monitor'):
             self._gui.sysMsg_to_monitor(msg)
 
     def close_gui(self):
