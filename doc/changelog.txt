@@ -1,6 +1,9 @@
 ###########################################################################################################
 # 2.120.x
 Fixes:
+- BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
+  wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
+  FWD-Warteschlange entfernt wird
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange

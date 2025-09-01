@@ -429,6 +429,7 @@ class BBSConnection:
             elif flag in FWD_LATER:
                 self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
                 self._send_next_time.append(fwd_id)
+                self._bbs.ack_next_fwd_q(fwd_id, 'S=')
             elif flag == FWD_HLD:
                 self._bbs.send_sysop_msg(topic='HELD MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rHeld by {self._dest_bbs_call}')
                 self._tx_out_msg_by_bid(bids[i])
