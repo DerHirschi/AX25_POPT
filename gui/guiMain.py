@@ -413,8 +413,12 @@ class PoPT_GUI_Main:
     def _destroy_win(self):
         if self._quit:
             return
-        self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self._port_handler.disco_all_Conn()
+        self._set_port_blocking(1)
         self._quit = True
+        self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self._set_port_blocking(1)
+        self._port_handler.disco_all_Conn()
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
@@ -3309,7 +3313,6 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame.t2speech.configure(state='disabled')
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
-
 
     def get_PH_manGUI(self):
         return self._port_handler

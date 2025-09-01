@@ -19,7 +19,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
         # self.geometry("1250x700")
-        self.geometry(f"1190x"
+        self.geometry(f"1430x"
                       f"420+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
@@ -111,6 +111,8 @@ class BBS_fwd_Q(tk.Toplevel):
         # port_frame
 
         self._port_tabctl = ttk.Notebook(port_frame)
+        self._port_tabctl.bind("<<NotebookTabChanged>>", self._update_bbs_vars)
+
         self._port_tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         for fwd_port_id, fwd_port_vars in self._bbs_obj.get_fwdPort_vars().items():
@@ -149,6 +151,7 @@ class BBS_fwd_Q(tk.Toplevel):
                       ).pack()
 
             bbs_tabctl = ttk.Notebook(r_frame)
+            bbs_tabctl.bind("<<NotebookTabChanged>>", self._update_bbs_vars)
             self._port_vars[fwd_port_id] = dict(
                 block_timer_var     = block_timer_var,
                 block_byte_c_var    = block_byte_c_var,
@@ -175,10 +178,13 @@ class BBS_fwd_Q(tk.Toplevel):
                 frame_l  = ttk.Frame(bbs_tab_f, borderwidth=5)
                 frame_m  = ttk.Frame(bbs_tab_f, borderwidth=5)
                 frame_r  = ttk.Frame(bbs_tab_f, borderwidth=5)
+                frame_rr = ttk.Frame(bbs_tab_f, borderwidth=5)
 
-                frame_l.pack(side=tk.LEFT)
-                frame_m.pack(side=tk.LEFT)
-                frame_r.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+                frame_l.pack(side='left')
+                frame_m.pack(side='left')
+                frame_r.pack(side='left', expand=True, fill=tk.BOTH)
+                ttk.Separator(bbs_tab_f, orient=tk.VERTICAL).pack(side='left', fill=tk.Y, expand=False, padx=10)
+                frame_rr.pack(side='left', expand=True, fill='both')
 
                 ###########
                 # frame_l
@@ -236,6 +242,49 @@ class BBS_fwd_Q(tk.Toplevel):
                 fwd_q_tree.column("tosend", anchor=tk.W,      stretch=tk.YES, width=140)
                 fwd_q_tree.pack(expand=True, fill=tk.BOTH)
 
+                ###########
+                # frame_rr
+                mail_pn_rx_var      = tk.StringVar(self)
+                mail_pn_tx_var      = tk.StringVar(self)
+                mail_bl_rx_var      = tk.StringVar(self)
+                mail_bl_tx_var      = tk.StringVar(self)
+                mail_rx_hold_var    = tk.StringVar(self)
+                mail_tx_hold_var    = tk.StringVar(self)
+                mail_rx_rej_var     = tk.StringVar(self)
+                mail_tx_rej_var     = tk.StringVar(self)
+                mail_rx_error_var   = tk.StringVar(self)
+                mail_tx_error_var   = tk.StringVar(self)
+                #
+                mail_bytes_rx_var   = tk.StringVar(self)
+                mail_bytes_tx_var   = tk.StringVar(self)
+                bytes_rx_var        = tk.StringVar(self)
+                bytes_tx_var        = tk.StringVar(self)
+                connect_c_var       = tk.StringVar(self)
+                connect_e_var       = tk.StringVar(self)
+
+                stat_f_l = ttk.Frame(frame_rr)
+                stat_f_r = ttk.Frame(frame_rr)
+                stat_f_l.pack(side='left', fill='both')
+                stat_f_r.pack(side='left', fill='both', padx=30)
+                ttk.Label(stat_f_l, textvariable=mail_pn_rx_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_pn_tx_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_bl_rx_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_bl_tx_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_rx_hold_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_tx_hold_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_rx_rej_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_tx_rej_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_rx_error_var).pack(anchor='w')
+                ttk.Label(stat_f_l, textvariable=mail_tx_error_var).pack(anchor='w')
+                #
+                ttk.Label(stat_f_r, textvariable=mail_bytes_rx_var).pack(anchor='w')
+                ttk.Label(stat_f_r, textvariable=mail_bytes_tx_var).pack(anchor='w')
+                ttk.Label(stat_f_r, textvariable=bytes_rx_var).pack(anchor='w')
+                ttk.Label(stat_f_r, textvariable=bytes_tx_var).pack(anchor='w')
+                ttk.Label(stat_f_r, textvariable=connect_c_var).pack(anchor='w')
+                ttk.Label(stat_f_r, textvariable=connect_e_var).pack(anchor='w')
+
+
                 self._bbs_vars[bbs_call] = dict(
                     bbs_byte_c_var  =bbs_byte_c_var,
                     bbs_error_c_var =bbs_error_c_var,
@@ -245,6 +294,24 @@ class BBS_fwd_Q(tk.Toplevel):
                     bbs_next_q_var  =bbs_next_q_var,
                     next_q_tree     =next_q_tree,
                     fwd_q_tree      =fwd_q_tree,
+                    #
+                    mail_pn_rx_var      =mail_pn_rx_var,
+                    mail_pn_tx_var      =mail_pn_tx_var,
+                    mail_bl_rx_var      =mail_bl_rx_var,
+                    mail_bl_tx_var      =mail_bl_tx_var,
+                    mail_rx_hold_var      =mail_rx_hold_var,
+                    mail_tx_hold_var      =mail_tx_hold_var,
+                    mail_rx_rej_var      =mail_rx_rej_var,
+                    mail_tx_rej_var      =mail_tx_rej_var,
+                    mail_rx_error_var      =mail_rx_error_var,
+                    mail_tx_error_var      =mail_tx_error_var,
+                    #
+                    mail_bytes_rx_var=mail_bytes_rx_var,
+                    mail_bytes_tx_var=mail_bytes_tx_var,
+                    bytes_rx_var=bytes_rx_var,
+                    bytes_tx_var=bytes_tx_var,
+                    connect_c_var=connect_c_var,
+                    connect_e_var=connect_e_var,
                 )
 
 
@@ -284,11 +351,13 @@ class BBS_fwd_Q(tk.Toplevel):
             gui_vars['block_byte_c_var'].set(block_byte_c_var)
             gui_vars['block_fwd_tasks_var'].set(block_fwd_tasks_var)
 
-    def _update_bbs_vars(self):
+    def _update_bbs_vars(self, event=None):
         # bbs_fwd_cfg     = POPT_CFG.get_BBS_cfg().get('fwd_bbs_cfg', {})
         bbs_Qvars: dict = self._bbs_obj.get_bbsQ_vars()
 
         for bbs_call, gui_vars in self._bbs_vars.items():
+            if bbs_call != self._get_bbs_tab():
+                continue
             bbs_var = bbs_Qvars.get(bbs_call, {})
             # bbs_cfg = bbs_fwd_cfg.get(bbs_call, {})
             if not bbs_var:
@@ -299,6 +368,24 @@ class BBS_fwd_Q(tk.Toplevel):
                 gui_vars['bbs_q_var'].set(e_msg)
                 gui_vars['bbs_q_done_var'].set(e_msg)
                 gui_vars['bbs_next_q_var'].set(e_msg)
+                #
+                gui_vars['mail_pn_rx_var'].set('')
+                gui_vars['mail_pn_tx_var'].set('')
+                gui_vars['mail_bl_rx_var'].set('')
+                gui_vars['mail_bl_tx_var'].set('')
+                gui_vars['mail_rx_hold_var'].set('')
+                gui_vars['mail_tx_hold_var'].set('')
+                gui_vars['mail_rx_rej_var'].set('')
+                gui_vars['mail_tx_rej_var'].set('')
+                gui_vars['mail_rx_error_var'].set('')
+                gui_vars['mail_tx_error_var'].set('')
+
+                gui_vars['mail_bytes_rx_var'].set('')
+                gui_vars['mail_bytes_tx_var'].set('')
+                gui_vars['bytes_rx_var'].set('')
+                gui_vars['bytes_tx_var'].set('')
+                gui_vars['connect_c_var'].set('')
+                gui_vars['connect_e_var'].set('')
                 continue
             bbs_byte_c  = bbs_var.get('bbs_fwd_byte_c',  0)
             bbs_error_c = bbs_var.get('bbs_fwd_error_c', 0)
@@ -360,6 +447,58 @@ class BBS_fwd_Q(tk.Toplevel):
                 fwd_q_tree.delete(i)
             for ret_ent in q_tree_data:
                 fwd_q_tree.insert('', tk.END, values=ret_ent)
+
+            # Statistics
+            statistics = bbs_var.get('bbs_fwd_statistic', {})
+            mail_pn_rx = statistics.get('mail_pn_rx', 'Error')
+            mail_pn_tx = statistics.get('mail_pn_tx', 'Error')
+            mail_bl_rx = statistics.get('mail_bl_rx', 'Error')
+            mail_bl_tx = statistics.get('mail_bl_tx', 'Error')
+            mail_rx_hold = statistics.get('mail_rx_hold', 'Error')
+            mail_tx_hold = statistics.get('mail_tx_hold', 'Error')
+            mail_rx_rej = statistics.get('mail_rx_rej', 'Error')
+            mail_tx_rej = statistics.get('mail_tx_rej', 'Error')
+            mail_rx_error = statistics.get('mail_rx_error', 'Error')
+            mail_tx_error = statistics.get('mail_tx_error', 'Error')
+
+            mail_bytes_rx = statistics.get('mail_bytes_rx', 'Error')
+            mail_bytes_tx = statistics.get('mail_bytes_tx', 'Error')
+            bytes_rx = statistics.get('bytes_rx', 'Error')
+            bytes_tx = statistics.get('bytes_tx', 'Error')
+            connect_c = statistics.get('connect_c', 'Error')
+            connect_e = statistics.get('connect_e', 'Error')
+
+            gui_vars['mail_pn_rx_var'].set(f"Private RX: {mail_pn_rx}")
+            gui_vars['mail_pn_tx_var'].set(f"Private TX: {mail_pn_tx}")
+            gui_vars['mail_bl_rx_var'].set(f"Bulletin RX: {mail_bl_rx}")
+            gui_vars['mail_bl_tx_var'].set(f"Bulletin TX: {mail_bl_tx}")
+            gui_vars['mail_rx_hold_var'].set(f"Held RX: {mail_rx_hold}")
+            gui_vars['mail_tx_hold_var'].set(f"Held TX: {mail_tx_hold}")
+            gui_vars['mail_rx_rej_var'].set(f"Rejected RX: {mail_rx_rej}")
+            gui_vars['mail_tx_rej_var'].set(f"Rejected TX: {mail_tx_rej}")
+            gui_vars['mail_rx_error_var'].set(f"Error RX: {mail_rx_error}")
+            gui_vars['mail_tx_error_var'].set(f"Error TX: {mail_tx_error}")
+
+            try:
+                gui_vars['mail_bytes_rx_var'].set(f"Mails RX: {mail_bytes_rx if type(mail_bytes_rx) != int else round((mail_bytes_rx/ 1024), 1)} kB")
+            except ValueError:
+                gui_vars['mail_bytes_rx_var'].set(f"Mails RX: {mail_bytes_rx}")
+            try:
+                gui_vars['mail_bytes_tx_var'].set(f"Mails TX: {mail_bytes_tx if type(mail_bytes_tx) != int else round((mail_bytes_tx/ 1024), 1)} kB")
+            except ValueError:
+                gui_vars['mail_bytes_tx_var'].set(f"Mails TX: {mail_bytes_tx}")
+
+            try:
+                gui_vars['bytes_rx_var'].set(f"Total RX: {bytes_rx if type(bytes_rx) != int else round((bytes_rx/ 1024), 1)} kB")
+            except ValueError:
+                gui_vars['bytes_rx_var'].set(f"Total RX: {bytes_rx}")
+            try:
+                gui_vars['bytes_tx_var'].set(f"Total TX: {bytes_tx if type(bytes_tx) != int else round((bytes_tx/ 1024), 1)} kB")
+            except ValueError:
+                gui_vars['bytes_tx_var'].set(f"Total TX: {bytes_tx}")
+
+            gui_vars['connect_c_var'].set(f"Connects: {connect_c}")
+            gui_vars['connect_e_var'].set(f"Connect Errors: {connect_e}")
 
     def _update_tree(self):
         for i in self._tree.get_children():
@@ -429,27 +568,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._update_fwdQ_tree()
 
     def _do_fwd_to(self):
-        try:
-            ind = self._port_tabctl.tab('current')
-        except tk.TclError:
-            return
-        ind = str(ind['text']).replace('FWD-Port ', '')
-        try:
-            current_port_id = int(ind)
-        except ValueError:
-            return
-
-        gui_port_var = self._port_vars.get(current_port_id, {})
-        if not gui_port_var:
-            return
-        bbs_tabctl = gui_port_var.get('bbs_tabctl', None)
-        if not hasattr(bbs_tabctl, 'tab'):
-            return
-        try:
-            bbs_ind = bbs_tabctl.tab('current')
-        except tk.TclError:
-            return
-        bbs_call = bbs_ind['text']
+        bbs_call = self._get_bbs_tab()
         if bbs_call not in self._bbs_vars:
             return
         self._bbs_obj.start_autoFwd(bbs_call)
@@ -501,6 +620,34 @@ class BBS_fwd_Q(tk.Toplevel):
         except ValueError:
             return
         self._bbs_obj.reset_port_block_fnc(current_port_id)
+    ###############################
+    #
+    def _get_bbs_tab(self):
+        try:
+            ind = self._port_tabctl.tab('current')
+        except tk.TclError:
+            return ''
+        ind = str(ind['text']).replace('FWD-Port ', '')
+        try:
+            current_port_id = int(ind)
+        except ValueError:
+            return ''
+
+        gui_port_var = self._port_vars.get(current_port_id, {})
+        if not gui_port_var:
+            return ''
+        bbs_tabctl = gui_port_var.get('bbs_tabctl', None)
+        if not hasattr(bbs_tabctl, 'tab'):
+            return ''
+        try:
+            bbs_ind = bbs_tabctl.tab('current')
+        except tk.TclError:
+            return ''
+        bbs_call = bbs_ind['text']
+        if bbs_call not in self._bbs_vars:
+            return
+        return bbs_call
+
 
     def _close(self):
         # self._bbs_obj = None

@@ -2,7 +2,7 @@ import copy
 
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -18,6 +18,7 @@ class Main_CFG:
             ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
+            'bbs_fwd_statistics': {},
             # 'pms_home_bbs': getNew_BBS_FWD_cfg,
             ##########################
             # -- MH
@@ -638,6 +639,15 @@ class Main_CFG:
 
     def get_BBS_AutoMail_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()).get('auto_mail_tasks', []))
+
+    def get_fwd_statistics(self, bbs_call: str):
+        return self._config.get('bbs_fwd_statistics', {}).get(bbs_call, getNew_fwdStatistic_cfg())
+
+    def set_fwd_statistics(self, bbs_call: str, stat_dict: dict):
+        try:
+            self._config['bbs_fwd_statistics'][bbs_call] = copy.deepcopy(stat_dict)
+        except Exception as ex:
+            logger.error(ex)
 
     ###########################################
     # Block List

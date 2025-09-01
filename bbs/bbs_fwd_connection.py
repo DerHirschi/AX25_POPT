@@ -62,6 +62,7 @@ class BBSConnection:
             if not tx:
                 BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
                 self._handshake = True
+            self._bbs.set_bbs_statistic(self._dest_bbs_call, 'connect_c', 1)
         else:
             self._state = 21
             self.end_conn()
@@ -197,18 +198,20 @@ class BBSConnection:
         return b''
 
     def _connection_tx(self, raw_data: b''):
-        logger.debug(f"fwd-conn-TX: State:    {self._state}")
-        logger.debug(f"fwd-conn-TX: raw_data: {raw_data}")
+        logger.debug(f"fwd-conn-TX({self._dest_bbs_call}): State:    {self._state}")
+        logger.debug(f"fwd-conn-TX({self._dest_bbs_call}): raw_data: {raw_data}")
         self._ax25_conn.send_data(data=raw_data)
+        self._bbs.set_bbs_statistic(self._dest_bbs_call, 'bytes_tx', len(raw_data))
         self._reset_conn_timeout()
 
     def connection_rx(self, raw_data: b''):
         if raw_data:
             self._reset_conn_timeout()
         # self._debug_rx_buff += bytes(raw_data)
-        logger.debug(f"fwd-conn-RX: State:    {self._state}")
-        logger.debug(f"fwd-conn-RX: raw_data: {raw_data}")
+        logger.debug(f"fwd-conn-RX({self._dest_bbs_call}): State:    {self._state}")
+        logger.debug(f"fwd-conn-RX({self._dest_bbs_call}): raw_data: {raw_data}")
         self._rx_buff += bytes(raw_data)
+        self._bbs.set_bbs_statistic(self._dest_bbs_call, 'bytes_rx', len(raw_data))
         if self._state == 11:
             return False
         return True
@@ -437,8 +440,7 @@ class BBSConnection:
                 self._bbs.send_sysop_msg(topic='ERROR MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rError by {self._dest_bbs_call}')
                 # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EE')
                 self._bbs.ack_next_fwd_q(fwd_id, 'EE')
-            # TODO
-            elif flag in FWD_ERR_OFFSET:  # Offset
+            elif flag in FWD_ERR_OFFSET:  # TODO Offset
                 # print("BBS FWD Prot Error! OFFSET Error not implemented yet")
                 BBS_LOG.error(self._logTag + "BBS FWD Prot Error! OFFSET Error not implemented yet")
                 # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'EO')
@@ -625,6 +627,13 @@ class BBSConnection:
                         hold = True
                     else:
                         pn_check += res_rej_tab
+                        try:
+                            self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
+                        except Exception as ex:
+                            logger.error(f"Error Statistics: {self._dest_bbs_call}")
+                            logger.error(ex)
+                            BBS_LOG.error(f"Error Statistics _parse_header: {self._dest_bbs_call}")
+                            BBS_LOG.error(ex)
                         BBS_LOG.info(logTag + f"Rejected : BID-MID: {bid}")
                         for k, val in msg.items():
                             if val:
@@ -681,7 +690,7 @@ class BBSConnection:
     def _parse_msg(self, msg: b''):
         # TODO: Again ..
         logTag  = self._logTag + f"MSG-Parser> "
-        BBS_LOG.debug(logTag + f"msg: {msg}")
+        logger.debug(f"msg: {msg}")
         # Find EOL Syntax
         eol = find_eol(msg)
         header_eol = eol + eol
@@ -692,7 +701,7 @@ class BBSConnection:
         if bin_mode:
             subject = self._rx_msg_header.get(bid, {}).get('subject', b'')
             msg = subject + eol + msg
-
+        # msg_len     = len(msg)
         lines       = msg.split(header_eol)
         short       = len(lines) < 3
 
@@ -881,11 +890,26 @@ class BBSConnection:
             self._rx_msg_header[bid]['time']          = ''
         self._rx_msg_header[bid]['subject']       = subject
         self._rx_msg_header[bid]['bid']           = bid
-        if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):  # PMS Opt TODO GUI
+        if POPT_CFG.get_BBS_cfg().get('enable_fwd', True):  # PMS Opt
             if self._rx_msg_header[bid]['hold']:
                 self._rx_msg_header[bid]['flag']      = 'H'
             else:
                 self._rx_msg_header[bid]['flag']      = '$'
+        #########################################
+        # Statistics
+        try:
+            if self._rx_msg_header[bid]['message_type'] == 'P':
+                self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_pn_rx', 1)
+            elif self._rx_msg_header[bid]['message_type'] == 'B':
+                self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_bl_rx', 1)
+            if self._rx_msg_header[bid]['hold']:
+                self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_hold', 1)
+            self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_bytes_rx', len(msg))
+        except Exception as ex:
+            BBS_LOG.error(self._logTag + "Error Statistics _parse_msg")
+            BBS_LOG.error(ex)
+            logger.error(f"Error ({self._dest_bbs_call})")
+            logger.error(ex)
         #########################################
         # TODO: make something from path_data
         """

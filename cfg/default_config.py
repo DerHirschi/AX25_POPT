@@ -74,7 +74,7 @@ def getNew_BBS_cfg():
         fwd_port_cfg    = {},           # Port CFGs
         home_bbs        = [],           # Used by GUI (newMSG)
         bin_mode        = True,         # Binary Mails (compressed)
-        enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
+        enable_fwd      = True,         # False = PMS-Mode (No Forwarding)
         single_auto_conn= True,         # TODO: delete .. We have port_conn_limit Only one outgoing connection at a time
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
@@ -163,6 +163,27 @@ def getNew_AUTOMAIL_task():
         env_vars        = False,
         scheduler_cfg   = dict(getNew_schedule_config()),
     )
+
+def getNew_fwdStatistic_cfg():
+    return dict(
+                mail_pn_rx      = 0,
+                mail_pn_tx      = 0,
+                mail_bl_rx      = 0,
+                mail_bl_tx      = 0,
+                mail_rx_hold    = 0,
+                mail_tx_hold    = 0,
+                mail_rx_rej     = 0,
+                mail_tx_rej     = 0,
+                mail_rx_error   = 0,
+                mail_tx_error   = 0,
+                # Bytes/Traffic Counter
+                mail_bytes_rx   = 0,
+                mail_bytes_tx   = 0,
+                bytes_rx        = 0,
+                bytes_tx        = 0,
+                connect_c       = 0,
+                connect_e       = 0,
+            )
 """
 def getNew_BBS_User_cfg():
     # UserDB Entry

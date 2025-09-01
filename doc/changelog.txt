@@ -3,8 +3,11 @@
 Fixes:
 
 Optimierung/Änderungen:
+- GUI Tasker-Warteschlange
+- Systemnachrichtenausgaben im Monitor beim Beenden von PoPT
 
 Neue Implementierungen / Funktionen:
+- BBS Forward-Statistiken/Zähler
 
 ###########################################################################################################
 ###########################################################################################################

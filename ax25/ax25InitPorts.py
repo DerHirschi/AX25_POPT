@@ -269,7 +269,7 @@ class AX25PortHandler(object):
 
     def close_popt(self):
         logger.info("PH: Closing PoPT")
-        self.block_all_ports(1)
+        # self.block_all_ports(1)
         self.is_running = False
         logger.info("PH: Closing APRS-Client")
         self.sysmsg_to_gui("Closing APRS-Client")
@@ -305,7 +305,7 @@ class AX25PortHandler(object):
                     break
                 time.sleep(0.5)
         logger.info("PH: Saving User-DB Data")
-        self.sysmsg_to_gui("Saving User-DB Data")
+        self.sysmsg_to_gui("Saving User-DB")
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")
         self.sysmsg_to_gui("Closing User-DB")
@@ -330,8 +330,9 @@ class AX25PortHandler(object):
             del self.rx_echo[port_id]
         if port_id in list(self.ax25_ports.keys()):
             port = self.ax25_ports[port_id]
-            # port.disco_all_conns()
-            # time.sleep(1)
+            if port.connections:
+                port.disco_all_conns()
+                time.sleep(1)
             port.close()
 
             while not port.ende:

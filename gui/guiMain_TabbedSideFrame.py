@@ -8,18 +8,19 @@ from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab
+from gui.guiRightClick_Menu import ContextMenu
 from sound.popt_sound import SOUND
 
 
-class SideTabbedFrame:  # TODO
+class SideTabbedFrame:
     def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
         self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._main_win      = main_cl
         self.style          = self._main_win.style
         self._get_colorMap  = lambda: COLOR_MAP.get(self._main_win.style_name, ('black', '#d9d9d9'))
         ##########################################
-        self._mh            = self._main_win.mh
-        self._ch_is_disc    = True
+        self._mh             = self._main_win.mh
+        self._ch_is_disc     = True
         ##########################################
         self._tabControl = ttk.Notebook(
             frame,
@@ -774,12 +775,13 @@ class SideTabbedFrame:  # TODO
                 self._main_win.new_conn_win.preset_ent(call, port)
 
     def _connects_entry_selected(self, event=None):
-        for selected_item in self._connects_tree.selection():
-            item = self._connects_tree.item(selected_item)
-            record = item['values']
-            # show a message
-            ch_id = int(record[0])
-            self._main_win.switch_channel(ch_id)
+        selected_items = self._connects_tree.selection()
+        if not selected_items:
+            self._selected_ch_id = 0
+            return
+        item = self._connects_tree.item(selected_items[0])
+        ch_id = int(item['values'][0])
+        self._main_win.switch_channel(ch_id)
 
     def _trace_entry_selected(self, event=None):
         pass
