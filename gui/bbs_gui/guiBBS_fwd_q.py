@@ -39,28 +39,32 @@ class BBS_fwd_Q(tk.Toplevel):
         self._port_vars      = {}
         self._bbs_vars       = {}
         self._tree_data      = []
+        self._stat_tree_data = []
         self._data           = []
         self._rev_ent        = False
         self._last_sort      = ''
         self._selected_bbs   = []
         self._selected_fwdid = []
+        self._tabctl_i       = self._getTabStr('fwd_list')
         ##########################################################################################
         # Tab-ctl
         root_frame   = ttk.Frame(self, borderwidth=10)
         root_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self._tabctl = ttk.Notebook(root_frame)
+        self._tabctl.bind("<<NotebookTabChanged>>", self._on_mainTab_change)
         self._tabctl.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         tree_frame = ttk.Frame(self._tabctl)
         port_frame = ttk.Frame(self._tabctl)
+        stat_frame = ttk.Frame(self._tabctl)
         self._tabctl.add(tree_frame, text=self._getTabStr('fwd_list'))
         self._tabctl.add(port_frame, text="FWD-Ports")
+        self._tabctl.add(stat_frame, text=self._getTabStr('statistic'))
         #tree_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         #port_frame.pack(side=tk.TOP,  fill=tk.BOTH, expand=True)
 
         ##########################################################################################
         # TREE
-
         columns = (
             'FWDID',
             'BID',
@@ -79,14 +83,14 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
 
-        self._tree.heading('FWDID', text='FWD-ID', command=lambda: self._sort_entry('FWDID'))
-        self._tree.heading('BID', text='BID', command=lambda: self._sort_entry('BID'))
-        self._tree.heading('from', text=self._getTabStr('from'), command=lambda: self._sort_entry('from'))
-        self._tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to'))
-        self._tree.heading('fwd_bbs_call', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry('fwd_bbs_call'))
-        self._tree.heading('type', text='Type', command=lambda: self._sort_entry('type'))
-        self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry('sub'))
-        self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry('size'))
+        self._tree.heading('FWDID', text='FWD-ID', command=lambda: self._sort_entry(self._tree, 'FWDID'))
+        self._tree.heading('BID', text='BID', command=lambda: self._sort_entry(self._tree, 'BID'))
+        self._tree.heading('from', text=self._getTabStr('from'), command=lambda: self._sort_entry(self._tree, 'from'))
+        self._tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry(self._tree, 'to'))
+        self._tree.heading('fwd_bbs_call', text=f"{self._getTabStr('to')} BBS", command=lambda: self._sort_entry(self._tree, 'fwd_bbs_call'))
+        self._tree.heading('type', text='Type', command=lambda: self._sort_entry(self._tree, 'type'))
+        self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry(self._tree, 'sub'))
+        self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry(self._tree, 'size'))
         self._tree.column("FWDID", anchor=tk.W, stretch=tk.YES, width=170)
         self._tree.column("BID", anchor=tk.W, stretch=tk.YES, width=130)
         self._tree.column("from", anchor=tk.W, stretch=tk.YES, width=190)
@@ -314,15 +318,173 @@ class BBS_fwd_Q(tk.Toplevel):
                     connect_e_var=connect_e_var,
                 )
 
+        ##########################################################################################
+        # Statistic/Counter TREE
+        columns = (
+            'BBS',
+            'MAILRX',
+            'MAILTX',
+            'PNRX',
+            'PNTX',
+            'BLRX',
+            'BLTX',
+            'HELDRX',
+            'HELDTX',
+            'REJRX',
+            'REJTX',
+            'MERX',
+            'METX',
+            'MAILDATARX',
+            'MAILDATATX',
+            'DATARX',
+            'DATATX',
+            'CONN',
+            'CONNE',
+        )
+
+        self._stat_tree = ttk.Treeview(stat_frame, columns=columns, show='headings')
+        self._stat_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # add a scrollbar
+        stat_scrollbar = ttk.Scrollbar(stat_frame, orient=tk.VERTICAL, command=self._stat_tree.yview)
+        self._stat_tree.configure(yscrollcommand=stat_scrollbar.set)
+        stat_scrollbar.pack(side=tk.LEFT, fill=tk.Y, expand=False)
+
+        self._stat_tree.heading('BBS', text='BBS', command=lambda: self._sort_entry(self._stat_tree, 'BBS'))
+        self._stat_tree.heading('MAILRX', text='Mail-RX', command=lambda: self._sort_entry(self._stat_tree, 'MAILRX'))
+        self._stat_tree.heading('MAILTX', text='Mail-TX', command=lambda: self._sort_entry(self._stat_tree, 'MAILTX'))
+        self._stat_tree.heading('PNRX', text='P-RX', command=lambda: self._sort_entry(self._stat_tree, 'PNRX'))
+        self._stat_tree.heading('PNTX', text='P-TX', command=lambda: self._sort_entry(self._stat_tree, 'PNTX'))
+        self._stat_tree.heading('BLRX', text='B-RX', command=lambda: self._sort_entry(self._stat_tree, 'BLRX'))
+        self._stat_tree.heading('BLTX', text='B-TX', command=lambda: self._sort_entry(self._stat_tree, 'BLTX'))
+        self._stat_tree.heading('HELDRX', text='H-RX', command=lambda: self._sort_entry(self._stat_tree, 'HELDRX'))
+        self._stat_tree.heading('HELDTX', text='H-TX', command=lambda: self._sort_entry(self._stat_tree, 'HELDTX'))
+        self._stat_tree.heading('REJRX', text='REJ-RX', command=lambda: self._sort_entry(self._stat_tree, 'REJRX'))
+        self._stat_tree.heading('REJTX', text='REJ-TX', command=lambda: self._sort_entry(self._stat_tree, 'REJTX'))
+        self._stat_tree.heading('MERX', text='Error-RX', command=lambda: self._sort_entry(self._stat_tree, 'MERX'))
+        self._stat_tree.heading('METX', text='Error-TX', command=lambda: self._sort_entry(self._stat_tree, 'METX'))
+
+        self._stat_tree.heading('MAILDATARX', text='Mail-RX (kB)', command=lambda: self._sort_entry(self._stat_tree, 'MAILDATARX'))
+        self._stat_tree.heading('MAILDATATX', text='Mail-TX (kB)', command=lambda: self._sort_entry(self._stat_tree, 'MAILDATATX'))
+        self._stat_tree.heading('DATARX', text='Data-RX (kB)', command=lambda: self._sort_entry(self._stat_tree, 'DATARX'))
+        self._stat_tree.heading('DATATX', text='Data-TX (kB)', command=lambda: self._sort_entry(self._stat_tree, 'DATATX'))
+        self._stat_tree.heading('CONN', text='Conn', command=lambda: self._sort_entry(self._stat_tree, 'CONN'))
+        self._stat_tree.heading('CONNE', text='Conn E', command=lambda: self._sort_entry(self._stat_tree, 'CONNE'))
+
+        self._stat_tree.column("BBS", anchor=tk.W, stretch=tk.NO, width=80)
+        self._stat_tree.column("MAILRX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("MAILTX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("PNRX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("PNTX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("BLRX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("BLTX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("HELDRX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("HELDTX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("REJRX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("REJTX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("MERX", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("METX", anchor=tk.W, stretch=tk.YES, width=60)
+
+        self._stat_tree.column("MAILDATARX", anchor=tk.W, stretch=tk.YES, width=80)
+        self._stat_tree.column("MAILDATATX", anchor=tk.W, stretch=tk.YES, width=80)
+        self._stat_tree.column("DATARX", anchor=tk.W, stretch=tk.YES, width=80)
+        self._stat_tree.column("DATATX", anchor=tk.W, stretch=tk.YES, width=80)
+        self._stat_tree.column("CONN", anchor=tk.W, stretch=tk.YES, width=60)
+        self._stat_tree.column("CONNE", anchor=tk.W, stretch=tk.YES, width=60)
+
 
         self._root_win.BBS_fwd_q_list = self
         self.tasker()
 
     def tasker(self):
-        self._update_fwdQ_tree()
+        {
+            self._getTabStr('fwd_list') : self._update_fwdQ_tree,
+            "FWD-Ports"                 : self._update_port_tab,
+            self._getTabStr('statistic'): self._update_stat_tree,
+        }.get(self._tabctl_i, self._update_fwdQ_tree)()
+    ###########################################
+    def _update_stat_tree(self):
+        new_data = self._update_stat_tree_data()
+        if new_data == self._stat_tree_data:
+            return
+        for i in self._stat_tree.get_children():
+            self._stat_tree.delete(i)
+        for ret_ent in new_data:
+            self._stat_tree.insert('', "end", values=ret_ent)
+        self._stat_tree_data = new_data
+
+    def _update_stat_tree_data(self):
+        bbs_Qvars: dict = self._bbs_obj.get_bbsQ_vars()
+        ret = []
+        for bbs_call, bbs_var in bbs_Qvars.items():
+            # Statistics
+            statistics = bbs_var.get('bbs_fwd_statistic', {})
+            mail_rx_sum = statistics.get('mail_pn_rx', 0) + statistics.get('mail_bl_rx', 0)
+            mail_tx_sum = statistics.get('mail_pn_tx', 0) + statistics.get('mail_bl_tx', 0)
+            ret.append((
+                bbs_call,
+                mail_rx_sum,
+                mail_tx_sum,
+                statistics.get('mail_pn_rx', -1),
+                statistics.get('mail_pn_tx', -1),
+                statistics.get('mail_bl_rx', -1),
+                statistics.get('mail_bl_tx', -1),
+                statistics.get('mail_rx_hold', -1),
+                statistics.get('mail_tx_hold', -1),
+                statistics.get('mail_rx_rej', -1),
+                statistics.get('mail_tx_rej', -1),
+                statistics.get('mail_rx_error', -1),
+                statistics.get('mail_tx_error', -1),
+
+                statistics.get('mail_bytes_rx', -1)
+                if statistics.get('mail_bytes_rx', -1) < 1
+                else round((statistics.get('mail_bytes_rx', -1) / 1024), 1),
+
+                statistics.get('mail_bytes_tx', -1)
+                if statistics.get('mail_bytes_tx', -1) < 1
+                else round((statistics.get('mail_bytes_tx', -1) / 1024), 1),
+
+                statistics.get('bytes_rx', -1)
+                if statistics.get('bytes_rx', -1) < 1
+                else round((statistics.get('bytes_rx', -1) / 1024), 1),
+
+                statistics.get('bytes_tx', -1)
+                if statistics.get('bytes_tx', -1) < 1
+                else round((statistics.get('bytes_tx', -1) / 1024), 1),
+
+                statistics.get('connect_c', -1),
+                statistics.get('connect_e', -1),
+            ))
+        return ret
+
+    ###########################################
+    def _update_port_tab(self):
+        fwd_port_cfgs = POPT_CFG.get_BBS_cfg().get('fwd_port_cfg', {})
+        for port_id, fwd_port_var in self._bbs_obj.get_fwdPort_vars().items():
+            gui_vars     = self._port_vars.get(port_id, {})
+            fwd_port_cfg = fwd_port_cfgs.get(port_id, {})
+            if not gui_vars:
+                continue
+            try:
+                block_timer     = int(fwd_port_var.get('block_timer', '0'))
+                block_byte_c    = int(fwd_port_var.get('block_byte_c', '0'))
+                block_fwd_tasks = list(fwd_port_var.get('block_fwd_tasks', []))
+            except ValueError:
+                continue
+            try:
+                block_timer_var     = f"Block Timer: {round(((time.time() - block_timer) / 60), 1)}/{fwd_port_cfg.get('block_time', 3)} Min"
+            except ZeroDivisionError:
+                block_timer_var = f"Block Timer: 0/{fwd_port_cfg.get('block_time', 3)} Min"
+            try:
+                block_byte_c_var    = f"Block Limit: {round((block_byte_c / 1024), 2)}/{fwd_port_cfg.get('send_limit', 1)} kB"
+            except ZeroDivisionError:
+                block_byte_c_var    = f"Block Limit: 0/{fwd_port_cfg.get('send_limit', 1)} kB"
+            block_fwd_tasks_var = f"Block Tasks: {len(block_fwd_tasks)}"
+
+            gui_vars['block_timer_var'].set(block_timer_var)
+            gui_vars['block_byte_c_var'].set(block_byte_c_var)
+            gui_vars['block_fwd_tasks_var'].set(block_fwd_tasks_var)
         self._update_port_vars()
         self._update_bbs_vars()
-
 
     def _update_port_vars(self):
         fwd_port_cfgs = POPT_CFG.get_BBS_cfg().get('fwd_port_cfg', {})
@@ -514,7 +676,7 @@ class BBS_fwd_Q(tk.Toplevel):
             self._update_tree()
             if self._last_sort:
                 self._rev_ent = not self._rev_ent
-                self._sort_entry(self._last_sort)
+                self._sort_entry(self._tree, self._last_sort)
 
     def _format_tree_data(self):
         self._tree_data = []
@@ -532,14 +694,14 @@ class BBS_fwd_Q(tk.Toplevel):
                 f'{el[9]}',  # size
             ))
 
-    def _sort_entry(self, col):
+    def _sort_entry(self, tree, col):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
         self._last_sort = col
-        tmp = [(self._tree.set(k, col), k) for k in self._tree.get_children('')]
+        tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
         tmp.sort(reverse=self._rev_ent)
         self._rev_ent = not self._rev_ent
         for index, (val, k) in enumerate(tmp):
-            self._tree.move(k, '', int(index))
+            tree.move(k, '', int(index))
 
     def _entry_selected(self, event=None):
         self._selected_bbs     = []
@@ -645,8 +807,20 @@ class BBS_fwd_Q(tk.Toplevel):
             return ''
         bbs_call = bbs_ind['text']
         if bbs_call not in self._bbs_vars:
-            return
+            return ''
         return bbs_call
+    ###########################################
+    #
+    def _on_mainTab_change(self, event=None):
+        try:
+            ind = self._tabctl.tab('current')
+            self._tabctl_i = str(ind['text'])
+        except tk.TclError:
+            return
+        except Exception as ex:
+            logger.error(ex)
+            return
+
 
 
     def _close(self):

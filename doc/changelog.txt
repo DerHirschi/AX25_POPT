@@ -8,9 +8,12 @@ Fixes:
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
 - Systemnachrichtenausgaben im Monitor beim Beenden von PoPT
+- Tasker für GUI FWD-Warteschlange
 
 Neue Implementierungen / Funktionen:
-- BBS Forward-Statistiken/Zähler
+- BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
+- BBS Forward-Statistiken/Zähler Tabelle in GUI FWD-Warteschlange
+- CLI-CMD "(FWDI)NFO" gibt FWD-Statistik/Zähler zurück
 
 ###########################################################################################################
 ###########################################################################################################

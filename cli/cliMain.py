@@ -1279,40 +1279,6 @@ class DefaultCLI(object):
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
         return ret + "\r"
-        """ Long Connect-Status """
-        ret = '\r'
-        ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
-        all_conn = self._port_handler.get_all_connections()
-        for k in all_conn.keys():
-            ch = k
-            conn = all_conn[k]
-            time_start = conn.time_start  # TODO DateSTR
-            port_id = conn.own_port.port_id
-            my_call = conn.my_call_str
-            to_call = conn.to_call_str
-            db_ent = conn.user_db_ent
-            name = ''
-            loc = ''
-            qth = ''
-            if db_ent:
-                name = db_ent.Name
-                loc = db_ent.LOC
-                qth = db_ent.QTH
-            if self._connection.ch_index == ch:
-                ret += ">"
-            else:
-                ret += " "
-
-            ret += f" {str(ch).ljust(3)} " \
-                   f"{str(port_id).ljust(3)}   " \
-                   f"{my_call.ljust(9)} " \
-                   f"{to_call.ljust(9)} " \
-                   f"{name.ljust(13)[:13]} " \
-                   f"{loc.ljust(6)[:6]} " \
-                   f"{qth.ljust(13)[:13]} " \
-                   f"{time_start.strftime('%H:%M:%S')}\r"
-
-        return ret + "\r"
 
     def _cmd_ch(self):
         if not self._parameter:

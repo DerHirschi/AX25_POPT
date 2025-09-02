@@ -3428,6 +3428,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_fwdinfo': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Zeigt Forward-Statistiken',
+        'Shows forward statistics',
+        'Toont voorwaartse statistieken',
+        'Affiche les statistiques avancées',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '<MSG#>: Liest die Nachricht mit der entspr. Nummer aus.',

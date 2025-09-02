@@ -46,20 +46,21 @@ class BoxCLI(DefaultCLI):
     def init(self):
         self._command_set.update({
             # BOX
-            'LB': (2, self._cmd_box_lb,     self._getTabStr('cmd_lb'),      False),
+            'LB'     : (2, self._cmd_box_lb,     self._getTabStr('cmd_lb'),      False),
 
-            'LN': (2, self._cmd_box_ln,     self._getTabStr('cmd_ln'),      False),
-            'LM': (2, self._cmd_box_lm,     self._getTabStr('cmd_lm'),      False),
-            'LL': (2, self._cmd_box_ll,     self._getTabStr('cmd_ll'),      False),
-            'L<': (2, self._cmd_box_l_from, self._getTabStr('cmd_l_from'),  False),
-            'L>': (2, self._cmd_box_l_to,   self._getTabStr('cmd_l_to'),    False),
-            'L@': (2, self._cmd_box_l_at,   self._getTabStr('cmd_l_at'),    False),
-            'R':  (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
-            'SP': (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
-            'SB': (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
-            'SR': (2, self._cmd_box_sr,     self._getTabStr('cmd_sr'),      False),
-            'KM': (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
-            'K':  (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
+            'LN'     : (2, self._cmd_box_ln,     self._getTabStr('cmd_ln'),      False),
+            'LM'     : (2, self._cmd_box_lm,     self._getTabStr('cmd_lm'),      False),
+            'LL'     : (2, self._cmd_box_ll,     self._getTabStr('cmd_ll'),      False),
+            'L<'     : (2, self._cmd_box_l_from, self._getTabStr('cmd_l_from'),  False),
+            'L>'     : (2, self._cmd_box_l_to,   self._getTabStr('cmd_l_to'),    False),
+            'L@'     : (2, self._cmd_box_l_at,   self._getTabStr('cmd_l_at'),    False),
+            'R'      : (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
+            'SP'     : (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
+            'SB'     : (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
+            'SR'     : (2, self._cmd_box_sr,     self._getTabStr('cmd_sr'),      False),
+            'KM'     : (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
+            'K'      : (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
+            'FWDINFO': (4, self._cmd_box_fwdinfo,self._getTabStr('cmd_fwdinfo'), False),
         })
         self._commands_cfg = ['QUIT',
                               'BYE',
@@ -70,6 +71,7 @@ class BoxCLI(DefaultCLI):
                               'WX',
                               ## User Info
                               'BELL',
+                              'FWDINFO',
                               'INFO',
                               'LINFO',
                               'NEWS',
@@ -1072,8 +1074,45 @@ class BoxCLI(DefaultCLI):
         ret_msg = self._getTabStr('box_cmd_sr_enter_msg').format(f"{from_call}@{from_bbs}") + self._getTabStr('box_cmd_sp_enter_msg')
         return ret_msg
 
+    def _cmd_box_fwdinfo(self):
+        if not self._bbs:
+            logger.error(self._logTag + "_cmd_box_fwdinfo: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
 
+        ret = '\r'
+        ret += " BBS   Mail-RX Mail-TX Mail-RX(kB) Mail-TX(kB) DATA-RX(kB) DATA-TX(kB)\r"
+        ret += "====== ======= ======= =========== =========== =========== ===========\r"
+        bbs_Qvars: dict = self._bbs.get_bbsQ_vars()
+        for bbs_call, bbs_var in bbs_Qvars.items():
+            # Statistics
+            statistics = bbs_var.get('bbs_fwd_statistic', {})
+            mail_rx_sum = statistics.get('mail_pn_rx', 0) + statistics.get('mail_bl_rx', 0)
+            mail_tx_sum = statistics.get('mail_pn_tx', 0) + statistics.get('mail_bl_tx', 0)
+            mail_rx = (statistics.get('mail_bytes_rx', -1)
+                if statistics.get('mail_bytes_rx', -1) < 1
+                else round((statistics.get('mail_bytes_rx', -1) / 1024), 1))
 
+            mail_tx = (statistics.get('mail_bytes_tx', -1)
+                       if statistics.get('mail_bytes_tx', -1) < 1
+                       else round((statistics.get('mail_bytes_tx', -1) / 1024), 1))
+
+            data_rx = (statistics.get('bytes_rx', -1)
+                       if statistics.get('bytes_rx', -1) < 1
+                       else round((statistics.get('bytes_rx', -1) / 1024), 1))
+
+            data_tx = (statistics.get('bytes_tx', -1)
+                       if statistics.get('bytes_tx', -1) < 1
+                       else round((statistics.get('bytes_tx', -1) / 1024), 1))
+            ret += (f"{str(bbs_call).ljust(6)} "
+                    f"{str(mail_rx_sum).ljust(7)} "
+                    f"{str(mail_tx_sum).ljust(7)} "
+                    f"{str(mail_rx).ljust(11)} "
+                    f"{str(mail_tx).ljust(11)} "
+                    f"{str(data_rx).ljust(11)} "
+                    f"{str(data_tx).ljust(11)}\r"
+                    )
+
+        return ret
     ########################################################################
 
     def get_ts_prompt(self):
