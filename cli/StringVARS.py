@@ -1,6 +1,7 @@
 import datetime
 
 from cfg.constant import VER
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_timedelta_CLIstr
 
@@ -176,8 +177,14 @@ def get_lastConnDate(port=None,
         return '--/--'
     if not connection.last_connect:
         return '--/--'
-    dt_time = connection.last_connect.strftime('%d/%m/%Y')
-    return str(dt_time)
+    #if type(connection.last_connect) == str:
+    #    return connection.last_connect
+    try:
+        dt_time = connection.last_connect.strftime('%d/%m/%Y')
+        return str(dt_time)
+    except Exception as ex:
+        logger.error(ex)
+        return '--:--'
 
 
 def get_lastConnTime(port=None,
@@ -188,8 +195,14 @@ def get_lastConnTime(port=None,
         return '--:--'
     if not connection.last_connect:
         return '--:--'
-    dt_time = connection.last_connect.strftime('%H:%M:%S')
-    return str(dt_time)
+    #if type(connection.last_connect) == str:
+    #    return connection.last_connect
+    try:
+        dt_time = connection.last_connect.strftime('%H:%M:%S')
+        return str(dt_time)
+    except Exception as ex:
+        logger.error(ex)
+        return '--:--'
 
 def get_fwdPartner(port=None,
                      port_handler=None,

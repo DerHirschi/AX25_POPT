@@ -236,6 +236,7 @@ class PoPT_GUI_Main:
         self._non_prio_task_timer               = time.time()
         self._non_non_prio_task_timer           = time.time()
         self._non_non_non_prio_task_timer       = time.time()
+        self._tasker_q_timer                    = time.time()
         # Tasker Q
         self._tasker_q                          = []
         # #### Tester
@@ -1777,6 +1778,9 @@ class PoPT_GUI_Main:
     def _tasker_queue(self):
         if not self._tasker_q:
             return False
+        if time.time() < self._tasker_q_timer:
+            return False
+        self._tasker_q_timer = time.time() + 0.2
         n = 10
         if len(self._tasker_q) > 10:
             logger.warning(self._logTag + f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
@@ -1840,8 +1844,8 @@ class PoPT_GUI_Main:
                 self._reset_aprsMail_alarm_task()
             elif task == 'sysMsg_to_monitor':
                 self._sysMsg_to_monitor_task(arg)
-
             n -= 1
+
         return True
 
     def _tasker_prio(self):
@@ -1858,7 +1862,7 @@ class PoPT_GUI_Main:
         return self._monitor_task()
 
     def _tasker_05_sec(self):
-        """ 0.5 Sec """
+        """ 0.25 Sec """
         if time.time() > self._non_prio_task_timer:
             #####################
             # self._aprs_task()
@@ -1928,7 +1932,7 @@ class PoPT_GUI_Main:
     # END TASKER
     ######################################################################
     def _add_tasker_q(self, fnc: str, arg):
-        if fnc in self._tasker_q and arg is None:
+        if (fnc, None) in self._tasker_q:
             return
         self._tasker_q.append(
             (fnc, arg)

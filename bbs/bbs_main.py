@@ -1872,6 +1872,10 @@ class BBS:
         self.set_bbs_statistic(bbs_call, 'connect_e', 1)
 
     ####################################################################################
+    def get_fwd_connections(self):
+        return self._fwd_connections
+
+    ####################################################################################
     # Get it
     def get_fwdCfg(self, fwd_bbs_call: str):
         return self._fwd_cfg.get(fwd_bbs_call, {})
