@@ -196,7 +196,7 @@ Ideas/TODO's :
   ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
-  ✓ Mail inport (SB TEST@TEST .... ..)
+  ✓ Mail import (SB TEST@TEST .... ..)
   - Mail export (SB TEST@TEST .... ..)
   - Baken Noty
   ✓ System-Mail (Sysop Noty) - bbs.send_sysop_msg(topic, msg)
@@ -290,7 +290,7 @@ Ideas/TODO's :
 - Daten Komprimierung (Hufman ??)
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
-✓ DX-Alarm überarbeiten
+- DX-Alarm überarbeiten
 ✓ Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI.
 - Drucker Ausgabe vom QSO
@@ -303,6 +303,5 @@ Ideas/TODO's :
   - Scheduler
 
 Evtl. später mal.
-
 - Web-GUI
 - Persönlichen Telegram Bot als UI

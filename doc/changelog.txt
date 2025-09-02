@@ -9,6 +9,7 @@ Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
 - Systemnachrichtenausgaben im Monitor beim Beenden von PoPT
 - Tasker für GUI FWD-Warteschlange
+- Rechtsklickmenü im QSO- und Vorschreibfenster
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

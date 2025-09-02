@@ -342,6 +342,12 @@ class UserDB:
             temp_ret[k] = temp[k]
         return temp_ret
 
+    def get_qth(self, call_str):
+        ent = self.get_entry(call_str, add_new=False)
+        if not ent:
+            return ''
+        return ent.QTH
+
     def get_distance(self, call_str):
         ent = self.get_entry(call_str, add_new=False)
         if not ent:

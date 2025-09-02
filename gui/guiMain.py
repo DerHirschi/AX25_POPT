@@ -849,6 +849,11 @@ class PoPT_GUI_Main:
                              lambda: self._open_settings_window('l_holder'))
         inp_txt_men.add_item(label=self._getTabStr('send_file'),
                              command=lambda: self.open_window('ft_send'))
+        inp_txt_men.add_item(label="Priv",
+                             command=lambda: self.do_priv())
+        inp_txt_men.add_separator()
+        inp_txt_men.add_item(label=self._getTabStr('user_db'),
+                             command=lambda: self.open_user_db_win())
         inp_txt_men.add_separator()
         inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
 
@@ -858,10 +863,17 @@ class PoPT_GUI_Main:
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
-        out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('linkholder'),
                              lambda: self._open_settings_window('l_holder'))
+        out_txt_men.add_item(label=self._getTabStr('send_file'),
+                             command=lambda: self.open_window('ft_send'))
+        out_txt_men.add_item(label="Priv",
+                             command=lambda: self.do_priv())
+        out_txt_men.add_separator()
+        out_txt_men.add_item(label=self._getTabStr('user_db'),
+                             command=lambda: self.open_user_db_win())
+        out_txt_men.add_separator()
+        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
         # Monitor
         mon_txt_men = ContextMenu(self._mon_txt)
         mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)

@@ -1079,11 +1079,29 @@ class BoxCLI(DefaultCLI):
             logger.error(self._logTag + "_cmd_box_fwdinfo: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
 
+        bbs_Qvars: dict = self._bbs.get_bbsQ_vars()
+        sorted_k = sorted(bbs_Qvars)
         ret = '\r'
+        ret += " BBS                        Locator  Dist(km) QTH\r"
+        ret += "====== ==================== ======== ======== ========================\r"
+        for bbs_call in sorted_k:
+            dist = self._user_db.get_PRmail(bbs_call).replace(bbs_call, '')
+            loc  = self._user_db.get_locator(bbs_call)
+            distance = self._user_db.get_distance(bbs_call)
+            qth = self._user_db.get_qth(bbs_call).replace(' ', '')
+            ret += (f"{str(bbs_call).ljust(6)} "
+                    f"{str(dist).ljust(20)} "
+                    f"{str(loc).ljust(8)} "
+                    f"{str(distance).ljust(8)} "
+                    f"{str(qth).ljust(33)}\r"
+                    )
+
+        ret += '\r'
         ret += " BBS   Mail-RX Mail-TX Mail-RX(kB) Mail-TX(kB) DATA-RX(kB) DATA-TX(kB)\r"
         ret += "====== ======= ======= =========== =========== =========== ===========\r"
-        bbs_Qvars: dict = self._bbs.get_bbsQ_vars()
-        for bbs_call, bbs_var in bbs_Qvars.items():
+
+        for bbs_call in sorted_k:
+            bbs_var = bbs_Qvars.get(bbs_call, {})
             # Statistics
             statistics = bbs_var.get('bbs_fwd_statistic', {})
             mail_rx_sum = statistics.get('mail_pn_rx', 0) + statistics.get('mail_bl_rx', 0)
