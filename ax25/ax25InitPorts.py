@@ -516,15 +516,15 @@ class AX25PortHandler(object):
         #if self._gui and self.is_running:
         if hasattr(self._gui, 'sysMsg_to_monitor'):
             self._gui.sysMsg_to_monitor(msg)
-
+    """
     def close_gui(self):
         # self.close_all_ports()
         if self._gui is not None:
             tmp = self._gui
             self._gui = None
-            self.set_gui()
             tmp.main_win.quit()
             tmp.main_win.destroy()
+    """
 
     ######################
     # Connection Handling

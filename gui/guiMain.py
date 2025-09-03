@@ -1771,7 +1771,10 @@ class PoPT_GUI_Main:
         if self._tasker_q:
             logger.info('GUI: Still jobs in _tasker_q')
             return
-        self._port_handler.close_gui()
+
+        self.main_win.quit()
+        self.main_win.destroy()
+        # self._port_handler.close_gui()
         # logger.info('GUI: Closing GUI: _tasker_quit Done.')
         logger.info('GUI: Closing GUI: Done')
 
@@ -2883,18 +2886,22 @@ class PoPT_GUI_Main:
                     self.status_label.bind('<Button-1>', self.open_ft_manager)
             else:
                 status = ''
-                if conn.cli.sysop_priv:
-                    status += 'S'
-                else:
-                    status += '-'
-                if conn.link_holder_on:
-                    status += 'L'
-                else:
-                    status += '-'
-                if conn.is_RNR:
-                    status += 'R'
-                else:
-                    status += '-'
+                try:
+                    if conn.cli.sysop_priv:
+                        status += 'S'
+                    else:
+                        status += '-'
+                    if conn.link_holder_on:
+                        status += 'L'
+                    else:
+                        status += '-'
+                    if conn.is_RNR:
+                        status += 'R'
+                    else:
+                        status += '-'
+                except Exception as ex:
+                    logger.error(ex)
+                    status = '---'
                 status += '----'
                 if self._stat_info_status_var.get() != status:
                     self._stat_info_status_var.set(status)
