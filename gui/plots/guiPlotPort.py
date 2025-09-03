@@ -4,8 +4,7 @@ from datetime import datetime
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
-from fnc.str_fnc import convert_str_to_datetime
+from fnc.str_fnc import convert_str_to_datetime, get_strTab
 # from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 # from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
@@ -21,6 +20,8 @@ from gui import plt
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
         tk.Toplevel.__init__(self, master=root_cl.main_win)
+        self._root_win  = root_cl
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.wm_title("Port Statistik")
         # self.root_cl = root_cl
         self.geometry(f"800x"
@@ -36,8 +37,6 @@ class PlotWindow(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         ##############################
-        self._root_win = root_cl
-        self._lang = POPT_CFG.get_guiCFG_language()
         self._mh = PORT_HANDLER.get_MH()
         ##################
         upper_frame = tk.Frame(self)
@@ -187,8 +186,8 @@ class PlotWindow(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._reset_PortStat)
-        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._reset_PortStat)
+        menubar.add_cascade(label=self._getTabStr('data'), menu=MenuVerb, underline=0)
 
     def _update_plots_bytes(self):
         port_id = int(self._port_var.get())
@@ -423,8 +422,9 @@ class PlotWindow(tk.Toplevel):
         if not self._mh:
             return
         # self.lower()
-        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_delete_data', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang], parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
+                                  message=self._getTabStr('msg_box_delete_data_msg'),
+                                  parent=self):
             self._mh.PortStat_reset()
             self._change_xlim()
         # self.lift()

@@ -7,15 +7,15 @@ from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from cfg.constant import APRS_SW_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
 
 
 class NewMessageWindow(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self)
         self._aprs_root = root_win
-        self._aprs_root._new_msg_win = self
-        self.lang = POPT_CFG.get_guiCFG_language()
+        self._aprs_root._new_msg_win = self # FIXME !!!!!
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.win_height = 250
         self.win_width = 700
         self.style = root_win.style
@@ -33,7 +33,7 @@ class NewMessageWindow(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
-        self.title(STR_TABLE['new_msg'][self.lang])
+        self.title(self._getTabStr('new_msg'))
         #######################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)

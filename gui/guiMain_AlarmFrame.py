@@ -87,7 +87,8 @@ class AlarmIconFrame(tk.Frame):
         self._bell_label.pack(side='left', padx=3)
 
         ##############################
-        self._fwd_alarm_state = False
+        self._fwd_alarm_state       = False
+        self._aprsMail_alarm_state  = False
         ##############################
         # Tasker
         self._alarm_labels = {
@@ -246,17 +247,16 @@ class AlarmIconFrame(tk.Frame):
 
     def set_aprsMail_alarm(self, alarm_set=True):
         if alarm_set:
-            if self._aprs_mail_label.cget('state') == 'disabled':
-                bl = 3
-            else:
-                bl = 2
-        else:
-            if self._aprs_mail_label.cget('state') == 'normal':
-                bl = 3
-            else:
-                bl = 2
+            if self._aprsMail_alarm_state:
+                return
+            self._aprsMail_alarm_state = True
+            self._add_blink_task('aprsmail', 3, sec05=True)
 
-        self._add_blink_task('aprsmail', bl, sec05=True)
+        else:
+            if not self._aprsMail_alarm_state:
+                return
+            self._aprsMail_alarm_state = False
+            self._add_blink_task('aprsmail', 3, sec05=True)
 
     def set_tracerAlarm(self, alarm_set=True):
         if alarm_set:
@@ -281,18 +281,15 @@ class AlarmIconFrame(tk.Frame):
                 self._diesel_label.configure(state='disabled')
 
     def set_pms_fwd_alarm(self, alarm_set=True):
-
         if alarm_set:
             if self._fwd_alarm_state:
                 return
             self._fwd_alarm_state = True
-            #if self._pms_fwd_label.cget('state') == 'disabled':
             self._add_blink_task('pmsfwd', 3, sec05=True)
         else:
             if not self._fwd_alarm_state:
                 return
             self._fwd_alarm_state = False
-            #if self._pms_fwd_label.cget('state') == 'normal':
             self._add_blink_task('pmsfwd', 3, sec05=True)
 
     def set_beacon_icon(self, alarm_set=True):
