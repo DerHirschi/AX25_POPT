@@ -7,25 +7,23 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import tk_filter_bad_chars
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 from gui.aprs.guiAPRSnewMSG import NewMessageWindow
-from cfg.string_tab import STR_TABLE
-
 
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
-        self._init_done = False
-        self._root_cl = root_win
+        self._init_done     = False
+        self._get_colorMap  = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_cl       = root_win
         PORT_HANDLER.set_aprsMailAlarm_PH(False)
         # self._root_cl.reset_aprsMail_alarm()
-        self._lang = POPT_CFG.get_guiCFG_language()
         self.text_size = self._root_cl.text_size
         self.win_height = 700
         self.win_width = 1450
         self.style = self._root_cl.style
-        self.title(STR_TABLE['aprs_pn_msg'][self._lang])
+        self.title(self._getTabStr('aprs_pn_msg'))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
@@ -51,10 +49,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         top_frame = ttk.Frame(main_f)
         top_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-        button4 = ttk.Button(top_frame, text=STR_TABLE['new_msg'][self._lang], command=self._btn_new_msg)
+        button4 = ttk.Button(top_frame, text=self._getTabStr('new_msg'), command=self._btn_new_msg)
         button4.pack(side=tk.LEFT, padx=5)
 
-        button5 = ttk.Button(top_frame, text=STR_TABLE['del_all'][self._lang], command=self._btn_del_all_msg)
+        button5 = ttk.Button(top_frame, text=self._getTabStr('del_all'), command=self._btn_del_all_msg)
         button5.pack(side=tk.LEFT, padx=5)
         """"
         button6 = ttk.Button(top_frame, text="Button 6", command=self.button6_clicked)
@@ -79,8 +77,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         )
         self._messages_treeview.heading("time", text="Datum")
         self._messages_treeview.heading("port_id", text="Port")
-        self._messages_treeview.heading("from", text=f"{STR_TABLE['from'][self._lang]}")
-        self._messages_treeview.heading("to", text=f"{STR_TABLE['to'][self._lang]}")
+        self._messages_treeview.heading("from", text=f"{self._getTabStr('from')}")
+        self._messages_treeview.heading("to", text=f"{self._getTabStr('to')}")
         self._messages_treeview.heading("via", text="VIA")
         self._messages_treeview.heading("msgno", text="#")
         self._messages_treeview.column("time", stretch=tk.NO, width=170)
@@ -101,20 +99,20 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         middle_frame = ttk.Frame(mid_frame)
         middle_frame.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=False)
 
-        selected_message_label = ttk.Label(middle_frame, text=f"{STR_TABLE['msg'][self._lang]}:")
+        selected_message_label = ttk.Label(middle_frame, text=f"{self._getTabStr('msg')}:")
         selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
 
-        self.selected_message_text = ScrolledText(middle_frame,
-                                                  height=10,
-                                                  width=67,
-                                                  background='black',
-                                                  foreground='white',
-                                                  fg='white',
-                                                  insertbackground='white',
-                                                  state='disabled'
-                                                  )
-        self.selected_message_text.pack(fill=tk.BOTH, expand=True)
-        self.selected_message_text.tag_config("header", foreground="green2")
+        self._selected_message_text = ScrolledText(middle_frame,
+                                                   height=10,
+                                                   width=67,
+                                                   background='black',
+                                                   foreground='white',
+                                                   fg='white',
+                                                   insertbackground='white',
+                                                   state='disabled'
+                                                   )
+        self._selected_message_text.pack(fill=tk.BOTH, expand=True)
+        self._selected_message_text.tag_config("header", foreground="green2")
         fg, bg = self._get_colorMap()
         self._out_text = tk.Text(middle_frame,
                                  height=3,
@@ -133,34 +131,34 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
         sppol_tree_scrollbar = ttk.Scrollbar(right_frame)
         sppol_tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.spooler_treeview = ttk.Treeview(
+        self._spooler_treeview = ttk.Treeview(
             right_frame,
             columns=("add", "port_id", 'msgno', 'N', "time"),
             show="headings",
             yscrollcommand=sppol_tree_scrollbar.set
         )
-        self.spooler_treeview.heading("add", text="Address")
-        self.spooler_treeview.heading("port_id", text="Port")
-        self.spooler_treeview.heading("msgno", text="#")
-        self.spooler_treeview.heading("N", text="N")
-        self.spooler_treeview.heading("time", text="TX in")
+        self._spooler_treeview.heading("add", text="Address")
+        self._spooler_treeview.heading("port_id", text="Port")
+        self._spooler_treeview.heading("msgno", text="#")
+        self._spooler_treeview.heading("N", text="N")
+        self._spooler_treeview.heading("time", text="TX in")
 
-        self.spooler_treeview.column("add", stretch=tk.NO, width=200)
-        self.spooler_treeview.column("port_id", stretch=tk.NO, width=60)
-        self.spooler_treeview.column("msgno", stretch=tk.NO, width=60)
-        self.spooler_treeview.column("N", stretch=tk.NO, width=20)
-        self.spooler_treeview.column("time", stretch=tk.NO, width=60)
-        self.spooler_treeview.pack(fill=tk.BOTH, expand=True)
+        self._spooler_treeview.column("add", stretch=tk.NO, width=200)
+        self._spooler_treeview.column("port_id", stretch=tk.NO, width=60)
+        self._spooler_treeview.column("msgno", stretch=tk.NO, width=60)
+        self._spooler_treeview.column("N", stretch=tk.NO, width=20)
+        self._spooler_treeview.column("time", stretch=tk.NO, width=60)
+        self._spooler_treeview.pack(fill=tk.BOTH, expand=True)
         but = ttk.Button(right_frame, text="Reset", command=self._btn_reset_spooler)
         but.pack(side=tk.LEFT, padx=5)
-        but = ttk.Button(right_frame, text=STR_TABLE['delete'][self._lang], command=self._btn_del_spooler)
+        but = ttk.Button(right_frame, text=self._getTabStr('delete'), command=self._btn_del_spooler)
         but.pack(side=tk.RIGHT, padx=5)
 
         # Unterer Bereich: Rahmen für Buttons
         bottom_frame = ttk.Frame(main_f)
         bottom_frame.pack(side=tk.BOTTOM, padx=10, pady=10)
 
-        button1 = ttk.Button(bottom_frame, text=STR_TABLE['close'][self._lang], command=self._btn_close)
+        button1 = ttk.Button(bottom_frame, text=self._getTabStr('close'), command=self._btn_close)
         button1.pack(side=tk.LEFT, padx=5)
         """
         button2 = ttk.Button(bottom_frame, text="Button 2", command=self.button2_clicked)
@@ -179,16 +177,17 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
 
     def _update_tree(self):
-        while self._is_in_update:
-            time.sleep(0.1)
+        if self._is_in_update:
+            return
 
         self._is_in_update = True
         self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
+        #print(list(self._aprs_ais.aprs_msg_pool['bulletin']))
         self._aprs_pn_msg.reverse()
 
         for i in self._messages_treeview.get_children():
             self._messages_treeview.delete(i)
-        self.update()
+        # self.update()
         tree_data = []
         for form_msg in self._aprs_pn_msg:
             if form_msg['addresse'] in POPT_CFG.get_stat_CFG_keys() \
@@ -212,59 +211,58 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._is_in_update = False
 
     def update_tree_single_pack(self, form_aprs_pack):
-        if self._init_done:
-            self._is_in_update = True
-            self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
-            self._aprs_pn_msg.reverse()
-            # print(form_aprs_pack)
+        if not self._init_done:
+            return
+        self._is_in_update = True
 
-            if form_aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
-                    or form_aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
-                is_own = 'is_own'
-            else:
-                is_own = 'not_own'
+        if form_aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                or form_aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
+            is_own = 'is_own'
+        else:
+            is_own = 'not_own'
 
-            new_tree_data = ((
-                                 f"{form_aprs_pack['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
-                                 f"{form_aprs_pack.get('port_id', '-')}",
-                                 f"{form_aprs_pack['from']}",
-                                 f"{form_aprs_pack['addresse']}",
-                                 f"{form_aprs_pack.get('via', '')}",
-                                 f"{form_aprs_pack.get('msgNo', '')}",
-                             ), is_own)
-            self._messages_treeview.insert('', 0, values=new_tree_data[0], tags=new_tree_data[1])
-            self._is_in_update = False
+        new_tree_data = ((
+                             f"{form_aprs_pack['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
+                             f"{form_aprs_pack.get('port_id', '-')}",
+                             f"{form_aprs_pack['from']}",
+                             f"{form_aprs_pack['addresse']}",
+                             f"{form_aprs_pack.get('via', '')}",
+                             f"{form_aprs_pack.get('msgNo', '')}",
+                         ), is_own)
+        self._messages_treeview.insert('', 0, values=new_tree_data[0], tags=new_tree_data[1])
+        self._is_in_update = False
 
     def update_spooler_tree(self):
-        if self._init_done:
-            for i in self.spooler_treeview.get_children():
-                self.spooler_treeview.delete(i)
-            self.update()
-            tree_data = []
-            for msg_no in self._aprs_ais.spooler_buffer:
-                pack = self._aprs_ais.spooler_buffer[msg_no]
-                if not pack['send_timer']:
-                    tx_timer = pack['send_timer']
-                else:
-                    tx_timer = max(round(pack['send_timer'] - time.time()), 0)
-                tree_data.append((
-                    f"{pack['address_str']}",
-                    f"{pack['port_id']}",
-                    f"{pack['msgNo']}",
-                    f"{pack['N']}",
-                    f"{tx_timer}",
+        if not self._init_done:
+            return
+        for i in self._spooler_treeview.get_children():
+            self._spooler_treeview.delete(i)
+        #self.update()
+        tree_data = []
+        for msg_no in self._aprs_ais.spooler_buffer:
+            pack = self._aprs_ais.spooler_buffer[msg_no]
+            if not pack['send_timer']:
+                tx_timer = pack['send_timer']
+            else:
+                tx_timer = max(round(pack['send_timer'] - time.time()), 0)
+            tree_data.append((
+                f"{pack['address_str']}",
+                f"{pack['port_id']}",
+                f"{pack['msgNo']}",
+                f"{pack['N']}",
+                f"{tx_timer}",
 
-                ))
-            for ret_ent in tree_data:
-                self.spooler_treeview.insert('', tk.END, values=ret_ent)
+            ))
+        for ret_ent in tree_data:
+            self._spooler_treeview.insert('', tk.END, values=ret_ent)
 
     def _entry_selected(self, event=None):
         show_no_dbl = True
         selected_iid = self._messages_treeview.selection()
         self._antwort_pack = {}
         if selected_iid:
-            self.selected_message_text.config(state='normal')
-            self.selected_message_text.delete(0.0, tk.END)
+            self._selected_message_text.config(state='normal')
+            self._selected_message_text.delete(0.0, tk.END)
             selected_iid = selected_iid[0]
             current_idx = self._messages_treeview.index(selected_iid)
             msg_id = f"{self._aprs_pn_msg[current_idx].get('from', '')}-{self._aprs_pn_msg[current_idx].get('addresse', '')}"
@@ -273,7 +271,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
             for pack_msg in self._aprs_pn_msg[current_idx:][::-1]:
                 msg = ''
-                tag_ind_1 = self.selected_message_text.index(tk.INSERT)
+                tag_ind_1 = self._selected_message_text.index(tk.INSERT)
                 if f"{pack_msg.get('from', '')}-{pack_msg.get('addresse', '')}" == msg_id \
                         or f"{pack_msg.get('addresse', '')}-{pack_msg.get('from', '')}" == msg_id:
                     if show_no_dbl:
@@ -296,12 +294,12 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
                                 msg_text = tk_filter_bad_chars(pack_msg.get('message_text', '')) + '\n\n'
 
-                                self.selected_message_text.insert(tk.END, msg)
-                                self.selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
-                                self.selected_message_text.insert(tk.END, msg_text)
+                                self._selected_message_text.insert(tk.END, msg)
+                                self._selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
+                                self._selected_message_text.insert(tk.END, msg_text)
 
-            self.selected_message_text.config(state='disabled')
-            self.selected_message_text.see(tk.END)
+            self._selected_message_text.config(state='disabled')
+            self._selected_message_text.see(tk.END)
 
     def _send_aprs_msg(self, event=None):
         msg = self._out_text.get(0.0, tk.END)[:-1].replace('\n', '')

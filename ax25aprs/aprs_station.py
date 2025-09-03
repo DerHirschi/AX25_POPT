@@ -149,6 +149,7 @@ class APRS_ais(object):
         gui = self._port_handler.get_gui()
         if gui is None:
             return
+        # TODO Update locator fm POPT_CFG
         gui.own_loc = self.ais_loc
 
     def _login(self):
@@ -243,12 +244,8 @@ class APRS_ais(object):
             # Tracer
             self._tracer_task()
             # update GUIs
-            if self._port_handler is not None:
-                gui = self._port_handler.get_gui()
-                if gui is not None:
-                    # APRS PN-MSG GUI
-                    if gui.aprs_pn_msg_win is not None:
-                        gui.aprs_pn_msg_win.update_spooler_tree()
+            if hasattr(self._port_handler, 'update_gui_aprs_spooler'):
+                self._port_handler.update_gui_aprs_spooler()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
 
     def aprs_wx_tree_task(self):
@@ -256,13 +253,8 @@ class APRS_ais(object):
         if self.wx_tree_gui is not None:
             if self._wx_update_tr:
                 self._wx_update_tr = False
-                # TODO Call fm guiMain loop (may cause random crash ?)
                 self.wx_tree_gui.update_tree_data()
 
-    """
-    def task_halt(self):
-        self.loop_is_running = False
-    """
 
     def ais_rx_task(self):
         """ Thread loop called fm Porthandler Init """
@@ -500,14 +492,11 @@ class APRS_ais(object):
         # ALARM / NOTY
         if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
                 or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
-            self._port_handler.set_aprsMailAlarm_PH(True)
+            if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
+                self._port_handler.set_aprsMailAlarm_PH(True)
 
-        gui = self._port_handler.get_gui()
-        if not hasattr(gui, 'aprs_pn_msg_win'):
-            return
-        if not hasattr(gui.aprs_pn_msg_win, 'update_tree_single_pack'):
-            return
-        gui.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+        if hasattr(self._port_handler, 'update_gui_aprs_pnMsg_win'):
+            self._port_handler.update_gui_aprs_pnMsg_win(aprs_pack)
 
     def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
         self._update_pn_msg_gui(aprs_pack)
@@ -714,7 +703,6 @@ class APRS_ais(object):
         # _aprs_msg = _aprs_msg.replace('`', '')
 
     def _tracer_build_pack(self):
-        # TODO Make a static for building Header
         port_id = int(self.be_tracer_port)
         station_call = str(self.be_tracer_station)
         wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'

@@ -10,6 +10,10 @@ Optimierung/Änderungen:
 - Systemnachrichtenausgaben im Monitor beim Beenden von PoPT
 - Tasker für GUI FWD-Warteschlange
 - Rechtsklickmenü im QSO- und Vorschreibfenster
+- Programm-Ende Prozedur
+- Alte StringTab Aufrufe aufgeräumt
+- GUI-APRS-Server Monitor Update-Tasks
+- GUI-APRS-Nachrichten Update-Tasks
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

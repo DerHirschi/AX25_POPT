@@ -1753,7 +1753,8 @@ class PoPT_GUI_Main:
     def _tasker(self):  # MAINLOOP
         q_tasker = self._tasker_queue()
         if self._quit:
-            self._tasker_quit()
+            if self._tasker_quit():
+                return
         else:
             prio     = self._tasker_prio()
             if not self._tasker_05_sec():
@@ -1767,16 +1768,17 @@ class PoPT_GUI_Main:
 
     def _tasker_quit(self):
         if not self._port_handler.get_ph_end():
-            return
+            return False
         if self._tasker_q:
             logger.info('GUI: Still jobs in _tasker_q')
-            return
+            return False
 
         self.main_win.quit()
-        self.main_win.destroy()
+        # self.main_win.destroy()
         # self._port_handler.close_gui()
         # logger.info('GUI: Closing GUI: _tasker_quit Done.')
         logger.info('GUI: Closing GUI: Done')
+        return True
 
     def _tasker_queue(self):
         if not self._tasker_q:
@@ -1847,6 +1849,10 @@ class PoPT_GUI_Main:
                 self._reset_aprsMail_alarm_task()
             elif task == 'sysMsg_to_monitor':
                 self._sysMsg_to_monitor_task(arg)
+            elif task == 'update_aprs_spooler':
+                self._update_aprs_spooler_task()
+            elif task == 'update_aprs_pnMsg_win':
+                self._update_aprs_pnMsg_win_task(arg)
             n -= 1
 
         return True
@@ -1862,7 +1868,11 @@ class PoPT_GUI_Main:
         """
         if hasattr(self._port_handler, 'tasker_gui_th'):
             self._port_handler.tasker_gui_th()
-        return self._monitor_task()
+        ret = any((
+            self._monitor_task(),
+            self._ais_monitor_task(),
+        ))
+        return ret
 
     def _tasker_05_sec(self):
         """ 0.25 Sec """
@@ -1942,10 +1952,30 @@ class PoPT_GUI_Main:
         )
 
     ######################################################################
+    def update_aprs_spooler(self):
+        self._add_tasker_q("update_aprs_spooler", None)
+
+    def _update_aprs_spooler_task(self):
+        if hasattr(self.aprs_pn_msg_win, 'update_spooler_tree'):
+            self.aprs_pn_msg_win.update_spooler_tree()
+
+    def update_aprs_pnMsg_win(self, aprs_pack):
+        self._add_tasker_q("update_aprs_pnMsg_win", aprs_pack)
+
+    def _update_aprs_pnMsg_win_task(self, aprs_pack):
+        if hasattr(self.aprs_pn_msg_win, 'update_tree_single_pack'):
+            self.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+
     def _aprs_wx_tree_task(self):
         if self._port_handler.get_aprs_ais() is not None:
             self._port_handler.get_aprs_ais().aprs_wx_tree_task()
 
+    def _ais_monitor_task(self):
+        if hasattr(self.aprs_mon_win, 'tasker'):
+           return self.aprs_mon_win.tasker()
+        return False
+
+    #######################################################################
     def _AlarmIcon_tasker05(self):
         if not self._Alarm_Frame:
             return
@@ -3223,7 +3253,10 @@ class PoPT_GUI_Main:
     ######################################################################
     # Alarm/Icon Frame
     def set_aprsMail_alarm(self):
-        self._add_tasker_q("set_aprsMail_alarm", None)
+        if self.aprs_pn_msg_win:
+            self._add_tasker_q("reset_aprsMail_alarm", None)
+        else:
+            self._add_tasker_q("set_aprsMail_alarm", None)
 
     def _set_aprsMail_alarm_task(self):
         self._Alarm_Frame.set_aprsMail_alarm(True)

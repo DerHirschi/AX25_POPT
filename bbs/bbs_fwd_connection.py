@@ -493,9 +493,7 @@ class BBSConnection:
 
         if self._handshake: # RX
             self._state = 3
-            print(3)
             return
-        print(1)
         self._state = 1
         self._wait_f_prompt()
 

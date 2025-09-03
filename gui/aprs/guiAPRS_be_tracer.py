@@ -6,8 +6,8 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
 from fnc.ax25_fnc import get_list_fm_viaStr
+from fnc.str_fnc import get_strTab
 
 
 # from cfg.logger_config import logger
@@ -16,9 +16,8 @@ from fnc.ax25_fnc import get_list_fm_viaStr
 class BeaconTracer(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win = root_win
-        self._lang = POPT_CFG.get_guiCFG_language()
-        # self._ais_obj = PORT_HANDLER.get_aprs_ais()
+        self._root_win  = root_win
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.style = self._root_win.style
         self.geometry(f"1330x"
                       f"400+"
@@ -233,8 +232,8 @@ class BeaconTracer(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
-        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._delete_all_data)
+        menubar.add_cascade(label=self._getTabStr('data'), menu=MenuVerb, underline=0)
 
     def update_tree_data(self):
         self._format_tree_data()
