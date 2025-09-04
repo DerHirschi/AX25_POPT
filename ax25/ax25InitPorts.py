@@ -477,7 +477,6 @@ class AX25PortHandler(object):
         if self.aprs_ais is None:
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
-        # self.aprs_ais.port_handler = self
         self.aprs_ais.set_port_handler(self)
         if self.aprs_ais.ais is None:
             logger.error("PH: APRS-AIS Init Error! No aprs_ais.ais !")
@@ -529,9 +528,9 @@ class AX25PortHandler(object):
         if hasattr(self._gui, 'update_aprs_spooler'):
             self._gui.update_aprs_spooler()
 
-    def update_gui_aprs_pnMsg_win(self, aprs_pack):
+    def update_gui_aprs_pnMsg_win(self):
         if hasattr(self._gui, 'update_aprs_pnMsg_win'):
-            self._gui.update_aprs_pnMsg_win(aprs_pack)
+            self._gui.update_aprs_pnMsg_win()
 
     ######################
     # Connection Handling

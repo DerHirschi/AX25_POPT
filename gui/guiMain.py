@@ -445,6 +445,7 @@ class PoPT_GUI_Main:
                 wn.destroy_win()
             if hasattr(wn, 'destroy'):
                 wn.destroy()
+            wn = None
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
@@ -599,7 +600,7 @@ class PoPT_GUI_Main:
             return
         text_pan_pos_cfg = []
         for pan_id in range(2):
-            text_pan_pos_cfg.append(self._pw.sashpos(pan_id))
+            text_pan_pos_cfg.append(int(self._pw.sashpos(pan_id)))
 
         guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_parm_main_pan_pos'] = int(self._main_pw.sashpos(0))
@@ -1793,7 +1794,12 @@ class PoPT_GUI_Main:
         while self._tasker_q and n:
             task, arg       = self._tasker_q[0]
             self._tasker_q  = self._tasker_q[1:]
-            if task == 'conn_btn_update':
+            if task == 'sysMsg_to_monitor':
+                self._sysMsg_to_monitor_task(arg)
+            elif self._quit:
+                n -= 1
+                continue
+            elif task == 'conn_btn_update':
                 self._conn_btn_update_task()
             elif task == 'ch_status_update':
                 self._ch_status_update_task()
@@ -1847,12 +1853,10 @@ class PoPT_GUI_Main:
                 self._set_aprsMail_alarm_task()
             elif task == 'reset_aprsMail_alarm':
                 self._reset_aprsMail_alarm_task()
-            elif task == 'sysMsg_to_monitor':
-                self._sysMsg_to_monitor_task(arg)
             elif task == 'update_aprs_spooler':
                 self._update_aprs_spooler_task()
             elif task == 'update_aprs_pnMsg_win':
-                self._update_aprs_pnMsg_win_task(arg)
+                self._update_aprs_pnMsg_win_task()
             n -= 1
 
         return True
@@ -1959,12 +1963,12 @@ class PoPT_GUI_Main:
         if hasattr(self.aprs_pn_msg_win, 'update_spooler_tree'):
             self.aprs_pn_msg_win.update_spooler_tree()
 
-    def update_aprs_pnMsg_win(self, aprs_pack):
-        self._add_tasker_q("update_aprs_pnMsg_win", aprs_pack)
+    def update_aprs_pnMsg_win(self):
+        self._add_tasker_q("update_aprs_pnMsg_win", None)
 
-    def _update_aprs_pnMsg_win_task(self, aprs_pack):
-        if hasattr(self.aprs_pn_msg_win, 'update_tree_single_pack'):
-            self.aprs_pn_msg_win.update_tree_single_pack(aprs_pack)
+    def _update_aprs_pnMsg_win_task(self):
+        if hasattr(self.aprs_pn_msg_win, 'update_tree'):
+            self.aprs_pn_msg_win.update_tree()
 
     def _aprs_wx_tree_task(self):
         if self._port_handler.get_aprs_ais() is not None:

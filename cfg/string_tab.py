@@ -11,6 +11,7 @@
 9: '?'
 
 Thanks to NL1NOD(Patrick) for the Dutch translations.
+Thanks to ClaudeMa for the France translations.
 """
 
 STR_TABLE = {

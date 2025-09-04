@@ -7,7 +7,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from cfg.constant import APRS_SW_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import get_strTab
+from fnc.str_fnc import get_strTab, zeilenumbruch
 
 
 class NewMessageWindow(tk.Toplevel):
@@ -78,22 +78,24 @@ class NewMessageWindow(tk.Toplevel):
         middle_frame = ttk.Frame(main_f)
         middle_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-        self.msg_entry = tk.Text(middle_frame,
-                                 width=67,
-                                 height=3,
-                                 background='black',
-                                 foreground='white',
-                                 fg='white',
-                                 insertbackground='white'
-                                 )
-        self.msg_entry.pack(fill=tk.BOTH, expand=True)
+        self._msg_entry = tk.Text(middle_frame,
+                                  width=67,
+                                  height=3,
+                                  background='black',
+                                  foreground='white',
+                                  fg='white',
+                                  insertbackground='white'
+                                  )
+        self._msg_entry.pack(fill=tk.BOTH, expand=True)
+        self._msg_entry.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
-        self.ack_var = tk.BooleanVar(self)
+
+        self._ack_var = tk.BooleanVar(self)
         ack_check = ttk.Checkbutton(top_frame,
                                     text="ACK",
-                                    variable=self.ack_var,
+                                    variable=self._ack_var,
                                     )
-        self.ack_var.set(True)
+        self._ack_var.set(True)
         ack_check.pack(side=tk.LEFT, padx=60)
 
 
@@ -105,11 +107,17 @@ class NewMessageWindow(tk.Toplevel):
         button.pack()
         self.bind('<Return>', self.send_message)
 
+    def _on_key_release_inp_txt(self, event=None):
+        ind = str(int(float(self._msg_entry.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch(self._msg_entry.get(ind,  self._msg_entry.index(tk.INSERT)), max_zeichen=67)
+        self._msg_entry.delete(ind,  self._msg_entry.index(tk.INSERT))
+        self._msg_entry.insert(tk.INSERT, text)
+
     def send_message(self, event=None):
-        with_ack = self.ack_var.get()
-        msg = self.msg_entry.get(0.0, tk.END)[:-1].replace('\n', '')
-        from_call = self.from_var.get()
-        port_id = self.port_var.get()
+        with_ack    = self._ack_var.get()
+        msg         = self._msg_entry.get(0.0, tk.END)[:-1]
+        from_call   = self.from_var.get()
+        port_id     = self.port_var.get()
         if from_call in POPT_CFG.get_stat_CFG_keys():
             add_str = self.to_call_ent.get().upper()
             if add_str:
@@ -126,7 +134,6 @@ class NewMessageWindow(tk.Toplevel):
                     aprs_pack['port_id'] = port_id
                     aprs_pack['rx_time'] = datetime.datetime.now()
                     PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
-
                 self.destroy_win()
 
     def destroy_win(self):

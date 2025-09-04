@@ -4,6 +4,8 @@ Fixes:
 - BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
   wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
   FWD-Warteschlange entfernt wird
+- Zeilenumbruch für APRS-Nachrichten
+- Eigene APRS-Nachrichten werden nicht angezeigt
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
@@ -14,6 +16,7 @@ Optimierung/Änderungen:
 - Alte StringTab Aufrufe aufgeräumt
 - GUI-APRS-Server Monitor Update-Tasks
 - GUI-APRS-Nachrichten Update-Tasks
+- GUI-APRS-Nachrichten (etwas) überarbeitet
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

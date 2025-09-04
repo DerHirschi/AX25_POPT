@@ -10,7 +10,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, 
 from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
-from fnc.str_fnc import convert_umlaute_to_ascii
+from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 
@@ -23,9 +23,9 @@ class APRS_ais(object):
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self.ais_call = ais_cfg.get('ais_call', '')
         self.ais_pass = ais_cfg.get('ais_pass', '')
-        self.ais_loc = ais_cfg.get('ais_loc', '')
-        self.ais_lat = ais_cfg.get('ais_lat', 0.0)
-        self.ais_lon = ais_cfg.get('ais_lon', 0.0)
+        self.ais_loc  = ais_cfg.get('ais_loc', '')
+        self.ais_lat  = ais_cfg.get('ais_lat', 0.0)
+        self.ais_lon  = ais_cfg.get('ais_lon', 0.0)
         if not self.ais_loc:
             guiCfg = POPT_CFG.load_guiPARM_main()
             own_loc = guiCfg.get('gui_cfg_locator', '')
@@ -38,12 +38,17 @@ class APRS_ais(object):
         self.ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
         # self.ais_new_rx_buff = []
         self.ais_active = ais_cfg.get('ais_active', False)
-        """ Global APRS Stuff """
-        self.aprs_msg_pool = ais_cfg.get('aprs_msg_pool',
+        """ APRS-Message Stuff """
+        self._spooler_buffer    = {}
+        self._ack_counter       = ais_cfg.get('aprs_msg_ack_c', 0)
+        self._parm_max_n        = 3
+        self._parm_resend       = 60
+        self.aprs_msg_pool      = ais_cfg.get('aprs_msg_pool',
                                          {  # TODO > DB ?
                                              "message": [],
                                              "bulletin": [],
                                          })
+
         # self.aprs_wx_msg_pool = {}  # TO-DO > DB
         """ Beacon Tracer """
         # Param
@@ -74,18 +79,13 @@ class APRS_ais(object):
         self.ais_mon_gui = None
         self.wx_tree_gui = None
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
-        """ Global APRS Stuff """
-        self._ack_counter = 0
-        self.spooler_buffer = {}
-        self._parm_max_n = 2
-        self._parm_resend = 60
         """ Loop Control """
-        self.loop_is_running = False
-        self._non_prio_task_timer = 0
-        self._parm_non_prio_task_timer = 1
-        self._del_spooler_tr = False
-        self._wx_update_tr = False
-        self._port_handler = None
+        self.loop_is_running            = False
+        self._non_prio_task_timer       = time.time()
+        self._parm_non_prio_task_timer  = 1
+        self._del_spooler_tr            = False
+        self._wx_update_tr              = False
+        self._port_handler              = None
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
@@ -119,30 +119,32 @@ class APRS_ais(object):
         # print("Save APRS Conf")
         logger.info("Save APRS Conf")
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
-        ais_cfg['ais_call'] = str(self.ais_call)
-        ais_cfg['ais_pass'] = str(self.ais_pass)
-        ais_cfg['ais_loc'] = str(self.ais_loc)
-        ais_cfg['ais_lat'] = float(self.ais_lat)
-        ais_cfg['ais_lon'] = float(self.ais_lon)
-        ais_cfg['add_new_user'] = bool(self.add_new_user)
-        ais_cfg['ais_host'] = tuple(self.ais_host)
-        ais_cfg['ais_active'] = bool(self.ais_active)
+        ais_cfg['ais_call']         = str(self.ais_call)
+        ais_cfg['ais_pass']         = str(self.ais_pass)
+        ais_cfg['ais_loc']          = str(self.ais_loc)
+        ais_cfg['ais_lat']          = float(self.ais_lat)
+        ais_cfg['ais_lon']          = float(self.ais_lon)
+        ais_cfg['add_new_user']     = bool(self.add_new_user)
+        ais_cfg['ais_host']         = tuple(self.ais_host)
+        ais_cfg['ais_active']       = bool(self.ais_active)
         # Tracer
-        ais_cfg['be_tracer_interval'] = int(self.be_tracer_interval)
-        ais_cfg['be_tracer_port'] = int(self.be_tracer_port)
-        ais_cfg['be_tracer_station'] = str(self.be_tracer_station)
-        ais_cfg['be_tracer_via'] = list(self.be_tracer_via)
-        ais_cfg['be_tracer_wide'] = int(self.be_tracer_wide)
-        ais_cfg['be_tracer_alarm_active'] = bool(self.be_tracer_alarm_active)
-        ais_cfg['be_tracer_alarm_range'] = int(self.be_tracer_alarm_range)
-        ais_cfg['be_auto_tracer_duration'] = int(self.be_auto_tracer_duration)
-        ais_cfg['be_tracer_active'] = False
-        # ais_cfg['be_tracer_active'] = bool(self.be_tracer_active)
-        ais_cfg['be_auto_tracer_active'] = bool(self.be_auto_tracer_active)
+        ais_cfg['be_tracer_interval']       = int(self.be_tracer_interval)
+        ais_cfg['be_tracer_port']           = int(self.be_tracer_port)
+        ais_cfg['be_tracer_station']        = str(self.be_tracer_station)
+        ais_cfg['be_tracer_via']            = list(self.be_tracer_via)
+        ais_cfg['be_tracer_wide']           = int(self.be_tracer_wide)
+        ais_cfg['be_tracer_alarm_active']   = bool(self.be_tracer_alarm_active)
+        ais_cfg['be_tracer_alarm_range']    = int(self.be_tracer_alarm_range)
+        ais_cfg['be_auto_tracer_duration']  = int(self.be_auto_tracer_duration)
+        ais_cfg['be_tracer_active']         = False
+        # ais_cfg['be_tracer_active']       = bool(self.be_tracer_active)
+        ais_cfg['be_auto_tracer_active']    = bool(self.be_auto_tracer_active)
         ais_cfg['be_tracer_traced_packets'] = dict(self.be_tracer_traced_packets)
-        ais_cfg['be_tracer_alarm_hist'] = dict(self.be_tracer_alarm_hist)
-        ais_cfg['ais_aprs_stations'] = dict(self.ais_aprs_stations)
-        ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
+        ais_cfg['be_tracer_alarm_hist']     = dict(self.be_tracer_alarm_hist)
+        ais_cfg['ais_aprs_stations']        = dict(self.ais_aprs_stations)
+        # APRS-Message
+        ais_cfg['aprs_msg_pool']            = dict(self.aprs_msg_pool)
+        ais_cfg['aprs_msg_ack_c']           = int(self._ack_counter)
         POPT_CFG.set_CFG_aprs_ais(ais_cfg)
         if self._port_handler is None:
             return
@@ -496,7 +498,7 @@ class APRS_ais(object):
                 self._port_handler.set_aprsMailAlarm_PH(True)
 
         if hasattr(self._port_handler, 'update_gui_aprs_pnMsg_win'):
-            self._port_handler.update_gui_aprs_pnMsg_win(aprs_pack)
+            self._port_handler.update_gui_aprs_pnMsg_win()
 
     def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
         self._update_pn_msg_gui(aprs_pack)
@@ -545,24 +547,28 @@ class APRS_ais(object):
 
     def send_pn_msg(self, pack, msg, with_ack=False):
         msg = convert_umlaute_to_ascii(msg)
-        msg_list = []
+        msg = msg.replace('\n', ' ')
+        msg = zeilenumbruch_lines(msg, max_zeichen=67)
+        msg_list = msg.split('\n')
+        """
         while len(msg) > 67:
             msg_list.append(msg[:67])
             msg = msg[67:]
-        msg_list.append(msg)
+        """
+        #msg_list.append(msg)
         for el in msg_list:
             if with_ack:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}" + "{" + f"{int(self._ack_counter)}"
-                self._add_to_spooler(pack)
+                pack = self._add_to_spooler(pack)
             else:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
-                self._send_it(pack)
+                self._send_it(dict(pack))
             if not pack.get('is_ack', False):
                 # print(f"ECHO {pack}")
-                self.aprs_msg_pool['message'].append(pack)
-                self._aprs_msg_sys_new_pn(pack)
+                self.aprs_msg_pool['message'].append(dict(pack))
+                self._aprs_msg_sys_new_pn(dict(pack))
         return True
 
     def _send_it(self, pack):
@@ -577,44 +583,47 @@ class APRS_ais(object):
         pack['send_timer'] = 0
         pack['msgNo'] = str(self._ack_counter)
         pack['address_str'] = f"{pack['from']}:{pack['addresse']}"
-        self.spooler_buffer[str(self._ack_counter)] = dict(pack)
+        self._spooler_buffer[str(self._ack_counter)] = dict(pack)
         self._ack_counter = (self._ack_counter + 1) % 99999
+        return pack
 
     def _del_fm_spooler(self, pack):
         # print("del_fm_spooler")
         msg_no = pack.get('msgNo', '')
-        ack_pack = self.spooler_buffer.get(msg_no, {})
+        ack_pack = self._spooler_buffer.get(msg_no, {})
         if ack_pack.get('address_str', '') == f"{pack.get('addresse', '')}:{pack.get('from', '')}":
             # print(f"ACK DEL {msg_no}")
-            del self.spooler_buffer[msg_no]
+            del self._spooler_buffer[msg_no]
             self._reset_address_in_spooler(pack)
+            return True
+        return False
 
     def _reset_address_in_spooler(self, pack):
         add_str = f"{pack.get('addresse', '')}:{pack.get('from', '')}"
-        for msg_no in self.spooler_buffer:
-            if self.spooler_buffer[msg_no]['address_str'] == add_str:
-                self.spooler_buffer[msg_no]['N'] = 0
-                self.spooler_buffer[msg_no]['send_timer'] = 0
+        for msg_no in self._spooler_buffer:
+            if self._spooler_buffer[msg_no]['address_str'] == add_str:
+                self._spooler_buffer[msg_no]['N'] = 0
+                self._spooler_buffer[msg_no]['send_timer'] = 0
 
     def reset_spooler(self):
-        for msg_no in self.spooler_buffer:
-            self.spooler_buffer[msg_no]['N'] = 0
-            self.spooler_buffer[msg_no]['send_timer'] = 0
+        for msg_no in self._spooler_buffer:
+            self._spooler_buffer[msg_no]['N'] = 0
+            self._spooler_buffer[msg_no]['send_timer'] = 0
 
     def del_spooler(self):
         self._del_spooler_tr = True
 
     def _flush_spooler_buff(self):
-        self.spooler_buffer = {}
+        self._spooler_buffer = {}
 
     def _handle_ack(self, pack):
-        self._del_fm_spooler(pack)
-        self._reset_address_in_spooler(pack)
+        if self._del_fm_spooler(pack):
+            self._reset_address_in_spooler(pack)
 
     def _spooler_task(self):
         send = []
-        for msg_no in list(self.spooler_buffer.keys()):
-            pack = self.spooler_buffer[msg_no]
+        for msg_no in list(self._spooler_buffer.keys()):
+            pack = self._spooler_buffer[msg_no]
             if (pack['address_str'], pack['port_id']) not in send:
                 send.append((pack['address_str'], pack['port_id']))
                 if pack['send_timer'] < time.time():
@@ -627,9 +636,9 @@ class APRS_ais(object):
                     # else: self.del_fm_spooler(pack, rx=False)
 
     def _del_address_fm_spooler(self, pack):
-        for msg_no in list(self.spooler_buffer.keys()):
-            if self.spooler_buffer[msg_no]['address_str'] == pack['address_str']:
-                self.spooler_buffer[msg_no]['N'] = self._parm_max_n
+        for msg_no in list(self._spooler_buffer.keys()):
+            if self._spooler_buffer[msg_no]['address_str'] == pack['address_str']:
+                self._spooler_buffer[msg_no]['N'] = self._parm_max_n
                 # self.del_fm_spooler(pack, rx=False)
 
     def _send_as_UI(self, pack):
@@ -674,6 +683,8 @@ class APRS_ais(object):
     def send_rej(self, pack_to_resp):
         pass
     """
+    def get_spooler_buffer(self):
+        return self._spooler_buffer
 
     #########################################
     # Beacon Tracer

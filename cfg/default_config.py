@@ -247,7 +247,8 @@ def getNew_APRS_ais_cfg():
         'aprs_msg_pool': {  # TODO > DB ?
             "message": [],
             "bulletin": [],
-        }
+        },
+        'aprs_msg_ack_c': 0
     }
 
 
