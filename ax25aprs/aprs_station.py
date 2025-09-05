@@ -10,7 +10,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, 
 from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
-from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines, zeilenumbruch
+from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 
@@ -508,25 +508,26 @@ class APRS_ais(object):
         print(
             f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack['port_id']} - {aprs_pack.get('message_text', '')}")
 
-    def send_aprs_answer_msg(self, answer_pack, msg='', with_ack=False):
+    def send_aprs_text_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
-            from_call = answer_pack.get('addresse', '')
-            to_call = answer_pack.get('from', '')
+            to_call   = answer_pack.get('addresse', '')
+            from_call = answer_pack.get('from', '')
+            path      = answer_pack.get('path', [])
+            if from_call == to_call:
+                return False
+            """
             if from_call in POPT_CFG.get_stat_CFG_keys():
-                # to_call = answer_pack.get('from', '')
-                path = answer_pack.get('path', [])
                 path.reverse()
             elif to_call in POPT_CFG.get_stat_CFG_keys():
                 tmp = from_call
                 from_call = to_call
                 to_call = tmp
-                path = answer_pack.get('path', [])
             else:
                 return False
+            """
             port_id = answer_pack.get('port_id', '')
             if not port_id:
                 return False
-            # out_pack = dict(answer_pack)
             aprs_str = f"{from_call}>{APRS_SW_ID}"
             for el in path:
                 if el[-1] == '*':
@@ -535,27 +536,20 @@ class APRS_ais(object):
             aprs_str += f"::{to_call.ljust(9)}:dummy"
             out_pack = parse_aprs_fm_aprsframe(aprs_str)
             if out_pack:
-                out_pack['from'] = from_call
-                out_pack['path'] = path
-                out_pack['addresse'] = to_call
-                out_pack['port_id'] = port_id
-                out_pack['rx_time'] = datetime.now()
-                out_pack['is_ack'] = answer_pack.get('is_ack', False)
+                out_pack['from']        = from_call
+                out_pack['path']        = path
+                out_pack['addresse']    = to_call
+                out_pack['port_id']     = port_id
+                out_pack['rx_time']     = datetime.now()
+                out_pack['is_ack']      = answer_pack.get('is_ack', False)
                 return self.send_pn_msg(out_pack, msg, with_ack)
             return False
         return False
-    #123456789 123456789 123456789 123456789 123456789 123456789 123456789---------<
+
     def send_pn_msg(self, pack, msg, with_ack=False):
-        #msg = msg.replace('\n', ' ')
         msg = convert_umlaute_to_ascii(msg)
         msg = zeilenumbruch_lines(msg, max_zeichen=67)
         msg_list = msg.split('\n')
-        """
-        while len(msg) > 67:
-            msg_list.append(msg[:67])
-            msg = msg[67:]
-        """
-        #msg_list.append(msg)
         for el in msg_list:
             if not el or el == '\n':
                 continue
@@ -568,7 +562,6 @@ class APRS_ais(object):
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
                 self._send_it(dict(pack))
             if not pack.get('is_ack', False):
-                # print(f"ECHO {pack}")
                 self.aprs_msg_pool['message'].append(dict(pack))
                 self._aprs_msg_sys_new_pn(dict(pack))
         return True
@@ -580,21 +573,18 @@ class APRS_ais(object):
             self._send_as_UI(pack)
 
     def _add_to_spooler(self, pack):
-        # print(f"Spooler in > {pack}")
-        pack['N'] = 0
-        pack['send_timer'] = 0
-        pack['msgNo'] = str(self._ack_counter)
+        pack['N']           = 0
+        pack['send_timer']  = 0
+        pack['msgNo']       = str(self._ack_counter)
         pack['address_str'] = f"{pack['from']}:{pack['addresse']}"
         self._spooler_buffer[str(self._ack_counter)] = dict(pack)
-        self._ack_counter = (self._ack_counter + 1) % 99999
+        self._ack_counter   = (self._ack_counter + 1) % 99999
         return pack
 
     def _del_fm_spooler(self, pack):
-        # print("del_fm_spooler")
         msg_no = pack.get('msgNo', '')
         ack_pack = self._spooler_buffer.get(msg_no, {})
         if ack_pack.get('address_str', '') == f"{pack.get('addresse', '')}:{pack.get('from', '')}":
-            # print(f"ACK DEL {msg_no}")
             del self._spooler_buffer[msg_no]
             self._reset_address_in_spooler(pack)
             return True
@@ -677,9 +667,20 @@ class APRS_ais(object):
     def _send_ack(self, pack_to_resp):
         msg_no = pack_to_resp.get('msgNo', False)
         if msg_no:
-            pack = dict(pack_to_resp)
-            pack['is_ack'] = True
-            self.send_aprs_answer_msg(pack, f"ack{msg_no}", False)
+            pack        = dict(pack_to_resp)
+            from_call   = pack.get('addresse', '')
+            to_call     = pack.get('from', '')
+            path        = pack.get('path', [])
+            for call in list(path):
+                if call.startswith('WIDE'):
+                    path.remove(call)
+            path.reverse()
+            pack['is_ack']      = True
+            pack['addresse']    = to_call
+            pack['from']        = from_call
+            pack['is_ackpath']  = path
+
+            self.send_aprs_text_msg(pack, f"ack{msg_no}", False)
 
     """
     def send_rej(self, pack_to_resp):

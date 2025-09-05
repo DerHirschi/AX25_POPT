@@ -37,14 +37,22 @@ class NewMessageWindow(tk.Toplevel):
         self.lift()
         self.title(self._getTabStr('new_msg'))
         #######################
-        self._to_call_var      = tk.StringVar(self,  value='')
-        self._char_counter_var = tk.StringVar(self,  value='67/0')
-        self._wide_var         = tk.StringVar(self,  value='0')
-        self._ack_var          = tk.BooleanVar(self, value=True)
+        if list(PORT_HANDLER.get_all_ports().keys()):
+            self._port_var            = tk.StringVar(self, value=str(list(PORT_HANDLER.get_all_ports().keys())[0]))
+        else:
+            self._port_var            = tk.StringVar(self, value='I-NET')
+        if POPT_CFG.get_stat_CFG_keys():
+            self._from_var        = tk.StringVar(self, value=str(POPT_CFG.get_stat_CFG_keys()[0]))
+        else:
+            self._from_var        = tk.StringVar(self, value='')
+        self._to_call_var         = tk.StringVar(self)
+        self._char_counter_var    = tk.StringVar(self,  value='67/0')
+        # self._wide_var          = tk.StringVar(self,  value='0')
+        self._ack_var             = tk.BooleanVar(self, value=True)
         #######################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
-        #######################
+        ###############################
         # Oberer Bereich: Dropdown-Menüs und Eingabefelder
         top_frame = ttk.Frame(main_f)
         top_frame.pack(side=tk.TOP, padx=10, pady=10)
@@ -53,14 +61,13 @@ class NewMessageWindow(tk.Toplevel):
         label1.pack(side=tk.LEFT, padx=5)
 
         port_vals = ['I-NET'] + list(PORT_HANDLER.get_all_ports().keys())
-        self.port_var = tk.StringVar(self)
         dropdown1 = ttk.Combobox(top_frame,
                                  width=3,
                                  values=port_vals,
-                                 textvariable=self.port_var
+                                 textvariable=self._port_var
                                  )
         dropdown1.pack(side=tk.LEFT, padx=5)
-        #
+        #################
         from_frame = ttk.Frame(top_frame)
         from_frame.pack(side=tk.LEFT, padx=60)
         label2 = ttk.Label(from_frame, text="From:")
@@ -68,14 +75,13 @@ class NewMessageWindow(tk.Toplevel):
 
 
         from_vals = POPT_CFG.get_stat_CFG_keys()
-        self.from_var = tk.StringVar(self)
         dropdown2 = ttk.Combobox(from_frame,
                                  width=10,
                                  values=from_vals,
-                                 textvariable=self.from_var
+                                 textvariable=self._from_var
                                  )
         dropdown2.pack(side=tk.LEFT, padx=5)
-        #
+        ############################################
         ack_check = ttk.Checkbutton(top_frame,
                                     text="ACK",
                                     variable=self._ack_var,
@@ -129,8 +135,8 @@ class NewMessageWindow(tk.Toplevel):
     def _send_message(self, event=None):
         with_ack    = self._ack_var.get()
         msg         = self._msg_entry.get(0.0, tk.END)[:-1]
-        from_call   = self.from_var.get()
-        port_id     = self.port_var.get()
+        from_call   = self._from_var.get()
+        port_id     = self._port_var.get()
         if from_call in POPT_CFG.get_stat_CFG_keys():
             add_str = self._to_call_var.get().upper()
             if add_str:
@@ -147,6 +153,7 @@ class NewMessageWindow(tk.Toplevel):
                     aprs_pack['port_id'] = port_id
                     aprs_pack['rx_time'] = datetime.datetime.now()
                     PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
+                self._aprs_root.set_chat_address(aprs_pack)
                 self.destroy_win()
 
     def destroy_win(self):
