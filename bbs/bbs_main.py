@@ -1991,6 +1991,9 @@ class BBS:
     def set_all_pn_msg_notNew(self):
         self._db.bbs_set_all_pn_msg_notNew()
 
+    def set_all_pn_msg_notNew_by_call(self, call: str):
+        self._db.bbs_set_all_pn_msg_notNew_for_call(call)
+
     def get_new_pn_count_by_call(self, call: str):
         return self._db.bbs_get_new_pn_msgCount_for_Call(call)
 

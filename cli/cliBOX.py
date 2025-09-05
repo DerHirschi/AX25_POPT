@@ -60,6 +60,7 @@ class BoxCLI(DefaultCLI):
             'SR'     : (2, self._cmd_box_sr,     self._getTabStr('cmd_sr'),      False),
             'KM'     : (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
             'K'      : (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
+            'MR'     : (2, self._cmd_box_mr,     self._getTabStr('cmd_mr'),      False),
             'FWDINFO': (4, self._cmd_box_fwdinfo,self._getTabStr('cmd_fwdinfo'), False),
         })
         self._commands_cfg = ['QUIT',
@@ -98,6 +99,7 @@ class BoxCLI(DefaultCLI):
                               'SR',
                               'KM',
                               'K',
+                              'MR',
                               # CLI OPT
                               'OP',
                               'LANG',
@@ -706,6 +708,7 @@ class BoxCLI(DefaultCLI):
             return "\r # Error: No Mail-Box available !\r\r"
 
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
+        print(msg_list)
         if not msg_list:
             return f"{self._getTabStr('hint_no_mail')}\r"
         self._ss_state = 1
@@ -722,16 +725,20 @@ class BoxCLI(DefaultCLI):
                                           )
         ret += BOX_MAIL_TAB_HEADER
         msg_list.reverse()
+        tr = False
         for el in msg_list:
             flag = 'P'
             if el[7]:
                 flag += 'N'
                 el = list(el)
                 el.append(flag)
+                tr = True
                 try:
                     ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
                 except IndexError:
                     pass
+        if not tr:
+            return f"{self._getTabStr('hint_no_mail')}\r"
         return ret + '\r'
 
     def _cmd_box_lm(self):
@@ -832,6 +839,16 @@ class BoxCLI(DefaultCLI):
         ret = [str(x[0]) for x in ret]
         msg_id_str = ' '.join(ret)
         return self._getTabStr('box_msg_del_k').format(msg_id_str)
+
+    def _cmd_box_mr(self):
+        bbs = self._port_handler.get_bbs()
+        if any((not hasattr(bbs, 'get_new_pn_count_by_call'),
+                not hasattr(bbs, 'set_all_pn_msg_notNew_by_call'))):
+            logger.error(self._logTag + "_cmd_box_mr: No BBS available")
+            return "\r # Error: No Mail-Box available !\r\r"
+        n = bbs.get_new_pn_count_by_call(self._to_call)
+        bbs.set_all_pn_msg_notNew_by_call(self._to_call)
+        return self._getTabStr('box_cmd_mr_msg').format(n)
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()

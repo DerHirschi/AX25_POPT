@@ -3619,6 +3619,32 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_mr': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Markiert alle pers. Nachrichten als gelesen.',
+        'Marks all personal messages as read.',
+        'Markeert alle persoonlijke berichten als gelezen.',
+        'Marque tous les messages personnels comme lus.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_mr_msg': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # {} Nachricht(en) wurde(n) als gelesen markiert.\r',
+        '\r # {} message(s) were marked as read.\r',
+        '\r # {} bericht(en) zijn gemarkeerd als gelezen.\r',
+        '\r # {} message(s) ont été marqués comme lus.\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_op': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Anzahl der Zeilen pro Seite. Nur OP aus.',
@@ -3738,9 +3764,9 @@ STR_TABLE = {
 
     'box_r_no_msg_found': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r\r # Nachricht {} nicht gefunden ! \r\r',
+        '\r\r # Nachricht {} nicht gefunden !\r\r',
         '\r\r # Message {} not found! \r\r',
-        '\r\r # Bericht {} niet gevonden! \r\r',
+        '\r\r # Bericht {} niet gevonden!\r\r',
         '\r\r # Message {} non trouvé! \r\r',
         '',
         '',
@@ -3790,7 +3816,7 @@ STR_TABLE = {
 
     'box_msg_del': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Es wurden {} Nachrichten gelöscht.\r',
+        '\r # Es wurden {} Nachricht(en) gelöscht.\r',
         '\r # {} messages have been deleted.\r',
         '\r # {} berichten zijn verwijderd.\r',
         '\r # {} messages ont été supprimés.\r',
@@ -3803,7 +3829,7 @@ STR_TABLE = {
 
     'box_msg_del_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Nachrichte(n) {} wurde(n) gelöscht.\r',
+        '\r # Nachricht(en) {} wurde(n) gelöscht.\r',
         '\r # Message(s) {} have been deleted.\r',
         '\r # Berichte(n) {} zijn verwijderd.\r',
         '\r # {} Message(s) supprimés.\r',
