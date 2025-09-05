@@ -2550,7 +2550,11 @@ class PoPT_GUI_Main:
 
     def _on_key_release_inp_txt(self, event=None):
         ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT)))
+        old_text = self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            self._inp_txt.tag_remove('send', ind, tk.INSERT)
+            return
         self._inp_txt.delete(ind,  self._inp_txt.index(tk.INSERT))
         self._inp_txt.insert(tk.INSERT, text)
         self._inp_txt.tag_remove('send', ind, tk.INSERT)

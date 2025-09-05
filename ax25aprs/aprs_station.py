@@ -10,7 +10,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, 
 from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
-from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
+from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines, zeilenumbruch
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 
@@ -544,10 +544,10 @@ class APRS_ais(object):
                 return self.send_pn_msg(out_pack, msg, with_ack)
             return False
         return False
-
+    #123456789 123456789 123456789 123456789 123456789 123456789 123456789---------<
     def send_pn_msg(self, pack, msg, with_ack=False):
+        #msg = msg.replace('\n', ' ')
         msg = convert_umlaute_to_ascii(msg)
-        msg = msg.replace('\n', ' ')
         msg = zeilenumbruch_lines(msg, max_zeichen=67)
         msg_list = msg.split('\n')
         """
@@ -557,6 +557,8 @@ class APRS_ais(object):
         """
         #msg_list.append(msg)
         for el in msg_list:
+            if not el or el == '\n':
+                continue
             if with_ack:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}" + "{" + f"{int(self._ack_counter)}"

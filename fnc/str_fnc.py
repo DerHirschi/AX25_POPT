@@ -297,9 +297,13 @@ def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):
     letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
 
     if letztes_leerzeichen == -1:
-        return text[:max_zeichen] + umbruch + zeilenumbruch(text[max_zeichen:])
+        return text[:max_zeichen] + umbruch + zeilenumbruch(text[max_zeichen:],
+                                                            max_zeichen=max_zeichen,
+                                                            umbruch=umbruch)
     else:
-        return text[:letztes_leerzeichen] + umbruch + zeilenumbruch(text[letztes_leerzeichen + 1:])
+        return text[:letztes_leerzeichen] + umbruch + zeilenumbruch(text[letztes_leerzeichen + 1:],
+                                                                    max_zeichen=max_zeichen,
+                                                                    umbruch=umbruch)
 
 def zeilenumbruch_lines(text: str, max_zeichen=79, umbruch='\n'):
     line_list = text.split(umbruch)

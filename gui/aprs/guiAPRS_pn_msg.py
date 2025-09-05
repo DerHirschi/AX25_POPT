@@ -7,7 +7,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import tk_filter_bad_chars, get_strTab, zeilenumbruch
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab, zeilenumbruch, convert_umlaute_to_ascii
 from gui.aprs.guiAPRSnewMSG import NewMessageWindow
 
 class APRS_msg_SYS_PN(tk.Toplevel):
@@ -22,7 +22,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.text_size  = self._root_cl.text_size
         self.win_height = 700
         self.win_width  = 1450
-        self.style = self._root_cl.style
+        self.style      = self._root_cl.style
+        self.style_name = self._root_cl.style_name
         self.title(self._getTabStr('aprs_pn_msg'))
         self.geometry(f"{self.win_width}x"
                       f"{self.win_height}+"
@@ -41,9 +42,12 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         ##########################
         self._aprs_ais      = PORT_HANDLER.get_aprs_ais()
         self._aprs_pn_msg   = list(self._aprs_ais.aprs_msg_pool['message'])
-        self._new_msg_win   = None
+        self.new_msg_win    = None
         self._antwort_pack  = {}
         self._is_in_update  = False
+        ##########################
+        self._char_counter_var  = tk.StringVar(self, value='67/0')
+        self._with_ack_var      = tk.BooleanVar(self, value=True)
         ##########################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -72,11 +76,12 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         left_frame.pack(  side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=False)
         middle_frame.pack(side=tk.LEFT, padx=5,  pady=10, fill=tk.BOTH, expand=False)
         right_frame.pack( side=tk.LEFT, padx=5,  pady=10, fill=tk.BOTH, expand=False)
-        self._paned_window.add(left_frame,   weight=2)
         self._paned_window.add(middle_frame, weight=0)
+        self._paned_window.add(left_frame,   weight=1)
         self._paned_window.add(right_frame,  weight=2)
         # self._load_pw_pos()
 
+        #############################################################
         # Linker Bereich: Treeview-Liste der Nachrichten
         tree_scrollbar = ttk.Scrollbar(left_frame)
         tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -107,10 +112,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
         tree_scrollbar.config(command=self._messages_treeview.yview)
 
+        #############################################################
         # Mittlerer Bereich: Fenster für die Ausgabe der selektierten Nachricht
         selected_message_label = ttk.Label(middle_frame, text=f"{self._getTabStr('msg')}:")
         selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
-
         self._selected_message_text = ScrolledText(middle_frame,
                                                    height=10,
                                                    width=67,
@@ -133,7 +138,23 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                  )
         self._out_text.pack(fill=tk.BOTH, expand=False)
         self._out_text.bind("<KeyRelease>", self._on_key_release_inp_txt)
-
+        # BTN Frame
+        btn_frame = ttk.Frame(middle_frame)
+        btn_frame.pack(fill=tk.BOTH, expand=False)
+        send_btn = ttk.Button(btn_frame,
+                              text=self._getTabStr('send'),
+                              command=self._send_aprs_msg
+                              )
+        send_btn.pack(side='left', anchor='w', padx=5)
+        #
+        ack_check_btn = ttk.Checkbutton(btn_frame,
+                                    text='ACK',
+                                    variable=self._with_ack_var)
+        ack_check_btn.pack(side='left', anchor='w', padx=5)
+        #
+        char_c_label = ttk.Label(btn_frame, textvariable=self._char_counter_var)
+        char_c_label.pack(side='right', anchor='e', padx=10)
+        #############################################################
         # Rechter Bereich: Scrolled Window für den fortlaufenden Text
         selected_message_label = ttk.Label(right_frame, text='Spooler:')
         selected_message_label.pack(anchor=tk.W, padx=5, pady=5)
@@ -252,9 +273,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
     def _on_key_release_inp_txt(self, event=None):
         ind = str(int(float(self._out_text.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._out_text.get(ind,  self._out_text.index(tk.INSERT)), max_zeichen=67)
-        self._out_text.delete(ind,  self._out_text.index(tk.INSERT))
-        self._out_text.insert(tk.INSERT, text)
+        old_text = self._out_text.get(ind,  self._out_text.index(tk.INSERT))
+        text = convert_umlaute_to_ascii(old_text)
+        text = zeilenumbruch(text, max_zeichen=67, umbruch='\n')
+        if text != old_text:
+            self._out_text.delete(ind,  self._out_text.index(tk.INSERT))
+            self._out_text.insert(tk.INSERT, text)
+        text_size = self._out_text.get(0.0, self._out_text.index(tk.INSERT)).split('\n')
+        self._char_counter_var.set(f"{67 - len(text_size[-1])}/{len(text_size)}")
 
     def _entry_selected(self, event=None):
         selected_iid = self._messages_treeview.selection()
@@ -265,6 +291,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         current_idx         = self._messages_treeview.index(selected_iid)
         msg_id = f"{self._aprs_pn_msg[current_idx].get('from', '')}-{self._aprs_pn_msg[current_idx].get('addresse', '')}"
         self._antwort_pack = self._aprs_pn_msg[current_idx]
+        if self._antwort_pack.get('msgNo', False):
+            self._with_ack_var.set(True)
+        else:
+            self._with_ack_var.set(False)
         dbl_pack = []
         self._selected_message_text.config(state='normal')
         self._selected_message_text.delete(0.0, tk.END)
@@ -302,12 +332,13 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._selected_message_text.see(tk.END)
 
     def _send_aprs_msg(self, event=None):
-        msg = self._out_text.get(0.0, tk.END)[:-1].replace('\n', '')
-        with_ack = False
-        if self._antwort_pack.get('msgNo', False):
-            with_ack = True
-        if self._aprs_ais.send_aprs_answer_msg(self._antwort_pack, msg, with_ack):
+        msg = self._out_text.get(0.0, tk.END)[:-1]
+        while msg.endswith('\n'):
+            msg = msg[:-1]
+        with_ack = self._with_ack_var.get()
+        if self._aprs_ais.send_aprs_answer_msg(dict(self._antwort_pack), msg, with_ack):
             self._out_text.delete(0.0, tk.END)
+            self._char_counter_var.set("67/0")
 
     def _btn_close(self):
         self._destroy_win()
@@ -321,7 +352,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._aprs_ais.reset_spooler()
 
     def _btn_new_msg(self):
-        if self._new_msg_win is None:
+        if self.new_msg_win is None:
             NewMessageWindow(self)
 
     def _btn_del_all_msg(self):
@@ -330,5 +361,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
     def _destroy_win(self):
         # self._save_pw_pos()
+        if hasattr(self.new_msg_win, 'destroy_win'):
+            self.new_msg_win.destroy_win()
         self._root_cl.aprs_pn_msg_win = None
         self.destroy()

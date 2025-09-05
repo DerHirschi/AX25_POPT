@@ -326,12 +326,14 @@ class BBSAutoMailSettings(ttk.Frame):
         ind -= 1
         text_ent = self._gui_vars.get(ind, {}).get('text_ent')
         ind2 = str(int(float(text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(text_ent.get(ind2, text_ent.index(tk.INSERT)))
-        text_ent.delete(ind2, text_ent.index(tk.INSERT))
-        text_ent.insert(tk.INSERT, text)
-        text_size = len(text_ent.get('1.0', tk.END)[:-1])
-        self._gui_vars[ind]['msg_size_var'].set(f" Size: {format_number(text_size)} Bytes")
+        old_text = text_ent.get(ind2, text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
 
+        if old_text != text:
+            text_ent.delete(ind2, text_ent.index(tk.INSERT))
+            text_ent.insert(tk.INSERT, text)
+        self._gui_vars[ind]['msg_size_var'].set(
+            f" Size: {format_number(len(text_ent.get(0.0, text_ent.index(tk.INSERT))))} Bytes")
 
     ##########################################
     def _open_schedWin(self):

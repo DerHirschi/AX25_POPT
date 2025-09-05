@@ -18,6 +18,7 @@ Optimierung/Änderungen:
 - GUI-APRS-Nachrichten Update-Tasks
 - GUI-APRS-Nachrichten (etwas) überarbeitet
 - Datenbank Abfragen
+- Zeilenumbruch-Check Methoden in diversen GUI's
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
