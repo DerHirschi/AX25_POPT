@@ -1,3 +1,4 @@
+import copy
 import time
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -42,10 +43,16 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         ##########################
         self._aprs_ais       = PORT_HANDLER.get_aprs_ais()
         self._aprs_pn_msg    = list(self._aprs_ais.aprs_msg_pool['message'])
+        self._aprs_bl_msg    = list(self._aprs_ais.aprs_msg_pool['bulletin'])
+        """
+        for el in self._aprs_bl_msg:
+            print(el)
+        """
         self.new_msg_win     = None
         self._is_in_update   = False
         self._antwort_pack   = {}
         self._chat_address   = ('', [])
+        self._sort_rev       = False
         ##########################
         self._get_msg_from_str = lambda : (f"{self._getTabStr('msg')}: "
                                            f"{self._antwort_pack.get('from', '') if self._antwort_pack.get('from', '') not in POPT_CFG.get_stat_CFG_keys() else self._antwort_pack.get('addresse', '')}>"
@@ -58,6 +65,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._sender_var        = tk.StringVar(self, value=str(POPT_CFG.get_stat_CFG_keys()[0]))
         else:
             self._sender_var        = tk.StringVar(self, value='')
+        self._port_var          = tk.StringVar(self, value='Port: ')
         self._msg_from_var      = tk.StringVar(self, value=f"{self._getTabStr('msg')}: ")
         self._msg_to_var        = tk.StringVar(self, value=f"{self._getTabStr('to')}: -----   via: -----")
         self._char_counter_var  = tk.StringVar(self, value='67/0')
@@ -77,7 +85,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._paned_window = ttk.PanedWindow(mid_frame, orient=tk.HORIZONTAL)
         self._paned_window.pack(fill=tk.BOTH, expand=True)
 
-        # Linker Bereich: Treeview
         left_frame      = ttk.Frame(self._paned_window)
         middle_frame    = ttk.Frame(self._paned_window)
         right_frame     = ttk.Frame(self._paned_window)
@@ -91,40 +98,95 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
         #############################################################
         # Linker Bereich: Treeview-Liste der Nachrichten
-        tree_scrollbar = ttk.Scrollbar(left_frame)
+        self._tree_tabctl = ttk.Notebook(left_frame)
+        self._tree_tabctl.pack(fill='both', expand=True)
+        pn_frame = ttk.Frame(left_frame)
+        bl_frame = ttk.Frame(left_frame)
+        self._tree_tabctl.add(pn_frame, text=self._getTabStr('pn_msg'))
+        self._tree_tabctl.add(bl_frame, text="Bulletin")
+        """PN"""
+        tree_scrollbar = ttk.Scrollbar(pn_frame)
         tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
         self._messages_treeview = ttk.Treeview(
-            left_frame,
-            columns=("time", "port_id", "from", "to", 'via', 'msgno', 'text'),
+            pn_frame,
+            columns=("time", "port_id", "from", "to", 'via', 'path', 'msgno', 'text'),
             show="headings",
             yscrollcommand=tree_scrollbar.set
         )
-        self._messages_treeview.heading("time", text=self._getTabStr('date'))
-        self._messages_treeview.heading("port_id", text="Port")
-        self._messages_treeview.heading("from", text=f"{self._getTabStr('from')}")
-        self._messages_treeview.heading("to", text=f"{self._getTabStr('to')}")
-        self._messages_treeview.heading("via", text="VIA")
-        self._messages_treeview.heading("msgno", text="#")
-        self._messages_treeview.heading("text", text=self._getTabStr('message'))
-        self._messages_treeview.column("time", stretch=tk.NO, width=130)
-        self._messages_treeview.column("port_id", stretch=tk.NO, width=45)
-        self._messages_treeview.column("from", stretch=tk.NO, width=85)
-        self._messages_treeview.column("to", stretch=tk.NO, width=85)
-        self._messages_treeview.column("via", stretch=tk.NO, width=85)
-        self._messages_treeview.column("msgno", stretch=tk.NO, width=45)
-        self._messages_treeview.column("text", stretch=tk.YES, width=220)
+        self._messages_treeview.heading("time",     text=self._getTabStr('date'))
+        self._messages_treeview.heading("port_id",  text="Port")
+        self._messages_treeview.heading("from",     text=f"{self._getTabStr('from')}")
+        self._messages_treeview.heading("to",       text=f"{self._getTabStr('to')}")
+        self._messages_treeview.heading("via",      text="VIA")
+        self._messages_treeview.heading("path",     text="Path")
+        self._messages_treeview.heading("msgno",    text="#")
+        self._messages_treeview.heading("text",     text=self._getTabStr('message'))
+        self._messages_treeview.column("time",      stretch=tk.NO,  width=130)
+        self._messages_treeview.column("port_id",   stretch=tk.NO,  width=45)
+        self._messages_treeview.column("from",      stretch=tk.NO,  width=85)
+        self._messages_treeview.column("to",        stretch=tk.NO,  width=85)
+        self._messages_treeview.column("via",       stretch=tk.NO,  width=85)
+        self._messages_treeview.column("path",      stretch=tk.YES, width=120)
+        self._messages_treeview.column("msgno",     stretch=tk.NO,  width=45)
+        self._messages_treeview.column("text",      stretch=tk.YES, width=220)
         self._messages_treeview.tag_configure("not_own", background='white', foreground='black')
-        self._messages_treeview.tag_configure("is_own", background='green2', foreground='black')
+        self._messages_treeview.tag_configure("is_own",  background='green2', foreground='black')
         self._messages_treeview.tag_configure("is_chat", background='yellow', foreground='black')
 
         self._messages_treeview.pack(fill=tk.BOTH, expand=True)
         self._messages_treeview.bind('<<TreeviewSelect>>', self._entry_selected)
 
         tree_scrollbar.config(command=self._messages_treeview.yview)
-        btn_frame1 = ttk.Frame(left_frame)
+        btn_frame1 = ttk.Frame(pn_frame)
         btn_frame1.pack(expand=False)
-        button5 = ttk.Button(btn_frame1, text=self._getTabStr('del_all'), command=self._btn_del_all_msg)
+        button5 = ttk.Button(btn_frame1, text=self._getTabStr('del_all'), command=self._btn_del_all_pn_msg)
+        button5.pack()
+        """BL"""
+        tree_scrollbar = ttk.Scrollbar(bl_frame)
+        tree_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self._bl_messages_treeview = ttk.Treeview(
+            bl_frame,
+            columns=("time", "port_id", "from", "to", 'via', 'path', 'msgno', 'text'),
+            show="headings",
+            yscrollcommand=tree_scrollbar.set
+        )
+        self._bl_messages_treeview.heading("time",      text=self._getTabStr('date'),
+                                           command=lambda: self._sort_entry('time', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("port_id",   text="Port",
+                                           command=lambda: self._sort_entry('port_id', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("from",      text=f"{self._getTabStr('from')}",
+                                           command=lambda: self._sort_entry('from', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("to",        text=f"{self._getTabStr('to')}",
+                                           command=lambda: self._sort_entry('to', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("via",       text="VIA",
+                                           command=lambda: self._sort_entry('via', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("path",      text="Path",
+                                           command=lambda: self._sort_entry('path', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("msgno",     text="BID",
+                                           command=lambda: self._sort_entry('msgno', self._bl_messages_treeview))
+        self._bl_messages_treeview.heading("text",      text=self._getTabStr('message'))
+        self._bl_messages_treeview.column("time",       stretch=tk.NO, width=130)
+        self._bl_messages_treeview.column("port_id",    stretch=tk.NO, width=45)
+        self._bl_messages_treeview.column("from",       stretch=tk.NO, width=85)
+        self._bl_messages_treeview.column("to",         stretch=tk.NO, width=85)
+        self._bl_messages_treeview.column("via",        stretch=tk.NO, width=85)
+        self._bl_messages_treeview.column("path",       stretch=tk.YES, width=120)
+        self._bl_messages_treeview.column("msgno",      stretch=tk.NO, width=45)
+        self._bl_messages_treeview.column("text",       stretch=tk.YES, width=220)
+        #self._bl_messages_treeview.tag_configure("not_own", background='white', foreground='black')
+        #self._bl_messages_treeview.tag_configure("is_own", background='green2', foreground='black')
+        #self._bl_messages_treeview.tag_configure("is_chat", background='yellow', foreground='black')
+
+        self._bl_messages_treeview.pack(fill=tk.BOTH, expand=True)
+        self._bl_messages_treeview.bind('<<TreeviewSelect>>', self._entry_selected)
+
+        tree_scrollbar.config(command=self._bl_messages_treeview.yview)
+        btn_frame1 = ttk.Frame(bl_frame)
+        btn_frame1.pack(expand=False)
+        button5 = ttk.Button(btn_frame1,
+                             text=self._getTabStr('del_all'),
+                             command=self._btn_del_all_bl_msg
+                             )
         button5.pack()
         #############################################################
         # Mittlerer Bereich: Fenster für die Ausgabe der selektierten Nachricht
@@ -143,7 +205,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._selected_message_text.tag_config("header", foreground="green2")
         #
         to_address_label = ttk.Label(middle_frame, textvariable=self._msg_to_var)
-        to_address_label.pack(anchor='w', padx=5, pady=5)
+        to_address_label.pack(anchor='w', padx=5,)
+        #
+        port_label = ttk.Label(middle_frame, textvariable=self._port_var)
+        port_label.pack(anchor='w', padx=5, )
         #
         fg, bg = self._get_colorMap()
         self._out_text = tk.Text(middle_frame,
@@ -205,7 +270,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._spooler_treeview.heading("N",         text="N")
         self._spooler_treeview.heading("time",      text="TX in")
 
-        self._spooler_treeview.column("add",        stretch=tk.YES, width=200)
+        self._spooler_treeview.column("add",        stretch=tk.YES, width=140)
         self._spooler_treeview.column("port_id",    stretch=tk.NO, width=45)
         self._spooler_treeview.column("msgno",      stretch=tk.NO, width=45)
         self._spooler_treeview.column("N",          stretch=tk.NO, width=20)
@@ -231,6 +296,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._root_cl.aprs_pn_msg_win = self
         self.bind('<Return>', self._send_aprs_msg)
         self.update_tree()
+        self.update_bl_tree()
         self._init_done = True
 
     ################################
@@ -254,20 +320,35 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         POPT_CFG.save_guiPARM_main(guiCfg)
     """
     ################################
+    def _sort_entry(self, col, tree):
+        """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
+        tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
+        tmp.sort(reverse=self._sort_rev)
+        self._sort_rev = not self._sort_rev
+        for index, (val, k) in enumerate(tmp):
+            tree.move(k, '', int(index))
+
+    ################################
     def update_tree(self):
         self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
         self._aprs_pn_msg.reverse()
 
         for i in self._messages_treeview.get_children():
             self._messages_treeview.delete(i)
-        # self.update()
+
         tree_data = []
         for form_msg in self._aprs_pn_msg:
-            if form_msg['addresse'] in POPT_CFG.get_stat_CFG_keys() \
-                    or form_msg['from'] in POPT_CFG.get_stat_CFG_keys():
-                is_own = 'is_own'
+            if all((
+                form_msg['addresse'] == self._sender_var.get(),
+                form_msg['from'] == self._chat_address[0]
+            )):
+                tag = 'is_chat'
+            elif form_msg['addresse'] in POPT_CFG.get_stat_CFG_keys() \
+                    or form_msg['from'] in POPT_CFG.get_stat_CFG_keys()\
+                    or self._aprs_ais.is_cq_call(form_msg['addresse']):
+                tag = 'is_own'
             else:
-                is_own = 'not_own'
+                tag = 'not_own'
             tree_data.append(
                 ((
                      f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
@@ -275,13 +356,40 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                      f"{form_msg['from']}",
                      f"{form_msg['addresse']}",
                      f"{form_msg.get('via', '')}",
+                     f"{'>'.join(form_msg.get('path', []))}",
                      f"{form_msg.get('msgNo', '')}",
                      f"{form_msg.get('message_text', '')}",
-                 ), is_own)
+                 ), tag)
             )
 
         for ret_ent in tree_data:
-            self._messages_treeview.insert('', tk.END, values=ret_ent[0], tags=ret_ent[1])
+            self._messages_treeview.insert('', 'end', values=ret_ent[0], tags=ret_ent[1])
+
+    def update_bl_tree(self):
+        self._aprs_bl_msg = list(self._aprs_ais.aprs_msg_pool['bulletin'])
+        self._aprs_bl_msg.reverse()
+
+        for i in self._bl_messages_treeview.get_children():
+            self._bl_messages_treeview.delete(i)
+        tree_data = []
+        for form_msg in self._aprs_bl_msg:
+
+            tree_data.append(
+                ((
+                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
+                     f"{form_msg.get('port_id', '-')}",
+                     f"{form_msg['from']}",
+                     f"{form_msg['to']}",
+                     f"{form_msg.get('via', '')}",
+                     f"{'>'.join(form_msg.get('path', []))}",
+                     f"{form_msg.get('bid', '')}",
+                     f"{form_msg.get('message_text', '')}",
+                 ), """tag""")
+            )
+
+        for ret_ent in tree_data:
+            self._bl_messages_treeview.insert('', 'end', values=ret_ent[0],)
+
 
     def update_spooler_tree(self):
         if not self._init_done:
@@ -324,21 +432,27 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._antwort_pack  = {}
         selected_iid        = selected_iid[0]
         current_idx         = self._messages_treeview.index(selected_iid)
-        self._antwort_pack  = self._aprs_pn_msg[current_idx]
+        self._antwort_pack  = copy.deepcopy(self._aprs_pn_msg[current_idx])
         if self._antwort_pack.get('msgNo', False):
             self._with_ack_var.set(True)
         else:
             self._with_ack_var.set(False)
         self._get_chat_address()
         self._build_chat(current_idx)
+        self.update_tree()
 
     def _get_chat_address(self):
-        from_call = self._antwort_pack.get('addresse', '')
-        to_call   = self._antwort_pack.get('from', '')
-        path      = self._antwort_pack.get('path', [])
+        from_call = str (self._antwort_pack.get('addresse', ''))
+        to_call   = str (self._antwort_pack.get('from', ''))
+        path      = list(self._antwort_pack.get('path', []))
+        port      = str (self._antwort_pack.get('port_id', ''))
 
         for call in list(path):
-            if call.startswith('WIDE'):
+            if any((
+                    call.startswith('WIDE'),
+                    call.startswith('q'),
+                    call.startswith('TCPIP'),
+                   )):
                 path.remove(call)
 
         if from_call == to_call:
@@ -354,10 +468,12 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         else:
             path.reverse()
             self._msg_to_var.set(value=f"{self._getTabStr('to')}: {to_call}   via: {' > '.join(path)}")
+            self._port_var.set(value=f"Port: {port}")
             self._chat_address = (to_call, path)
             return
 
         self._msg_to_var.set(value=f"{self._getTabStr('to')}: {to_call}   via: {' > '.join(path)}")
+        self._port_var.set(value=f"Port: {port}")
         self._chat_address = (to_call, path)
         self._sender_var.set(from_call)
 
@@ -387,7 +503,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                     msg += '\n'
                 msg += f"Path: {' > '.join(pack_msg.get('path', []))}\n"
                 msg += f"From: {pack_msg.get('from', '')}({pack_msg.get('distance', -1)}km)".ljust(22)
-                msg += f"Via : {pack_msg.get('via', '')}\n"
+                msg += f"Via : {str(pack_msg.get('via', '')).ljust(9)}  Port: {pack_msg.get('port_id', '')}\n"
 
                 msg_text = tk_filter_bad_chars(pack_msg.get('message_text', '')) + '\n\n'
 
@@ -403,10 +519,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         msg = self._out_text.get(0.0, tk.END)[:-1]
         while msg.endswith('\n'):
             msg = msg[:-1]
-        with_ack                        = self._with_ack_var.get()
-        self._antwort_pack['from']      = self._sender_var.get()
-        self._antwort_pack['addresse']  = self._chat_address[0]
-        self._antwort_pack['path']      = self._chat_address[1]
+        with_ack                        = bool(self._with_ack_var.get())
+        self._antwort_pack['from']      = str( self._sender_var.get())
+        self._antwort_pack['addresse']  = str( self._chat_address[0])
+        self._antwort_pack['path']      = list(self._chat_address[1])
         if not all((self._antwort_pack['from'], self._antwort_pack['addresse'])):
             return
         if self._aprs_ais.send_aprs_text_msg(dict(self._antwort_pack), msg, with_ack):
@@ -415,9 +531,9 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
     def set_chat_address(self, packet: dict):
         self._antwort_pack = packet
-        to_call     = packet.get('addresse', '')
-        from_call   = packet.get('from', '')
-        path        = packet.get('path', [])
+        to_call     = str(packet.get('addresse', ''))
+        from_call   = str(packet.get('from', ''))
+        path        = list(packet.get('path', []))
 
         if from_call == to_call:
             self._msg_to_var.set(value=f"{self._getTabStr('to')}: -----   via: -----")
@@ -468,12 +584,19 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         if self.new_msg_win is None:
             NewMessageWindow(self)
 
-    def _btn_del_all_msg(self):
+    def _btn_del_all_pn_msg(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
                                   message=self._getTabStr('msg_box_delete_data_msg'),
                                   parent=self):
             self._aprs_ais.aprs_msg_pool['message'] = []
             self.update_tree()
+
+    def _btn_del_all_bl_msg(self):
+        if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
+                                  message=self._getTabStr('msg_box_delete_data_msg'),
+                                  parent=self):
+            self._aprs_ais.aprs_msg_pool['bulletin'] = []
+            self.update_bl_tree()
 
     def _destroy_win(self):
         # self._save_pw_pos()

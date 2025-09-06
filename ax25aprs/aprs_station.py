@@ -7,7 +7,7 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT
+from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, APRS_INET_PORT_ID, APRS_CQ_ADDRESSES
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
 from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
@@ -313,7 +313,7 @@ class APRS_ais(object):
     def callback(self, packet):
         """ RX fm APRS-Server"""
         self._watchdog_reset()
-        packet['port_id'] = 'I-NET'
+        packet['port_id'] = APRS_INET_PORT_ID
         packet['rx_time'] = datetime.now()
         self.ais_rx_buff.append(packet)
         if self.ais_mon_gui is not None:
@@ -438,17 +438,18 @@ class APRS_ais(object):
     def _aprs_msg_sys_rx(self, aprs_pack: {}):
         if aprs_pack.get('format', '') == 'thirdparty':
             # print(f"THP > {aprs_pack['subpacket']}")
-            path = aprs_pack.get('path', [])
+            path    = aprs_pack.get('path', [])
             port_id = aprs_pack.get('port_id', '')
             rx_time = aprs_pack['rx_time']
-            loc = aprs_pack['locator']
-            dist = aprs_pack['distance']
-            aprs_pack = dict(aprs_pack['subpacket'])
-            aprs_pack['path'] = path
-            aprs_pack['port_id'] = port_id
-            aprs_pack['rx_time'] = rx_time
-            aprs_pack['locator'] = loc
-            aprs_pack['distance'] = dist
+            loc     = aprs_pack['locator']
+            dist    = aprs_pack['distance']
+
+            aprs_pack               = dict(aprs_pack['subpacket'])
+            aprs_pack['path']       = path
+            aprs_pack['port_id']    = port_id
+            aprs_pack['rx_time']    = rx_time
+            aprs_pack['locator']    = loc
+            aprs_pack['distance']   = dist
             # aprs_pack['message_text'], ack = extract_ack(aprs_pack.get('message_text', ''))
 
         if aprs_pack.get('format', '') in ['message', 'bulletin']:
@@ -493,7 +494,8 @@ class APRS_ais(object):
             return
         # ALARM / NOTY
         if aprs_pack['addresse'] in POPT_CFG.get_stat_CFG_keys() \
-                or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys():
+                or aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys()\
+                or self.is_cq_call(aprs_pack['addresse']):
             if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
                 self._port_handler.set_aprsMailAlarm_PH(True)
 
@@ -510,38 +512,38 @@ class APRS_ais(object):
 
     def send_aprs_text_msg(self, answer_pack, msg='', with_ack=False):
         if answer_pack and msg:
-            to_call   = answer_pack.get('addresse', '')
-            from_call = answer_pack.get('from', '')
-            path      = answer_pack.get('path', [])
+            to_call   = str(answer_pack.get('addresse', ''))
+            from_call = str(answer_pack.get('from', ''))
+            via_call  = str(answer_pack.get('via', ''))
+            path      = list(answer_pack.get('path', []))
             if from_call == to_call:
                 return False
-            """
-            if from_call in POPT_CFG.get_stat_CFG_keys():
-                path.reverse()
-            elif to_call in POPT_CFG.get_stat_CFG_keys():
-                tmp = from_call
-                from_call = to_call
-                to_call = tmp
-            else:
-                return False
-            """
             port_id = answer_pack.get('port_id', '')
             if not port_id:
                 return False
             aprs_str = f"{from_call}>{APRS_SW_ID}"
+            new_path = []
             for el in path:
-                if el[-1] == '*':
-                    el = el[:-1]
+                el: str
+                el = el.replace('*', '')
                 aprs_str += f",{el}"
+                new_path.append(el)
             aprs_str += f"::{to_call.ljust(9)}:dummy"
             out_pack = parse_aprs_fm_aprsframe(aprs_str)
             if out_pack:
                 out_pack['from']        = from_call
-                out_pack['path']        = path
+                out_pack['path']        = new_path
                 out_pack['addresse']    = to_call
                 out_pack['port_id']     = port_id
                 out_pack['rx_time']     = datetime.now()
                 out_pack['is_ack']      = answer_pack.get('is_ack', False)
+                if via_call:
+                    out_pack['via'] = via_call
+                #print(f"old Path:  {path}")
+                #print(f"new Path:  {new_path}")
+                #print(f"APRS:  {aprs_str}")
+                #print(f"In:    {answer_pack}")
+                #print(f"Out:   {out_pack}")
                 return self.send_pn_msg(out_pack, msg, with_ack)
             return False
         return False
@@ -567,7 +569,7 @@ class APRS_ais(object):
         return True
 
     def _send_it(self, pack):
-        if pack['port_id'] == 'I-NET':
+        if pack['port_id'] == APRS_INET_PORT_ID:
             self._send_as_AIS(pack)
         else:
             self._send_as_UI(pack)
@@ -894,3 +896,11 @@ class APRS_ais(object):
     def tracer_tracer_get_active(self):
         return self.be_tracer_active
 
+    ############################################
+    # Helper
+    @staticmethod
+    def is_cq_call(aprs_call: str):
+        for cq_call in APRS_CQ_ADDRESSES:
+            if aprs_call.startswith(cq_call):
+                return True
+        return False

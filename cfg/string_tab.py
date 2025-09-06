@@ -1905,10 +1905,10 @@ STR_TABLE = {
         ''),
 
     'aprs_pn_msg': (
-        'APRS Private Nachrichten',
-        'APRS Private Messages',
-        'APRS Prive berichten',
-        'Message APRS privés',
+        'APRS Messenger',
+        'APRS Messenger',
+        'APRS Messenger',
+        'APRS Messenger',
         '',
         '',
         '',

@@ -1629,7 +1629,7 @@ class SQL_Database:
             'rain_since_midnight': 3.81,
             'luminosity': 0
         },
-        'port_id': 'I-NET',     # TODO Change 'I-NET' to 'SERVER'
+        'port_id': APRS_INET_PORT_ID,
         'rx_time': datetime.datetime(2023, 12, 8, 8, 7, 1, 574225),
         'locator': 'JN47gn98',
         'distance': 614.6}

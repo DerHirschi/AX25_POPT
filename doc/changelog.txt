@@ -25,6 +25,9 @@ Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler Tabelle in GUI FWD-Warteschlange
 - CLI-CMD "(FWDI)NFO" gibt FWD-Statistik/Zähler zurück
 - CLI-CMD "(MR)" markiert alle pers. Nachrichten als gelesen.
+- APRS-Messenger: CQ-Calls (CQ*, ALL*, QST*) werden jetzt ausgewertet
+  und Sysop benachrichtigt bei Empfang eine CQ-Nachricht
+- APRS-Messenger: Tabelle für empfangende Bulletin Nachrichten
 
 ###########################################################################################################
 ###########################################################################################################

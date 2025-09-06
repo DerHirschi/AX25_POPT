@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.11'
+VER = '2.120.12'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -174,9 +174,10 @@ BBS_REVERS_FWD_CMD = {
 DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
 
 # APRS Stuff
-APRS_SW_ID = f"APZPOP"  # TODO get SW ID
+APRS_SW_ID          = f"APZPOP"  # TODO get SW ID
 APRS_TRACER_COMMENT = "PoPT-Tracer"
-
+APRS_INET_PORT_ID   = 'I-NET'
+APRS_CQ_ADDRESSES   = ['ALL', 'QST', 'CQ']
 # Locator Calc
 ASCII_0 = 48
 ASCII_A = 65

@@ -4,7 +4,7 @@ from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
-from cfg.constant import APRS_SW_ID
+from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, zeilenumbruch, convert_umlaute_to_ascii
@@ -40,7 +40,7 @@ class NewMessageWindow(tk.Toplevel):
         if list(PORT_HANDLER.get_all_ports().keys()):
             self._port_var            = tk.StringVar(self, value=str(list(PORT_HANDLER.get_all_ports().keys())[0]))
         else:
-            self._port_var            = tk.StringVar(self, value='I-NET')
+            self._port_var            = tk.StringVar(self, value=APRS_INET_PORT_ID)
         if POPT_CFG.get_stat_CFG_keys():
             self._from_var        = tk.StringVar(self, value=str(POPT_CFG.get_stat_CFG_keys()[0]))
         else:
@@ -60,7 +60,7 @@ class NewMessageWindow(tk.Toplevel):
         label1 = ttk.Label(top_frame, text="Port:")
         label1.pack(side=tk.LEFT, padx=5)
 
-        port_vals = ['I-NET'] + list(PORT_HANDLER.get_all_ports().keys())
+        port_vals = [APRS_INET_PORT_ID] + list(PORT_HANDLER.get_all_ports().keys())
         dropdown1 = ttk.Combobox(top_frame,
                                  width=3,
                                  values=port_vals,
