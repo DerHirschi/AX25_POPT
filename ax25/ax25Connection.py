@@ -782,10 +782,9 @@ class AX25Conn:
         return not bool(self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK)
 
     def _wait_for_disco(self):
-        if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
-            return
-        self._await_disco = False
-        self.zustand_exec.change_state(4)
+        if self.is_buffer_empty():
+            self._await_disco = False
+            self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
         # logger.debug(f"conn_cleanup: {self.uid}\n"

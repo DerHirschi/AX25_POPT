@@ -239,6 +239,7 @@ class BBSConnection:
         # Cleanup Wait MSG.
         self._db.bbs_outMsg_release_wait_by_list(list(self._send_next_time))
         self._send_next_time = []
+        self._ax25_conn.conn_disco()
         """
         called in self._bbs.end_fwd_conn(self)
         for bid in list(self._rx_msg_header.keys()):

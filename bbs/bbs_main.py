@@ -836,7 +836,7 @@ class BBS:
         for bid, msg_to_fwd in bbs_fwd_q.items():
             typ  = msg_to_fwd.get('typ', '')
             flag = msg_to_fwd.get('flag', 'F')
-            if flag != 'F':
+            if flag not in ['F', 'S=']:
                 continue
             if typ == 'P':
                 pn_bid_s.append(bid)
