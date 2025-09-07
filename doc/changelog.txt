@@ -19,8 +19,8 @@ Optimierung/Änderungen:
 - Programm-Ende Prozedur
 - Alte StringTab Aufrufe aufgeräumt
 - GUI-APRS-Server Monitor Update-Tasks
-- GUI-APRS-Nachrichten Update-Tasks
-- GUI-APRS-Nachrichten (etwas) überarbeitet
+- GUI-APRS-Messenger Update-Tasks
+- GUI-APRS-Messenger überarbeitet
 - Datenbank Abfragen
 - Zeilenumbruch-Check Methoden in diversen GUI's
 

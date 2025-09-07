@@ -70,7 +70,7 @@ class NewMessageWindow(tk.Toplevel):
         #################
         from_frame = ttk.Frame(top_frame)
         from_frame.pack(side=tk.LEFT, padx=60)
-        label2 = ttk.Label(from_frame, text="From:")
+        label2 = ttk.Label(from_frame, text=f"{self._getTabStr('from')}:")
         label2.pack(side=tk.LEFT)
 
 
@@ -91,7 +91,7 @@ class NewMessageWindow(tk.Toplevel):
         top_bottom_frame = ttk.Frame(main_f)
         top_bottom_frame.pack(side=tk.TOP, padx=10, pady=10)
 
-        label3 = ttk.Label(top_bottom_frame, text="To & Via: ")
+        label3 = ttk.Label(top_bottom_frame, text=f"{self._getTabStr('to')} & Via: ")
         label3.pack(side=tk.LEFT)
         to_call_ent = ttk.Entry(top_bottom_frame, textvariable=self._to_call_var , width=50)
         to_call_ent.pack(side=tk.LEFT, padx=5)
@@ -117,7 +117,7 @@ class NewMessageWindow(tk.Toplevel):
         bottom_frame = ttk.Frame(main_f)
         bottom_frame.pack(side=tk.TOP, padx=10, pady=10,fill='y')
 
-        button = ttk.Button(bottom_frame, text="Nachricht senden", command=self._send_message)
+        button = ttk.Button(bottom_frame, text=self._getTabStr('send'), command=self._send_message)
         button.pack(fill='y')
         self.bind('<Return>', self._send_message)
 
@@ -152,8 +152,8 @@ class NewMessageWindow(tk.Toplevel):
                 if aprs_pack:
                     aprs_pack['port_id'] = port_id
                     aprs_pack['rx_time'] = datetime.datetime.now()
+                    #self._aprs_root.set_new_chat(aprs_pack)
                     PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
-                self._aprs_root.set_chat_address(aprs_pack)
                 self.destroy_win()
 
     def destroy_win(self):

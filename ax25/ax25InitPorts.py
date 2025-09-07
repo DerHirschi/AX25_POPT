@@ -528,9 +528,9 @@ class AX25PortHandler(object):
         if hasattr(self._gui, 'update_aprs_spooler'):
             self._gui.update_aprs_spooler()
 
-    def update_gui_aprs_pnMsg_win(self):
-        if hasattr(self._gui, 'update_aprs_pnMsg_win'):
-            self._gui.update_aprs_pnMsg_win()
+    def update_gui_aprs_msg_win(self, aprs_pack):
+        if hasattr(self._gui, 'update_aprs_msg_win'):
+            self._gui.update_aprs_msg_win(aprs_pack)
 
     ######################
     # Connection Handling

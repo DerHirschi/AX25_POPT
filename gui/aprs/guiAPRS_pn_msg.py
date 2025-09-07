@@ -53,6 +53,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._antwort_pack   = {}
         self._chat_address   = ('', [])
         self._sort_rev       = False
+        self._dbl_pack       = []
         ##########################
         self._get_msg_from_str = lambda : (f"{self._getTabStr('msg')}: "
                                            f"{self._antwort_pack.get('from', '') if self._antwort_pack.get('from', '') not in POPT_CFG.get_stat_CFG_keys() else self._antwort_pack.get('addresse', '')}>"
@@ -295,8 +296,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
         self._root_cl.aprs_pn_msg_win = self
         self.bind('<Return>', self._send_aprs_msg)
-        self.update_tree()
-        self.update_bl_tree()
+        self._update_tree()
+        self._update_bl_tree()
         self._init_done = True
 
     ################################
@@ -329,7 +330,22 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             tree.move(k, '', int(index))
 
     ################################
-    def update_tree(self):
+    def update_aprs_msg(self, aprs_pack):
+        if aprs_pack is None:
+            self._update_tree()
+            self._update_tree()
+        elif 'message' == aprs_pack.get('format', ''):
+            self._update_tree()
+            if (aprs_pack.get('from', '') == self._chat_address[0]
+                and aprs_pack.get('addresse', '') == self._sender_var.get()) \
+                    or (aprs_pack.get('addresse', '') == self._chat_address[0]
+                        and aprs_pack.get('from', '') == self._sender_var.get()):
+                self._build_new_chat_fm_chat_address()
+        elif 'bulletin' == aprs_pack['format']:
+            self._update_tree()
+
+    ################################
+    def _update_tree(self):
         self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
         self._aprs_pn_msg.reverse()
 
@@ -365,7 +381,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         for ret_ent in tree_data:
             self._messages_treeview.insert('', 'end', values=ret_ent[0], tags=ret_ent[1])
 
-    def update_bl_tree(self):
+    def _update_bl_tree(self):
         self._aprs_bl_msg = list(self._aprs_ais.aprs_msg_pool['bulletin'])
         self._aprs_bl_msg.reverse()
 
@@ -389,7 +405,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
         for ret_ent in tree_data:
             self._bl_messages_treeview.insert('', 'end', values=ret_ent[0],)
-
 
     def update_spooler_tree(self):
         if not self._init_done:
@@ -438,8 +453,9 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         else:
             self._with_ack_var.set(False)
         self._get_chat_address()
-        self._build_chat(current_idx)
-        self.update_tree()
+        self._build_chat_fm_selected(current_idx)
+        self._msg_from_var.set(value=self._get_msg_from_str())
+        self._update_tree()
 
     def _get_chat_address(self):
         from_call = str (self._antwort_pack.get('addresse', ''))
@@ -477,41 +493,58 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._chat_address = (to_call, path)
         self._sender_var.set(from_call)
 
-    def _build_chat(self, current_idx):
+    def _build_chat_fm_selected(self, current_idx):
         msg_id = f"{self._aprs_pn_msg[current_idx].get('from', '')}-{self._aprs_pn_msg[current_idx].get('addresse', '')}"
-        dbl_pack = []
+        self._dbl_pack = []
         self._selected_message_text.config(state='normal')
         self._selected_message_text.delete(0.0, tk.END)
+        self._selected_message_text.config(state='disabled')
 
         for pack_msg in self._aprs_pn_msg[current_idx:][::-1]:
-            msg = ''
-            tag_ind_1 = self._selected_message_text.index(tk.INSERT)
             if f"{pack_msg.get('from', '')}-{pack_msg.get('addresse', '')}" == msg_id \
             or f"{pack_msg.get('addresse', '')}-{pack_msg.get('from', '')}" == msg_id:
-                if pack_msg in dbl_pack:
-                    continue
-                msg_nr = pack_msg.get('msgNo', '')
-                if (msg_nr, msg_id) in dbl_pack:
-                    continue
-                dbl_pack.append(pack_msg)
-                if msg_nr:
-                    dbl_pack.append((msg_nr, msg_id))
-                msg += f"Time: {pack_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
-                if msg_nr != '':
-                    msg += f"Msg#: {msg_nr}\n"
-                else:
-                    msg += '\n'
-                msg += f"Path: {' > '.join(pack_msg.get('path', []))}\n"
-                msg += f"From: {pack_msg.get('from', '')}({pack_msg.get('distance', -1)}km)".ljust(22)
-                msg += f"Via : {str(pack_msg.get('via', '')).ljust(9)}  Port: {pack_msg.get('port_id', '')}\n"
+                self._build_chat_fm_packet(pack_msg)
 
-                msg_text = tk_filter_bad_chars(pack_msg.get('message_text', '')) + '\n\n'
+    def _build_new_chat_fm_chat_address(self):
+        self._dbl_pack = []
+        self._selected_message_text.config(state='normal')
+        self._selected_message_text.delete(0.0, tk.END)
+        self._selected_message_text.config(state='disabled')
 
-                self._selected_message_text.insert(tk.END, msg)
-                self._selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
-                self._selected_message_text.insert(tk.END, msg_text)
+        for aprs_pack in self._aprs_pn_msg[::-1]:
+            if (aprs_pack.get('from', '') == self._chat_address[0]
+                and aprs_pack.get('addresse', '') == self._sender_var.get()) \
+                    or (aprs_pack.get('addresse', '') == self._chat_address[0]
+                        and aprs_pack.get('from', '') == self._sender_var.get()):
+                self._build_chat_fm_packet(aprs_pack)
 
-        self._msg_from_var.set(value=self._get_msg_from_str())
+    def _build_chat_fm_packet(self, aprs_pack: dict):
+        msg_id = f"{aprs_pack.get('from', '')}-{aprs_pack.get('addresse', '')}"
+        msg = ''
+        if aprs_pack in self._dbl_pack:
+            return
+        msg_nr = aprs_pack.get('msgNo', '')
+        if (msg_nr, msg_id) in self._dbl_pack:
+            return
+        self._dbl_pack.append(aprs_pack)
+        if msg_nr:
+            self._dbl_pack.append((msg_nr, msg_id))
+        msg += f"Time: {aprs_pack['rx_time'].strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
+        if msg_nr != '':
+            msg += f"Msg#: {msg_nr}\n"
+        else:
+            msg += '\n'
+        msg += f"Path: {' > '.join(aprs_pack.get('path', []))}\n"
+        msg += f"From: {aprs_pack.get('from', '')}({aprs_pack.get('distance', -1)}km)".ljust(22)
+        msg += f"Via : {str(aprs_pack.get('via', '')).ljust(9)}  Port: {aprs_pack.get('port_id', '')}\n"
+
+        msg_text = tk_filter_bad_chars(aprs_pack.get('message_text', '')) + '\n\n'
+
+        tag_ind_1 = self._selected_message_text.index(tk.INSERT)
+        self._selected_message_text.config(state='normal')
+        self._selected_message_text.insert(tk.END, msg)
+        self._selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
+        self._selected_message_text.insert(tk.END, msg_text)
         self._selected_message_text.config(state='disabled')
         self._selected_message_text.see(tk.END)
 
@@ -529,7 +562,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._out_text.delete(0.0, tk.END)
             self._char_counter_var.set("67/0")
 
-    def set_chat_address(self, packet: dict):
+    def set_new_chat(self, packet: dict):
+        """ Called fm guiAPRSnewMSG.py._send_message() """
         self._antwort_pack = packet
         to_call     = str(packet.get('addresse', ''))
         from_call   = str(packet.get('from', ''))
@@ -539,27 +573,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             self._msg_to_var.set(value=f"{self._getTabStr('to')}: -----   via: -----")
             self._chat_address = ('', [])
             return
-        msg = ''
-
-        msg += f"Time: {packet['rx_time'].strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
-        msg_nr = packet.get('msgNo', '')
-        if msg_nr != '':
-            msg += f"Msg#: {msg_nr}\n"
-        else:
-            msg += '\n'
-        msg += f"Path: {' > '.join(packet.get('path', []))}\n"
-        msg += f"From: {packet.get('from', '')}({packet.get('distance', -1)}km)".ljust(22)
-        msg += f"Via : {packet.get('via', '')}\n"
-
-        msg_text = tk_filter_bad_chars(packet.get('message_text', '')) + '\n\n'
-
-        self._selected_message_text.config(state='normal')
-        self._selected_message_text.delete(0.0, tk.END)
-        tag_ind_1 = self._selected_message_text.index(tk.INSERT)
-        self._selected_message_text.insert(tk.END, msg)
-        self._selected_message_text.tag_add('header', tag_ind_1, tk.INSERT)
-        self._selected_message_text.insert(tk.END, msg_text)
-        self._selected_message_text.config(state='disabled')
 
         self._msg_to_var.set(value=f"{self._getTabStr('to')}: {to_call}   via: {' > '.join(path)}")
         self._chat_address = (to_call, path)
@@ -589,14 +602,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                                   message=self._getTabStr('msg_box_delete_data_msg'),
                                   parent=self):
             self._aprs_ais.aprs_msg_pool['message'] = []
-            self.update_tree()
+            self._update_tree()
 
     def _btn_del_all_bl_msg(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
                                   message=self._getTabStr('msg_box_delete_data_msg'),
                                   parent=self):
             self._aprs_ais.aprs_msg_pool['bulletin'] = []
-            self.update_bl_tree()
+            self._update_bl_tree()
 
     def _destroy_win(self):
         # self._save_pw_pos()

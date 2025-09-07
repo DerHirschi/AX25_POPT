@@ -1855,8 +1855,8 @@ class PoPT_GUI_Main:
                 self._reset_aprsMail_alarm_task()
             elif task == 'update_aprs_spooler':
                 self._update_aprs_spooler_task()
-            elif task == 'update_aprs_pnMsg_win':
-                self._update_aprs_pnMsg_win_task()
+            elif task == 'update_aprs_msg_win':
+                self._update_aprs_msg_win_task(arg)
             n -= 1
 
         return True
@@ -1963,12 +1963,12 @@ class PoPT_GUI_Main:
         if hasattr(self.aprs_pn_msg_win, 'update_spooler_tree'):
             self.aprs_pn_msg_win.update_spooler_tree()
 
-    def update_aprs_pnMsg_win(self):
-        self._add_tasker_q("update_aprs_pnMsg_win", None)
+    def update_aprs_msg_win(self, aprs_pack):
+        self._add_tasker_q("update_aprs_msg_win", aprs_pack)
 
-    def _update_aprs_pnMsg_win_task(self):
-        if hasattr(self.aprs_pn_msg_win, 'update_tree'):
-            self.aprs_pn_msg_win.update_tree()
+    def _update_aprs_msg_win_task(self, aprs_pack):
+        if hasattr(self.aprs_pn_msg_win, 'update_aprs_msg'):
+            self.aprs_pn_msg_win.update_aprs_msg(aprs_pack)
 
     def _aprs_wx_tree_task(self):
         if self._port_handler.get_aprs_ais() is not None:

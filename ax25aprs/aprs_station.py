@@ -460,7 +460,7 @@ class APRS_ais(object):
                     if aprs_pack not in self.aprs_msg_pool['message']:
                         # print(f"APRS-MSG: {aprs_pack}")
                         self.aprs_msg_pool['message'].append(aprs_pack)
-                        self._aprs_msg_sys_new_pn(aprs_pack)
+                        self._aprs_msg_sys_new_msg(dict(aprs_pack))
                     if aprs_pack.get('addresse', '') in POPT_CFG.get_stat_CFG_keys():
                         if aprs_pack.get('msgNo', None) is not None:
                             self._send_ack(aprs_pack)
@@ -489,7 +489,7 @@ class APRS_ais(object):
         return False
     """
 
-    def _update_pn_msg_gui(self, aprs_pack: dict):
+    def _update_msg_gui(self, aprs_pack: dict):
         if self._port_handler is None:
             return
         # ALARM / NOTY
@@ -499,11 +499,11 @@ class APRS_ais(object):
             if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
                 self._port_handler.set_aprsMailAlarm_PH(True)
 
-        if hasattr(self._port_handler, 'update_gui_aprs_pnMsg_win'):
-            self._port_handler.update_gui_aprs_pnMsg_win()
+        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
+            self._port_handler.update_gui_aprs_msg_win(aprs_pack)
 
-    def _aprs_msg_sys_new_pn(self, aprs_pack: dict):
-        self._update_pn_msg_gui(aprs_pack)
+    def _aprs_msg_sys_new_msg(self, aprs_pack: dict):
+        self._update_msg_gui(aprs_pack)
 
     @staticmethod
     def _aprs_msg_sys_new_bn(aprs_pack: dict):
@@ -565,7 +565,7 @@ class APRS_ais(object):
                 self._send_it(dict(pack))
             if not pack.get('is_ack', False):
                 self.aprs_msg_pool['message'].append(dict(pack))
-                self._aprs_msg_sys_new_pn(dict(pack))
+                self._aprs_msg_sys_new_msg(dict(pack))
         return True
 
     def _send_it(self, pack):
@@ -573,6 +573,8 @@ class APRS_ais(object):
             self._send_as_AIS(pack)
         else:
             self._send_as_UI(pack)
+        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
+            self._port_handler.update_gui_aprs_msg_win(pack)
 
     def _add_to_spooler(self, pack):
         pack['N']           = 0
@@ -645,10 +647,10 @@ class APRS_ais(object):
             return
         ax_port = self._port_handler.get_all_ports().get(port_id, None)
         if ax_port:
-            path = pack.get('path', [])
-            msg_text = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
-            from_call = pack.get('from', '')
-            add_str = f"{APRS_SW_ID}"
+            path        = pack.get('path', [])
+            msg_text    = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
+            from_call   = pack.get('from', '')
+            add_str     = f"{APRS_SW_ID}"
             for elm in path:
                 elm = elm.replace('*', '')
                 add_str += f" {elm}"
@@ -680,8 +682,7 @@ class APRS_ais(object):
             pack['is_ack']      = True
             pack['addresse']    = to_call
             pack['from']        = from_call
-            pack['is_ackpath']  = path
-
+            pack['path']        = path
             self.send_aprs_text_msg(pack, f"ack{msg_no}", False)
 
     """
