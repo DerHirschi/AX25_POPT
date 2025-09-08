@@ -10,6 +10,7 @@ Fixes:
   beendet ist.
 - S= Nachrichten (Nachricht wird bereits von einer anderen Station empfangen)
   werden nicht erneut zum FWD angeboten.
+- S&F-Forwardverbindung: Header Parsing Error bei Bulletin Mails von WinBox
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange

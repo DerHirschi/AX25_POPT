@@ -615,6 +615,8 @@ class BBSConnection:
                     BBS_LOG.error(logTag + f"Can't parse Header: msg: {msg} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
                     # pn_check += FWD_RESP_ERR
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_error', 1)
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                     pn_check += FWD_RESP_REJ
                     continue
                 bid = str(msg.get('bid_mid', ''))
@@ -627,13 +629,7 @@ class BBSConnection:
                         hold = True
                     else:
                         pn_check += res_rej_tab
-                        try:
-                            self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
-                        except Exception as ex:
-                            logger.error(f"Error Statistics: {self._dest_bbs_call}")
-                            logger.error(ex)
-                            BBS_LOG.error(f"Error Statistics _parse_header: {self._dest_bbs_call}")
-                            BBS_LOG.error(ex)
+                        self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                         BBS_LOG.info(logTag + f"Rejected : BID-MID: {bid}")
                         for k, val in msg.items():
                             if val:
@@ -644,6 +640,8 @@ class BBSConnection:
                     BBS_LOG.error(logTag + f"No BID-MID found: msg: {msg} - Header-Line: {el}")
                     BBS_LOG.debug(logTag + f"Header-Lines: {header_lines}")
                     pn_check += FWD_RESP_REJ
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_error', 1)
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                     continue
                 db_ret = {
                     'P': self._bbs.is_bid_in_db,
@@ -656,6 +654,8 @@ class BBSConnection:
                     BBS_LOG.error(logTag + f"No db_ret: msg: {msg} - Header-Line: {el}")
                     BBS_LOG.error(logTag + f"Msg-Typ: {msg.get('message_type', '')}  BID-MID: {bid}")
                     pn_check += FWD_RESP_REJ
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_error', 1)
+                    self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                     continue
                 if db_ret == FWD_RESP_OK:
                     if not self._bbs.insert_incoming_fwd_bid(bid):
@@ -675,6 +675,7 @@ class BBSConnection:
                     if hold:
                         # db_ret == 'H'
                         pn_check += FWD_RESP_HLD
+                        self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_hold', 1)
                         continue
                     # db_ret == '+'
                     pn_check += db_ret
