@@ -452,7 +452,7 @@ class AX25PortHandler(object):
                 port.set_block_incoming_conn(0)
         self._glb_port_blocking = 0
 
-    def block_all_ports(self, state=1):
+    def block_all_ports(self, state=0):
         # 0 = unblock incoming
         # 1 = ignore incoming
         # 2 = reject incoming

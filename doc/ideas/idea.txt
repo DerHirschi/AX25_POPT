@@ -27,6 +27,8 @@ Ideas/TODO's :
   ✓ $parmPacLen = Pakete Länge Einstellungen    - Bake
   ✓ $lastConnDate = Letzter Connect Datum
   ✓ $lastConnTime = Letzter Connect Zeit
+  ✓ $fwdPartner = Pakete Länge Einstellungen    - Bake
+
   ✓ Raspberry 1Wire Sensoren                    - Bake
   - Raspberry BME280-Wettersensor               - Bake
   - Raspberry GPIO Zustand                      - Bake
@@ -60,7 +62,8 @@ Ideas/TODO's :
   - Sprachausgabe überarbeiten
 
 ✓ Haupt GUI überarbeiten
-  - Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
+  ✓ Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
+    - Splash Screen für Start, Beenden & Port-Reinit
   ✓ ttk Styles (AW-Themes)
   ✓ Einstellung GUI überarbeiten (OnePager)
     ✓ Individuelle Farben (Vorschreib Fenster)
@@ -68,6 +71,7 @@ Ideas/TODO's :
     - Individuelle Farben (APRS)
     ✓ Sprache auswählbar
     ✓ F-Texte
+  - Titelleiste & Menüleiste ausblendbar (Vollbildmodus ?) für kleine Monitore(Auflösungen)
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)
@@ -151,7 +155,7 @@ Ideas/TODO's :
   - GUI Ausgabe/Auswertung
 
 - Converse Mode intern
-  - Ping-Pong Converse
+- Ping-Pong Converse
 
 - QSO Fenster/Tool
 - Debugging Tool
@@ -162,7 +166,6 @@ Ideas/TODO's :
   ✓ PMS
     ✓ Papierkorb usw
     - Signatur
-  - APRS
   ✓ BBS (Grundlegend)
     ✓ FWD-Q (Tasker) mehr Steuer/Monitoring-Möglichkeiten (GUI)
     ✓ Hold
@@ -274,13 +277,18 @@ Ideas/TODO's :
 - Yapp Server Modes
 - Yapp Resume
 - Didadit
-✓ APRS decoding
-✓ APRS Private Message System
-✓ APRS Tracer
-✓ APRS Tracer Alarm
-✓ APRS Auto-Tracer nach DX-Alarm(MH-Liste)
-✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
-- APRS Digi / I-Gate Funktion
+
+- APRS
+  ✓ APRS decoding
+  ✓ APRS Private Message System (Messenger)
+    - Bulletin Nachrichten senden
+  ✓ APRS Tracer
+  ✓ APRS Tracer Alarm
+  ✓ APRS Auto-Tracer nach DX-Alarm(MH-Liste)
+    - Überarbeiten
+  ✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
+  - APRS Digi / I-Gate Funktion
+
 ✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
   ✓ PortFilter

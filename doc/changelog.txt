@@ -11,6 +11,7 @@ Fixes:
 - S= Nachrichten (Nachricht wird bereits von einer anderen Station empfangen)
   werden nicht erneut zum FWD angeboten.
 - S&F-Forwardverbindung: Header Parsing Error bei Bulletin Mails von WinBox
+- FWD-Statistik mail_bytes_tx Zähler hat falschen Wert erfasst
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
@@ -24,6 +25,7 @@ Optimierung/Änderungen:
 - GUI-APRS-Messenger überarbeitet
 - Datenbank Abfragen
 - Zeilenumbruch-Check Methoden in diversen GUI's
+- Blacklist gilt jetzt auch für DIGI
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

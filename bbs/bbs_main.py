@@ -674,7 +674,7 @@ class BBS:
                 to_bbs_call=    to_bbs_call,
                 fwd_bbs_call=   fwd_task[9],
                 msg_size=       msg_size,
-                bytes_to_send=  to_send_len,
+                bytes_to_send=  int(to_send_len),
                 comp_rate    =  comp_ratio,
                 q_subject=      fwd_task[11],
                 typ=            typ,
@@ -904,8 +904,9 @@ class BBS:
         if flag in ['S+', 'H']:
             # Mail Bytes
             bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
+            msg_len    = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('msg_size', 0)
             self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] += bytes_send
-            self.set_bbs_statistic(bbs_call, 'mail_bytes_tx', bytes_send)
+            self.set_bbs_statistic(bbs_call, 'mail_bytes_tx', msg_len)
             # Mail Counter by Typ
             typ = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('typ', '')
             if typ == 'B':

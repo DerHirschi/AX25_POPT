@@ -414,11 +414,10 @@ class PoPT_GUI_Main:
     def _destroy_win(self):
         if self._quit:
             return
-        self._port_handler.disco_all_Conn()
         self._set_port_blocking(1)
+        self._port_handler.disco_all_Conn()
         self._quit = True
         self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
-        self._set_port_blocking(1)
         self._port_handler.disco_all_Conn()
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
@@ -445,7 +444,7 @@ class PoPT_GUI_Main:
                 wn.destroy_win()
             if hasattr(wn, 'destroy'):
                 wn.destroy()
-            wn = None
+
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
