@@ -1774,7 +1774,10 @@ class PoPT_GUI_Main:
             return False
 
         self.main_win.quit()
-        # self.main_win.destroy()
+        try:
+            self.main_win.destroy()
+        except Exception as ex:
+            logger.warning(ex)
         # self._port_handler.close_gui()
         # logger.info('GUI: Closing GUI: _tasker_quit Done.')
         logger.info('GUI: Closing GUI: Done')
