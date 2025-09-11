@@ -189,10 +189,18 @@ class AISmonitor(tk.Toplevel):
             self._tree.delete(i)
 
     def _add_to_tree(self, tree_data: tuple, add_to_end=True):
+        is_scrolled_to_top = self._tree.yview()[0] == 0.0
         if add_to_end:
             self._tree.insert('', 'end', values=tree_data)
         else:
             self._tree.insert('', 0, values=tree_data)
+
+        if not is_scrolled_to_top and not add_to_end:
+            try:
+                self._tree.yview_scroll(1, "units")
+            except Exception as e:
+                logger.warning(e)
+                pass
 
     @staticmethod
     def _get_treedata_fm_pack(aprs_pack: dict):
