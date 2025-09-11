@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.16'
+VER = '2.120.17'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -178,37 +178,38 @@ APRS_SW_ID          = f"APZPOP"  # TODO get SW ID
 APRS_TRACER_COMMENT = "PoPT-Tracer"
 APRS_INET_PORT_ID   = 'I-NET'
 APRS_CQ_ADDRESSES   = ['ALL', 'QST', 'CQ']
+
 # Locator Calc
 ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
 
 # GUI Stuff
-DEF_TEXTSIZE = 13
-FONT = "Courier"
-TEXT_SIZE_STATUS = 10
-TXT_INP_CURSOR_CLR = '#ffffff'
-STAT_BAR_CLR = 'grey60'
-STAT_BAR_TXT_CLR = '#000000'
-FONT_STAT_BAR = 'Arial'
-PARAM_MAX_QSO_LEN   = 50000     # TODO
-PARAM_MAX_MON_LEN   = 100000
-PARAM_MAX_MON_WIDTH = 100
-MON_SYS_MSG_CLR_FG = 'red'
-MON_SYS_MSG_CLR_BG = '#000000'
-CFG_TR_DX_ALARM_BG_CLR = '#55ed9f'
-GUI_DISABLED_CLR = '#b1b1b3'
+DEF_TEXTSIZE            = 13
+FONT                    = "Courier"
+TEXT_SIZE_STATUS        = 10
+TXT_INP_CURSOR_CLR      = '#ffffff'
+STAT_BAR_CLR            = 'grey60'
+STAT_BAR_TXT_CLR        = '#000000'
+FONT_STAT_BAR           = 'Arial'
+PARAM_MAX_QSO_LEN       = 50000     # TODO
+PARAM_MAX_MON_LEN       = 100000
+PARAM_MAX_MON_WIDTH     = 100
+MON_SYS_MSG_CLR_FG      = 'red'
+MON_SYS_MSG_CLR_BG      = '#000000'
+CFG_TR_DX_ALARM_BG_CLR  = '#55ed9f'
+GUI_DISABLED_CLR        = '#b1b1b3'
 # Station Default
-DEF_STAT_QSO_TX_COL = '#ffffff'
-DEF_STAT_QSO_RX_COL = '#00ff06'
-DEF_STAT_QSO_BG_COL = '#000000'
+DEF_STAT_QSO_TX_COL     = '#ffffff'
+DEF_STAT_QSO_RX_COL     = '#00ff06'
+DEF_STAT_QSO_BG_COL     = '#000000'
 # QSO SysMSG
-DEF_QSO_SYSMSG_FG= '#fc7126'
-DEF_QSO_SYSMSG_BG= '#000000'
+DEF_QSO_SYSMSG_FG       = '#fc7126'
+DEF_QSO_SYSMSG_BG       = '#000000'
 # Port Default
-DEF_PORT_MON_TX_COL = 'medium violet red'
-DEF_PORT_MON_RX_COL = 'green'
-DEF_PORT_MON_BG_COL = '#000000'
+DEF_PORT_MON_TX_COL     = 'medium violet red'
+DEF_PORT_MON_RX_COL     = 'green'
+DEF_PORT_MON_BG_COL     = '#000000'
 
 # Built-in Styles
 STYLES_BULD_IN_LINUX = [

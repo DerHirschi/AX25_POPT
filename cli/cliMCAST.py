@@ -119,12 +119,12 @@ class MCastCLI(DefaultCLI):
         out += self._c_text
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
-        out += self.get_ts_prompt()
+        out += self._get_ts_prompt()
         self._send_output(out, env_vars=True)
         return ''
 
     def _s1(self):
-        self.software_identifier()
+        self._software_identifier()
         ########################
         # Check String Commands
         if not self._exec_str_cmd():

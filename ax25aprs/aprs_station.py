@@ -665,7 +665,7 @@ class APRS_ais(object):
         # print(f"send_as_AIS : {pack}")
         msg = pack['raw_message_text']
         pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
-        # print(f" AIS OUT > {pack_str}")
+        print(f" AIS OUT > {pack_str}")
         self._ais_tx(pack_str)
 
     def _send_ack(self, pack_to_resp):
@@ -716,27 +716,27 @@ class APRS_ais(object):
         coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
         rtt_timer = time.time()
         self._be_tracer_tx_rtt = rtt_timer
-        return f'!{coordinate[0]}/{coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{rtt_timer}#'
+        return f'={coordinate[0]}/{coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{rtt_timer}#'
         # _aprs_msg = _aprs_msg.replace('`', '')
 
     def _tracer_build_pack(self):
-        port_id = int(self.be_tracer_port)
-        station_call = str(self.be_tracer_station)
+        port_id         = int(self.be_tracer_port)
+        station_call    = str(self.be_tracer_station)
         wide = f'WIDE{self.be_tracer_wide}-{self.be_tracer_wide}'
         path = ','.join(list(self.be_tracer_via) + [wide])
-
         # dest = APRS_SW_ID
+        if station_call not in self._port_handler.get_stat_calls_fm_port(port_id):
+            return {}
+        add_str = f'{station_call}>{APRS_SW_ID},{path}:'
+        msg = self._tracer_build_msg()
+        aprs_raw = add_str + msg
+        aprs_pack = parse_aprs_fm_aprsframe(aprs_raw)
+        if not aprs_pack:
+            return {}
+        aprs_pack['port_id'] = str(port_id)
+        aprs_pack['raw_message_text'] = msg
+        return aprs_pack
 
-        if station_call in self._port_handler.get_stat_calls_fm_port(port_id):
-            add_str = f'{station_call}>{APRS_SW_ID},{path}:'
-            msg = self._tracer_build_msg()
-            aprs_raw = add_str + msg
-            aprs_pack = parse_aprs_fm_aprsframe(aprs_raw)
-            if aprs_pack:
-                aprs_pack['port_id'] = str(port_id)
-                aprs_pack['raw_message_text'] = msg
-                return aprs_pack
-        return {}
 
     def tracer_sendit(self):
         if self.be_tracer_station != 'NOCALL':
@@ -852,12 +852,12 @@ class APRS_ais(object):
         self.be_tracer_alarm_hist[str(hist_struc['key'])] = dict(hist_struc)
 
     def _tracer_update_gui(self):
-        root_gui = self._port_handler.get_gui()
-        if root_gui is not None:
+        gui = self._port_handler.get_gui()
+        if gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
-            if root_gui.be_tracer_win is not None:
+            if gui.be_tracer_win is not None:
                 # TODO Call fm guiMain loop (may cause random crash ?)
-                root_gui.be_tracer_win.update_tree_data()
+                gui.be_tracer_win.update_tree_data()
 
     """
     def _update_gui_icon(self):
@@ -896,6 +896,26 @@ class APRS_ais(object):
 
     def tracer_tracer_get_active(self):
         return self.be_tracer_active
+
+    ############################################
+    # Bacon of Hope
+    def _build_aprs_beacon(self):
+        aprs_beacon_cfg = dict(
+            msg_typ     = '=',
+            lat         = self.ais_lat,
+            lon         = self.ais_lon,
+            symbol      = ("\\", '-'),
+            msg_text    = ''
+        )
+
+        msg_typ          = aprs_beacon_cfg.get('msg_typ', '=')
+        msg_text         = aprs_beacon_cfg.get('msg_text', '')
+        lat              = aprs_beacon_cfg.get('lat', 0.0)
+        lon              = aprs_beacon_cfg.get('lon', 0.0)
+        symbol1, symbol2 = aprs_beacon_cfg.get('symbol',("\\", '-'))
+
+        coordinate = decimal_degrees_to_aprs(lat, lon)
+        return f'{msg_typ}{coordinate[0]}{symbol1}{coordinate[1]}{symbol2}{msg_text[:6]}' # TODO max beacon len
 
     ############################################
     # Helper

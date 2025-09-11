@@ -138,7 +138,7 @@ class BoxCLI(DefaultCLI):
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
             # self._software_identifier()
-            self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+            self._send_output(ret + self._get_ts_prompt(), env_vars=True)
             return ''
 
         ret += self._c_text
@@ -173,7 +173,7 @@ class BoxCLI(DefaultCLI):
 
         if not self._user_db_ent.PRmail:
             ret += self._getTabStr('box_no_hbbs_address')
-        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+        self._send_output(ret + self._get_ts_prompt(), env_vars=True)
 
         return ''
 
@@ -200,7 +200,7 @@ class BoxCLI(DefaultCLI):
             else:
                 self._crone_state_index = 100  # Quit State
                 return "******* PoPT-BBS Error !! \r"
-        self.software_identifier()
+        self._software_identifier()
         if hasattr(self.stat_identifier, 'typ'):
             if any((
                 # Disabling Remote CMDs for non Sysop Stations
@@ -234,7 +234,7 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self.get_ts_prompt()), env_vars=False)
+                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self._get_ts_prompt()), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])
@@ -289,7 +289,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self._get_ts_prompt(), env_vars=False)
                 return
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
@@ -299,7 +299,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self._get_ts_prompt(), env_vars=False)
                 return
             bid, fwd_bbs_list = ret
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
@@ -319,7 +319,7 @@ class BoxCLI(DefaultCLI):
                     len(self._out_msg.get('msg', b''))
                 )
 
-            ret_text += self.get_ts_prompt()
+            ret_text += self._get_ts_prompt()
             self._send_output(ret_text, env_vars=False)
 
             self._out_msg = GET_MSG_STRUC()
@@ -428,7 +428,7 @@ class BoxCLI(DefaultCLI):
                                                                       self._user_db_ent.QTH,
                                                                       self._user_db_ent.LOC,
                                                                       )
-                    ret += self.get_ts_prompt()
+                    ret += self._get_ts_prompt()
                     self._send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
@@ -456,7 +456,7 @@ class BoxCLI(DefaultCLI):
                         new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                         if new_mail:
                             ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
-                        ret += self.get_ts_prompt()
+                        ret += self._get_ts_prompt()
                         self._send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
@@ -497,7 +497,7 @@ class BoxCLI(DefaultCLI):
                 new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                 if new_mail:
                     ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
-                ret += self.get_ts_prompt()
+                ret += self._get_ts_prompt()
                 self._send_output(ret, env_vars=True)
                 self._s9_state = 10
                 self.can_sidestop = True
@@ -1150,7 +1150,7 @@ class BoxCLI(DefaultCLI):
         return ret
     ########################################################################
 
-    def get_ts_prompt(self):
+    def _get_ts_prompt(self):
         return f"\r({datetime.now().strftime('%H:%M:%S')}) {self._my_call_str}>\r"
 
     ########################################################################

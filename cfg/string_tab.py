@@ -3686,7 +3686,7 @@ STR_TABLE = {
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # BOX: Du hast {} neu Mails.\r\r',
+        '\r # BOX: Du hast {} neue Mail(s).\r\r',
         '\r # BOX : You have {} new mails.\r\r',
         '\r # BOX: Je hebt {} nieuwe mails.\r\r',
         '\r # BOX : Vous avez {} nouveaux mails.\r\r',

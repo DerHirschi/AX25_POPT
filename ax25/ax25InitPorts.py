@@ -178,6 +178,7 @@ class AX25PortHandler(object):
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
+            self._port_watchdog_task()
             self._mh_task()
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
@@ -189,6 +190,20 @@ class AX25PortHandler(object):
             self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
 
+    #######################################################################
+    # Port Watchdog
+    def _port_watchdog_task(self):
+        for port_id, port in dict(self.get_all_ports()).items():
+            if hasattr(port, 'get_watchdog_timer'):
+                wd_timer = time.time() - port.get_watchdog_timer()
+                if wd_timer > 10:
+                    if hasattr(port, 'reset_watchdog_timer'):
+                        port.reset_watchdog_timer()
+                    logger.warning("=================Port-Watch-Dog====================")
+                    logger.warning(f"Port : {port_id}")
+                    logger.warning(f"timer: {round(wd_timer)} s")
+                    #logger.info(f"Try to reinit Port {port_id}")
+                    #threading.Thread(target=self.reinit_port, args=(port_id, )).start()
     #######################################################################
     # MH
     def _mh_task(self):
@@ -326,7 +341,7 @@ class AX25PortHandler(object):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
         logger.info('PH: Versuche Port {} zu schließen.'.format(port_id))
-        if port_id in self.rx_echo.keys():
+        if port_id in list(self.rx_echo.keys()):
             del self.rx_echo[port_id]
         if port_id in list(self.ax25_ports.keys()):
             port = self.ax25_ports[port_id]
@@ -340,9 +355,9 @@ class AX25PortHandler(object):
                 time.sleep(0.5)
                 port.close()
 
-            if port_id in self.ax25_ports:
+            if port_id in list(self.ax25_ports.keys()):
                 del self.ax25_ports[port_id]
-            del port
+            # del port
         # self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
@@ -389,9 +404,13 @@ class AX25PortHandler(object):
     def _init_port(self, port_id: int):
         logger.info("PH: Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
-            logger.error('PH: Could not initialise Port {}. Port already in use'.format(port_id))
-            self.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
-            return False
+            port = self.ax25_ports[port_id]
+            if hasattr(port, 'ende'):
+                if not port.ende:
+                    logger.error('PH: Could not initialise Port {}. Port already in use'.format(port_id))
+                    self.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
+                    return False
+                del self.ax25_ports[port_id]
         ##########
         # Init CFG
         new_cfg = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
@@ -425,8 +444,8 @@ class AX25PortHandler(object):
             return False
         ######################################
         # Gather all Ports in dict: ax25_ports
-        self.ax25_ports[port_id] = temp
-        self.rx_echo[port_id] = RxEchoVars(port_id) # TODO Cleanup / OPT
+        self.ax25_ports[port_id]    = temp
+        self.rx_echo[port_id]       = RxEchoVars(port_id) # TODO Cleanup / OPT
         self.sysmsg_to_gui(get_strTab('port_init', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PH: Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
         return True

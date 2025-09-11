@@ -223,12 +223,11 @@ class PoPT_GUI_Main:
         self._quit          = False
         self._init_state    = 0
         self._tracer_alarm  = False
-        self._flip05        = True
         ####################
         # GUI PARAM
         self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
-        # Tasker Timings
+        # Tasker
         self._loop_delay                        = 60  # ms
         self._parm_non_prio_task_timer          = 0.25  # s
         self._parm_non_non_prio_task_timer      = 1  # s
@@ -239,6 +238,8 @@ class PoPT_GUI_Main:
         self._tasker_q_timer                    = time.time()
         # Tasker Q
         self._tasker_q                          = []
+        #
+        self._flip025                           = True
         # #### Tester
         # self._parm_test_task_timer = 60  # 5        # s
         # self._test_task_timer = time.time()
@@ -320,7 +321,7 @@ class PoPT_GUI_Main:
             2: self._init_TXT_frame_low(),
         }
         self._inp_txt = self._winPos_cfgTab[txtWin_pos_cfg[0]]
-        self._out_txt = self._winPos_cfgTab[txtWin_pos_cfg[1]]
+        self._qso_txt = self._winPos_cfgTab[txtWin_pos_cfg[1]]
         self._mon_txt = self._winPos_cfgTab[txtWin_pos_cfg[2]]
 
         self._pw.add(self._TXT_upper_frame, weight=1)
@@ -500,7 +501,7 @@ class PoPT_GUI_Main:
         current_ch_vars = self.get_ch_var(ch_index=self.channel_index)
         current_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         current_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        current_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        current_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
         current_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
@@ -860,7 +861,7 @@ class PoPT_GUI_Main:
 
 
         # QSO
-        out_txt_men = ContextMenu(self._out_txt)
+        out_txt_men = ContextMenu(self._qso_txt)
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
@@ -1290,7 +1291,7 @@ class PoPT_GUI_Main:
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
         if all_stat_cfg:
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
         guiCFG = POPT_CFG.load_guiPARM_main()
 
         for call in list(all_stat_cfg.keys()):
@@ -1304,38 +1305,38 @@ class PoPT_GUI_Main:
             rx_tag = 'RX-' + str(call)
             self._all_tag_calls.append(str(call))
 
-            self._out_txt.tag_config(tx_tag,
+            self._qso_txt.tag_config(tx_tag,
                                      foreground=tx_fg,
                                      background=tx_bg,
                                      selectbackground=tx_fg,
                                      selectforeground=tx_bg,
                                      )
-            self._out_txt.tag_config(rx_tag,
+            self._qso_txt.tag_config(rx_tag,
                                      foreground=rx_fg,
                                      background=tx_bg,
                                      selectbackground=rx_fg,
                                      selectforeground=tx_bg,
                                      )
-            self._out_txt.tag_config('SYS-MSG',
+            self._qso_txt.tag_config('SYS-MSG',
                                      foreground=DEF_QSO_SYSMSG_FG,
                                      background=DEF_QSO_SYSMSG_BG,
                                      selectbackground=DEF_QSO_SYSMSG_FG,
                                      selectforeground=DEF_QSO_SYSMSG_BG,
                                      )
-            self._out_txt.tag_config('TX-NOCALL',
+            self._qso_txt.tag_config('TX-NOCALL',
                                      foreground='#ffffff',
                                      background='#000000',
                                      selectbackground='#ffffff',
                                      selectforeground='#000000',
                                      )
-            self._out_txt.tag_config('RX-NOCALL',
+            self._qso_txt.tag_config('RX-NOCALL',
                                      foreground='#000000',
                                      background='#ffffff',
                                      selectbackground='#000000',
                                      selectforeground='#ffffff',
                                      )
 
-        self._out_txt.configure(state="disabled")
+        self._qso_txt.configure(state="disabled")
         self._mon_txt.configure(state="normal")
         # Monitor Tags
         all_port = self._port_handler.ax25_ports
@@ -1366,7 +1367,7 @@ class PoPT_GUI_Main:
                                  foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_raise(tk.SEL)
-        self._out_txt.tag_raise(tk.SEL)
+        self._qso_txt.tag_raise(tk.SEL)
         self._mon_txt.tag_raise(tk.SEL)
 
 
@@ -1526,23 +1527,23 @@ class PoPT_GUI_Main:
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
         self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._out_txt.configure(font=(FONT, self.text_size), )
+        self._qso_txt.configure(font=(FONT, self.text_size), )
         self._mon_txt.configure(font=(FONT, self.text_size), )
 
     def _decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
         self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._out_txt.configure(font=(FONT, self.text_size), )
+        self._qso_txt.configure(font=(FONT, self.text_size), )
         self._mon_txt.configure(font=(FONT, self.text_size), )
 
     ##########################
     # Clipboard Stuff
     def _copy_select(self):
-        if self._out_txt.tag_ranges("sel"):
+        if self._qso_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._out_txt.selection_get())
-            self._out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+            self.main_win.clipboard_append(self._qso_txt.selection_get())
+            self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
         elif self._inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
             self.main_win.clipboard_append(self._inp_txt.selection_get())
@@ -1594,7 +1595,7 @@ class PoPT_GUI_Main:
         return
 
     def _save_to_file(self):
-        data = self._out_txt.get('1.0', tk.END)
+        data = self._qso_txt.get('1.0', tk.END)
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data, self.main_win)
 
@@ -1651,9 +1652,9 @@ class PoPT_GUI_Main:
         chVars.input_win_cursor_index   = tk.INSERT
 
     def _clear_qsoWin(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         # del self._channel_vars[self.channel_index]
 
         chVars = self._channel_vars[self.channel_index]
@@ -1662,9 +1663,9 @@ class PoPT_GUI_Main:
         chVars.t2speech_buf     = ''
 
     def clear_channel_vars(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
 
@@ -1672,9 +1673,9 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
 
     def _clear_all_Channel_vars(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
         for ch_id in self._channel_vars.keys():
@@ -1757,7 +1758,7 @@ class PoPT_GUI_Main:
                 return
         else:
             prio     = self._tasker_prio()
-            if not self._tasker_05_sec():
+            if not self._tasker_025_sec():
                 if not self._tasker_1_sec():
                     if all((not self._tasker_5_sec(),
                             not prio,
@@ -1880,20 +1881,21 @@ class PoPT_GUI_Main:
         ))
         return ret
 
-    def _tasker_05_sec(self):
+    def _tasker_025_sec(self):
         """ 0.25 Sec """
         if time.time() > self._non_prio_task_timer:
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
             # self._aprs_task()
             # self._monitor_task()
             self._dualPort_monitor_task()
             self._update_qso_win()
             self._SideFrame_tasker()
-            self._update_status_win()
-            self._AlarmIcon_tasker05()
+            self._update_status_bar()
+            if self._flip025:
+                self._AlarmIcon_tasker05()
             #####################
-            self._flip05 = not self._flip05
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
+            self._flip025 = not self._flip025
             return True
         return False
 
@@ -1994,7 +1996,7 @@ class PoPT_GUI_Main:
         self._check_port_blocking_task()
 
     def _SideFrame_tasker(self):
-        if self._flip05:
+        if self._flip025:
             self.tabbed_sideFrame.tasker()
             self.tabbed_sideFrame.on_ch_stat_change()
         else:
@@ -2027,7 +2029,7 @@ class PoPT_GUI_Main:
             return False
         if conn.ft_obj:
             # self.ch_status_update()
-            return False
+            return True
         if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)
             # self.ch_status_update()
@@ -2064,17 +2066,17 @@ class PoPT_GUI_Main:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
-            self._out_txt.configure(state="normal")
-            ind = self._out_txt.index('end-1c')
-            self._out_txt.insert('end', inp)
-            ind2 = self._out_txt.index('end-1c')
+            self._qso_txt.configure(state="normal")
+            ind = self._qso_txt.index('end-1c')
+            self._qso_txt.insert('end', inp)
+            ind2 = self._qso_txt.index('end-1c')
             if tag_name_tx:
-                self._out_txt.tag_add(tag_name_tx, ind, ind2)
-            self._out_txt.configure(state="disabled",
+                self._qso_txt.tag_add(tag_name_tx, ind, ind2)
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             # TODO Autoscroll
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             if tag_name_tx:
@@ -2112,19 +2114,19 @@ class PoPT_GUI_Main:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
 
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
             # configuring a tag called start
-            ind = self._out_txt.index('end-1c')
-            self._out_txt.insert('end', out)
-            ind2 = self._out_txt.index('end-1c')
+            ind = self._qso_txt.index('end-1c')
+            self._qso_txt.insert('end', out)
+            ind2 = self._qso_txt.index('end-1c')
             if tag_name_rx:
-                self._out_txt.tag_add(tag_name_rx, ind, ind2)
+                self._qso_txt.tag_add(tag_name_rx, ind, ind2)
 
-            self._out_txt.configure(state="disabled",
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             # TODO Autoscroll
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             Ch_var.new_data_tr = True
@@ -2148,18 +2150,18 @@ class PoPT_GUI_Main:
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr  = False
 
-        self._out_txt.configure(state="normal")
+        self._qso_txt.configure(state="normal")
 
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.insert(tk.END, ch_vars.output_win)
-        self._out_txt.configure(state="disabled")
-        self._out_txt.see(tk.END)
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.insert(tk.END, ch_vars.output_win)
+        self._qso_txt.configure(state="disabled")
+        self._qso_txt.see(tk.END)
 
         self._inp_txt.delete('1.0', tk.END)
         self._inp_txt.insert(tk.END, ch_vars.input_win[:-1])
         set_all_tags(self._inp_txt, ch_vars.input_win_tags)
-        set_all_tags(self._out_txt, ch_vars.output_win_tags)
-        set_new_tags(self._out_txt, ch_vars.new_tags)
+        set_all_tags(self._qso_txt, ch_vars.output_win_tags)
+        set_new_tags(self._qso_txt, ch_vars.new_tags)
         ch_vars.new_tags = []
         self._inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
         self._inp_txt.see(tk.END)
@@ -2197,15 +2199,15 @@ class PoPT_GUI_Main:
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
 
-            ind = self._out_txt.index(tk.INSERT)
-            self._out_txt.insert('end', data)
-            ind2 = self._out_txt.index(tk.INSERT)
-            self._out_txt.tag_add(tag_name, ind, ind2)
-            self._out_txt.configure(state="disabled",
+            ind = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.insert('end', data)
+            ind2 = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.tag_add(tag_name, ind, ind2)
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             if tr or self.get_ch_var().autoscroll:
@@ -2301,7 +2303,7 @@ class PoPT_GUI_Main:
         self._inp_txt.see("end")
 
     def see_end_qso_win(self):
-        self._out_txt.see("end")
+        self._qso_txt.see("end")
 
     def _see_end_mon_win(self):
         self._mon_txt.see("end")
@@ -2722,7 +2724,7 @@ class PoPT_GUI_Main:
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
         old_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         old_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        old_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
         self._update_qso_Vars()
@@ -3004,7 +3006,7 @@ class PoPT_GUI_Main:
 
     #########################################
     # TxTframe FNCs
-    def _update_status_win(self):
+    def _update_status_bar(self):
         station = self.get_conn(self.channel_index)
         fg, bg = self._get_colorMap()
         if station is not None:

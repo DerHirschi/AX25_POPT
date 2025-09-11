@@ -127,6 +127,7 @@ class BBS:
         # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
         # self._pms_cfg['pn_auto_path'] = 1
         # self.send_sysop_msg(topic='Test', msg='Test MSG\r')
+        # self._reset_bbs_statistic()
 
 
     def _reinit(self):
@@ -2207,3 +2208,7 @@ class BBS:
                 bbs_call=bbs_call,
                 stat_dict=fwd_BBS_q.get('bbs_fwd_statistic', getNew_fwdStatistic_cfg())
                 )
+
+    def _reset_bbs_statistic(self):
+        for bbs_call, fwd_BBS_q in self._fwd_BBS_q.items():
+            fwd_BBS_q['bbs_fwd_statistic'] = getNew_fwdStatistic_cfg()

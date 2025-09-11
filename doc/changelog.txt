@@ -26,6 +26,7 @@ Optimierung/Änderungen:
 - Datenbank Abfragen
 - Zeilenumbruch-Check Methoden in diversen GUI's
 - Blacklist gilt jetzt auch für DIGI
+- APRS-Servermonitor überarbeitet
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

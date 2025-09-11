@@ -31,10 +31,12 @@ class AX25Port(object):
         self._logTag = f"Port {port_id}: "
         #self.port_w_dog = time.time()   # Debuging
         self._port_handler              = port_handler
+        self._loop_watchdog             = time.time()
         self._loop_is_running           = self._port_handler.is_running
         self.ende                       = False
         self.device                     = None
         self.device_is_running          = False
+        ############
         self._tnc_emu_connection        = None
         self._tnc_emu_client_address    = None
         ############
@@ -1056,6 +1058,7 @@ class AX25Port(object):
 
     def _port_loop(self):
         while self._loop_is_running:
+            self._loop_watchdog = time.time()
             try:
                 buf: RxBuf = self._rx()
                 if buf and buf.raw_data:
@@ -1087,6 +1090,14 @@ class AX25Port(object):
 
     def port_get_port_cfg(self):
         return dict(self._port_cfg)
+
+    ################################
+    # Watchdog
+    def get_watchdog_timer(self):
+        return self._loop_watchdog
+
+    def reset_watchdog_timer(self):
+        self._loop_watchdog = time.time()
 
     ################################
     # Port Ctrl
@@ -1142,7 +1153,8 @@ class KissTCP(AX25Port):
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
-        self.close_device()
+        #self.close_device()
+        pass
 
     def close_device(self):
         self._loop_is_running = False
@@ -1403,8 +1415,8 @@ class AXIP(AX25Port):
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.device.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
             self.device.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+            # self.device.settimeout(1)
             self.device.setblocking(False)  # Nicht-blockierend
-            # self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self._port_param)
             except Exception as e:

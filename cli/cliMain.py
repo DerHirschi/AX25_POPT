@@ -34,7 +34,7 @@ class DefaultCLI(object):
         self._port_handler          = self._connection.get_port_handler_CONN()
         self._own_port              = self._connection.own_port
         # self.channel_index = self._connection.ch_index
-        self._gui                   = self._port_handler.get_gui()
+        # self._gui                   = self._port_handler.get_gui()
 
         self._my_call_str           = self._connection.my_call_str
         self._to_call_str           = self._connection.to_call_str
@@ -172,8 +172,7 @@ class DefaultCLI(object):
     def init(self):
         pass
 
-
-    def get_ts_prompt(self):
+    def _get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
     def _send_output(self, ret, env_vars=True):
@@ -217,7 +216,7 @@ class DefaultCLI(object):
     def _abort_send_out(self):
         self._tx_buffer = b''
         self._connection.tx_buf_rawData = (f"\r\r # {self._getTabStr('aborted')} !\r"
-                                           + self.get_ts_prompt()).encode(self._encoding[0], 'ignore')
+                                           + self._get_ts_prompt()).encode(self._encoding[0], 'ignore')
 
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
@@ -230,12 +229,11 @@ class DefaultCLI(object):
             return True
         return False
 
-
     def change_cli_state(self, state: int):
         # print(f"CLI change state: {state} - {self._state_index}")
         self._state_index = state
 
-    def is_prefix(self):
+    def _is_prefix(self):
         # Optimized by GROK (x.com)
         if not self.prefix:
             # Handle case where there is no prefix
@@ -338,7 +336,7 @@ class DefaultCLI(object):
             if not self._user_db_ent.TYP:
                 self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
-    def software_identifier(self):
+    def _software_identifier(self):
         #print("SW-ID")
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
@@ -441,7 +439,7 @@ class DefaultCLI(object):
 
     def _exec_cmd(self):
         self._input = self._last_line + self._input
-        if self.is_prefix():
+        if self._is_prefix():
             return self._find_cmd()
         # Message is for User ( Text , Chat )
         if self.prefix:
@@ -451,7 +449,7 @@ class DefaultCLI(object):
         ret = self._find_cmd()
         if self._crone_state_index not in [100] and \
                 self._state_index not in [2, 4, 8]:  # Not Quit| 8 = BBS send msg
-            ret += self.get_ts_prompt()
+            ret += self._get_ts_prompt()
         return ret
 
     def _exec_str_cmd(self):
@@ -474,7 +472,7 @@ class DefaultCLI(object):
         return ret
 
     def send_prompt(self):
-        self._send_output(self.get_ts_prompt(), env_vars=False)
+        self._send_output(self._get_ts_prompt(), env_vars=False)
 
     def _decode_param(self, defaults=None):
         if defaults is None:
@@ -497,6 +495,12 @@ class DefaultCLI(object):
                     tmp_parm = el
                 tmp.append(tmp_parm)
         self._parameter = list(tmp)
+
+    def _gui_channel_status_change(self):
+        gui = self._port_handler.get_gui()
+        if hasattr(gui, 'on_channel_status_change'):
+            gui.on_channel_status_change()
+
     #########################################################
     def _cmd_connect(self, exclusive=False):
         self._decode_param()
@@ -1367,9 +1371,9 @@ class DefaultCLI(object):
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
         name = stat_cfg.get('stat_parm_Name', '')
-        qth = self._gui.own_qth
+        qth = POPT_CFG.get_guiCFG_qth()
         # qth = self._connection.stat_cfg.stat_parm_QTH
-        loc = self._gui.own_loc
+        loc = POPT_CFG.get_guiCFG_locator()
         # loc = self._connection.stat_cfg.stat_parm_LOC
         if name:
             name = f'\r#NAM# {name}\r'
@@ -1444,13 +1448,13 @@ class DefaultCLI(object):
         if self.cli_name == 'USER':
             self._send_output(ret, env_vars=True)
             return ''
-        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+        self._send_output(ret + self._get_ts_prompt(), env_vars=True)
         return ''
 
     def _s1(self):
         # print("CMD-Handler S1")
         # if not self.stat_identifier:
-        self.software_identifier()
+        self._software_identifier()
         """
         BBS / evtl. NODE, MCAST
         if any((
@@ -1487,8 +1491,7 @@ class DefaultCLI(object):
             self._sys_login = None
             # print("END")
             self.sysop_priv = True
-            if self._gui:
-                self._gui.on_channel_status_change()
+            self._gui_channel_status_change()
 
             self.change_cli_state(1)
             return ''
@@ -1499,8 +1502,7 @@ class DefaultCLI(object):
                 self._sys_login = None
                 # print("Priv: Failed !")
                 logger.warning("Priv: Failed !")
-                if self._gui:
-                    self._gui.on_channel_status_change()
+                self._gui_channel_status_change()
 
                 self.change_cli_state(1)
             return ""
@@ -1509,8 +1511,7 @@ class DefaultCLI(object):
             self._sys_login = None
             # print("END")
             self.sysop_priv = True
-            if self._gui:
-                self._gui.on_channel_status_change()
+            self._gui_channel_status_change()
 
             self.change_cli_state(1)
         return res
@@ -1521,7 +1522,7 @@ class DefaultCLI(object):
             # print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
         self.change_cli_state(1)
-        return self.get_ts_prompt()
+        return self._get_ts_prompt()
 
     @staticmethod
     def _s5():
@@ -1541,8 +1542,7 @@ class DefaultCLI(object):
             self._sys_login = None
             # print("END")
             self.sysop_priv = True
-            if self._gui:
-                self._gui.on_channel_status_change()
+            self._gui_channel_status_change()
 
             self.change_cli_state(1)
             return ''
@@ -1554,8 +1554,7 @@ class DefaultCLI(object):
                 self._sys_login = None
                 # print("Priv: Failed !")
                 logger.warning(self._logTag + "Priv: Failed !")
-                if self._gui:
-                    self._gui.on_channel_status_change()
+                self._gui_channel_status_change()
 
                 self.change_cli_state(1)
 
@@ -1567,8 +1566,7 @@ class DefaultCLI(object):
             self._sys_login = None
             # print("END")
             self.sysop_priv = True
-            if self._gui:
-                self._gui.on_channel_status_change()
+            self._gui_channel_status_change()
 
             self.change_cli_state(1)
         return res
@@ -1651,7 +1649,7 @@ class NoneCLI(DefaultCLI):
         self._raw_input += bytes(inp)
         #if self.stat_identifier is None:
         #    self._raw_input += bytes(inp)
-        return self.software_identifier()
+        return self._software_identifier()
 
 
     def _exec_cmd(self):
