@@ -57,7 +57,6 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
         return ''
     if not aprs_msg:
         return ''
-    # print(aprs_msg)
     symbol = '  '
     ret, dist = format_aprs_msg(aprs_msg, own_locator, aprs_msg, add_new_user=add_new_user)
     if 'subpacket' in aprs_msg.keys():

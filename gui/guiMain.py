@@ -53,7 +53,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES
 from fnc.os_fnc import is_linux, get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
+    build_aprs_icon_tab
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -151,6 +152,15 @@ class PoPT_GUI_Main:
         ###############################
         self._root_dir  = get_root_dir()
         self._root_dir  = self._root_dir.replace('/', '//')
+        #####################
+        # APRS Icon Tab
+        logger.info("Building APRS-Icon Tab")
+        try:
+            self._aprs_icon_tab_16 = build_aprs_icon_tab((16, 16))
+        except Exception as ex:
+            logger.error("Error while building APRS-Icon Tab")
+            logger.error(ex)
+            self._aprs_icon_tab_16 = {}
         #####################
         # GUI VARS
         self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
@@ -3385,6 +3395,10 @@ class PoPT_GUI_Main:
     def get_PH_manGUI(self):
         return self._port_handler
 
+    def get_aprs_icon_tab_16(self):
+        return self._aprs_icon_tab_16
+
+    #####################################
     def _set_port_blocking(self, state=0):
         if hasattr(self._port_handler, 'block_all_ports'):
             self._port_handler.block_all_ports(state)

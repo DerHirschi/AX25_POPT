@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.18'
+VER = '2.120.19'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -44,6 +44,8 @@ CFG_sound_DICO      = '//data//sound//disco_alarm.wav'
 CFG_sound_CONN      = '//data//sound//conn_alarm.wav'
 CFG_sound_RX_BEEP   = '//data//sound//rx_beep.wav'
 CFG_sound_BELL      = '//data//sound//bell.wav'
+""" APRS Icons """
+CFG_aprs_icon_path  = 'data/image/APRS_icons'
 
 ###################################################################################
 """ CONST Stuff """
