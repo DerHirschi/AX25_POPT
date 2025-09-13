@@ -27,6 +27,8 @@ Optimierung/Änderungen:
 - Zeilenumbruch-Check Methoden in diversen GUI's
 - Blacklist gilt jetzt auch für DIGI
 - APRS-Servermonitor überarbeitet
+- APRS-Servermonitor ist jetzt APRS-Monitor in dem APRS-Pakete
+  aus allen Quellen(Ports) angezeigt werden
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

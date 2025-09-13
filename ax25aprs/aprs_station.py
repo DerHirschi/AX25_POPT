@@ -1,6 +1,5 @@
 import time
-from collections import deque
-
+from collections import deque, OrderedDict
 import aprslib
 from cfg.logger_config import logger
 from datetime import datetime
@@ -16,7 +15,7 @@ from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 class APRS_ais(object):
     def __init__(self, load_cfg=True):
-        # TODO Again !! Cleanup/OPT
+        # TODO Cleanup/OPT
         # print("APRS-IS INIT")
         logger.info("APRS-IS: Init")
         """ APRS-Server Stuff """
@@ -32,12 +31,14 @@ class APRS_ais(object):
             if own_loc:
                 self.ais_loc = own_loc
                 self._set_own_location()
-        self.add_new_user = ais_cfg.get('add_new_user', False)
+        # self.add_new_user = ais_cfg.get('add_new_user', False)
         # self.ais_host = "cbaprs.dyndns.org", 27234
         self.ais_aprs_stations = ais_cfg.get('ais_aprs_stations', {})
         self.ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
         # self.ais_new_rx_buff = []
         self.ais_active = ais_cfg.get('ais_active', False)
+        """ APRS-Node List """
+        self._node_tab          = OrderedDict()
         """ APRS-Message Stuff """
         self._spooler_buffer    = {}
         self._ack_counter       = ais_cfg.get('aprs_msg_ack_c', 0)
@@ -124,7 +125,7 @@ class APRS_ais(object):
         ais_cfg['ais_loc']          = str(self.ais_loc)
         ais_cfg['ais_lat']          = float(self.ais_lat)
         ais_cfg['ais_lon']          = float(self.ais_lon)
-        ais_cfg['add_new_user']     = bool(self.add_new_user)
+        # ais_cfg['add_new_user']     = bool(self.add_new_user)
         ais_cfg['ais_host']         = tuple(self.ais_host)
         ais_cfg['ais_active']       = bool(self.ais_active)
         # Tracer
@@ -257,7 +258,6 @@ class APRS_ais(object):
                 self._wx_update_tr = False
                 self.wx_tree_gui.update_tree_data()
 
-
     def ais_rx_task(self):
         """ Thread loop called fm Porthandler Init """
         if self.ais is not None:
@@ -315,38 +315,114 @@ class APRS_ais(object):
         self._watchdog_reset()
         packet['port_id'] = APRS_INET_PORT_ID
         packet['rx_time'] = datetime.now()
-        self.ais_rx_buff.append(packet)
-        if self.ais_mon_gui is not None:
-            self.ais_mon_gui.pack_to_mon(packet)
-            # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
-        self._aprs_proces_rx(aprs_pack=packet)
+
+        # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
+        self._aprs_process_rx(aprs_pack=packet)
         # print(packet)
 
     def aprs_ax25frame_rx(self, port_id, ax25frame_conf):
         """ RX fm AX25Frame (HF/AXIP) """
         aprs_pack = parse_aprs_fm_ax25frame(ax25frame_conf)
+        if not aprs_pack:
+            return
         aprs_pack['port_id'] = str(port_id)
         aprs_pack['rx_time'] = datetime.now()
-        self._aprs_proces_rx(aprs_pack=aprs_pack)
+        self._aprs_process_rx(aprs_pack=aprs_pack)
 
-    def _aprs_proces_rx(self, aprs_pack):
-        if aprs_pack:
-            aprs_pack['locator'] = self._get_loc(aprs_pack)
-            aprs_pack['distance'] = self._get_loc_dist(aprs_pack.get('locator', ''))
-            # APRS PN/BULLETIN MSG
-            if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
-                # TODO get return fm fnc
-                self._aprs_msg_sys_rx(aprs_pack=aprs_pack)
-                return True
-            # APRS Weather
-            elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
-                # print(aprs_pack)
-                USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
-                return True
-            # Tracer
-            elif self._tracer_msg_rx(aprs_pack):
-                return True
+    def _aprs_process_rx(self, aprs_pack):
+        self.ais_rx_buff.append(aprs_pack)
+        if self.ais_mon_gui is not None:
+            self.ais_mon_gui.pack_to_mon(aprs_pack)
+
+        if not aprs_pack:
+            return False
+        aprs_pack['locator']  = self._get_loc(aprs_pack)
+        aprs_pack['distance'] = self._get_loc_dist(aprs_pack.get('locator', ''))
+        self._node_list_process_rx(aprs_pack)
+        # APRS PN/BULLETIN MSG
+        if aprs_pack.get("format", '') in ['message', 'bulletin', 'thirdparty']:
+            # TODO get return fm fnc
+            self._aprs_msg_sys_rx(aprs_pack=aprs_pack)
+            return True
+        # APRS Weather
+        elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
+            # print(aprs_pack)
+            USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
+            return True
+        # Tracer
+        elif self._tracer_msg_rx(aprs_pack):
+            return True
         return False
+
+    ##########################
+    # Node List
+    def _node_list_process_rx(self, aprs_pack: dict):
+        #print(aprs_pack)
+        #print(aprs_pack.keys())
+        a_from      = aprs_pack.get('from', '')
+        a_to        = aprs_pack.get('to', '')
+        path        = aprs_pack.get('path', '')
+        via         = aprs_pack.get('via', '')
+        m_capable   = aprs_pack.get('messagecapable', False)
+        is_object   = True if aprs_pack.get('format', '') == 'object' else False
+        port        = aprs_pack.get('port_id', '')
+        rx_time     = aprs_pack.get('rx_time', '')
+        locator     = aprs_pack.get('locator', '')
+        distance    = aprs_pack.get('distance', -1)
+        pos         = (aprs_pack.get('latitude', 0.0), aprs_pack.get('longitude', 0.0))
+        symbol      = (aprs_pack.get('symbol_table', ''), aprs_pack.get('symbol', ''))
+
+        # Determine the unique node ID: for objects, use 'name'; otherwise, use 'from'
+        """
+        if is_object:
+            node_id = aprs_pack.get('name', '')
+        else:
+            node_id = a_from
+        """
+        node_id = a_from
+        if not node_id:
+            return
+        old_ent     = self._node_tab.get(node_id, {})
+        ent = {
+            'node_id': node_id,
+            'rx_time': rx_time,
+            'port_id': port,
+            'path': path[:],  # Copy list to avoid reference issues
+            'via': via,
+        }
+        if not is_object:
+            ent.update(
+                {
+                    'locator': locator if locator else old_ent.get('locator', ''),
+                    'distance': distance if distance != -1 else old_ent.get('distance', -1),
+                    'position': pos if pos != (0.0 ,0.0) else old_ent.get('position', (0.0 ,0.0)),
+                    'symbol': symbol if symbol != ('', '') else old_ent.get('position', ('symbol', '')),
+                    'message_capable': m_capable,
+                }
+            )
+
+        if 'comment' in aprs_pack:
+            ent['comment'] = aprs_pack['comment']
+        if 'course' in aprs_pack:
+            ent['course'] = aprs_pack['course']
+        if 'speed' in aprs_pack:
+            ent['speed'] = aprs_pack['speed']
+        if 'altitude' in aprs_pack:
+            ent['altitude'] = aprs_pack['altitude']
+        if 'weather' in aprs_pack:
+            ent['weather'] = aprs_pack['weather']  # If it's a WX station
+        # Add more fields as needed, e.g., 'status', 'telemetry', etc.
+
+        # For objects, store the reporter (the actual sender)
+        """
+        if is_object:
+            ent['reporter'] = a_from
+        """
+        self._node_tab[node_id] = ent
+        self._node_tab.move_to_end(node_id, last=False)
+        if hasattr(self._port_handler, 'update_gui_aprs_node_tab'):
+            self._port_handler.update_gui_aprs_node_tab(ent)
+
 
     ##########################
     # WX
@@ -665,7 +741,7 @@ class APRS_ais(object):
         # print(f"send_as_AIS : {pack}")
         msg = pack['raw_message_text']
         pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
-        print(f" AIS OUT > {pack_str}")
+        #print(f" AIS OUT > {pack_str}")
         self._ais_tx(pack_str)
 
     def _send_ack(self, pack_to_resp):
@@ -916,6 +992,10 @@ class APRS_ais(object):
 
         coordinate = decimal_degrees_to_aprs(lat, lon)
         return f'{msg_typ}{coordinate[0]}{symbol1}{coordinate[1]}{symbol2}{msg_text[:6]}' # TODO max beacon len
+
+    ############################################
+    def get_node_tab(self):
+        return self._node_tab
 
     ############################################
     # Helper

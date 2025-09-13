@@ -968,10 +968,10 @@ STR_TABLE = {
         ''),
 
     'aprs_mon': (
-        'APRS-Server Monitor',
-        'APRS-Server Monitor',
-        'APRS-Server Monitor',
-        'Moniteur APRS-Server',
+        'APRS Monitor',
+        'APRS Monitor',
+        'APRS Monitor',
+        'Moniteur APRS',
         '',
         '',
         '',

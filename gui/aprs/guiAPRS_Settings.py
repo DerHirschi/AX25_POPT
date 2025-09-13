@@ -50,7 +50,7 @@ class APRSSettingsWin(tk.Toplevel):
         self.ais_lat_var = tk.StringVar(self)
         self.ais_lon_var = tk.StringVar(self)
         self.ais_run_var = tk.BooleanVar(self)
-        self.ais_add_new_user_var = tk.BooleanVar(self)
+        #self.ais_add_new_user_var = tk.BooleanVar(self)
         if self._ais is not None:
             self.ais_call_var.set(self._ais.ais_call)
             self.ais_pass_var.set(self._ais.ais_pass)
@@ -60,7 +60,7 @@ class APRSSettingsWin(tk.Toplevel):
             self.ais_lon_var.set(str(self._ais.ais_lon))
             self.ais_loc_var.set(self._ais.ais_loc)
             self.ais_run_var.set(self._ais.ais_active)
-            self.ais_add_new_user_var.set(self._ais.add_new_user)
+            #self.ais_add_new_user_var.set(self._ais.add_new_user)
 
         ais_conf_frame = ttk.Frame(main_f)
         ais_conf_frame.pack(side=tk.TOP, padx=10, pady=10)
@@ -112,7 +112,7 @@ class APRSSettingsWin(tk.Toplevel):
         # self.vars[-1]['lon'].set(port_aprs.aprs_parm_lon)
 
         ttk.Checkbutton(ais_conf_frame, text="Run", variable=self.ais_run_var).grid(row=5, column=1, sticky=tk.W)
-        ttk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=6, column=1, columnspan=3, sticky=tk.W)
+        #ttk.Checkbutton(ais_conf_frame, text="Add to UserDB", variable=self.ais_add_new_user_var).grid(row=6, column=1, columnspan=3, sticky=tk.W)
 
         # Create a Notebook widget
         notebook = ttk.Notebook(main_f)
@@ -218,7 +218,7 @@ class APRSSettingsWin(tk.Toplevel):
             self._ais.ais_call = self.ais_call_var.get()
             self._ais.ais_pass = self.ais_pass_var.get()
             self._ais.ais_active = self.ais_run_var.get()
-            self._ais.add_new_user = self.ais_add_new_user_var.get()
+            #self._ais.add_new_user = self.ais_add_new_user_var.get()
             self._ais.ais_loc = loc
             self._ais.ais_lat = float(lat)
             self._ais.ais_lon = float(lon)

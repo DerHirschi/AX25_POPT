@@ -551,6 +551,10 @@ class AX25PortHandler(object):
         if hasattr(self._gui, 'update_aprs_msg_win'):
             self._gui.update_aprs_msg_win(aprs_pack)
 
+    def update_gui_aprs_node_tab(self, node_tab_ent: dict):
+        if hasattr(self._gui, 'update_aprs_node_tab_win'):
+            self._gui.update_aprs_node_tab_win(node_tab_ent)
+
     ######################
     # Connection Handling
     def insert_new_connection_PH(self, new_conn, ind=1, is_service=False):
