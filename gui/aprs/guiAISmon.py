@@ -69,10 +69,13 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         pack_list_f = ttk.Frame(tab)
         node_list_f = ttk.Frame(tab)
+        obj_list_f  = ttk.Frame(tab)
         pack_list_f.pack(fill='both', expand=True)
         node_list_f.pack(fill='both', expand=True)
+        obj_list_f.pack( fill='both', expand=True)
         ##############################################
         tab.add(node_list_f, text="Node-List")
+        tab.add(obj_list_f,  text="Reported-Objects")
         tab.add(pack_list_f, text="Packet-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
@@ -92,8 +95,8 @@ class AISmonitor(tk.Toplevel):
             'from',
             'to',
             'port',
-            'path',
             'via',
+            'path',
             'loc',
             'typ',
             'rx_time',
@@ -111,8 +114,8 @@ class AISmonitor(tk.Toplevel):
         self._tree.heading('from',    text=self._getTabStr('from'),      command=lambda: self._sort_entry('from', self._tree))
         self._tree.heading('to',      text=self._getTabStr('to'),        command=lambda: self._sort_entry('to', self._tree))
         self._tree.heading('port',    text="Port",                       command=lambda: self._sort_entry('port', self._tree))
-        self._tree.heading('path',    text='Path',                       command=lambda: self._sort_entry('path', self._tree))
         self._tree.heading('via',     text='VIA',                        command=lambda: self._sort_entry('via', self._tree))
+        self._tree.heading('path',    text='Path',                       command=lambda: self._sort_entry('path', self._tree))
         self._tree.heading('loc',     text='Locator',                    command=lambda: self._sort_entry('loc', self._tree))
         self._tree.heading('typ',     text='Typ',                        command=lambda: self._sort_entry('typ', self._tree))
         self._tree.heading('rx_time', text=self._getTabStr('date_time'), command=lambda: self._sort_entry('rx_time', self._tree))
@@ -122,8 +125,8 @@ class AISmonitor(tk.Toplevel):
         self._tree.column("from",     anchor='w', stretch=False, width=80)
         self._tree.column("to",       anchor='w', stretch=False, width=80)
         self._tree.column("port",     anchor='w', stretch=False, width=60)
-        self._tree.column("path",     anchor='w', stretch=False, width=200)
         self._tree.column("via",      anchor='w', stretch=False, width=80)
+        self._tree.column("path",     anchor='w', stretch=False, width=200)
         self._tree.column("loc",      anchor='w', stretch=False, width=120)
         self._tree.column("typ",      anchor='w', stretch=False, width=100)
         self._tree.column("rx_time",  anchor='w', stretch=False, width=70)
@@ -145,7 +148,7 @@ class AISmonitor(tk.Toplevel):
                                          width=85
                                          )
         self._text_widget.configure(font=(FONT, self._text_size))
-        self._text_widget.pack(fill=tk.BOTH, expand=True)
+        self._text_widget.pack(fill='both', expand=True)
 
         # Frame für den rechten Bereich
         ttk.Checkbutton(l1_frame   ,
@@ -190,8 +193,9 @@ class AISmonitor(tk.Toplevel):
         #
         columns = (
             'node_id',
-            'via',
             'port',
+            'via',
+            'path',
             'loc',
             'dist',
             'm_cap',
@@ -200,29 +204,66 @@ class AISmonitor(tk.Toplevel):
         self._node_tree = ttk.Treeview(node_list_f, columns=columns, show='tree headings')
         self._node_tree.pack(side='left', fill='both', expand=True)
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(node_list_f, orient='vertical', command=self._tree.yview)
+        scrollbar = ttk.Scrollbar(node_list_f, orient='vertical', command=self._node_tree.yview)
         self._node_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='left', fill='y')
 
-        self._node_tree.heading('#0', text='Symbol')
-        self._node_tree.heading('node_id', text="Call", command=lambda: self._sort_entry('node_id', self._node_tree))
-        self._node_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._node_tree))
-        self._node_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._node_tree))
-        self._node_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._node_tree))
-        self._node_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._node_tree))
-        self._node_tree.heading('m_cap', text="MSG capable", command=lambda: self._sort_entry('m_cap', self._node_tree))
-        self._node_tree.heading('rx_time', text=self._getTabStr('date_time'), command=lambda: self._sort_entry('rx_time', self._node_tree))
+        self._node_tree.heading('#0',       text='Symbol')
+        self._node_tree.heading('node_id',  text="ID", command=lambda: self._sort_entry('node_id', self._node_tree))
+        self._node_tree.heading('port',     text="Port", command=lambda: self._sort_entry('port', self._node_tree))
+        self._node_tree.heading('via',      text="VIA", command=lambda: self._sort_entry('via', self._node_tree))
+        self._node_tree.heading('path',     text="Path", command=lambda: self._sort_entry('path', self._node_tree))
+        self._node_tree.heading('loc',      text="Locator", command=lambda: self._sort_entry('loc', self._node_tree))
+        self._node_tree.heading('dist',     text="km", command=lambda: self._sort_entry('dist', self._node_tree))
+        self._node_tree.heading('m_cap',    text="MSG capable", command=lambda: self._sort_entry('m_cap', self._node_tree))
+        self._node_tree.heading('rx_time',  text=self._getTabStr('date_time'), command=lambda: self._sort_entry('rx_time', self._node_tree))
 
         self._node_tree.column('#0',       anchor='w', stretch=False, width=50)
         self._node_tree.column("node_id",  anchor='w', stretch=False, width=80)
-        self._node_tree.column("via",      anchor='w', stretch=False, width=80)
         self._node_tree.column("port",     anchor='w', stretch=False, width=60)
+        self._node_tree.column("via",      anchor='w', stretch=False, width=80)
+        self._node_tree.column("path",     anchor='w', stretch=True,  width=80)
         self._node_tree.column("loc",      anchor='w', stretch=False, width=90)
         self._node_tree.column("dist",     anchor='w', stretch=False, width=50)
         self._node_tree.column("m_cap",    anchor='w', stretch=False, width=80)
         self._node_tree.column("rx_time",  anchor='w', stretch=False, width=80)
         self._node_tree.bind('<<TreeviewSelect>>', self._node_entry_selected)
 
+        ########################################################
+        columns = (
+            'node_id',
+            'via',
+            'port',
+            'loc',
+            'dist',
+            'rx_time',
+            'comment',
+        )
+        self._obj_tree = ttk.Treeview(obj_list_f, columns=columns, show='tree headings')
+        self._obj_tree.pack(side='left', fill='both', expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(obj_list_f, orient='vertical', command=self._obj_tree.yview)
+        self._obj_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='left', fill='y')
+
+        self._obj_tree.heading('#0', text='Symbol')
+        self._obj_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self._obj_tree))
+        self._obj_tree.heading('via', text="Reporter", command=lambda: self._sort_entry('via', self._obj_tree))
+        self._obj_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._obj_tree))
+        self._obj_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._obj_tree))
+        self._obj_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._obj_tree))
+        self._obj_tree.heading('rx_time', text=self._getTabStr('date_time'),
+                                command=lambda: self._sort_entry('rx_time', self._obj_tree))
+        self._obj_tree.heading('comment', text="Comment", command=lambda: self._sort_entry('comment', self._obj_tree))
+
+        self._obj_tree.column('#0', anchor='w', stretch=False, width=50)
+        self._obj_tree.column("node_id", anchor='w', stretch=False, width=80)
+        self._obj_tree.column("via", anchor='w', stretch=False, width=80)
+        self._obj_tree.column("port", anchor='w', stretch=False, width=60)
+        self._obj_tree.column("loc", anchor='w', stretch=False, width=90)
+        self._obj_tree.column("dist", anchor='w', stretch=False, width=50)
+        self._obj_tree.column("rx_time", anchor='w', stretch=False, width=80)
+        self._obj_tree.column("comment", anchor='w', stretch=True, width=80)
         ########################################################
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
@@ -241,8 +282,8 @@ class AISmonitor(tk.Toplevel):
             """
         root_win.aprs_mon_win = self
         self._init_ais_mon()
-        #self._update_tree()
         self._node_tree_init()
+        self._obj_tree_init()
 
     #############################################################
     def _sort_entry(self, col, tree):
@@ -312,8 +353,8 @@ class AISmonitor(tk.Toplevel):
                 aprs_pack.get('from', ''),
                 aprs_pack.get('to', ''),
                 aprs_pack.get('port_id', ''),
-                '>'.join(aprs_pack.get('path', [])),
                 aprs_pack.get('via', ''),
+                '>'.join(aprs_pack.get('path', [])),
                 f"{aprs_pack.get('locator', '')}({round(aprs_pack.get('distance', -1))} km)",
                 msg_typ,
                 aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
@@ -328,6 +369,66 @@ class AISmonitor(tk.Toplevel):
         self._tree_data = self._tree_data[:9001] # Over 9000 !!
      """
 
+    #############################################################
+    # Obj Tree
+    def _obj_tree_init(self):
+        if not hasattr(self._ais_obj, 'get_obj_tab'):
+            return
+        obj_tab: dict = self._ais_obj.get_obj_tab()
+        port_filter   = self._port_filter_var.get()
+        for node_id, ent in obj_tab.items():
+            port = ent.get('port_id', '')
+            if port_filter and port_filter != port:
+                continue
+            tree_data = self._get_treedata_fm_obj_tab(ent)
+            if not tree_data:
+                continue
+            self._add_to_tree(tree_data, tree=self._obj_tree)
+
+    @staticmethod
+    def _get_treedata_fm_obj_tab(obj_tab_ent: dict):
+        node_id = obj_tab_ent.get('node_id', '')
+        if not node_id:
+            return ()
+        return (
+            obj_tab_ent.get('node_id', ''),
+            obj_tab_ent.get('reporter', ''),
+            obj_tab_ent.get('port_id', ''),
+            obj_tab_ent.get('locator', ''),
+            round(obj_tab_ent.get('distance', -1)),
+            obj_tab_ent.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            obj_tab_ent.get('comment', ''),
+            obj_tab_ent.get('symbol', ('', '')),
+        )
+
+    def _obj_tree_update(self, object_ent: dict):
+        node_id     = object_ent.get('node_id', '')
+        port_filter = self._port_filter_var.get()
+        port = object_ent.get('port_id', '')
+
+        if port_filter and port_filter != port:
+            return
+        selected_node_ids = []
+        for selected_item in self._obj_tree.selection():
+            selected_node_ids.append(self._obj_tree.set(selected_item, 'node_id'))
+
+        items = list(self._obj_tree.get_children())
+        list_len = len(items)
+        for index, item in enumerate(items):
+            if self._obj_tree.set(item, 'node_id') == node_id:
+                self._obj_tree.delete(item)
+                break
+
+        auto_scroll = list_len == len(list(self._obj_tree.get_children()))
+        tree_data = self._get_treedata_fm_obj_tab(object_ent)
+        if tree_data:
+            self._add_to_tree(tree_data, tree=self._obj_tree, add_to_end=False, auto_scroll=auto_scroll)
+
+        if node_id in selected_node_ids:
+            for item in self._obj_tree.get_children():
+                if self._obj_tree.set(item, 'node_id') == node_id:
+                    self._obj_tree.selection_add(item)
+                    break
     #############################################################
     # Node Tree
     def _node_tree_init(self):
@@ -347,8 +448,7 @@ class AISmonitor(tk.Toplevel):
             c += 1
         self._node_count_label_var.set(self._set_node_c(c))
 
-
-    def _node_tree_update(self, node_tab_ent: dict):
+    def _node_tree_update(self, node_tab_ent: dict, object_ent: dict):
         node_id     = node_tab_ent.get('node_id', '')
         port_filter = self._port_filter_var.get()
         port = node_tab_ent.get('port_id', '')
@@ -381,18 +481,19 @@ class AISmonitor(tk.Toplevel):
                     self._node_tree.selection_add(item)
                     break
 
-    def _get_treedata_fm_node_tab(self, node_tab_ent: dict):
-        if not hasattr(self._ais_obj, 'get_node_tab'):
-            return ()
+        if object_ent:
+            self._obj_tree_update(object_ent)
+
+    @staticmethod
+    def _get_treedata_fm_node_tab(node_tab_ent: dict):
         node_id = node_tab_ent.get('node_id', '')
         if not node_id:
             return ()
-        #node_tab: dict = self._ais_obj.get_node_tab()
-        #node_ent: dict = node_tab.get(node_id, {})
         return (
                 node_tab_ent.get('node_id', ''),
-                node_tab_ent.get('via', ''),
                 node_tab_ent.get('port_id', ''),
+                node_tab_ent.get('via', ''),
+                '>'.join(node_tab_ent.get('path', [])),
                 node_tab_ent.get('locator', ''),
                 round(node_tab_ent.get('distance', -1)),
                 node_tab_ent.get('message_capable', False),
@@ -512,11 +613,12 @@ class AISmonitor(tk.Toplevel):
         if tr:
             self._scroll_to_end()
 
-    def update_node_tab(self, node_tab_ent: dict):
-        self._add_tasker_q("update_node_tab", node_tab_ent)
+    def update_node_tab(self, node_tab_ent: dict, object_ent: dict):
+        self._add_tasker_q("update_node_tab", (node_tab_ent, object_ent))
 
-    def _update_node_tab_task(self, node_tab_ent: dict):
-        self._node_tree_update(node_tab_ent)
+    def _update_node_tab_task(self, arg: tuple):
+        node_tab_ent, object_ent = arg
+        self._node_tree_update(node_tab_ent, object_ent)
 
     #######################################
     def set_ais_obj(self):
@@ -550,8 +652,10 @@ class AISmonitor(tk.Toplevel):
         self._text_widget.delete(0.0, tk.END)
         self._del_tree(tree=self._tree)
         self._del_tree(tree=self._node_tree)
+        self._del_tree(tree=self._obj_tree)
         self._init_ais_mon()
         self._node_tree_init()
+        self._obj_tree_init()
 
     def _reset_filter(self):
         self._call_filter_list = []
@@ -560,8 +664,10 @@ class AISmonitor(tk.Toplevel):
         self._text_widget.delete(0.0, tk.END)
         self._del_tree(tree=self._tree)
         self._del_tree(tree=self._node_tree)
+        self._del_tree(tree=self._obj_tree)
         self._init_ais_mon()
         self._node_tree_init()
+        self._obj_tree_init()
 
     def _del_buffer(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
@@ -572,6 +678,7 @@ class AISmonitor(tk.Toplevel):
             self._text_widget.delete(0.0, tk.END)
             self._del_tree(tree=self._tree)
             self._del_tree(tree=self._node_tree)
+            self._del_tree(tree=self._obj_tree)
 
     def _scroll_to_end(self):
         if self._autoscroll_var.get():

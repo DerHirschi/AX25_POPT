@@ -41,6 +41,7 @@ class APRS_ais(object):
         self.ais_active = ais_cfg.get('ais_active', False)
         """ APRS-Node List """
         self._node_tab          = OrderedDict()
+        self._object_tab        = OrderedDict()  # Reported Objects
         """ APRS-Message Stuff """
         self._spooler_buffer    = {}
         self._ack_counter       = ais_cfg.get('aprs_msg_ack_c', 0)
@@ -362,7 +363,7 @@ class APRS_ais(object):
         #print(aprs_pack)
         #print(aprs_pack.keys())
         a_from      = aprs_pack.get('from', '')
-        a_to        = aprs_pack.get('to', '')
+        #a_to        = aprs_pack.get('to', '')
         path        = aprs_pack.get('path', '')
         via         = aprs_pack.get('via', '')
         m_capable   = aprs_pack.get('messagecapable', False)
@@ -415,18 +416,34 @@ class APRS_ais(object):
             ent['weather'] = aprs_pack['weather']  # If it's a WX station
         # Add more fields as needed, e.g., 'status', 'telemetry', etc.
 
-        # For objects, store the reporter (the actual sender)
-        """
-        if is_object:
-            ent['reporter'] = a_from
-        """
         if node_id in self._node_tab:
             self._node_tab[node_id].update(ent)
         else:
             self._node_tab[node_id] = ent
+        aprs_object = {}
+        if is_object:
+            ent = deepcopy(ent)
+            object_id = aprs_pack.get('object_name', '')
+            ent['reporter'] = a_from
+            ent.update(
+                {
+                    'node_id': object_id,
+                    'locator': locator if locator else old_ent.get('locator', ''),
+                    'distance': distance if distance != -1 else old_ent.get('distance', -1),
+                    'position': pos if pos != (0.0, 0.0) else old_ent.get('position', (0.0, 0.0)),
+                    'symbol': symbol if symbol != ('', '') else old_ent.get('symbol', ('', '')),
+                    'reporter': a_from,
+                })
+            if object_id in self._object_tab:
+                self._object_tab[object_id].update(ent)
+            else:
+                self._object_tab[object_id] = ent
+            self._object_tab.move_to_end(object_id, last=False)
+            aprs_object = deepcopy(self._object_tab[object_id])
+
         self._node_tab.move_to_end(node_id, last=False)
-        if hasattr(self._port_handler, 'update_gui_aprs_node_tab'):
-            self._port_handler.update_gui_aprs_node_tab(deepcopy(self._node_tab[node_id]))
+        if hasattr(self.ais_mon_gui, 'update_node_tab'):
+            self.ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
 
 
     ##########################
@@ -1002,6 +1019,8 @@ class APRS_ais(object):
     def get_node_tab(self):
         return self._node_tab
 
+    def get_obj_tab(self):
+        return self._object_tab
     ############################################
     # Helper
     @staticmethod

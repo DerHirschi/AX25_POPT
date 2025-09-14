@@ -1984,10 +1984,6 @@ class PoPT_GUI_Main:
            return self.aprs_mon_win.tasker()
         return False
 
-    def update_aprs_node_tab_win(self, node_tab_ent: dict):
-        if hasattr(self.aprs_mon_win, 'update_node_tab'):
-            self.aprs_mon_win.update_node_tab(node_tab_ent)
-
     #######################################################################
     def _AlarmIcon_tasker05(self):
         if not self._Alarm_Frame:
