@@ -1,5 +1,7 @@
 import time
 from collections import deque, OrderedDict
+from copy import deepcopy
+
 import aprslib
 from cfg.logger_config import logger
 from datetime import datetime
@@ -382,13 +384,13 @@ class APRS_ais(object):
         node_id = a_from
         if not node_id:
             return
-        old_ent     = self._node_tab.get(node_id, {})
+        old_ent = self._node_tab.get(node_id, {})
         ent = {
             'node_id': node_id,
             'rx_time': rx_time,
             'port_id': port,
-            'path': path[:],  # Copy list to avoid reference issues
-            'via': via,
+            'path':    path[:],  # Copy list to avoid reference issues
+            'via':     via,
         }
         if not is_object:
             ent.update(
@@ -396,7 +398,7 @@ class APRS_ais(object):
                     'locator': locator if locator else old_ent.get('locator', ''),
                     'distance': distance if distance != -1 else old_ent.get('distance', -1),
                     'position': pos if pos != (0.0 ,0.0) else old_ent.get('position', (0.0 ,0.0)),
-                    'symbol': symbol if symbol != ('', '') else old_ent.get('position', ('symbol', '')),
+                    'symbol': symbol if symbol != ('', '') else old_ent.get('symbol', ('', '')),
                     'message_capable': m_capable,
                 }
             )
@@ -418,10 +420,13 @@ class APRS_ais(object):
         if is_object:
             ent['reporter'] = a_from
         """
-        self._node_tab[node_id] = ent
+        if node_id in self._node_tab:
+            self._node_tab[node_id].update(ent)
+        else:
+            self._node_tab[node_id] = ent
         self._node_tab.move_to_end(node_id, last=False)
         if hasattr(self._port_handler, 'update_gui_aprs_node_tab'):
-            self._port_handler.update_gui_aprs_node_tab(ent)
+            self._port_handler.update_gui_aprs_node_tab(deepcopy(self._node_tab[node_id]))
 
 
     ##########################

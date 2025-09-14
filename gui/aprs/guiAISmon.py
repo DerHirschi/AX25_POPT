@@ -6,7 +6,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
-from cfg.constant import FONT
+from cfg.constant import FONT, APRS_INET_PORT_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import build_aprs_icon_tab
@@ -40,9 +40,7 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         self._ais_obj               = PORT_HANDLER.get_aprs_ais()
         self._aprs_icon_tab         = build_aprs_icon_tab((16, 16))
-        self._ais_aprs_stations     = {}
         self._call_filter_list      = []
-        #self._tree_data             = []
         self._sort_rev              = False
         ####
         self._tasker_q_timer        = time.time()
@@ -53,6 +51,7 @@ class AISmonitor(tk.Toplevel):
         self._autoscroll_var        = tk.BooleanVar(self, value=True)
         self._call_filter           = tk.BooleanVar(self, value=False)
         self._call_filter_calls_var = tk.StringVar(self)
+        self._port_filter_var       = tk.StringVar(self,  value='')
         self._node_count_label_var  = tk.StringVar(self,  value=self._set_node_c(0))
         ##############################################
         main_f = ttk.Frame(self)
@@ -75,6 +74,18 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         tab.add(node_list_f, text="Node-List")
         tab.add(pack_list_f, text="Packet-Monitor")
+        ##############################################
+        ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
+        opt = [
+                  "",
+                  "",
+                  APRS_INET_PORT_ID,
+              ] + [str(el) for el in list(POPT_CFG.get_port_CFGs().keys())]
+        port_filter_m = ttk.OptionMenu(tree_f,
+                                       self._port_filter_var,
+                                       *opt,
+                                       command=lambda e: self._chk_port_filter())
+        port_filter_m.pack(side='left', padx=0)
         ##############################################
         # Frame für den linken Bereich
         columns = (
@@ -173,7 +184,9 @@ class AISmonitor(tk.Toplevel):
         ########################################################
         ########################################################
         # Node-List
-        ttk.Label(node_list_f, textvariable=self._node_count_label_var).pack(anchor='w', padx=10)
+        h_frame = ttk.Frame(node_list_f)
+        h_frame.pack(fill='x', expand=False)
+        ttk.Label(h_frame, textvariable=self._node_count_label_var).pack(side='left', anchor='w', padx=10)
         #
         columns = (
             'node_id',
@@ -217,7 +230,6 @@ class AISmonitor(tk.Toplevel):
 
 
         if self._ais_obj is not None:
-            self._ais_aprs_stations = self._ais_obj.ais_aprs_stations
             self._call_filter_list.append(self._ais_obj.ais_call)
             self._ais_obj.ais_mon_gui = self
             """
@@ -322,23 +334,35 @@ class AISmonitor(tk.Toplevel):
         if not hasattr(self._ais_obj, 'get_node_tab'):
             return
         node_tab: dict = self._ais_obj.get_node_tab()
-        self._node_count_label_var.set(self._set_node_c(len(node_tab.keys())))
+        port_filter = self._port_filter_var.get()
+        c = 0
         for node_id, ent in node_tab.items():
+            port = ent.get('port_id', '')
+            if port_filter and port_filter != port:
+                continue
             tree_data = self._get_treedata_fm_node_tab(ent)
             if not tree_data:
                 continue
             self._add_to_tree(tree_data, tree=self._node_tree)
+            c += 1
+        self._node_count_label_var.set(self._set_node_c(c))
+
 
     def _node_tree_update(self, node_tab_ent: dict):
-        node_id = node_tab_ent.get('node_id', '')
+        node_id     = node_tab_ent.get('node_id', '')
+        port_filter = self._port_filter_var.get()
+        port = node_tab_ent.get('port_id', '')
 
+        if port_filter and port_filter != port:
+            items = list(self._node_tree.get_children())
+            self._node_count_label_var.set(self._set_node_c(len(items)))
+            return
         selected_node_ids = []
         for selected_item in self._node_tree.selection():
             selected_node_ids.append(self._node_tree.set(selected_item, 'node_id'))
 
         items = list(self._node_tree.get_children())
         list_len = len(items)
-        self._node_count_label_var.set(self._set_node_c(len(items)))
         for index, item in enumerate(items):
             if self._node_tree.set(item, 'node_id') == node_id:
                 self._node_tree.delete(item)
@@ -349,6 +373,8 @@ class AISmonitor(tk.Toplevel):
         if tree_data:
             self._add_to_tree(tree_data, tree=self._node_tree, add_to_end=False, auto_scroll=auto_scroll)
 
+        items = list(self._node_tree.get_children())
+        self._node_count_label_var.set(self._set_node_c(len(items)))
         if node_id in selected_node_ids:
             for item in self._node_tree.get_children():
                 if self._node_tree.set(item, 'node_id') == node_id:
@@ -361,31 +387,34 @@ class AISmonitor(tk.Toplevel):
         node_id = node_tab_ent.get('node_id', '')
         if not node_id:
             return ()
-        node_tab: dict = self._ais_obj.get_node_tab()
-        node_ent: dict = node_tab.get(node_id, {})
+        #node_tab: dict = self._ais_obj.get_node_tab()
+        #node_ent: dict = node_tab.get(node_id, {})
         return (
-                node_ent.get('node_id', ''),
-                node_ent.get('via', ''),
-                node_ent.get('port_id', ''),
-                node_ent.get('locator', ''),
-                round(node_ent.get('distance', -1)),
-                node_ent.get('message_capable', False),
-                node_ent.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-                node_ent.get('symbol', ('', '')),
+                node_tab_ent.get('node_id', ''),
+                node_tab_ent.get('via', ''),
+                node_tab_ent.get('port_id', ''),
+                node_tab_ent.get('locator', ''),
+                round(node_tab_ent.get('distance', -1)),
+                node_tab_ent.get('message_capable', False),
+                node_tab_ent.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+                node_tab_ent.get('symbol', ('', '')),
         )
 
     def _node_entry_selected(self, event=None):
         self._call_filter_list = []
         for selected_item in self._node_tree.selection():
-
             item = self._node_tree.item(selected_item)
-            record = item['values']
-            node_id = record[0]
+            node_id = item['values'][0]
             self._call_filter_list.append(node_id)
 
         if self._call_filter_list:
-            self._call_filter.set(True)
-            self._call_filter_calls_var.set(' '.join(self._call_filter_list))
+            old_call_filter = list(self._call_filter_calls_var.get(). split(' '))
+            old_call_filter.sort()
+            new_call_filter = list(self._call_filter_list)
+            new_call_filter.sort()
+            if old_call_filter != new_call_filter:
+                self._call_filter.set(True)
+                self._call_filter_calls_var.set(' '.join(new_call_filter))
             self._text_widget.delete(0.0, 'end')
             self._init_ais_mon(init_tree=False)
 
@@ -399,11 +428,14 @@ class AISmonitor(tk.Toplevel):
         # self._tree_data = []
         tr              = False
         call_filter_var = self._call_filter.get()
+        port_filter     = self._port_filter_var.get()
         for el in list(self._ais_obj.ais_rx_buff):
             if not el:
                 continue
             el: dict
             # Tree
+            if port_filter and port_filter != el.get('port_id', ''):
+                continue
             if init_tree:
                 tree_data = self._get_treedata_fm_pack(el)
                 self._add_to_tree(tree_data=tree_data, tree=self._tree)
@@ -458,6 +490,9 @@ class AISmonitor(tk.Toplevel):
         self._add_tasker_q("pack_to_mon", pack)
 
     def _pack_to_mon_task(self, pack):
+        port_filter = self._port_filter_var.get()
+        if port_filter and port_filter != pack.get('port_id', ''):
+            return
         tr = False
         tree_data = self._get_treedata_fm_pack(pack)
         #self._add_treedata(tree_data)
@@ -498,18 +533,10 @@ class AISmonitor(tk.Toplevel):
         self._text_widget.configure(font=(FONT, self._text_size))
 
     def _chk_call_filter(self):
-        self._ais_aprs_stations = {}
         self._call_filter_list = []
         if self._ais_obj is not None:
-            self._ais_aprs_stations = self._ais_obj.ais_aprs_stations
             self._call_filter_list.append(self._ais_obj.ais_call)
-            """
-            for port_id in self._ais_aprs_stations.keys():
-                if self._ais_aprs_stations[port_id].aprs_parm_call:
-                    self._ais_aprs_stat_calls.append(
-                        self._ais_aprs_stations[port_id].aprs_parm_call
-                    )
-            """
+
         calls = self._call_filter_calls_var.get()
         calls = calls.split(' ')
         tmp = []
@@ -518,6 +545,13 @@ class AISmonitor(tk.Toplevel):
                 tmp.append(el.upper())
         calls = tmp
         self._call_filter_list = self._call_filter_list + calls
+
+    def _chk_port_filter(self):
+        self._text_widget.delete(0.0, tk.END)
+        self._del_tree(tree=self._tree)
+        self._del_tree(tree=self._node_tree)
+        self._init_ais_mon()
+        self._node_tree_init()
 
     def _reset_filter(self):
         self._call_filter_list = []
