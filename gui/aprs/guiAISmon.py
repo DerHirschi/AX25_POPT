@@ -39,7 +39,7 @@ class AISmonitor(tk.Toplevel):
         self.lift()
         ##############################################
         self._ais_obj               = PORT_HANDLER.get_aprs_ais()
-        self._aprs_icon_tab         = build_aprs_icon_tab((16, 16))
+        self._aprs_icon_tab         = root_win.get_aprs_icon_tab_16()
         self._call_filter_list      = []
         self._sort_rev              = False
         ####

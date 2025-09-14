@@ -81,7 +81,6 @@ class APRS_ais(object):
         """"""
         self.ais = None
         self.ais_mon_gui = None
-        self.wx_tree_gui = None
         self.ais_rx_buff = deque([] * 5000, maxlen=5000)
         """ Loop Control """
         self.loop_is_running            = False
@@ -253,13 +252,6 @@ class APRS_ais(object):
             if hasattr(self._port_handler, 'update_gui_aprs_spooler'):
                 self._port_handler.update_gui_aprs_spooler()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
-
-    def aprs_wx_tree_task(self):
-        """ Called fm guiMain Tasker """
-        if self.wx_tree_gui is not None:
-            if self._wx_update_tr:
-                self._wx_update_tr = False
-                self.wx_tree_gui.update_tree_data()
 
     def ais_rx_task(self):
         """ Thread loop called fm Porthandler Init """
@@ -469,8 +461,7 @@ class APRS_ais(object):
             if db:
                 db.aprsWX_insert_data(new_aprs_pack)
 
-            if self.wx_tree_gui is not None:
-                self._wx_update_tr = True
+            self._wx_update_tr = True
             return True
         return False
         # print(aprs_pack)
@@ -953,9 +944,8 @@ class APRS_ais(object):
         gui = self._port_handler.get_gui()
         if gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
-            if gui.be_tracer_win is not None:
-                # TODO Call fm guiMain loop (may cause random crash ?)
-                gui.be_tracer_win.update_tree_data()
+            if hasattr(gui, 'update_tracer_win'):
+                gui.update_tracer_win()
 
     """
     def _update_gui_icon(self):
@@ -1019,8 +1009,18 @@ class APRS_ais(object):
     def get_node_tab(self):
         return self._node_tab
 
+    def get_symbol_fm_node_tab(self, node_id: str):
+        return self._node_tab.get(node_id, {}).get('symbol', ('', ''))
+
     def get_obj_tab(self):
         return self._object_tab
+    ############################################
+    def get_update_tr(self):
+        if not self._wx_update_tr:
+            return False
+        self._wx_update_tr = False
+        return True
+
     ############################################
     # Helper
     @staticmethod

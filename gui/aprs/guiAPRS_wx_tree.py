@@ -15,7 +15,6 @@ class WXWin(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win  = root_win
         self._ais_obj   = PORT_HANDLER.get_aprs_ais()
-        self._ais_obj.wx_tree_gui = self
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
@@ -142,7 +141,6 @@ class WXWin(tk.Toplevel):
         self._update_tree()
 
     def update_tree_data(self):
-        # TODO Call fm guiMain Loop
         self._get_wx_data()
         self._format_tree_data()
         self._update_tree()
@@ -219,6 +217,5 @@ class WXWin(tk.Toplevel):
         # self.lift()
 
     def _close(self):
-        self._ais_obj.wx_tree_gui = None
         self._root_win.wx_window = None
         self.destroy()

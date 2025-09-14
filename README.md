@@ -78,7 +78,7 @@ $ python3 PoPT.py
   - Weather data evaluation
   - Beacon Tracer
   - Private Message System
-  - APRS-Server Monitor
+  - APRS Monitor
   - APRS Decoder for Monitor
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
 - RX-Echo (Packet echoing to another Port/Device)

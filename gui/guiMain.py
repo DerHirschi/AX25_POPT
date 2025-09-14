@@ -93,7 +93,6 @@ class PoPT_GUI_Main:
         # GUI Stuff
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._logTag = 'GUI-Main> '
-        logTag = self._logTag + 'Init: '
         logger.info('start..')
         guiCfg = POPT_CFG.load_guiPARM_main()
         ###########################################
@@ -123,7 +122,7 @@ class PoPT_GUI_Main:
             try:
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning(logTag + f'TclError Style{self.style_name}')
+                logger.warning(f'GUI: TclError Style{self.style_name}')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
@@ -152,6 +151,9 @@ class PoPT_GUI_Main:
         ###############################
         self._root_dir  = get_root_dir()
         self._root_dir  = self._root_dir.replace('/', '//')
+        ###############################
+        logger.info("GUI: Init APRS-Icon Tab")
+        self._aprs_icon_tab_16  = build_aprs_icon_tab((16, 16))
         #####################
         # GUI VARS
         self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
@@ -357,7 +359,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
-        logger.info(logTag + 'BW-Plot Init')
+        logger.info('GUI: BW-Plot Init')
         self._bw_plot_x_scale   = []
         self._bw_plot_lines     = {}
         self._init_bw_plot(bw_plot_frame)
@@ -1861,6 +1863,8 @@ class PoPT_GUI_Main:
                 self._update_aprs_spooler_task()
             elif task == 'update_aprs_msg_win':
                 self._update_aprs_msg_win_task(arg)
+            elif task == 'update_tracer_win':
+                self._update_tracer_win_task()
             n -= 1
 
         return True
@@ -1976,8 +1980,15 @@ class PoPT_GUI_Main:
             self.aprs_pn_msg_win.update_aprs_msg(aprs_pack)
 
     def _aprs_wx_tree_task(self):
-        if self._port_handler.get_aprs_ais() is not None:
-            self._port_handler.get_aprs_ais().aprs_wx_tree_task()
+        ais = self._port_handler.get_aprs_ais()
+        if not hasattr(ais, "get_update_tr"):
+            return
+        if not hasattr(self.wx_window, 'update_tree_data'):
+            return
+        update_tr = ais.get_update_tr()
+        if update_tr:
+            self._wx_update_tr = False
+            self.wx_window.update_tree_data()
 
     def _ais_monitor_task(self):
         if hasattr(self.aprs_mon_win, 'tasker'):
@@ -3252,6 +3263,14 @@ class PoPT_GUI_Main:
                 ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
 
+    def update_tracer_win(self):
+        self._add_tasker_q("update_tracer_win", None)
+
+    def _update_tracer_win_task(self):
+        if hasattr(self.be_tracer_win, 'update_tree_data'):
+            self.be_tracer_win.update_tree_data()
+
+    ########
     def set_dx_alarm(self, event=None):
         dx_alarm = bool(self.setting_dx_alarm.get())
         if not dx_alarm:
@@ -3385,6 +3404,10 @@ class PoPT_GUI_Main:
 
     def get_PH_manGUI(self):
         return self._port_handler
+
+    def get_aprs_icon_tab_16(self):
+        return self._aprs_icon_tab_16
+
     #####################################
     def _set_port_blocking(self, state=0):
         if hasattr(self._port_handler, 'block_all_ports'):

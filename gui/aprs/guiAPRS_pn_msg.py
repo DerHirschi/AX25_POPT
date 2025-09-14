@@ -21,8 +21,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         PORT_HANDLER.set_aprsMailAlarm_PH(False)
         # self._root_cl.reset_aprsMail_alarm()
         self.text_size  = self._root_cl.text_size
-        self.win_height = 700
-        self.win_width  = 1450
+        self.win_height = 600
+        self.win_width  = 1200
         self.style      = self._root_cl.style
         self.style_name = self._root_cl.style_name
         self.title(self._getTabStr('aprs_pn_msg'))
@@ -42,6 +42,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.lift()
         ##########################
         self._aprs_ais       = PORT_HANDLER.get_aprs_ais()
+        self._aprs_icon_tab  = root_win.get_aprs_icon_tab_16()
         self._aprs_pn_msg    = list(self._aprs_ais.aprs_msg_pool['message'])
         self._aprs_bl_msg    = list(self._aprs_ais.aprs_msg_pool['bulletin'])
         """
@@ -111,7 +112,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._messages_treeview = ttk.Treeview(
             pn_frame,
             columns=("time", "port_id", "from", "to", 'via', 'path', 'msgno', 'text'),
-            show="headings",
+            show='tree headings',
             yscrollcommand=tree_scrollbar.set
         )
         self._messages_treeview.heading("time",     text=self._getTabStr('date'))
@@ -122,6 +123,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._messages_treeview.heading("path",     text="Path")
         self._messages_treeview.heading("msgno",    text="#")
         self._messages_treeview.heading("text",     text=self._getTabStr('message'))
+        self._messages_treeview.column('#0', anchor='w', stretch=False, width=50)
         self._messages_treeview.column("time",      stretch=tk.NO,  width=130)
         self._messages_treeview.column("port_id",   stretch=tk.NO,  width=45)
         self._messages_treeview.column("from",      stretch=tk.NO,  width=85)
@@ -365,8 +367,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 tag = 'is_own'
             else:
                 tag = 'not_own'
-            tree_data.append(
-                ((
+
+            tree_data = (
                      f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
                      f"{form_msg.get('port_id', '-')}",
                      f"{form_msg['from']}",
@@ -375,11 +377,16 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                      f"{'>'.join(form_msg.get('path', []))}",
                      f"{form_msg.get('msgNo', '')}",
                      f"{form_msg.get('message_text', '')}",
-                 ), tag)
-            )
-
-        for ret_ent in tree_data:
-            self._messages_treeview.insert('', 'end', values=ret_ent[0], tags=ret_ent[1])
+                 )
+            if hasattr(self._aprs_ais, 'get_symbol_fm_node_tab'):
+                symbol = self._aprs_ais.get_symbol_fm_node_tab(form_msg.get('from'))
+                image  = self._aprs_icon_tab.get(symbol, None)
+            else:
+                image = None
+            if image:
+                self._messages_treeview.insert('', 'end', values=tree_data, tags=tag, image=image)
+            else:
+                self._messages_treeview.insert('', 'end', values=tree_data, tags=tag)
 
     def _update_bl_tree(self):
         self._aprs_bl_msg = list(self._aprs_ais.aprs_msg_pool['bulletin'])
