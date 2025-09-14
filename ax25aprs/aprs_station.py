@@ -40,7 +40,7 @@ class APRS_ais(object):
         # self.ais_new_rx_buff = []
         self.ais_active = ais_cfg.get('ais_active', False)
         """ APRS-Node List """
-        self._node_tab          = OrderedDict()
+        self._node_tab          = OrderedDict(POPT_CFG.get_APRS_node_tab())
         self._object_tab        = OrderedDict()  # Reported Objects
         """ APRS-Message Stuff """
         self._spooler_buffer    = {}
@@ -121,6 +121,7 @@ class APRS_ais(object):
     def save_conf_to_file(self):
         # print("Save APRS Conf")
         logger.info("Save APRS Conf")
+        POPT_CFG.set_APRS_node_tab(self._node_tab)
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         ais_cfg['ais_call']         = str(self.ais_call)
         ais_cfg['ais_pass']         = str(self.ais_pass)

@@ -70,12 +70,21 @@ class AISmonitor(tk.Toplevel):
         pack_list_f = ttk.Frame(tab)
         node_list_f = ttk.Frame(tab)
         obj_list_f  = ttk.Frame(tab)
+        wx_list_f   = ttk.Frame(tab)
+        msg_list_f  = ttk.Frame(tab)
+        bl_list_f   = ttk.Frame(tab)
         pack_list_f.pack(fill='both', expand=True)
         node_list_f.pack(fill='both', expand=True)
         obj_list_f.pack( fill='both', expand=True)
+        wx_list_f.pack(  fill='both', expand=True)
+        msg_list_f.pack( fill='both', expand=True)
+        bl_list_f.pack(  fill='both', expand=True)
         ##############################################
         tab.add(node_list_f, text="Node-List")
-        tab.add(obj_list_f,  text="Reported-Objects")
+        tab.add(obj_list_f,  text="Objects")
+        tab.add(wx_list_f,   text="WX")
+        tab.add(msg_list_f,  text="Msg")
+        tab.add(bl_list_f,   text="Bulletin")
         tab.add(pack_list_f, text="Packet-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
@@ -265,6 +274,127 @@ class AISmonitor(tk.Toplevel):
         self._obj_tree.column("rx_time", anchor='w', stretch=False, width=80)
         self._obj_tree.column("comment", anchor='w', stretch=True, width=80)
         ########################################################
+        # WX
+        columns = (
+            'node_id',
+            'port',
+            'via',
+            'loc',
+            'dist',
+            'rx_time',
+            'comment',
+        )
+        self._wx_tree = ttk.Treeview(wx_list_f, columns=columns, show='tree headings')
+        self._wx_tree.pack(side='left', fill='both', expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(wx_list_f, orient='vertical', command=self._wx_tree.yview)
+        self._wx_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='left', fill='y')
+
+        self._wx_tree.heading('#0', text='Symbol')
+        self._wx_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self._wx_tree))
+        self._wx_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._wx_tree))
+        self._wx_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._wx_tree))
+        self._wx_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._wx_tree))
+        self._wx_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._wx_tree))
+        self._wx_tree.heading('rx_time', text=self._getTabStr('date_time'),
+                               command=lambda: self._sort_entry('rx_time', self._wx_tree))
+        self._wx_tree.heading('comment', text="Data", command=lambda: self._sort_entry('comment', self._wx_tree))
+
+        self._wx_tree.column('#0', anchor='w', stretch=False, width=50)
+        self._wx_tree.column("node_id", anchor='w', stretch=False, width=80)
+        self._wx_tree.column("port", anchor='w', stretch=False, width=60)
+        self._wx_tree.column("via", anchor='w', stretch=False, width=80)
+        self._wx_tree.column("loc", anchor='w', stretch=False, width=90)
+        self._wx_tree.column("dist", anchor='w', stretch=False, width=50)
+        self._wx_tree.column("rx_time", anchor='w', stretch=False, width=80)
+        self._wx_tree.column("comment", anchor='w', stretch=True, width=80)
+        ########################################################
+        # P MSG
+        columns = (
+            'node_id',
+            'to',
+            'port',
+            'via',
+            'path',
+            'loc',
+            'dist',
+            'rx_time',
+            'comment',
+        )
+        self._msg_tree = ttk.Treeview(msg_list_f, columns=columns, show='tree headings')
+        self._msg_tree.pack(side='left', fill='both', expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(msg_list_f, orient='vertical', command=self._msg_tree.yview)
+        self._msg_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='left', fill='y')
+
+        self._msg_tree.heading('#0', text='Symbol')
+        self._msg_tree.heading('node_id', text=self._getTabStr('from'), command=lambda: self._sort_entry('node_id', self._msg_tree))
+        self._msg_tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to', self._msg_tree))
+        self._msg_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._msg_tree))
+        self._msg_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._msg_tree))
+        self._msg_tree.heading('path', text="Path", command=lambda: self._sort_entry('path', self._msg_tree))
+        self._msg_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._msg_tree))
+        self._msg_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._msg_tree))
+        self._msg_tree.heading('rx_time', text=self._getTabStr('date_time'),
+                               command=lambda: self._sort_entry('rx_time', self._msg_tree))
+        self._msg_tree.heading('comment', text="Msg", command=lambda: self._sort_entry('comment', self._msg_tree))
+
+        self._msg_tree.column('#0', anchor='w', stretch=False, width=50)
+        self._msg_tree.column("node_id", anchor='w', stretch=False, width=80)
+        self._msg_tree.column("to", anchor='w', stretch=False, width=80)
+        self._msg_tree.column("port", anchor='w', stretch=False, width=60)
+        self._msg_tree.column("via", anchor='w', stretch=False, width=80)
+        self._msg_tree.column("path", anchor='w', stretch=False, width=200)
+        self._msg_tree.column("loc", anchor='w', stretch=False, width=90)
+        self._msg_tree.column("dist", anchor='w', stretch=False, width=50)
+        self._msg_tree.column("rx_time", anchor='w', stretch=False, width=80)
+        self._msg_tree.column("comment", anchor='w', stretch=True, width=80)
+        ########################################################
+        # Bulletin
+        columns = (
+            'node_id',
+            'to',
+            'port',
+            'via',
+            'path',
+            'loc',
+            'dist',
+            'rx_time',
+            'comment',
+        )
+        self._bl_tree = ttk.Treeview(bl_list_f, columns=columns, show='tree headings')
+        self._bl_tree.pack(side='left', fill='both', expand=True)
+        # add a scrollbar
+        scrollbar = ttk.Scrollbar(bl_list_f, orient='vertical', command=self._bl_tree.yview)
+        self._bl_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='left', fill='y')
+
+        self._bl_tree.heading('#0', text='Symbol')
+        self._bl_tree.heading('node_id', text="BL ID",
+                               command=lambda: self._sort_entry('node_id', self._bl_tree))
+        self._bl_tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to', self._bl_tree))
+        self._bl_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._bl_tree))
+        self._bl_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._bl_tree))
+        self._bl_tree.heading('path', text="Path", command=lambda: self._sort_entry('path', self._bl_tree))
+        self._bl_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._bl_tree))
+        self._bl_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._bl_tree))
+        self._bl_tree.heading('rx_time', text=self._getTabStr('date_time'),
+                               command=lambda: self._sort_entry('rx_time', self._bl_tree))
+        self._bl_tree.heading('comment', text="Msg", command=lambda: self._sort_entry('comment', self._bl_tree))
+
+        self._bl_tree.column('#0', anchor='w', stretch=False, width=50)
+        self._bl_tree.column("node_id", anchor='w', stretch=False, width=80)
+        self._bl_tree.column("to", anchor='w', stretch=False, width=80)
+        self._bl_tree.column("port", anchor='w', stretch=False, width=60)
+        self._bl_tree.column("via", anchor='w', stretch=False, width=80)
+        self._bl_tree.column("path", anchor='w', stretch=False, width=200)
+        self._bl_tree.column("loc", anchor='w', stretch=False, width=90)
+        self._bl_tree.column("dist", anchor='w', stretch=False, width=50)
+        self._bl_tree.column("rx_time", anchor='w', stretch=False, width=80)
+        self._bl_tree.column("comment", anchor='w', stretch=True, width=80)
+        ########################################################
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         ########################################################
@@ -272,6 +402,7 @@ class AISmonitor(tk.Toplevel):
 
         if self._ais_obj is not None:
             self._call_filter_list.append(self._ais_obj.ais_call)
+            self._call_filter_calls_var.set(self._ais_obj.ais_call)
             self._ais_obj.ais_mon_gui = self
             """
             for port_id in self._ais_aprs_stations.keys():
@@ -519,6 +650,142 @@ class AISmonitor(tk.Toplevel):
             self._text_widget.delete(0.0, 'end')
             self._init_ais_mon(init_tree=False)
 
+    #############################################################
+    # WX Tree (init in _init_ais_mon)
+    def _get_treedata_fm_wx_pack(self, aprs_pack: dict):
+        wx_data = ' - '.join([f"{k}: {val}" for k, val in aprs_pack.get('weather', {}).items()])
+        symbol  =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
+        return (
+            aprs_pack.get('from', ''),
+            aprs_pack.get('port_id', ''),
+            aprs_pack.get('via', ''),
+            aprs_pack.get('locator', ''),
+            round(aprs_pack.get('distance', -1)),
+            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            wx_data,
+            symbol,
+        )
+
+    def _wx_tree_update(self, aprs_pack: dict):
+        if not aprs_pack.get('weather', {}):
+            return
+        node_id = aprs_pack.get('from', '')
+        if not node_id:
+            return
+        port_filter = self._port_filter_var.get()
+        port = aprs_pack.get('port_id', '')
+
+        if port_filter and port_filter != port:
+            return
+        selected_node_ids = []
+        for selected_item in self._wx_tree.selection():
+            selected_node_ids.append(self._wx_tree.set(selected_item, 'node_id'))
+
+        items    = list(self._wx_tree.get_children())
+        list_len = len(items)
+        for index, item in enumerate(items):
+            if self._wx_tree.set(item, 'node_id') == node_id:
+                self._wx_tree.delete(item)
+                break
+
+        auto_scroll = list_len == len(list(self._wx_tree.get_children()))
+        tree_data   = self._get_treedata_fm_wx_pack(aprs_pack)
+        if tree_data:
+            self._add_to_tree(tree_data, tree=self._wx_tree, add_to_end=False, auto_scroll=auto_scroll)
+
+        if node_id in selected_node_ids:
+            for item in self._wx_tree.get_children():
+                if self._wx_tree.set(item, 'node_id') == node_id:
+                    self._wx_tree.selection_add(item)
+                    break
+
+    #############################################################
+    # MSG Tree (init in _init_ais_mon)
+    def _get_treedata_fm_msg_pack(self, aprs_pack: dict):
+        symbol  =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
+        msg_text = aprs_pack.get('message_text', '')
+        if not msg_text and aprs_pack.get('response', ''):
+            msg_text = f"{aprs_pack.get('response', '')} {aprs_pack.get('msgNo', '')}"
+        return (
+            aprs_pack.get('from', ''),
+            aprs_pack.get('addresse', '') if aprs_pack.get('addresse', '') else aprs_pack.get('to', ''),
+            aprs_pack.get('port_id', ''),
+            aprs_pack.get('via', ''),
+            '>'.join(aprs_pack.get('path', [])),
+            aprs_pack.get('locator', ''),
+            round(aprs_pack.get('distance', -1)),
+            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            msg_text,
+            symbol,
+        )
+
+    def _msg_tree_update(self, aprs_pack: dict):
+        if aprs_pack.get('format', '') != 'message':
+            return
+        node_id = aprs_pack.get('from', '')
+        if not node_id:
+            return
+        port_filter = self._port_filter_var.get()
+        port = aprs_pack.get('port_id', '')
+
+        if port_filter and port_filter != port:
+            return
+        selected_node_ids = []
+        for selected_item in self._msg_tree.selection():
+            selected_node_ids.append(self._msg_tree.set(selected_item, 'node_id'))
+
+        tree_data   = self._get_treedata_fm_msg_pack(aprs_pack)
+        if tree_data:
+            self._add_to_tree(tree_data, tree=self._msg_tree, add_to_end=False, auto_scroll=True)
+
+        if node_id in selected_node_ids:
+            for item in self._msg_tree.get_children():
+                if self._msg_tree.set(item, 'node_id') == node_id:
+                    self._msg_tree.selection_add(item)
+                    break
+
+    #############################################################
+    # BL Tree (init in _init_ais_mon)
+    def _get_treedata_fm_bl_pack(self, aprs_pack: dict):
+        symbol   =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
+        msg_text = aprs_pack.get('message_text', '')
+        return (
+            aprs_pack.get('from', ''),
+            aprs_pack.get('msgNo', ''),
+            aprs_pack.get('port_id', ''),
+            aprs_pack.get('via', ''),
+            '>'.join(aprs_pack.get('path', [])),
+            aprs_pack.get('locator', ''),
+            round(aprs_pack.get('distance', -1)),
+            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            msg_text,
+            symbol,
+        )
+
+    def _bl_tree_update(self, aprs_pack: dict):
+        if aprs_pack.get('format', '') != 'bulletin':
+            return
+        node_id = aprs_pack.get('from', '')
+        if not node_id:
+            return
+        port_filter = self._port_filter_var.get()
+        port = aprs_pack.get('port_id', '')
+
+        if port_filter and port_filter != port:
+            return
+        selected_node_ids = []
+        for selected_item in self._bl_tree.selection():
+            selected_node_ids.append(self._bl_tree.set(selected_item, 'node_id'))
+
+        tree_data = self._get_treedata_fm_bl_pack(aprs_pack)
+        if tree_data:
+            self._add_to_tree(tree_data, tree=self._bl_tree, add_to_end=False, auto_scroll=True)
+
+        if node_id in selected_node_ids:
+            for item in self._bl_tree.get_children():
+                if self._bl_tree.set(item, 'node_id') == node_id:
+                    self._bl_tree.selection_add(item)
+                    break
 
     #############################################################
     def _init_ais_mon(self, init_tree=True):
@@ -539,17 +806,23 @@ class AISmonitor(tk.Toplevel):
                 continue
             if init_tree:
                 tree_data = self._get_treedata_fm_pack(el)
-                self._add_to_tree(tree_data=tree_data, tree=self._tree)
+                if tree_data:
+                    self._add_to_tree(tree_data=tree_data, tree=self._tree, add_to_end=False)
+                if el.get('weather', {}):
+                    wx_tree_data = self._get_treedata_fm_wx_pack(el)
+                    if wx_tree_data:
+                        self._add_to_tree(tree_data=wx_tree_data, tree=self._wx_tree, add_to_end=False)
+                elif el.get('format', '') == 'message':
+                    msg_tree_data = self._get_treedata_fm_msg_pack(el)
+                    if msg_tree_data:
+                        self._add_to_tree(tree_data=msg_tree_data, tree=self._msg_tree, add_to_end=False)
+                elif el.get('format', '') == 'bulletin':
+                    bl_tree_data = self._get_treedata_fm_bl_pack(el)
+                    if bl_tree_data:
+                        self._add_to_tree(tree_data=bl_tree_data, tree=self._bl_tree, add_to_end=False)
             # self._add_treedata(tree_data)
             # Monitor
-            """
-            image = self._aprs_icon_tab.get((el.get('symbol_table', ''), el.get('symbol', '')), None)
-            if image:
-                self._text_widget.image_ref = image
-                self._text_widget.insert(tk.END, "\n")
-                self._text_widget.image_create(tk.END, image=image)
-                self._text_widget.insert(tk.END, "\n")
-            """
+
             if call_filter_var:
                 if el.get('from', '') in self._call_filter_list:
                     tr = True
@@ -562,6 +835,7 @@ class AISmonitor(tk.Toplevel):
         if tr:
             self._scroll_to_end()
 
+    ###########################################################
     def tasker(self):
         if not self._tasker_q:
             return False
@@ -569,9 +843,11 @@ class AISmonitor(tk.Toplevel):
             return False
         self._tasker_q_timer = time.time() + 0.1
         n = 10
+        """
         if len(self._tasker_q) > 10:
             logger.warning(f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
             logger.warning(f"self._tasker_q: {self._tasker_q}")
+        """
         while self._tasker_q and n:
             task, arg = self._tasker_q[0]
             self._tasker_q = self._tasker_q[1:]
@@ -604,12 +880,17 @@ class AISmonitor(tk.Toplevel):
                 tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
                 tmp = tk_filter_bad_chars(tmp)
                 self._text_widget.insert(tk.END, tmp)
+                self._wx_tree_update(pack)
+                self._msg_tree_update(pack)
+                self._bl_tree_update(pack)
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
             tmp = tk_filter_bad_chars(tmp)
             self._text_widget.insert(tk.END, tmp)
-
+            self._wx_tree_update(pack)
+            self._msg_tree_update(pack)
+            self._bl_tree_update(pack)
         if tr:
             self._scroll_to_end()
 
@@ -623,6 +904,13 @@ class AISmonitor(tk.Toplevel):
     #######################################
     def set_ais_obj(self):
         self._ais_obj = PORT_HANDLER.get_aprs_ais()
+
+    def _get_symbol_fm_node_tab(self, node_id: str):
+        if hasattr(self._ais_obj, 'get_symbol_fm_node_tab'):
+            return self._ais_obj.get_symbol_fm_node_tab(node_id)
+        return '', ''
+
+    #######################################
 
     def _increase_textsize(self):
         self._text_size += 1
@@ -653,6 +941,7 @@ class AISmonitor(tk.Toplevel):
         self._del_tree(tree=self._tree)
         self._del_tree(tree=self._node_tree)
         self._del_tree(tree=self._obj_tree)
+        self._del_tree(tree=self._wx_tree)
         self._init_ais_mon()
         self._node_tree_init()
         self._obj_tree_init()
@@ -665,6 +954,7 @@ class AISmonitor(tk.Toplevel):
         self._del_tree(tree=self._tree)
         self._del_tree(tree=self._node_tree)
         self._del_tree(tree=self._obj_tree)
+        self._del_tree(tree=self._wx_tree)
         self._init_ais_mon()
         self._node_tree_init()
         self._obj_tree_init()
@@ -679,6 +969,7 @@ class AISmonitor(tk.Toplevel):
             self._del_tree(tree=self._tree)
             self._del_tree(tree=self._node_tree)
             self._del_tree(tree=self._obj_tree)
+            self._del_tree(tree=self._wx_tree)
 
     def _scroll_to_end(self):
         if self._autoscroll_var.get():

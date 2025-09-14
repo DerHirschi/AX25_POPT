@@ -25,8 +25,7 @@ class Main_CFG:
             'mh_cfg': getNew_MH_cfg,
             ##########################
             # -- APRS
-            # 'aprs_station': getNew_APRS_Station_cfg,
-            'aprs_station': {},
+            'aprs_node_tab': {},
             'aprs_ais': getNew_APRS_ais_cfg,
             ##########################
             # -- GUI
@@ -268,14 +267,17 @@ class Main_CFG:
 
     ####################
     # APRS
-    def get_CFG_aprs_station(self):
-        return self._config['aprs_station']
-
     def get_CFG_aprs_ais(self):
         return self._config['aprs_ais']
 
     def set_CFG_aprs_ais(self, data: dict):
         self._config['aprs_ais'] = data
+
+    def get_APRS_node_tab(self):
+        return self._config['aprs_node_tab']
+
+    def set_APRS_node_tab(self, node_tab: dict):
+        self._config['aprs_node_tab'] = node_tab
 
     ########################################################
     # GUI
@@ -491,6 +493,7 @@ class Main_CFG:
         self.del_pipe_CFG_fm_call(call=call)
         self.del_digi_CFG_fm_call(call=call)
         del_user_data(call=call)
+        return True
 
     ###########################################
     # Port
