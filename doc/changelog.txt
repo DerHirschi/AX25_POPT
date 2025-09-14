@@ -38,8 +38,12 @@ Neue Implementierungen / Funktionen:
 - APRS-Messenger: CQ-Calls (CQ*, ALL*, QST*) werden jetzt ausgewertet
   und Sysop benachrichtigt bei Empfang eine CQ-Nachricht
 - APRS-Messenger: Tabelle für empfangende Bulletin Nachrichten
-- APRS-Icons für APRS-Servermonitor
+- APRS-Icons für APRS-Monitor
 - "Node-Liste" im APRS-Monitor
+- "Reported Objects Liste" im APRS-Monitor
+- "WX-Paket Liste" im APRS-Monitor
+- "MSG-Paket Liste" im APRS-Monitor
+- "Bulletin-Paket Liste" im APRS-Monitor
 
 ###########################################################################################################
 ###########################################################################################################
