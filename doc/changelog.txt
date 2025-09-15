@@ -44,6 +44,7 @@ Neue Implementierungen / Funktionen:
 - "WX-Paket Liste" im APRS-Monitor
 - "MSG-Paket Liste" im APRS-Monitor
 - "Bulletin-Paket Liste" im APRS-Monitor
+- Zusätzlicher Monitor in Tabellenansicht im Hauptfenster
 
 ###########################################################################################################
 ###########################################################################################################

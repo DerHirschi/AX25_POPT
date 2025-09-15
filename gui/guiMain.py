@@ -51,10 +51,10 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, PARAM_MAX_MON_TREE_ITEMS
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
-    build_aprs_icon_tab
+    build_aprs_icon_tab, get_image
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -154,6 +154,10 @@ class PoPT_GUI_Main:
         ###############################
         logger.info("GUI: Init APRS-Icon Tab")
         self._aprs_icon_tab_16  = build_aprs_icon_tab((16, 16))
+        self._rx_tx_icons       = {
+            False: get_image(CFG_gui_icon_path + '/pfeil_rechts_gruen.png'),  # RX
+            True:  get_image(CFG_gui_icon_path + '/pfeil_links_rot.png')      # TX
+        }
         #####################
         # GUI VARS
         self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
@@ -279,12 +283,12 @@ class PoPT_GUI_Main:
         ######################################
         # ....
         self._main_pw       = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
-        self._main_pw.pack(fill=tk.BOTH, expand=True)
+        self._main_pw.pack(fill='both', expand=True)
 
         l_frame             = ttk.Frame(self._main_pw)
         self._r_frame       = ttk.Frame(self._main_pw)
         r_pack_frame        = ttk.Frame(self._r_frame)
-        l_frame.pack(fill=tk.BOTH, expand=True)
+        l_frame.pack(      fill=tk.BOTH, expand=True)
         self._r_frame.pack(fill=tk.BOTH, expand=True)
         r_pack_frame.pack( fill=tk.BOTH, expand=True)
         """
@@ -316,16 +320,19 @@ class PoPT_GUI_Main:
         self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         self._TXT_mid_frame.pack(  side=tk.BOTTOM, expand=1, fill=tk.BOTH)
         self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
-
+        self._mon_tree_frame = None
         txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
-        self._winPos_cfgTab = {
-            0: self._init_TXT_frame_up(),
-            1: self._init_TXT_frame_mid(),
-            2: self._init_TXT_frame_low(),
+        winPos_cfgTab = {
+            0: self._init_TXT_frame_up,
+            1: self._init_TXT_frame_mid,
+            2: self._init_TXT_frame_low,
         }
-        self._inp_txt = self._winPos_cfgTab[txtWin_pos_cfg[0]]
-        self._qso_txt = self._winPos_cfgTab[txtWin_pos_cfg[1]]
-        self._mon_txt = self._winPos_cfgTab[txtWin_pos_cfg[2]]
+        self._inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
+        self._qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
+        self._mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
+
+        if self._mon_tree_frame is not None:
+            self._init_mon_tree(self._mon_tree_frame)
 
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
@@ -938,10 +945,24 @@ class PoPT_GUI_Main:
         self._con_btn_dict[9][0].configure(command=lambda: self.switch_channel(9))
         self._con_btn_dict[10][0].configure(command=lambda: self.switch_channel(10))
 
-    def _init_TXT_frame_up(self):
+    def _init_TXT_frame_up(self, is_monitor=False):
         # guiCFG          = POPT_CFG.load_guiPARM_main()
         text_frame      = ttk.Frame(self._TXT_upper_frame)
-        inp_txt         = tk.Text(text_frame,
+        if is_monitor:
+            pw = ttk.Panedwindow(text_frame, orient='vertical')
+            pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(pw)
+            mon_tab_f = ttk.Frame(pw)
+            mon_txt_f.pack(fill='both', expand=True)
+            mon_tab_f.pack(fill='both', expand=True)
+            pw.add(mon_txt_f, weight=0)
+            pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = text_frame
+
+        inp_txt         = tk.Text(mon_txt_f,
                       #background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
                       #foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
                       font=(FONT, self.text_size),
@@ -956,7 +977,7 @@ class PoPT_GUI_Main:
         #                         foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
         #                         background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         inp_scrollbar = ttk.Scrollbar(
-            text_frame,
+            mon_txt_f,
             orient=tk.VERTICAL,
             command=inp_txt.yview
         )
@@ -1100,12 +1121,27 @@ class PoPT_GUI_Main:
         """
         return inp_txt
 
-    def _init_TXT_frame_mid(self):
+    def _init_TXT_frame_mid(self, is_monitor=False):
         text_frame = ttk.Frame(self._TXT_mid_frame)
+        if is_monitor:
+            pw = ttk.Panedwindow(text_frame, orient='vertical')
+            pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(pw)
+            mon_tab_f = ttk.Frame(pw)
+            mon_txt_f.pack(fill='both', expand=True)
+            mon_tab_f.pack(fill='both', expand=True)
+            pw.add(mon_txt_f, weight=0)
+            pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = text_frame
+
+
         stat_frame = ttk.Frame(self._TXT_mid_frame)
         stat_frame.pack(side=tk.BOTTOM, fill=tk.X,    expand=False)
         text_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        out_txt = tk.Text(text_frame,
+        out_txt = tk.Text(mon_txt_f,
                               background=DEF_QSO_SYSMSG_BG,
                               foreground=DEF_QSO_SYSMSG_FG,
                               font=(FONT, self.text_size),
@@ -1120,7 +1156,7 @@ class PoPT_GUI_Main:
                                 )
         # out_txt.tag_config("input", foreground="white")
         out_scrollbar = ttk.Scrollbar(
-            text_frame,
+            mon_txt_f,
             orient=tk.VERTICAL,
             command=out_txt.yview
         )
@@ -1263,10 +1299,24 @@ class PoPT_GUI_Main:
 
         return out_txt
 
-    def _init_TXT_frame_low(self):
+    def _init_TXT_frame_low(self, is_monitor=False):
         mon_frame = ttk.Frame(self._TXT_lower_frame)
-        mon_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        mon_txt = tk.Text(mon_frame,
+        mon_frame.pack(side='bottom', fill='both', expand=True)
+        if is_monitor:
+            pw = ttk.Panedwindow(mon_frame, orient='vertical')
+            pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(pw)
+            mon_tab_f = ttk.Frame(pw)
+            mon_txt_f. pack(fill='both', expand=True)
+            mon_tab_f. pack(fill='both', expand=True)
+            pw.add(mon_txt_f, weight=0)
+            pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = mon_frame
+
+        mon_txt = tk.Text(mon_txt_f,
                               background=MON_SYS_MSG_CLR_BG,
                               foreground=MON_SYS_MSG_CLR_BG,
                               font=(FONT, self.text_size),
@@ -1279,14 +1329,74 @@ class PoPT_GUI_Main:
                               highlightthickness=0,
                               )
         mon_scrollbar = ttk.Scrollbar(
-            mon_frame,
-            orient=tk.VERTICAL,
+            mon_txt_f,
+            orient='vertical',
             command=mon_txt.yview
         )
-        mon_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        mon_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
+        mon_txt.pack(side='left', fill='both', expand=True)
+        mon_scrollbar.pack(side='left', fill='y',    expand=False)
         mon_txt.config(yscrollcommand=mon_scrollbar.set)
+        ################
+        #self._init_mon_tree(mon_tab_f)
         return mon_txt
+
+    def _init_mon_tree(self, frame: ttk.Frame):
+        columns = (
+            'time',
+            'port',
+            'from',
+            'to',
+            'via',
+            'typ',
+            'pid',
+            'nr_ns',
+            'cmd_poll',
+            'data',
+        )
+        mon_f_1 = ttk.Frame(frame)
+        mon_f_2 = ttk.Frame(frame)
+        mon_f_1.pack(fill='both', expand=True)
+        mon_f_2.pack(fill='x', expand=False)
+
+        self._mon_tree = ttk.Treeview(mon_f_1, columns=columns, show='tree headings', height=2)
+        # self._mon_tree = ttk.Treeview(mon_f_1, columns=columns, show='headings', height=2)
+        self._mon_tree.pack(side='left', fill='both', expand=True)
+
+        self._mon_tree.heading('#0', text="RX/TX")
+        self._mon_tree.heading('time', text=self._getTabStr('time'))
+        self._mon_tree.heading('port', text='Port')
+        self._mon_tree.heading('from', text=self._getTabStr('from'))
+        self._mon_tree.heading('to', text=self._getTabStr('to'))
+        self._mon_tree.heading('via', text='Via')
+        self._mon_tree.heading('typ', text='Typ')
+        self._mon_tree.heading('pid', text='PID')
+        self._mon_tree.heading('nr_ns', text='NS/NR')
+        self._mon_tree.heading('cmd_poll', text='CMD/POLL')
+        self._mon_tree.heading('data', text='Data')
+
+        self._mon_tree.column("#0",       anchor='w', stretch=False, width=40)
+        self._mon_tree.column("time",     anchor='w', stretch=False, width=80)
+        self._mon_tree.column("port",     anchor='center', stretch=False, width=50)
+        self._mon_tree.column("from",     anchor='w', stretch=False, width=85)
+        self._mon_tree.column("to",       anchor='w', stretch=False, width=85)
+        self._mon_tree.column("via",      anchor='w', stretch=False, width=120)
+        self._mon_tree.column("typ",      anchor='w', stretch=False, width=70)
+        self._mon_tree.column("pid",      anchor='w', stretch=False, width=100)
+        self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=50)
+        self._mon_tree.column("cmd_poll", anchor='center', stretch=False, width=50)
+        self._mon_tree.column("data",     anchor='w', stretch=False,  width=700)
+
+        #for el in list(range(100)):
+        #    mon_tree.insert('', 'end', values=(el,))
+        # Vertikale Scrollbar
+        scrollbar_y = ttk.Scrollbar(mon_f_1, orient='vertical', command=self._mon_tree.yview)
+        self._mon_tree.configure(yscrollcommand=scrollbar_y.set)
+        scrollbar_y.pack(side='left', fill='y')
+
+        # Horizontale Scrollbar
+        scrollbar_x = ttk.Scrollbar(mon_f_2, orient='horizontal', command=self._mon_tree.xview)
+        self._mon_tree.configure(xscrollcommand=scrollbar_x.set)
+        scrollbar_x.pack(fill='x')
 
     #######################################
     # Text Tags
@@ -2268,6 +2378,66 @@ class PoPT_GUI_Main:
         ))
     """
 
+    def _monitor_tree_update(self, ax25pack_conf: dict):
+        via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
+        ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
+        ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
+        cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
+        cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
+        payload = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
+        payload = tk_filter_bad_chars(payload)
+        payload = payload.replace('\n', ' ').replace('\r', ' ')
+        user_db = self._port_handler.get_userDB()
+        from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
+        to_dist = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
+        from_call = ax25pack_conf.get('from_call_str', '')
+        if from_dist > 0:
+            from_call += f'({from_dist}km)'
+
+        to_call   = ax25pack_conf.get('to_call_str', '')
+        if to_dist > 0:
+            to_call += f'({to_dist}km)'
+
+        tree_data = (
+            ax25pack_conf.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            ax25pack_conf.get('port', -1),
+            from_call,
+            to_call,
+            '>'.join(via),
+            ax25pack_conf.get('ctl_flag', ''),
+            ax25pack_conf.get('pid_flag', ''),
+            ns_nr,
+            cmd_pl,
+            payload,
+        )
+        is_scrolled_to_top = self._mon_tree.yview()[0] == 0.0
+        index = 0
+
+        image = self._rx_tx_icons.get(ax25pack_conf.get('tx', True), None)
+
+        if image is not None:
+            self._mon_tree.image_ref = image
+            self._mon_tree.insert('', index, values=tree_data, image=image)
+        else:
+            self._mon_tree.insert('', index, values=tree_data)
+
+        # Begrenze die Anzahl der Einträge
+        tree_items = self._mon_tree.get_children()
+        if len(tree_items) > PARAM_MAX_MON_TREE_ITEMS:
+            # Entferne die ältesten Einträge (am Ende der Liste)
+            for item in tree_items[PARAM_MAX_MON_TREE_ITEMS:]:
+                self._mon_tree.delete(item)
+
+        if not is_scrolled_to_top:
+            try:
+                self._mon_tree.yview_scroll(1, "units")
+            except tk.TclError:
+                pass
+            except Exception as e:
+                null = e
+                # logger.warning(e)
+                pass
+
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
         if mon_buff:
@@ -2283,6 +2453,10 @@ class PoPT_GUI_Main:
             self._mon_txt.configure(state="normal")
             for axframe_conf, port_conf, tx in mon_buff:
                 port_id = port_conf.get('parm_PortNr', -1)
+                axframe_conf['tx']   = tx
+                axframe_conf['port'] = port_id
+                self._monitor_tree_update(axframe_conf)
+
                 mon_conf['port_name'] = port_conf.get('parm_PortName', '')
                 mon_str = monitor_frame_inp(axframe_conf, mon_conf)
 

@@ -2365,6 +2365,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'time': (
+        'Zeit',
+        'Time',
+        'Tijd',
+        'Heure',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'date': (
         'Datum',
         'Date',
