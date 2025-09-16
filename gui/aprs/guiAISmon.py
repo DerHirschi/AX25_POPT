@@ -451,13 +451,13 @@ class AISmonitor(tk.Toplevel):
         else:
             index = 0
 
-        tree_data_f = [tk_filter_bad_chars(el) for el in tree_data[-1]]
+        #tree_data_f = [tk_filter_bad_chars(el) for el in tree_data[-1]]
         try:
             if image:
                 tree.image_ref = image
-                tree.insert('', index, values=tree_data_f, image=image)
+                tree.insert('', index, values=tree_data[:-1], image=image)
             else:
-                tree.insert('', index, values=tree_data_f)
+                tree.insert('', index, values=tree_data[:-1])
         except tk.TclError as ex:
             logger.warning("TCL Error in AISmonitor add_to_tree")
             logger.warning(ex)
