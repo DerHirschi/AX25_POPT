@@ -451,11 +451,22 @@ class AISmonitor(tk.Toplevel):
         else:
             index = 0
 
-        if image:
-            tree.image_ref = image
-            tree.insert('', index, values=tree_data[:-1], image=image)
-        else:
-            tree.insert('', index, values=tree_data[:-1])
+        tree_data_f = [tk_filter_bad_chars(el) for el in tree_data[-1]]
+        try:
+            if image:
+                tree.image_ref = image
+                tree.insert('', index, values=tree_data_f, image=image)
+            else:
+                tree.insert('', index, values=tree_data_f)
+        except tk.TclError as ex:
+            logger.warning("TCL Error in AISmonitor add_to_tree")
+            logger.warning(ex)
+            return
+
+        tree_items = tree.get_children()
+        if len(tree_items) > 5000:
+            for item in tree_items[5000:]:
+                tree.delete(item)
 
         if not is_scrolled_to_top and not add_to_end and auto_scroll :
             try:

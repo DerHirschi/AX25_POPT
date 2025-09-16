@@ -1351,6 +1351,7 @@ class PoPT_GUI_Main:
             'pid',
             'nr_ns',
             'cmd_poll',
+            'size',
             'data',
         )
         mon_f_1 = ttk.Frame(frame)
@@ -1372,18 +1373,20 @@ class PoPT_GUI_Main:
         self._mon_tree.heading('pid', text='PID')
         self._mon_tree.heading('nr_ns', text='NS/NR')
         self._mon_tree.heading('cmd_poll', text='CMD/POLL')
+        self._mon_tree.heading('size', text='Bytes')
         self._mon_tree.heading('data', text='Data')
 
         self._mon_tree.column("#0",       anchor='w', stretch=False, width=40)
-        self._mon_tree.column("time",     anchor='w', stretch=False, width=80)
-        self._mon_tree.column("port",     anchor='center', stretch=False, width=50)
+        self._mon_tree.column("time",     anchor='w', stretch=False, width=70)
+        self._mon_tree.column("port",     anchor='center', stretch=False, width=30)
         self._mon_tree.column("from",     anchor='w', stretch=False, width=85)
         self._mon_tree.column("to",       anchor='w', stretch=False, width=85)
         self._mon_tree.column("via",      anchor='w', stretch=False, width=120)
-        self._mon_tree.column("typ",      anchor='w', stretch=False, width=70)
+        self._mon_tree.column("typ",      anchor='w', stretch=False, width=50)
         self._mon_tree.column("pid",      anchor='w', stretch=False, width=100)
-        self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=50)
+        self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=45)
         self._mon_tree.column("cmd_poll", anchor='center', stretch=False, width=50)
+        self._mon_tree.column("size",     anchor='center', stretch=False, width=45)
         self._mon_tree.column("data",     anchor='w', stretch=False,  width=700)
 
         #for el in list(range(100)):
@@ -2384,12 +2387,13 @@ class PoPT_GUI_Main:
         ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
         cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
         cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
-        payload = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
-        payload = tk_filter_bad_chars(payload)
-        payload = payload.replace('\n', ' ').replace('\r', ' ')
-        user_db = self._port_handler.get_userDB()
+        pay_size  = len(ax25pack_conf.get('payload', b''))
+        payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
+        payload   = tk_filter_bad_chars(payload)
+        payload   = payload.replace('\n', ' ').replace('\r', ' ')
+        user_db   = self._port_handler.get_userDB()
         from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
-        to_dist = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
+        to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
         from_call = ax25pack_conf.get('from_call_str', '')
         if from_dist > 0:
             from_call += f'({from_dist}km)'
@@ -2408,6 +2412,7 @@ class PoPT_GUI_Main:
             ax25pack_conf.get('pid_flag', ''),
             ns_nr,
             cmd_pl,
+            pay_size,
             payload,
         )
         is_scrolled_to_top = self._mon_tree.yview()[0] == 0.0
