@@ -1369,7 +1369,7 @@ class PoPT_GUI_Main:
         self._mon_tree.heading('from', text=self._getTabStr('from'))
         self._mon_tree.heading('to', text=self._getTabStr('to'))
         self._mon_tree.heading('via', text='Via')
-        self._mon_tree.heading('typ', text='Typ')
+        self._mon_tree.heading('typ', text='CTL')
         self._mon_tree.heading('pid', text='PID')
         self._mon_tree.heading('nr_ns', text='NS/NR')
         self._mon_tree.heading('cmd_poll', text='CMD/POLL')
@@ -2419,12 +2419,17 @@ class PoPT_GUI_Main:
         index = 0
 
         image = self._rx_tx_icons.get(ax25pack_conf.get('tx', True), None)
-
-        if image is not None:
-            self._mon_tree.image_ref = image
-            self._mon_tree.insert('', index, values=tree_data, image=image)
-        else:
-            self._mon_tree.insert('', index, values=tree_data)
+        tree_data_f = [tk_filter_bad_chars(el) for el in tree_data]
+        try:
+            if image is not None:
+                self._mon_tree.image_ref = image
+                self._mon_tree.insert('', index, values=tree_data_f, image=image)
+            else:
+                self._mon_tree.insert('', index, values=tree_data_f)
+        except tk.TclError as ex:
+            logger.warning("TCL Error in guiMain _monitor_tree_update")
+            logger.warning(ex)
+            return
 
         # Begrenze die Anzahl der Einträge
         tree_items = self._mon_tree.get_children()
