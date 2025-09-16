@@ -2419,13 +2419,13 @@ class PoPT_GUI_Main:
         index = 0
 
         image = self._rx_tx_icons.get(ax25pack_conf.get('tx', True), None)
-        tree_data_f = [tk_filter_bad_chars(el) for el in tree_data]
+        #tree_data_f = [tk_filter_bad_chars(el) for el in tree_data]
         try:
             if image is not None:
                 self._mon_tree.image_ref = image
-                self._mon_tree.insert('', index, values=tree_data_f, image=image)
+                self._mon_tree.insert('', index, values=tree_data, image=image)
             else:
-                self._mon_tree.insert('', index, values=tree_data_f)
+                self._mon_tree.insert('', index, values=tree_data)
         except tk.TclError as ex:
             logger.warning("TCL Error in guiMain _monitor_tree_update")
             logger.warning(ex)
