@@ -45,6 +45,7 @@ class AISmonitor(tk.Toplevel):
         ####
         self._tasker_q_timer        = time.time()
         self._tasker_q              = []
+        self._tasker_n              = 1
         ##############################################
         self._set_node_c = lambda n: f"Total Nodes: {n}"
         ##############################################
@@ -412,9 +413,12 @@ class AISmonitor(tk.Toplevel):
                     )
             """
         root_win.aprs_mon_win = self
-        self._init_ais_mon()
-        self._node_tree_init()
-        self._obj_tree_init()
+        #self._init_ais_mon()
+        #self._node_tree_init()
+        #self._obj_tree_init()
+        self._add_tasker_q("_init_ais_mon",   None)
+        self._add_tasker_q("_node_tree_init", None)
+        self._add_tasker_q("_obj_tree_init",  None)
 
     #############################################################
     def _sort_entry(self, col, tree):
@@ -519,7 +523,7 @@ class AISmonitor(tk.Toplevel):
             return
         obj_tab: dict = self._ais_obj.get_obj_tab()
         port_filter   = self._port_filter_var.get()
-        for node_id, ent in obj_tab.items():
+        for node_id, ent in dict(obj_tab).items():
             port = ent.get('port_id', '')
             if port_filter and port_filter != port:
                 continue
@@ -580,7 +584,7 @@ class AISmonitor(tk.Toplevel):
         node_tab: dict = self._ais_obj.get_node_tab()
         port_filter = self._port_filter_var.get()
         c = 0
-        for node_id, ent in node_tab.items():
+        for node_id, ent in dict(node_tab).items():
             port = ent.get('port_id', '')
             if port_filter and port_filter != port:
                 continue
@@ -854,20 +858,27 @@ class AISmonitor(tk.Toplevel):
         if time.time() < self._tasker_q_timer:
             return False
         self._tasker_q_timer = time.time() + 0.1
-        n = 10
         """
         if len(self._tasker_q) > 10:
             logger.warning(f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
             logger.warning(f"self._tasker_q: {self._tasker_q}")
         """
-        while self._tasker_q and n:
+        while self._tasker_q and self._tasker_n:
             task, arg = self._tasker_q[0]
             self._tasker_q = self._tasker_q[1:]
             if task == 'pack_to_mon':
                 self._pack_to_mon_task(arg)
             elif task == 'update_node_tab':
                 self._update_node_tab_task(arg)
-            n -= 1
+            elif task == '_init_ais_mon':
+                self._init_ais_mon()
+            elif task == '_node_tree_init':
+                self._node_tree_init()
+            elif task == '_obj_tree_init':
+                self._obj_tree_init()
+            self._tasker_n -= 1
+        self._tasker_n = 10
+
         return True
 
     def _add_tasker_q(self, fnc: str, arg):
