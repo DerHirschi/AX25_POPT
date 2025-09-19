@@ -502,8 +502,11 @@ class AX25PortHandler(object):
             return False
         # self.aprs_ais.loop_is_running = True
         threading.Thread(target=self.aprs_ais.ais_rx_task).start()
-        if self.aprs_ais.ais_mon_gui is not None:
-            self.aprs_ais.ais_mon_gui.set_ais_obj()
+        gui = self.get_gui()
+        if hasattr(gui, 'get_ais_mon_gui'):
+            ais_mon_gui = gui.get_ais_mon_gui()
+            if hasattr(ais_mon_gui, 'set_ais_obj'):
+                ais_mon_gui.set_ais_obj()
         logger.info("PH: APRS-AIS Init complete.")
         return True
 

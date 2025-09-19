@@ -8,7 +8,8 @@ from datetime import datetime
 
 from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
-from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, APRS_INET_PORT_ID, APRS_CQ_ADDRESSES
+from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, APRS_INET_PORT_ID, APRS_CQ_ADDRESSES, APRS_MAX_BUFFER, \
+    APRS_MAX_OBJ_TAB
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
 from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
@@ -80,8 +81,7 @@ class APRS_ais(object):
         self._be_auto_tracer_timer = 0
         """"""
         self.ais = None
-        self.ais_mon_gui = None
-        self.ais_rx_buff = deque([] * 5000, maxlen=5000)
+        self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
         """ Loop Control """
         self.loop_is_running            = False
         self._non_prio_task_timer       = time.time()
@@ -116,7 +116,7 @@ class APRS_ais(object):
             self.ais_lon = lon
 
     def del_ais_rx_buff(self):
-        self.ais_rx_buff = deque([] * 5000, maxlen=5000)
+        self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
 
     def save_conf_to_file(self):
         # print("Save APRS Conf")
@@ -327,8 +327,9 @@ class APRS_ais(object):
 
     def _aprs_process_rx(self, aprs_pack):
         self.ais_rx_buff.append(aprs_pack)
-        if self.ais_mon_gui is not None:
-            self.ais_mon_gui.pack_to_mon(aprs_pack)
+        ais_mon_gui = self._get_ais_mon_gui()
+        if hasattr(ais_mon_gui, 'pack_to_mon'):
+            ais_mon_gui.pack_to_mon(aprs_pack)
 
         if not aprs_pack:
             return False
@@ -432,11 +433,15 @@ class APRS_ais(object):
             else:
                 self._object_tab[object_id] = ent
             self._object_tab.move_to_end(object_id, last=False)
+            while len(self._object_tab) > APRS_MAX_OBJ_TAB:
+                del self._object_tab[list(self._object_tab.keys())[-1]]
+
             aprs_object = deepcopy(self._object_tab[object_id])
 
         self._node_tab.move_to_end(node_id, last=False)
-        if hasattr(self.ais_mon_gui, 'update_node_tab'):
-            self.ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
+        ais_mon_gui = self._get_ais_mon_gui()
+        if hasattr(ais_mon_gui, 'update_node_tab'):
+            ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
 
 
     ##########################
@@ -1022,6 +1027,11 @@ class APRS_ais(object):
         self._wx_update_tr = False
         return True
 
+    def _get_ais_mon_gui(self):
+        gui = self._port_handler.get_gui()
+        if hasattr(gui, 'get_ais_mon_gui'):
+            return gui.get_ais_mon_gui()
+        return None
     ############################################
     # Helper
     @staticmethod

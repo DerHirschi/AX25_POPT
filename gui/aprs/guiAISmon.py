@@ -6,10 +6,9 @@ from tkinter.scrolledtext import ScrolledText
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import format_aprs_f_aprs_mon
-from cfg.constant import FONT, APRS_INET_PORT_ID
+from cfg.constant import FONT, APRS_INET_PORT_ID, APRS_MAX_TREE_ITEMS
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.gui_fnc import build_aprs_icon_tab
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 
 
@@ -43,9 +42,8 @@ class AISmonitor(tk.Toplevel):
         self._call_filter_list      = []
         self._sort_rev              = False
         ####
-        self._tasker_q_timer        = time.time()
+        #self._tasker_q_timer        = time.time()
         self._tasker_q              = []
-        self._tasker_n              = 1
         ##############################################
         self._set_node_c = lambda n: f"Total Nodes: {n}"
         ##############################################
@@ -404,7 +402,6 @@ class AISmonitor(tk.Toplevel):
         if self._ais_obj is not None:
             self._call_filter_list.append(self._ais_obj.ais_call)
             self._call_filter_calls_var.set(self._ais_obj.ais_call)
-            self._ais_obj.ais_mon_gui = self
             """
             for port_id in self._ais_aprs_stations.keys():
                 if self._ais_aprs_stations[port_id].aprs_parm_call:
@@ -412,13 +409,18 @@ class AISmonitor(tk.Toplevel):
                         self._ais_aprs_stations[port_id].aprs_parm_call
                     )
             """
-        root_win.aprs_mon_win = self
         #self._init_ais_mon()
         #self._node_tree_init()
         #self._obj_tree_init()
-        self._add_tasker_q("_init_ais_mon",   None)
-        self._add_tasker_q("_node_tree_init", None)
-        self._add_tasker_q("_obj_tree_init",  None)
+        # self._add_tasker_q("_init_ais_mon",   None)
+        #self._add_tasker_q("_node_tree_init", None)
+        #t = time.time()
+        self._node_tree_init()
+        self._init_ais_mon()
+        self._obj_tree_init()
+        #print(f"Init-t: {time.time() - t} s")
+        #self._add_tasker_q("_init_ais_mon",   None)
+        root_win.aprs_mon_win = self
 
     #############################################################
     def _sort_entry(self, col, tree):
@@ -447,7 +449,11 @@ class AISmonitor(tk.Toplevel):
         for i in tree.get_children():
             tree.delete(i)
 
+
     def _add_to_tree(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True):
+        self._add_tasker_q("_add_to_tree", (tree_data, tree, add_to_end, auto_scroll))
+
+    def _add_to_tree_task(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True):
         is_scrolled_to_top = tree.yview()[0] == 0.0
         image = self._aprs_icon_tab.get(tree_data[-1], None)
         if add_to_end:
@@ -469,8 +475,8 @@ class AISmonitor(tk.Toplevel):
             return
 
         tree_items = tree.get_children()
-        if len(tree_items) > 5000:
-            for item in tree_items[5000:]:
+        if len(tree_items) > APRS_MAX_TREE_ITEMS:
+            for item in tree_items[APRS_MAX_TREE_ITEMS:]:
                 tree.delete(item)
 
         if not is_scrolled_to_top and not add_to_end and auto_scroll :
@@ -523,6 +529,7 @@ class AISmonitor(tk.Toplevel):
             return
         obj_tab: dict = self._ais_obj.get_obj_tab()
         port_filter   = self._port_filter_var.get()
+        n = APRS_MAX_TREE_ITEMS
         for node_id, ent in dict(obj_tab).items():
             port = ent.get('port_id', '')
             if port_filter and port_filter != port:
@@ -531,6 +538,9 @@ class AISmonitor(tk.Toplevel):
             if not tree_data:
                 continue
             self._add_to_tree(tree_data, tree=self._obj_tree)
+            n -= 1
+            if not n:
+                break
 
     @staticmethod
     def _get_treedata_fm_obj_tab(obj_tab_ent: dict):
@@ -813,6 +823,8 @@ class AISmonitor(tk.Toplevel):
         tr              = False
         call_filter_var = self._call_filter.get()
         port_filter     = self._port_filter_var.get()
+        #buf_len = len(self._ais_obj.ais_rx_buff)
+        #tt = time.time()
         for el in list(self._ais_obj.ais_rx_buff):
             if not el:
                 continue
@@ -851,33 +863,27 @@ class AISmonitor(tk.Toplevel):
         if tr:
             self._scroll_to_end()
 
+        #print(f"e_t Total: {time.time() - tt} s")
+        #print(f"buf_len  : {buf_len} ")
+
     ###########################################################
     def tasker(self):
         if not self._tasker_q:
             return False
-        if time.time() < self._tasker_q_timer:
-            return False
-        self._tasker_q_timer = time.time() + 0.1
-        """
-        if len(self._tasker_q) > 10:
-            logger.warning(f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
-            logger.warning(f"self._tasker_q: {self._tasker_q}")
-        """
-        while self._tasker_q and self._tasker_n:
+
+        tasker_n = 20
+
+        while self._tasker_q and tasker_n:
             task, arg = self._tasker_q[0]
             self._tasker_q = self._tasker_q[1:]
             if task == 'pack_to_mon':
                 self._pack_to_mon_task(arg)
             elif task == 'update_node_tab':
                 self._update_node_tab_task(arg)
-            elif task == '_init_ais_mon':
-                self._init_ais_mon()
-            elif task == '_node_tree_init':
-                self._node_tree_init()
-            elif task == '_obj_tree_init':
-                self._obj_tree_init()
-            self._tasker_n -= 1
-        self._tasker_n = 10
+            elif task == '_add_to_tree':
+                tree_data, tree, add_to_end, auto_scroll = arg
+                self._add_to_tree_task(tree_data, tree, add_to_end, auto_scroll)
+            tasker_n -= 1
 
         return True
 
@@ -1000,7 +1006,6 @@ class AISmonitor(tk.Toplevel):
 
     def _destroy_win(self):
         # self.tasker = lambda: 0
-        self._ais_obj.ais_mon_gui  = None
         self._root_cl.aprs_mon_win = None
         # self._ais_obj.ais_rx_buff = self._tmp_buffer + self._ais_obj.ais_rx_buff
         self.destroy()

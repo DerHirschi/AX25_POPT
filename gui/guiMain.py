@@ -872,6 +872,8 @@ class PoPT_GUI_Main:
 
         # QSO
         out_txt_men = ContextMenu(self._qso_txt)
+        out_txt_men.add_item(self._getTabStr('send_selected'), self._send_selected)
+        out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
@@ -892,6 +894,10 @@ class PoPT_GUI_Main:
         mon_txt_men.add_item(self._getTabStr('save_mon_to_file'), self._save_monitor_to_file)
         mon_txt_men.add_separator()
         mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
+        # Mon Tab
+        # TODO
+        #mon_tree_men = ContextMenu(self._mon_tree)
+        #mon_tree_men.add_item('Connect', self._monitor_tree_conn_selected)
 
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
@@ -1486,7 +1492,6 @@ class PoPT_GUI_Main:
         self._qso_txt.tag_raise(tk.SEL)
         self._mon_txt.tag_raise(tk.SEL)
 
-
     #######################################
     # KEYBIND Stuff
     def _set_binds(self):
@@ -1693,6 +1698,24 @@ class PoPT_GUI_Main:
         self._inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
         self._inp_txt.see(tk.INSERT)  #
 
+    def _send_selected(self):
+        if not self.channel_index:
+            return
+        if not self._qso_txt.tag_ranges("sel"):
+            return
+        selected_text = self._qso_txt.selection_get()
+        selected_text += '\n'
+        #self._inp_txt.tag_remove('send', '0.0', 'end')
+        self._inp_txt.insert('insert', '\n')
+        #ind = self._inp_txt.index(tk.INSERT)
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
+        self._inp_txt.insert('insert', selected_text)
+        #self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
+        self._snd_text()
+        self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        self._inp_txt.tag_remove('send', "0.0", str(self._inp_txt.index('end')))
+        self._inp_txt.tag_add('send', "0.0", str(self._inp_txt.index('end')))
 
     ##########################
     # Pre-write Text Stuff
@@ -2381,6 +2404,66 @@ class PoPT_GUI_Main:
         ))
     """
 
+    def _monitor_task(self):
+        mon_buff = self._port_handler.get_monitor_data()
+        if mon_buff:
+            mon_conf = {
+                "port_name": '',
+                "distance": bool(self.mon_dec_dist_var.get()),
+                "aprs_dec": bool(self.mon_dec_aprs_var.get()),
+                "nr_dec"  : bool(self.mon_dec_nr_var.get()),
+                "hex_out" : bool(self.mon_dec_hex_var.get()),
+                "decoding": str(self.setting_mon_encoding.get()),
+            }
+            tr = False
+            self._mon_txt.configure(state="normal")
+            for axframe_conf, port_conf, tx in mon_buff:
+                port_id = port_conf.get('parm_PortNr', -1)
+                axframe_conf['tx']   = tx
+                axframe_conf['port'] = port_id
+                self._monitor_tree_update(axframe_conf)
+
+                mon_conf['port_name'] = port_conf.get('parm_PortName', '')
+                mon_str = monitor_frame_inp(axframe_conf, mon_conf)
+
+                var = tk_filter_bad_chars(mon_str)
+                ind = self._mon_txt.index('end-1c')
+                # TODO Autoscroll
+                if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
+                    tr = True
+                if tx:
+                    tag = f"tx{port_id}"
+                else:
+                    tag = f"rx{port_id}"
+
+                if tag in self._mon_txt.tag_names(None):
+                    self._mon_txt.insert(tk.END, var, tag)
+                else:
+                    self._mon_txt.insert(tk.END, var)
+                    ind2 = self._mon_txt.index('end-1c')
+                    self._mon_txt.tag_add(tag, ind, ind2)
+            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+            if cut_len > 0:
+                self._mon_txt.delete('1.0', f"{cut_len}.0")
+            if tr or self.mon_scroll_var.get():
+                self._see_end_mon_win()
+            self._mon_txt.configure(state="disabled", exportselection=True)
+            return True
+        return False
+
+    def see_end_inp_win(self):
+        self._inp_txt.see("end")
+
+    def see_end_qso_win(self):
+        self._qso_txt.see("end")
+
+    def _see_end_mon_win(self):
+        self._mon_txt.see("end")
+
+    # END Monitor WIN
+    ###############################################################
+    ###############################################################
+    # Monitor Tree
     def _monitor_tree_update(self, ax25pack_conf: dict):
         via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
         ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
@@ -2448,64 +2531,32 @@ class PoPT_GUI_Main:
                 # logger.warning(e)
                 pass
 
-    def _monitor_task(self):
-        mon_buff = self._port_handler.get_monitor_data()
-        if mon_buff:
-            mon_conf = {
-                "port_name": '',
-                "distance": bool(self.mon_dec_dist_var.get()),
-                "aprs_dec": bool(self.mon_dec_aprs_var.get()),
-                "nr_dec"  : bool(self.mon_dec_nr_var.get()),
-                "hex_out" : bool(self.mon_dec_hex_var.get()),
-                "decoding": str(self.setting_mon_encoding.get()),
-            }
-            tr = False
-            self._mon_txt.configure(state="normal")
-            for axframe_conf, port_conf, tx in mon_buff:
-                port_id = port_conf.get('parm_PortNr', -1)
-                axframe_conf['tx']   = tx
-                axframe_conf['port'] = port_id
-                self._monitor_tree_update(axframe_conf)
+    """
+    def _monitor_tree_conn_selected(self):
+        if not self._mon_tree.selection():
+            return
+        selected =  self._mon_tree.selection()[0]
+        item     = self._mon_tree.item(selected)
+        record     = item['values']
+        call = record[3].split('(')[0]
+        vias = record[5]
+        vias = vias.replace('*', '').split('>')
+        vias.reverse()
+        vias = [x.split('(')[0] for x in list(vias)]
+        vias = ' '.join(vias)
+        port = record[2]
 
-                mon_conf['port_name'] = port_conf.get('parm_PortName', '')
-                mon_str = monitor_frame_inp(axframe_conf, mon_conf)
 
-                var = tk_filter_bad_chars(mon_str)
-                ind = self._mon_txt.index('end-1c')
-                # TODO Autoscroll
-                if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
-                    tr = True
-                if tx:
-                    tag = f"tx{port_id}"
-                else:
-                    tag = f"rx{port_id}"
+        if type(port) is str:
+            port = int(port.split('-')[0])
 
-                if tag in self._mon_txt.tag_names(None):
-                    self._mon_txt.insert(tk.END, var, tag)
-                else:
-                    self._mon_txt.insert(tk.END, var)
-                    ind2 = self._mon_txt.index('end-1c')
-                    self._mon_txt.tag_add(tag, ind, ind2)
-            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
-            if cut_len > 0:
-                self._mon_txt.delete('1.0', f"{cut_len}.0")
-            if tr or self.mon_scroll_var.get():
-                self._see_end_mon_win()
-            self._mon_txt.configure(state="disabled", exportselection=True)
-            return True
-        return False
-
-    def see_end_inp_win(self):
-        self._inp_txt.see("end")
-
-    def see_end_qso_win(self):
-        self._qso_txt.see("end")
-
-    def _see_end_mon_win(self):
-        self._mon_txt.see("end")
-
-    # END Monitor WIN
-    ###############################################################
+        if vias:
+            call = f'{call} {vias}'
+        if not self.new_conn_win:
+            self.open_new_conn_win()
+        if self.new_conn_win:
+            self.new_conn_win.preset_ent(call, port)
+    """
 
     ###############################################################
     # Dual Port
@@ -2671,7 +2722,7 @@ class PoPT_GUI_Main:
     #######################################################################
     #######################################################################
     # SEND TEXT OUT
-    def _snd_text(self, event: tk.Event):
+    def _snd_text(self, event=None):
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
@@ -3591,6 +3642,9 @@ class PoPT_GUI_Main:
 
     def get_aprs_icon_tab_16(self):
         return self._aprs_icon_tab_16
+
+    def get_ais_mon_gui(self):
+        return self.aprs_mon_win
 
     #####################################
     def _set_port_blocking(self, state=0):

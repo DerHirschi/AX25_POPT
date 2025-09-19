@@ -45,6 +45,8 @@ Neue Implementierungen / Funktionen:
 - "MSG-Paket Liste" im APRS-Monitor
 - "Bulletin-Paket Liste" im APRS-Monitor
 - Zusätzlicher Monitor in Tabellenansicht im Hauptfenster
+- QSO-Fenster Rechtsklick "Auswahl senden" - sendet ausgewählten Text oder
+  Kommando an Gegenstation
 
 ###########################################################################################################
 ###########################################################################################################

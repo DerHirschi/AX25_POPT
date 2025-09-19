@@ -1325,6 +1325,18 @@ STR_TABLE = {
         '',
         '',
         '',
+        ''), # send_selected
+
+    'send_selected': (
+        'Auswahl senden',
+        'Send selected',
+        'Selectie verzenden',
+        'Envoyer la sélection',
+        '',
+        '',
+        '',
+        '',
+        '',
         ''),
 
     'clean_mon_win': (
