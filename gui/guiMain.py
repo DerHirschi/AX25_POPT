@@ -2580,9 +2580,11 @@ class PoPT_GUI_Main:
     # Open Toplevel Win
 
     def open_link_holder_sett(self):
+        self.main_win.update_idletasks()
         self._open_settings_window('l_holder')
 
     def open_ft_manager(self, event=None):
+        self.main_win.update_idletasks()
         self._open_settings_window('ft_manager')
 
     def _open_settings_window(self, win_key: str):
@@ -2604,6 +2606,7 @@ class PoPT_GUI_Main:
             'all_sett': SettingsMain,           # New All Settings
         }.get(win_key, '')
         if callable(settings_win):
+            self.main_win.update_idletasks()
             self.settings_win = settings_win(self)
 
     def open_window(self, win_key: str):
@@ -2637,6 +2640,7 @@ class PoPT_GUI_Main:
                 win_list[0].lift()
             return
         if callable(win_list[1]):
+            self.main_win.update_idletasks()
             win_list[1](self)
 
     ##########################
@@ -2647,6 +2651,7 @@ class PoPT_GUI_Main:
                 conn = self.get_conn()
                 if conn is not None:
                     ent_key = conn.to_call_str
+            self.main_win.update_idletasks()
             self.userdb_win = UserDB(self, ent_key)
 
     ##########################
@@ -2659,6 +2664,7 @@ class PoPT_GUI_Main:
     def open_be_tracer_win(self):
         self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         if self.be_tracer_win is None:
+            self.main_win.update_idletasks()
             self.be_tracer_win = BeaconTracer(self)
 
     ###################
@@ -2667,6 +2673,7 @@ class PoPT_GUI_Main:
         """MH WIN"""
         self._port_handler.set_dxAlarm(False)
         if self.mh_window is None:
+            self.main_win.update_idletasks()
             MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
         self.tabbed_sideFrame2.reset_dx_alarm()
