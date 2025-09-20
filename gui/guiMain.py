@@ -2569,10 +2569,9 @@ class PoPT_GUI_Main:
     ###############################################################
     # Dual Port
     def _dualPort_monitor_task(self):
-        if not self.dualPortMon_win:
+        if not hasattr(self.dualPortMon_win, 'dB_mon_tasker'):
             return False
-        self.dualPortMon_win.dB_mon_tasker()
-        return True
+        return self.dualPortMon_win.dB_mon_tasker()
 
     ###############################################################
 

@@ -290,10 +290,13 @@ class DualPort_Monitor(tk.Toplevel):
         try:
             ind = self._tabControl_prim_ports.index(self._tabControl_prim_ports.select())
         except TclError:
-            pass
+            return False
         else:
             if ind in self.tab_list.keys():
                 self.tab_list[ind].tab_tasker()
+                return True
+        return False
+
 
     def _close(self):
         self._root_win.dualPortMon_win = None
