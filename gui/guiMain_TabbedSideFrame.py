@@ -748,10 +748,12 @@ class SideTabbedFrame:
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except TclError:
-            pass
+            return False
         else:
             if ind in self._tasker_dict.keys():
                 self._tasker_dict[ind]()
+                return True
+        return False
 
     def _entry_selected(self, event):
         for selected_item in self._tree.selection():
@@ -960,10 +962,12 @@ class SideTabbedFrame:
         try:
             ind = self._tabControl.index(self._tabControl.select())
         except TclError:
-            pass
+            return False
         else:
             if ind != 0:
-                return
+                return False
+        ret = False
+
         conn = self._main_win.get_conn()
         if conn:
             if self._ch_is_disc:
@@ -987,7 +991,7 @@ class SideTabbedFrame:
                 self._t2.configure(state='disabled')
             else:
                 self._t2.configure(state='normal')
-
+            ret = True
         else:
             if not self._ch_is_disc:
                 self._ch_is_disc = True
@@ -1006,8 +1010,12 @@ class SideTabbedFrame:
                 self._tx_buff_var.set('TX-Buffer: --- kb')
                 self._tx_count_var.set('TX: --- kb')
                 self._rx_count_var.set('RX: --- kb')
+                ret = True
 
-        self._t2speech_var.set(self._main_win.get_ch_var().t2speech)
+        if self._t2speech_var.get() != self._main_win.get_ch_var().t2speech:
+            self._t2speech_var.set(self._main_win.get_ch_var().t2speech)
+            ret = True
+        return ret
         # self._update_ch_echo()
 
     def _set_max_frame(self):

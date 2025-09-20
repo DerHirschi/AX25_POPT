@@ -156,11 +156,14 @@ class AX25PortHandler(object):
 
     def tasker_gui_th(self):
         if not self.is_running:
-            return
+            return False
         # self._prio_task()
-        self._05sec_task()
-        self._1sec_task()
-        self._2sec_task()
+        return any((
+            self._05sec_task(),
+            self._1sec_task(),
+            self._2sec_task(),
+        ))
+
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
@@ -174,6 +177,8 @@ class AX25PortHandler(object):
             self._aprs_task()
             self._gpio_task()
             self._task_timer_05sec = time.time() + 0.5
+            return True
+        return False
 
     def _1sec_task(self):
         """ 1 Sec """
@@ -182,6 +187,8 @@ class AX25PortHandler(object):
             self._mh_task()
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
+            return True
+        return False
 
     def _2sec_task(self):
         """ 2 Sec """
@@ -189,6 +196,8 @@ class AX25PortHandler(object):
             self._bbs.main_cron()
             self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
+            return True
+        return False
 
     #######################################################################
     # Port Watchdog
@@ -511,8 +520,9 @@ class AX25PortHandler(object):
         return True
 
     def _aprs_task(self):
-        if self.aprs_ais is not None:
-            self.aprs_ais.task()
+        if hasattr(self.aprs_ais, 'task'):
+            return self.aprs_ais.task()
+        return False
 
     def _close_aprs_ais(self):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """

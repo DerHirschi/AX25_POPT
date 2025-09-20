@@ -29,6 +29,7 @@ Optimierung/Änderungen:
 - APRS-Servermonitor überarbeitet
 - APRS-Servermonitor ist jetzt APRS-Monitor in dem APRS-Pakete
   aus allen Quellen(Ports) angezeigt werden
+- MainGUI Tasker update_idletasks() wird jetzt nur wenn nötig ausgeführt
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

@@ -228,7 +228,7 @@ class APRS_ais(object):
 
     def task(self):
         # self.prio_tasks()
-        self._non_prio_tasks()
+        return self._non_prio_tasks()
 
     """
     def prio_tasks(self):
@@ -253,6 +253,8 @@ class APRS_ais(object):
             if hasattr(self._port_handler, 'update_gui_aprs_spooler'):
                 self._port_handler.update_gui_aprs_spooler()
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
+            return True
+        return False
 
     def ais_rx_task(self):
         """ Thread loop called fm Porthandler Init """

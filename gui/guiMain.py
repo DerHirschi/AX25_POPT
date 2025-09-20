@@ -222,6 +222,12 @@ class PoPT_GUI_Main:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
         self.mon_port_var.set('0')
+        # Monitor Tree
+        self._mon_tree_port_filter_var       = tk.StringVar(self.main_win, value='')
+        self._mon_tree_to_call_filter_var    = tk.StringVar(self.main_win, value='')
+        self._mon_tree_fm_call_filter_var    = tk.StringVar(self.main_win, value='')
+        self._mon_tree_ctl_packet_filter_var = tk.StringVar(self.main_win, value='')
+        self._mon_tree_pid_packet_filter_var = tk.StringVar(self.main_win, value='')
         ##############
         # Controlling
         self._ch_alarm      = False
@@ -235,7 +241,7 @@ class PoPT_GUI_Main:
         self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
         # Tasker
-        self._loop_delay                        = 60  # ms
+        self._loop_delay                        = 50  # ms
         self._parm_non_prio_task_timer          = 0.25  # s
         self._parm_non_non_prio_task_timer      = 1  # s
         self._parm_non_non_non_prio_task_timer  = 5  # s
@@ -1895,16 +1901,18 @@ class PoPT_GUI_Main:
         if self._quit:
             if self._tasker_quit():
                 return
-            self.main_win.update_idletasks()
+            # self.main_win.update_idletasks()
         else:
-            prio     = self._tasker_prio()
-            if not self._tasker_025_sec():
-                if not self._tasker_1_sec():
-                    if all((not self._tasker_5_sec(),
-                            not prio,
-                            not q_tasker)):
-                        self.main_win.update_idletasks()
-            # self._tasker_tester()
+            prio            = self._tasker_prio()
+            update_needed   = self._tasker_025_sec()
+            if not update_needed:
+                update_needed = self._tasker_1_sec()
+            if not update_needed:
+                update_needed = self._tasker_5_sec()
+            if not update_needed:
+                update_needed = bool(any((prio, q_tasker)))
+            if update_needed:
+                self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
 
     def _tasker_quit(self):
@@ -2005,19 +2013,15 @@ class PoPT_GUI_Main:
         return True
 
     def _tasker_prio(self):
-        """ Prio Tasks every Irritation flip flop """
-        """
-        if self._prio_task_flip:
-            
-        else:
-           
-        self._prio_task_flip = not self._prio_task_flip
-        """
+        """ Prio Tasks every Irritation """
+
+        ph_task = False
         if hasattr(self._port_handler, 'tasker_gui_th'):
-            self._port_handler.tasker_gui_th()
+            ph_task = self._port_handler.tasker_gui_th()
         ret = any((
             self._monitor_task(),
             self._ais_monitor_task(),
+            ph_task
         ))
         return ret
 
@@ -2028,15 +2032,15 @@ class PoPT_GUI_Main:
             #####################
             # self._aprs_task()
             # self._monitor_task()
-            self._dualPort_monitor_task()
-            self._update_qso_win()
-            self._SideFrame_tasker()
-            self._update_status_bar()
+            ret = self._dualPort_monitor_task()
+            ret = any((self._update_qso_win(),    ret))
+            ret = any((self._SideFrame_tasker(),  ret))
+            ret = any((self._update_status_bar(), ret))
             if self._flip025:
-                self._AlarmIcon_tasker05()
+                ret = any((self._AlarmIcon_tasker05(), ret))
             #####################
             self._flip025 = not self._flip025
-            return True
+            return ret
         return False
 
     def _tasker_1_sec(self):
@@ -2132,9 +2136,10 @@ class PoPT_GUI_Main:
 
     #######################################################################
     def _AlarmIcon_tasker05(self):
-        if not self._Alarm_Frame:
-            return
+        if not hasattr(self._Alarm_Frame, 'AlarmIcon_tasker05'):
+            return False
         self._Alarm_Frame.AlarmIcon_tasker05()
+        return True
 
     def _AlarmIcon_tasker1(self):
         if not self._Alarm_Frame:
@@ -2144,11 +2149,15 @@ class PoPT_GUI_Main:
 
     def _SideFrame_tasker(self):
         if self._flip025:
-            self.tabbed_sideFrame.tasker()
-            self.tabbed_sideFrame.on_ch_stat_change()
-        else:
-            self.tabbed_sideFrame2.tasker()
+            return any((
+                self.tabbed_sideFrame.tasker(),
+                self.tabbed_sideFrame.on_ch_stat_change()
+            ))
+
+        return any((
+            self.tabbed_sideFrame2.tasker(),
             self.tabbed_sideFrame2.on_ch_stat_change()
+        ))
 
     def _check_port_blocking_task(self):
         if hasattr(self._port_handler, 'get_glb_port_blocking'):
@@ -2170,6 +2179,8 @@ class PoPT_GUI_Main:
                     tr = True
         if tr:
             self.ch_status_update()
+            return True
+        return False
 
     def _update_qso(self, conn):
         if not conn:
@@ -2403,50 +2414,50 @@ class PoPT_GUI_Main:
 
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
-        if mon_buff:
-            mon_conf = {
-                "port_name": '',
-                "distance": bool(self.mon_dec_dist_var.get()),
-                "aprs_dec": bool(self.mon_dec_aprs_var.get()),
-                "nr_dec"  : bool(self.mon_dec_nr_var.get()),
-                "hex_out" : bool(self.mon_dec_hex_var.get()),
-                "decoding": str(self.setting_mon_encoding.get()),
-            }
-            tr = False
-            self._mon_txt.configure(state="normal")
-            for axframe_conf, port_conf, tx in mon_buff:
-                port_id = port_conf.get('parm_PortNr', -1)
-                axframe_conf['tx']   = tx
-                axframe_conf['port'] = port_id
-                self._monitor_tree_update(axframe_conf)
+        if not mon_buff:
+            return False
+        mon_conf = {
+            "port_name": '',
+            "distance": bool(self.mon_dec_dist_var.get()),
+            "aprs_dec": bool(self.mon_dec_aprs_var.get()),
+            "nr_dec"  : bool(self.mon_dec_nr_var.get()),
+            "hex_out" : bool(self.mon_dec_hex_var.get()),
+            "decoding": str(self.setting_mon_encoding.get()),
+        }
+        tr = False
+        self._mon_txt.configure(state="normal")
+        for axframe_conf, port_conf, tx in mon_buff:
+            port_id = port_conf.get('parm_PortNr', -1)
+            axframe_conf['tx']   = tx
+            axframe_conf['port'] = port_id
+            self._monitor_tree_update(axframe_conf)
 
-                mon_conf['port_name'] = port_conf.get('parm_PortName', '')
-                mon_str = monitor_frame_inp(axframe_conf, mon_conf)
+            mon_conf['port_name'] = port_conf.get('parm_PortName', '')
+            mon_str = monitor_frame_inp(axframe_conf, mon_conf)
 
-                var = tk_filter_bad_chars(mon_str)
-                ind = self._mon_txt.index('end-1c')
-                # TODO Autoscroll
-                if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
-                    tr = True
-                if tx:
-                    tag = f"tx{port_id}"
-                else:
-                    tag = f"rx{port_id}"
+            var = tk_filter_bad_chars(mon_str)
+            ind = self._mon_txt.index('end-1c')
+            # TODO Autoscroll
+            if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
+                tr = True
+            if tx:
+                tag = f"tx{port_id}"
+            else:
+                tag = f"rx{port_id}"
 
-                if tag in self._mon_txt.tag_names(None):
-                    self._mon_txt.insert(tk.END, var, tag)
-                else:
-                    self._mon_txt.insert(tk.END, var)
-                    ind2 = self._mon_txt.index('end-1c')
-                    self._mon_txt.tag_add(tag, ind, ind2)
-            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
-            if cut_len > 0:
-                self._mon_txt.delete('1.0', f"{cut_len}.0")
-            if tr or self.mon_scroll_var.get():
-                self._see_end_mon_win()
-            self._mon_txt.configure(state="disabled", exportselection=True)
-            return True
-        return False
+            if tag in self._mon_txt.tag_names(None):
+                self._mon_txt.insert(tk.END, var, tag)
+            else:
+                self._mon_txt.insert(tk.END, var)
+                ind2 = self._mon_txt.index('end-1c')
+                self._mon_txt.tag_add(tag, ind, ind2)
+        cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+        if cut_len > 0:
+            self._mon_txt.delete('1.0', f"{cut_len}.0")
+        if tr or self.mon_scroll_var.get():
+            self._see_end_mon_win()
+        self._mon_txt.configure(state="disabled", exportselection=True)
+        return True
 
     def see_end_inp_win(self):
         self._inp_txt.see("end")
@@ -3251,6 +3262,7 @@ class PoPT_GUI_Main:
     #########################################
     # TxTframe FNCs
     def _update_status_bar(self):
+        ret = False
         station = self.get_conn(self.channel_index)
         fg, bg = self._get_colorMap()
         if station is not None:
@@ -3274,9 +3286,13 @@ class PoPT_GUI_Main:
             ##
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
+                ret = True
+
             if self._status_status_var.get() != status_text:
                 self._status_status_var.set(status_text)
                 self._status_status.configure(bg=status_bg)
+                ret = True
+
             if self._status_unack_var.get() != unAck:
                 self._status_unack_var.set(unAck)
                 if len(station.tx_buf_unACK.keys()):
@@ -3285,8 +3301,11 @@ class PoPT_GUI_Main:
                 else:
                     if self._status_unack.cget('bg') != 'green':
                         self._status_unack.configure(bg='green')
+                ret = True
+
             if self._status_vs_var.get() != vs_vr:
                 self._status_vs_var.set(vs_vr)
+                ret = True
             if self._status_n2_var.get() != n2_text:
                 self._status_n2_var.set(n2_text)
                 if n2 > 4:
@@ -3301,15 +3320,23 @@ class PoPT_GUI_Main:
                     if self._status_n2.cget('bg') != bg:
                         self._status_n2.configure(bg=bg)
                         self._status_n2.configure(fg=fg)
+                ret = True
+
             if self._status_t1_var.get() != t1_text:
                 self._status_t1_var.set(t1_text)
+                ret = True
+
             if self._status_t2_var.get() != t2_text:
                 self._status_t2_var.set(t2_text)
+                ret = True
+
             if self._status_rtt_var.get() != rtt_text:
                 self._status_rtt_var.set(rtt_text)
+                ret = True
+
             if self._status_t3_var.get() != t3_text:
                 self._status_t3_var.set(t3_text)
-
+                ret = True
         else:
 
             if self._status_status.cget('bg') != bg:
@@ -3327,6 +3354,8 @@ class PoPT_GUI_Main:
                 self._status_t2_var.set('')
                 self._status_t3_var.set('')
                 self._status_rtt_var.set('')
+                ret = True
+        return ret
 
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
