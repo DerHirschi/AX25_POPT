@@ -465,7 +465,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Closing GUI: Closing Ports.')
         self._sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._port_handler.close_popt).start()
-        self.main_win.update_idletasks()
+        #self.main_win.update_idletasks()
         #self._loop_delay = 800
         #logger.info('GUI: Closing GUI: Done')
 
@@ -1895,6 +1895,7 @@ class PoPT_GUI_Main:
         if self._quit:
             if self._tasker_quit():
                 return
+            self.main_win.update_idletasks()
         else:
             prio     = self._tasker_prio()
             if not self._tasker_025_sec():
@@ -1916,11 +1917,9 @@ class PoPT_GUI_Main:
         self.main_win.quit()
         try:
             self.main_win.destroy()
+            logger.info('GUI: Closing GUI: Done')
         except Exception as ex:
             logger.warning(ex)
-        # self._port_handler.close_gui()
-        # logger.info('GUI: Closing GUI: _tasker_quit Done.')
-        logger.info('GUI: Closing GUI: Done')
         return True
 
     def _tasker_queue(self):
@@ -2253,8 +2252,6 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = my_call
         else:
             logger.error('Conn: _update_qso_rx: no Tagname')
-            print('Conn: _update_qso_rx: no Tagname')
-            print(f"Conn: last Tag: {Ch_var.last_tag_name}")
             logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
             tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
