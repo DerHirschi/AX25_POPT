@@ -12,6 +12,7 @@ Fixes:
   werden nicht erneut zum FWD angeboten.
 - S&F-Forwardverbindung: Header Parsing Error bei Bulletin Mails von WinBox
 - FWD-Statistik mail_bytes_tx Zähler hat falschen Wert erfasst
+- Asynchrone Ausgabe der "SYS-Nachrichten" (*** connected to ..., ...)
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange

@@ -2017,7 +2017,7 @@ class PoPT_GUI_Main:
                 self._resetHome_LivePath_plot_task(ch_id)
             elif task == 'sysMsg_to_qso':
                 data, ch_index = arg
-                self._sysMsg_to_qso_task(data, ch_index)
+                self.sysMsg_to_qso_task(data, ch_index)
             elif task == 'dx_alarm':
                 self._dx_alarm_task()
             elif task == 'tracer_alarm':
@@ -2064,6 +2064,7 @@ class PoPT_GUI_Main:
             elif task == 'update_tracer_win':
                 self._update_tracer_win_task()
             elif task == '_monitor_tree_update':
+                # No Prio
                 self._monitor_tree_update_task(arg)
             n -= 1
 
@@ -2262,8 +2263,11 @@ class PoPT_GUI_Main:
         gui_buf = list(conn.rx_tx_buf_guiData)
         conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
         for qso_data in gui_buf:
-            if qso_data[0] == 'TX':
-                self._update_qso_tx(conn, qso_data[1])
+            if qso_data[0] == 'SYS':
+                ch_id = conn.ch_index
+                self.sysMsg_to_qso_task(qso_data[1], ch_id)
+                #self._update_qso_tx(conn, qso_data[1])
+
             else:
                 self._update_qso_rx(conn, qso_data[1])
 
@@ -2406,7 +2410,7 @@ class PoPT_GUI_Main:
     def sysMsg_to_qso(self, data, ch_index):
         self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
 
-    def _sysMsg_to_qso_task(self, data, ch_index):
+    def sysMsg_to_qso_task(self, data, ch_index):
         if not data:
             return
         if 1 > ch_index > SERVICE_CH_START - 1:

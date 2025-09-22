@@ -338,7 +338,7 @@ class NewConnWin(tk.Toplevel):
 
             call_list = get_list_fm_viaStr(addrs_str)
             if not call_list:
-                self._main.sysMsg_to_qso('*** Error. No valid Address.', ch_id)
+                self._main.sysMsg_to_qso_task('*** Error. No valid Address.', ch_id)
                 return
             dest_call = call_list[0]
             via_calls = call_list[1:]
@@ -370,7 +370,7 @@ class NewConnWin(tk.Toplevel):
                     if axip_port.isdigit() and check_ip_add_format(axip_ip):
                         axip_address = axip_ip, int(axip_port)
                     else:
-                        self._main.sysMsg_to_qso('*** Error. No valid AXIP-Address.', ch_id)
+                        self._main.sysMsg_to_qso_task('*** Error. No valid AXIP-Address.', ch_id)
                         return
 
                 # conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
@@ -384,7 +384,7 @@ class NewConnWin(tk.Toplevel):
                     link_conn=None,  # Linked Connection AX25Conn
                     channel=int(ch_id)  # Channel/Connection Index = Channel-ID
                 )
-                self._main.sysMsg_to_qso(msg, ch_id)
+                self._main.sysMsg_to_qso_task(msg, ch_id)
 
                 if conn:
                     if addrs_str in list(self._conn_hist.keys()):

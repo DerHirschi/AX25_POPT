@@ -602,15 +602,16 @@ class AX25PortHandler(object):
         lb_msg = f"CH {ch_id} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
         LOG_BOOK.info(lb_msg)
         LOG_BOOK.info(lb_msg_1)
+        connection.send_sys_Msg_to_gui(msg)
         if self._gui:
             # TODO GUI Stuff > guiMain
             if not connection.LINK_Connection:
                 # TODO: Trigger here, UserDB-Conn C
 
-                self._gui.sysMsg_to_qso(
-                    data=msg,
-                    ch_index=ch_id
-                )
+                #self._gui.sysMsg_to_qso(
+                #    data=msg,
+                #    ch_index=ch_id
+                #)
                 if 0 < ch_id < SERVICE_CH_START:
                     SOUND.new_conn_sound()
                     speech = ' '.join(call_str.replace('-', ' '))
@@ -655,6 +656,7 @@ class AX25PortHandler(object):
         lb_msg_1 = f"CH {ch_id} - {str(conn.my_call_str)}: *** Disconnected fm {call_str}"
         LOG_BOOK.info(lb_msg)
         LOG_BOOK.info(lb_msg_1)
+        #conn.send_sys_Msg_to_gui(msg)
         if self._gui:
             # TODO GUI Stuff > guiMain
             # TODO: Trigger here, UserDB-Conn C

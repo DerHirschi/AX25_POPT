@@ -803,7 +803,6 @@ class AX25Conn:
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
-        logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
 
     def end_connection(self, reconn=True):
         logger.debug(f"end_connection: {self.uid}")
@@ -913,7 +912,6 @@ class AX25Conn:
     """
 
     def _send_gui_QSObuf_rx(self, data):
-        # TODO send to GUI Buffer
         if self.ft_obj:
             return
         if self.pipe:
@@ -921,13 +919,11 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('RX', data)
         )
-        """
-        if not self._gui:
-            return
-        if not hasattr(self._gui, 'update_qso'):
-            return
-        self._gui.update_qso(self)      # TODO send to GUI Buffer
-        """
+
+    def _send_gui_QSObuf_sysMsg(self, data):
+        self.rx_tx_buf_guiData.append(
+            ('SYS', data)
+        )
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
@@ -1270,13 +1266,17 @@ class AX25Conn:
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
-        lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-        LOG_BOOK.info(lb_msg)
-        LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
-        gui = self._port_handler.get_gui()
-        if not hasattr(gui, 'sysMsg_to_qso'):
-            return
-        gui.sysMsg_to_qso(data, self.ch_index)
+        if type(data) != list:
+            data = [data]
+        for msg in data:
+            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {msg}")
+            #gui = self._port_handler.get_gui()
+            #if not hasattr(gui, 'sysMsg_to_qso'):
+            #    return
+            # gui.sysMsg_to_qso(data, self.ch_index)
+            self._send_gui_QSObuf_sysMsg(msg)
 
     def accept_connection(self):
         self._port_handler.accept_new_connection(self)
