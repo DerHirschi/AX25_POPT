@@ -255,6 +255,7 @@ class PoPT_GUI_Main:
         self._tasker_q_timer                    = time.time()
         # Tasker Q
         self._tasker_q                          = []
+        self._tasker_q_prio                     = []
         #
         self._flip025                           = True
         # #### Tester
@@ -1979,18 +1980,24 @@ class PoPT_GUI_Main:
         return True
 
     def _tasker_queue(self):
-        if not self._tasker_q:
+        if not self._tasker_q and not self._tasker_q_prio:
             return False
         #if time.time() < self._tasker_q_timer:
         #    return False
         #self._tasker_q_timer = time.time() + 0.2
-        n = 20
+        n = 25
         #if len(self._tasker_q) > 10:
         #    logger.warning(self._logTag + f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
         #    logger.warning(self._logTag + f"self._tasker_q: {self._tasker_q}")
-        while self._tasker_q and n:
-            task, arg       = self._tasker_q[0]
-            self._tasker_q  = self._tasker_q[1:]
+        while any((self._tasker_q_prio, self._tasker_q)) and n:
+            if self._tasker_q_prio:
+                task, arg = self._tasker_q_prio[0]
+                self._tasker_q_prio = self._tasker_q_prio[1:]
+            elif self._tasker_q:
+                task, arg       = self._tasker_q[0]
+                self._tasker_q  = self._tasker_q[1:]
+            else:
+                break
             if task == 'sysMsg_to_monitor':
                 self._sysMsg_to_monitor_task(arg)
             elif self._quit:
@@ -2146,12 +2153,19 @@ class PoPT_GUI_Main:
 
     # END TASKER
     ######################################################################
-    def _add_tasker_q(self, fnc: str, arg):
-        if (fnc, None) in self._tasker_q:
-            return
-        self._tasker_q.append(
-            (fnc, arg)
-        )
+    def _add_tasker_q(self, fnc: str, arg, prio=True):
+        if prio:
+            if (fnc, None) in self._tasker_q_prio:
+                return
+            self._tasker_q_prio.append(
+                (fnc, arg)
+            )
+        else:
+            if (fnc, None) in self._tasker_q:
+                return
+            self._tasker_q.append(
+                (fnc, arg)
+            )
 
     ######################################################################
     def update_aprs_spooler(self):
@@ -2527,7 +2541,7 @@ class PoPT_GUI_Main:
     ###############################################################
     # Monitor Tree
     def _monitor_tree_update(self, ax25pack_conf: dict):
-        self._add_tasker_q("_monitor_tree_update", ax25pack_conf)
+        self._add_tasker_q("_monitor_tree_update", ax25pack_conf, prio=False)
 
     def _monitor_tree_update_task(self, ax25pack_conf: dict):
         via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]

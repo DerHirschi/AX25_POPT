@@ -883,7 +883,7 @@ class AISmonitor(tk.Toplevel):
         if not self._tasker_q:
             return False
 
-        tasker_n = 30
+        tasker_n = 20
 
         while self._tasker_q and tasker_n:
             task, arg = self._tasker_q[0]

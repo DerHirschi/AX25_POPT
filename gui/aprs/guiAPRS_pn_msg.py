@@ -335,7 +335,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
     def update_aprs_msg(self, aprs_pack):
         if aprs_pack is None:
             self._update_tree()
-            self._update_tree()
         elif 'message' == aprs_pack.get('format', ''):
             self._update_tree()
             if (aprs_pack.get('from', '') == self._chat_address[0]
@@ -354,7 +353,6 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         for i in self._messages_treeview.get_children():
             self._messages_treeview.delete(i)
 
-        tree_data = []
         for form_msg in self._aprs_pn_msg:
             if all((
                 form_msg['addresse'] == self._sender_var.get(),
