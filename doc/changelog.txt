@@ -30,6 +30,8 @@ Optimierung/Änderungen:
 - APRS-Servermonitor ist jetzt APRS-Monitor in dem APRS-Pakete
   aus allen Quellen(Ports) angezeigt werden
 - MainGUI Tasker update_idletasks() wird jetzt nur wenn nötig ausgeführt
+- Gesendeter Text wird jetzt sofort nach der Eingabe im Vorschreibfenster,
+  im QSO-Fenster angezeigt und nicht erst wenn das Paket gesendet wurde.
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange

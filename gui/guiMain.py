@@ -2862,9 +2862,9 @@ class PoPT_GUI_Main:
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
                 tmp_txt = self._inp_txt.get(ind, tk.INSERT)
 
-                tmp_txt = tmp_txt.replace('\n', '\r')
-                station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
-
+                tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
+                station.send_data(tmp_txt)
+                self._update_qso_tx(station, tmp_txt)
                 self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 

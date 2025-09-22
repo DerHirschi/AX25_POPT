@@ -364,6 +364,7 @@ class AX25Conn:
             if type(data) is bytes:
                 self._link_holder_reset()
                 self.tx_buf_rawData += data
+                #self._send_gui_QSObuf_tx(data)
                 return True
         return False
 
@@ -893,6 +894,7 @@ class AX25Conn:
             if new_state:
                 self.zustand_exec.change_state(new_state)
 
+    """
     def _send_gui_QSObuf_tx(self, data):
         # TODO send direct to GUI Buffer
         if self.ft_obj:
@@ -902,13 +904,13 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('TX', data)
         )
-        """
-        if not self._gui:
-            return
-        if not hasattr(self._gui, 'update_qso'):
-            return
-        self._gui.update_qso(self)     # TODO send to GUI Buffer
-        """
+    
+        #if not self._gui:
+        #    return
+        #if not hasattr(self._gui, 'update_qso'):
+        #    return
+        #self._gui.update_qso(self)     # TODO send to GUI Buffer
+    """
 
     def _send_gui_QSObuf_rx(self, data):
         # TODO send to GUI Buffer
@@ -1198,7 +1200,7 @@ class AX25Conn:
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             new_axFrame.payload = self.tx_buf_rawData[:pac_len]
-            self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
+            #self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
             #####################################################################
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = new_axFrame       # Keep Packet until ACK/RR

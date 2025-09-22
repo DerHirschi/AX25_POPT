@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.37'
+VER = '2.120.38'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -216,8 +216,8 @@ DEF_PORT_MON_RX_COL      = 'green'
 DEF_PORT_MON_BG_COL      = '#000000'
 # APRS-MONITOR
 APRS_MAX_TREE_ITEMS     = 10000
-APRS_MAX_BUFFER         = 5000
-APRS_MAX_OBJ_TAB        = 5000
+APRS_MAX_BUFFER         = 2000
+APRS_MAX_OBJ_TAB        = 2000
 # Built-in Styles
 STYLES_BULD_IN_LINUX = [
             'default',
