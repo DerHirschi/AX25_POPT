@@ -124,7 +124,7 @@ class APRSSettingsWin(tk.Toplevel):
 
             # Add content to the "Port 1" tab
             # self.create_settings_widgets(port_tab, self._all_ports[port_id].port_cfg.parm_aprs_station)
-            self.create_settings_widgets(port_tab, POPT_CFG.get_CFG_aprs_station().get(port_id, getNew_APRS_Station_cfg()))
+            self.create_settings_widgets(port_tab, POPT_CFG.get_CFG_aprs_ais().get(port_id, getNew_APRS_Station_cfg()))
 
 
         # Pack the Notebook widget
