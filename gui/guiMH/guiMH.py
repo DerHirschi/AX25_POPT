@@ -474,6 +474,9 @@ class MHWin(tk.Toplevel):
                                     ), None))
     ##########################
     def entry_selected(self, event):
+        pass
+    """
+    def entry_selected(self, event):
         for selected_item in self._tree.selection():
             item = self._tree.item(selected_item)
             record = item['values']
@@ -493,7 +496,7 @@ class MHWin(tk.Toplevel):
             if self._root_win.new_conn_win:
                 self._root_win.new_conn_win.preset_ent(call, port)
             self._close_me()
-
+    """
     def _update_mh(self):
         self._init_tree_data()
         self._update_tree()

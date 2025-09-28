@@ -135,7 +135,7 @@ class SafeTkinterMapView(TkinterMapView):
 
     def _clean_cache(self):
         """ Cache-Cleanup im Hauptthread """
-        while len(self.tile_image_cache) > 1500 and self.running:
+        while len(self.tile_image_cache) > 1000 and self.running:
             logger.debug(f"Del Cache, size: {len(self.tile_image_cache)}")  # Debugging
             del self.tile_image_cache[list(self.tile_image_cache.keys())[0]]
         #if hasattr(self._root_win, 'set_MapView_cache'):
