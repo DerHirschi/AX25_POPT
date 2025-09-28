@@ -76,7 +76,7 @@ class SafeTkinterMapView(TkinterMapView):
                 try:
                     image = self.request_image(zoom, x, y, db_cursor=None)
                 except Exception as e:
-                    print(f"Error in request_image: {e}")
+                    logger.error(f"Error in request_image: {e}")
                     self.image_load_queue_tasks.append(task)
                     continue
                 if image is None:
@@ -97,7 +97,7 @@ class SafeTkinterMapView(TkinterMapView):
                 try:
                     canvas_tile.set_image(image)  # Im Hauptthread
                 except Exception as e:
-                    print(f"Error in set_image: {e}")
+                    logger.error(f"Error in set_image: {e}")
             n -= 1
 
     def _pre_cache(self):
@@ -135,8 +135,8 @@ class SafeTkinterMapView(TkinterMapView):
 
     def _clean_cache(self):
         """ Cache-Cleanup im Hauptthread """
-        while len(self.tile_image_cache) > 2000 and self.running:
-            print(f"Del Cache, size: {len(self.tile_image_cache)}")  # Debugging
+        while len(self.tile_image_cache) > 1500 and self.running:
+            logger.debug(f"Del Cache, size: {len(self.tile_image_cache)}")  # Debugging
             del self.tile_image_cache[list(self.tile_image_cache.keys())[0]]
         #if hasattr(self._root_win, 'set_MapView_cache'):
         #    self._root_win.set_MapView_cache(self.tile_image_cache)

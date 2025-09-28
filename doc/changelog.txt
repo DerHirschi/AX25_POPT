@@ -14,6 +14,7 @@ Fixes:
 - S&F-Forwardverbindung: Header Parsing Error bei Bulletin Mails von WinBox
 - FWD-Statistik mail_bytes_tx Zähler hat falschen Wert erfasst
 - Asynchrone Ausgabe der "SYS-Nachrichten" (*** connected to ..., ...)
+- Probleme beim Sortieren der Statistik-Tabelle in Forwardwarteschlange-GUI
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
@@ -37,6 +38,7 @@ Optimierung/Änderungen:
 - APRS-Einstellung-GUI überarbeitet
 - MH-Liste-GUI überarbeitet
 - MH Netzwerk-Graph(Net-Plot) ist jetzt in die MH-Liste GUI gewandert
+- APRS-Beacon-Tracer ist jetzt in die MH-GUI "gewandert"
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
@@ -58,6 +60,7 @@ Neue Implementierungen / Funktionen:
 - Möglichkeit APRS-Beacons zu senden via (HF & APSR-Server)
 - APRS-Map im APRS-Monitor
 - Karte/Map für MH-Liste GUI
+- Tabelle für DX-Alarm-History für MH-Liste GUI
 
 ###########################################################################################################
 ###########################################################################################################

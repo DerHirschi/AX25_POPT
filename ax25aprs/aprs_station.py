@@ -892,7 +892,7 @@ class APRS_ais(object):
                 self.be_tracer_traced_packets[k] = deque([pack], maxlen=100)
             # print(f'Tracer RX dict: {self.be_tracer_traced_packets}')
             # self._tracer_check_alarm(pack)
-            self._tracer_update_gui()
+            # self._tracer_update_gui()
             return True
         return False
 
@@ -932,13 +932,14 @@ class APRS_ais(object):
         )
         self.be_tracer_alarm_hist[str(hist_struc['key'])] = dict(hist_struc)
 
+    """
     def _tracer_update_gui(self):
         gui = self._port_handler.get_gui()
         if gui is not None:
             # _root_gui.tabbed_sideFrame.update_side_trace()
             if hasattr(gui, 'update_tracer_win'):
                 gui.update_tracer_win()
-
+    """
     """
     def _update_gui_icon(self):
         root_gui = self._port_handler.get_gui()

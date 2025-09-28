@@ -3,14 +3,14 @@ import random
 
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
-#from tkintermapview import TkinterMapView
 from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
-from gui.plots.gui_ConnPath_plot import ConnPathsPlot
+from gui.guiMH.guiAPRS_be_tracer import BeaconTracer
+from gui.guiMH.gui_ConnPath_plot import ConnPathsPlot
 
 
 class MHWin(tk.Toplevel):
@@ -25,8 +25,6 @@ class MHWin(tk.Toplevel):
                       f"{root_win.main_win.winfo_x()}+"
                       f"{root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close_me)
-        #self.attributes("-topmost", True)
-        #self.attributes("-topmost", False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -39,9 +37,9 @@ class MHWin(tk.Toplevel):
         self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
         ###################################
         # Vars
-        self._mh                    = self.get_mh()
         self._rev_ent               = False
         self._tree_data             = []
+        self._alarm_tree_data       = []
         self._alarm_newCall_var     = tk.BooleanVar(self)
         self._alarm_seenSince_var   = tk.StringVar(self)
         self._alarm_distance_var    = tk.StringVar(self)
@@ -66,6 +64,7 @@ class MHWin(tk.Toplevel):
 
         self._main_pw.add(up_frame,  weight=0)
         self._main_pw.add(map_frame, weight=1)
+        #################
         # Map / Net-Graph
         self._map_pw = ttk.Panedwindow(map_frame, orient='horizontal')
         self._map_pw.pack(fill='both', expand=True)
@@ -77,15 +76,18 @@ class MHWin(tk.Toplevel):
 
         self._map_pw.add(map1_frame, weight=1)
         self._map_pw.add(map2_frame, weight=1)
-        # ###################### Upper Frame Notebook####################
+        # ###################### Upper Frame Notebook ####################
         self._tabclt = ttk.Notebook(up_frame)
         self._tabclt.pack(fill='both', expand=True)
         mh_frame = ttk.Frame(self._tabclt)
         hi_frame = ttk.Frame(self._tabclt)
+        tr_frame = ttk.Frame(self._tabclt)
         mh_frame.pack(fill='both', expand=True)
         hi_frame.pack(fill='both', expand=True)
+        tr_frame.pack(fill='both', expand=True)
         self._tabclt.add(mh_frame, text='MH')
         self._tabclt.add(hi_frame, text='DX-Alarm')
+        self._tabclt.add(tr_frame, text='APRS-Tracer')
 
         # ###################### DX Alarm Settings ######################
         # ALARM
@@ -210,16 +212,14 @@ class MHWin(tk.Toplevel):
 
         # #### DX Alarm TREE
         columns = (
-            'mh_last_seen',
-            'mh_first_seen',
-            'mh_port',
             'mh_call',
+            'mh_port',
             'mh_loc',
             'mh_dist',
             'mh_nPackets',
-            'mh_REJ',
             'mh_route',
-            'mh_last_ip',
+            'mh_first_seen',
+            'mh_last_seen',
         )
         alarm_tree_f = ttk.Frame(alarm_tree_frame)
         alarm_tree_f.pack(fill='both', expand=True)
@@ -230,25 +230,23 @@ class MHWin(tk.Toplevel):
         self._alarm_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='left', fill='y', expand=False)
 
-        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  command=lambda: self._sort_entry('last'))
-        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   command=lambda: self._sort_entry('first'))
-        self._alarm_tree.heading('mh_port',       text='Port',          command=lambda: self._sort_entry('port'))
         self._alarm_tree.heading('mh_call',       text='Call',          command=lambda: self._sort_entry('call'))
+        self._alarm_tree.heading('mh_port',       text='Port',          command=lambda: self._sort_entry('port'))
         self._alarm_tree.heading('mh_loc',        text='LOC',           command=lambda: self._sort_entry('loc'))
         self._alarm_tree.heading('mh_dist',       text='km',            command=lambda: self._sort_entry('dist'))
         self._alarm_tree.heading('mh_nPackets',   text='Packets',       command=lambda: self._sort_entry('pack'))
-        self._alarm_tree.heading('mh_REJ',        text='REJs',          command=lambda: self._sort_entry('rej'))
         self._alarm_tree.heading('mh_route',      text='Route',         command=lambda: self._sort_entry('route'))
-        self._alarm_tree.heading('mh_last_ip',    text='AXIP',          command=lambda: self._sort_entry('axip'))
+        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   command=lambda: self._sort_entry('first'))
+        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  command=lambda: self._sort_entry('last'))
         #self._tree.heading('mh_ip_fail', text='Fail', command=lambda: self._sort_entry('axipfail'))
-        self._alarm_tree.column("mh_last_seen",     anchor='w', stretch=tk.YES, width=180)
-        self._alarm_tree.column("mh_first_seen",    anchor='w', stretch=tk.YES, width=180)
-        self._alarm_tree.column("mh_call",          anchor='w', stretch=tk.YES, width=120)
-        self._alarm_tree.column("mh_loc",           anchor='w', stretch=tk.YES, width=100)
-        self._alarm_tree.column("mh_dist",          anchor='w', stretch=tk.YES, width=70)
-        self._alarm_tree.column("mh_port",          anchor='w', stretch=tk.NO,  width=80)
-        self._alarm_tree.column("mh_nPackets",      anchor='w', stretch=tk.NO,  width=80)
-        self._alarm_tree.column("mh_REJ",           anchor='w', stretch=tk.NO,  width=55)
+        self._alarm_tree.column("mh_call",        anchor='w', stretch=tk.NO,  width=90)
+        self._alarm_tree.column("mh_port",        anchor='w', stretch=tk.NO,  width=60)
+        self._alarm_tree.column("mh_loc",         anchor='w', stretch=tk.NO,  width=80)
+        self._alarm_tree.column("mh_dist",        anchor='w', stretch=tk.NO,  width=60)
+        self._alarm_tree.column("mh_nPackets",    anchor='w', stretch=tk.NO,  width=80)
+        self._alarm_tree.column("mh_route",       anchor='w', stretch=tk.YES, width=180)
+        self._alarm_tree.column("mh_first_seen",  anchor='w', stretch=tk.NO,  width=140)
+        self._alarm_tree.column("mh_last_seen",   anchor='w', stretch=tk.NO,  width=140)
         #self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         #self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
 
@@ -309,6 +307,9 @@ class MHWin(tk.Toplevel):
         self._tree.column("mh_last_seen",   anchor='w', stretch=tk.NO,  width=140)
         self._tree.tag_configure("dx_alarm", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         self._tree.bind('<<TreeviewSelect>>', self.entry_selected)
+        # ###################### MH-TREE Frame ######################
+        # tr_frame
+        self._be_tracer = BeaconTracer(tr_frame, self)
         #############################################################################
         # ###################### MAP ################################################
         # map1_frame
@@ -336,6 +337,7 @@ class MHWin(tk.Toplevel):
         self._init_menubar()
         self._root_win.mh_window = self
         self._update_mh()
+        self._update_dx_his()
 
     ##########################
     def _init_menubar(self):
@@ -348,13 +350,14 @@ class MHWin(tk.Toplevel):
         menubar.add_cascade(label='MyHeard', menu=MenuVerb, underline=0)
 
     def _get_vars(self):
-        self._alarm_newCall_var.set(bool(self._mh.parm_new_call_alarm))
-        self._alarm_seenSince_var.set(str(self._mh.parm_lastseen_alarm))
-        self._alarm_distance_var.set(str(self._mh.parm_distance_alarm))
+        mh = self.get_mh()
+        self._alarm_newCall_var.set(bool(mh.parm_new_call_alarm))
+        self._alarm_seenSince_var.set(str(mh.parm_lastseen_alarm))
+        self._alarm_distance_var.set(str(mh.parm_distance_alarm))
         self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
         i = 0
         for var in self._alarm_ports:
-            if i in self._mh.parm_alarm_ports:
+            if i in mh.parm_alarm_ports:
                 var.set(True)
             else:
                 var.set(False)
@@ -362,9 +365,6 @@ class MHWin(tk.Toplevel):
 
     ##########################
     def tasker(self):
-        #self._map_widget.pre_cache()
-        #self._map_widget.update_canvas_tile_images()
-        #self._map_widget.load_images_background()
         if self._quit:
             self._check_threads_and_destroy()
             return True
@@ -375,13 +375,14 @@ class MHWin(tk.Toplevel):
     ##########################
     def _set_alarm_ports(self, event=None):
         i = 0
+        mh = self.get_mh()
         for var in self._alarm_ports:
             if var.get():
-                if i not in self._mh.parm_alarm_ports:
-                    self._mh.parm_alarm_ports.append(int(i))
+                if i not in mh.parm_alarm_ports:
+                    mh.parm_alarm_ports.append(int(i))
             else:
-                if i in self._mh.parm_alarm_ports:
-                    self._mh.parm_alarm_ports.remove(int(i))
+                if i in mh.parm_alarm_ports:
+                    mh.parm_alarm_ports.remove(int(i))
             i += 1
 
     def _set_alarm_distance(self, event=None):
@@ -390,7 +391,8 @@ class MHWin(tk.Toplevel):
             var = int(var)
         except ValueError:
             return
-        self._mh.parm_distance_alarm = var
+        mh = self.get_mh()
+        mh.parm_distance_alarm = var
 
     def _set_alarm_last_seen(self, event=None):
         var = self._alarm_seenSince_var.get()
@@ -398,10 +400,12 @@ class MHWin(tk.Toplevel):
             var = int(var)
         except ValueError:
             return
-        self._mh.parm_lastseen_alarm = var
+        mh = self.get_mh()
+        mh.parm_lastseen_alarm = var
 
     def _set_alarm_newCall(self, event=None):
-        self._mh.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
+        mh = self.get_mh()
+        mh.parm_new_call_alarm = bool(self._alarm_newCall_var.get())
 
     def _set_auto_tracer(self, event=None):
         dur = self._tracer_duration_var.get()
@@ -411,6 +415,63 @@ class MHWin(tk.Toplevel):
             return
         self._root_win.set_auto_tracer_duration(dur)
 
+    ##########################
+    def _update_dx_his(self):
+        self._format_alarm_tree_data()
+        self._update_alarm_tree()
+        # self._update_map()
+
+    def _update_alarm_tree(self):
+        for i in self._alarm_tree.get_children():
+            self._alarm_tree.delete(i)
+
+        for ret_ent in self._alarm_tree_data:
+            self._alarm_tree.insert('', 'end', values=ret_ent[0], )
+
+    def _format_alarm_tree_data(self):
+        self._alarm_tree_data = []
+        mh = self.get_mh()
+        if not hasattr(mh, 'get_dx_alarm_perma_his') or not hasattr(mh, 'mh_get_data_fm_call'):
+            logger.error("Attribute Error: mh.get_dx_alarm_perma_his()")
+            return
+        dx_alarm_his = mh.get_dx_alarm_perma_his()
+        """
+          return {
+        'ts': now,
+        'port_id': port_id,
+        'call_str': call_str,
+        'via': via,
+        'path': path,
+        'loc': locator,
+        'dist': distance,
+        'typ': typ,
+        'key': f"{conv_time_for_key(now)}{call_str}",
+              """
+        his_keys = list(dx_alarm_his.keys())
+        his_keys.reverse()
+        for k in his_keys:
+            ent = dx_alarm_his.get(k, {})
+            call = ent.get('call_str', '')
+            port = ent.get('port_id', -1)
+            mh_ent = mh.mh_get_data_fm_call(call, port)
+            mh_ent: MyHeard
+            pac_n       = 'n/a'
+            first_seen  = 'n/a'
+            last_seen   = 'n/a'
+            if mh_ent:
+                pac_n       = mh_ent.pac_n
+                first_seen  = mh_ent.first_seen
+                last_seen   = mh_ent.last_seen
+            self._alarm_tree_data.append(((
+                                        f"{call}",
+                                        f"{port}",
+                                        f"{ent.get('loc', '')}",
+                                        f"{ent.get('dist', 'n/a')}",
+                                        f"{pac_n}",
+                                        f"{' '.join(ent.get('path', []))}",
+                                        f'{conv_time_DE_str(first_seen)}',
+                                        f'{conv_time_DE_str(last_seen)}',
+                                    ), None))
     ##########################
     def entry_selected(self, event):
         for selected_item in self._tree.selection():
@@ -452,7 +513,8 @@ class MHWin(tk.Toplevel):
                 self._tree.insert('', 'end', values=ret_ent[0], )
 
     def _sort_entry(self, flag: str):
-        sort_date = self._mh.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
+        mh = self.get_mh()
+        sort_date = mh.get_sort_mh_entry(flag_str=flag, reverse=self._rev_ent)
         if self._rev_ent:
             self._rev_ent = False
         else:
@@ -520,7 +582,8 @@ class MHWin(tk.Toplevel):
     def _update_map(self):
         """Aktualisiert die Karte mit Stationen und deren Routen als Verbindungslinien."""
         self._clear_map()  # Vorherige Marker und Pfade löschen
-        mh_list = self._mh.get_sort_mh_entry(flag_str='last', reverse=False)
+        mh = self.get_mh()
+        mh_list = mh.get_sort_mh_entry(flag_str='last', reverse=False)
         #own_lat, own_lon = POPT_CFG.get_CFG_aprs_ais().get('ais_lat', 0.0), POPT_CFG.get_CFG_aprs_ais().get('ais_lon', 0.0)
         user_db = self._get_userDB()
         if not hasattr(user_db, 'get_location'):
@@ -533,7 +596,7 @@ class MHWin(tk.Toplevel):
             lat, lon, loc = user_db.get_location(ent.own_call)
             if not lat and not lon:
                 continue
-            offset_range = 0.0001  # Ca. 10-11 Meter, anpassen nach Bedarf
+            offset_range = 0.0002  # Ca. 10-11 Meter, anpassen nach Bedarf
             lat += random.uniform(-offset_range, offset_range)
             lon += random.uniform(-offset_range, offset_range)
             icon = self._get_station_icon(ent.own_call)
@@ -640,7 +703,8 @@ class MHWin(tk.Toplevel):
     def _close_me(self):
         if self._quit:
             return
-        self._mh.reset_dx_alarm_his()
+        mh = self.get_mh()
+        mh.reset_dx_alarm_his()
         self._mh_graph.destroy_plot()
         self._clear_map()
 

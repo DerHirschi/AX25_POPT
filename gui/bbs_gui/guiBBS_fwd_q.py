@@ -697,7 +697,14 @@ class BBS_fwd_Q(tk.Toplevel):
     def _sort_entry(self, tree, col):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
         self._last_sort = col
-        tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
+
+        def convert_value(val):
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return val
+
+        tmp = [(convert_value(tree.set(k, col)), k) for k in tree.get_children('')]
         tmp.sort(reverse=self._rev_ent)
         self._rev_ent = not self._rev_ent
         for index, (val, k) in enumerate(tmp):

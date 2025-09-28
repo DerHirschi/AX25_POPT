@@ -15,7 +15,6 @@ from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.aprs.guiAISmon import AISmonitor
 from gui.aprs.guiAPRS_Settings_Main import APRSSettingsMain
-from gui.aprs.guiAPRS_be_tracer import BeaconTracer
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
 #from gui.aprs.guiAPRS_symbol_tab import APRSymbolTab
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
@@ -39,7 +38,7 @@ from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
 from gui.UserDB.guiUserDBoverview import UserDBtreeview
-from gui.guiMH import MHWin
+from gui.guiMH.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.settings.guiSettingsMain import SettingsMain
 from gui.settings.guiLinkholderSettings import LinkHolderSettings
@@ -796,8 +795,8 @@ class PoPT_GUI_Main:
         MenuAPRS.add_command(label=self._getTabStr('aprs_mon'),
                              command=lambda: self.open_window('aprs_mon'),
                              underline=0)
-        MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
-                             underline=0)
+        #MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
+        #                     underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=self._getTabStr('wx_window'),
                              command=lambda: self.open_window('wx_win'),
@@ -2082,8 +2081,8 @@ class PoPT_GUI_Main:
                 self._update_aprs_spooler_task()
             elif task == 'update_aprs_msg_win':
                 self._update_aprs_msg_win_task(arg)
-            elif task == 'update_tracer_win':
-                self._update_tracer_win_task()
+            #elif task == 'update_tracer_win':
+            #    self._update_tracer_win_task()
             elif task == '_monitor_tree_update':
                 # No Prio
                 self._monitor_tree_update_task(arg)
@@ -2857,16 +2856,19 @@ class PoPT_GUI_Main:
 
     ######################
     # APRS Beacon Tracer
+    """
     def open_be_tracer_win(self):
         self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         if self.be_tracer_win is None:
             #self.main_win.update_idletasks()
             self.be_tracer_win = BeaconTracer(self)
+    """
 
     ###################
     # MH WIN
     def open_MH_win(self):
         """MH WIN"""
+        self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         self._port_handler.set_dxAlarm(False)
         self.tabbed_sideFrame.reset_dx_alarm()
         self.tabbed_sideFrame2.reset_dx_alarm()
@@ -3734,12 +3736,12 @@ class PoPT_GUI_Main:
                 ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
 
-    def update_tracer_win(self):
-        self._add_tasker_q("update_tracer_win", None)
+    #def update_tracer_win(self):
+    #    self._add_tasker_q("update_tracer_win", None)
 
-    def _update_tracer_win_task(self):
-        if hasattr(self.be_tracer_win, 'update_tree_data'):
-            self.be_tracer_win.update_tree_data()
+    #def _update_tracer_win_task(self):
+    #    if hasattr(self.be_tracer_win, 'update_tree_data'):
+    #        self.be_tracer_win.update_tree_data()
 
     ########
     def set_dx_alarm(self, event=None):

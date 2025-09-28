@@ -38,7 +38,7 @@ class AlarmIconFrame(tk.Frame):
                                       state='disabled',
                                       foreground='#18e002')
         self._tracer_label.pack(side='left', padx=3)
-        self._tracer_label.bind('<Button-1>', lambda event: main_gui.open_be_tracer_win())
+        self._tracer_label.bind('<Button-1>', lambda event: main_gui.open_MH_win())
 
         self._beacon_label = tk.Label(self, text='⨀',
                                       font=('', 9),

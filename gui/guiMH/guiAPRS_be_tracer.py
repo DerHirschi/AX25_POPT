@@ -1,40 +1,19 @@
 import tkinter as tk
-from tkinter import Menu
 from tkinter import ttk
 
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
-from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr
 from fnc.str_fnc import get_strTab
 
 
-# from cfg.logger_config import logger
-
-
-class BeaconTracer(tk.Toplevel):
-    def __init__(self, root_win):
-        tk.Toplevel.__init__(self, master=root_win.main_win)
+class BeaconTracer(ttk.Frame):
+    def __init__(self, root_frame, root_win):
+        ttk.Frame.__init__(self, root_frame)
+        self.pack(fill='both', expand=True)
         self._root_win  = root_win
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self.style = self._root_win.style
-        self.geometry(f"1330x"
-                      f"400+"
-                      f"{self._root_win.main_win.winfo_x()}+"
-                      f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.close)
-        self.wm_title("APRS Trace")
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            try:
-                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
-            except Exception as ex:
-                logger.warning(ex)
-        self.attributes("-topmost", True)
-        self.attributes("-topmost", False)
-        self.lift()
         ##############################################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -225,17 +204,19 @@ class BeaconTracer(tk.Toplevel):
 
         ##########################
         # self._chk_port()
-        self._init_menubar()
-        self.update_tree_data()
+        # self._init_menubar()
+        self._update_tree_data()
 
+    """
     def _init_menubar(self):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
         MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._delete_all_data)
         menubar.add_cascade(label=self._getTabStr('data'), menu=MenuVerb, underline=0)
+    """
 
-    def update_tree_data(self):
+    def _update_tree_data(self):
         self._format_tree_data()
         self._update_tree()
 
@@ -250,9 +231,11 @@ class BeaconTracer(tk.Toplevel):
                 self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _format_tree_data(self):
-        traces = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        traces: dict = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
         self._tree_data = []
-        for k in traces:
+        tr_keys = list(traces.keys())
+        tr_keys.reverse()
+        for k in tr_keys:
             pack = traces[k][-1]
             rx_time = pack.get('rx_time', '')
             if rx_time:
@@ -326,11 +309,5 @@ class BeaconTracer(tk.Toplevel):
 
     def _delete_all_data(self):
         PORT_HANDLER.get_aprs_ais().tracer_traces_delete()
-        self.update_tree_data()
+        self._update_tree_data()
 
-    def close(self):
-        self._root_win.be_tracer_win = None
-        self.destroy()
-
-    def destroy_plot(self):
-        self.close()

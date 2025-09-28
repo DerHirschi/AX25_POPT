@@ -544,10 +544,10 @@ class SideTabbedFrame:
                   text="SEND",
                   command=self._tracer_send
                   ).pack(side=tk.LEFT)
-        ttk.Button(btn_frame_tr,
-                  text="Tracer",
-                  command=self._open_tracer
-                  ).pack(side=tk.LEFT, padx=20)
+        #ttk.Button(btn_frame_tr,
+        #          text="Tracer",
+        #          command=self._open_tracer
+        #          ).pack(side=tk.LEFT, padx=20)
         """
         tk.Button(btn_frame_tr,
                   text=self._getTabStr('delete'),
@@ -1033,8 +1033,8 @@ class SideTabbedFrame:
         if bool(self._autoscroll_var.get()):
             self._main_win.see_end_qso_win()
 
-    def _open_tracer(self):
-        self._main_win.open_be_tracer_win()
+    #def _open_tracer(self):
+    #    self._main_win.open_be_tracer_win()
     """
     def _delete_tracer(self):
         pass
