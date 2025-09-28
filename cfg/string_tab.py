@@ -1446,6 +1446,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'address': (
+        'Adresse',
+        'Address',
+        'Adres',
+        'Adresse',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'channel': (
         'Kanal',
         'Channel',
@@ -1499,6 +1511,18 @@ STR_TABLE = {
         'Main Page',
         'Hoofdpagina',
         'Page principale',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'password': (
+        'Passwort',
+        'Password',
+        'Wachtwoord',
+        'Mot de passe',
         '',
         '',
         '',
@@ -1904,6 +1928,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'comment': (
+        'Kommentar',
+        'Comment',
+        'Opmerking',
+        'Commentaire',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'aprs_settings': (
         'APRS-Einstellungen',
         'APRS-Settings',
@@ -1916,6 +1952,29 @@ STR_TABLE = {
         '',
         ''),
 
+    'aprs_server': (
+        'APRS-Server',
+        'APRS-Server',
+        'APRS-Server',
+        'APRS-Server',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'conn_2_aprs_server': (
+        'Zum APRS-Server verbinden',
+        'Connect to APRS server',
+        'Verbinding maken met APRS-server',
+        'Se connecter au serveur APRS',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     'aprs_pn_msg': (
         'APRS Messenger',
         'APRS Messenger',

@@ -288,6 +288,9 @@ Ideas/TODO's :
     - Überarbeiten
   ✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
   - APRS Digi / I-Gate Funktion
+  ✓ APRS Baken
+  ✓ APRS Map
+  ✓ APRS Monitor
 
 ✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe

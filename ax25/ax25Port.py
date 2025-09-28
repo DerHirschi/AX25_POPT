@@ -959,10 +959,13 @@ class AX25Port(object):
                       axip_add=None
                       ):
         if not own_call:
+            print(f"own_call {own_call}")
             return False
         if not add_str:
+            print(f"add_str {add_str}")
             return False
         if not text:
+            print(f"text {text}")
             return False
         tmp = add_str.upper().split(' ')
         dest_call = tmp[0].replace(' ', '')

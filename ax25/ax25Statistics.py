@@ -95,20 +95,18 @@ def get_port_stat_struct():
 
 class MH:
     def __init__(self, port_handler):
-        # print("MH Init")
         logger.info("MH: Init")
-        self._port_handler = port_handler
-        # self._db = None
-        self._mh_inp_buffer = []
-        self.dx_alarm_trigger = False
-        self.last_dx_alarm = time.time()
-        self._now_10sec = datetime.now()
-        self._now_min = int(datetime.now().minute)
-        self._MH_db: {int: {str: MyHeard}} = {}  # MH TODO ? > SQL-DB ?
-        self._short_MH = deque([], maxlen=40)
-        self._PortStat_buf = {}
-        self._bandwidth = {}
-        self._lock = False
+        self._port_handler                  = port_handler
+        self._mh_inp_buffer                 = []
+        self.dx_alarm_trigger               = False
+        self.last_dx_alarm                  = time.time()
+        self._now_10sec                     = datetime.now()
+        self._now_min                       = int(datetime.now().minute)
+        self._MH_db: {int: {str: MyHeard}}  = {}
+        self._short_MH                      = deque([], maxlen=40)
+        self._PortStat_buf                  = {}
+        self._bandwidth                     = {}
+        self._lock                          = False
 
         ############################
         # MH
@@ -136,12 +134,12 @@ class MH:
         self._db = None
         ##################
         # Saved Param
-        self.dx_alarm_hist = []             # For GUI MH
-        self.dx_alarm_perma_hist = {}       # CLI DX List
-        self.parm_new_call_alarm = False
-        self.parm_distance_alarm = 50
-        self.parm_lastseen_alarm = 1
-        self.parm_alarm_ports = []
+        self._dx_alarm_hist         = []       # For GUI MH
+        self.dx_alarm_perma_hist    = {}       # CLI DX List
+        self.parm_new_call_alarm    = False
+        self.parm_distance_alarm    = 50
+        self.parm_lastseen_alarm    = 1
+        self.parm_alarm_ports       = []
         self._load_fm_cfg()
         logger.info("MH: Init Complete")
 
@@ -195,7 +193,7 @@ class MH:
         logger.info('MH: Save MH')
         while self._lock:
             logger.info('MH: Save MH, wait for Lock')
-            time.sleep(0.5)
+            time.sleep(0.05)
         self._lock = True
         self._save_to_cfg()
         tmp_mh = self._MH_db
@@ -222,7 +220,7 @@ class MH:
     # Main CFG/PARAM
     def _load_fm_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
-        self.dx_alarm_hist = mh_cfg.get('dx_alarm_hist', [])
+        self._dx_alarm_hist = mh_cfg.get('dx_alarm_hist', [])
         self.dx_alarm_perma_hist = mh_cfg.get('dx_alarm_perma_hist', {})
         self.parm_new_call_alarm = mh_cfg.get('parm_new_call_alarm', False)
         self.parm_distance_alarm = mh_cfg.get('parm_distance_alarm', 50)
@@ -231,7 +229,7 @@ class MH:
 
     def _save_to_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
-        mh_cfg['dx_alarm_hist'] = list(self.dx_alarm_hist)
+        mh_cfg['dx_alarm_hist'] = list(self._dx_alarm_hist)
         mh_cfg['dx_alarm_perma_hist'] = dict(self.dx_alarm_perma_hist)
         mh_cfg['parm_new_call_alarm'] = bool(self.parm_new_call_alarm)
         mh_cfg['parm_distance_alarm'] = int(self.parm_distance_alarm)
@@ -252,9 +250,9 @@ class MH:
     def _set_dx_alarm(self, ent):
         port_id = ent.port_id
         if port_id in self.parm_alarm_ports:
-            self.dx_alarm_trigger = True
-            self.last_dx_alarm = time.time()
-            self.dx_alarm_hist.append(ent.own_call)
+            self.dx_alarm_trigger   = True
+            self.last_dx_alarm      = time.time()
+            self._dx_alarm_hist.append(ent.own_call)
             self._add_dx_alarm_hist(ent=ent)
             self._port_handler.set_dxAlarm()
 
@@ -279,8 +277,11 @@ class MH:
             LOG_BOOK.info(lb_msg_2)
 
     def reset_dx_alarm_his(self):
-        self.dx_alarm_hist = []
-        self.dx_alarm_trigger = False
+        self._dx_alarm_hist     = []
+        self.dx_alarm_trigger   = False
+
+    def is_dx_alarm_f_call(self, call: str):
+        return bool(call in self._dx_alarm_hist)
 
     ########################
     # Port Statistic
@@ -369,7 +370,7 @@ class MH:
         """ Called fm Porthandler Tasker """
         while self._lock:
             logger.info('MH: Tasker, wait for Lock')
-            time.sleep(0.5)
+            time.sleep(0.05)
         self._lock = True
         for el in list(self._mh_inp_buffer):
             if not el.get('tx', False):
@@ -601,19 +602,18 @@ class MH:
                 return userdb_axip
         for port in self._MH_db.keys():
             if call_str in self._MH_db[port].keys():
-                if call_str in self._MH_db[port].keys():
-                    if self._MH_db[port][call_str].axip_add[0]:
-                        # if self._MH_db[port][call_str].axip_fail < param_fail:
-                        """
-                        if userdb_axip:
-                            if userdb_axip[0]:
-                                return userdb_axip
-                        """
-                        """
-                        if not param_fail:
-                            return self._MH_db[port][call_str].axip_add
-                        """
+                if self._MH_db[port][call_str].axip_add[0]:
+                    # if self._MH_db[port][call_str].axip_fail < param_fail:
+                    """
+                    if userdb_axip:
+                        if userdb_axip[0]:
+                            return userdb_axip
+                    """
+                    """
+                    if not param_fail:
                         return self._MH_db[port][call_str].axip_add
+                    """
+                    return self._MH_db[port][call_str].axip_add
         return '', 0
 
     def get_unsort_entrys_fm_port(self, port_id: int):
@@ -665,12 +665,12 @@ class MH:
     def reset_mainMH(self):
         self.dx_alarm_trigger = False
         self._MH_db = {}
-        self.dx_alarm_hist = []  # For GUI MH
+        self._dx_alarm_hist = []  # For GUI MH
         self.dx_alarm_perma_hist = {}  # CLI DX List
 
     def reset_dxHistory(self):
         self.dx_alarm_trigger = False
-        self.dx_alarm_hist = []  # For GUI MH
+        self._dx_alarm_hist = []  # For GUI MH
         self.dx_alarm_perma_hist = {}  # CLI DX List
 # MH_LIST = MH()
 

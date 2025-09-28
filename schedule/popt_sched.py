@@ -79,7 +79,7 @@ class PoPTSchedule:
         self._set_cooldown()
 
     def _set_cooldown(self):
-        self._cooldown = time.time() + 60
+        self._cooldown = time.time() + 55
 
     def _set_intervall(self):
         self._next_run = time.time() + (self.conf.get('repeat_min', 1) * 60)

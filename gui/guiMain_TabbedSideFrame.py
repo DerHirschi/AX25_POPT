@@ -89,7 +89,7 @@ class SideTabbedFrame:
         label = ttk.Label(tab1_kanal, text='T2:')
         self._t2_var = tk.StringVar(tab1_kanal)
         self._t2_var.set(str(1700))
-        val_list = []
+        val_list = [str(x) for x in range(0, 10)]
 
         for i in range(1, 500):
             # 10 - 5000
@@ -300,11 +300,7 @@ class SideTabbedFrame:
                   text="MH",
                   command=self._open_mh
                   ).pack(side=tk.LEFT, )
-        ttk.Button(btn_frame,
-                  # text="Statistik",
-                  text='Plot',
-                  command=self._open_MHPlot
-                  ).pack(side=tk.LEFT, padx=20)
+
         ttk.Button(btn_frame,
                   # text="Statistik",
                   text=self._getTabStr('statistic'),
@@ -889,9 +885,8 @@ class SideTabbedFrame:
             # ent: MyHeard
             ent = k
             route = ent.route
-            dx_alarm = False
-            if ent.own_call in list(self._mh.dx_alarm_hist):
-                dx_alarm = True
+            dx_alarm = self._mh.is_dx_alarm_f_call(ent.own_call)
+
             self._tree_data.append(
                 ((
                      f"{conv_time_DE_str(ent.last_seen).split(' ')[1]}",
@@ -1050,9 +1045,6 @@ class SideTabbedFrame:
 
     def _open_PortStat(self):
         self._main_win.open_window('PortStat')
-
-    def _open_MHPlot(self):
-        self._main_win.open_window('ConnPathPlot')
 
     def _disco_all(self):
         if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),

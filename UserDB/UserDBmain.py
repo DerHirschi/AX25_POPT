@@ -11,7 +11,7 @@ from cfg.popt_config import POPT_CFG
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
-from fnc.loc_fnc import locator_to_coordinates, locator_distance
+from fnc.loc_fnc import locator_to_coordinates, locator_distance, coordinates_to_locator
 from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str, str_to_datetime
 from cfg.constant import CFG_user_db, MH_BEACON_FILTER, CFG_user_db_json
 
@@ -228,6 +228,11 @@ class UserDB:
         else:
             if not ent.TYP:
                 ent.TYP = typ
+    def get_typ(self, call_str: str):
+        ent = self.get_entry(call_str, False)
+        if not ent:
+            return ''
+        return ent.TYP
 
     def set_distance(self, entry_call: str):
         own_loc = POPT_CFG.get_guiCFG_locator()
@@ -240,6 +245,7 @@ class UserDB:
             ent.Distance = -1
             return False
         ent.Distance = locator_distance(own_loc, ent.LOC)
+        return True
 
     def set_distance_for_all(self):
         for k in list(self.db.keys()):
@@ -363,13 +369,16 @@ class UserDB:
     def get_location(self, call_str):
         ent = self.get_entry(call_str, add_new=False)
         if not ent:
-            return ()
-        if ent.Lon or ent.Lon:
+            return 0, 0, ''
+        if all((ent.Lat, ent.Lon, ent.LOC)) :
             return ent.Lat, ent.Lon, ent.LOC
-        if ent.LOC:
-            lat, lon = locator_to_coordinates(ent.LOC)
-            return lat, lon, ent.LOC
-        return ()
+        if ent.LOC and not any((ent.Lat, ent.Lon)):
+            ent.Lat, ent.Lon = locator_to_coordinates(ent.LOC)
+            return ent.Lat, ent.Lon, ent.LOC
+        if any((ent.Lat, ent.Lon)) and not ent.LOC:
+            ent.LOC = coordinates_to_locator(ent.Lat, ent.Lon)
+            return ent.Lat, ent.Lon, ent.LOC
+        return 0, 0, ''
 
     def get_AXIP(self, call_str):
         ret = self.db.get(call_str, None)
@@ -432,7 +441,7 @@ class UserDB:
     def get_PRmail(self, call: str):
         return self.db.get(call, Client).PRmail
 
-
+    ##########################################
     def save_data(self):
         # print('Save Client DB')
         logger.info('User-DB: Save User-DB')

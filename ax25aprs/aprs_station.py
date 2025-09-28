@@ -17,29 +17,17 @@ from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
 
 class APRS_ais(object):
-    def __init__(self, load_cfg=True):
-        # TODO Cleanup/OPT
-        # print("APRS-IS INIT")
+    def __init__(self, port_handler):
         logger.info("APRS-IS: Init")
         """ APRS-Server Stuff """
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
-        self.ais_call = ais_cfg.get('ais_call', '')
-        self.ais_pass = ais_cfg.get('ais_pass', '')
-        self.ais_loc  = ais_cfg.get('ais_loc', '')
-        self.ais_lat  = ais_cfg.get('ais_lat', 0.0)
-        self.ais_lon  = ais_cfg.get('ais_lon', 0.0)
+        ais_cfg        = POPT_CFG.get_CFG_aprs_ais()
+        self.ais_loc   = ais_cfg.get('ais_loc', '')
         if not self.ais_loc:
-            guiCfg = POPT_CFG.load_guiPARM_main()
+            guiCfg  = POPT_CFG.load_guiPARM_main()
             own_loc = guiCfg.get('gui_cfg_locator', '')
             if own_loc:
                 self.ais_loc = own_loc
-                self._set_own_location()
-        # self.add_new_user = ais_cfg.get('add_new_user', False)
-        # self.ais_host = "cbaprs.dyndns.org", 27234
-        self.ais_aprs_stations = ais_cfg.get('ais_aprs_stations', {})
-        self.ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
-        # self.ais_new_rx_buff = []
-        self.ais_active = ais_cfg.get('ais_active', False)
+        self._ais_active        = ais_cfg.get('ais_active', False)
         """ APRS-Node List """
         self._node_tab          = OrderedDict(POPT_CFG.get_APRS_node_tab())
         self._object_tab        = OrderedDict()  # Reported Objects
@@ -49,12 +37,11 @@ class APRS_ais(object):
         self._parm_max_n        = 3
         self._parm_resend       = 60
         self.aprs_msg_pool      = ais_cfg.get('aprs_msg_pool',
-                                         {  # TODO > DB ?
+                                         {
                                              "message": [],
                                              "bulletin": [],
                                          })
 
-        # self.aprs_wx_msg_pool = {}  # TO-DO > DB
         """ Beacon Tracer """
         # Param
         self.be_tracer_interval         = ais_cfg.get('be_tracer_interval', 5)
@@ -71,16 +58,14 @@ class APRS_ais(object):
         # Control vars
         # self._be_tracer_is_alarm = False
         self._be_tracer_tx_trace_packet = ''
-        self._be_tracer_tx_rtt = time.time()
-        self._be_tracer_interval_timer = time.time()
+        self._be_tracer_tx_rtt          = time.time()
+        self._be_tracer_interval_timer  = time.time()
         """ Load CFGs and Init (Login to APRS-Server) """
-        # self.aprs_wx_msg_pool = {}
-        # self.be_tracer_active = ais_cfg.get('be_tracer_active', False)
-        self.be_tracer_active = False
-        self.be_auto_tracer_active = ais_cfg.get('be_auto_tracer_active', False)
-        self._be_auto_tracer_timer = 0
+        self.be_tracer_active       = False
+        self.be_auto_tracer_active  = ais_cfg.get('be_auto_tracer_active', False)
+        self._be_auto_tracer_timer  = 0
         """"""
-        self.ais = None
+        self._ais = None
         self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
         """ Loop Control """
         self.loop_is_running            = False
@@ -88,32 +73,13 @@ class APRS_ais(object):
         self._parm_non_prio_task_timer  = 1
         self._del_spooler_tr            = False
         self._wx_update_tr              = False
-        self._port_handler              = None
+        self._port_handler              = port_handler
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
-        if self.ais_active:
+        if self._ais_active:
             self._login()
         logger.info("APRS-IS: Init complete")
-
-
-    def set_port_handler(self, port_handler):
-        self._port_handler = port_handler
-        logger.info("APRS-IS: PH set")
-
-
-    def _set_own_location(self):
-        if not self.ais_loc:
-            if self.ais_lat and self.ais_lon:
-                loc = coordinates_to_locator(
-                    latitude=self.ais_lat,
-                    longitude=self.ais_lon,
-                )
-                self.ais_loc = loc
-        elif not self.ais_lat or not self.ais_lon:
-            lat, lon = locator_to_coordinates(self.ais_loc)
-            self.ais_lat = lat
-            self.ais_lon = lon
 
     def del_ais_rx_buff(self):
         self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
@@ -123,14 +89,6 @@ class APRS_ais(object):
         logger.info("Save APRS Conf")
         POPT_CFG.set_APRS_node_tab(self._node_tab)
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
-        ais_cfg['ais_call']         = str(self.ais_call)
-        ais_cfg['ais_pass']         = str(self.ais_pass)
-        ais_cfg['ais_loc']          = str(self.ais_loc)
-        ais_cfg['ais_lat']          = float(self.ais_lat)
-        ais_cfg['ais_lon']          = float(self.ais_lon)
-        # ais_cfg['add_new_user']     = bool(self.add_new_user)
-        ais_cfg['ais_host']         = tuple(self.ais_host)
-        ais_cfg['ais_active']       = bool(self.ais_active)
         # Tracer
         ais_cfg['be_tracer_interval']       = int(self.be_tracer_interval)
         ais_cfg['be_tracer_port']           = int(self.be_tracer_port)
@@ -145,56 +103,87 @@ class APRS_ais(object):
         ais_cfg['be_auto_tracer_active']    = bool(self.be_auto_tracer_active)
         ais_cfg['be_tracer_traced_packets'] = dict(self.be_tracer_traced_packets)
         ais_cfg['be_tracer_alarm_hist']     = dict(self.be_tracer_alarm_hist)
-        ais_cfg['ais_aprs_stations']        = dict(self.ais_aprs_stations)
         # APRS-Message
         ais_cfg['aprs_msg_pool']            = dict(self.aprs_msg_pool)
         ais_cfg['aprs_msg_ack_c']           = int(self._ack_counter)
         POPT_CFG.set_CFG_aprs_ais(ais_cfg)
-        if self._port_handler is None:
-            return
-        gui = self._port_handler.get_gui()
-        if gui is None:
-            return
-        # TODO Update locator fm POPT_CFG
-        gui.own_loc = self.ais_loc
+
+    def reinit(self):
+        self._port_handler.reinit_aprs_beacon_task()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        self.ais_loc     = ais_cfg.get('ais_loc', '')
+        if not self.ais_loc:
+            guiCfg  = POPT_CFG.load_guiPARM_main()
+            own_loc = guiCfg.get('gui_cfg_locator', '')
+            if own_loc:
+                self.ais_loc = own_loc
+        self._ais_active         = ais_cfg.get('ais_active', False)
+
+        """ Trace """
+        self.be_tracer_interval       = ais_cfg.get('be_tracer_interval', 5)
+        self.be_tracer_port           = ais_cfg.get('be_tracer_port', 0)
+        self.be_tracer_station        = ais_cfg.get('be_tracer_station', 'NOCALL')
+        self.be_tracer_via            = ais_cfg.get('be_tracer_via', [])
+        self.be_tracer_wide           = ais_cfg.get('be_tracer_wide', 1)
+        self.be_tracer_alarm_active   = ais_cfg.get('be_tracer_alarm_active', False)
+        self.be_tracer_alarm_range    = ais_cfg.get('be_tracer_alarm_range', 50)
+        self.be_auto_tracer_duration  = ais_cfg.get('be_auto_tracer_duration', 60)
+        # Control vars
+        self._be_tracer_tx_trace_packet = ''
+        self._be_tracer_tx_rtt          = time.time()
+        self._be_tracer_interval_timer  = time.time()
+        self.be_auto_tracer_active      = ais_cfg.get('be_auto_tracer_active', False)
+        """ (Login to APRS-Server) """
+
+        if self._ais_active:
+            self.watchdog_task(run_now=True)
+        else:
+            self._ais.close()
 
     def _login(self):
+        ais_cfg  = POPT_CFG.get_CFG_aprs_ais()
+        ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
+        ais_call = ais_cfg.get('ais_call', '')
+        ais_pass = ais_cfg.get('ais_pass', '')
+        if not all((ais_call, ais_pass, ais_host[0])):
+            logger.error("APRS-IS: Config Error.")
+            return False
         logger.info("APRS-IS: Try connect to APRS-Server:")
-        logger.info(f"APRS-IS: {self.ais_host[0]} Port: {self.ais_host[1]}")
+        logger.info(f"APRS-IS: {ais_host[0]} Port: {ais_host[1]}")
         self._watchdog_reset()
-        if not self.ais_active:
+        if not self._ais_active:
             logger.error("APRS-IS: Connecting to APRS-Server failed!")
             return False
-        if not self.ais_call:
+        if not ais_call:
             logger.error("APRS-IS: Connecting to APRS-Server failed! No APRS-Call set !")
-            self.ais_active = False
+            self._ais_active = False
             return False
-        if self.ais_host == ('', 0):
+        if ais_host == ('', 0):
             logger.error("APRS-IS: Connecting to APRS-Server failed! No Server Address !")
-            self.ais_active = False
+            self._ais_active = False
             return False
-        if not self.ais_host[0] or not self.ais_host[1]:
+        if not ais_host[0] or not ais_host[1]:
             logger.error("APRS-IS: Connecting to APRS-Server failed! No Server Address !")
-            self.ais_active = False
+            self._ais_active = False
             return False
-        self.ais = aprslib.IS(callsign=self.ais_call,
-                              passwd=self.ais_pass,
-                              host=self.ais_host[0],
-                              port=self.ais_host[1],
-                              skip_login=False)
+        self._ais = aprslib.IS(callsign=ais_call,
+                               passwd=ais_pass,
+                               host=ais_host[0],
+                               port=ais_host[1],
+                               skip_login=False)
         try:
-            self.ais.connect()
+            self._ais.connect()
         except aprslib.ConnectionError:
             logger.error("APRS-IS: Connecting to APRS-Server failed! Connection Error !")
-            self.ais = None
+            self._ais = None
             return False
         except aprslib.LoginError:
             logger.error("APRS-IS: Connecting to APRS-Server failed! Login Error !")
-            self.ais = None
+            self._ais = None
             return False
         except IndexError:
             logger.error("APRS-IS: Connecting to APRS-Server failed! IndexError !")
-            self.ais = None
+            self._ais = None
             return False
         # finally:
         #     self.ais.close()
@@ -207,7 +196,7 @@ class APRS_ais(object):
         self._watchdog_last = time.time() + self._parm_watchdog
 
     def watchdog_task(self, run_now=False):
-        if not self.ais_active:
+        if not self._ais_active:
             return
         if time.time() < self._watchdog_last and not run_now:
             return
@@ -258,17 +247,17 @@ class APRS_ais(object):
 
     def ais_rx_task(self):
         """ Thread loop called fm Porthandler Init """
-        if self.ais is not None:
-            if self.ais_active:
+        if self._ais is not None:
+            if self._ais_active:
                 # print("APRS-Consumer start")
                 logger.info("APRS-IS: Consumer start")
                 # while self.loop_is_running:
                 self.loop_is_running = True
                 try:
-                    self.ais.consumer(self.callback,
-                                      blocking=True,
-                                      immortal=False,
-                                      raw=False)
+                    self._ais.consumer(self.callback,
+                                       blocking=True,
+                                       immortal=False,
+                                       raw=False)
 
                 except ValueError:
                     # print("APRS-Consumer ValueError")
@@ -282,31 +271,31 @@ class APRS_ais(object):
 
                 self.loop_is_running = False
 
-                if self.ais is not None:
-                    self.ais.close()
+                if self._ais is not None:
+                    self._ais.close()
                 # print("APRS-Consumer ENDE")
                 logger.info("APRS-IS: Consumer ENDE")
 
     def _ais_tx(self, ais_pack):
-        if self.ais is not None:
+        if self._ais is not None:
             if ais_pack:
                 try:
-                    self.ais.sendall(ais_pack)
+                    self._ais.sendall(ais_pack)
                 except aprslib.ConnectionError:
                     self.loop_is_running = False
-                    del self.ais
-                    self.ais = None
+                    del self._ais
+                    self._ais = None
 
     def ais_close(self):
         logger.info("APRS-IS: close")
-        if self.ais is not None:
+        if self._ais is not None:
             self.loop_is_running = False
             try:
-                self.ais.sendall(" ")
+                self._ais.sendall(" ")
             except aprslib.ConnectionError:
                 pass
-            self.ais.close()
-            self.save_conf_to_file()
+            self._ais.close()
+            #self.save_conf_to_file()
 
     def callback(self, packet):
         """ RX fm APRS-Server"""
@@ -352,6 +341,44 @@ class APRS_ais(object):
         elif self._tracer_msg_rx(aprs_pack):
             return True
         return False
+
+    def send_it(self, pack):
+        if pack['port_id'] == APRS_INET_PORT_ID:
+            self._send_as_AIS(pack)
+        else:
+            self._send_as_UI(pack)
+
+    def _send_as_UI(self, pack):
+        port_id = pack.get('port_id', '')
+        if not port_id:
+            return
+        try:
+            port_id = int(port_id)
+        except ValueError:
+            return
+        ax_port = self._port_handler.get_all_ports().get(port_id, None)
+        if ax_port:
+            path        = pack.get('path', [])
+            msg_text    = pack.get('raw_message_text', '').encode('UTF-8', 'ignore')
+            from_call   = pack.get('from', '')
+            add_str     = f"{APRS_SW_ID}"
+            for elm in path:
+                elm = elm.replace('*', '')
+                add_str += f" {elm}"
+            ax_port.send_UI_frame(
+                own_call=from_call,
+                add_str=add_str,
+                text=msg_text,
+                cmd_poll=(False, False)
+            )
+
+    def _send_as_AIS(self, pack):
+        # print(f"send_as_AIS : {pack}")
+        msg = pack['raw_message_text']
+        pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
+        #print(f" AIS OUT > {pack_str}")
+        self._ais_tx(pack_str)
+
 
     ##########################
     # Node List
@@ -445,22 +472,12 @@ class APRS_ais(object):
         if hasattr(ais_mon_gui, 'update_node_tab'):
             ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
 
-
     ##########################
     # WX
     def _aprs_wx_msg_rx(self, aprs_pack):
         if not aprs_pack.get("weather", False):
             return False
         new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
-        """
-        if not new_aprs_pack:
-            print("APRS Weather Pack correction Failed!")
-            print(f"Org Pack: {aprs_pack}")
-            logger.warning("APRS Weather Pack correction Failed!")
-            logger.warning(f"Org Pack: {aprs_pack}")
-            new_aprs_pack = aprs_pack
-            # self._aprs_wx_msg_rx(port_id=port_id, aprs_pack=new_aprs_pack)
-        """
         from_aprs = new_aprs_pack.get('from', '')
         if from_aprs:
             ########
@@ -659,19 +676,13 @@ class APRS_ais(object):
             else:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
-                self._send_it(dict(pack))
+                self.send_it(dict(pack))
+            if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
+                self._port_handler.update_gui_aprs_msg_win(pack)
             if not pack.get('is_ack', False):
                 self.aprs_msg_pool['message'].append(dict(pack))
                 self._aprs_msg_sys_new_msg(dict(pack))
         return True
-
-    def _send_it(self, pack):
-        if pack['port_id'] == APRS_INET_PORT_ID:
-            self._send_as_AIS(pack)
-        else:
-            self._send_as_UI(pack)
-        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
-            self._port_handler.update_gui_aprs_msg_win(pack)
 
     def _add_to_spooler(self, pack):
         pack['N']           = 0
@@ -723,7 +734,9 @@ class APRS_ais(object):
                     if pack['N'] < self._parm_max_n:
                         pack['send_timer'] = time.time() + self._parm_resend
                         pack['N'] += 1
-                        self._send_it(pack)
+                        self.send_it(pack)
+                        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
+                            self._port_handler.update_gui_aprs_msg_win(pack)
                         if pack['N'] == self._parm_max_n:
                             self._del_address_fm_spooler(pack)
                     # else: self.del_fm_spooler(pack, rx=False)
@@ -733,37 +746,6 @@ class APRS_ais(object):
             if self._spooler_buffer[msg_no]['address_str'] == pack['address_str']:
                 self._spooler_buffer[msg_no]['N'] = self._parm_max_n
                 # self.del_fm_spooler(pack, rx=False)
-
-    def _send_as_UI(self, pack):
-        port_id = pack.get('port_id', '')
-        if not port_id:
-            return
-        try:
-            port_id = int(port_id)
-        except ValueError:
-            return
-        ax_port = self._port_handler.get_all_ports().get(port_id, None)
-        if ax_port:
-            path        = pack.get('path', [])
-            msg_text    = pack.get('raw_message_text', '').encode('ASCII', 'ignore')
-            from_call   = pack.get('from', '')
-            add_str     = f"{APRS_SW_ID}"
-            for elm in path:
-                elm = elm.replace('*', '')
-                add_str += f" {elm}"
-            ax_port.send_UI_frame(
-                own_call=from_call,
-                add_str=add_str,
-                text=msg_text,
-                cmd_poll=(False, False)
-            )
-
-    def _send_as_AIS(self, pack):
-        # print(f"send_as_AIS : {pack}")
-        msg = pack['raw_message_text']
-        pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
-        #print(f" AIS OUT > {pack_str}")
-        self._ais_tx(pack_str)
 
     def _send_ack(self, pack_to_resp):
         msg_no = pack_to_resp.get('msgNo', False)
@@ -810,7 +792,9 @@ class APRS_ais(object):
 
     def _tracer_build_msg(self):
         # !5251.12N\01109.78E-27.235MHz P.ython o.ther P.acket T.erminal (PoPT)
-        coordinate = decimal_degrees_to_aprs(self.ais_lat, self.ais_lon)
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+        coordinate = decimal_degrees_to_aprs(lat, lon)
         rtt_timer = time.time()
         self._be_tracer_tx_rtt = rtt_timer
         return f'={coordinate[0]}/{coordinate[1]}%{APRS_TRACER_COMMENT} #{self.ais_loc}#{rtt_timer}#'
@@ -992,26 +976,6 @@ class APRS_ais(object):
 
     def tracer_tracer_get_active(self):
         return self.be_tracer_active
-
-    ############################################
-    # Bacon of Hope
-    def _build_aprs_beacon(self):
-        aprs_beacon_cfg = dict(
-            msg_typ     = '=',
-            lat         = self.ais_lat,
-            lon         = self.ais_lon,
-            symbol      = ("\\", '-'),
-            msg_text    = ''
-        )
-
-        msg_typ          = aprs_beacon_cfg.get('msg_typ', '=')
-        msg_text         = aprs_beacon_cfg.get('msg_text', '')
-        lat              = aprs_beacon_cfg.get('lat', 0.0)
-        lon              = aprs_beacon_cfg.get('lon', 0.0)
-        symbol1, symbol2 = aprs_beacon_cfg.get('symbol',("\\", '-'))
-
-        coordinate = decimal_degrees_to_aprs(lat, lon)
-        return f'{msg_typ}{coordinate[0]}{symbol1}{coordinate[1]}{symbol2}{msg_text[:6]}' # TODO max beacon len
 
     ############################################
     def get_node_tab(self):

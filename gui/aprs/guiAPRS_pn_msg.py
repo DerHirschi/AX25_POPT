@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -18,16 +17,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._get_colorMap  = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
         self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._root_cl       = root_win
-        PORT_HANDLER.set_aprsMailAlarm_PH(False)
-        # self._root_cl.reset_aprsMail_alarm()
-        self.text_size  = self._root_cl.text_size
-        self.win_height = 600
-        self.win_width  = 1200
-        self.style      = self._root_cl.style
-        self.style_name = self._root_cl.style_name
+        #TODO self.text_size      = self._root_cl.text_size
+        win_height          = 600
+        win_width           = 1200
+        self.style          = self._root_cl.style
+        self.style_name     = self._root_cl.style_name
         self.title(self._getTabStr('aprs_pn_msg'))
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
@@ -41,7 +38,10 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         ##########################
-        self._aprs_ais       = PORT_HANDLER.get_aprs_ais()
+        ph                   = root_win.get_PH_mainGUI()
+        if hasattr(ph, 'set_aprsMailAlarm_PH'):
+            ph.set_aprsMailAlarm_PH(False)
+        self._aprs_ais       = root_win.get_AIS_mainGUI()
         self._aprs_icon_tab  = root_win.get_aprs_icon_tab_16()
         self._aprs_pn_msg    = list(self._aprs_ais.aprs_msg_pool['message'])
         self._aprs_bl_msg    = list(self._aprs_ais.aprs_msg_pool['bulletin'])
@@ -288,37 +288,33 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         # Unterer Bereich: Rahmen für Buttons
         button1 = ttk.Button(bottom_frame, text=self._getTabStr('close'), command=self._btn_close)
         button1.pack(side=tk.LEFT, padx=5)
-        """
-        button2 = ttk.Button(bottom_frame, text="Button 2", command=self.button2_clicked)
-        button2.pack(side=tk.LEFT, padx=5)
 
-        button3 = ttk.Button(bottom_frame, text="Button 3", command=self.button3_clicked)
-        button3.pack(side=tk.LEFT, padx=5)
-        """
 
         self._root_cl.aprs_pn_msg_win = self
         self.bind('<Return>', self._send_aprs_msg)
         self._update_tree()
         self._update_bl_tree()
+        #self._load_pw_pos()
         self._init_done = True
 
     ################################
     """
     def _load_pw_pos(self):
         guiCfg = POPT_CFG.load_guiPARM_main()
-        pan_pos_cfg = guiCfg.get('gui_aprs_text_pan_pos', [300, 300])
-        print(pan_pos_cfg)
+        pan_pos_cfg = guiCfg.get('gui_aprs_text_pan_pos', (300, 300))
         i = 0
         for pan_pos in pan_pos_cfg:
+            print(pan_pos)
             self._paned_window.sashpos(i, pan_pos)
             i += 1
+        self.update_idletasks()
 
     def _save_pw_pos(self):
         pan_pos_cfg = []
         for pan_id in range(2):
             pan_pos_cfg.append(int(self._paned_window.sashpos(pan_id)))
-        print(pan_pos_cfg)
         guiCfg = POPT_CFG.load_guiPARM_main()
+        print(pan_pos_cfg)
         guiCfg['gui_aprs_text_pan_pos'] = tuple(pan_pos_cfg)
         POPT_CFG.save_guiPARM_main(guiCfg)
     """

@@ -267,6 +267,9 @@ class AX25PortHandler(object):
         if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
             self._scheduled_tasker.reinit_SchedMail_tasks()
 
+    def reinit_aprs_beacon_task(self):
+        if hasattr(self._scheduled_tasker, 'reinit_aprs_beacon_tasks'):
+            self._scheduled_tasker.reinit_aprs_beacon_tasks()
     #######################################################################
     # Setting/Parameter Updates
 
@@ -381,7 +384,6 @@ class AX25PortHandler(object):
             self._init_port(port_id=port_id)
         ##########################
         # Pipe-Tool Init
-        # self._pipeTool_init()
         self.set_diesel()
 
     def reinit_port(self, port_id: int):
@@ -395,7 +397,6 @@ class AX25PortHandler(object):
         self._init_port(port_id=port_id)
         ##########################
         # Pipe-Tool Init
-        # self._pipeTool_init()
         self.set_diesel()
 
     def set_kiss_param_all_ports(self):
@@ -429,9 +430,6 @@ class AX25PortHandler(object):
         if new_cfg.get('parm_PortTyp', '') not in AX25DeviceTAB.keys():
             logger.info(f'PH: Port {port_id} disabled.')
             return False
-
-        # cfg = PortConfigInit(port_id=port_id)
-        # cfg = dict(POPT_CFG.get_port_CFG_fm_id(port_id=port_id))
         #########################
         # Init Port/Device
         try:
@@ -443,7 +441,6 @@ class AX25PortHandler(object):
         ##########################
         # Start Port/Device Thread
         threading.Thread(target=temp.port_tasker).start()
-        # temp.start()
         ##########################
         # Start Port/Device Thread
         if not temp.device_is_running:
@@ -468,12 +465,6 @@ class AX25PortHandler(object):
         port.disco_all_conns()
         return True
 
-    """
-    def save_all_port_cfgs(self):
-        # TODO self.sysmsg_to_gui( bla + StringTab )
-        for port_id in self.ax25_ports.keys():
-            self.ax25_ports[port_id].port_cfg.save_to_pickl()
-    """
     def unblock_all_ports(self):
         for port_id, port in self.ax25_ports.items():
             if hasattr(port, 'set_block_incoming_conn'):
@@ -498,18 +489,14 @@ class AX25PortHandler(object):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         logger.info("PH: APRS-AIS Init")
         if aprs_obj is None:
-            self.aprs_ais = APRS_ais()
+            self.aprs_ais = APRS_ais(self)
         else:
             logger.info("PH: APRS-AIS ReInit")
             self.aprs_ais = aprs_obj
         if self.aprs_ais is None:
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
-        self.aprs_ais.set_port_handler(self)
-        if self.aprs_ais.ais is None:
-            logger.error("PH: APRS-AIS Init Error! No aprs_ais.ais !")
-            return False
-        # self.aprs_ais.loop_is_running = True
+
         threading.Thread(target=self.aprs_ais.ais_rx_task).start()
         gui = self.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):

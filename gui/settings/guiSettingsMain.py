@@ -130,7 +130,7 @@ class SettingsMain(tk.Toplevel):
     ################################################
 
     def get_PH(self):
-        return self._root_win.get_PH_manGUI()
+        return self._root_win.get_PH_mainGUI()
 
     def get_GPIOfmPH(self):
         ph = self.get_PH()

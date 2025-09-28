@@ -1,5 +1,6 @@
 ###########################################################################################################
 # 2.120.x
+!!! Check requirements.txt (tkintermapview benötigt) !!!
 Fixes:
 - BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
   wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
@@ -32,7 +33,10 @@ Optimierung/Änderungen:
   aus allen Quellen(Ports) angezeigt werden
 - MainGUI Tasker update_idletasks() wird jetzt nur wenn nötig ausgeführt
 - Gesendeter Text wird jetzt sofort nach der Eingabe im Vorschreibfenster,
-  im QSO-Fenster angezeigt und nicht erst wenn das Paket gesendet wurde.
+  im QSO-Fenster angezeigt und nicht, erst wenn das Paket gesendet wurde.
+- APRS-Einstellung-GUI überarbeitet
+- MH-Liste-GUI überarbeitet
+- MH Netzwerk-Graph(Net-Plot) ist jetzt in die MH-Liste GUI gewandert
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
@@ -51,6 +55,9 @@ Neue Implementierungen / Funktionen:
 - Zusätzlicher Monitor in Tabellenansicht im Hauptfenster
 - QSO-Fenster Rechtsklick "Auswahl senden" - sendet ausgewählten Text oder
   Kommando an Gegenstation
+- Möglichkeit APRS-Beacons zu senden via (HF & APSR-Server)
+- APRS-Map im APRS-Monitor
+- Karte/Map für MH-Liste GUI
 
 ###########################################################################################################
 ###########################################################################################################

@@ -227,8 +227,6 @@ def getNew_APRS_ais_cfg():
         'ais_loc': '',
         'ais_lat': 0.0,
         'ais_lon': 0.0,
-        'add_new_user': False,
-        'ais_aprs_stations': {},
         'ais_host': ('cbaprs.dyndns.org', 27234),
         'ais_active': False,
         # Tracer Parameter
@@ -244,13 +242,27 @@ def getNew_APRS_ais_cfg():
         'be_tracer_alarm_hist': {},
         'be_tracer_active': False,
         'be_auto_tracer_active': False,
-        'aprs_msg_pool': {  # TODO > DB ?
+        'aprs_msg_pool': {
             "message": [],
             "bulletin": [],
         },
-        'aprs_msg_ack_c': 0
+        'aprs_msg_ack_c': 0,
+        # Beacon
+        'aprs_beacons'      : {},
+
     }
 
+def getNew_APRS_beacon_cfg():
+    return dict(
+        be_scheduler_cfg    = dict(getNew_schedule_config()),
+        be_text             = '',
+        be_symbol           = '',
+        be_from             = 'NOCALL',
+        be_via              = '',
+        be_wide             = 0,
+        be_ports            = [],
+        be_enabled          = True,
+    )
 
 #######################################
 # GUI Parameter
@@ -299,6 +311,8 @@ def getNew_maniGUI_parm():
         gui_parm_main_pan_pos       = 400,
         gui_parm_side_pan_pos       = 300,
         gui_parm_text_pan_pos       = (300, 300),
+        gui_parm_mon_pw_pos         = 200,
+        gui_aprs_text_pan_pos       = (300, 300),
         #################
         # MAin GUI width and height
         gui_parm_main_width        = 1400,

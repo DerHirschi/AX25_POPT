@@ -268,10 +268,10 @@ class Main_CFG:
     ####################
     # APRS
     def get_CFG_aprs_ais(self):
-        return self._config['aprs_ais']
+        return copy.deepcopy(self._config['aprs_ais'])
 
     def set_CFG_aprs_ais(self, data: dict):
-        self._config['aprs_ais'] = data
+        self._config['aprs_ais'] = copy.deepcopy(data)
 
     def get_APRS_node_tab(self):
         return self._config['aprs_node_tab']
@@ -279,6 +279,8 @@ class Main_CFG:
     def set_APRS_node_tab(self, node_tab: dict):
         self._config['aprs_node_tab'] = node_tab
 
+    def get_APRS_beacon_cfg(self):
+        return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
     ########################################################
     # GUI
     def get_guiCFG_language(self):
@@ -447,7 +449,7 @@ class Main_CFG:
 
     def del_pipe_CFG_fm_call(self, call: str):
         if not call:
-            return False
+            return
         for k in list(self.get_pipe_CFG().keys()):
             i = len(k) - len(call)
             if call == k[i:]:

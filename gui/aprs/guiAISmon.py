@@ -1,5 +1,9 @@
 import datetime
+import gc
+import time
+import random
 import tkinter as tk
+
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
@@ -9,6 +13,7 @@ from cfg.constant import FONT, APRS_INET_PORT_ID, APRS_MAX_TREE_ITEMS
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
+from gui.MapView.tkMapView_override import SafeTkinterMapView
 
 
 class AISmonitor(tk.Toplevel):
@@ -25,7 +30,7 @@ class AISmonitor(tk.Toplevel):
                       f"{self._win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -37,12 +42,19 @@ class AISmonitor(tk.Toplevel):
         self.lift()
         ##############################################
         self._ais_obj               = PORT_HANDLER.get_aprs_ais()
-        self._aprs_icon_tab         = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_16      = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
         self._call_filter_list      = []
         self._sort_rev              = False
         ####
-        #self._tasker_q_timer        = time.time()
+        self._marker_timeout        = 30  # Minuten, bis Marker gelöscht wird (anpassen nach Bedarf)
+        self._markers               = {}  # {node_id: {'marker': MarkerObj, 'lat': float, 'lon': float, 'last_update': datetime}}
+        ####
         self._tasker_q              = []
+        self._tasker_q_prio         = []
+        self._10_sec_task_timer     = time.time() + 10
+        self._quit                  = False
+        self.is_destroyed           = False
         ##############################################
         self._set_node_c = lambda n: f"Total Nodes: {n}"
         ##############################################
@@ -140,14 +152,27 @@ class AISmonitor(tk.Toplevel):
         self._mon_tree.column("comment", anchor='w', stretch=True, width=20)
         self._mon_tree.column("raw", anchor='w', stretch=True, width=20)
         ##############################################
-        # Frame für den rechten Bereich
-        left_frame  = ttk.Frame(mon_f)
-        l1_frame    = ttk.Frame(mon_f)
-        l2_frame    = ttk.Frame(mon_f)
+        # PW für den rechten Bereich
+        tab2 = ttk.Notebook(mon_f)
+        tab2.pack(fill='both', expand=True)
+        ##############################################
+        mon_tab_f = ttk.Frame(tab2)
+        map_tab_f = ttk.Frame(tab2)
+
+        mon_tab_f.pack(fill='both', expand=True)
+        map_tab_f.pack(fill='both', expand=True)
+
+        tab2.add(mon_tab_f, text="Monitor")
+        tab2.add(map_tab_f, text="Map")
+        ##############################################
+        # Monitor
+        left_frame  = ttk.Frame(mon_tab_f)
+        l1_frame    = ttk.Frame(mon_tab_f)
+        l2_frame    = ttk.Frame(mon_tab_f)
 
         left_frame.pack( padx=5, pady=5, fill='both', expand=True)
-        l1_frame   .pack(padx=5,         fill='x',    expand=True)
-        l2_frame   .pack(padx=5,         fill='x',    expand=True)
+        l1_frame   .pack(padx=5,         fill='x',    expand=False)
+        l2_frame   .pack(padx=5,         fill='x',    expand=False)
 
         self._text_widget = ScrolledText(left_frame,
                                          background='black',
@@ -162,13 +187,7 @@ class AISmonitor(tk.Toplevel):
                        variable=self._autoscroll_var,
                        text="Autoscroll  ",
                        command=self._scroll_to_end).pack(side='left', padx=2)
-        """
-        ttk.Checkbutton(l1_frame   ,
-                       variable=self._new_user_var,
-                       text="UserDB      ",
-                       command=self._chk_new_user
-                       ).pack(side='left', padx=2)
-        """
+
         ttk.Checkbutton(l1_frame   ,
                        variable=self._call_filter,
                        text="Call-Filter  ",
@@ -190,7 +209,30 @@ class AISmonitor(tk.Toplevel):
                   text=self._getTabStr('delete'),
                   command=self._del_buffer
                   ).pack(side='left', padx=10)
+        ##############################################
+        # MAP
+        f1 = ttk.Frame(map_tab_f)
+        f2 = ttk.Frame(map_tab_f)
 
+        f1.pack(padx=5, pady=5, fill='both', expand=True)
+        f2.pack(padx=5,         fill='x',    expand=False)
+        ##############################################
+        # Erstelle das Map-Widget
+        self._map_widget = SafeTkinterMapView(root_win=self, master=f1, corner_radius=0)
+        self._map_widget.pack(fill="both", expand=True)
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+
+        # Setze die anfängliche Position und Zoom-Level (z. B. Europa)
+        self._map_widget.set_position(lat, lon)  # Paris als Startpunkt
+        self._map_widget.set_zoom(8)
+        # self._map_widget.bind("<<MapViewZoom>>", self._on_zoom_change)
+        ########################################################
+        # f2
+        ttk.Button(f2,
+                   text='Reset Map',
+                   command=lambda : self._clear_map_markers()
+        ).pack(anchor='w', padx=20)
         ########################################################
         ########################################################
         # Node-List
@@ -399,27 +441,16 @@ class AISmonitor(tk.Toplevel):
 
 
         if self._ais_obj is not None:
-            self._call_filter_list.append(self._ais_obj.ais_call)
-            self._call_filter_calls_var.set(self._ais_obj.ais_call)
-            """
-            for port_id in self._ais_aprs_stations.keys():
-                if self._ais_aprs_stations[port_id].aprs_parm_call:
-                    self._ais_aprs_stat_calls.append(
-                        self._ais_aprs_stations[port_id].aprs_parm_call
-                    )
-            """
-        #self._init_ais_mon()
-        #self._node_tree_init()
-        #self._obj_tree_init()
-        # self._add_tasker_q("_init_ais_mon",   None)
-        #self._add_tasker_q("_node_tree_init", None)
-        #t = time.time()
+            own_call = POPT_CFG.get_CFG_aprs_ais().get('ais_call', '')
+            if own_call:
+                self._call_filter_list.append(own_call)
+                self._call_filter_calls_var.set(own_call)
+
         self._node_tree_init()
         self._obj_tree_init()
         self._init_ais_mon()
-        #print(f"Init-t: {time.time() - t} s")
-        #self._add_tasker_q("_init_ais_mon",   None)
         root_win.aprs_mon_win = self
+
 
     #############################################################
     def _sort_entry(self, col, tree):
@@ -435,26 +466,18 @@ class AISmonitor(tk.Toplevel):
         for index, (val, k) in enumerate(tmp):
             tree.move(k, '', int(index))
 
-
-    """
-    def _update_tree(self):
-        self._del_tree()
-        for ret_ent in self._tree_data:
-            self._add_to_tree(tree_data=ret_ent)
-
-    """
     @staticmethod
     def _del_tree(tree):
         for i in tree.get_children():
             tree.delete(i)
 
 
-    def _add_to_tree(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True, replace_ent=False):
-        self._add_tasker_q("_add_to_tree", (tree_data, tree, add_to_end, auto_scroll, replace_ent))
+    def _add_to_tree(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True, replace_ent=False, prio=True):
+        self._add_tasker_q("_add_to_tree", (tree_data, tree, add_to_end, auto_scroll, replace_ent), prio=prio)
 
     def _add_to_tree_task(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True, replace_ent=False):
         is_scrolled_to_top = tree.yview()[0] == 0.0
-        image              = self._aprs_icon_tab.get(tree_data[-1], None)
+        image              = self._aprs_icon_tab_16.get(tree_data[-1], None)
         if replace_ent:
             items = list(tree.get_children())
             for index, item in enumerate(items):
@@ -522,12 +545,6 @@ class AISmonitor(tk.Toplevel):
                 (aprs_pack.get('symbol_table', ''), aprs_pack.get('symbol', ''))
             )
 
-    """
-    def _add_treedata(self, tree_data: tuple):
-        self._tree_data = [tree_data] + self._tree_data
-        self._tree_data = self._tree_data[:9001] # Over 9000 !!
-     """
-
     #############################################################
     # Obj Tree
     def _obj_tree_init(self):
@@ -543,7 +560,7 @@ class AISmonitor(tk.Toplevel):
             tree_data = self._get_treedata_fm_obj_tab(ent)
             if not tree_data:
                 continue
-            self._add_to_tree(tree_data, tree=self._obj_tree, replace_ent=True)
+            self._add_to_tree(tree_data, tree=self._obj_tree, replace_ent=True, prio=False)
             n -= 1
             if not n:
                 break
@@ -588,7 +605,12 @@ class AISmonitor(tk.Toplevel):
         auto_scroll = list_len == len(list(self._obj_tree.get_children()))
         tree_data = self._get_treedata_fm_obj_tab(object_ent)
         if tree_data:
-            self._add_to_tree(tree_data, tree=self._obj_tree, add_to_end=False, auto_scroll=auto_scroll, replace_ent=True)
+            self._add_to_tree(tree_data,
+                              tree=self._obj_tree,
+                              add_to_end=False,
+                              auto_scroll=auto_scroll,
+                              replace_ent=True,
+                              prio=False)
 
         if node_id in selected_node_ids:
             for item in self._obj_tree.get_children():
@@ -831,12 +853,9 @@ class AISmonitor(tk.Toplevel):
             self._text_widget.insert(tk.END, "*** ERROR: No AIS found ***")
             logger.error("*** ERROR: No AIS found ***")
             return
-        # self._tree_data = []
         tr              = False
         call_filter_var = self._call_filter.get()
         port_filter     = self._port_filter_var.get()
-        #buf_len = len(self._ais_obj.ais_rx_buff)
-        #tt = time.time()
         for el in list(self._ais_obj.ais_rx_buff):
             if not el:
                 continue
@@ -847,19 +866,32 @@ class AISmonitor(tk.Toplevel):
             if init_tree:
                 tree_data = self._get_treedata_fm_pack(el)
                 if tree_data:
-                    self._add_to_tree(tree_data=tree_data, tree=self._mon_tree, add_to_end=False, replace_ent=False)
+                    self._add_to_tree(tree_data=tree_data,
+                                      tree=self._mon_tree,
+                                      add_to_end=False,
+                                      replace_ent=False,
+                                      prio=False)
                 if el.get('weather', {}):
                     wx_tree_data = self._get_treedata_fm_wx_pack(el)
                     if wx_tree_data:
-                        self._add_to_tree(tree_data=wx_tree_data, tree=self._wx_tree, add_to_end=False, replace_ent=True)
+                        self._add_to_tree(tree_data=wx_tree_data,
+                                          tree=self._wx_tree,
+                                          add_to_end=False,
+                                          replace_ent=True)
                 elif el.get('format', '') == 'message':
                     msg_tree_data = self._get_treedata_fm_msg_pack(el)
                     if msg_tree_data:
-                        self._add_to_tree(tree_data=msg_tree_data, tree=self._msg_tree, add_to_end=False, replace_ent=False)
+                        self._add_to_tree(tree_data=msg_tree_data,
+                                          tree=self._msg_tree,
+                                          add_to_end=False,
+                                          replace_ent=False)
                 elif el.get('format', '') == 'bulletin':
                     bl_tree_data = self._get_treedata_fm_bl_pack(el)
                     if bl_tree_data:
-                        self._add_to_tree(tree_data=bl_tree_data, tree=self._bl_tree, add_to_end=False, replace_ent=False)
+                        self._add_to_tree(tree_data=bl_tree_data,
+                                          tree=self._bl_tree,
+                                          add_to_end=False,
+                                          replace_ent=False)
             # self._add_treedata(tree_data)
             # Monitor
 
@@ -880,14 +912,32 @@ class AISmonitor(tk.Toplevel):
 
     ###########################################################
     def tasker(self):
-        if not self._tasker_q:
-            return False
+        if self._quit:
+            self._check_threads_and_destroy()
+            return True
+        ret = False
+        if time.time() > self._10_sec_task_timer:
+            self._10_sec_task_timer = time.time() + 10
+            self._check_map_timeouts()
+            ret = True
+
+        if hasattr(self._map_widget, 'tasker'):
+            ret = self._map_widget.tasker()
+
+        if not self._tasker_q and not self._tasker_q_prio:
+            return ret
 
         tasker_n = 20
 
-        while self._tasker_q and tasker_n:
-            task, arg = self._tasker_q[0]
-            self._tasker_q = self._tasker_q[1:]
+        while any((self._tasker_q_prio, self._tasker_q)) and tasker_n:
+            if self._tasker_q_prio:
+                task, arg = self._tasker_q_prio[0]
+                self._tasker_q_prio = self._tasker_q_prio[1:]
+            elif self._tasker_q:
+                task, arg = self._tasker_q[0]
+                self._tasker_q = self._tasker_q[1:]
+            else:
+                break
             if task == 'pack_to_mon':
                 self._pack_to_mon_task(arg)
             elif task == 'update_node_tab':
@@ -899,10 +949,19 @@ class AISmonitor(tk.Toplevel):
 
         return True
 
-    def _add_tasker_q(self, fnc: str, arg):
-        if (fnc, None) in self._tasker_q:
-            return
-        self._tasker_q.append((fnc, arg))
+    def _add_tasker_q(self, fnc: str, arg, prio=True):
+        if prio:
+            if (fnc, None) in self._tasker_q_prio:
+                return
+            self._tasker_q_prio.append(
+                (fnc, arg)
+            )
+        else:
+            if (fnc, None) in self._tasker_q:
+                return
+            self._tasker_q.append(
+                (fnc, arg)
+            )
 
     def pack_to_mon(self, pack):
         self._add_tasker_q("pack_to_mon", pack)
@@ -914,7 +973,7 @@ class AISmonitor(tk.Toplevel):
         tr = False
         tree_data = self._get_treedata_fm_pack(pack)
         #self._add_treedata(tree_data)
-        self._add_to_tree(tree_data, tree=self._mon_tree, add_to_end=False, replace_ent=False)
+        self._add_to_tree(tree_data, tree=self._mon_tree, add_to_end=False, replace_ent=False, prio=False)
         if self._call_filter.get():
             if pack['from'] in self._call_filter_list:
                 tr = True
@@ -935,12 +994,77 @@ class AISmonitor(tk.Toplevel):
         if tr:
             self._scroll_to_end()
 
+        # Marker aktualisieren/hinzufügen
+        if 'latitude' in pack and 'longitude' in pack:
+            lat, lon = pack.get('latitude', 0.0), pack.get('longitude', 0.0)
+            if lat is not None:
+                node_id = pack.get('from', '')
+                if pack.get('format', '') == 'object':
+                    node_id = pack.get('name', node_id)
+                symbol_table = pack.get('symbol_table', '/')
+                symbol = pack.get('symbol', ' ')
+                last_update = pack.get('rx_time', datetime.datetime.now())
+                comment = pack.get('comment', '') or pack.get('status', '') or pack.get('message_text', '')
+                self._update_marker(node_id, lat, lon, symbol_table, symbol, last_update, comment=comment)
+
     def update_node_tab(self, node_tab_ent: dict, object_ent: dict):
         self._add_tasker_q("update_node_tab", (node_tab_ent, object_ent))
 
     def _update_node_tab_task(self, arg: tuple):
         node_tab_ent, object_ent = arg
         self._node_tree_update(node_tab_ent, object_ent)
+
+    #######################################
+    def _update_marker(self, node_id, lat, lon, symbol_table, symbol, last_update, text=None, comment=''):
+        if not node_id or lat is None or lon is None:
+            return
+        # Kleiner Random-Offset hinzufügen, wenn neu
+        if node_id not in self._markers:
+            offset_range = 0.0001  # Ca. 10-11 Meter, anpassen nach Bedarf
+            lat += random.uniform(-offset_range, offset_range)
+            lon += random.uniform(-offset_range, offset_range)
+        else:
+            # Bei Update die offsette Position beibehalten
+            old_data = self._markers[node_id]
+            lat = old_data['lat']
+            lon = old_data['lon']
+
+        icon = self._aprs_icon_tab_24.get((symbol_table, symbol), None)
+        text = node_id
+        #if comment:
+        #    text += f" ({tk_filter_bad_chars(comment)})"
+        if node_id in self._markers:
+            old_data = self._markers[node_id]
+            marker = old_data['marker']
+            if old_data['lat'] != lat or old_data['lon'] != lon:
+                marker.set_position(lat, lon)
+                old_data['lat'] = lat
+                old_data['lon'] = lon
+            old_data['last_update'] = last_update
+        else:
+            marker = self._map_widget.set_marker(lat, lon, text=text, icon=icon)
+            self._markers[node_id] = {
+                'marker': marker,
+                'lat': lat,
+                'lon': lon,
+                'last_update': last_update
+            }
+
+    def _check_map_timeouts(self):
+        now = datetime.datetime.now()
+        to_delete = []
+        for node_id, data in list(self._markers.items()):
+            if (now - data['last_update']).total_seconds() / 60 > self._marker_timeout:
+                data['marker'].delete()
+                to_delete.append(node_id)
+        for d in to_delete:
+            del self._markers[d]
+
+    def _clear_map_markers(self):
+        """Löscht alle Marker von der Karte und leert das _markers Dictionary."""
+        for node_id, data in list(self._markers.items()):
+            data['marker'].delete()
+            del self._markers[node_id]
 
     #######################################
     def set_ais_obj(self):
@@ -966,7 +1090,9 @@ class AISmonitor(tk.Toplevel):
     def _chk_call_filter(self):
         self._call_filter_list = []
         if self._ais_obj is not None:
-            self._call_filter_list.append(self._ais_obj.ais_call)
+            own_call = POPT_CFG.get_CFG_aprs_ais().get('ais_call', '')
+            if own_call:
+                self._call_filter_list.append(own_call)
 
         calls = self._call_filter_calls_var.get()
         calls = calls.split(' ')
@@ -1016,8 +1142,63 @@ class AISmonitor(tk.Toplevel):
         if self._autoscroll_var.get():
             self._text_widget.see(tk.END)
 
+    """
     def _destroy_win(self):
         # self.tasker = lambda: 0
+        self._map_widget.running   = False
+        #while self._map_widget.pre_cache_thread.is_alive():
+        #    print('wait')
+        #    time.sleep(0.04)
+        #self._map_widget.delete_all_path()
+        #self._map_widget.delete_all_marker()
+        #self._map_widget.delete_all_polygon()
+        self._map_widget.destroy()
+        #self._map_widget = None
         self._root_cl.aprs_mon_win = None
         # self._ais_obj.ais_rx_buff = self._tmp_buffer + self._ais_obj.ais_rx_buff
         self.destroy()
+    """
+    #####################################################
+    def _add_thread_gc(self, thread):
+        if hasattr(self._root_cl, 'add_thread_gc'):
+            self._root_cl.add_thread_gc(thread)
+
+    def destroy_win(self):
+        self._close_me()
+
+    def destroy(self):
+        self.destroy_win()
+
+    def _close_me(self):
+        if self._quit:
+            return
+
+        # Threads stoppen signalisieren
+        self._map_widget.running = False
+        self._map_widget.image_load_queue_tasks = []
+        self._map_widget.image_load_queue_results = []
+        for thread in self._map_widget.get_threads():
+            self._add_thread_gc(thread)
+        self._root_cl.aprs_mon_win = None
+        self._root_cl.add_win_gc(self)
+        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
+        self._quit = True
+        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
+        # Starte asynchrones Polling, um auf Threads zu warten
+        self._check_threads_and_destroy()
+
+    def _check_threads_and_destroy(self):
+        map_threads = self._map_widget.get_threads()
+        all_dead = all(not thread.is_alive() for thread in map_threads)
+
+        if all_dead:
+            # Alle Threads sind tot – jetzt safe zerstören
+            self._map_widget.clean_cache()
+            gc.collect()
+
+            self.destroy()
+            self.is_destroyed = True
+
+    def all_dead(self):
+        map_threads = self._map_widget.get_threads()
+        return all(not thread.is_alive() for thread in map_threads)

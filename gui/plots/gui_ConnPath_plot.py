@@ -2,62 +2,38 @@ import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
 
-from cfg.logger_config import logger
-#from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-#from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-#from gui import FigureCanvasTkAgg
 from gui import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import networkx as nx
 import random
-from ax25.ax25InitPorts import PORT_HANDLER
-# from fnc.cfg_fnc import convert_obj_to_dict
-# from fnc.gui_fnc import generate_random_hex_color
-
-# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
-# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
-#import matplotlib
 
 from cfg.constant import MH_BEACON_FILTER
 from cfg.popt_config import POPT_CFG
 
-#matplotlib.use('Agg')
-# from matplotlib import pyplot as plt
 from gui import plt
 
 
-class ConnPathsPlot(tk.Toplevel):
-    def __init__(self, root_win):
-        tk.Toplevel.__init__(self)
-        self.wm_title("MH Routes")
+class ConnPathsPlot(ttk.Frame):
+    def __init__(self, root_frame,  root_win):
+        ttk.Frame.__init__(self, root_frame)
+        self.pack(fill='both', expand=True)
         self._root_win = root_win
         #self._get_colorMap = lambda: COLOR_MAP.get(root_win.style_name, ('black', '#d9d9d9'))
-
-        self.geometry(f"800x"
-                      f"600+"
-                      f"{self._root_win.main_win.winfo_x()}+"
-                      f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._destroy_plot)
-        try:
-            self.iconbitmap("favicon.ico")
-        except tk.TclError:
-            try:
-                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
-            except Exception as ex:
-                logger.warning(ex)
         #######################################################################
-        self._seed = random.randint(1, 10000)
+        self._seed      = random.randint(1, 10000)
         self._path_data = {}
-        self._node_key = []
-        self._dest_key = []
+        self._node_key  = []
+        self._dest_key  = []
         self._own_calls = []
-        self._pos = None
-        self._port = tk.IntVar(self, value=0)
-        self._mh = PORT_HANDLER.get_MH()
-        self._show_last_route_var = tk.BooleanVar(self, value=False)
-        self._show_dest_var = tk.BooleanVar(self, value=True)
-        self._filter_beacon_var = tk.BooleanVar(self, value=True)
+        self._pos       = None
+        #######################################################################
+        self._port                  = tk.IntVar(self, value=0)
+        self._show_last_route_var   = tk.BooleanVar(self, value=True)
+        self._show_dest_var         = tk.BooleanVar(self, value=False)
+        self._filter_beacon_var     = tk.BooleanVar(self, value=True)
+        self._style_var             = tk.StringVar(self, value='Spring')
+        self._node_option_var       = tk.StringVar(self, '')
+        self._last_seen_days_var    = tk.IntVar(self, value=30)
 
-        self._init_vars_fm_raw_data()
         #######################################################################
         #######################################################################
         btn_frame = ttk.Frame(self)
@@ -67,7 +43,6 @@ class ConnPathsPlot(tk.Toplevel):
                                 command=self._refresh_btn
                                 )
         refresh_btn.pack(side=tk.LEFT, padx=10)
-        self._style_var = tk.StringVar(self, value='Spring')
         self._style_opt = {
             'Circular': nx.circular_layout,
             'Planar': nx.planar_layout,
@@ -86,17 +61,6 @@ class ConnPathsPlot(tk.Toplevel):
                                      )
         style_option.pack(side=tk.LEFT, padx=10)
 
-        # node_option = [''] + list(self._node_key)
-        # node_option.sort()
-        self._node_option_var = tk.StringVar(self, '')
-        """
-        node_optionmen = tk.OptionMenu(btn_frame,
-                                       self._node_option_var,
-                                       *node_option,
-                                       command=self._update_Graph
-                                       )
-        node_optionmen.pack(side=tk.LEFT, padx=10)
-        """
 
         show_hops_chk = ttk.Checkbutton(btn_frame,
                                        variable=self._show_dest_var,
@@ -109,7 +73,6 @@ class ConnPathsPlot(tk.Toplevel):
                                        command=self._update_Graph)
         filter_beacon.pack(side=tk.LEFT, padx=10)
         # Last seen
-        self._last_seen_days_var = tk.IntVar(self, value=30)
         last_seen_days = ttk.Spinbox(btn_frame,
                                      textvariable=self._last_seen_days_var,
                                      from_=1,
@@ -141,6 +104,8 @@ class ConnPathsPlot(tk.Toplevel):
         g_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self._fig, self._plot1 = plt.subplots()
+        self._fig.set_size_inches(6, 3)  # Ändert die Größe des Figures (Breite x Höhe in Zoll)
+        self._fig.set_dpi(85)
         # self._plot2 = self._plot1.twinx()
         self._fig.subplots_adjust(top=1.00, bottom=0.00, left=0.00, right=1.00, hspace=0.00)
         self._canvas = FigureCanvasTkAgg(self._fig, master=g_frame)
@@ -154,14 +119,14 @@ class ConnPathsPlot(tk.Toplevel):
         toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
         toolbar1.update()
         toolbar1.pack(side=tk.TOP, fill=tk.X)
-
+        for button in toolbar1.winfo_children():
+            if isinstance(button, tk.Button):
+                button.config(width=20, height=20)
         right_frame = ttk.Frame(self)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
-        # self._init_chk_frame(right_frame)
-        self._root_win.conn_Path_plot_win = self
+        # ###################################
 
-        # self._init_stationInfo_vars(self._path_data)
-        ##self._init_vars_fm_raw_data()
+        self._init_vars_fm_raw_data()
         self._g = nx.Graph()
         self._update_Graph()
 
@@ -184,13 +149,14 @@ class ConnPathsPlot(tk.Toplevel):
             self._canvas.draw()
 
     def _init_vars_fm_raw_data(self):
-        if not self._mh:
+        mh = self._root_win.get_mh()
+        if not hasattr(mh, 'get_mh_db_by_port'):
             return
         self._path_data = {}
         self._node_key = []
         self._dest_key = []
         port = self._port.get()
-        data = self._mh.get_mh_db_by_port(port)
+        data = mh.get_mh_db_by_port(port)
         if not data:
             return
         self._own_calls = []
@@ -273,7 +239,7 @@ class ConnPathsPlot(tk.Toplevel):
                     if add_dest:
                         dest_call = self._path_data[k].get('dest_call', '')
                         if filter_beacon_of_hope:
-                            if dest_call not in MH_BEACON_FILTER:
+                            if dest_call not in MH_BEACON_FILTER or 'WIDE' not in dest_call:
                                 self._add_edge(call1, dest_call, '', 1)
                         else:
                             self._add_edge(call1, dest_call, '', 1)
@@ -284,7 +250,7 @@ class ConnPathsPlot(tk.Toplevel):
                     if add_dest:
                         dest_call = self._path_data[k].get('dest_call', '')
                         if filter_beacon_of_hope:
-                            if dest_call not in MH_BEACON_FILTER:
+                            if dest_call not in MH_BEACON_FILTER or 'WIDE' not in dest_call:
                                 self._add_edge(from_call, dest_call, '', 1)
                         else:
                             self._add_edge(from_call, dest_call, '', 1)
@@ -375,11 +341,12 @@ class ConnPathsPlot(tk.Toplevel):
                                  horizontalalignment='center',
                                  )
 
-    def _destroy_plot(self):
+    def destroy_plot(self):
         self._plot1.clear()
         self._g.clear()
         self._fig.clear()
-        plt.close()
+        plt.close(self._fig)
+        # plt.close()
         self._canvas.get_tk_widget().destroy()
-        self._root_win.conn_Path_plot_win = None
+        del self._canvas
         self.destroy()

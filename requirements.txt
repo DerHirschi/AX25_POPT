@@ -6,3 +6,6 @@ gTTS~=2.3.1
 playsound~=1.3.0
 # mysql-connector-python~=8.1.0
 networkx~=3.1
+pillow~=11.2.1
+future~=1.0.0
+tkintermapview~=1.29

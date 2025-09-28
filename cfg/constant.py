@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.40'
+VER = '2.120.41'
 
 DEBUG_LOG       = True
 CONSOLE_LOG     = True
@@ -177,10 +177,11 @@ BBS_REVERS_FWD_CMD = {
 DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
 
 # APRS Stuff
-APRS_SW_ID          = f"APZPOP"  # TODO get SW ID
-APRS_TRACER_COMMENT = "PoPT-Tracer"
-APRS_INET_PORT_ID   = 'I-NET'
-APRS_CQ_ADDRESSES   = ['ALL', 'QST', 'CQ']
+APRS_SW_ID                  = f"APZPOP"  # TODO get SW ID
+APRS_TRACER_COMMENT         = "PoPT-Tracer"
+APRS_INET_PORT_ID           = 'I-NET'
+APRS_CQ_ADDRESSES           = ['ALL', 'QST', 'CQ']
+APRS_POS_BEACON_COMMENT_MAX = 40
 
 # Locator Calc
 ASCII_0 = 48
@@ -216,8 +217,8 @@ DEF_PORT_MON_RX_COL      = 'green'
 DEF_PORT_MON_BG_COL      = '#000000'
 # APRS-MONITOR
 APRS_MAX_TREE_ITEMS     = 10000
-APRS_MAX_BUFFER         = 2000
-APRS_MAX_OBJ_TAB        = 2000
+APRS_MAX_BUFFER         = 5000
+APRS_MAX_OBJ_TAB        = 5000
 # Built-in Styles
 STYLES_BULD_IN_LINUX = [
             'default',
@@ -435,6 +436,7 @@ GPIO_PATH = '/sys/class/gpio'
 GPIO_RANGE = (1, 26)
 #######################################################
 # Tasker
-TASK_TYP_FWD    = 'FWD'
-TASK_TYP_BEACON = 'BEACON'
-TASK_TYP_MAIL   = 'AUTOMAIL'
+TASK_TYP_FWD            = 'FWD'
+TASK_TYP_BEACON         = 'BEACON'
+TASK_TYP_APRS_BEACON    = 'APRS-BEACON'
+TASK_TYP_MAIL           = 'AUTOMAIL'
