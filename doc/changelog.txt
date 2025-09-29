@@ -39,6 +39,7 @@ Optimierung/Änderungen:
 - MH-Liste-GUI überarbeitet
 - MH Netzwerk-Graph(Net-Plot) ist jetzt in die MH-Liste GUI gewandert
 - APRS-Beacon-Tracer ist jetzt in die MH-GUI "gewandert"
+- Icons für Verbindungstypen in "Connects" Tabelle (Seiten-Fenster)
 
 Neue Implementierungen / Funktionen:
 - BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
@@ -60,7 +61,9 @@ Neue Implementierungen / Funktionen:
 - Möglichkeit APRS-Beacons zu senden via (HF & APSR-Server)
 - APRS-Map im APRS-Monitor
 - Karte/Map für MH-Liste GUI
-- Tabelle für DX-Alarm-History für MH-Liste GUI
+- Tabelle für DX-Alarm-History in MH-Liste GUI
+- Tabelle für Verbindungsverlauf in Seitenfenter(Haupt-GUI)
+- Tabelle für Verbindungsverlauf in MH-Liste GUI
 
 ###########################################################################################################
 ###########################################################################################################

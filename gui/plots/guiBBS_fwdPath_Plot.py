@@ -476,7 +476,7 @@ class FwdGraph(tk.Toplevel):
         self._plot2.clear()
         self._g.clear()
         self._fig.clear()
-        plt.close()
+        plt.close(self._fig)
         self._canvas.get_tk_widget().destroy()
         self._root_win.fwd_Path_plot_win = None
         self.destroy()

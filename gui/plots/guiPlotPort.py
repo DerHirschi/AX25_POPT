@@ -431,8 +431,8 @@ class PlotWindow(tk.Toplevel):
 
     def destroy_plot(self):
         self._plot1.clear()
+        plt.close(self._fig)
         self._fig.clear()
-        plt.close()
         self._canvas.get_tk_widget().destroy()
         self._root_win.port_stat_win = None
         self.destroy()

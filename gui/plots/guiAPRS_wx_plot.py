@@ -285,6 +285,6 @@ class WXPlotWindow(tk.Toplevel):
     def destroy_plot(self):
         self._plot2.clear()
         self._fig.clear()
-        plt.close()
+        plt.close(self._fig)
         self._canvas.get_tk_widget().destroy()
         self.destroy()

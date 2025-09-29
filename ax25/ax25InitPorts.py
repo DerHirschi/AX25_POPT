@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime
 import time
 import threading
 
 from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25Multicast import ax25Multicast
+from cfg.default_config import getNew_ConnHistory_struc
 # from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
@@ -46,7 +47,7 @@ class AX25PortHandler(object):
             # print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
         ###########################
-        self._start_time        = datetime.datetime.now()
+        self._start_time        = datetime.now()
         self.is_running         = True
         self._ph_end            = False
         self._glb_port_blocking = 1
@@ -321,6 +322,8 @@ class AX25PortHandler(object):
             logger.info("PH: Saving Port Statistic-Data")
             self.sysmsg_to_gui("Saving Port Statistic-Data")
             self._mh.save_PortStat()
+            self.sysmsg_to_gui("Saving Connection History")
+            self._mh.save_conn_hist()
         if self._update_1wire_th is not None:
             self.sysmsg_to_gui("Closing 1-Wire Thread")
             n = 0
@@ -589,6 +592,7 @@ class AX25PortHandler(object):
         lb_msg = f"CH {ch_id} - {str(connection.my_call_str)}: - {str(connection.uid)} - Port: {int(connection.port_id)}"
         LOG_BOOK.info(lb_msg)
         LOG_BOOK.info(lb_msg_1)
+        # GUI Stuff
         connection.send_sys_Msg_to_gui(msg)
         if self._gui:
             # TODO GUI Stuff > guiMain
@@ -609,7 +613,8 @@ class AX25PortHandler(object):
                                         path=path)
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
-
+        # Conn History
+        self._update_conn_history(connection, disco=False)
 
     """
     def reset_connection(self, connection):
@@ -644,21 +649,70 @@ class AX25PortHandler(object):
         LOG_BOOK.info(lb_msg)
         LOG_BOOK.info(lb_msg_1)
         #conn.send_sys_Msg_to_gui(msg)
-        if self._gui:
-            # TODO GUI Stuff > guiMain
-            # TODO: Trigger here, UserDB-Conn C
-            self._gui.sysMsg_to_qso(
-                data=msg,
-                ch_index=ch_id)
+        if ch_id:
+            if self._gui:
+                # TODO GUI Stuff > guiMain
+                # TODO: Trigger here, UserDB-Conn C
+                self._gui.sysMsg_to_qso(
+                    data=msg,
+                    ch_index=ch_id)
 
-            if 0 < ch_id < SERVICE_CH_START:
-                SOUND.disco_sound()
-            self._gui.resetHome_LivePath_plot(ch_id=ch_id)
-            self._gui.ch_status_update()
-            self._gui.conn_btn_update()
-            if conn.noty_bell:
-                self.reset_noty_bell_PH()
+                if ch_id < SERVICE_CH_START:
+                    SOUND.disco_sound()
+                self._gui.resetHome_LivePath_plot(ch_id=ch_id)
+                self._gui.ch_status_update()
+                self._gui.conn_btn_update()
+                if conn.noty_bell:
+                    self.reset_noty_bell_PH()
+            # Conn History
+            self._update_conn_history(conn, disco=True)
 
+    def _update_conn_history(self, conn, disco: bool):
+        ch_id     = conn.ch_index
+        port_id   = conn.port_id
+        ent_call  = conn.to_call_str
+        own_call  = conn.my_call_str
+        via_calls = conn.via_calls
+        conn_typ  = conn.cli_type
+        if conn.is_link:
+            if hasattr(conn.LINK_Connection, 'to_call_str'):
+                conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}'
+            else:
+                conn_typ = 'DIGI'
+        if conn.pipe:
+            conn_typ = 'PIPE'
+        user_db_ent = self._userDB.get_entry(ent_call, add_new=False)
+        if all((hasattr(user_db_ent, ''),
+                    hasattr(user_db_ent, ''),)):
+            locator   = ''
+            distance  = -1
+        else:
+            locator  = user_db_ent.LOC
+            distance = user_db_ent.Distance
+        conn_incoming = conn.is_incoming_conn()
+        duration  = 0
+        if disco:
+            duration = datetime.now() - conn.time_start
+
+        his_ent = getNew_ConnHistory_struc(
+            ch_id           = ch_id,
+            port_id         = port_id,
+            from_call       = ent_call,
+            own_call        = own_call,
+            via             = via_calls,
+            locator         = locator,
+            distance        = distance,
+            typ             = conn_typ,
+            conn_incoming   = conn_incoming,
+            time            = datetime.now(),
+            duration        = duration,
+            disco           = disco,
+        )
+        mh = self.get_MH()
+        if hasattr(mh, 'add_conn_hist'):
+            mh.add_conn_hist(his_ent)
+
+    ######################
     def del_link(self, uid: str):
         if uid in self.link_connections.keys():
             del self.link_connections[uid]
@@ -854,7 +908,7 @@ class AX25PortHandler(object):
                 else:
                     port_id = pipeCfg.get('pipe_parm_port', -1)
                     port = self.get_port_by_index(port_id)
-                    if port is not None:
+                    if hasattr(port, 'add_pipe'):
                         port.add_pipe(pipe_cfg=pipeCfg)
 
                     # self._all_pipe_cfgs[call] = pipe

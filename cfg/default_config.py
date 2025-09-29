@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
     DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
@@ -206,7 +208,34 @@ def getNew_MH_cfg():
         # '_short_MH': deque([], maxlen=40),
     }
 
-
+def getNew_ConnHistory_struc(
+        ch_id: int,
+        port_id: int,
+        from_call: str,
+        own_call: str,
+        via: list,
+        locator: str,
+        distance: int,
+        typ: str,
+        conn_incoming: bool,
+        time,
+        disco: bool,
+        duration: timedelta,
+):
+    return dict(
+        ch_id=int(ch_id),
+        port_id=int(port_id),
+        from_call=str(from_call),
+        own_call=str(own_call),
+        via=list(via),
+        locator=str(locator),
+        distance=int(distance),
+        typ=str(typ),
+        conn_incoming=bool(conn_incoming),
+        time=time,
+        disco=bool(disco),
+        duration=duration,
+    )
 #######################################
 # APRS
 def getNew_APRS_Station_cfg():

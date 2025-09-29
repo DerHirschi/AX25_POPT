@@ -33,6 +33,7 @@ class Main_CFG:
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': {},
             'gui_pacman': {},
+            'conn_history': [],
             ##########################
             # -- Beacon
             'beacon_tasks': [],
@@ -665,5 +666,12 @@ class Main_CFG:
     def set_block_list(self, block_tab: dict):
         self._config['block_list'] = block_tab
 
+    ############################################
+    # Conn History
+    def set_conn_hist(self, conn_hist: list):
+        self._config['conn_history'] = list(conn_hist)
+
+    def get_conn_hist(self):
+        return list(self._config['conn_history'])
 
 POPT_CFG = Main_CFG()

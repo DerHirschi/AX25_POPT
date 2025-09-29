@@ -204,17 +204,7 @@ class BeaconTracer(ttk.Frame):
 
         ##########################
         # self._chk_port()
-        # self._init_menubar()
         self._update_tree_data()
-
-    """
-    def _init_menubar(self):
-        menubar = Menu(self, tearoff=False)
-        self.config(menu=menubar)
-        MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._delete_all_data)
-        menubar.add_cascade(label=self._getTabStr('data'), menu=MenuVerb, underline=0)
-    """
 
     def _update_tree_data(self):
         self._format_tree_data()
@@ -307,7 +297,9 @@ class BeaconTracer(ttk.Frame):
         self._root_win.set_tracer_fm_aprs()
         # self._root_win.set_tracer_icon()
 
-    def _delete_all_data(self):
+    def delete_all_data(self):
         PORT_HANDLER.get_aprs_ais().tracer_traces_delete()
         self._update_tree_data()
 
+    def get_tracer_tree(self):
+        return self._tree

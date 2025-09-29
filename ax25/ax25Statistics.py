@@ -133,9 +133,11 @@ class MH:
         # Port Statistic
         self._db = None
         ##################
-        # Saved Param
+        # History Data
         self._dx_alarm_hist         = []       # For GUI MH
         self.dx_alarm_perma_hist    = {}       # CLI DX List
+        self._conn_hist             = POPT_CFG.get_conn_hist()  # Connection History / Logbook
+        # Parameter
         self.parm_new_call_alarm    = False
         self.parm_distance_alarm    = 50
         self.parm_lastseen_alarm    = 1
@@ -282,6 +284,20 @@ class MH:
 
     def is_dx_alarm_f_call(self, call: str):
         return bool(call in self._dx_alarm_hist)
+
+    #########################
+    # Connection History
+    def add_conn_hist(self, his_ent: dict):
+        self._conn_hist.append(his_ent)
+
+    def get_conn_hist(self):
+        return list(self._conn_hist)
+
+    def reset_conn_hist(self):
+       self._conn_hist = []
+
+    def save_conn_hist(self):
+        POPT_CFG.set_conn_hist(self._conn_hist)
 
     ########################
     # Port Statistic
