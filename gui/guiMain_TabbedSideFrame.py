@@ -935,7 +935,7 @@ class SideTabbedFrame:
         if len(conn_history) == self._old_conn_hist_len:
             return
         new_entries = conn_history[self._old_conn_hist_len:]
-        for ent in reversed(new_entries):  # Reversed, um neueste zuerst einzufügen
+        for ent in new_entries:  # Reversed, um neueste zuerst einzufügen
             ent: dict
             typ = ent.get('typ', '')
             image_typ = str(typ)

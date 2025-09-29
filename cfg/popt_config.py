@@ -669,6 +669,8 @@ class Main_CFG:
     ############################################
     # Conn History
     def set_conn_hist(self, conn_hist: list):
+        conn_hist = list(conn_hist)
+        #conn_hist.reverse()
         self._config['conn_history'] = list(conn_hist)
 
     def get_conn_hist(self):
