@@ -99,6 +99,9 @@ class SafeTkinterMapView(TkinterMapView):
                 except Exception as e:
                     logger.error(f"Error in set_image: {e}")
             n -= 1
+        if n == 15:
+            return False
+        return True
 
     def _pre_cache(self):
         if not hasattr(self, '_radius'):

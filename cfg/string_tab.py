@@ -2868,6 +2868,17 @@ STR_TABLE = {
         '',
         ''),
 
+    'show_in_userDB': (
+        'In User-DB zeigen',
+        'Show in User-DB',
+        'Weergeven in Gebruikersdatabase',
+        'Afficher dans la base de données utilisateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     # CLI
     'cmd_help_bell': (
         'Sysop Rufen',

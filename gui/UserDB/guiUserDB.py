@@ -1,11 +1,14 @@
+import gc
+import random
 import tkinter as tk
 from tkinter import ttk
 
-from UserDB.UserDBmain import USER_DB
+from UserDB.UserDBmain import Client
 from cfg.constant import ENCODINGS, STATION_TYPS
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
+from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.UserDB.guiNewEntry import GUINewUserEntry
 from gui.guiMsgBoxes import AskMsg
 from gui.guiRightClick_Menu import ContextMenu
@@ -14,8 +17,9 @@ from gui.guiRightClick_Menu import ContextMenu
 class UserDB(tk.Toplevel):
     def __init__(self, root, ent_key=''):
         tk.Toplevel.__init__(self, master=root.main_win)
-        self._root_win = root
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win          = root
+        self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._aprs_icon_tab_24  = self._root_win.get_aprs_icon_tab_24()
         self.win_height = 600
         self.win_width = 1060
         self.style = root.style
@@ -25,7 +29,7 @@ class UserDB(tk.Toplevel):
                       f"{self.win_height}+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
         self.resizable(False, False)
         try:
             self.iconbitmap("favicon.ico")
@@ -38,11 +42,21 @@ class UserDB(tk.Toplevel):
         # self.attributes("-topmost", True)
         ###############
         main_f = ttk.Frame(self)
-        main_f.pack(fill=tk.BOTH, expand=True)
+        main_f.pack(fill='both', expand=True)
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
-        self._user_db           = USER_DB
+        #
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+        self._markers       = {}  # {call: {'marker': MarkerObj, 'lat': float, 'lon': float}}
+        self._paths         = []  # Liste von Path-Objekten für Verbindungslinien
+        self._current_path  = None
+        # MapView Thread Ctrl.
+        self._quit          = False
+        self.is_destroyed   = False
+        ########################
+        self._user_db           = self.get_userDB()
         self._db_ent            = None
         self.NewUser_ent_win    = None
         self._selected          = []
@@ -101,11 +115,11 @@ class UserDB(tk.Toplevel):
                               # bg="green",
                               #height=1,
                               width=8,
-                              command=self._destroy_win)
+                              command=self.destroy_win)
         ok_bt.place(x=20, y=self.win_height - 50)
         save_bt.place(x=110, y=self.win_height - 50)
         cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
-
+        ################################################
         upper_btn_f = ttk.Frame(main_f)
         upper_btn_f.place(x=200, y=10)
         new_bt = ttk.Button(upper_btn_f,
@@ -116,7 +130,7 @@ class UserDB(tk.Toplevel):
                            width=6,
                            command=self._new_btn_cmd
                            )
-        new_bt.pack(side=tk.LEFT)
+        new_bt.pack(side='left')
 
         del_bt = tk.Button(upper_btn_f,
                            text=self._getTabStr('delete'),
@@ -128,7 +142,7 @@ class UserDB(tk.Toplevel):
                            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                            highlightthickness=0,
                            )
-        del_bt.pack(side=tk.LEFT, padx=50)
+        del_bt.pack(side='left', padx=50)
 
         self.grid_columnconfigure(0, weight=0, minsize=15)
         self.grid_columnconfigure(1, weight=0)
@@ -138,7 +152,7 @@ class UserDB(tk.Toplevel):
 
         self._tree = ttk.Treeview(main_f, columns=('call',), show='tree', height=20)
         self._tree.grid(row=1, column=1, sticky='nw')
-        scrollbar = ttk.Scrollbar(main_f, orient=tk.VERTICAL, command=self._tree.yview)
+        scrollbar = ttk.Scrollbar(main_f, orient='vertical', command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=1, column=2, sticky='wns')
 
@@ -291,7 +305,21 @@ class UserDB(tk.Toplevel):
                                  highlightthickness=0,
                                  )
         self._info_ent.place(x=x + 80, y=y)
+        ##############################
+        # MiniMap
+        x = 625
+        y = 155
+        map_frame = ttk.Frame(tab1, height=200, width=200)
+        map_frame.place(x=x, y=y)
+        self._map_widget = SafeTkinterMapView(root_win=self, master=map_frame, corner_radius=0)
+        self._map_widget.pack(fill="both", expand=True)
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
 
+        # Setze die anfängliche Position und Zoom-Level (z. B. Europa)
+        self._map_widget.set_position(lat, lon)
+        self._map_widget.set_zoom(2)
+        ##################################
         # CLI LANGUAGE   # TODO
         x = 10
         y = 400
@@ -468,6 +496,7 @@ class UserDB(tk.Toplevel):
             self._select_entry_fm_ch_id()
         else:
             self._select_entry_fm_key(ent_key)
+        self._update_map()
         root.userdb_win = self
 
     def _init_RClick_menu(self):
@@ -475,9 +504,144 @@ class UserDB(tk.Toplevel):
             txt_men = ContextMenu(self._tree)
             txt_men.add_item(self._getTabStr('delete_selected'),  self._del_menu_cmd)
 
+    ######################################################
+    # MAP
+    def _get_station_icon(self, call: str):
+        default_icon = self._aprs_icon_tab_24.get(('\\', 'X'), None)
+        ais = self._get_aprs_ais()
+        user_db = self.get_userDB()
+        if not hasattr(ais, 'get_symbol_fm_node_tab'):
+            logger.error("not hasattr(ais, 'get_symbol_fm_node_tab')")
+            return default_icon
+        if not hasattr(user_db, 'get_typ'):
+            logger.error("not hasattr(user_db, 'get_typ')")
+            return default_icon
+        symbol = ais.get_symbol_fm_node_tab(call)  # ('', '')
+        stat_typ = user_db.get_typ(call)
+
+        # Beispiel-Implementierung: Zuweisung basierend auf Stationstyp
+        icon_map = {
+            'BBS':   self._aprs_icon_tab_24.get('/B', default_icon),
+            'NODE':  self._aprs_icon_tab_24.get('/r', default_icon),
+            'SYSOP': self._aprs_icon_tab_24.get('/y', default_icon)
+        }
+
+        aprs_icon = self._aprs_icon_tab_24.get(symbol, default_icon)
+        if aprs_icon:
+            return aprs_icon
+        if stat_typ:
+            return icon_map.get(stat_typ, default_icon)
+        return default_icon
+
+    def _update_map(self):
+        """Aktualisiert die Karte mit Stationen und deren Routen als Verbindungslinien."""
+        self._clear_map()  # Vorherige Marker und Pfade löschen
+        # own_lat, own_lon = POPT_CFG.get_CFG_aprs_ais().get('ais_lat', 0.0), POPT_CFG.get_CFG_aprs_ais().get('ais_lon', 0.0)
+        user_db = self.get_userDB()
+        user_database: dict = user_db.get_database()
+        if not hasattr(user_db, 'get_location'):
+            logger.error("not hasattr(user_db, 'get_location')")
+            return
+
+        for call, ent in user_database.items():
+            ent: Client
+            if ent.call_str in self._markers:
+                continue
+            lat, lon, loc = user_db.get_location(ent.call_str)
+            if not lat and not lon:
+                continue
+
+            offset_range = 0.0002  # Ca. 10-11 Meter, anpassen nach Bedarf
+            lat += random.uniform(-offset_range, offset_range)
+            lon += random.uniform(-offset_range, offset_range)
+            icon = self._get_station_icon(ent.call_str)
+            # Marker für die Station setzen
+            marker = self._map_widget.set_marker(lat, lon, text=ent.call_str, icon=icon)
+            self._markers[ent.call_str] = {'marker': marker, 'lat': lat, 'lon': lon}
+
+    def _clear_map(self):
+        """Löscht alle Marker und Pfade von der Karte."""
+        for call, data in list(self._markers.items()):
+            data['marker'].delete()
+            del self._markers[call]
+        for path in self._paths:
+            path.delete()
+        self._paths.clear()
+
+    def _draw_connection(self):
+        # By Grok-AK
+        tree = self._tree
+        selected = tree.selection()
+        #self._select_entry(event)
+        if not selected:
+            return
+
+        item = tree.item(selected[0])
+        values = item['values']
+        if not values:
+            return
+
+        # Alten Pfad löschen, falls vorhanden
+        if self._current_path:
+            self._current_path.delete()
+            self._current_path = None
+            ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+            lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+            self._map_widget.set_position(lat, lon)
+            self._map_widget.set_zoom(2)
+
+        # Bestimme Indizes je nach Treeview
+        call_index = 0  # mh_call
+        call = values[call_index].strip()
+        if not call:
+            return
+
+        user_db = self.get_userDB()
+        if not user_db:
+            return
+
+        target_lat, target_lon, target_loc = user_db.get_location(call)
+        if not target_lat or not target_lon:
+            return  # Position unbekannt
+
+        # Linie zeichnen
+        path_coords = [(self._own_lat, self._own_lon), (target_lat, target_lon)]
+        self._current_path = self._map_widget.set_path(path_coords, color="blue", width=2)
+
+        # Marker für eigene Position sicherstellen
+        if 'Own' not in self._markers:
+            # own_icon = self._get_station_icon('')  # Default Icon, da kein Call
+            own_marker = self._map_widget.set_marker(self._own_lat, self._own_lon, text="My Station", )
+            self._markers['Own'] = {'marker': own_marker, 'lat': self._own_lat, 'lon': self._own_lon}
+
+        # Marker für Zielstation sicherstellen
+        if call not in self._markers:
+            target_icon = self._get_station_icon(call)
+            target_marker = self._map_widget.set_marker(target_lat, target_lon, text=call, icon=target_icon)
+            self._markers[call] = {'marker': target_marker, 'lat': target_lat, 'lon': target_lon}
+
+        # Karte anpassen: Bounding Box mit Padding
+        min_lat = min(self._own_lat, target_lat)
+        max_lat = max(self._own_lat, target_lat)
+        min_lon = min(self._own_lon, target_lon)
+        max_lon = max(self._own_lon, target_lon)
+
+        delta_lat = max_lat - min_lat
+        delta_lon = max_lon - min_lon
+        padding = 0.1 * max(delta_lat, delta_lon, 0.01)  # Mindestpadding für nahe Punkte
+
+        north_lat = max_lat + padding
+        south_lat = min_lat - padding
+        west_lon = min_lon - padding
+        east_lon = max_lon + padding
+
+        self._map_widget.fit_bounding_box((north_lat, west_lon), (south_lat, east_lon))
+    ##########################
+
     def _select_entry(self, event=None):
         self._save_vars()
         self._selected = []
+        self._draw_connection()
         for selected_item in self._tree.selection():
             item = self._tree.item(selected_item)
             self._selected.append(item['values'][0])
@@ -505,7 +669,7 @@ class UserDB(tk.Toplevel):
         ent = sorted(list(self._user_db.db.keys()))
         for ret_ent in ent:
             if tree_filter in ret_ent:
-                self._tree.insert('', tk.END, values=ret_ent)
+                self._tree.insert('', 'end', values=ret_ent)
 
     def _on_select_sysop(self, event=None):
         lang = POPT_CFG.get_guiCFG_language()
@@ -730,7 +894,7 @@ class UserDB(tk.Toplevel):
     def _ok_btn_cmd(self):
         self._save_vars()
         self._root_win.sysMsg_to_monitor(lob_gen(POPT_CFG.get_guiCFG_language()))
-        self._destroy_win()
+        self.destroy_win()
 
     def _del_btn_cmd(self):
         if self._db_ent is not None:
@@ -766,15 +930,85 @@ class UserDB(tk.Toplevel):
         self._db_ent = db_entry
         self._set_var_to_ent()
 
-    def get_UserDB(self):
-        return self._user_db
+    #######################################
+    def tasker(self):
+        if self._quit:
+            self._check_threads_and_destroy()
+            return True
+        if hasattr(self._map_widget, 'tasker'):
+            return self._map_widget.tasker()
+        return False
 
-    def _destroy_win(self):
+    ##########################
+    def _get_mh(self):
+        try:
+            port_handler = self._root_win.get_PH_mainGUI()
+            return port_handler.get_MH()
+        except Exception as ex:
+            logger.error(ex)
+            return None
+
+    def _get_aprs_ais(self):
+        try:
+            port_handler = self._root_win.get_PH_mainGUI()
+            return port_handler.get_aprs_ais()
+        except Exception as ex:
+            logger.error(ex)
+            return None
+
+    def get_userDB(self):
+        try:
+            port_handler = self._root_win.get_PH_mainGUI()
+            return port_handler.get_userDB()
+        except Exception as ex:
+            logger.error(ex)
+            return None
+
+    #################################################
+    def _add_thread_gc(self, thread):
+        if hasattr(self._root_win, 'add_thread_gc'):
+            self._root_win.add_thread_gc(thread)
+
+    def _close_me(self):
+        if self._quit:
+            return
+        #self._clear_map()
+
+        # Threads stoppen signalisieren
+        self._map_widget.running = False
+        self._map_widget.image_load_queue_tasks = []
+        self._map_widget.image_load_queue_results = []
+        for thread in self._map_widget.get_threads():
+            self._add_thread_gc(thread)
+        self._root_win.userdb_win = None
+        self._root_win.add_win_gc(self)
+        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
+        self._quit = True
+        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
+        # Starte asynchrones Polling, um auf Threads zu warten
+        self._check_threads_and_destroy()
+
+    def _check_threads_and_destroy(self):
+        map_threads = self._map_widget.get_threads()
+        all_dead    = all(not thread.is_alive() for thread in map_threads)
+
+        if all_dead:
+            # Alle Threads sind tot – jetzt safe zerstören
+            self._map_widget.clean_cache()
+            gc.collect()
+
+            self.destroy()
+            self.is_destroyed = True
+
+    def all_dead(self):
+        map_threads = self._map_widget.get_threads()
+        return all(not thread.is_alive() for thread in map_threads)
+
+    def destroy_win(self):
         if hasattr(self.NewUser_ent_win, 'destroy_win'):
             self.NewUser_ent_win.destroy_win()
-        self._root_win.userdb_win = None
-        self.destroy()
+        self._close_me()
 
+    def destroy(self):
+        self.destroy_win()
 
-    def tasker(self):
-        pass

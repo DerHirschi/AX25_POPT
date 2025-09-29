@@ -2138,16 +2138,20 @@ class PoPT_GUI_Main:
     def _tasker_prio(self):
         """ Prio Tasks every Irritation """
 
-        ph_task = False
+        tasker_ret = False
         if hasattr(self._port_handler, 'tasker_gui_th'):
-            ph_task = self._port_handler.tasker_gui_th()
-        ret = any((
+            tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
+        if hasattr(self.userDB_tree_win, 'tasker'):
+            tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
+        if hasattr(self.userdb_win, 'tasker'):
+            tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
+        return any((
             self._monitor_task(),
             self._ais_monitor_task(),
             self._mh_win_task(),
-            ph_task
+            tasker_ret
         ))
-        return ret
+
 
     def _tasker_025_sec(self):
         """ 0.25 Sec """
@@ -2886,13 +2890,14 @@ class PoPT_GUI_Main:
     ##########################
     # UserDB
     def open_user_db_win(self, event=None, ent_key=''):
-        if self.userdb_win is None:
-            if not ent_key:
-                conn = self.get_conn()
-                if conn is not None:
-                    ent_key = conn.to_call_str
-            #self.main_win.update_idletasks()
-            self.userdb_win = UserDB(self, ent_key)
+        if self.userdb_win is not None:
+            return
+        if not ent_key:
+            conn = self.get_conn()
+            if conn is not None:
+                ent_key = conn.to_call_str
+        #self.main_win.update_idletasks()
+        self.userdb_win = UserDB(self, ent_key)
 
     ##########################
     # New Connection WIN

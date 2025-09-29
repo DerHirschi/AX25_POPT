@@ -61,6 +61,8 @@ Neue Implementierungen / Funktionen:
 - Möglichkeit APRS-Beacons zu senden via (HF & APSR-Server)
 - APRS-Map im APRS-Monitor
 - Karte/Map für MH-Liste GUI
+- Karte/Map für UserDB-Übersicht GUI
+- Karte/Map für UserDB Haupt-GUI
 - Tabelle für DX-Alarm-History in MH-Liste GUI
 - Tabelle für Verbindungsverlauf in Seitenfenter(Haupt-GUI)
 - Tabelle für Verbindungsverlauf in MH-Liste GUI

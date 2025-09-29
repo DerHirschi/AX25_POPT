@@ -42,7 +42,6 @@ class MHWin(tk.Toplevel):
         # Vars
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
-        self._current_path           = None
         self._old_conn_hist_len      = 0
         self._old_alarm_his_len      = 0
         self._old_mh_data            = {}
@@ -53,6 +52,7 @@ class MHWin(tk.Toplevel):
         self._alarm_ports            = []
         self._markers                = {}  # {call: {'marker': MarkerObj, 'lat': float, 'lon': float}}
         self._paths                  = []  # Liste von Path-Objekten für Verbindungslinien
+        self._current_path           = None
         self._tab_task_timer         = time.time() + 2
         # MapView Thread Ctrl.
         self._quit                   = False

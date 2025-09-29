@@ -401,6 +401,7 @@ class BBS_fwd_Q(tk.Toplevel):
             "FWD-Ports"                 : self._update_port_tab,
             self._getTabStr('statistic'): self._update_stat_tree,
         }.get(self._tabctl_i, self._update_fwdQ_tree)()
+
     ###########################################
     def _update_stat_tree(self):
         new_data = self._update_stat_tree_data()

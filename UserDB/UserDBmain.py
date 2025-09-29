@@ -442,6 +442,10 @@ class UserDB:
         return self.db.get(call, Client).PRmail
 
     ##########################################
+    def get_database(self):
+        return dict(self.db)
+
+    ##########################################
     def save_data(self):
         # print('Save Client DB')
         logger.info('User-DB: Save User-DB')
