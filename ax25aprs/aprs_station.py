@@ -6,12 +6,11 @@ import aprslib
 from cfg.logger_config import logger
 from datetime import datetime
 
-from UserDB.UserDBmain import USER_DB
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe, extract_ack, get_last_digi_fm_path
 from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, APRS_INET_PORT_ID, APRS_CQ_ADDRESSES, APRS_MAX_BUFFER, \
     APRS_MAX_OBJ_TAB
 from cfg.popt_config import POPT_CFG
-from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator, locator_to_coordinates
+from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
 from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
 
@@ -335,7 +334,8 @@ class APRS_ais(object):
         # APRS Weather
         elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
             # print(aprs_pack)
-            USER_DB.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
+            user_db = self._get_userDB()
+            user_db.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
             return True
         # Tracer
         elif self._tracer_msg_rx(aprs_pack):
@@ -528,8 +528,7 @@ class APRS_ais(object):
 
     #####################
     #
-    @staticmethod
-    def _get_loc(aprs_pack):
+    def _get_loc(self, aprs_pack):
         lat = aprs_pack.get('latitude', None)
         lon = aprs_pack.get('longitude', None)
         if lat is not None and lon is not None:
@@ -537,9 +536,11 @@ class APRS_ais(object):
                 aprs_pack.get('latitude', 0),
                 aprs_pack.get('longitude', 0)
             )
-        _db_ent = USER_DB.get_entry(aprs_pack.get('from', ''), add_new=False)
-        if _db_ent:
-            return _db_ent.LOC
+        user_db = self._get_userDB()
+
+        db_ent = user_db.get_entry(aprs_pack.get('from', ''), add_new=False)
+        if db_ent:
+            return db_ent.LOC
         return ''
 
     def _get_loc_dist(self, locator):
@@ -879,7 +880,8 @@ class APRS_ais(object):
 
             loc = ''
             dist = 0
-            user_db_ent = USER_DB.get_entry(call_str=call, add_new=True)
+            user_db = self._get_userDB()
+            user_db_ent = user_db.get_entry(call_str=call, add_new=True)
             if user_db_ent:
                 loc = user_db_ent.LOC
                 dist = user_db_ent.Distance
@@ -985,8 +987,21 @@ class APRS_ais(object):
     def get_symbol_fm_node_tab(self, node_id: str):
         return self._node_tab.get(node_id, {}).get('symbol', ('', ''))
 
+    """
+    def get_pos_fm_node_tab(self, node_id: str):
+        return self._node_tab.get(node_id, {}).get('position', (0, 0))
+    """
+
     def get_obj_tab(self):
         return self._object_tab
+
+    def _get_userDB(self):
+        try:
+            return self._port_handler.get_userDB()
+        except Exception as ex:
+            logger.error(ex)
+            return None
+
     ############################################
     def get_update_tr(self):
         if not self._wx_update_tr:

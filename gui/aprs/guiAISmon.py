@@ -41,20 +41,25 @@ class AISmonitor(tk.Toplevel):
         # self.resizable(False, False)
         self.lift()
         ##############################################
-        self._ais_obj               = PORT_HANDLER.get_aprs_ais()
-        self._aprs_icon_tab_16      = root_win.get_aprs_icon_tab_16()
-        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
-        self._call_filter_list      = []
-        self._sort_rev              = False
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+        self._ais_obj                = PORT_HANDLER.get_aprs_ais()
+        self._aprs_icon_tab_16       = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_24       = root_win.get_aprs_icon_tab_24()
+        self._call_filter_list       = []
+        self._sort_rev               = False
         ####
-        self._marker_timeout        = 30  # Minuten, bis Marker gelöscht wird (anpassen nach Bedarf)
-        self._markers               = {}  # {node_id: {'marker': MarkerObj, 'lat': float, 'lon': float, 'last_update': datetime}}
+        self._tasker_q               = []
+        self._tasker_q_prio          = []
+        self._10_sec_task_timer      = time.time() + 10
         ####
-        self._tasker_q              = []
-        self._tasker_q_prio         = []
-        self._10_sec_task_timer     = time.time() + 10
-        self._quit                  = False
-        self.is_destroyed           = False
+        self._marker_timeout         = 30  # Minuten, bis Marker gelöscht wird (anpassen nach Bedarf)
+        self._markers                = {}  # {call: {'marker': MarkerObj, 'lat': float, 'lon': float}}
+        self._paths                  = []  # Liste von Path-Objekten für Verbindungslinien
+        self._current_path           = None
+        # Map View Thread Ctrl.
+        self._quit                   = False
+        self.is_destroyed            = False
         ##############################################
         self._set_node_c = lambda n: f"Total Nodes: {n}"
         ##############################################
@@ -276,7 +281,7 @@ class AISmonitor(tk.Toplevel):
         self._node_tree.column("dist",     anchor='w', stretch=False, width=50)
         self._node_tree.column("m_cap",    anchor='w', stretch=False, width=80)
         self._node_tree.column("rx_time",  anchor='w', stretch=False, width=80)
-        self._node_tree.bind('<<TreeviewSelect>>', self._node_entry_selected)
+        #self._node_tree.bind('<<TreeviewSelect>>', self._node_entry_selected)
 
         ########################################################
         columns = (
@@ -438,7 +443,11 @@ class AISmonitor(tk.Toplevel):
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         ########################################################
-
+        self._bl_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree))
+        self._msg_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree))
+        self._obj_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._obj_tree))
+        self._mon_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._mon_tree))
+        self._node_tree.bind('<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._node_tree))
 
         if self._ais_obj is not None:
             own_call = POPT_CFG.get_CFG_aprs_ais().get('ais_call', '')
@@ -690,7 +699,7 @@ class AISmonitor(tk.Toplevel):
                 node_tab_ent.get('symbol', ('', '')),
         )
 
-    def _node_entry_selected(self, event=None):
+    def _node_entry_selected(self):
         self._call_filter_list = []
         for selected_item in self._node_tree.selection():
             item = self._node_tree.item(selected_item)
@@ -703,7 +712,7 @@ class AISmonitor(tk.Toplevel):
             new_call_filter = list(self._call_filter_list)
             new_call_filter.sort()
             if old_call_filter != new_call_filter:
-                self._call_filter.set(True)
+                #self._call_filter.set(True)
                 self._call_filter_calls_var.set(' '.join(new_call_filter))
             self._text_widget.delete(0.0, 'end')
             self._init_ais_mon(init_tree=False)
@@ -1004,8 +1013,8 @@ class AISmonitor(tk.Toplevel):
                 symbol_table = pack.get('symbol_table', '/')
                 symbol = pack.get('symbol', ' ')
                 last_update = pack.get('rx_time', datetime.datetime.now())
-                comment = pack.get('comment', '') or pack.get('status', '') or pack.get('message_text', '')
-                self._update_marker(node_id, lat, lon, symbol_table, symbol, last_update, comment=comment)
+                #comment = pack.get('comment', '') or pack.get('status', '') or pack.get('message_text', '')
+                self._update_marker(node_id, lat, lon, symbol_table, symbol, last_update)
 
     def update_node_tab(self, node_tab_ent: dict, object_ent: dict):
         self._add_tasker_q("update_node_tab", (node_tab_ent, object_ent))
@@ -1015,7 +1024,113 @@ class AISmonitor(tk.Toplevel):
         self._node_tree_update(node_tab_ent, object_ent)
 
     #######################################
-    def _update_marker(self, node_id, lat, lon, symbol_table, symbol, last_update, text=None, comment=''):
+    # MAP
+    def _get_station_icon(self, call: str):
+        default_icon    = self._aprs_icon_tab_24.get(('\\', 'X'), None)
+        user_db         = self._get_userDB()
+
+        if not hasattr(user_db, 'get_typ'):
+            logger.error("not hasattr(user_db, 'get_typ')")
+            return default_icon
+        symbol   = self._get_symbol_fm_node_tab(call) # ('', '')
+        stat_typ = user_db.get_typ(call)
+
+        # Beispiel-Implementierung: Zuweisung basierend auf Stationstyp
+        icon_map = {
+            'BBS':   self._aprs_icon_tab_24.get('/B', default_icon),
+            'NODE':  self._aprs_icon_tab_24.get('/r', default_icon),
+            'SYSOP': self._aprs_icon_tab_24.get('/y', default_icon)
+        }
+
+        aprs_icon = self._aprs_icon_tab_24.get(symbol, default_icon)
+        if aprs_icon:
+            return aprs_icon
+        if stat_typ:
+            return icon_map.get(stat_typ, default_icon)
+        return default_icon
+
+    def _draw_connection(self, event, tree):
+        # By Grok-AK
+        selected = tree.selection()
+
+        if not selected:
+            return
+
+        item = tree.item(selected[0])
+        values = item['values']
+        if not values:
+            return
+
+        # Alten Pfad löschen, falls vorhanden
+        if self._current_path:
+            self._current_path.delete()
+            self._current_path = None
+            ais_cfg  = POPT_CFG.get_CFG_aprs_ais()
+            lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
+            self._map_widget.set_position(lat, lon)
+            self._map_widget.set_zoom(8)
+
+        # Bestimme Indizes je nach Treeview
+        if tree == self._node_tree:
+            self._node_entry_selected()
+        call_index = 0  # node_id
+        call = values[call_index].strip()
+        if not call:
+            return
+
+        user_db = self._get_userDB()
+        if not user_db:
+            return
+
+        target_lat, target_lon, target_loc = user_db.get_location(call)
+        if not target_lat and not target_lon:
+            return  # Position unbekannt
+
+        # Linie zeichnen
+        path_coords = [(self._own_lat, self._own_lon), (target_lat, target_lon)]
+        self._current_path = self._map_widget.set_path(path_coords, color="blue", width=2)
+
+        # Marker für eigene Position sicherstellen
+        if 'Own' not in self._markers:
+            #own_icon = self._get_station_icon('')  # Default Icon, da kein Call
+            own_marker = self._map_widget.set_marker(self._own_lat, self._own_lon, text="My Station",)
+            self._markers['Own'] = {
+                'marker': own_marker,
+                'lat': self._own_lat,
+                'lon': self._own_lon,
+                'last_update': datetime.datetime.now()
+            }
+
+        # Marker für Zielstation sicherstellen
+        if call not in self._markers:
+            target_icon = self._get_station_icon(call)
+            target_marker = self._map_widget.set_marker(target_lat, target_lon, text=call, icon=target_icon)
+            self._markers[call] = {
+                'marker': target_marker,
+                'lat': target_lat,
+                'lon': target_lon,
+                'last_update': datetime.datetime.now()
+            }
+
+        # Karte anpassen: Bounding Box mit Padding
+        min_lat = min(self._own_lat, target_lat)
+        max_lat = max(self._own_lat, target_lat)
+        min_lon = min(self._own_lon, target_lon)
+        max_lon = max(self._own_lon, target_lon)
+
+        delta_lat = max_lat - min_lat
+        delta_lon = max_lon - min_lon
+        padding = 0.1 * max(delta_lat, delta_lon, 0.01)  # Mindestpadding für nahe Punkte
+
+        north_lat = max_lat + padding
+        south_lat = min_lat - padding
+        west_lon = min_lon - padding
+        east_lon = max_lon + padding
+
+        self._map_widget.fit_bounding_box((north_lat, west_lon), (south_lat, east_lon))
+    ##########################
+
+    def _update_marker(self, node_id, lat, lon, symbol_table, symbol, last_update):
         if not node_id or lat is None or lon is None:
             return
         # Kleiner Random-Offset hinzufügen, wenn neu
@@ -1075,6 +1190,20 @@ class AISmonitor(tk.Toplevel):
             return self._ais_obj.get_symbol_fm_node_tab(node_id)
         return '', ''
 
+    """
+    def _get_pos_fm_node_tab(self, node_id: str):
+        if hasattr(self._ais_obj, 'get_pos_fm_node_tab'):
+            return self._ais_obj.get_pos_fm_node_tab(node_id)
+        return 0, 0
+    """
+
+    def _get_userDB(self):
+        try:
+            port_handler = self._root_cl.get_PH_mainGUI()
+            return port_handler.get_userDB()
+        except Exception as ex:
+            logger.error(ex)
+            return None
     #######################################
 
     def _increase_textsize(self):

@@ -66,6 +66,8 @@ Neue Implementierungen / Funktionen:
 - Tabelle für DX-Alarm-History in MH-Liste GUI
 - Tabelle für Verbindungsverlauf in Seitenfenter(Haupt-GUI)
 - Tabelle für Verbindungsverlauf in MH-Liste GUI
+- Tabelle für Verbindungsverlauf in BBS-Forwardwarteschlangen GUI
+- APRS-Icons (wenn bekannt) in MH-Liste
 
 ###########################################################################################################
 ###########################################################################################################

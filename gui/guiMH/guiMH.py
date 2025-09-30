@@ -9,7 +9,7 @@ from ax25.ax25Statistics import MyHeard
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta
+from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, format_number
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.guiMH.guiAPRS_be_tracer import BeaconTracer
 from gui.guiMH.gui_ConnPath_plot import ConnPathsPlot
@@ -18,8 +18,9 @@ from gui.guiMH.gui_ConnPath_plot import ConnPathsPlot
 class MHWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win    = root_win
-        self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win          = root_win
+        self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._aprs_icon_tab_16  = root_win.get_aprs_icon_tab_16()
         self.title("MyHeard")
         self.style = root_win.style
         self.geometry(f"1100x"
@@ -38,6 +39,7 @@ class MHWin(tk.Toplevel):
         ###################################
         self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
         self._conn_typ_icon_tab     = root_win.get_conn_typ_icon_16()
+        ###################################
         ###################################
         # Vars
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
@@ -59,6 +61,7 @@ class MHWin(tk.Toplevel):
         self.is_destroyed            = False
         ###################################
         # GUI Vars
+        self._conn_hist_label_var       = tk.StringVar(self, value='')
         self._port_filter_var           = tk.StringVar(self, value='')
         # self._call_filter_var           = tk.StringVar(self, value='')
         self._alarm_newCall_var         = tk.BooleanVar(self)
@@ -70,6 +73,8 @@ class MHWin(tk.Toplevel):
         for _por_id in ports:
             self._alarm_ports.append(tk.BooleanVar(self))
         self._get_vars()
+        #####################################################
+        self._update_conn_hist_label = lambda n: self._conn_hist_label_var.set(f"Total: {n}")
         # ###################### Filter ######################
         filter_f = ttk.Frame(self)
         filter_f.pack(fill='x', anchor='w')
@@ -130,7 +135,7 @@ class MHWin(tk.Toplevel):
         self._tabclt.add(mh_frame, text='MH')
         self._tabclt.add(hi_frame, text='DX-Alarm')
         self._tabclt.add(tr_frame, text='APRS-Tracer')
-        self._tabclt.add(co_frame, text='Connections')
+        self._tabclt.add(co_frame, text=self._getTabStr('connection_history'))
 
         # ###################### DX Alarm Settings ######################
         # ALARM
@@ -217,6 +222,13 @@ class MHWin(tk.Toplevel):
             i += 1
         # ###################### Connection History ######################
         # co_frame
+        co_lable_f = ttk.Frame(co_frame)
+        co_tree_f  = ttk.Frame(co_frame)
+        co_lable_f.pack(fill='x')
+        co_tree_f.pack( fill='both', expand=True)
+        ###
+        ttk.Label(co_lable_f, textvariable=self._conn_hist_label_var). pack(padx=5, pady=5)
+        ###
         columns = (
             'channel',
             'call',
@@ -227,10 +239,14 @@ class MHWin(tk.Toplevel):
             'typ',
             'via',
             'dauer',
+            'tx_bytes_n',
+            'rx_bytes_n',
+            'tx_pack_n',
+            'rx_pack_n',
             'time',
         )
 
-        self._conn_his_tab = ttk.Treeview(co_frame, columns=columns, show='tree headings')
+        self._conn_his_tab = ttk.Treeview(co_tree_f, columns=columns, show='tree headings')
 
         self._conn_his_tab.heading('channel', text='CH', command=lambda: self._sort_conn_his('channel'))
         self._conn_his_tab.heading('call', text='To', command=lambda: self._sort_conn_his('call'))
@@ -241,19 +257,27 @@ class MHWin(tk.Toplevel):
         self._conn_his_tab.heading('typ', text='Typ', command=lambda: self._sort_conn_his('typ'))
         self._conn_his_tab.heading('via', text='VIA', command=lambda: self._sort_conn_his('via'))
         self._conn_his_tab.heading('dauer', text='Duration', command=lambda: self._sort_conn_his('dauer'))
+        self._conn_his_tab.heading('tx_bytes_n', text='Bytes TX', command=lambda: self._sort_conn_his('tx_bytes_n'))
+        self._conn_his_tab.heading('rx_bytes_n', text='Bytes RX', command=lambda: self._sort_conn_his('rx_bytes_n'))
+        self._conn_his_tab.heading('tx_pack_n', text='Pac. TX', command=lambda: self._sort_conn_his('tx_pack_n'))
+        self._conn_his_tab.heading('rx_pack_n', text='Pac. RX', command=lambda: self._sort_conn_his('rx_pack_n'))
         self._conn_his_tab.heading('time', text='Time', command=lambda: self._sort_conn_his('time'))
 
-        self._conn_his_tab.column("#0", anchor='w', stretch=tk.NO, width=45)
-        self._conn_his_tab.column("channel", anchor='center', stretch=tk.NO, width=40)
-        self._conn_his_tab.column("call", anchor='w', stretch=tk.NO, width=90)
-        self._conn_his_tab.column("own_call", anchor='w', stretch=tk.NO, width=90)
-        self._conn_his_tab.column("port", anchor='center', stretch=tk.NO, width=50)
-        self._conn_his_tab.column("dist", anchor='w', stretch=tk.NO, width=50)
-        self._conn_his_tab.column("loc", anchor='w', stretch=tk.NO, width=100)
-        self._conn_his_tab.column("typ", anchor='w', stretch=tk.NO, width=110)
-        self._conn_his_tab.column("via", anchor='w', stretch=tk.YES, width=180)
-        self._conn_his_tab.column("dauer", anchor='center', stretch=tk.NO, width=90)
-        self._conn_his_tab.column("time", anchor='w', stretch=tk.NO, width=130)
+        self._conn_his_tab.column("#0",         anchor='w', stretch=tk.NO, width=45)
+        self._conn_his_tab.column("channel",    anchor='center', stretch=tk.NO, width=40)
+        self._conn_his_tab.column("call",       anchor='w', stretch=tk.NO, width=90)
+        self._conn_his_tab.column("own_call",   anchor='w', stretch=tk.NO, width=90)
+        self._conn_his_tab.column("port",       anchor='center', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("dist",       anchor='w', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("loc",        anchor='w', stretch=tk.NO, width=100)
+        self._conn_his_tab.column("typ",        anchor='w', stretch=tk.NO, width=110)
+        self._conn_his_tab.column("via",        anchor='w', stretch=tk.YES, width=90)
+        self._conn_his_tab.column("dauer",      anchor='center', stretch=tk.NO, width=90)
+        self._conn_his_tab.column("tx_bytes_n", anchor='w', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("rx_bytes_n", anchor='w', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("tx_pack_n",  anchor='w', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("rx_pack_n",  anchor='w', stretch=tk.NO, width=50)
+        self._conn_his_tab.column("time",       anchor='w', stretch=tk.NO, width=130)
 
         # self._conn_his_tab.tag_configure("bell", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         # self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
@@ -361,7 +385,7 @@ class MHWin(tk.Toplevel):
         )
         #tree_f = ttk.Frame(tree_frame)
         #tree_f.pack(fill='both', expand=True)
-        self._tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
+        self._tree = ttk.Treeview(tree_frame, columns=columns, show='tree headings')
         self._tree.pack(side='left', fill='both', expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(tree_frame, orient='vertical', command=self._tree.yview)
@@ -380,6 +404,7 @@ class MHWin(tk.Toplevel):
         self._tree.heading('mh_first_seen', text='Erste Paket',     command=lambda: self._sort_entry('first'))
         self._tree.heading('mh_last_seen',  text='Letzte Paket',    command=lambda: self._sort_entry('last'))
 
+        self._tree.column("#0",             anchor='w', stretch=tk.NO,  width=45)
         self._tree.column("mh_call",        anchor='w', stretch=tk.NO,  width=90)
         self._tree.column("mh_port",        anchor='w', stretch=tk.NO,  width=60)
         self._tree.column("mh_loc",         anchor='w', stretch=tk.NO,  width=80)
@@ -558,6 +583,7 @@ class MHWin(tk.Toplevel):
         conn_history = mh.get_conn_hist()
         if len(conn_history) == self._old_conn_hist_len:
             return
+        self._update_conn_hist_label(len(conn_history))
         new_entries = conn_history[self._old_conn_hist_len:]
         for ent in new_entries:  # Reversed, um neueste zuerst einzufügen
             ent: dict
@@ -596,8 +622,12 @@ class MHWin(tk.Toplevel):
                 ent.get('distance', -1),    # Distance
                 ent.get('locator', ''),
                 typ,  # typ
-                ' '.join(ent.get('via', [])),
+                '>'.join(ent.get('via', [])),
                 duration_str,  # dauer (Time)
+                format_number(ent.get('tx_bytes_n', 0)),  #
+                format_number(ent.get('rx_bytes_n', 0)),  #
+                format_number(ent.get('tx_pack_n', 0)),  #
+                format_number(ent.get('rx_pack_n', 0)),  #
                 time_str,  # time (Duration)
             )
             if image:
@@ -750,11 +780,17 @@ class MHWin(tk.Toplevel):
         for i in self._tree.get_children():
             self._tree.delete(i)
 
+        ais = self._root_win.get_AIS_mainGUI()
         for ret_ent in self._tree_data:
-            if ret_ent[1]:
-                self._tree.insert('', 'end', values=ret_ent[0], tags=('dx_alarm',))
+            tag     = ('dx_alarm',) if ret_ent[1] else ()
+            call    = ret_ent[0][0]
+            symbol  = ais.get_symbol_fm_node_tab(call)
+            image   = self._aprs_icon_tab_16.get(symbol, None)
+
+            if image:
+                self._tree.insert('', 'end', values=ret_ent[0], tags=tag, image=image)
             else:
-                self._tree.insert('', 'end', values=ret_ent[0], )
+                self._tree.insert('', 'end', values=ret_ent[0], tags=tag)
 
     def _sort_entry(self, flag: str):
         mh = self.get_mh()

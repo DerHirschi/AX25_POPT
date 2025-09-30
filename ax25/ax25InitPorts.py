@@ -695,8 +695,16 @@ class AX25PortHandler(object):
             distance = user_db_ent.Distance
         conn_incoming = conn.is_incoming_conn()
         duration  = 0
+        rx_bytes  = 0
+        tx_bytes  = 0
+        rx_pack   = 0
+        tx_pack   = 0
         if disco:
             duration = datetime.now() - conn.time_start
+            rx_bytes = conn.rx_byte_count
+            tx_bytes = conn.tx_byte_count
+            rx_pack  = conn.rx_pack_count
+            tx_pack  = conn.tx_pack_count
 
         his_ent = getNew_ConnHistory_struc(
             ch_id           = ch_id,
@@ -710,6 +718,10 @@ class AX25PortHandler(object):
             conn_incoming   = conn_incoming,
             time            = datetime.now(),
             duration        = duration,
+            tx_bytes_n      = tx_bytes,
+            rx_bytes_n      = rx_bytes,
+            tx_pack_n       = tx_pack,
+            rx_pack_n       = rx_pack,
             disco           = disco,
         )
         mh = self.get_MH()

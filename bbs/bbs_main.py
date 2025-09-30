@@ -2209,6 +2209,6 @@ class BBS:
                 stat_dict=fwd_BBS_q.get('bbs_fwd_statistic', getNew_fwdStatistic_cfg())
                 )
 
-    def _reset_bbs_statistic(self):
+    def reset_bbs_statistic(self):
         for bbs_call, fwd_BBS_q in self._fwd_BBS_q.items():
             fwd_BBS_q['bbs_fwd_statistic'] = getNew_fwdStatistic_cfg()

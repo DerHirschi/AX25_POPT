@@ -145,6 +145,7 @@ class PoPT_GUI_Main:
                 logger.warning(f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
+        ######################################
         self._port_handler = port_handler
         ######################################
         # Init Vars
@@ -500,6 +501,8 @@ class PoPT_GUI_Main:
         self._set_port_blocking(1)
         self._port_handler.disco_all_Conn()
         self._quit = True
+        SOUND.close_sound()
+        self._thread_gc.append(SOUND.get_sound_thread())
         self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._port_handler.disco_all_Conn()
         self._Pacman.save_path_data()

@@ -217,6 +217,8 @@ class AX25Conn:
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
         self.rx_byte_count = 0
+        self.tx_pack_count = 0
+        self.rx_pack_count = 0
         """ Connection Start Time """
         self.time_start = datetime.now()
         """ Zustandstabelle / States """
@@ -373,6 +375,7 @@ class AX25Conn:
     def _recv_data(self, data: bytes):
         # Statistic
         self.rx_byte_count += len(data)
+        self.rx_pack_count += 1
         """ Link/Node-DIGI """
         if self.is_link:
             self.LINK_rx_buff += data
@@ -1210,6 +1213,7 @@ class AX25Conn:
             self.set_T1()  # Re/Set T1
             # Statistics
             self.tx_byte_count += int(pac_len)
+            self.tx_pack_count += 1
 
     def send_UA(self):
         new_axFrame = self._get_new_ax25frame()

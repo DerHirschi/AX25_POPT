@@ -267,11 +267,6 @@ class SideTabbedFrame:
         #######################################################################
         # MH ##########################
         # TREE
-        tab2_mh.rowconfigure(0, minsize=100, weight=1)
-        tab2_mh.rowconfigure(1, minsize=50, weight=0)
-        tab2_mh.columnconfigure(0, minsize=150, weight=1)
-        tab2_mh.columnconfigure(1, minsize=150, weight=1)
-
         columns = (
             'mh_last_seen',
             'mh_call',
@@ -281,8 +276,8 @@ class SideTabbedFrame:
             'mh_route',
         )
 
-        self._tree = ttk.Treeview(tab2_mh, columns=columns, show='headings')
-        self._tree.grid(row=0, column=0, columnspan=2, sticky='nsew')
+        self._tree = ttk.Treeview(tab2_mh, columns=columns, show='headings', height=7)
+        self._tree.pack(fill='both', expand=True)
 
         self._tree.heading('mh_last_seen', text='Time')
         self._tree.heading('mh_call', text='Call')
@@ -301,7 +296,7 @@ class SideTabbedFrame:
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
 
         btn_frame = ttk.Frame(tab2_mh)
-        btn_frame.grid(row=1, column=0, columnspan=2)
+        btn_frame.pack(pady=5)
         ttk.Button(btn_frame,
                   text="MH",
                   command=self._open_mh

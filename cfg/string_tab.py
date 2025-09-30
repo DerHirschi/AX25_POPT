@@ -883,6 +883,7 @@ STR_TABLE = {
         '',
         ''),
 
+
     'select_all': (
         'Alles auswählen',
         'Select all',
@@ -2849,6 +2850,18 @@ STR_TABLE = {
         'Be careful with node connections like TNN. Linking multiple nodes via multicast can lead to problems!',
         'Voorzichtigmet nodeverbinding zoals TNN, verbinden meervoudige nodes via multicast kan leiden naar problemen!',
         'Soyez prudent avec les connexions de node comme TNN. La liaison de plusieurs nodes via la multidiffusion peut entraîner des problèmes »,',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'connection_history': (
+        'Verbindungsverlauf',
+        'Connection history',
+        'Verbindingsgeschiedenis',
+        'Historique des connexions',
         '',
         '',
         '',

@@ -221,6 +221,10 @@ def getNew_ConnHistory_struc(
         time,
         disco: bool,
         duration: timedelta,
+        tx_bytes_n: int,
+        rx_bytes_n: int,
+        tx_pack_n: int,
+        rx_pack_n: int,
 ):
     return dict(
         ch_id=int(ch_id),
@@ -235,6 +239,10 @@ def getNew_ConnHistory_struc(
         time=time,
         disco=bool(disco),
         duration=duration,
+        tx_bytes_n=int(tx_bytes_n),
+        rx_bytes_n=int(rx_bytes_n),
+        tx_pack_n=int(tx_pack_n),
+        rx_pack_n=int(rx_pack_n),
     )
 #######################################
 # APRS
