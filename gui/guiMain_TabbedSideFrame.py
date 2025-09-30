@@ -884,11 +884,16 @@ class SideTabbedFrame:
         # Update oder füge neue Einträge hinzu (sortiert)
         ch_list = sorted(connects.keys())
         for ch_id in ch_list:
-            conn  = connects[ch_id]
-            timer = datetime.now() - conn.time_start
-            timer = str(timer).split('.')[0]
-            typ   = conn.cli_type
-            bell  = conn.noty_bell
+            conn        = connects[ch_id]
+            timer       = datetime.now() - conn.time_start
+            timer       = str(timer).split('.')[0]
+            typ         = conn.cli_type
+            bell        = conn.noty_bell
+            ent_call    = str(conn.to_call_str)
+            if typ == 'BOX':
+                if POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
+                    typ = 'Task: FWD'
+
             is_digi = False
             if conn.is_link:
                 is_digi = True
@@ -900,7 +905,7 @@ class SideTabbedFrame:
                 typ = 'PIPE'
             ent = [
                 int(conn.ch_index),
-                str(conn.to_call_str),
+                ent_call,
                 str(conn.my_call_str),
                 int(conn.port_id),
                 str(typ),

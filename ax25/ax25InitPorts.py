@@ -78,7 +78,7 @@ class AX25PortHandler(object):
         # Init Routing Table
         logger.info("PH: Routing Table Init")
         # self._routingTable      = RoutingTable()
-        self._routingTable      = None
+        self._routingTable      = None  # NetRom TODO
         #######################################################
         # Scheduled Tasks
         logger.info("PH: Scheduled Tasks Init")
@@ -306,7 +306,6 @@ class AX25PortHandler(object):
             logger.info("PH: Closing GPIO")
             self.sysmsg_to_gui("Closing GPIO")
             self._gpio.close_gpio_pins()
-
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.sysmsg_to_gui(f"Closing Port {k}")
@@ -346,7 +345,6 @@ class AX25PortHandler(object):
         logger.info("PH: Saving MainCFG")
         self.sysmsg_to_gui("Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
-        time.sleep(0.5)
         self._ph_end = True
 
     def get_ph_end(self):
@@ -674,6 +672,10 @@ class AX25PortHandler(object):
         own_call  = conn.my_call_str
         via_calls = conn.via_calls
         conn_typ  = conn.cli_type
+        if conn_typ == 'BOX':
+            if POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
+                conn_typ = 'Task: FWD'
+
         if conn.is_link:
             if hasattr(conn.LINK_Connection, 'to_call_str'):
                 conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}'
@@ -682,6 +684,8 @@ class AX25PortHandler(object):
         if conn.pipe:
             conn_typ = 'PIPE'
         user_db_ent = self._userDB.get_entry(ent_call, add_new=False)
+
+
         if all((hasattr(user_db_ent, ''),
                     hasattr(user_db_ent, ''),)):
             locator   = ''
