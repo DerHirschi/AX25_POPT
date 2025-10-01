@@ -835,9 +835,8 @@ class BBS_fwd_Q(tk.Toplevel):
                 continue
 
             if typ_filter_var and typ != {
-                'BOX': 'BOX',
                 'FWD': 'Task: FWD',
-            }.get(typ_filter_var, ''):
+            }.get(typ_filter_var, typ_filter_var):
                 continue
 
             image_typ = str(typ)

@@ -63,6 +63,7 @@ class MHWin(tk.Toplevel):
         # GUI Vars
         self._conn_hist_label_var       = tk.StringVar(self, value='')
         self._port_filter_var           = tk.StringVar(self, value='')
+        self._typ_filter_var            = tk.StringVar(self, value='')
         # self._call_filter_var           = tk.StringVar(self, value='')
         self._alarm_newCall_var         = tk.BooleanVar(self)
         self._alarm_newCall_var         = tk.BooleanVar(self)
@@ -227,7 +228,23 @@ class MHWin(tk.Toplevel):
         co_lable_f.pack(fill='x')
         co_tree_f.pack( fill='both', expand=True)
         ###
-        ttk.Label(co_lable_f, textvariable=self._conn_hist_label_var). pack(padx=5, pady=5)
+        f1 = ttk.Frame(co_lable_f)
+        f2 = ttk.Frame(co_lable_f)
+        f1.pack(side='left',  anchor='w', padx=10)
+        f2.pack(side='right', anchor='e', padx=100)
+
+        # f1
+        ttk.Label(f1, text='Filter: ').pack(side='left', anchor='w', padx=10)
+        ttk.Label(f1, text='Typ: ').pack(side='left', anchor='w', padx=15)
+        opt = [self._typ_filter_var.get(), '', 'USER', 'NODE', 'DIGI', 'BOX', 'FWD', 'PIPE']
+        ttk.OptionMenu(f1,
+                       self._typ_filter_var,
+                       *opt,
+                       command=lambda e: self._on_filter_select()
+                       ).pack(side='left', anchor='w', )
+        #
+        # f2
+        ttk.Label(f2, textvariable=self._conn_hist_label_var). pack(padx=30)
         ###
         columns = (
             'channel',
@@ -533,7 +550,7 @@ class MHWin(tk.Toplevel):
         self._rev_ent = not self._rev_ent
         self._update_mh()
         self._update_dx_his(True)
-        self._update_conn_his()
+        self._on_filter_select()
 
     ##########################
     def _set_alarm_ports(self, event=None):
@@ -587,12 +604,22 @@ class MHWin(tk.Toplevel):
         conn_history = mh.get_conn_hist()
         if len(conn_history) == self._old_conn_hist_len:
             return
-        self._update_conn_hist_label(len(conn_history))
         new_entries = conn_history[self._old_conn_hist_len:]
+        port_filter_var = self._port_filter_var.get()
+        typ_filter_var  = self._typ_filter_var.get()
+        n = 0
         for ent in new_entries:  # Reversed, um neueste zuerst einzufügen
             ent: dict
             port = ent.get('port_id', -1)
             typ  = ent.get('typ', '')
+            if port_filter_var and port_filter_var != str(port):
+                continue
+
+            if typ_filter_var and typ != {
+                'FWD': 'Task: FWD',
+            }.get(typ_filter_var, typ_filter_var):
+                continue
+
             image_typ = str(typ)
             if 'DIGI' in image_typ:
                 image_typ = 'DIGI'
@@ -639,6 +666,9 @@ class MHWin(tk.Toplevel):
             else:
                 self._conn_his_tab.insert('', 0, values=ent_values, tags=tags)
 
+            n += 1
+
+        self._update_conn_hist_label(n)
         self._old_conn_hist_len = len(conn_history)
 
     def _sort_conn_his(self, flag: str):
@@ -684,6 +714,11 @@ class MHWin(tk.Toplevel):
         for index, (val, k) in enumerate(items):
             self._conn_his_tab.move(k, '', index)
 
+    def _on_filter_select(self):
+        for i in self._conn_his_tab.get_children():
+            self._conn_his_tab.delete(i)
+        self._old_conn_hist_len = 0
+        self._update_conn_his()
     ##########################
     # DX History
     def _update_dx_his(self, force_update=False):
