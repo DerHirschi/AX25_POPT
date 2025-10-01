@@ -23,7 +23,7 @@ class MHWin(tk.Toplevel):
         self._aprs_icon_tab_16  = root_win.get_aprs_icon_tab_16()
         self.title("MyHeard")
         self.style = root_win.style
-        self.geometry(f"1100x"
+        self.geometry(f"1200x"
                       f"650+"
                       f"{root_win.main_win.winfo_x()}+"
                       f"{root_win.main_win.winfo_y()}")
@@ -278,10 +278,14 @@ class MHWin(tk.Toplevel):
         self._conn_his_tab.column("tx_pack_n",  anchor='w', stretch=tk.NO, width=50)
         self._conn_his_tab.column("rx_pack_n",  anchor='w', stretch=tk.NO, width=50)
         self._conn_his_tab.column("time",       anchor='w', stretch=tk.NO, width=130)
+        self._conn_his_tab.pack(side='left', fill='both', expand=True)
+
+        scrollbar_y = ttk.Scrollbar(co_tree_f, orient='vertical', command=self._conn_his_tab.yview)
+        self._conn_his_tab.configure(yscrollcommand=scrollbar_y.set)
+        scrollbar_y.pack(side='left', fill='y')
 
         # self._conn_his_tab.tag_configure("bell", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         # self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
-        self._conn_his_tab.pack(fill='both', expand=True)
         # ###################### Auto Tracer ######################
         # Tracer
         auto_tracer_state = {

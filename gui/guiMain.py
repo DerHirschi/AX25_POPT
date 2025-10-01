@@ -3,7 +3,7 @@ import random
 import time
 import tkinter as tk
 from collections import deque
-from tkinter import ttk, messagebox, PhotoImage
+from tkinter import ttk, messagebox
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -100,7 +100,7 @@ class PoPT_GUI_Main:
         ###########################################
         self.main_win   = tk.Tk()
         ###########################################
-        self.style_name = guiCfg.get('gui_parm_style_name', 'default')
+        self.style_name = POPT_CFG.get_guiCFG_style_name()
         logger.info(f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
 
@@ -140,7 +140,7 @@ class PoPT_GUI_Main:
             logger.warning(f"Couldn't load favicon.ico: {ex}")
             logger.info("Try to load popt.png.")
             try:
-                self.main_win.iconphoto(False, PhotoImage(file='popt.png'))
+                self.main_win.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
                 logger.warning(f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
@@ -1474,8 +1474,8 @@ class PoPT_GUI_Main:
         self._mon_tree.column("from",     anchor='w', stretch=False, width=85)
         self._mon_tree.column("to",       anchor='w', stretch=False, width=85)
         self._mon_tree.column("via",      anchor='w', stretch=False, width=120)
-        self._mon_tree.column("typ",      anchor='w', stretch=False, width=50)
-        self._mon_tree.column("pid",      anchor='w', stretch=False, width=100)
+        self._mon_tree.column("typ",      anchor='center', stretch=False, width=50)
+        self._mon_tree.column("pid",      anchor='center', stretch=False, width=100)
         self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=45)
         self._mon_tree.column("cmd_poll", anchor='center', stretch=False, width=50)
         self._mon_tree.column("size",     anchor='center', stretch=False, width=45)

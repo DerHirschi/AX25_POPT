@@ -284,6 +284,15 @@ class Main_CFG:
         return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
     ########################################################
     # GUI
+    def set_guiCFG_style_name(self, style_name: str):
+        self._config['gui_main_parm']['gui_parm_style_name'] = str(style_name)
+
+    def get_guiCFG_style_name(self):
+        return self._config['gui_main_parm'].get('gui_parm_style_name', 'default')
+
+    def set_guiCFG_language(self, lang_index: int):
+        self._config['gui_main_parm']['gui_lang'] = int(lang_index)
+
     def get_guiCFG_language(self):
         return int(self._config['gui_main_parm'].get('gui_lang', 0))
 

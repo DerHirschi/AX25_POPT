@@ -7,7 +7,7 @@ Fixes:
   FWD-Warteschlange entfernt wird
 - Zeilenumbruch für APRS-Nachrichten
 - Eigene APRS-Nachrichten werden nicht angezeigt
-- Eingehende S&F-Forwardverbindung wird nicht Disconnected wenn FWD
+- Eingehende S&F-Forwardverbindung wird nicht Disconnected, wenn FWD
   beendet ist.
 - S= Nachrichten (Nachricht wird bereits von einer anderen Station empfangen)
   werden nicht erneut zum FWD angeboten.
@@ -68,6 +68,8 @@ Neue Implementierungen / Funktionen:
 - Tabelle für Verbindungsverlauf in MH-Liste GUI
 - Tabelle für Verbindungsverlauf in BBS-Forwardwarteschlangen GUI
 - APRS-Icons (wenn bekannt) in MH-Liste
+- Simpler "First Setup" Wizard, mit Einstellungen für Sprache und
+  GUI-Style. (Wird nach und nach erweitert)
 
 ###########################################################################################################
 ###########################################################################################################

@@ -123,6 +123,7 @@ class DefaultCLI(object):
             'VERSION':  (3, self._cmd_ver,                  'Version', False),
             'POPT':     (0, self._cmd_popt_banner,          'PoPT Banner', False),
             'HELP':     (1, self._cmd_help,                 self._getTabStr('help'), False),
+            # 'X':     (1, self._cmd_x,                 self._getTabStr('help'), False),
             '?':        (0, self._cmd_shelp,                self._getTabStr('cmd_shelp'), False),
         }
         self._commands_cfg  = list(self._command_set.keys())
@@ -1367,6 +1368,10 @@ class DefaultCLI(object):
             return self._getTabStr('box_cmd_op2')
         return self._getTabStr('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
 
+    """
+    def _cmd_x(self):
+        self._connection.change_cli()
+    """
     ##############################################
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()

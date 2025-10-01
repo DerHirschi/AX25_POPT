@@ -485,10 +485,13 @@ class BBS_fwd_Q(tk.Toplevel):
         self._conn_his_tab.column("tx_pack_n", anchor='w', stretch=tk.NO, width=50)
         self._conn_his_tab.column("rx_pack_n", anchor='w', stretch=tk.NO, width=50)
         self._conn_his_tab.column("time", anchor='w', stretch=tk.NO, width=130)
+        self._conn_his_tab.pack(side='left', fill='both', expand=True)
 
+        scrollbar_y = ttk.Scrollbar(co_tree_f, orient='vertical', command=self._conn_his_tab.yview)
+        self._conn_his_tab.configure(yscrollcommand=scrollbar_y.set)
+        scrollbar_y.pack(side='left', fill='y')
         # self._conn_his_tab.tag_configure("bell", background=CFG_TR_DX_ALARM_BG_CLR, foreground='black')
         # self._connects_tree.bind('<<TreeviewSelect>>', self._connects_entry_selected)
-        self._conn_his_tab.pack(fill='both', expand=True)
 
         ##########################################################################################
         #self._update_conn_his()

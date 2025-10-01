@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from bbs.bbs_constant import GET_MSG_STRUC
-from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
+from cfg.constant import DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
     DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
     TASK_TYP_MAIL
 from schedule.popt_sched import getNew_schedule_config
@@ -305,7 +305,7 @@ def getNew_APRS_beacon_cfg():
 # GUI Parameter
 def getNew_maniGUI_parm():
     return dict(
-        gui_lang                    = int(LANGUAGE),
+        gui_lang                    = 1,
         gui_cfg_locator             = '',
         gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
@@ -356,7 +356,7 @@ def getNew_maniGUI_parm():
         gui_parm_main_height       = 850,
         #################
         # Style name
-        gui_parm_style_name         = "classic"
+        gui_parm_style_name         = "default"
     )
 
 

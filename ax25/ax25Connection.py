@@ -851,6 +851,12 @@ class AX25Conn:
         if self.zustand_exec.stat_index == 1:
             return True
         return False
+    ########
+    """
+    def change_cli(self):
+        self.cli = CLI_OPT.get('BOX', NoneCLI)(self)
+        self.cli_type = str('BOX')
+    """
 
     ###############################################
     # Timer usw

@@ -184,9 +184,11 @@ def exist_awthemes_path():
     return False
 
 def init_dir_struct():
+    first_setup = False
     if not os.path.exists(CFG_data_path):
         logger.warning(f'Directory {CFG_data_path} not found ! Creating new Directory.')
         os.makedirs(CFG_data_path)
+        first_setup = True
     if not os.path.exists(CFG_data_path + CFG_usertxt_path):
         logger.warning(f'Directory {CFG_data_path + CFG_usertxt_path} not found ! Creating new Directory.')
         os.makedirs(CFG_data_path + CFG_usertxt_path)
@@ -198,6 +200,7 @@ def init_dir_struct():
     if not os.path.exists(CFG_logging_path):
         logger.warning(f'Directory {CFG_logging_path} not found ! Creating new Directory.')
         os.makedirs(CFG_logging_path)
+    return first_setup
 
 def init_bbs_dir():
     if not os.path.exists(CFG_bbs_data_path):

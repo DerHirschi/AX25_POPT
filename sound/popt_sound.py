@@ -25,7 +25,6 @@ class POPT_Sound:
             self.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.master_sprech_on = False
-        self._lang = POPT_CFG.get_guiCFG_language()
 
     def sound_play(self, snd_file: str, wait=True):
         if self._quit:
@@ -95,7 +94,7 @@ class POPT_Sound:
                             6: 'pt',
                             7: 'it',
                             8: 'zh',
-                        }[self._lang]
+                        }[POPT_CFG.get_guiCFG_language()]
                         try:
                             # print("GTTS")
                             tts = gTTS(text=text,
