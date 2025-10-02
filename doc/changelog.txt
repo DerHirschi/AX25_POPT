@@ -15,6 +15,8 @@ Fixes:
 - FWD-Statistik mail_bytes_tx Zähler hat falschen Wert erfasst
 - Asynchrone Ausgabe der "SYS-Nachrichten" (*** connected to ..., ...)
 - Probleme beim Sortieren der Statistik-Tabelle in Forwardwarteschlange-GUI
+- BBS: "Neue Benutzeranmeldung" Mail an Sysop wird in CLI-Sprache und nicht
+  in GUI Sprache gesendet
 
 Optimierung/Änderungen:
 - GUI Tasker-Warteschlange
@@ -70,6 +72,7 @@ Neue Implementierungen / Funktionen:
 - APRS-Icons (wenn bekannt) in MH-Liste
 - Simpler "First Setup" Wizard, mit Einstellungen für Sprache und
   GUI-Style. (Wird nach und nach erweitert)
+- Lokaler Converse-Mode (kein Ping-Pong Converse !)
 
 ###########################################################################################################
 ###########################################################################################################

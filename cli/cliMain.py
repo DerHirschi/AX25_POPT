@@ -69,12 +69,14 @@ class DefaultCLI(object):
         self._new_last_line     = b''   # TODO ???????????????????????
         self._parameter         = []
         self._env_var_cmd       = False
+        self._skip_prompt       = False
 
         self._sys_login         = None
         self.sysop_priv         = False
 
         self._tx_buffer         = b''
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._cli_lang)
+        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
+        self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # self._user_db_ent.cli_sidestop = 20
         # Crone
         self._cron_state_exec = {
@@ -95,36 +97,36 @@ class DefaultCLI(object):
             'LMH':      (0, self._cmd_mhl,                  'Long MYHeard List', False),
             'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
             'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
-            'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr('cmd_help_lcstatus'), False),
-            'CH':       (2, self._cmd_ch,                   self._getTabStr('cmd_help_ch'), False),
+            'LCSTATUS': (2, self._cmd_lcstatus, self._getTabStr_CLI('cmd_help_lcstatus'), False),
+            'CH':       (2, self._cmd_ch, self._getTabStr_CLI('cmd_help_ch'), False),
             # APRS Stuff
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
-            'WX':       (0, self._cmd_wx,                   self._getTabStr('cmd_help_wx'), False),
+            'WX':       (0, self._cmd_wx, self._getTabStr_CLI('cmd_help_wx'), False),
             # User/Station Info
-            'BELL':     (2, self._cmd_bell,                 self._getTabStr('cmd_help_bell'), False),
+            'BELL':     (2, self._cmd_bell, self._getTabStr_CLI('cmd_help_bell'), False),
             'INFO':     (1, self._cmd_i,                    'Info', True),
             'LINFO':    (2, self._cmd_li,                   'Long Info', True),
             'NEWS':     (2, self._cmd_news,                 'NEWS', True),
             # USER DB
-            'USER':     (2, self._cmd_user_db_detail,       self._getTabStr('cmd_help_user_db'), False),
-            'NAME':     (1, self._cmd_set_name,             self._getTabStr('cmd_help_set_name'), False),
-            'QTH':      (3, self._cmd_set_qth,              self._getTabStr('cmd_help_set_qth'), False),
-            'LOC':      (3, self._cmd_set_loc,              self._getTabStr('cmd_help_set_loc'), False),
-            'ZIP':      (3, self._cmd_set_zip,              self._getTabStr('cmd_help_set_zip'), False),
-            'PRMAIL':   (2, self._cmd_set_pr_mail,          self._getTabStr('cmd_help_set_prmail'), False),
-            'EMAIL':    (0, self._cmd_set_e_mail,           self._getTabStr('cmd_help_set_email'), False),
-            'WEB':      (3, self._cmd_set_http,             self._getTabStr('cmd_help_set_http'),  False),
+            'USER':     (2, self._cmd_user_db_detail, self._getTabStr_CLI('cmd_help_user_db'), False),
+            'NAME':     (1, self._cmd_set_name, self._getTabStr_CLI('cmd_help_set_name'), False),
+            'QTH':      (3, self._cmd_set_qth, self._getTabStr_CLI('cmd_help_set_qth'), False),
+            'LOC':      (3, self._cmd_set_loc, self._getTabStr_CLI('cmd_help_set_loc'), False),
+            'ZIP':      (3, self._cmd_set_zip, self._getTabStr_CLI('cmd_help_set_zip'), False),
+            'PRMAIL':   (2, self._cmd_set_pr_mail, self._getTabStr_CLI('cmd_help_set_prmail'), False),
+            'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr_CLI('cmd_help_set_email'), False),
+            'WEB':      (3, self._cmd_set_http, self._getTabStr_CLI('cmd_help_set_http'), False),
 
             # CLI OPT
-            'OP':       (2, self._cmd_op,                   self._getTabStr('cmd_op'), False),
-            'LANG':     (4, self._cmd_lang,                 self._getTabStr('cli_change_language'), False),
-            'UMLAUT':   (2, self._cmd_umlaut,               self._getTabStr('auto_text_encoding'), False),
+            'OP':       (2, self._cmd_op, self._getTabStr_CLI('cmd_op'), False),
+            'LANG':     (4, self._cmd_lang, self._getTabStr_CLI('cli_change_language'), False),
+            'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'), False),
             #
             'VERSION':  (3, self._cmd_ver,                  'Version', False),
             'POPT':     (0, self._cmd_popt_banner,          'PoPT Banner', False),
-            'HELP':     (1, self._cmd_help,                 self._getTabStr('help'), False),
-            # 'X':     (1, self._cmd_x,                 self._getTabStr('help'), False),
-            '?':        (0, self._cmd_shelp,                self._getTabStr('cmd_shelp'), False),
+            'HELP':     (1, self._cmd_help, self._getTabStr_CLI('help'), False),
+            'CONV':     (3, self._cmd_conv,                 'Converse', False),
+            '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
         }
         self._commands_cfg  = list(self._command_set.keys())
         self._commands      = {}
@@ -208,15 +210,15 @@ class DefaultCLI(object):
             self.change_cli_state(1)
             return
         if self._ss_state == 0:
-            out_lines += self._getTabStr('op_prompt_0').encode(self._encoding[0], self._encoding[1])
+            out_lines += self._getTabStr_CLI('op_prompt_0').encode(self._encoding[0], self._encoding[1])
         elif self._ss_state == 1:
-            out_lines += self._getTabStr('op_prompt_1').encode(self._encoding[0], self._encoding[1])
+            out_lines += self._getTabStr_CLI('op_prompt_1').encode(self._encoding[0], self._encoding[1])
         self._connection.tx_buf_rawData += out_lines
         self.change_cli_state(7)
 
     def _abort_send_out(self):
         self._tx_buffer = b''
-        self._connection.tx_buf_rawData = (f"\r\r # {self._getTabStr('aborted')} !\r"
+        self._connection.tx_buf_rawData = (f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
                                            + self._get_ts_prompt()).encode(self._encoding[0], 'ignore')
 
     def _check_abort_cmd(self):
@@ -421,9 +423,9 @@ class DefaultCLI(object):
                 if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
             if not treffer:
-                return f"\r # {self._getTabStr('cmd_not_known')}\r"
+                return f"\r # {self._getTabStr_CLI('cmd_not_known')}\r"
             if len(treffer) > 1:
-                return (f"\r # {self._getTabStr('cmd_not_known')}"
+                return (f"\r # {self._getTabStr_CLI('cmd_not_known')}"
                         f"\r # {(' '.join(treffer))} ?\r")
             self._cmd = b''
             if not callable(self._commands[treffer[0]][1]):
@@ -436,7 +438,7 @@ class DefaultCLI(object):
                 return ret
             return ''
 
-        return f"\r # {self._getTabStr('cmd_not_known')}\r"
+        return f"\r # {self._getTabStr_CLI('cmd_not_known')}\r"
 
     def _exec_cmd(self):
         self._input = self._last_line + self._input
@@ -450,7 +452,10 @@ class DefaultCLI(object):
         ret = self._find_cmd()
         if self._crone_state_index not in [100] and \
                 self._state_index not in [2, 4, 8]:  # Not Quit| 8 = BBS send msg
-            ret += self._get_ts_prompt()
+            if self._skip_prompt:
+                self._skip_prompt = False
+            else:
+                ret += self._get_ts_prompt()
         return ret
 
     def _exec_str_cmd(self):
@@ -506,11 +511,11 @@ class DefaultCLI(object):
     def _cmd_connect(self, exclusive=False):
         self._decode_param()
         if not self._parameter:
-            return f"\r {self._getTabStr('cmd_c_noCall')}\r"
+            return f"\r {self._getTabStr_CLI('cmd_c_noCall')}\r"
 
         dest_call = str(self._parameter[0]).upper()
         if not validate_ax25Call(dest_call):
-            return f"\r {self._getTabStr('cmd_c_badCall')}\r"
+            return f"\r {self._getTabStr_CLI('cmd_c_badCall')}\r"
 
         port_id = -1
         vias = []
@@ -521,9 +526,9 @@ class DefaultCLI(object):
                 try:
                     port_id = int(self._parameter[-1])
                     if port_id not in self._port_handler.get_all_ports().keys():
-                        return f"\r {self._getTabStr('cmd_c_noPort')}\r"
+                        return f"\r {self._getTabStr_CLI('cmd_c_noPort')}\r"
                 except ValueError:
-                    return f"\r {self._getTabStr('cmd_c_badPort')}\r"
+                    return f"\r {self._getTabStr_CLI('cmd_c_badPort')}\r"
 
             via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
             vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
@@ -555,7 +560,7 @@ class DefaultCLI(object):
         # self._connection: AX25Conn
         # self._connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
         conn_dauer = get_time_delta(self.time_start)
-        ret = f"\r # {self._getTabStr('time_connected')}: {conn_dauer}\r\r"
+        ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
         ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
         self._send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
@@ -563,12 +568,12 @@ class DefaultCLI(object):
 
     def _cmd_lang(self):
         if not self._parameter:
-            return f'\r # {self._getTabStr("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
         self._decode_param()
         if self._parameter[0].upper() in constant.LANG_IND.keys():
             self._connection.set_user_db_language(constant.LANG_IND[self._parameter[0].upper()])
-            return f'\r # {self._getTabStr("cli_lang_set")}\r'
-        return f'\r # {self._getTabStr("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
+        return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
 
     def _cmd_dxlist(self):
         parm = 10
@@ -585,7 +590,7 @@ class DefaultCLI(object):
         alarm_his = dict(self._port_handler.get_MH().dx_alarm_perma_hist)
         alarm_his.update(dict(self._port_handler.get_aprs_ais().be_tracer_alarm_hist))
         if not alarm_his:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         out = '\r'
         out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---\r"
         max_c = 0
@@ -622,7 +627,7 @@ class DefaultCLI(object):
         ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
         dbl_ent = []
         if not ent:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         max_c = 0
         out = '\r'
         # out += '\r                       < AXIP - Clients >\r\r'
@@ -668,7 +673,7 @@ class DefaultCLI(object):
     def _get_mh_out_cli(self, max_ent=20, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         out = ''
         c = 0
         max_c = 0
@@ -689,7 +694,7 @@ class DefaultCLI(object):
                     c = 0
                     out += '\r'
         if not out:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         return '\r' + out
 
     def _cmd_mhl(self):
@@ -720,7 +725,7 @@ class DefaultCLI(object):
     def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
         sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
         if not sort_list:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         out = ''
         max_c = 0
         """
@@ -755,13 +760,13 @@ class DefaultCLI(object):
 
                 out += '\r'
         if not out:
-            return f'\r # {self._getTabStr("cli_no_data")}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
 
     def _cmd_wx(self):
         """ WX Stations """
         if self._port_handler.aprs_ais is None:
-            return f'\r # {self._getTabStr("cli_no_wx_data")}\r\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
         parm = 10
         ret = ''
         self._decode_param()
@@ -785,7 +790,7 @@ class DefaultCLI(object):
         else:
             ret = self._get_wx_cli_out(max_ent=parm)
         if not ret:
-            return f'\r # {self._getTabStr("cli_no_wx_data")}\r\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
@@ -870,12 +875,12 @@ class DefaultCLI(object):
         if 'temp' in init_dict:
             datasets = {'temp': '+'}
             temp_graph = generate_ascii_graph(temp_graph_data,
-                                         f"{self._getTabStr('temperature')}(C) - {call} - {time_range} {self._getTabStr('hours')}",
-                                         datasets,
-                                         chart_type='line',
-                                         graph_height=12,
-                                         graph_width=time_range,
-                                         expand=True )
+                                         f"{self._getTabStr_CLI('temperature')}(C) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
+                                              datasets,
+                                              chart_type='line',
+                                              graph_height=12,
+                                              graph_width=time_range,
+                                              expand=True)
             out += '\r'
             out += '\r'
             out += temp_graph
@@ -883,12 +888,12 @@ class DefaultCLI(object):
         if 'pres' in init_dict:
             datasets = {'pres': '+'}
             press_graph = generate_ascii_graph(temp_graph_data,
-                                              f"{self._getTabStr('wx_press')}(hPa) - {call} - {time_range} {self._getTabStr('hours')}",
-                                              datasets,
-                                              chart_type='line',
-                                              graph_height=12,
-                                              graph_width=time_range,
-                                              expand=True)
+                                              f"{self._getTabStr_CLI('wx_press')}(hPa) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
+                                               datasets,
+                                               chart_type='line',
+                                               graph_height=12,
+                                               graph_width=time_range,
+                                               expand=True)
             out += '\r'
             out += '\r'
             out += press_graph
@@ -896,12 +901,12 @@ class DefaultCLI(object):
         if 'hum' in init_dict:
             datasets = {'hum': '+'}
             hum_graph = generate_ascii_graph(temp_graph_data,
-                                              f"{self._getTabStr('wx_hum')}(%) - {call} - {time_range} {self._getTabStr('hours')}",
-                                              datasets,
-                                              chart_type='line',
-                                              graph_height=12,
-                                              graph_width=time_range,
-                                              expand=True)
+                                              f"{self._getTabStr_CLI('wx_hum')}(%) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
+                                             datasets,
+                                             chart_type='line',
+                                             graph_height=12,
+                                             graph_width=time_range,
+                                             expand=True)
 
             out += '\r'
             out += '\r'
@@ -942,7 +947,7 @@ class DefaultCLI(object):
     def _cmd_aprs_trace(self):
         """APRS Tracer"""
         if self._port_handler.aprs_ais is None:
-            return f'\r # {self._getTabStr("cli_no_tracer_data")}\r\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
         parm = 10
         if self._parameter:
             try:
@@ -951,7 +956,7 @@ class DefaultCLI(object):
                 pass
         data = self._port_handler.aprs_ais.tracer_traces_get()
         if not data:
-            return f'\r # {self._getTabStr("cli_no_tracer_data")}\r\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
         intervall = self._port_handler.aprs_ais.be_tracer_interval
         active = self._port_handler.aprs_ais.be_tracer_active
         last_send = self._port_handler.aprs_ais.tracer_get_last_send()
@@ -1072,7 +1077,7 @@ class DefaultCLI(object):
                 return header + ent_ret
 
             return "\r" \
-                   f"{self._getTabStr('cli_no_user_db_ent')}" \
+                   f"{self._getTabStr_CLI('cli_no_user_db_ent')}" \
                    "\r"
 
     def _cmd_set_name(self):
@@ -1088,7 +1093,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_name_set')}: {self._user_db_ent.Name}" \
+                   f"{self._getTabStr_CLI('cli_name_set')}: {self._user_db_ent.Name}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
@@ -1107,7 +1112,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_qth_set')}: {self._user_db_ent.QTH}" \
+                   f"{self._getTabStr_CLI('cli_qth_set')}: {self._user_db_ent.QTH}" \
                    "\r"
 
         logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
@@ -1131,10 +1136,10 @@ class DefaultCLI(object):
             self._user_db.set_distance(self._user_db_ent.call_str)
             if self._user_db_ent.Distance:
                 return "\r" \
-                       f"{self._getTabStr('cli_loc_set')}: {self._user_db_ent.LOC}" \
+                       f"{self._getTabStr_CLI('cli_loc_set')}: {self._user_db_ent.LOC}" \
                        "\r"
             return "\r" \
-                   f"{self._getTabStr('cli_loc_set')}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
+                   f"{self._getTabStr_CLI('cli_loc_set')}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
@@ -1153,7 +1158,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_zip_set')}: {self._user_db_ent.ZIP}" \
+                   f"{self._getTabStr_CLI('cli_zip_set')}: {self._user_db_ent.ZIP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_zip NO ENTRY FOUND !")
@@ -1172,7 +1177,7 @@ class DefaultCLI(object):
                 replace('\r', '')).upper()
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
+                   f"{self._getTabStr_CLI('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_pr_mail NO ENTRY FOUND !")
@@ -1191,7 +1196,7 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_email_set')}: {self._user_db_ent.Email}" \
+                   f"{self._getTabStr_CLI('cli_email_set')}: {self._user_db_ent.Email}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_e_mail NO ENTRY FOUND !")
@@ -1210,14 +1215,14 @@ class DefaultCLI(object):
                 replace('\r', '')
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
-                   f"{self._getTabStr('cli_http_set')}: {self._user_db_ent.HTTP}" \
+                   f"{self._getTabStr_CLI('cli_http_set')}: {self._user_db_ent.HTTP}" \
                    "\r"
 
         logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
     def _cmd_port(self):  # TODO Pipe
-        ret = f"\r      < {self._getTabStr('port_overview')} >\r\r"
+        ret = f"\r      < {self._getTabStr_CLI('port_overview')} >\r\r"
         ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
         for port_id in self._port_handler.ax25_ports.keys():
             port = self._port_handler.ax25_ports[port_id]
@@ -1287,30 +1292,30 @@ class DefaultCLI(object):
 
     def _cmd_ch(self):
         if not self._parameter:
-            return self._getTabStr('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error')
         if len(self._parameter) > 1:
             param = [self._parameter[0], b' '.join(self._parameter[1:])]
         else:
             param: b'' = self._parameter[0]
             param = param.split(b' ', maxsplit=1)
         if len(param) < 2:
-            return self._getTabStr('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error')
         try:
             ch_id = int(param[0])
         except ValueError:
-            return self._getTabStr('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error')
 
         all_conn = self._port_handler.get_all_connections()
         if ch_id not in all_conn:
-            return self._getTabStr('ch_cmd_empty_ch')
+            return self._getTabStr_CLI('ch_cmd_empty_ch')
         if ch_id == self._connection.ch_index:
-            return self._getTabStr('ch_cmd_own_ch')
+            return self._getTabStr_CLI('ch_cmd_own_ch')
 
         to_conn = all_conn[ch_id]
         to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')
         to_send += param[1] + b'\r'
         to_conn.send_data(to_send)
-        return self._getTabStr('ch_cmd_send').format(ch_id, to_conn.to_call_str)
+        return self._getTabStr_CLI('ch_cmd_send').format(ch_id, to_conn.to_call_str)
 
     def _cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"
@@ -1339,14 +1344,14 @@ class DefaultCLI(object):
     def _cmd_umlaut(self):
         # print(self.parameter)
         if not self._parameter:
-            return f"\r{self._getTabStr('cli_text_encoding_no_param')}: {self._encoding[0]}\r"
+            return f"\r{self._getTabStr_CLI('cli_text_encoding_no_param')}: {self._encoding[0]}\r"
         res = find_decoding(self._parameter[0].replace(b'\r', b''))
         if not res:
-            return f"\r{self._getTabStr('cli_text_encoding_error_not_found')}\r"
+            return f"\r{self._getTabStr_CLI('cli_text_encoding_error_not_found')}\r"
         self._encoding = res, self._encoding[1]
         if self._user_db_ent:
             self._user_db_ent.Encoding = str(res)
-        return f"\r{self._getTabStr('cli_text_encoding_set')} {res}\r"
+        return f"\r{self._getTabStr_CLI('cli_text_encoding_set')} {res}\r"
 
     def _cmd_bell(self):
         if not self._connection.noty_bell:
@@ -1354,24 +1359,25 @@ class DefaultCLI(object):
             msg = b' '.join(self._parameter)
             msg = msg.decode(self._encoding[0], self._encoding[1])
             self._port_handler.set_noty_bell_PH(self._connection.ch_index, msg)
-            return f'\r # {self._getTabStr("cmd_bell")}\r'
-        return f'\r # {self._getTabStr("cmd_bell_again")}\r'
+            return f'\r # {self._getTabStr_CLI("cmd_bell")}\r'
+        return f'\r # {self._getTabStr_CLI("cmd_bell_again")}\r'
 
     def _cmd_op(self):
         if not self._parameter:
             self._user_db_ent.cli_sidestop = 0
             ""
-            return self._getTabStr('box_cmd_op1')
+            return self._getTabStr_CLI('box_cmd_op1')
         try:
             self._user_db_ent.cli_sidestop = int(self._parameter[0])
         except ValueError:
-            return self._getTabStr('box_cmd_op2')
-        return self._getTabStr('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
+            return self._getTabStr_CLI('box_cmd_op2')
+        return self._getTabStr_CLI('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
 
-    """
-    def _cmd_x(self):
-        self._connection.change_cli()
-    """
+
+    def _cmd_conv(self):
+        self._skip_prompt = True
+        self._connection.enter_converse_cli()
+
     ##############################################
     def str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -1438,6 +1444,11 @@ class DefaultCLI(object):
         ret = self._cron_state_exec[self._crone_state_index]()
         if ret:
             self._send_output(ret, env_vars=False)
+    ########################################################
+    def cli_conn_cleanup(self):
+        pass
+
+    ########################################################
 
     def _s0(self):  # C-Text
         self._state_index = 1

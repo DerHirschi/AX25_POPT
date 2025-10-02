@@ -3,6 +3,7 @@ import time
 import threading
 
 from ax25.ax25Error import AX25DeviceFAIL
+from ax25.ax25LocalConverse import LocalConverse
 from ax25.ax25Multicast import ax25Multicast
 from cfg.default_config import getNew_ConnHistory_struc
 # from ax25.ax25RoutingTable import RoutingTable
@@ -87,6 +88,10 @@ class AX25PortHandler(object):
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
         self._mcast_server      = ax25Multicast(self)
+        #######################################################
+        # MCast Server Init
+        logger.info("PH: Local Converse Init")
+        self._local_conv_obj    = LocalConverse(self)
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
@@ -612,7 +617,7 @@ class AX25PortHandler(object):
             self._gui.ch_status_update()
             self._gui.conn_btn_update()
         # Conn History
-        self._update_conn_history(connection, disco=False)
+        self.update_conn_history(connection, disco=False)
 
     """
     def reset_connection(self, connection):
@@ -663,9 +668,9 @@ class AX25PortHandler(object):
                 if conn.noty_bell:
                     self.reset_noty_bell_PH()
             # Conn History
-            self._update_conn_history(conn, disco=True)
+            self.update_conn_history(conn, disco=True)
 
-    def _update_conn_history(self, conn, disco: bool):
+    def update_conn_history(self, conn, disco: bool, inter_connect=False):
         ch_id     = conn.ch_index
         port_id   = conn.port_id
         ent_call  = conn.to_call_str
@@ -700,7 +705,10 @@ class AX25PortHandler(object):
         rx_pack   = 0
         tx_pack   = 0
         if disco:
-            duration = datetime.now() - conn.time_start
+            if inter_connect:
+                duration = datetime.now() - conn.cli.time_start
+            else:
+                duration = datetime.now() - conn.time_start
             rx_bytes = conn.rx_byte_count
             tx_bytes = conn.tx_byte_count
             rx_pack  = conn.rx_pack_count
@@ -723,6 +731,7 @@ class AX25PortHandler(object):
             tx_pack_n       = tx_pack,
             rx_pack_n       = rx_pack,
             disco           = disco,
+            inter_connect   = inter_connect,
         )
         mh = self.get_MH()
         if hasattr(mh, 'add_conn_hist'):
@@ -1316,6 +1325,10 @@ class AX25PortHandler(object):
             return
         return
 
+    ##############################################################
+    # Local Converse Mode
+    def get_loConverse(self):
+        return self._local_conv_obj
     ##############################################################
     #
     def debug_Connections(self):

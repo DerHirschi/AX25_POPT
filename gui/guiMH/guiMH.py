@@ -627,7 +627,9 @@ class MHWin(tk.Toplevel):
                 image_typ += '-DISCO'
             else:
                 image_typ += '-CONN'
-            if ent.get('conn_incoming', False):
+            if ent.get('inter_connect', False):
+                image_typ += '-INTER'
+            elif ent.get('conn_incoming', False):
                 image_typ += '-IN'
             else:
                 image_typ += '-OUT'

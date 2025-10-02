@@ -594,7 +594,7 @@ class SideTabbedFrame:
             'dauer',
         )
 
-        self._connects_tree = ttk.Treeview(cur_conn_tab_f, columns=columns, show='tree headings')
+        self._connects_tree = ttk.Treeview(cur_conn_tab_f, columns=columns, show='tree headings', height=5)
 
         self._connects_tree.heading('channel',  text='CH')
         self._connects_tree.heading('call',     text='To')
@@ -626,7 +626,7 @@ class SideTabbedFrame:
             'time',
         )
 
-        self._conn_his_tab = ttk.Treeview(his_conn_tab_f, columns=columns, show='tree headings')
+        self._conn_his_tab = ttk.Treeview(his_conn_tab_f, columns=columns, show='tree headings', height=5)
 
         self._conn_his_tab.heading('channel',   text='CH')
         self._conn_his_tab.heading('call',      text='To')
@@ -945,7 +945,9 @@ class SideTabbedFrame:
                 image_typ += '-DISCO'
             else:
                 image_typ += '-CONN'
-            if ent.get('conn_incoming', False):
+            if ent.get('inter_connect', False):
+                image_typ += '-INTER'
+            elif ent.get('conn_incoming', False):
                 image_typ += '-IN'
             else:
                 image_typ += '-OUT'

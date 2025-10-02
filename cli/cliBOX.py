@@ -46,22 +46,22 @@ class BoxCLI(DefaultCLI):
     def init(self):
         self._command_set.update({
             # BOX
-            'LB'     : (2, self._cmd_box_lb,     self._getTabStr('cmd_lb'),      False),
+            'LB'     : (2, self._cmd_box_lb, self._getTabStr_CLI('cmd_lb'), False),
 
-            'LN'     : (2, self._cmd_box_ln,     self._getTabStr('cmd_ln'),      False),
-            'LM'     : (2, self._cmd_box_lm,     self._getTabStr('cmd_lm'),      False),
-            'LL'     : (2, self._cmd_box_ll,     self._getTabStr('cmd_ll'),      False),
-            'L<'     : (2, self._cmd_box_l_from, self._getTabStr('cmd_l_from'),  False),
-            'L>'     : (2, self._cmd_box_l_to,   self._getTabStr('cmd_l_to'),    False),
-            'L@'     : (2, self._cmd_box_l_at,   self._getTabStr('cmd_l_at'),    False),
-            'R'      : (1, self._cmd_box_r,      self._getTabStr('cmd_r'),       False),
-            'SP'     : (2, self._cmd_box_sp,     self._getTabStr('cmd_sp'),      False),
-            'SB'     : (2, self._cmd_box_sb,     self._getTabStr('cmd_sb'),      False),
-            'SR'     : (2, self._cmd_box_sr,     self._getTabStr('cmd_sr'),      False),
-            'KM'     : (2, self._cmd_box_km,     self._getTabStr('cmd_km'),      False),
-            'K'      : (1, self._cmd_box_k,      self._getTabStr('cmd_k'),       False),
-            'MR'     : (2, self._cmd_box_mr,     self._getTabStr('cmd_mr'),      False),
-            'FWDINFO': (4, self._cmd_box_fwdinfo,self._getTabStr('cmd_fwdinfo'), False),
+            'LN'     : (2, self._cmd_box_ln, self._getTabStr_CLI('cmd_ln'), False),
+            'LM'     : (2, self._cmd_box_lm, self._getTabStr_CLI('cmd_lm'), False),
+            'LL'     : (2, self._cmd_box_ll, self._getTabStr_CLI('cmd_ll'), False),
+            'L<'     : (2, self._cmd_box_l_from, self._getTabStr_CLI('cmd_l_from'), False),
+            'L>'     : (2, self._cmd_box_l_to, self._getTabStr_CLI('cmd_l_to'), False),
+            'L@'     : (2, self._cmd_box_l_at, self._getTabStr_CLI('cmd_l_at'), False),
+            'R'      : (1, self._cmd_box_r, self._getTabStr_CLI('cmd_r'), False),
+            'SP'     : (2, self._cmd_box_sp, self._getTabStr_CLI('cmd_sp'), False),
+            'SB'     : (2, self._cmd_box_sb, self._getTabStr_CLI('cmd_sb'), False),
+            'SR'     : (2, self._cmd_box_sr, self._getTabStr_CLI('cmd_sr'), False),
+            'KM'     : (2, self._cmd_box_km, self._getTabStr_CLI('cmd_km'), False),
+            'K'      : (1, self._cmd_box_k, self._getTabStr_CLI('cmd_k'), False),
+            'MR'     : (2, self._cmd_box_mr, self._getTabStr_CLI('cmd_mr'), False),
+            'FWDINFO': (4, self._cmd_box_fwdinfo, self._getTabStr_CLI('cmd_fwdinfo'), False),
         })
         self._commands_cfg = ['QUIT',
                               'BYE',
@@ -108,6 +108,7 @@ class BoxCLI(DefaultCLI):
                               'VERSION',
                               'POPT',
                               'HELP',
+                              'CONV',
                               '?']
 
         self._state_exec.update({
@@ -146,7 +147,7 @@ class BoxCLI(DefaultCLI):
         # New User
 
         if self._user_db_ent.bbs_newUser:
-            ret += self._getTabStr('bbs_new_user_reg0')
+            ret += self._getTabStr_CLI('bbs_new_user_reg0')
             for lang, k in LANG_IND.items():
                 if self._cli_lang == k:
                     ret += f"{lang}*> {k}\r"
@@ -159,20 +160,20 @@ class BoxCLI(DefaultCLI):
             self.can_sidestop = False
             self._send_output(ret, env_vars=True)
             self._bbs.send_sysop_msg(
-                topic=self._getTabStr('bbs_new_user_sysopMsg_top'),
-                msg=self._getTabStr('bbs_new_user_sysopMsg_msg').format(self._to_call,
-                                                                        bbs.get_pms_cfg().get('user', ''),
-                                                                        datetime.now().strftime('%d/%m/%y %H:%M:%S')
-                                                                        )
+                topic=self._getTabStr_GUI('bbs_new_user_sysopMsg_top'),
+                msg=self._getTabStr_GUI('bbs_new_user_sysopMsg_msg').format(self._to_call,
+                                                                            bbs.get_pms_cfg().get('user', ''),
+                                                                            datetime.now().strftime('%d/%m/%y %H:%M:%S')
+                                                                            )
             )
             return ''
 
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
-            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
+            ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
 
         if not self._user_db_ent.PRmail:
-            ret += self._getTabStr('box_no_hbbs_address')
+            ret += self._getTabStr_CLI('box_no_hbbs_address')
         self._send_output(ret + self._get_ts_prompt(), env_vars=True)
 
         return ''
@@ -234,14 +235,14 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self._get_ts_prompt()), env_vars=False)
+                self._send_output(self._getTabStr_CLI('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self._get_ts_prompt()), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])
 
             self._out_msg.update(dict(subject=subject))
             # Text eingeben ... (Ende mit /EX oder Ctrl-Z) :
-            self._send_output(self._getTabStr('box_cmd_sp_enter_msg'), env_vars=False)
+            self._send_output(self._getTabStr_CLI('box_cmd_sp_enter_msg'), env_vars=False)
             self._send_msg_state = 1
             return
         if self._send_msg_state == 1:
@@ -305,7 +306,7 @@ class BoxCLI(DefaultCLI):
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
             # ueber: MD2BOX MD2SAW  Mid: 24221-MD2BBS  Bytes: 5
             if fwd_bbs_list:
-                ret_text = self._getTabStr('box_cmd_sp_msg_accepted').format(
+                ret_text = self._getTabStr_CLI('box_cmd_sp_msg_accepted').format(
                     self._out_msg.get('receiver', ''),
                     self._out_msg.get('recipient_bbs', ''),
                     ' '.join(fwd_bbs_list),
@@ -313,7 +314,7 @@ class BoxCLI(DefaultCLI):
                     len(self._out_msg.get('msg', b''))
                 )
             else:
-                ret_text = self._getTabStr('box_cmd_sp_msg_accepted_local').format(
+                ret_text = self._getTabStr_CLI('box_cmd_sp_msg_accepted_local').format(
                     self._out_msg.get('receiver', ''),
                     bid,
                     len(self._out_msg.get('msg', b''))
@@ -338,19 +339,19 @@ class BoxCLI(DefaultCLI):
             if self._raw_input.endswith(eol):
                 inp = self._raw_input.replace(eol, b'')
                 if not inp:
-                    ret = self._getTabStr('bbs_new_user_reg1')
+                    ret = self._getTabStr_CLI('bbs_new_user_reg1')
                     if self._user_db_ent.Name:
                         ret += f" {self._user_db_ent.Name} ?\r"
-                        ret += self._getTabStr('bbs_new_user_reg_confirm')
+                        ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
                     self._send_output(ret, env_vars=False)
                     self._s9_state = 1
                     return
                 try:
                     lang_opt = int(inp.replace(b' ', b''))
                 except ValueError:
-                    ret = self._getTabStr('box_parameter_error')
+                    ret = self._getTabStr_CLI('box_parameter_error')
                     ret += '\r'
-                    ret += self._getTabStr('bbs_new_user_reg0')
+                    ret += self._getTabStr_CLI('bbs_new_user_reg0')
                     for lang, k in LANG_IND.items():
                         if self._cli_lang == k:
                             ret += f"{lang}*> {k}\r"
@@ -360,9 +361,9 @@ class BoxCLI(DefaultCLI):
                     self._send_output(ret)
                     return
                 if lang_opt not in LANG_IND.values():
-                    ret = self._getTabStr('box_parameter_error')
+                    ret = self._getTabStr_CLI('box_parameter_error')
                     ret += '\r'
-                    ret += self._getTabStr('bbs_new_user_reg0')
+                    ret += self._getTabStr_CLI('bbs_new_user_reg0')
                     for lang, k in LANG_IND.items():
                         if self._cli_lang == k:
                             ret += f"{lang}*> {k}\r"
@@ -372,10 +373,10 @@ class BoxCLI(DefaultCLI):
                     self._send_output(ret)
                     return
                 self._connection.set_user_db_language(lang_opt)
-            ret = self._getTabStr('bbs_new_user_reg1')
+            ret = self._getTabStr_CLI('bbs_new_user_reg1')
             if self._user_db_ent.Name:
                 ret += f" {self._user_db_ent.Name} ?\r"
-                ret += self._getTabStr('bbs_new_user_reg_confirm')
+                ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
             self._send_output(ret, env_vars=False)
 
             self._s9_state   = 1
@@ -389,7 +390,7 @@ class BoxCLI(DefaultCLI):
             ret = 'QTH                :'
             if self._user_db_ent.QTH:
                 ret += f" {self._user_db_ent.QTH} ?\r"
-                ret += self._getTabStr('bbs_new_user_reg_confirm')
+                ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
             self._send_output(ret)
             self._s9_state = 2
         elif self._s9_state == 2:
@@ -401,7 +402,7 @@ class BoxCLI(DefaultCLI):
             ret = 'Locator            :'
             if self._user_db_ent.LOC:
                 ret += f" {self._user_db_ent.LOC} ?\r"
-                ret += self._getTabStr('bbs_new_user_reg_confirm')
+                ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
             self._send_output(ret)
             self._s9_state   = 3
         elif self._s9_state == 3:
@@ -411,23 +412,23 @@ class BoxCLI(DefaultCLI):
                 loc = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
                 self._user_db_ent.LOC = str(loc)
             if self._user_db_ent.PRmail:
-                self._send_output(self._getTabStr('bbs_new_user_reg2_1').format(self._user_db_ent.PRmail.split('@')[-1]))
+                self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_1').format(self._user_db_ent.PRmail.split('@')[-1]))
                 self._s9_state = 41
             else:
-                self._send_output(self._getTabStr('bbs_new_user_reg2_2'), env_vars=False)
+                self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
                 self._s9_state   = 4
         elif self._s9_state == 41:
             if self._raw_input.endswith(eol):
                 anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
                 if anw in [b'N']:
-                    self._send_output(self._getTabStr('bbs_new_user_reg2_2'), env_vars=False)
+                    self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
                     self._s9_state = 4
                 else:
-                    ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
-                                                                      self._user_db_ent.PRmail,
-                                                                      self._user_db_ent.QTH,
-                                                                      self._user_db_ent.LOC,
-                                                                      )
+                    ret = self._getTabStr_CLI('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                          self._user_db_ent.PRmail,
+                                                                          self._user_db_ent.QTH,
+                                                                          self._user_db_ent.LOC,
+                                                                          )
                     ret += self._get_ts_prompt()
                     self._send_output(ret, env_vars=True)
                     self._s9_state = 10
@@ -437,7 +438,7 @@ class BoxCLI(DefaultCLI):
             if self._raw_input.endswith(eol):
                 anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
                 if anw in [b'N']:
-                    self._send_output(self._getTabStr('bbs_new_user_reg3'), env_vars=False)
+                    self._send_output(self._getTabStr_CLI('bbs_new_user_reg3'), env_vars=False)
                     self._s9_state = 5
                 else:
                     pms_cfg  = self._bbs.get_pms_cfg()
@@ -448,14 +449,14 @@ class BoxCLI(DefaultCLI):
                         self._send_output("\r # Error: BBS-Error !\r\r")
                     else:
                         self._user_db_ent.PRmail = f"{self._to_call}@{bbs_call}.{regio}"
-                        ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
-                                                                          self._user_db_ent.PRmail,
-                                                                          self._user_db_ent.QTH,
-                                                                          self._user_db_ent.LOC,
-                                                                          )
+                        ret = self._getTabStr_CLI('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                              self._user_db_ent.PRmail,
+                                                                              self._user_db_ent.QTH,
+                                                                              self._user_db_ent.LOC,
+                                                                              )
                         new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                         if new_mail:
-                            ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
+                            ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
                         ret += self._get_ts_prompt()
                         self._send_output(ret, env_vars=True)
                     self._s9_state = 10
@@ -474,11 +475,11 @@ class BoxCLI(DefaultCLI):
                     # TODO Set ent to BBS and add Mail Address or Noty Sysop
                     self._user_db_ent.PRmail = str(PRmail)
                 elif db_ent.TYP != 'BBS':
-                    ret = self._getTabStr('bbs_new_user_error_hbbs_add').format(
+                    ret = self._getTabStr_CLI('bbs_new_user_error_hbbs_add').format(
                         bbs_call,
                         db_ent.TYP
                     )
-                    ret += self._getTabStr('bbs_new_user_reg2_2')
+                    ret += self._getTabStr_CLI('bbs_new_user_reg2_2')
                     self._send_output(ret)
                     self._s9_state = 4
                     return
@@ -489,14 +490,14 @@ class BoxCLI(DefaultCLI):
                     self._user_db_ent.PRmail = f"{self._to_call}@{bbs_add}"
 
 
-                ret = self._getTabStr('bbs_new_user_reg4').format(self._user_db_ent.Name,
-                                                                              self._user_db_ent.PRmail,
-                                                                              self._user_db_ent.QTH,
-                                                                              self._user_db_ent.LOC,
-                                                                              )
+                ret = self._getTabStr_CLI('bbs_new_user_reg4').format(self._user_db_ent.Name,
+                                                                      self._user_db_ent.PRmail,
+                                                                      self._user_db_ent.QTH,
+                                                                      self._user_db_ent.LOC,
+                                                                      )
                 new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                 if new_mail:
-                    ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
+                    ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
                 ret += self._get_ts_prompt()
                 self._send_output(ret, env_vars=True)
                 self._s9_state = 10
@@ -549,18 +550,18 @@ class BoxCLI(DefaultCLI):
 
         self._decode_param(defaults=[''])
         if not self._parameter:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         param    = self._parameter[0].upper()
         msg_list = bbs.get_l_from(param)
 
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail_for').format(param)}\r"
 
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -586,18 +587,18 @@ class BoxCLI(DefaultCLI):
 
         self._decode_param(defaults=[''])
         if not self._parameter:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         param    = self._parameter[0].upper()
         msg_list = bbs.get_l_to(param, self._to_call)
 
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail_for').format(param)}\r"
 
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -629,18 +630,18 @@ class BoxCLI(DefaultCLI):
 
         self._decode_param(defaults=[''])
         if not self._parameter:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         param = self._parameter[0].upper()
         msg_list = bbs.get_l_at(param, self._to_call)
 
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail_for').format(param)}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail_for').format(param)}\r"
 
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -672,11 +673,11 @@ class BoxCLI(DefaultCLI):
 
         msg_list = list(bbs.get_bl_msg_tabCLI())
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail')}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail')}\r"
 
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -710,10 +711,10 @@ class BoxCLI(DefaultCLI):
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         print(msg_list)
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail')}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -738,7 +739,7 @@ class BoxCLI(DefaultCLI):
                 except IndexError:
                     pass
         if not tr:
-            return f"{self._getTabStr('hint_no_mail')}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail')}\r"
         return ret + '\r'
 
     def _cmd_box_lm(self):
@@ -749,10 +750,10 @@ class BoxCLI(DefaultCLI):
 
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail')}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -786,13 +787,13 @@ class BoxCLI(DefaultCLI):
         self._decode_param(defaults=[-1])
 
         if not self._parameter:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         msg_list = bbs.get_ll(self._parameter[0], self._to_call)
         if not msg_list:
-            return f"{self._getTabStr('hint_no_mail')}\r"
+            return f"{self._getTabStr_CLI('hint_no_mail')}\r"
         self._ss_state = 1
         ret = '\r'
-        BOX_MAIL_TAB_HEADER = (self._getTabStr('box_lm_header') +
+        BOX_MAIL_TAB_HEADER = (self._getTabStr_CLI('box_lm_header') +
                                "===== ==== ====== ====== ====== ====== ====/==== ======\r")
         BOX_MAIL_TAB_DATA = lambda data: (f"{str(data[0]).ljust(5)} "
                                           f"{data[-1].ljust(4)} "
@@ -822,7 +823,7 @@ class BoxCLI(DefaultCLI):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         ret = bbs.del_old_pn_msg_by_call(self._to_call)
-        return self._getTabStr('box_msg_del').format(len(ret))
+        return self._getTabStr_CLI('box_msg_del').format(len(ret))
 
     def _cmd_box_k(self):
         bbs = self._port_handler.get_bbs()
@@ -835,10 +836,10 @@ class BoxCLI(DefaultCLI):
 
         ret = bbs.del_pn_in_by_IDs(self._parameter, self._to_call)
         if not ret:
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         ret = [str(x[0]) for x in ret]
         msg_id_str = ' '.join(ret)
-        return self._getTabStr('box_msg_del_k').format(msg_id_str)
+        return self._getTabStr_CLI('box_msg_del_k').format(msg_id_str)
 
     def _cmd_box_mr(self):
         bbs = self._port_handler.get_bbs()
@@ -848,7 +849,7 @@ class BoxCLI(DefaultCLI):
             return "\r # Error: No Mail-Box available !\r\r"
         n = bbs.get_new_pn_count_by_call(self._to_call)
         bbs.set_all_pn_msg_notNew_by_call(self._to_call)
-        return self._getTabStr('box_cmd_mr_msg').format(n)
+        return self._getTabStr_CLI('box_cmd_mr_msg').format(n)
 
     def _cmd_box_r(self):
         bbs = self._port_handler.get_bbs()
@@ -858,14 +859,14 @@ class BoxCLI(DefaultCLI):
         try:
             msg_id = int(self._parameter[0])
         except (ValueError, IndexError):
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
         if msg:
             return self._fnc_box_r(msg)
         msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
         if msg:
             return self._fnc_box_r(msg)
-        return self._getTabStr('box_r_no_msg_found').format(msg_id)
+        return self._getTabStr_CLI('box_r_no_msg_found').format(msg_id)
 
     def _fnc_box_r(self, raw_msg: list):
         try:
@@ -873,7 +874,7 @@ class BoxCLI(DefaultCLI):
         except IndexError as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return self._getTabStr('box_msg_error')
+            return self._getTabStr_CLI('box_msg_error')
         try:
             MSGID, \
             BID, \
@@ -894,21 +895,21 @@ class BoxCLI(DefaultCLI):
         except Exception as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {raw_msg}")
             logger.error(self._logTag + f"{e}")
-            return self._getTabStr('box_msg_error')
+            return self._getTabStr_CLI('box_msg_error')
         stat = str(typ)
         if new:
             stat += '/N'
         ret = '\r'
-        ret += f"{str(self._getTabStr('from')).ljust(13)}: {from_call}@{from_bbs}\r"
-        ret += f"{str(self._getTabStr('to')).ljust(13)}: {to_call}@{to_bbs}\r"
+        ret += f"{str(self._getTabStr_CLI('from')).ljust(13)}: {from_call}@{from_bbs}\r"
+        ret += f"{str(self._getTabStr_CLI('to')).ljust(13)}: {to_call}@{to_bbs}\r"
         ret += f"{'Typ/Status'.ljust(13)}: {stat}\r"
-        ret += f"{str(self._getTabStr('date_time')).ljust(13)}: {msg_time}\r"
-        ret += f"RX {str(self._getTabStr('date_time')).ljust(10)}: {rx_time[2:]}\r"
+        ret += f"{str(self._getTabStr_CLI('date_time')).ljust(13)}: {msg_time}\r"
+        ret += f"RX {str(self._getTabStr_CLI('date_time')).ljust(10)}: {rx_time[2:]}\r"
         ret += f"{'BID'.ljust(13)}: {BID}\r"
-        ret += f"{str(self._getTabStr('message') + ' #').ljust(13)}: {MSGID}\r"
-        ret += zeilenumbruch(f"{str(self._getTabStr('titel')).ljust(13)}: {subject}\r\r")
+        ret += f"{str(self._getTabStr_CLI('message') + ' #').ljust(13)}: {MSGID}\r"
+        ret += zeilenumbruch(f"{str(self._getTabStr_CLI('titel')).ljust(13)}: {subject}\r\r")
         ret += msg.decode(self._encoding[0], self._encoding[1])
-        ret += self._getTabStr('box_msg_foter').format(
+        ret += self._getTabStr_CLI('box_msg_foter').format(
             MSGID, to_call, from_call, BID
         )
         if all((new, typ == 'P')):
@@ -922,7 +923,7 @@ class BoxCLI(DefaultCLI):
     def _cmd_box_sp(self):
         self._decode_param(defaults=[''])
         if not self._parameter:
-            return self._getTabStr('box_error_no_address')
+            return self._getTabStr_CLI('box_error_no_address')
 
         # if not hasattr(bbs, 'del_pn_in_by_IDs'):
         if not self._bbs:
@@ -961,34 +962,34 @@ class BoxCLI(DefaultCLI):
             if self._bbs_call in user_db_address:
                 # Local
                 self.change_cli_state(8)
-                ret = self._getTabStr('box_cmd_sp_local').format(user_db_address, call)
+                ret = self._getTabStr_CLI('box_cmd_sp_local').format(user_db_address, call)
                 return ret
             userdb_bbs_add = user_db_address.split('@')[1]
             self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
             self.change_cli_state(8)
-            ret  = self._getTabStr('box_cmd_sp_routing_to').format(userdb_bbs_add, call)
+            ret  = self._getTabStr_CLI('box_cmd_sp_routing_to').format(userdb_bbs_add, call)
             return ret
         userdb_bbs_add = self._user_db.get_PRmail(bbs_call)
         if '@' in userdb_bbs_add:
             userdb_bbs_add = userdb_bbs_add.split('@')[1]
         if userdb_bbs_add:
             self.change_cli_state(8)
-            ret  = self._getTabStr('box_cmd_sp_routing_to').format(f"{call}@{userdb_bbs_add}", call)
+            ret  = self._getTabStr_CLI('box_cmd_sp_routing_to').format(f"{call}@{userdb_bbs_add}", call)
             self._out_msg.update(dict(recipient_bbs=userdb_bbs_add))
             return ret
         if bbs_addr and not '.' in bbs_addr:
-            ret = self._getTabStr('box_error_invalid_dist').format(bbs_addr)
+            ret = self._getTabStr_CLI('box_error_invalid_dist').format(bbs_addr)
             self._out_msg = GET_MSG_STRUC()
             return ret
         # Local
         self.change_cli_state(8)
-        ret = self._getTabStr('box_cmd_sp_local').format(call)
+        ret = self._getTabStr_CLI('box_cmd_sp_local').format(call)
         return ret
 
     def _cmd_box_sb(self):
         self._decode_param(defaults=[''])
         if not self._parameter:
-            return self._getTabStr('box_error_no_address')
+            return self._getTabStr_CLI('box_error_no_address')
 
         # if not hasattr(bbs, 'del_pn_in_by_IDs'):
         if not self._bbs:
@@ -1026,9 +1027,9 @@ class BoxCLI(DefaultCLI):
         local_theme = bbs_cfg.get('local_theme', [])
         local_dist  = bbs_cfg.get('local_dist',  [])
         if any((not bbs_addr, bbs_addr in local_dist, call in local_theme)):
-            ret = self._getTabStr('box_cmd_sp_local').format(call)
+            ret = self._getTabStr_CLI('box_cmd_sp_local').format(call)
         else:
-            ret  = self._getTabStr('box_cmd_sp_routing_to').format(bbs_addr, call)
+            ret  = self._getTabStr_CLI('box_cmd_sp_routing_to').format(bbs_addr, call)
         return ret
 
     def _cmd_box_sr(self):
@@ -1039,13 +1040,13 @@ class BoxCLI(DefaultCLI):
         try:
             msg_id = int(self._parameter[0])
         except (ValueError, IndexError):
-            return self._getTabStr('box_parameter_error')
+            return self._getTabStr_CLI('box_parameter_error')
         msg = bbs.get_pn_msg_by_id(msg_id=msg_id, call=self._to_call)
         if msg:
             return self._fnc_box_r(msg)
         msg = bbs.get_bl_msg_by_id(msg_id=msg_id)
         if not msg:
-            return self._getTabStr('box_r_no_msg_found').format(msg_id)
+            return self._getTabStr_CLI('box_r_no_msg_found').format(msg_id)
         ####################
         #
         try:
@@ -1053,7 +1054,7 @@ class BoxCLI(DefaultCLI):
         except IndexError as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {msg}")
             logger.error(self._logTag + f"{e}")
-            return self._getTabStr('box_msg_error')
+            return self._getTabStr_CLI('box_msg_error')
         try:
             MSGID, \
             BID, \
@@ -1074,7 +1075,7 @@ class BoxCLI(DefaultCLI):
         except Exception as e:
             logger.error(self._logTag + f"_fnc_box_r: raw_msg: {msg}")
             logger.error(self._logTag + f"{e}")
-            return self._getTabStr('box_msg_error')
+            return self._getTabStr_CLI('box_msg_error')
         ##############
         self._input   = b''
         self._out_msg = GET_MSG_STRUC()
@@ -1088,7 +1089,7 @@ class BoxCLI(DefaultCLI):
         ))
         self.change_cli_state(8)
         self._send_msg_state = 1
-        ret_msg = self._getTabStr('box_cmd_sr_enter_msg').format(f"{from_call}@{from_bbs}") + self._getTabStr('box_cmd_sp_enter_msg')
+        ret_msg = self._getTabStr_CLI('box_cmd_sr_enter_msg').format(f"{from_call}@{from_bbs}") + self._getTabStr_CLI('box_cmd_sp_enter_msg')
         return ret_msg
 
     def _cmd_box_fwdinfo(self):

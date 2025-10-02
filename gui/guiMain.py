@@ -178,6 +178,7 @@ class PoPT_GUI_Main:
             'PIPE':      get_image(CFG_aprs_icon_path + '/1-26.png', size=(16, 16)),
             'BOX':       get_image(CFG_aprs_icon_path + '/0-34.png', size=(16, 16)),
             'Task: FWD': get_image(CFG_aprs_icon_path + '/0-61.png', size=(16, 16)),
+            'CONV':      get_image(CFG_aprs_icon_path + '/1-54.png', size=(16, 16)),
             # Connection History Tab
             'USER-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/term_conn_out.png',  size=(32, 16)),
             'USER-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/term_conn_in.png',   size=(32, 16)),
@@ -213,6 +214,14 @@ class PoPT_GUI_Main:
             'Task: FWD-CONN-IN':  get_image(CFG_gui_conn_hist_path + '/fwd_conn_in.png',   size=(32, 16)),
             'Task: FWD-DISCO-OUT':get_image(CFG_gui_conn_hist_path + '/fwd_disco_out.png', size=(32, 16)),
             'Task: FWD-DISCO-IN': get_image(CFG_gui_conn_hist_path + '/fwd_disco_in.png',  size=(32, 16)),
+
+            'CONV-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/conv_conn_out.png',    size=(32, 16)),
+            'CONV-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/conv_conn_in.png',     size=(32, 16)),
+            'CONV-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/conv_disco_out.png',   size=(32, 16)),
+            'CONV-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/conv_disco_in.png',    size=(32, 16)),
+            'CONV-CONN-INTER':  get_image(CFG_gui_conn_hist_path + '/conv_conn_inter.png',  size=(32, 16)),
+            'CONV-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
+
         }
         logger.info("GUI: Init APRS-Icon Tabs. Done")
         #####################

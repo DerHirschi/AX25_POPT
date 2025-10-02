@@ -5,6 +5,7 @@
 import time
 from datetime import datetime
 
+from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
 # from ax25.ax25Error import AX25ConnectionERROR
@@ -796,7 +797,7 @@ class AX25Conn:
         # logger.debug(f"conn_cleanup: {self.uid}\n"
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
-
+        self.cli.cli_conn_cleanup()
         if self.tx_buf_ctl:
             #logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
@@ -851,12 +852,11 @@ class AX25Conn:
         if self.zustand_exec.stat_index == 1:
             return True
         return False
-    ########
-    """
-    def change_cli(self):
-        self.cli = CLI_OPT.get('BOX', NoneCLI)(self)
-        self.cli_type = str('BOX')
-    """
+    ###############################################
+    def enter_converse_cli(self):
+        self.cli = ConverseCLI(self)
+        self._port_handler.update_conn_history(self, disco=False, inter_connect=True)
+        #self.cli_type = str(self.cli.cli_name)
 
     ###############################################
     # Timer usw
@@ -1116,11 +1116,11 @@ class AX25Conn:
         if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
             # Process correct I-Frame
             self.vr = count_modulo(int(self.vr))
-            try:
-                self._recv_data(bytes(self.zustand_exec.frame.payload))
-            except Exception as ex:
-                logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
-                logger.error(f"Exception:  {ex}")
+            #try:
+            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            #except Exception as ex:
+            #    logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
+            #    logger.error(f"Exception:  {ex}")
             return True
         else:
             return False

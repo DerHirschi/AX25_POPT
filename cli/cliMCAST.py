@@ -21,10 +21,10 @@ class MCastCLI(DefaultCLI):
         self._command_set.update( {
             # CMD: (needed lookup len(cmd), cmd_fnc, HElp-Str)
             # MCAST ######################################################
-            'CH':       (2, self._cmd_mcast_move_channel, self._getTabStr('cmd_help_mcast_move_ch'),     False),
-            'CHLIST':   (3, self._cmd_mcast_channels, self._getTabStr('cmd_help_mcast_channels'),        False),
-            'CHINFO':   (3, self._cmd_mcast_channel_info, self._getTabStr('cmd_help_mcast_ch_info'),     False),
-            'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr('cmd_help_mcast_set_axip'), False),
+            'CH':       (2, self._cmd_mcast_move_channel, self._getTabStr_CLI('cmd_help_mcast_move_ch'), False),
+            'CHLIST':   (3, self._cmd_mcast_channels, self._getTabStr_CLI('cmd_help_mcast_channels'), False),
+            'CHINFO':   (3, self._cmd_mcast_channel_info, self._getTabStr_CLI('cmd_help_mcast_ch_info'), False),
+            'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr_CLI('cmd_help_mcast_set_axip'), False),
             ##############################################################
         })
         self._commands_cfg = ['QUIT',
