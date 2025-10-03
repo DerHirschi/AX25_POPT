@@ -620,20 +620,7 @@ class MHWin(tk.Toplevel):
             }.get(typ_filter_var, typ_filter_var):
                 continue
 
-            image_typ = str(typ)
-            if 'DIGI' in image_typ:
-                image_typ = 'DIGI'
-            if ent.get('disco', False):
-                image_typ += '-DISCO'
-            else:
-                image_typ += '-CONN'
-            if ent.get('inter_connect', False):
-                image_typ += '-INTER'
-            elif ent.get('conn_incoming', False):
-                image_typ += '-IN'
-            else:
-                image_typ += '-OUT'
-
+            image_typ = str(ent.get('image_typ', ''))
 
             image = self._conn_typ_icon_tab.get(image_typ, None)
             tags = ()  # Optional: tags = ('disco',) if ent.disco else ()
@@ -844,8 +831,8 @@ class MHWin(tk.Toplevel):
 
     def _format_tree_ent(self, mh_list):
         self._tree_data = []
-        mh = self.get_mh()
-
+        mh      = self.get_mh()
+        user_db = self._get_userDB()
         for k in mh_list:
             ent: MyHeard
             ent = mh_list[k]
@@ -859,11 +846,14 @@ class MHWin(tk.Toplevel):
             if hasattr(mh, 'is_dx_alarm_f_call'):
                 dx_alarm = mh.is_dx_alarm_f_call(ent.own_call)
 
+            locator  = user_db.get_locator(ent.own_call)
+            distance = user_db.get_distance(ent.own_call)
+
             self._tree_data.append(((
                                         f'{ent.own_call}',
                                         f'{ent.port_id} {ent.port}',
-                                        f'{ent.locator}',
-                                        f'{ent.distance}',
+                                        f'{locator}',
+                                        f'{distance}',
                                         f'{ent.pac_n}',
                                         f'{ent.rej_n}',
                                         ' '.join(ent.route),

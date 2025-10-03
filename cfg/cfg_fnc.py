@@ -192,6 +192,7 @@ def init_dir_struct():
     if not os.path.exists(CFG_data_path + CFG_usertxt_path):
         logger.warning(f'Directory {CFG_data_path + CFG_usertxt_path} not found ! Creating new Directory.')
         os.makedirs(CFG_data_path + CFG_usertxt_path)
+        first_setup = True
     # File Transfer
     if not os.path.exists(CFG_ft_downloads):
         logger.warning(f'Directory {CFG_ft_downloads} not found ! Creating new Directory.')

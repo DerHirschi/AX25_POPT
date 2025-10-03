@@ -22,8 +22,7 @@ class APRS_ais(object):
         ais_cfg        = POPT_CFG.get_CFG_aprs_ais()
         self.ais_loc   = ais_cfg.get('ais_loc', '')
         if not self.ais_loc:
-            guiCfg  = POPT_CFG.load_guiPARM_main()
-            own_loc = guiCfg.get('gui_cfg_locator', '')
+            own_loc = POPT_CFG.get_guiCFG_locator()
             if own_loc:
                 self.ais_loc = own_loc
         self._ais_active        = ais_cfg.get('ais_active', False)
@@ -112,8 +111,7 @@ class APRS_ais(object):
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self.ais_loc     = ais_cfg.get('ais_loc', '')
         if not self.ais_loc:
-            guiCfg  = POPT_CFG.load_guiPARM_main()
-            own_loc = guiCfg.get('gui_cfg_locator', '')
+            own_loc = POPT_CFG.get_guiCFG_locator()
             if own_loc:
                 self.ais_loc = own_loc
         self._ais_active         = ais_cfg.get('ais_active', False)

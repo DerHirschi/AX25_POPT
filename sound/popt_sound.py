@@ -89,7 +89,7 @@ class POPT_Sound:
                             1: 'en',
                             2: 'nl',
                             3: 'fr',
-                            4: 'fi',
+                            4: 'cz',
                             5: 'pl',
                             6: 'pt',
                             7: 'it',

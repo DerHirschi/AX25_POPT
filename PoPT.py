@@ -11,10 +11,11 @@ else:
     logger.info(f"Version: {VER} (Linux) wird gestartet.")
 
 logger.info(f"DEBUG_LOG: {DEBUG_LOG}")
-first_setup = init_dir_struct()  # Setting up Directory's
+first_setup  = init_dir_struct()  # Setting up Directory's
 if first_setup:
-    from setup_wizard.wguiSetup_app import SetLangAPP
-    SetLangAPP()
+    from setup_wizard.wguiSetup_app import SetupWizardAPP
+    SetupWizardAPP()
+
 #############################################
 logger.info("Starte Port-Handler")
 from ax25.ax25InitPorts import PORT_HANDLER

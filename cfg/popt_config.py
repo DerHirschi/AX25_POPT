@@ -294,7 +294,7 @@ class Main_CFG:
         self._config['gui_main_parm']['gui_lang'] = int(lang_index)
 
     def get_guiCFG_language(self):
-        return int(self._config['gui_main_parm'].get('gui_lang', 0))
+        return int(self._config['gui_main_parm'].get('gui_lang', 1))
 
     def get_guiCFG_text_size(self):
         return int(self._config['gui_main_parm'].get('gui_parm_text_size', DEF_TEXTSIZE))
@@ -303,10 +303,23 @@ class Main_CFG:
         return tuple(self._config['gui_main_parm'].get('gui_cfg_txtWin_pos', (0, 1, 2)))
 
     def get_guiCFG_STYLE_NAME(self):
-        return int(self._config['gui_main_parm'].get('gui_lang', ('black', '#d9d9d9')))
+        return int(self._config['gui_main_parm'].get('gui_parm_style_name', ('black', '#d9d9d9')))
+
+    def set_guiCFG_locator(self, locator: str):
+        if not locator:
+            return False
+        locator = locator.replace(' ', '').replace('\n', '')
+        if len(locator) < 6:
+            return False
+        locator = locator[:6].upper() + locator[6:]
+        self._config['gui_main_parm']['gui_cfg_locator'] = str(locator)
+        return True
 
     def get_guiCFG_locator(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_locator', ''))
+
+    def set_guiCFG_qth(self, qth: str):
+        self._config['gui_main_parm']['gui_cfg_qth'] = str(qth)
 
     def get_guiCFG_qth(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_qth', ''))

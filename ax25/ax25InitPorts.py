@@ -670,69 +670,74 @@ class AX25PortHandler(object):
             # Conn History
             self.update_conn_history(conn, disco=True)
 
-    def update_conn_history(self, conn, disco: bool, inter_connect=False):
+    from datetime import datetime, timedelta
+
+    def update_conn_history(self, conn, disco: bool, inter_connect: bool = False):
+        # Opt by Grok-AI
+        # Extrahiere grundlegende Verbindungsdaten
         ch_id     = conn.ch_index
         port_id   = conn.port_id
         ent_call  = conn.to_call_str
         own_call  = conn.my_call_str
         via_calls = conn.via_calls
         conn_typ  = conn.cli_type
-        if conn_typ == 'BOX':
-            if POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
-                conn_typ = 'Task: FWD'
 
-        if conn.is_link:
-            if hasattr(conn.LINK_Connection, 'to_call_str'):
-                conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}'
-            else:
-                conn_typ = 'DIGI'
-        if conn.pipe:
+        # Bestimme Verbindungstyp
+        if conn_typ == 'BOX' and POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
+            conn_typ = 'Task: FWD'
+        elif conn.is_link:
+            conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}' if hasattr(conn.LINK_Connection,
+                                                                             'to_call_str') else 'DIGI'
+        elif conn.pipe:
             conn_typ = 'PIPE'
+
+        # Bestimme Bildtyp
+        image_typ = 'DIGI' if 'DIGI' in conn_typ else conn_typ
+        image_typ += '-DISCO' if disco else '-CONN'
+        image_typ += '-INTER' if inter_connect else '-IN' if conn.is_incoming_conn() else '-OUT'
+
+        # Hole Benutzerdaten aus der Datenbank
         user_db_ent = self._userDB.get_entry(ent_call, add_new=False)
+        locator = user_db_ent.LOC if user_db_ent else ''
+        distance = user_db_ent.Distance if user_db_ent else -1
 
-
-        if all((hasattr(user_db_ent, ''),
-                    hasattr(user_db_ent, ''),)):
-            locator   = ''
-            distance  = -1
-        else:
-            locator  = user_db_ent.LOC
-            distance = user_db_ent.Distance
+        # Initialisiere Verbindungsmetriken
         conn_incoming = conn.is_incoming_conn()
-        duration  = 0
-        rx_bytes  = 0
-        tx_bytes  = 0
-        rx_pack   = 0
-        tx_pack   = 0
-        if disco:
-            if inter_connect:
-                duration = datetime.now() - conn.cli.time_start
-            else:
-                duration = datetime.now() - conn.time_start
-            rx_bytes = conn.rx_byte_count
-            tx_bytes = conn.tx_byte_count
-            rx_pack  = conn.rx_pack_count
-            tx_pack  = conn.tx_pack_count
+        duration = 0
+        rx_bytes, tx_bytes, rx_pack, tx_pack = 0, 0, 0, 0
 
+        # Berechne Metriken bei Disconnect
+        if disco:
+            start_time = conn.cli.time_start if inter_connect else conn.time_start
+            duration   = datetime.now() - start_time
+            rx_bytes   = conn.rx_byte_count
+            tx_bytes   = conn.tx_byte_count
+            rx_pack    = conn.rx_pack_count
+            tx_pack    = conn.tx_pack_count
+
+        # Erstelle neuen Verbindungshistorie-Eintrag
         his_ent = getNew_ConnHistory_struc(
-            ch_id           = ch_id,
-            port_id         = port_id,
-            from_call       = ent_call,
-            own_call        = own_call,
-            via             = via_calls,
-            locator         = locator,
-            distance        = distance,
-            typ             = conn_typ,
-            conn_incoming   = conn_incoming,
-            time            = datetime.now(),
-            duration        = duration,
-            tx_bytes_n      = tx_bytes,
-            rx_bytes_n      = rx_bytes,
-            tx_pack_n       = tx_pack,
-            rx_pack_n       = rx_pack,
-            disco           = disco,
-            inter_connect   = inter_connect,
+            ch_id=ch_id,
+            port_id=port_id,
+            from_call=ent_call,
+            own_call=own_call,
+            via=via_calls,
+            locator=locator,
+            distance=distance,
+            typ=conn_typ,
+            conn_incoming=conn_incoming,
+            time=datetime.now(),
+            duration=duration,
+            tx_bytes_n=tx_bytes,
+            rx_bytes_n=rx_bytes,
+            tx_pack_n=tx_pack,
+            rx_pack_n=rx_pack,
+            disco=disco,
+            inter_connect=inter_connect,
+            image_typ=image_typ,
         )
+
+        # Füge Eintrag zur Historie hinzu
         mh = self.get_MH()
         if hasattr(mh, 'add_conn_hist'):
             mh.add_conn_hist(his_ent)

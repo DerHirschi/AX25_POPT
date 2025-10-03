@@ -938,20 +938,7 @@ class SideTabbedFrame:
         for ent in new_entries:  # Reversed, um neueste zuerst einzufügen
             ent: dict
             typ = ent.get('typ', '')
-            image_typ = str(typ)
-            if 'DIGI' in image_typ:
-                image_typ = 'DIGI'
-            if ent.get('disco', False):
-                image_typ += '-DISCO'
-            else:
-                image_typ += '-CONN'
-            if ent.get('inter_connect', False):
-                image_typ += '-INTER'
-            elif ent.get('conn_incoming', False):
-                image_typ += '-IN'
-            else:
-                image_typ += '-OUT'
-
+            image_typ = str(ent.get('image_typ', ''))
 
             image = self._conn_typ_icon_tab.get(image_typ, None)
             tags = ()  # Optional: tags = ('disco',) if ent.disco else ()

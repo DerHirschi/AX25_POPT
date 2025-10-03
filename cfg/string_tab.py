@@ -3,7 +3,7 @@
 1: 'en'
 2: 'nl'
 3: 'fr'
-4: 'fi'
+4: 'cz'
 5: 'pl'
 6: 'pt'
 7: 'it'
@@ -19,12 +19,12 @@ STR_TABLE = {
     #  ENG
     #  NL
     #  FR
-    #  FI
+    #  CZ
     #  PL
     #  PT
     #  IT
-    #  ?
-    #  ?
+    #  RU
+    #  UA
     'default_ctext': (
         # GER
         ('\n'
@@ -66,7 +66,7 @@ STR_TABLE = {
          '\n'
          ' # Dernière connexion le : $lastConnDate à : $lastConnTime\n'
          '\n'),
-        # FI
+        # CZ
         ('\n'
          '-= Hallo $destName, =-\n'
          '-= willkommen bei $ownCall ($distance km), =-\n'
@@ -229,8 +229,8 @@ STR_TABLE = {
     'bbs_new_user_reg3': (
         'Heimat-BBS         :',
         'Home-BBS           :',
-        'Thuis BBS          :',
-        'Accueil BBS        :',
+        'Thuis-BBS          :',
+        'Accueil-BBS        :',
         '',
         '',
         '',
@@ -4985,6 +4985,33 @@ STR_TABLE = {
         'Alle instellingen gaan verloren!'),
         ('Voulez-vous vraiment supprimer ce port? \n'
          'Tous les réglages seront perdus! '),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    ######################################
+    # Setup Wizard
+    'invalid_call_titel': (
+        'Ungültiger Call',
+        'Invalid Callsign',
+        'Ongeldige Call',
+        'Call invalide',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_msg': (
+        'Der eingegebene Sysop-Call ist ungültig',
+        'The entered sysop-call is invalid',
+        'De ingevoerde sysop-aanroep is ongeldig',
+        "L'appel sysop-call n'est pas valide",
         '',
         '',
         '',

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.120.51'
+VER = '2.120.52'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -58,7 +58,7 @@ LANG_IND = {
             'EN': 1,
             'NL': 2,
             'FR': 3,
-            # 'FI': 4,
+            # 'CZ': 4,
             # 'PL': 5,
             # 'PT': 6,
             # 'IT': 7,

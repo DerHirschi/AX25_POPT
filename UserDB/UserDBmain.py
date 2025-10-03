@@ -358,13 +358,13 @@ class UserDB:
         ent = self.get_entry(call_str, add_new=False)
         if not ent:
             return 0
-        return ent.Distance
+        return float(ent.Distance)
 
     def get_locator(self, call_str):
         ent = self.get_entry(call_str, add_new=False)
         if not ent:
             return ''
-        return ent.LOC
+        return str(ent.LOC)
 
     def get_location(self, call_str):
         ent = self.get_entry(call_str, add_new=False)

@@ -72,7 +72,7 @@ Neue Implementierungen / Funktionen:
 - APRS-Icons (wenn bekannt) in MH-Liste
 - Simpler "First Setup" Wizard, mit Einstellungen für Sprache und
   GUI-Style. (Wird nach und nach erweitert)
-- Lokaler Converse-Mode (kein Ping-Pong Converse !)
+- Simpler lokaler Converse-Mode (kein Ping-Pong Converse !)
 
 ###########################################################################################################
 ###########################################################################################################

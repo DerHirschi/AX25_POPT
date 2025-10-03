@@ -226,6 +226,7 @@ def getNew_ConnHistory_struc(
         rx_bytes_n: int,
         tx_pack_n: int,
         rx_pack_n: int,
+        image_typ: str,
 ):
     return dict(
         ch_id=int(ch_id),
@@ -245,6 +246,7 @@ def getNew_ConnHistory_struc(
         rx_bytes_n=int(rx_bytes_n),
         tx_pack_n=int(tx_pack_n),
         rx_pack_n=int(rx_pack_n),
+        image_typ=str(image_typ),
     )
 #######################################
 # APRS
