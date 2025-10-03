@@ -31,10 +31,12 @@ class AX25Port(object):
         self._logTag = f"Port {port_id}: "
         #self.port_w_dog = time.time()   # Debuging
         self._port_handler              = port_handler
+        self._loop_watchdog             = time.time()
         self._loop_is_running           = self._port_handler.is_running
         self.ende                       = False
         self.device                     = None
         self.device_is_running          = False
+        ############
         self._tnc_emu_connection        = None
         self._tnc_emu_client_address    = None
         ############
@@ -350,6 +352,13 @@ class AX25Port(object):
             if is_digipeated_pre_digi(ax25_conf=dict(ax25_conf), call=str(call.call_str)):
                 if tmp_cfg.get('managed_digi', False):
                     if uid not in self._digi_connections.keys():
+                        if self._block_incoming_conn:
+                            LOG_BOOK.info(
+                                f"*** DIGI ignored (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                            gui = self._port_handler.get_gui()
+                            if hasattr(gui, 'set_port_block_warning'):
+                                gui.set_port_block_warning()
+                            return True
                         tmp_cfg.update(dict(
                             rx_port=self,
                             digi_call=str(call.call_str),
@@ -386,29 +395,35 @@ class AX25Port(object):
                         self._digi_connections[uid].digi_rx_handle(ax25_frame)
                         return True
 
-                    logger.error(self._logTag + f" DigiConn: not ax25_frame.digi_check_and_encode")
-                    logger.error(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
-                    logger.error(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
-                    logger.error(self._logTag + f" DigiConn: conn {self.connections.keys()}")
-                    logger.error(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
+                    #logger.debug(self._logTag + f" DigiConn: not ax25_frame.digi_check_and_encode")
+                    #logger.debug(self._logTag + f" DigiConn: tmp_cfg {tmp_cfg}")
+                    #logger.debug(self._logTag + f" DigiConn: digi_conn {self._digi_connections.keys()}")
+                    #logger.debug(self._logTag + f" DigiConn: conn {self.connections.keys()}")
+                    #logger.debug(self._logTag + f" DigiConn: ax25_conf {ax25_conf}")
                     return True
 
                 if ax25_conf.get('uid', '') not in self._digi_connections.keys():
                     # logger.debug(self._logTag + f" S-Digi: digi_check_and_encode {ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True)}")
                     if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
+                        if self._block_incoming_conn:
+                            LOG_BOOK.info(
+                                f"*** DIGI ignored (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
+                            gui = self._port_handler.get_gui()
+                            if hasattr(gui, 'set_port_block_warning'):
+                                gui.set_port_block_warning()
+                            return True
                         logger.debug(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
                         logger.debug(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
                         logger.debug(self._logTag + f" S-Digi: conn {self.connections.keys()}")
                         logger.debug(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
                         self.add_frame_to_digiBuff(ax25_frame)
                         return True
-                    logger.error(self._logTag + f" S-Digi: not ax25_frame.digi_check_and_encode")
-                    logger.error(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
-                    logger.error(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
-                    logger.error(self._logTag + f" S-Digi: conn {self.connections.keys()}")
-                    logger.error(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
+                    #logger.debug(self._logTag + f" S-Digi: not ax25_frame.digi_check_and_encode")
+                    #logger.debug(self._logTag + f" S-Digi: tmp_cfg {tmp_cfg}")
+                    #logger.debug(self._logTag + f" S-Digi: digi_conn {self._digi_connections.keys()}")
+                    #logger.debug(self._logTag + f" S-Digi: conn {self.connections.keys()}")
+                    #logger.debug(self._logTag + f" S-Digi: ax25_conf {ax25_conf}")
                     return True
-
             return False
         return False
 
@@ -944,10 +959,13 @@ class AX25Port(object):
                       axip_add=None
                       ):
         if not own_call:
+            print(f"own_call {own_call}")
             return False
         if not add_str:
+            print(f"add_str {add_str}")
             return False
         if not text:
+            print(f"text {text}")
             return False
         tmp = add_str.upper().split(' ')
         dest_call = tmp[0].replace(' ', '')
@@ -1043,6 +1061,7 @@ class AX25Port(object):
 
     def _port_loop(self):
         while self._loop_is_running:
+            self._loop_watchdog = time.time()
             try:
                 buf: RxBuf = self._rx()
                 if buf and buf.raw_data:
@@ -1074,6 +1093,14 @@ class AX25Port(object):
 
     def port_get_port_cfg(self):
         return dict(self._port_cfg)
+
+    ################################
+    # Watchdog
+    def get_watchdog_timer(self):
+        return self._loop_watchdog
+
+    def reset_watchdog_timer(self):
+        self._loop_watchdog = time.time()
 
     ################################
     # Port Ctrl
@@ -1129,7 +1156,8 @@ class KissTCP(AX25Port):
 
     def __del__(self):
         # self.device.shutdown(socket.SHUT_RDWR)
-        self.close_device()
+        #self.close_device()
+        pass
 
     def close_device(self):
         self._loop_is_running = False
@@ -1390,8 +1418,8 @@ class AXIP(AX25Port):
             # self.device.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.device.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 1024)
             self.device.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 1024)
+            # self.device.settimeout(1)
             self.device.setblocking(False)  # Nicht-blockierend
-            # self.device.settimeout(sock_timeout)
             try:
                 self.device.bind(self._port_param)
             except Exception as e:

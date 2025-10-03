@@ -2,7 +2,8 @@ import datetime
 import random
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox, PhotoImage
+from collections import deque
+from tkinter import ttk, messagebox
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
 from ax25.ax25monitor import monitor_frame_inp
@@ -13,9 +14,9 @@ from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.aprs.guiAISmon import AISmonitor
-from gui.aprs.guiAPRS_Settings import APRSSettingsWin
-from gui.aprs.guiAPRS_be_tracer import BeaconTracer
+from gui.aprs.guiAPRS_Settings_Main import APRSSettingsMain
 from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
+#from gui.aprs.guiAPRS_symbol_tab import APRSymbolTab
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
@@ -23,7 +24,7 @@ from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
-from gui.plots.gui_ConnPath_plot import ConnPathsPlot
+#from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
 from gui.bbs_gui.bbs_settings.guiBBS_Settings_Main import BBSSettingsMain
@@ -37,7 +38,7 @@ from gui.plots.guiPlotPort import PlotWindow
 from gui.guiPriv import PrivilegWin
 
 from gui.UserDB.guiUserDBoverview import UserDBtreeview
-from gui.guiMH import MHWin
+from gui.guiMH.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.settings.guiSettingsMain import SettingsMain
 from gui.settings.guiLinkholderSettings import LinkHolderSettings
@@ -51,9 +52,11 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
+    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path
 from fnc.os_fnc import is_linux, get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
+    build_aprs_icon_tab, get_image
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -92,13 +95,12 @@ class PoPT_GUI_Main:
         # GUI Stuff
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._logTag = 'GUI-Main> '
-        logTag = self._logTag + 'Init: '
         logger.info('start..')
         guiCfg = POPT_CFG.load_guiPARM_main()
         ###########################################
         self.main_win   = tk.Tk()
         ###########################################
-        self.style_name = guiCfg.get('gui_parm_style_name', 'default')
+        self.style_name = POPT_CFG.get_guiCFG_style_name()
         logger.info(f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
 
@@ -122,7 +124,7 @@ class PoPT_GUI_Main:
             try:
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning(logTag + f'TclError Style{self.style_name}')
+                logger.warning(f'GUI: TclError Style{self.style_name}')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
@@ -138,10 +140,11 @@ class PoPT_GUI_Main:
             logger.warning(f"Couldn't load favicon.ico: {ex}")
             logger.info("Try to load popt.png.")
             try:
-                self.main_win.iconphoto(False, PhotoImage(file='popt.png'))
+                self.main_win.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
                 logger.warning(f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
+        ######################################
         ######################################
         self._port_handler = port_handler
         ######################################
@@ -151,9 +154,89 @@ class PoPT_GUI_Main:
         ###############################
         self._root_dir  = get_root_dir()
         self._root_dir  = self._root_dir.replace('/', '//')
+        ###############################
+        logger.info("GUI: Init APRS-Icon Tabs")
+        self._aprs_icon_tab_16  = build_aprs_icon_tab((16, 16))
+        self._aprs_icon_tab_24  = build_aprs_icon_tab((24, 24))
+        self._rx_tx_icons       = {
+            'rx':       get_image(CFG_gui_icon_path + '/pfeil_rechts_gruen.png'     ,size=(16, 16)),  # RX
+            'tx':       get_image(CFG_gui_icon_path + '/pfeil_links_rot.png'        ,size=(16, 16)),     # TX
+            'rx-node':  get_image(CFG_gui_icon_path + '/node_rx.png',  size=(32, 16)),
+            'tx-node':  get_image(CFG_gui_icon_path + '/node_tx.png',  size=(32, 16)),
+            'rx-bbs':   get_image(CFG_gui_icon_path + '/bbs_rx.png',   size=(32, 16)),
+            'tx-bbs':   get_image(CFG_gui_icon_path + '/bbs_tx.png',   size=(32, 16)),
+            'rx-term':  get_image(CFG_gui_icon_path + '/term_rx.png',  size=(32, 16)),
+            'tx-term':  get_image(CFG_gui_icon_path + '/term_tx.png',  size=(32, 16)),
+            'rx-dx':    get_image(CFG_gui_icon_path + '/dx_rx.png',    size=(32, 16)),
+            'rx-block': get_image(CFG_gui_icon_path + '/block_rx.png', size=(32, 16)),
+        }
+        self._conn_typ_icons       = {
+            # Connection Tab
+            'USER':      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
+            'NODE':      get_image(CFG_aprs_icon_path + '/0-78.png', size=(16, 16)),
+            'DIGI':      get_image(CFG_aprs_icon_path + '/0-82.png', size=(16, 16)),
+            'PIPE':      get_image(CFG_aprs_icon_path + '/1-26.png', size=(16, 16)),
+            'BOX':       get_image(CFG_aprs_icon_path + '/0-34.png', size=(16, 16)),
+            'Task: FWD': get_image(CFG_aprs_icon_path + '/0-61.png', size=(16, 16)),
+            'CONV':      get_image(CFG_aprs_icon_path + '/1-54.png', size=(16, 16)),
+            # Connection History Tab
+            'USER-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/term_conn_out.png',  size=(32, 16)),
+            'USER-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/term_conn_in.png',   size=(32, 16)),
+            'USER-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/term_disco_out.png', size=(32, 16)),
+            'USER-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/term_disco_in.png',  size=(32, 16)),
+
+            'NODE-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/node_conn_out.png',  size=(32, 16)),
+            'NODE-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/node_conn_in.png',   size=(32, 16)),
+            'NODE-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/node_disco_out.png', size=(32, 16)),
+            'NODE-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/node_disco_in.png',  size=(32, 16)),
+
+            'DIGI-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
+            'DIGI-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
+            'DIGI-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
+            'DIGI-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
+
+            'NO-CLI-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png', size=(32, 16)),
+            'NO-CLI-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png', size=(32, 16)),
+            'NO-CLI-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
+            'NO-CLI-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png', size=(32, 16)),
+
+            'PIPE-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/pipe_conn_out.png',  size=(32, 16)),
+            'PIPE-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/pipe_conn_in.png',   size=(32, 16)),
+            'PIPE-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/pipe_disco_out.png', size=(32, 16)),
+            'PIPE-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/pipe_disco_in.png',  size=(32, 16)),
+
+            'BOX-CONN-OUT':       get_image(CFG_gui_conn_hist_path + '/bbs_conn_out.png',  size=(32, 16)),
+            'BOX-CONN-IN':        get_image(CFG_gui_conn_hist_path + '/bbs_conn_in.png',   size=(32, 16)),
+            'BOX-DISCO-OUT':      get_image(CFG_gui_conn_hist_path + '/bbs_disco_out.png', size=(32, 16)),
+            'BOX-DISCO-IN':       get_image(CFG_gui_conn_hist_path + '/bbs_disco_in.png',  size=(32, 16)),
+
+            'Task: FWD-CONN-OUT': get_image(CFG_gui_conn_hist_path + '/fwd_conn_out.png',  size=(32, 16)),
+            'Task: FWD-CONN-IN':  get_image(CFG_gui_conn_hist_path + '/fwd_conn_in.png',   size=(32, 16)),
+            'Task: FWD-DISCO-OUT':get_image(CFG_gui_conn_hist_path + '/fwd_disco_out.png', size=(32, 16)),
+            'Task: FWD-DISCO-IN': get_image(CFG_gui_conn_hist_path + '/fwd_disco_in.png',  size=(32, 16)),
+
+            'CONV-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/conv_conn_out.png',    size=(32, 16)),
+            'CONV-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/conv_conn_in.png',     size=(32, 16)),
+            'CONV-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/conv_disco_out.png',   size=(32, 16)),
+            'CONV-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/conv_disco_in.png',    size=(32, 16)),
+            'CONV-CONN-INTER':  get_image(CFG_gui_conn_hist_path + '/conv_conn_inter.png',  size=(32, 16)),
+            'CONV-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
+
+        }
+        logger.info("GUI: Init APRS-Icon Tabs. Done")
+        #####################
+        # Global Cache Tab
+        """
+        self._global_cache_tab = dict(
+            tkMapView_cache={},
+        )
+        """
+        #####################
+        # Buffer
+        self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
+        self._mon_pack_buff     = deque([] * 10000, maxlen=10000)
         #####################
         # GUI VARS
-        self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
         # GLb Setting Vars
         self.setting_sound          = tk.BooleanVar(self.main_win)
         self.setting_sprech         = tk.BooleanVar(self.main_win)
@@ -177,9 +260,6 @@ class PoPT_GUI_Main:
         self._status_t3_var         = tk.StringVar(self.main_win)
         self._rx_beep_var           = tk.IntVar(self.main_win)
         self._ts_box_var            = tk.IntVar(self.main_win)
-        # OWN Stat INFO (LOC, QTH)
-        self.own_loc = ''
-        self.own_qth = ''
         # Stat INFO (Name,QTH usw)
         self._stat_info_name_var     = tk.StringVar(self.main_win)
         self._stat_info_qth_var      = tk.StringVar(self.main_win)
@@ -215,29 +295,41 @@ class PoPT_GUI_Main:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
         self.mon_port_var.set('0')
+        # Monitor Tree
+        self._mon_tree_port_filter_var       = tk.StringVar(self.main_win, value='')
+        self._mon_tree_to_call_filter_var    = tk.StringVar(self.main_win, value='')
+        self._mon_tree_fm_call_filter_var    = tk.StringVar(self.main_win, value='')
+        #self._mon_tree_ctl_packet_filter_var = tk.StringVar(self.main_win, value='')
+        #self._mon_tree_pid_packet_filter_var = tk.StringVar(self.main_win, value='')
         ##############
         # Controlling
         self._ch_alarm      = False
         self.channel_index  = 1
         self._mon_mode      = 0
+        self._tracer_alarm  = False
+        ####################
         self._quit          = False
         self._init_state    = 0
-        self._tracer_alarm  = False
-        self._flip05        = True
-        ####################
+        self._thread_gc: list[threading.Thread] = []    # Thread Garbage colletor
+        self._win_gc                            = []
         # GUI PARAM
         self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
-        # Tasker Timings
-        self._loop_delay                        = 60  # ms
+        # Tasker
+        self._loop_delay                        = 50  # ms
         self._parm_non_prio_task_timer          = 0.25  # s
         self._parm_non_non_prio_task_timer      = 1  # s
         self._parm_non_non_non_prio_task_timer  = 5  # s
         self._non_prio_task_timer               = time.time()
         self._non_non_prio_task_timer           = time.time()
         self._non_non_non_prio_task_timer       = time.time()
+        self._tasker_q_timer                    = time.time()
+        self._win_gc_task_timer                 = time.time() + 1
         # Tasker Q
         self._tasker_q                          = []
+        self._tasker_q_prio                     = []
+        #
+        self._flip025                           = True
         # #### Tester
         # self._parm_test_task_timer = 60  # 5        # s
         # self._test_task_timer = time.time()
@@ -262,7 +354,6 @@ class PoPT_GUI_Main:
         self.fwd_Path_plot_win      = None
         self.dualPort_settings_win  = None
         self.dualPortMon_win        = None
-        self.conn_Path_plot_win     = None
         self.block_list_win         = None
         #self.routingTab_win         = None
         ####################################
@@ -273,15 +364,15 @@ class PoPT_GUI_Main:
         self._init_Channel_Vars()
         ######################################
         # ....
-        self._main_pw       = ttk.PanedWindow(self.main_win, orient=tk.HORIZONTAL)
-        self._main_pw.pack(fill=tk.BOTH, expand=True)
+        self._main_pw       = ttk.PanedWindow(self.main_win, orient='horizontal')
+        self._main_pw.pack(fill='both', expand=True)
 
         l_frame             = ttk.Frame(self._main_pw)
         self._r_frame       = ttk.Frame(self._main_pw)
         r_pack_frame        = ttk.Frame(self._r_frame)
-        l_frame.pack(fill=tk.BOTH, expand=True)
-        self._r_frame.pack(fill=tk.BOTH, expand=True)
-        r_pack_frame.pack( fill=tk.BOTH, expand=True)
+        l_frame.pack(      fill='both', expand=True)
+        self._r_frame.pack(fill='both', expand=True)
+        r_pack_frame.pack( fill='both', expand=True)
         """
         if is_linux():
             self._main_pw.add(l_frame, weight=150)
@@ -295,12 +386,12 @@ class PoPT_GUI_Main:
         self._ch_btn_blink_timer    = time.time()
         self._con_btn_dict          = {}
         ch_btn_frame                = ttk.Frame(l_frame)
-        ch_btn_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, )
+        ch_btn_frame.pack(side='bottom', fill='both', )
         self._init_ch_btn_frame(ch_btn_frame)
         ###########################################
         # Input Output TXT Frames and Status Bar
-        self._pw = ttk.PanedWindow(l_frame, orient=tk.VERTICAL, )
-        self._pw.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
+        self._pw = ttk.PanedWindow(l_frame, orient='vertical', )
+        self._pw.pack(side='bottom', expand=1, fill='both')
         # Upper
         self._TXT_upper_frame   = ttk.Frame(self._pw, borderwidth=0, height=20)
         # Mid
@@ -308,19 +399,23 @@ class PoPT_GUI_Main:
         # Lower
         self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
         # Pack it
-        self._TXT_upper_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
-        self._TXT_mid_frame.pack(  side=tk.BOTTOM, expand=1, fill=tk.BOTH)
-        self._TXT_lower_frame.pack(side=tk.BOTTOM, expand=1, fill=tk.BOTH)
-
+        self._TXT_upper_frame.pack(side='bottom', expand=1, fill='both')
+        self._TXT_mid_frame.pack(  side='bottom', expand=1, fill='both')
+        self._TXT_lower_frame.pack(side='bottom', expand=1, fill='both')
+        self._mon_tree_frame = None
+        self._mon_pw         = None
         txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
-        self._winPos_cfgTab = {
-            0: self._init_TXT_frame_up(),
-            1: self._init_TXT_frame_mid(),
-            2: self._init_TXT_frame_low(),
+        winPos_cfgTab = {
+            0: self._init_TXT_frame_up,
+            1: self._init_TXT_frame_mid,
+            2: self._init_TXT_frame_low,
         }
-        self._inp_txt = self._winPos_cfgTab[txtWin_pos_cfg[0]]
-        self._out_txt = self._winPos_cfgTab[txtWin_pos_cfg[1]]
-        self._mon_txt = self._winPos_cfgTab[txtWin_pos_cfg[2]]
+        self._inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
+        self._qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
+        self._mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
+
+        if self._mon_tree_frame is not None:
+            self._init_mon_tree(self._mon_tree_frame)
 
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
@@ -332,13 +427,12 @@ class PoPT_GUI_Main:
         ######################################################################
         # GUI Buttons
         conn_btn_frame = ttk.Frame(r_pack_frame, )
-        conn_btn_frame.pack(expand=False, pady=5, fill=tk.X)
-        # conn_btn_frame.pack(anchor='w', fill=tk.X, expand=True)
+        conn_btn_frame.pack(expand=False, pady=5, fill='x')
         self._init_btn(conn_btn_frame)
         ######################################################################
         # Pane Tabbed Frame
-        self._side_pw = ttk.PanedWindow(r_pack_frame, orient=tk.VERTICAL, )
-        self._side_pw.pack(expand=True, pady=5, fill=tk.BOTH)
+        self._side_pw = ttk.PanedWindow(r_pack_frame, orient='vertical', )
+        self._side_pw.pack(expand=True, pady=5, fill='both')
         #
         tabbedF_upper_frame = ttk.Frame(self._side_pw)
         tabbedF_lower_frame = ttk.Frame(self._side_pw)
@@ -354,7 +448,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
         ############################
         # Canvas Plot
-        logger.info(logTag + 'BW-Plot Init')
+        logger.info('GUI: BW-Plot Init')
         self._bw_plot_x_scale   = []
         self._bw_plot_lines     = {}
         self._init_bw_plot(bw_plot_frame)
@@ -411,7 +505,15 @@ class PoPT_GUI_Main:
         pass
 
     def _destroy_win(self):
-        self.sysMsg_to_monitor(self._getTabStr('mon_end_msg1'))
+        if self._quit:
+            return
+        self._set_port_blocking(1)
+        self._port_handler.disco_all_Conn()
+        self._quit = True
+        SOUND.close_sound()
+        self._thread_gc.append(SOUND.get_sound_thread())
+        self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self._port_handler.disco_all_Conn()
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
@@ -429,7 +531,6 @@ class PoPT_GUI_Main:
             self.fwd_Path_plot_win,
             self.dualPort_settings_win,
             self.dualPortMon_win,
-            self.conn_Path_plot_win,
             self.block_list_win,
             #self.routingTab_win,
         ]:
@@ -437,18 +538,19 @@ class PoPT_GUI_Main:
                 wn.destroy_win()
             if hasattr(wn, 'destroy'):
                 wn.destroy()
+
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
+        self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
         self._save_pw_pos()
         self._save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
+        self._sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._port_handler.close_popt).start()
-        logger.debug('GUI: Closing GUI: Destroying all Sub-Windows')
-        self._quit = True
-        self.main_win.update_idletasks()
-        self._loop_delay = 800
-        logger.info('GUI: Closing GUI: Done')
+        #self.main_win.update_idletasks()
+        #self._loop_delay = 800
+        #logger.info('GUI: Closing GUI: Done')
 
     def save_GUIvars(self):
         #########################
@@ -492,7 +594,7 @@ class PoPT_GUI_Main:
         current_ch_vars = self.get_ch_var(ch_index=self.channel_index)
         current_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         current_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        current_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        current_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
         current_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
@@ -539,8 +641,8 @@ class PoPT_GUI_Main:
         self.mon_dec_dist_var.set(guiCfg.get('gui_cfg_mon_dec_distance', True))
         self.mon_dec_aprs_var.set(guiCfg.get('gui_cfg_mon_dec_aprs', True))
         # OWN Loc and QTH
-        self.own_loc = guiCfg.get('gui_cfg_locator', '')
-        self.own_qth = guiCfg.get('gui_cfg_qth', '')
+        #self.own_loc = guiCfg.get('gui_cfg_locator', '')
+        #self.own_qth = guiCfg.get('gui_cfg_qth', '')
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
@@ -586,12 +688,15 @@ class PoPT_GUI_Main:
             self._pw.sashpos(i, pan_pos)
             i += 1
 
+        if hasattr(self._mon_pw, 'sashpos'):
+            self._mon_pw.sashpos(0, guiCfg.get('gui_parm_mon_pw_pos', 200))  # Default: 200 Pixel
+
     def _save_pw_pos(self):
         if self._mon_mode:
             return
         text_pan_pos_cfg = []
         for pan_id in range(2):
-            text_pan_pos_cfg.append(self._pw.sashpos(pan_id))
+            text_pan_pos_cfg.append(int(self._pw.sashpos(pan_id)))
 
         guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_parm_main_pan_pos'] = int(self._main_pw.sashpos(0))
@@ -599,6 +704,8 @@ class PoPT_GUI_Main:
         guiCfg['gui_parm_text_pan_pos'] = tuple(text_pan_pos_cfg)
         guiCfg['gui_parm_main_height']  = int(self.main_win.winfo_height())
         guiCfg['gui_parm_main_width']   = int(self.main_win.winfo_width())
+        if hasattr(self._mon_pw, 'sashpos'):
+            guiCfg['gui_parm_mon_pw_pos'] = int(self._mon_pw.sashpos(0))
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     ###############################################################
@@ -626,7 +733,7 @@ class PoPT_GUI_Main:
 
         # Embed in Tkinter
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
-        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill=tk.BOTH)
+        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill='both')
         self._canvas.draw()  # Initial draw
 
     def _init_menubar(self):
@@ -675,9 +782,6 @@ class PoPT_GUI_Main:
         # Menü 3 "Tools"
         MenuTools = tk.Menu(menubar, tearoff=False)
         MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
-        MenuTools.add_command(label="MH-Graph",
-                              command=lambda: self.open_window('ConnPathPlot'),
-                              underline=0)
         MenuTools.add_command(label=self._getTabStr('statistic'),
                               command=lambda: self.open_window('PortStat'),
                               underline=1)
@@ -748,8 +852,8 @@ class PoPT_GUI_Main:
         MenuAPRS.add_command(label=self._getTabStr('aprs_mon'),
                              command=lambda: self.open_window('aprs_mon'),
                              underline=0)
-        MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
-                             underline=0)
+        #MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
+        #                     underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=self._getTabStr('wx_window'),
                              command=lambda: self.open_window('wx_win'),
@@ -842,29 +946,47 @@ class PoPT_GUI_Main:
                              lambda: self._open_settings_window('l_holder'))
         inp_txt_men.add_item(label=self._getTabStr('send_file'),
                              command=lambda: self.open_window('ft_send'))
+        inp_txt_men.add_item(label="Priv",
+                             command=lambda: self.do_priv())
+        inp_txt_men.add_separator()
+        inp_txt_men.add_item(label=self._getTabStr('user_db'),
+                             command=lambda: self.open_user_db_win())
         inp_txt_men.add_separator()
         inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
 
 
         # QSO
-        out_txt_men = ContextMenu(self._out_txt)
+        out_txt_men = ContextMenu(self._qso_txt)
+        out_txt_men.add_item(self._getTabStr('send_selected'), self._send_selected)
+        out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
-        out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('linkholder'),
                              lambda: self._open_settings_window('l_holder'))
+        out_txt_men.add_item(label=self._getTabStr('send_file'),
+                             command=lambda: self.open_window('ft_send'))
+        out_txt_men.add_item(label="Priv",
+                             command=lambda: self.do_priv())
+        out_txt_men.add_separator()
+        out_txt_men.add_item(label=self._getTabStr('user_db'),
+                             command=lambda: self.open_user_db_win())
+        out_txt_men.add_separator()
+        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
         # Monitor
         mon_txt_men = ContextMenu(self._mon_txt)
         mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         mon_txt_men.add_item(self._getTabStr('save_mon_to_file'), self._save_monitor_to_file)
         mon_txt_men.add_separator()
         mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
+        # Mon Tab
+        # TODO
+        #mon_tree_men = ContextMenu(self._mon_tree)
+        #mon_tree_men.add_item('Connect', self._monitor_tree_conn_selected)
 
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
-        # btn_upper_frame.pack(anchor='w', fill=tk.X, expand=True)
+        # btn_upper_frame.pack(anchor='w', fill='x', expand=True)
         self._conn_btn = tk.Button(frame,
                                    text="Connect",
                                    bg="green",
@@ -873,7 +995,7 @@ class PoPT_GUI_Main:
                                    relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                    highlightthickness=0,
                                    )
-        self._conn_btn.pack(side=tk.LEFT)
+        self._conn_btn.pack(side='left')
 
         self._mon_btn = tk.Button(frame,
                                   text="Monitor",
@@ -883,12 +1005,12 @@ class PoPT_GUI_Main:
                                   relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                   highlightthickness=0,
                                   )
-        self._mon_btn.pack(side=tk.LEFT, padx=2)
+        self._mon_btn.pack(side='left', padx=2)
 
     def _init_ch_btn_frame(self, root_frame):
         btn_font = ("fixedsys", 8,)
         ch_btn_frame = ttk.Frame(root_frame, )
-        ch_btn_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        ch_btn_frame.pack(side='top', fill='both', expand=True)
 
         for ch_nr in list(range(1,11)):
             ch_text_var = tk.StringVar(self.main_win, value=str(ch_nr))
@@ -900,7 +1022,7 @@ class PoPT_GUI_Main:
                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                highlightthickness=0,
                                )
-            ch_btn.pack( side=tk.LEFT, anchor="center", expand=True, fill=tk.X)
+            ch_btn.pack( side='left', anchor="center", expand=True, fill='x')
             self._con_btn_dict[ch_nr] = ch_btn, ch_text_var
 
         self._con_btn_dict[1][0].configure(command=lambda: self.switch_channel(1))
@@ -914,10 +1036,24 @@ class PoPT_GUI_Main:
         self._con_btn_dict[9][0].configure(command=lambda: self.switch_channel(9))
         self._con_btn_dict[10][0].configure(command=lambda: self.switch_channel(10))
 
-    def _init_TXT_frame_up(self):
+    def _init_TXT_frame_up(self, is_monitor=False):
         # guiCFG          = POPT_CFG.load_guiPARM_main()
         text_frame      = ttk.Frame(self._TXT_upper_frame)
-        inp_txt         = tk.Text(text_frame,
+        if is_monitor:
+            self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
+            self._mon_pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_txt_f.pack(fill='both', expand=True)
+            mon_tab_f.pack(fill='both', expand=True)
+            self._mon_pw.add(mon_txt_f, weight=1)
+            self._mon_pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = text_frame
+
+        inp_txt         = tk.Text(mon_txt_f,
                       #background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
                       #foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
                       font=(FONT, self.text_size),
@@ -932,19 +1068,19 @@ class PoPT_GUI_Main:
         #                         foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
         #                         background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         inp_scrollbar = ttk.Scrollbar(
-            text_frame,
-            orient=tk.VERTICAL,
+            mon_txt_f,
+            orient='vertical',
             command=inp_txt.yview
         )
-        inp_txt.pack(side=tk.LEFT, fill=tk.BOTH,  expand=True)
-        inp_scrollbar.pack(side=tk.LEFT, fill=tk.Y,     expand=False)
+        inp_txt.pack(side='left', fill='both',  expand=True)
+        inp_scrollbar.pack(side='left', fill='y',     expand=False)
         inp_txt.config(yscrollcommand=inp_scrollbar.set)
         # self.in_txt_win.insert(tk.END, "Inp")
         ##############
         # Status Frame
         status_frame = ttk.Frame(self._TXT_upper_frame, height=18)
-        status_frame.pack( side=tk.BOTTOM, fill=tk.X   , expand=False)
-        text_frame.pack(   side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        status_frame.pack( side='bottom', fill='x'   , expand=False)
+        text_frame.pack(   side='bottom', fill='both', expand=True)
 
         name_f      = ttk.Frame(status_frame, width=60)
         stat_f      = ttk.Frame(status_frame, width=40)
@@ -958,17 +1094,17 @@ class PoPT_GUI_Main:
         rx_beep_f   = ttk.Frame(status_frame, width=50)
         #ts_f        = ttk.Frame(status_frame, width=20)
 
-        name_f.pack(side=tk.LEFT, expand=True)
-        stat_f.pack(side=tk.LEFT, expand=False)
-        nack_f.pack(side=tk.LEFT, expand=False)
-        vsvr_f.pack(side=tk.LEFT, expand=True)
-        n2_f.pack(  side=tk.LEFT, expand=True)
-        t1_f.pack(  side=tk.LEFT, expand=True)
-        t2_f.pack(  side=tk.LEFT, expand=True)
-        rtt_f.pack( side=tk.LEFT, expand=True)
-        t3_f.pack(  side=tk.LEFT, expand=True)
-        rx_beep_f.pack(side=tk.LEFT, expand=False)
-        #ts_f.pack(  side=tk.LEFT, expand=False)
+        name_f.pack(side='left', expand=True)
+        stat_f.pack(side='left', expand=False)
+        nack_f.pack(side='left', expand=False)
+        vsvr_f.pack(side='left', expand=True)
+        n2_f.pack(  side='left', expand=True)
+        t1_f.pack(  side='left', expand=True)
+        t2_f.pack(  side='left', expand=True)
+        rtt_f.pack( side='left', expand=True)
+        t3_f.pack(  side='left', expand=True)
+        rx_beep_f.pack(side='left', expand=False)
+        #ts_f.pack(  side='left', expand=False)
 
         fg, bg = self._get_colorMap()
         tk.Label(name_f,
@@ -977,7 +1113,7 @@ class PoPT_GUI_Main:
                 foreground=fg,
                 bg=bg,
                 width=10
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
 
         self._status_status = tk.Label(stat_f,
                                     textvariable=self._status_status_var,
@@ -995,14 +1131,14 @@ class PoPT_GUI_Main:
                                     bg=bg,
                                     #width=8
                                    )
-        self._status_unack.pack(side=tk.LEFT, anchor='w', expand=True)
+        self._status_unack.pack(side='left', anchor='w', expand=True)
 
         tk.Label(vsvr_f,
               textvariable=self._status_vs_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=bg,
               foreground=fg
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
 
         self._status_n2 = tk.Label(n2_f,
                                 textvariable=self._status_n2_var,
@@ -1011,35 +1147,35 @@ class PoPT_GUI_Main:
                                 foreground=fg,
                                 width=5
                                 )
-        self._status_n2.pack(side=tk.LEFT, anchor='w')
+        self._status_n2.pack(side='left', anchor='w')
 
         tk.Label(t1_f,
               textvariable=self._status_t1_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=bg,
               foreground=fg
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
         # PARM T2
         tk.Label(t2_f,
               textvariable=self._status_t2_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=bg,
               foreground=fg
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
         # RTT
         tk.Label(rtt_f,
               textvariable=self._status_rtt_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=bg,
               foreground=fg
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
 
         tk.Label(t3_f,
               textvariable=self._status_t3_var,
               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
               bg=bg,
               foreground=fg
-              ).pack(side=tk.LEFT, anchor='w')
+              ).pack(side='left', anchor='w')
         # Checkbox RX-BEEP
         self._rx_beep_box = tk.Checkbutton(rx_beep_f,
                                         text="RX-BEEP",
@@ -1057,7 +1193,7 @@ class PoPT_GUI_Main:
                                            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                            highlightthickness=0,
                                         )
-        self._rx_beep_box.pack(side=tk.LEFT, anchor='w')
+        self._rx_beep_box.pack(side='left', anchor='w')
         # TODO Checkbox Time Stamp
         """
         self._ts_box_box = ttk.Checkbutton(ts_f,
@@ -1072,16 +1208,31 @@ class PoPT_GUI_Main:
                                        command=self._chk_timestamp,
                                        state='disabled'
                                        )
-        # self._ts_box_box.pack(side=tk.LEFT, anchor='w') # TODO
+        # self._ts_box_box.pack(side='left', anchor='w') # TODO
         """
         return inp_txt
 
-    def _init_TXT_frame_mid(self):
+    def _init_TXT_frame_mid(self, is_monitor=False):
         text_frame = ttk.Frame(self._TXT_mid_frame)
+        if is_monitor:
+            self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
+            self._mon_pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_txt_f.pack(fill='both', expand=True)
+            mon_tab_f.pack(fill='both', expand=True)
+            self._mon_pw.add(mon_txt_f, weight=1)
+            self._mon_pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = text_frame
+
+
         stat_frame = ttk.Frame(self._TXT_mid_frame)
-        stat_frame.pack(side=tk.BOTTOM, fill=tk.X,    expand=False)
-        text_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        out_txt = tk.Text(text_frame,
+        stat_frame.pack(side='bottom', fill='x',    expand=False)
+        text_frame.pack(side='bottom', fill='both', expand=True)
+        out_txt = tk.Text(mon_txt_f,
                               background=DEF_QSO_SYSMSG_BG,
                               foreground=DEF_QSO_SYSMSG_FG,
                               font=(FONT, self.text_size),
@@ -1096,12 +1247,12 @@ class PoPT_GUI_Main:
                                 )
         # out_txt.tag_config("input", foreground="white")
         out_scrollbar = ttk.Scrollbar(
-            text_frame,
-            orient=tk.VERTICAL,
+            mon_txt_f,
+            orient='vertical',
             command=out_txt.yview
         )
-        out_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        out_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
+        out_txt.pack(side='left', fill='both', expand=True)
+        out_scrollbar.pack(side='left', fill='y',    expand=False)
         out_txt.config(yscrollcommand=out_scrollbar.set)
         # Status bar
         name_f = ttk.Frame(stat_frame)
@@ -1113,14 +1264,14 @@ class PoPT_GUI_Main:
         time_f = ttk.Frame(stat_frame)
         enc_f  = ttk.Frame(stat_frame)
 
-        name_f.pack(side=tk.LEFT, expand=True,  anchor="center")
-        qth_f.pack( side=tk.LEFT, expand=True,  anchor="center")
-        loc_f.pack( side=tk.LEFT, expand=True,  anchor="center", padx=5)
-        typ_f.pack( side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
-        sw_f.pack(  side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
-        stat_f.pack(side=tk.LEFT, expand=False, anchor="center")
-        time_f.pack(side=tk.LEFT, expand=False, anchor="center", padx=7)
-        enc_f.pack( side=tk.LEFT, expand=True,  anchor="center", fill=tk.X)
+        name_f.pack(side='left', expand=True,  anchor="center")
+        qth_f.pack( side='left', expand=True,  anchor="center")
+        loc_f.pack( side='left', expand=True,  anchor="center", padx=5)
+        typ_f.pack( side='left', expand=True,  anchor="center", fill='x')
+        sw_f.pack(  side='left', expand=True,  anchor="center", fill='x')
+        stat_f.pack(side='left', expand=False, anchor="center")
+        time_f.pack(side='left', expand=False, anchor="center", padx=7)
+        enc_f.pack( side='left', expand=True,  anchor="center", fill='x')
 
         fg, bg = self._get_colorMap()
 
@@ -1178,7 +1329,7 @@ class PoPT_GUI_Main:
             relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
             highlightthickness=0,
         )
-        stat_typ.pack(fill=tk.X, expand=True, padx=6)
+        stat_typ.pack(fill='x', expand=True, padx=6)
 
         tk.Label(sw_f,
                  textvariable=self._stat_info_sw_var,
@@ -1191,7 +1342,7 @@ class PoPT_GUI_Main:
                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
                  relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                  highlightthickness=0,
-                 ).pack(fill=tk.X, expand=True, padx=6)
+                 ).pack(fill='x', expand=True, padx=6)
 
         self.status_label = tk.Label(stat_f,
                                      textvariable=self._stat_info_status_var,
@@ -1217,7 +1368,7 @@ class PoPT_GUI_Main:
                   # bg="steel blue",
                   # fg="red3",
                   font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
-                  ).pack(fill=tk.X, expand=True)
+                  ).pack(fill='x', expand=True)
         opt = ENCODINGS
         txt_encoding_ent = tk.OptionMenu(
             enc_f,
@@ -1235,14 +1386,28 @@ class PoPT_GUI_Main:
             relief = "flat",  # Flache Optik für ttk-ähnliches Aussehen
             highlightthickness = 0,
         )
-        txt_encoding_ent.pack(fill=tk.X, expand=True)
+        txt_encoding_ent.pack(fill='x', expand=True)
 
         return out_txt
 
-    def _init_TXT_frame_low(self):
+    def _init_TXT_frame_low(self, is_monitor=False):
         mon_frame = ttk.Frame(self._TXT_lower_frame)
-        mon_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-        mon_txt = tk.Text(mon_frame,
+        mon_frame.pack(side='bottom', fill='both', expand=True)
+        if is_monitor:
+            self._mon_pw = ttk.Panedwindow(mon_frame, orient='vertical')
+            self._mon_pw.pack(fill='both', expand=True)
+
+            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_txt_f. pack(fill='both', expand=True)
+            mon_tab_f. pack(fill='both', expand=True)
+            self._mon_pw.add(mon_txt_f, weight=1)
+            self._mon_pw.add(mon_tab_f, weight=0)
+            self._mon_tree_frame = mon_tab_f
+        else:
+            mon_txt_f = mon_frame
+
+        mon_txt = tk.Text(mon_txt_f,
                               background=MON_SYS_MSG_CLR_BG,
                               foreground=MON_SYS_MSG_CLR_BG,
                               font=(FONT, self.text_size),
@@ -1255,22 +1420,130 @@ class PoPT_GUI_Main:
                               highlightthickness=0,
                               )
         mon_scrollbar = ttk.Scrollbar(
-            mon_frame,
-            orient=tk.VERTICAL,
+            mon_txt_f,
+            orient='vertical',
             command=mon_txt.yview
         )
-        mon_txt.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        mon_scrollbar.pack(side=tk.LEFT, fill=tk.Y,    expand=False)
+        mon_txt.pack(side='left', fill='both', expand=True)
+        mon_scrollbar.pack(side='left', fill='y',    expand=False)
         mon_txt.config(yscrollcommand=mon_scrollbar.set)
+        ################
+        #self._init_mon_tree(mon_tab_f)
         return mon_txt
 
+    def _init_mon_tree(self, frame: ttk.Frame):
+        columns = (
+            'time',
+            'port',
+            'from',
+            'to',
+            'via',
+            'typ',
+            'pid',
+            'nr_ns',
+            'cmd_poll',
+            'size',
+            'data',
+        )
+        mon_tree_pw = ttk.Panedwindow(frame, orient='horizontal')
+        mon_tree_pw.pack(fill='both', expand=True)
+        #
+        mon_f_main = ttk.Frame(mon_tree_pw)
+        mon_f_1 = ttk.Frame(mon_f_main)
+        mon_f_2 = ttk.Frame(mon_f_main)
+        mon_f_1.pack(fill='both', expand=True)
+        mon_f_2.pack(fill='x', expand=False)
+        #
+        mon_filter_f = ttk.Frame(mon_tree_pw)
+        mon_filter_f.pack(fill='x', expand=False)
+        #
+        mon_tree_pw.add(mon_f_main,    weight=0)
+        mon_tree_pw.add(mon_filter_f,  weight=1)
+
+        ###################################################
+        self._mon_tree = ttk.Treeview(mon_f_1, columns=columns, show='tree headings', height=2)
+        self._mon_tree.pack(side='left', fill='both', expand=True)
+
+        self._mon_tree.heading('#0', text="RX/TX")
+        self._mon_tree.heading('time', text=self._getTabStr('time'))
+        self._mon_tree.heading('port', text='Port')
+        self._mon_tree.heading('from', text=self._getTabStr('from'))
+        self._mon_tree.heading('to', text=self._getTabStr('to'))
+        self._mon_tree.heading('via', text='Via')
+        self._mon_tree.heading('typ', text='CTL')
+        self._mon_tree.heading('pid', text='PID')
+        self._mon_tree.heading('nr_ns', text='NS/NR')
+        self._mon_tree.heading('cmd_poll', text='CMD/POLL')
+        self._mon_tree.heading('size', text='Bytes')
+        self._mon_tree.heading('data', text='Data')
+
+        self._mon_tree.column("#0",       anchor='w', stretch=False, width=50)
+        self._mon_tree.column("time",     anchor='w', stretch=False, width=70)
+        self._mon_tree.column("port",     anchor='center', stretch=False, width=30)
+        self._mon_tree.column("from",     anchor='w', stretch=False, width=85)
+        self._mon_tree.column("to",       anchor='w', stretch=False, width=85)
+        self._mon_tree.column("via",      anchor='w', stretch=False, width=120)
+        self._mon_tree.column("typ",      anchor='center', stretch=False, width=50)
+        self._mon_tree.column("pid",      anchor='center', stretch=False, width=100)
+        self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=45)
+        self._mon_tree.column("cmd_poll", anchor='center', stretch=False, width=50)
+        self._mon_tree.column("size",     anchor='center', stretch=False, width=45)
+        self._mon_tree.column("data",     anchor='w', stretch=False,  width=700)
+
+        #for el in list(range(100)):
+        #    mon_tree.insert('', 'end', values=(el,))
+        # Vertikale Scrollbar
+        scrollbar_y = ttk.Scrollbar(mon_f_1, orient='vertical', command=self._mon_tree.yview)
+        self._mon_tree.configure(yscrollcommand=scrollbar_y.set)
+        scrollbar_y.pack(side='left', fill='y')
+
+        # Horizontale Scrollbar
+        scrollbar_x = ttk.Scrollbar(mon_f_2, orient='horizontal', command=self._mon_tree.xview)
+        self._mon_tree.configure(xscrollcommand=scrollbar_x.set)
+        scrollbar_x.pack(fill='x')
+        ###################################################
+        ttk.Label(mon_filter_f, text="Filter").pack()
+        port_f     = ttk.Frame(mon_filter_f)
+        fm_call_f  = ttk.Frame(mon_filter_f)
+        to_call_f  = ttk.Frame(mon_filter_f)
+        btn_pack_f = ttk.Frame(mon_filter_f)
+        port_f.pack(    fill='x', expand=False, pady=5)
+        fm_call_f.pack( fill='x', expand=False, pady=5)
+        to_call_f.pack( fill='x', expand=False, pady=5)
+        btn_pack_f.pack(fill='x', expand=False, pady=5)
+        # Port
+        ttk.Label(port_f, text='Port').pack(side='left', anchor='w', padx=5)
+        opt = ['', ''] + [str(x) for x in list(POPT_CFG.get_port_CFGs().keys())]
+        ttk.OptionMenu(port_f,
+                       self._mon_tree_port_filter_var,
+                       *opt,
+                       command=lambda e: self._monitor_tree_on_filter_chg()).pack(side='left', anchor='w')
+        # FM Call
+        ttk.Label(fm_call_f, text='From Call').pack(side='left', anchor='w', padx=5)
+        ttk.Entry(fm_call_f,
+                  textvariable=self._mon_tree_fm_call_filter_var,
+                  width=30).pack(side='left', anchor='w', expand=True)
+        # TO Call
+        ttk.Label(to_call_f, text='To Call      ').pack(side='left', anchor='w', padx=5)
+        ttk.Entry(to_call_f,
+                  textvariable=self._mon_tree_to_call_filter_var,
+                  width=30).pack(side='left', anchor='w', expand=True)
+        # BTN
+        ttk.Button(btn_pack_f,
+                   text='Update',
+                   command=lambda: self._monitor_tree_on_filter_chg()
+                   ).pack(side='left', anchor='w', padx=10)
+        ttk.Button(btn_pack_f,
+                   text='Reset',
+                   command=lambda: self._monitor_tree_on_filter_reset()
+                   ).pack(side='right', anchor='e', padx=10)
     #######################################
     # Text Tags
     def set_text_tags(self):
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
         if all_stat_cfg:
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
         guiCFG = POPT_CFG.load_guiPARM_main()
 
         for call in list(all_stat_cfg.keys()):
@@ -1284,38 +1557,38 @@ class PoPT_GUI_Main:
             rx_tag = 'RX-' + str(call)
             self._all_tag_calls.append(str(call))
 
-            self._out_txt.tag_config(tx_tag,
+            self._qso_txt.tag_config(tx_tag,
                                      foreground=tx_fg,
                                      background=tx_bg,
                                      selectbackground=tx_fg,
                                      selectforeground=tx_bg,
                                      )
-            self._out_txt.tag_config(rx_tag,
+            self._qso_txt.tag_config(rx_tag,
                                      foreground=rx_fg,
                                      background=tx_bg,
                                      selectbackground=rx_fg,
                                      selectforeground=tx_bg,
                                      )
-            self._out_txt.tag_config('SYS-MSG',
+            self._qso_txt.tag_config('SYS-MSG',
                                      foreground=DEF_QSO_SYSMSG_FG,
                                      background=DEF_QSO_SYSMSG_BG,
                                      selectbackground=DEF_QSO_SYSMSG_FG,
                                      selectforeground=DEF_QSO_SYSMSG_BG,
                                      )
-            self._out_txt.tag_config('TX-NOCALL',
+            self._qso_txt.tag_config('TX-NOCALL',
                                      foreground='#ffffff',
                                      background='#000000',
                                      selectbackground='#ffffff',
                                      selectforeground='#000000',
                                      )
-            self._out_txt.tag_config('RX-NOCALL',
+            self._qso_txt.tag_config('RX-NOCALL',
                                      foreground='#000000',
                                      background='#ffffff',
                                      selectbackground='#000000',
                                      selectforeground='#ffffff',
                                      )
 
-        self._out_txt.configure(state="disabled")
+        self._qso_txt.configure(state="disabled")
         self._mon_txt.configure(state="normal")
         # Monitor Tags
         all_port = self._port_handler.ax25_ports
@@ -1346,9 +1619,8 @@ class PoPT_GUI_Main:
                                  foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                  background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self._inp_txt.tag_raise(tk.SEL)
-        self._out_txt.tag_raise(tk.SEL)
+        self._qso_txt.tag_raise(tk.SEL)
         self._mon_txt.tag_raise(tk.SEL)
-
 
     #######################################
     # KEYBIND Stuff
@@ -1441,7 +1713,7 @@ class PoPT_GUI_Main:
         else:
             text = text.decode(ch_enc, 'ignore')
         conn = self.get_conn()
-        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_manGUI(), connection=conn)
+        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
         text = zeilenumbruch_lines(text)
         self._inp_txt.insert(tk.INSERT, text)
         self.see_end_inp_win()
@@ -1460,7 +1732,7 @@ class PoPT_GUI_Main:
         else:
             text = text.decode(ch_enc, 'ignore')
         conn = self.get_conn()
-        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_manGUI(), connection=conn)
+        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
         text = zeilenumbruch_lines(text)
         self._inp_txt.insert(tk.INSERT, text)
         self.see_end_inp_win()
@@ -1475,23 +1747,23 @@ class PoPT_GUI_Main:
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
-            self.sysMsg_to_monitor(el)
-        self.sysMsg_to_monitor('Python Other Packet Terminal ' + VER)
+            self._sysMsg_to_monitor_task(el)
+        self._sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
-            self.sysMsg_to_monitor(self._getTabStr('mon_start_msg1').format(stat))
+            self._sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
         all_ports = self._port_handler.ax25_ports
         for port_k in all_ports.keys():
             msg = self._getTabStr('mon_start_msg2')
             if all_ports[port_k].device_is_running:
                 msg = self._getTabStr('mon_start_msg3')
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
-            self.sysMsg_to_monitor('Info: Port {}: {} - {} {}'
+            self._sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortName', ''),
                                            port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
-            self.sysMsg_to_monitor('Info: Port {}: Parameter: {} | {}'
+            self._sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortParm', ('', 0))[0],
                                            port_cfg.get('parm_PortParm', ('', 0))[1],
@@ -1506,23 +1778,23 @@ class PoPT_GUI_Main:
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
         self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._out_txt.configure(font=(FONT, self.text_size), )
+        self._qso_txt.configure(font=(FONT, self.text_size), )
         self._mon_txt.configure(font=(FONT, self.text_size), )
 
     def _decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
         self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._out_txt.configure(font=(FONT, self.text_size), )
+        self._qso_txt.configure(font=(FONT, self.text_size), )
         self._mon_txt.configure(font=(FONT, self.text_size), )
 
     ##########################
     # Clipboard Stuff
     def _copy_select(self):
-        if self._out_txt.tag_ranges("sel"):
+        if self._qso_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._out_txt.selection_get())
-            self._out_txt.tag_remove(tk.SEL, "1.0", tk.END)
+            self.main_win.clipboard_append(self._qso_txt.selection_get())
+            self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
         elif self._inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
             self.main_win.clipboard_append(self._inp_txt.selection_get())
@@ -1556,6 +1828,24 @@ class PoPT_GUI_Main:
         self._inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
         self._inp_txt.see(tk.INSERT)  #
 
+    def _send_selected(self):
+        if not self.channel_index:
+            return
+        if not self._qso_txt.tag_ranges("sel"):
+            return
+        selected_text = self._qso_txt.selection_get()
+        selected_text += '\n'
+        #self._inp_txt.tag_remove('send', '0.0', 'end')
+        self._inp_txt.insert('insert', '\n')
+        #ind = self._inp_txt.index(tk.INSERT)
+        ch_vars = self.get_ch_var(ch_index=self.channel_index)
+        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
+        self._inp_txt.insert('insert', selected_text)
+        #self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
+        self._snd_text()
+        self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        self._inp_txt.tag_remove('send', "0.0", str(self._inp_txt.index('end')))
+        self._inp_txt.tag_add('send', "0.0", str(self._inp_txt.index('end')))
 
     ##########################
     # Pre-write Text Stuff
@@ -1574,7 +1864,7 @@ class PoPT_GUI_Main:
         return
 
     def _save_to_file(self):
-        data = self._out_txt.get('1.0', tk.END)
+        data = self._qso_txt.get('1.0', tk.END)
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data, self.main_win)
 
@@ -1631,9 +1921,9 @@ class PoPT_GUI_Main:
         chVars.input_win_cursor_index   = tk.INSERT
 
     def _clear_qsoWin(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         # del self._channel_vars[self.channel_index]
 
         chVars = self._channel_vars[self.channel_index]
@@ -1642,9 +1932,9 @@ class PoPT_GUI_Main:
         chVars.t2speech_buf     = ''
 
     def clear_channel_vars(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
 
@@ -1652,9 +1942,9 @@ class PoPT_GUI_Main:
         self._update_qso_Vars()
 
     def _clear_all_Channel_vars(self):
-        self._out_txt.configure(state='normal')
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.configure(state='disabled')
+        self._qso_txt.configure(state='normal')
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
         for ch_id in self._channel_vars.keys():
@@ -1731,36 +2021,66 @@ class PoPT_GUI_Main:
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
+        q_tasker = self._tasker_queue()
+        self._win_gc_tasker()
         if self._quit:
-            self._tasker_quit()
+            if self._tasker_quit():
+                return
+            # self.main_win.update_idletasks()
         else:
-            prio     = self._tasker_prio()
-            q_tasker = self._tasker_queue()
-            if not self._tasker_05_sec():
-                if not self._tasker_1_sec():
-                    if all((not self._tasker_5_sec(),
-                            not prio,
-                            not q_tasker)):
-                        self.main_win.update_idletasks()
-            # self._tasker_tester()
+            prio            = self._tasker_prio()
+            update_needed   = self._tasker_025_sec()
+            if not update_needed:
+                update_needed = self._tasker_1_sec()
+            if not update_needed:
+                update_needed = self._tasker_5_sec()
+            if not update_needed:
+                update_needed = bool(any((prio, q_tasker)))
+            if update_needed:
+                self.main_win.update_idletasks()
         self.main_win.after(self._loop_delay, self._tasker)
 
     def _tasker_quit(self):
-        if self._port_handler.check_all_ports_closed():
-            self._port_handler.close_gui()
-            logger.info('GUI: Closing GUI: _tasker_quit Done.')
+        if not self._port_handler.get_ph_end():
+            return False
+        if self._tasker_q:
+            logger.info('GUI: Still jobs in _tasker_q')
+            return False
+        n = 0
+        for gc_thread in self._thread_gc:
+            if hasattr(gc_thread, 'is_alive'):
+                if gc_thread.is_alive():
+                    n += 1
+        if n:
+            logger.info(f'GUI: Waiting for {n} Threads ! Please Wait ...')
+            return False
+        self.main_win.quit()
+        try:
+            self.main_win.destroy()
+            logger.info('GUI: Closing GUI: Done')
+        except Exception as ex:
+            logger.warning(ex)
+        return True
 
     def _tasker_queue(self):
-        if not self._tasker_q:
+        if not self._tasker_q and not self._tasker_q_prio:
             return False
-        n = 10
-        if len(self._tasker_q) > 10:
-            logger.warning(self._logTag + f"len(self._tasker_q) > 10: {len(self._tasker_q)}")
-            logger.warning(self._logTag + f"self._tasker_q: {self._tasker_q}")
-        while self._tasker_q and n:
-            task, arg       = self._tasker_q[0]
-            self._tasker_q  = self._tasker_q[1:]
-            if task == 'conn_btn_update':
+        n = 25
+        while any((self._tasker_q_prio, self._tasker_q)) and n:
+            if self._tasker_q_prio:
+                task, arg = self._tasker_q_prio[0]
+                self._tasker_q_prio = self._tasker_q_prio[1:]
+            elif self._tasker_q:
+                task, arg       = self._tasker_q[0]
+                self._tasker_q  = self._tasker_q[1:]
+            else:
+                break
+            if task == 'sysMsg_to_monitor':
+                self._sysMsg_to_monitor_task(arg)
+            elif self._quit:
+                n -= 1
+                continue
+            elif task == 'conn_btn_update':
                 self._conn_btn_update_task()
             elif task == 'ch_status_update':
                 self._ch_status_update_task()
@@ -1774,7 +2094,7 @@ class PoPT_GUI_Main:
                 self._resetHome_LivePath_plot_task(ch_id)
             elif task == 'sysMsg_to_qso':
                 data, ch_index = arg
-                self._sysMsg_to_qso_task(data, ch_index)
+                self.sysMsg_to_qso_task(data, ch_index)
             elif task == 'dx_alarm':
                 self._dx_alarm_task()
             elif task == 'tracer_alarm':
@@ -1814,38 +2134,53 @@ class PoPT_GUI_Main:
                 self._set_aprsMail_alarm_task()
             elif task == 'reset_aprsMail_alarm':
                 self._reset_aprsMail_alarm_task()
-
+            elif task == 'update_aprs_spooler':
+                self._update_aprs_spooler_task()
+            elif task == 'update_aprs_msg_win':
+                self._update_aprs_msg_win_task(arg)
+            #elif task == 'update_tracer_win':
+            #    self._update_tracer_win_task()
+            elif task == '_monitor_tree_update':
+                # No Prio
+                self._monitor_tree_update_task(arg)
             n -= 1
+
         return True
 
     def _tasker_prio(self):
-        """ Prio Tasks every Irritation flip flop """
-        """
-        if self._prio_task_flip:
-            
-        else:
-           
-        self._prio_task_flip = not self._prio_task_flip
-        """
-        if hasattr(self._port_handler, 'tasker_gui_th'):
-            self._port_handler.tasker_gui_th()
-        return self._monitor_task()
+        """ Prio Tasks every Irritation """
 
-    def _tasker_05_sec(self):
-        """ 0.5 Sec """
+        tasker_ret = False
+        if hasattr(self._port_handler, 'tasker_gui_th'):
+            tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
+        if hasattr(self.userDB_tree_win, 'tasker'):
+            tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
+        if hasattr(self.userdb_win, 'tasker'):
+            tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
+        return any((
+            self._monitor_task(),
+            self._ais_monitor_task(),
+            self._mh_win_task(),
+            tasker_ret
+        ))
+
+
+    def _tasker_025_sec(self):
+        """ 0.25 Sec """
         if time.time() > self._non_prio_task_timer:
+            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
             # self._aprs_task()
             # self._monitor_task()
-            self._dualPort_monitor_task()
-            self._update_qso_win()
-            self._SideFrame_tasker()
-            self._update_status_win()
-            self._AlarmIcon_tasker05()
+            ret = self._dualPort_monitor_task()
+            ret = any((self._update_qso_win(),    ret))
+            ret = any((self._SideFrame_tasker(),  ret))
+            ret = any((self._update_status_bar(), ret))
+            if self._flip025:
+                ret = any((self._AlarmIcon_tasker05(), ret))
             #####################
-            self._flip05 = not self._flip05
-            self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
-            return True
+            self._flip025 = not self._flip025
+            return ret
         return False
 
     def _tasker_1_sec(self):
@@ -1901,22 +2236,79 @@ class PoPT_GUI_Main:
 
     # END TASKER
     ######################################################################
-    def _add_tasker_q(self, fnc: str, arg):
-        if fnc in self._tasker_q:
+    def _add_tasker_q(self, fnc: str, arg, prio=True):
+        if prio:
+            if (fnc, None) in self._tasker_q_prio:
+                return
+            self._tasker_q_prio.append(
+                (fnc, arg)
+            )
+        else:
+            if (fnc, None) in self._tasker_q:
+                return
+            self._tasker_q.append(
+                (fnc, arg)
+            )
+
+    def add_thread_gc(self, thread: threading.Thread):
+        self._thread_gc.append(thread)
+
+    def add_win_gc(self, trash_win):
+        self._win_gc.append(trash_win)
+
+    def _win_gc_tasker(self):
+        if time.time() < self._win_gc_task_timer:
             return
-        self._tasker_q.append(
-            (fnc, arg)
-        )
+        self._win_gc_task_timer = time.time() + 1
+        for trash_win in list(self._win_gc):
+            if hasattr(trash_win, 'is_destroyed'):
+                if trash_win.is_destroyed:
+                    if hasattr(trash_win, 'all_dead'):
+                        if trash_win.all_dead():
+                            self._win_gc.remove(trash_win)
+                            del trash_win
+                            continue
+            if hasattr(trash_win, 'tasker'):
+                trash_win.tasker()
+
 
     ######################################################################
-    def _aprs_wx_tree_task(self):
-        if self._port_handler.get_aprs_ais() is not None:
-            self._port_handler.get_aprs_ais().aprs_wx_tree_task()
+    def update_aprs_spooler(self):
+        self._add_tasker_q("update_aprs_spooler", None)
 
-    def _AlarmIcon_tasker05(self):
-        if not self._Alarm_Frame:
+    def _update_aprs_spooler_task(self):
+        if hasattr(self.aprs_pn_msg_win, 'update_spooler_tree'):
+            self.aprs_pn_msg_win.update_spooler_tree()
+
+    def update_aprs_msg_win(self, aprs_pack):
+        self._add_tasker_q("update_aprs_msg_win", aprs_pack)
+
+    def _update_aprs_msg_win_task(self, aprs_pack):
+        if hasattr(self.aprs_pn_msg_win, 'update_aprs_msg'):
+            self.aprs_pn_msg_win.update_aprs_msg(aprs_pack)
+
+    def _aprs_wx_tree_task(self):
+        ais = self._port_handler.get_aprs_ais()
+        if not hasattr(ais, "get_update_tr"):
             return
+        if not hasattr(self.wx_window, 'update_tree_data'):
+            return
+        update_tr = ais.get_update_tr()
+        if update_tr:
+            self._wx_update_tr = False
+            self.wx_window.update_tree_data()
+
+    def _ais_monitor_task(self):
+        if hasattr(self.aprs_mon_win, 'tasker'):
+           return self.aprs_mon_win.tasker()
+        return False
+
+    #######################################################################
+    def _AlarmIcon_tasker05(self):
+        if not hasattr(self._Alarm_Frame, 'AlarmIcon_tasker05'):
+            return False
         self._Alarm_Frame.AlarmIcon_tasker05()
+        return True
 
     def _AlarmIcon_tasker1(self):
         if not self._Alarm_Frame:
@@ -1925,12 +2317,16 @@ class PoPT_GUI_Main:
         self._check_port_blocking_task()
 
     def _SideFrame_tasker(self):
-        if self._flip05:
-            self.tabbed_sideFrame.tasker()
-            self.tabbed_sideFrame.on_ch_stat_change()
-        else:
-            self.tabbed_sideFrame2.tasker()
+        if self._flip025:
+            return any((
+                self.tabbed_sideFrame.tasker(),
+                self.tabbed_sideFrame.on_ch_stat_change()
+            ))
+
+        return any((
+            self.tabbed_sideFrame2.tasker(),
             self.tabbed_sideFrame2.on_ch_stat_change()
+        ))
 
     def _check_port_blocking_task(self):
         if hasattr(self._port_handler, 'get_glb_port_blocking'):
@@ -1952,13 +2348,15 @@ class PoPT_GUI_Main:
                     tr = True
         if tr:
             self.ch_status_update()
+            return True
+        return False
 
     def _update_qso(self, conn):
         if not conn:
             return False
         if conn.ft_obj:
             # self.ch_status_update()
-            return False
+            return True
         if conn.rx_tx_buf_guiData:
             self._update_qso_spooler(conn)
             # self.ch_status_update()
@@ -1969,8 +2367,11 @@ class PoPT_GUI_Main:
         gui_buf = list(conn.rx_tx_buf_guiData)
         conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
         for qso_data in gui_buf:
-            if qso_data[0] == 'TX':
-                self._update_qso_tx(conn, qso_data[1])
+            if qso_data[0] == 'SYS':
+                ch_id = conn.ch_index
+                self.sysMsg_to_qso_task(qso_data[1], ch_id)
+                #self._update_qso_tx(conn, qso_data[1])
+
             else:
                 self._update_qso_rx(conn, qso_data[1])
 
@@ -1995,17 +2396,17 @@ class PoPT_GUI_Main:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
-            self._out_txt.configure(state="normal")
-            ind = self._out_txt.index('end-1c')
-            self._out_txt.insert('end', inp)
-            ind2 = self._out_txt.index('end-1c')
+            self._qso_txt.configure(state="normal")
+            ind = self._qso_txt.index('end-1c')
+            self._qso_txt.insert('end', inp)
+            ind2 = self._qso_txt.index('end-1c')
             if tag_name_tx:
-                self._out_txt.tag_add(tag_name_tx, ind, ind2)
-            self._out_txt.configure(state="disabled",
+                self._qso_txt.tag_add(tag_name_tx, ind, ind2)
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             # TODO Autoscroll
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             if tag_name_tx:
@@ -2034,8 +2435,6 @@ class PoPT_GUI_Main:
             Ch_var.last_tag_name = my_call
         else:
             logger.error('Conn: _update_qso_rx: no Tagname')
-            print('Conn: _update_qso_rx: no Tagname')
-            print(f"Conn: last Tag: {Ch_var.last_tag_name}")
             logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
             tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
@@ -2043,19 +2442,19 @@ class PoPT_GUI_Main:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
 
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
             # configuring a tag called start
-            ind = self._out_txt.index('end-1c')
-            self._out_txt.insert('end', out)
-            ind2 = self._out_txt.index('end-1c')
+            ind = self._qso_txt.index('end-1c')
+            self._qso_txt.insert('end', out)
+            ind2 = self._qso_txt.index('end-1c')
             if tag_name_rx:
-                self._out_txt.tag_add(tag_name_rx, ind, ind2)
+                self._qso_txt.tag_add(tag_name_rx, ind, ind2)
 
-            self._out_txt.configure(state="disabled",
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             # TODO Autoscroll
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             Ch_var.new_data_tr = True
@@ -2079,18 +2478,18 @@ class PoPT_GUI_Main:
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr  = False
 
-        self._out_txt.configure(state="normal")
+        self._qso_txt.configure(state="normal")
 
-        self._out_txt.delete('1.0', tk.END)
-        self._out_txt.insert(tk.END, ch_vars.output_win)
-        self._out_txt.configure(state="disabled")
-        self._out_txt.see(tk.END)
+        self._qso_txt.delete('1.0', tk.END)
+        self._qso_txt.insert(tk.END, ch_vars.output_win)
+        self._qso_txt.configure(state="disabled")
+        self._qso_txt.see(tk.END)
 
         self._inp_txt.delete('1.0', tk.END)
         self._inp_txt.insert(tk.END, ch_vars.input_win[:-1])
         set_all_tags(self._inp_txt, ch_vars.input_win_tags)
-        set_all_tags(self._out_txt, ch_vars.output_win_tags)
-        set_new_tags(self._out_txt, ch_vars.new_tags)
+        set_all_tags(self._qso_txt, ch_vars.output_win_tags)
+        set_new_tags(self._qso_txt, ch_vars.new_tags)
         ch_vars.new_tags = []
         self._inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
         self._inp_txt.see(tk.END)
@@ -2115,7 +2514,7 @@ class PoPT_GUI_Main:
     def sysMsg_to_qso(self, data, ch_index):
         self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
 
-    def _sysMsg_to_qso_task(self, data, ch_index):
+    def sysMsg_to_qso_task(self, data, ch_index):
         if not data:
             return
         if 1 > ch_index > SERVICE_CH_START - 1:
@@ -2128,15 +2527,15 @@ class PoPT_GUI_Main:
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
-            if float(self._out_txt.index(tk.END)) - float(self._out_txt.index("@0,0")) < 22:
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True
-            self._out_txt.configure(state="normal")
+            self._qso_txt.configure(state="normal")
 
-            ind = self._out_txt.index(tk.INSERT)
-            self._out_txt.insert('end', data)
-            ind2 = self._out_txt.index(tk.INSERT)
-            self._out_txt.tag_add(tag_name, ind, ind2)
-            self._out_txt.configure(state="disabled",
+            ind = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.insert('end', data)
+            ind2 = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.tag_add(tag_name, ind, ind2)
+            self._qso_txt.configure(state="disabled",
                                     exportselection=True
                                     )
             if tr or self.get_ch_var().autoscroll:
@@ -2156,6 +2555,9 @@ class PoPT_GUI_Main:
     # Monitor WIN
 
     def sysMsg_to_monitor(self, var: str):
+        self._add_tasker_q("sysMsg_to_monitor", var)
+
+    def _sysMsg_to_monitor_task(self, var: str):
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
         ind = str(self._mon_txt.index(tk.INSERT))
@@ -2184,66 +2586,250 @@ class PoPT_GUI_Main:
 
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
-        if mon_buff:
-            mon_conf = {
-                "port_name": '',
-                "distance": bool(self.mon_dec_dist_var.get()),
-                "aprs_dec": bool(self.mon_dec_aprs_var.get()),
-                "nr_dec"  : bool(self.mon_dec_nr_var.get()),
-                "hex_out" : bool(self.mon_dec_hex_var.get()),
-                "decoding": str(self.setting_mon_encoding.get()),
-            }
-            tr = False
-            self._mon_txt.configure(state="normal")
-            for axframe_conf, port_conf, tx in mon_buff:
-                port_id = port_conf.get('parm_PortNr', -1)
-                mon_conf['port_name'] = port_conf.get('parm_PortName', '')
-                mon_str = monitor_frame_inp(axframe_conf, mon_conf)
+        if not mon_buff:
+            return False
 
-                var = tk_filter_bad_chars(mon_str)
-                ind = self._mon_txt.index('end-1c')
-                # TODO Autoscroll
-                if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
-                    tr = True
-                if tx:
-                    tag = f"tx{port_id}"
-                else:
-                    tag = f"rx{port_id}"
+        mon_conf = {
+            "port_name": '',
+            "distance": bool(self.mon_dec_dist_var.get()),
+            "aprs_dec": bool(self.mon_dec_aprs_var.get()),
+            "nr_dec"  : bool(self.mon_dec_nr_var.get()),
+            "hex_out" : bool(self.mon_dec_hex_var.get()),
+            "decoding": str(self.setting_mon_encoding.get()),
+        }
+        tr = False
+        self._mon_txt.configure(state="normal")
+        for axframe_conf, port_conf, tx in mon_buff:
+            port_id = port_conf.get('parm_PortNr', -1)
+            axframe_conf['tx']   = tx
+            axframe_conf['port'] = port_id
+            self._monitor_tree_update(axframe_conf)
 
-                if tag in self._mon_txt.tag_names(None):
-                    self._mon_txt.insert(tk.END, var, tag)
-                else:
-                    self._mon_txt.insert(tk.END, var)
-                    ind2 = self._mon_txt.index('end-1c')
-                    self._mon_txt.tag_add(tag, ind, ind2)
-            cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
-            if cut_len > 0:
-                self._mon_txt.delete('1.0', f"{cut_len}.0")
-            if tr or self.mon_scroll_var.get():
-                self._see_end_mon_win()
-            self._mon_txt.configure(state="disabled", exportselection=True)
-            return True
-        return False
+            mon_conf['port_name'] = port_conf.get('parm_PortName', '')
+            mon_str = monitor_frame_inp(axframe_conf, mon_conf)
+
+            var = tk_filter_bad_chars(mon_str)
+            ind = self._mon_txt.index('end-1c')
+            # TODO Autoscroll
+            if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
+                tr = True
+            if tx:
+                tag = f"tx{port_id}"
+            else:
+                tag = f"rx{port_id}"
+
+            if tag in self._mon_txt.tag_names(None):
+                self._mon_txt.insert(tk.END, var, tag)
+            else:
+                self._mon_txt.insert(tk.END, var)
+                ind2 = self._mon_txt.index('end-1c')
+                self._mon_txt.tag_add(tag, ind, ind2)
+
+            self._mon_pack_buff.append(dict(axframe_conf))
+
+        cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+        if cut_len > 0:
+            self._mon_txt.delete('1.0', f"{cut_len}.0")
+        if tr or self.mon_scroll_var.get():
+            self._see_end_mon_win()
+        self._mon_txt.configure(state="disabled", exportselection=True)
+        return True
 
     def see_end_inp_win(self):
         self._inp_txt.see("end")
 
     def see_end_qso_win(self):
-        self._out_txt.see("end")
+        self._qso_txt.see("end")
 
     def _see_end_mon_win(self):
         self._mon_txt.see("end")
 
     # END Monitor WIN
     ###############################################################
+    ###############################################################
+    # Monitor Tree
+    def _monitor_tree_update(self, ax25pack_conf: dict):
+        self._add_tasker_q("_monitor_tree_update", ax25pack_conf, prio=False)
+
+    def _monitor_tree_update_task(self, ax25pack_conf: dict):
+        via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
+        ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
+        ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
+        cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
+        cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
+        pay_size  = len(ax25pack_conf.get('payload', b''))
+        payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
+        payload   = tk_filter_bad_chars(payload)
+        payload   = payload.replace('\n', ' ').replace('\r', ' ')
+        user_db   = self._port_handler.get_userDB()
+        from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
+        to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
+        from_call = ax25pack_conf.get('from_call_str', '')
+        to_call   = ax25pack_conf.get('to_call_str', '')
+        port      = ax25pack_conf.get('port', -1)
+        ctl       = ax25pack_conf.get('ctl_flag', '')
+        pid       = ax25pack_conf.get('pid_flag', '')
+        port_filter      = self._mon_tree_port_filter_var.get()
+        fm_call_filter   = self._mon_tree_fm_call_filter_var.get().split(' ')
+        to_call_filter   = self._mon_tree_to_call_filter_var.get().split(' ')
+
+        fm_call_filter   = [str(x.upper()).replace(' ', '') for x in list(fm_call_filter)]
+        to_call_filter   = [str(x.upper()).replace(' ', '') for x in list(to_call_filter)]
+
+        while '' in fm_call_filter:
+            fm_call_filter.remove('')
+        while '' in to_call_filter:
+            to_call_filter.remove('')
+        #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
+        #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
+
+        if not all((
+            any((all((port_filter,     port_filter     == str(port) )),     not port_filter)),
+            any((all((fm_call_filter,  from_call       in fm_call_filter)), not fm_call_filter)),
+            any((all((to_call_filter,  to_call         in to_call_filter)), not to_call_filter)),
+            #all((ctl_pack_filter, ctl_pack_filter != ctl)),
+            #all((pid_pack_filter, pid_pack_filter != pid)),
+        )):
+            return
+        raw_from_call = str(from_call)
+        raw_to_call   = str(to_call)
+        if from_dist > 0:
+            from_call += f'({from_dist}km)'
+
+        if to_dist > 0:
+            to_call += f'({to_dist}km)'
+
+        tree_data = (
+            ax25pack_conf.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+            port,
+            from_call,
+            to_call,
+            '>'.join(via),
+            ctl,
+            pid,
+            ns_nr,
+            cmd_pl,
+            pay_size,
+            payload,
+        )
+        is_scrolled_to_top = self._mon_tree.yview()[0] == 0.0
+        index = 0
+
+        is_tx = ax25pack_conf.get('tx', True)
+        icon_k = {
+            True:  'tx',
+            False: 'rx',
+        }.get(is_tx, True)
+
+        """
+            '', '-dx',
+            '', '-term',
+            '', '-node',
+            '', '-bbs',
+            '', '-block',
+        """
+        icon_k_k = ''
+        # Is DX ?
+        if not is_tx:
+            mh    = self._get_mh()
+            is_dx = mh.is_dx_alarm_f_call(raw_from_call)
+            if is_dx:
+                icon_k_k = '-dx'
+
+        # Is to own Station ?
+        block_list = POPT_CFG.get_block_list().get(port, {})
+        if is_tx:
+            own_station = POPT_CFG.get_stat_CFG_fm_call(raw_from_call.split('-')[0])
+            block_state = block_list.get(raw_to_call.split('-')[0], 0)
+        else:
+            own_station = POPT_CFG.get_stat_CFG_fm_call(raw_to_call.split('-')[0])
+            block_state = block_list.get(raw_from_call.split('-')[0], 0)
+
+        if own_station:
+            if block_state:
+                icon_k_k = '-block'
+            else:
+                icon_k_k = dict(
+                    USER=   '-term',
+                    NODE=   '-node',
+                    BOX=    '-bbs',
+                ).get(own_station.get('stat_parm_cli', ''), '')
+
+        # Get Icon
+        icon_k += icon_k_k
+        image = self._rx_tx_icons.get(icon_k)
+        tree_data_f = [tk_filter_bad_chars(el) if type(el) == str else el for el in tree_data]
+        try:
+            self._mon_tree.image_ref = image
+            self._mon_tree.insert('', index, values=tree_data_f, image=image)
+
+        except tk.TclError as ex:
+            logger.warning("TCL Error in guiMain _monitor_tree_update")
+            logger.warning(ex)
+            return
+
+        # Begrenze die Anzahl der Einträge
+        tree_items = self._mon_tree.get_children()
+        if len(tree_items) > PARAM_MAX_MON_TREE_ITEMS:
+            # Entferne die ältesten Einträge (am Ende der Liste)
+            for item in tree_items[PARAM_MAX_MON_TREE_ITEMS:]:
+                self._mon_tree.delete(item)
+
+        if not is_scrolled_to_top:
+            try:
+                self._mon_tree.yview_scroll(1, "units")
+            except tk.TclError:
+                pass
+            except Exception as e:
+                null = e
+                # logger.warning(e)
+                pass
+
+    def _monitor_tree_on_filter_chg(self):
+        for i in self._mon_tree.get_children():
+            self._mon_tree.delete(i)
+
+        for pack in self._mon_pack_buff:
+            self._monitor_tree_update(pack)
+
+    def _monitor_tree_on_filter_reset(self):
+        self._mon_tree_port_filter_var.set('')
+        self._mon_tree_fm_call_filter_var.set('')
+        self._mon_tree_to_call_filter_var.set('')
+        self._monitor_tree_on_filter_chg()
+    """
+    def _monitor_tree_conn_selected(self):
+        if not self._mon_tree.selection():
+            return
+        selected =  self._mon_tree.selection()[0]
+        item     = self._mon_tree.item(selected)
+        record     = item['values']
+        call = record[3].split('(')[0]
+        vias = record[5]
+        vias = vias.replace('*', '').split('>')
+        vias.reverse()
+        vias = [x.split('(')[0] for x in list(vias)]
+        vias = ' '.join(vias)
+        port = record[2]
+
+
+        if type(port) is str:
+            port = int(port.split('-')[0])
+
+        if vias:
+            call = f'{call} {vias}'
+        if not self.new_conn_win:
+            self.open_new_conn_win()
+        if self.new_conn_win:
+            self.new_conn_win.preset_ent(call, port)
+    """
 
     ###############################################################
     # Dual Port
     def _dualPort_monitor_task(self):
-        if not self.dualPortMon_win:
+        if not hasattr(self.dualPortMon_win, 'dB_mon_tasker'):
             return False
-        self.dualPortMon_win.dB_mon_tasker()
-        return True
+        return self.dualPortMon_win.dB_mon_tasker()
 
     ###############################################################
 
@@ -2251,9 +2837,11 @@ class PoPT_GUI_Main:
     # Open Toplevel Win
 
     def open_link_holder_sett(self):
+        #self.main_win.update_idletasks()
         self._open_settings_window('l_holder')
 
     def open_ft_manager(self, event=None):
+        #self.main_win.update_idletasks()
         self._open_settings_window('ft_manager')
 
     def _open_settings_window(self, win_key: str):
@@ -2266,7 +2854,7 @@ class PoPT_GUI_Main:
             'priv_win': PrivilegWin,            # Priv Win              # TODO move to open_window
             'keybinds': KeyBindsHelp,           # Keybinds Help WIN     # TODO move to open_window
             'about': About,                     # About WIN             # TODO move to open_window
-            'aprs_sett': APRSSettingsWin,       # APRS Settings
+            'aprs_sett': APRSSettingsMain,       # APRS Settings
             'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
             'pipe_sett': PipeToolSettings,      # Pipe Tool
             # 'user_db': UserDB,  # UserDB
@@ -2275,6 +2863,7 @@ class PoPT_GUI_Main:
             'all_sett': SettingsMain,           # New All Settings
         }.get(win_key, '')
         if callable(settings_win):
+            #self.main_win.update_idletasks()
             self.settings_win = settings_win(self)
 
     def open_window(self, win_key: str):
@@ -2296,7 +2885,6 @@ class PoPT_GUI_Main:
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
-            'ConnPathPlot': (self.conn_Path_plot_win, ConnPathsPlot),
 
             # TODO .......
 
@@ -2308,17 +2896,20 @@ class PoPT_GUI_Main:
                 win_list[0].lift()
             return
         if callable(win_list[1]):
+            #self.main_win.update_idletasks()
             win_list[1](self)
 
     ##########################
     # UserDB
     def open_user_db_win(self, event=None, ent_key=''):
-        if self.userdb_win is None:
-            if not ent_key:
-                conn = self.get_conn()
-                if conn is not None:
-                    ent_key = conn.to_call_str
-            self.userdb_win = UserDB(self, ent_key)
+        if self.userdb_win is not None:
+            return
+        if not ent_key:
+            conn = self.get_conn()
+            if conn is not None:
+                ent_key = conn.to_call_str
+        #self.main_win.update_idletasks()
+        self.userdb_win = UserDB(self, ent_key)
 
     ##########################
     # New Connection WIN
@@ -2327,20 +2918,31 @@ class PoPT_GUI_Main:
 
     ######################
     # APRS Beacon Tracer
+    """
     def open_be_tracer_win(self):
         self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         if self.be_tracer_win is None:
+            #self.main_win.update_idletasks()
             self.be_tracer_win = BeaconTracer(self)
+    """
 
     ###################
     # MH WIN
     def open_MH_win(self):
         """MH WIN"""
+        self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
         self._port_handler.set_dxAlarm(False)
-        if self.mh_window is None:
-            MHWin(self)
         self.tabbed_sideFrame.reset_dx_alarm()
         self.tabbed_sideFrame2.reset_dx_alarm()
+        if hasattr(self.mh_window, 'lift'):
+            self.mh_window.lift()
+            return
+        MHWin(self)
+
+    def _mh_win_task(self):
+        if hasattr(self.mh_window, 'tasker'):
+            return self.mh_window.tasker()
+        return False
 
     ##################
     # Black List Win
@@ -2401,7 +3003,7 @@ class PoPT_GUI_Main:
     #######################################################################
     #######################################################################
     # SEND TEXT OUT
-    def _snd_text(self, event: tk.Event):
+    def _snd_text(self, event=None):
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
@@ -2420,9 +3022,9 @@ class PoPT_GUI_Main:
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
                 tmp_txt = self._inp_txt.get(ind, tk.INSERT)
 
-                tmp_txt = tmp_txt.replace('\n', '\r')
-                station.send_data(tmp_txt.encode(txt_enc, 'ignore'))
-
+                tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
+                station.send_data(tmp_txt)
+                self._update_qso_tx(station, tmp_txt)
                 self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 
@@ -2480,7 +3082,11 @@ class PoPT_GUI_Main:
 
     def _on_key_release_inp_txt(self, event=None):
         ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT)))
+        old_text = self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            self._inp_txt.tag_remove('send', ind, tk.INSERT)
+            return
         self._inp_txt.delete(ind,  self._inp_txt.index(tk.INSERT))
         self._inp_txt.insert(tk.INSERT, text)
         self._inp_txt.tag_remove('send', ind, tk.INSERT)
@@ -2551,8 +3157,9 @@ class PoPT_GUI_Main:
     #######################################################################
 
     def _kaffee(self):
-        self.sysMsg_to_monitor('Hinweis: Hier gibt es nur Muckefuck !')
+        self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
+        #APRSymbolTab(self)
         # self.open_RoutingTab_win()
         #print(self._inp_txt.cget('height'))
         #print(self._pw.sashpos(0))
@@ -2646,7 +3253,7 @@ class PoPT_GUI_Main:
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
         old_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
         old_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        old_ch_vars.output_win_tags = get_all_tags(self._out_txt)
+        old_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
         old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         self.channel_index = ind
         self._update_qso_Vars()
@@ -2850,18 +3457,22 @@ class PoPT_GUI_Main:
                     self.status_label.bind('<Button-1>', self.open_ft_manager)
             else:
                 status = ''
-                if conn.cli.sysop_priv:
-                    status += 'S'
-                else:
-                    status += '-'
-                if conn.link_holder_on:
-                    status += 'L'
-                else:
-                    status += '-'
-                if conn.is_RNR:
-                    status += 'R'
-                else:
-                    status += '-'
+                try:
+                    if conn.cli.sysop_priv:
+                        status += 'S'
+                    else:
+                        status += '-'
+                    if conn.link_holder_on:
+                        status += 'L'
+                    else:
+                        status += '-'
+                    if conn.is_RNR:
+                        status += 'R'
+                    else:
+                        status += '-'
+                except Exception as ex:
+                    logger.error(ex)
+                    status = '---'
                 status += '----'
                 if self._stat_info_status_var.get() != status:
                     self._stat_info_status_var.set(status)
@@ -2924,7 +3535,8 @@ class PoPT_GUI_Main:
 
     #########################################
     # TxTframe FNCs
-    def _update_status_win(self):
+    def _update_status_bar(self):
+        ret = False
         station = self.get_conn(self.channel_index)
         fg, bg = self._get_colorMap()
         if station is not None:
@@ -2948,9 +3560,13 @@ class PoPT_GUI_Main:
             ##
             if self._status_name_var.get() != from_call:
                 self._status_name_var.set(from_call)
+                ret = True
+
             if self._status_status_var.get() != status_text:
                 self._status_status_var.set(status_text)
                 self._status_status.configure(bg=status_bg)
+                ret = True
+
             if self._status_unack_var.get() != unAck:
                 self._status_unack_var.set(unAck)
                 if len(station.tx_buf_unACK.keys()):
@@ -2959,8 +3575,11 @@ class PoPT_GUI_Main:
                 else:
                     if self._status_unack.cget('bg') != 'green':
                         self._status_unack.configure(bg='green')
+                ret = True
+
             if self._status_vs_var.get() != vs_vr:
                 self._status_vs_var.set(vs_vr)
+                ret = True
             if self._status_n2_var.get() != n2_text:
                 self._status_n2_var.set(n2_text)
                 if n2 > 4:
@@ -2975,15 +3594,23 @@ class PoPT_GUI_Main:
                     if self._status_n2.cget('bg') != bg:
                         self._status_n2.configure(bg=bg)
                         self._status_n2.configure(fg=fg)
+                ret = True
+
             if self._status_t1_var.get() != t1_text:
                 self._status_t1_var.set(t1_text)
+                ret = True
+
             if self._status_t2_var.get() != t2_text:
                 self._status_t2_var.set(t2_text)
+                ret = True
+
             if self._status_rtt_var.get() != rtt_text:
                 self._status_rtt_var.set(rtt_text)
+                ret = True
+
             if self._status_t3_var.get() != t3_text:
                 self._status_t3_var.set(t3_text)
-
+                ret = True
         else:
 
             if self._status_status.cget('bg') != bg:
@@ -3001,6 +3628,8 @@ class PoPT_GUI_Main:
                 self._status_t2_var.set('')
                 self._status_t3_var.set('')
                 self._status_rtt_var.set('')
+                ret = True
+        return ret
 
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
@@ -3169,6 +3798,14 @@ class PoPT_GUI_Main:
                 ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
 
+    #def update_tracer_win(self):
+    #    self._add_tasker_q("update_tracer_win", None)
+
+    #def _update_tracer_win_task(self):
+    #    if hasattr(self.be_tracer_win, 'update_tree_data'):
+    #        self.be_tracer_win.update_tree_data()
+
+    ########
     def set_dx_alarm(self, event=None):
         dx_alarm = bool(self.setting_dx_alarm.get())
         if not dx_alarm:
@@ -3183,7 +3820,10 @@ class PoPT_GUI_Main:
     ######################################################################
     # Alarm/Icon Frame
     def set_aprsMail_alarm(self):
-        self._add_tasker_q("set_aprsMail_alarm", None)
+        if self.aprs_pn_msg_win:
+            self._add_tasker_q("reset_aprsMail_alarm", None)
+        else:
+            self._add_tasker_q("set_aprsMail_alarm", None)
 
     def _set_aprsMail_alarm_task(self):
         self._Alarm_Frame.set_aprsMail_alarm(True)
@@ -3297,10 +3937,48 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
 
-
-    def get_PH_manGUI(self):
+    def get_PH_mainGUI(self):
         return self._port_handler
 
+    def _get_mh(self):
+        try:
+            return self._port_handler.get_MH()
+        except Exception as ex:
+            logger.error(ex)
+            return None
+
+    def get_AIS_mainGUI(self):
+        if hasattr(self._port_handler, 'get_aprs_ais'):
+            return self._port_handler.get_aprs_ais()
+        logger.error("AttributeError: hasattr(self._port_handler, 'get_aprs_ais')")
+        raise AttributeError
+
+    def get_aprs_icon_tab_16(self):
+        return self._aprs_icon_tab_16
+
+    def get_aprs_icon_tab_24(self):
+        return self._aprs_icon_tab_24
+
+    def get_conn_typ_icon_16(self):
+        return self._conn_typ_icons
+
+    def get_ais_mon_gui(self):
+        return self.aprs_mon_win
+
+    #####################################
     def _set_port_blocking(self, state=0):
         if hasattr(self._port_handler, 'block_all_ports'):
             self._port_handler.block_all_ports(state)
+
+    #####################################
+    # Cache
+    """
+    def get_MapView_cache(self):
+        return dict(self._global_cache_tab.get('tkMapView_cache', {}))
+
+    def set_MapView_cache(self, cache: dict):
+        #while len(cache) > 10_000:
+        #    del cache[list(cache.keys())[0]]
+
+        self._global_cache_tab['tkMapView_cache'] = dict(cache)
+    """

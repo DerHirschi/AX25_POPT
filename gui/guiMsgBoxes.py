@@ -3,8 +3,9 @@ from tkinter import messagebox, font, filedialog
 import sys
 
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
 
+getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
 def open_file_dialog(master_win=None):
     filetypes = (
@@ -47,17 +48,19 @@ def save_file_dialog(data, master_win=None):
     except PermissionError:
         return False
     if f is None:
-        return
+        return DeprecationWarning
     try:
         f.write(data)
     except UnicodeEncodeError:
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         pass
     f.close()
+    return True
 
 def call_vali_warning(root_win):
-    mb = messagebox.showerror(STR_TABLE['call_vali_warning_1'][POPT_CFG.get_guiCFG_language()],
-                         STR_TABLE['call_vali_warning_2'][POPT_CFG.get_guiCFG_language()], parent=root_win)
+    mb = messagebox.showerror(getTabStr('call_vali_warning_1'),
+                              getTabStr('call_vali_warning_2'),
+                              parent=root_win)
     mb.upper()
 
 

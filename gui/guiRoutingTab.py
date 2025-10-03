@@ -251,7 +251,7 @@ class RoutingTableWindow:
         self._canvas.draw_idle()
         self._canvas.flush_events()
         self._canvas.get_tk_widget().update()
-        self._window.update_idletasks()
+        #self._window.update_idletasks()
 
     def update_treeview(self, port_id=None):
         """Aktualisiert die Treeview und den Graphen mit Daten aus der RoutingTable."""

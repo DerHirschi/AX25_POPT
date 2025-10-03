@@ -27,24 +27,29 @@ def parse_forward_header(header):
     # FB P MD2BBS MD2SAW MD2SAW 18243-MD2BBS 502
     # FB P MD2BBS MD2SAW MD2SAW 18245-MD2BBS 502
     # FB P MD2BBS MD2SAW MD2SAW 18248-MD2BBS 502
-    # FB B DBO527 SAW STATUS 4CWDBO527004 109836
-    # FB B MD2SAW SAW TEST 11139-MD2BBS 5
+    # FB B DBO527 SAW    STATUS 4CWDBO527004 109836
+    # FB B MD2SAW SAW    TEST   11139-MD2BBS 5
+    # FA B DX0SAW EU     MH     61157_DX0SAW 8082 365 < WB / WinBOX
     hdr = header.split(' ')
     bin_mode = False
-    if len(hdr) != 7:
-        logger.debug(f"PH!!: {header}")
+    if len(hdr) > 8:
+        logger.error(f"Header len > 8: {header}")
         return None
-    # if hdr[0] != 'FB':
     if hdr[0] not in ['FB', 'FA']:
-        logger.debug(f"PH!!: {header}")
+        logger.error(f"Header Start not FA or FB: {header}")
         return None
     if hdr[1] not in ['P', 'B']:
-        logger.debug(f"PH!!: {header}")
+        logger.error(f"Header Msg-Typ not P or B: {header}")
         return None
     if hdr[0] == 'FA':
         bin_mode = True
 
-    tmp = hdr[5].split('-')
+    if '-' in hdr[5]:
+        tmp = hdr[5].split('-')
+    elif '_' in hdr[5]:
+        tmp = hdr[5].split('_')
+    else:
+        tmp = hdr[5]
     mid = tmp[0]
     recipient = ''
     if len(tmp) == 2:

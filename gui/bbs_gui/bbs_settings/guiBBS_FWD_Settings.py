@@ -292,32 +292,15 @@ class BBS_FWD_Settings(ttk.Frame):
     def _set_NOCALL_tab(self):
         nocall_vars = self._bbs_vars.get('NOCALL', {})
         if nocall_vars:
-            port_id = 0
-            try:
-                port_id = int(nocall_vars['port_id_var'].get())
-            except ValueError:
-                pass
             dest_call = str(nocall_vars['dest_call_var'].get()).upper()
             if not validate_ax25Call(dest_call):
                 dest_call = ''
-            regio = str(nocall_vars['regio_var'].get()).upper()
-            via_calls = str(nocall_vars['via_calls_var'].get())
-            axip_ip = str(nocall_vars['axip_var'].get())
-            try:
-                axip_port = int(nocall_vars['axip_port_var'].get())
-            except ValueError:
-                axip_port = 0
-            home_bbs_cfg                = getNew_BBS_FWD_cfg()
-            home_bbs_cfg['port_id']     = port_id
-            home_bbs_cfg['regio']       = regio
-            home_bbs_cfg['dest_call']   = dest_call
-            home_bbs_cfg['via_calls']   = get_list_fm_viaStr(via_calls)
-            home_bbs_cfg['axip_add']    = axip_ip, axip_port
-            # self._set_homeBBS_cfg(dest_call, home_bbs_cfg)
+            if not dest_call:
+                return
+
             self._bbs_vars[dest_call]   = dict(self._bbs_vars['NOCALL'])
             self._set_tab_name(dest_call)
             self._bbs_vars['NOCALL']    = {}
-            # self._del_NOCALL_homeBBS_cfg()
 
     def _set_tab_name(self, name):
         self._tabctl.tab(self._tabctl.select(), text=name)

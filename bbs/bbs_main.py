@@ -32,7 +32,7 @@ from bbs.bbs_fwd_connection import BBSConnection
 from bbs.bbs_mail_import import get_mail_import
 from cfg.cfg_fnc import init_bbs_dir
 from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD
-from cfg.default_config import getNew_BBS_Port_cfg
+from cfg.default_config import getNew_BBS_Port_cfg, getNew_fwdStatistic_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
@@ -127,12 +127,15 @@ class BBS:
         # BBS_LOG.debug(f"_find_most_current_PN_route res: {ret}")
         # self._pms_cfg['pn_auto_path'] = 1
         # self.send_sysop_msg(topic='Test', msg='Test MSG\r')
+        # self._reset_bbs_statistic()
 
 
     def _reinit(self):
         if not self._fwd_connections:
             logger.info(self._logTag + "ReInit")
             BBS_LOG.info(self._logTag + "ReInit")
+            BBS_LOG.info(self._logTag + "ReInit: Saving Fwd-Statistics")
+            self._save_bbs_statistic()
             BBS_LOG.info(self._logTag + "ReInit: Delete Scheduler")
             self._del_all_pms_fwd_schedule()
             BBS_LOG.info(self._logTag + "ReInit: Read new Config")
@@ -178,9 +181,11 @@ class BBS:
         ports: dict = self._port_handler.get_all_ports()
         for port_id, port in ports.items():
             self._fwd_ports[port_id] = dict(
-            block_timer = time.time(),
-            block_byte_c = 0,
-            block_fwd_tasks  = [],
+            block_timer         = time.time(),
+            block_byte_c        = 0,
+            block_fwd_tasks     = [],
+            block_byte_rx       = 0,    # TODO
+            block_byte_tx       = 0,    # TODO
         )
 
     def _build_fwd_BBSq_vars(self):
@@ -194,10 +199,12 @@ class BBS:
             bbs_fwd_q={
                 # 'BID' : dict(out_msg)
             },
-            bbs_fwd_next_q=[],  # ['FWD-ID', ...][:5]
+            bbs_fwd_next_q    = [],  # ['FWD-ID', ...][:5]
+            bbs_fwd_statistic = POPT_CFG.get_fwd_statistics(bbs_call)
         )
 
     def close(self):
+        self._save_bbs_statistic()
         # self._email_server.stop()
         pass
 
@@ -668,7 +675,7 @@ class BBS:
                 to_bbs_call=    to_bbs_call,
                 fwd_bbs_call=   fwd_task[9],
                 msg_size=       msg_size,
-                bytes_to_send=  to_send_len,
+                bytes_to_send=  int(to_send_len),
                 comp_rate    =  comp_ratio,
                 q_subject=      fwd_task[11],
                 typ=            typ,
@@ -830,7 +837,7 @@ class BBS:
         for bid, msg_to_fwd in bbs_fwd_q.items():
             typ  = msg_to_fwd.get('typ', '')
             flag = msg_to_fwd.get('flag', 'F')
-            if flag != 'F':
+            if flag not in ['F', 'S=']:
                 continue
             if typ == 'P':
                 pn_bid_s.append(bid)
@@ -887,7 +894,6 @@ class BBS:
         return bbs_fwd_next_q
 
     def _set_bbs_byte_c(self, bbs_call: str, bid: str):
-        # TODO Statistics
         log_tag = self._logTag + f"Set BBS Byte C - BBS:({bbs_call}) - BID:({bid})> "
         if bbs_call not in self._fwd_BBS_q:
             BBS_LOG.error(log_tag + f"bbs_call not in ..")
@@ -895,11 +901,28 @@ class BBS:
         if bid not in self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}):
             BBS_LOG.error(log_tag + f"bid not in ..")
             return False
-        bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
-        self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] += bytes_send
-        BBS_LOG.debug(log_tag)
-        BBS_LOG.debug(self._logTag + f"Set BBS Byte C - added:{bytes_send} Bytes")
-        BBS_LOG.debug(self._logTag + f"Set BBS Byte C - total:{round((self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] / 1024), 1)} kB")
+        flag = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('flag', '')
+        if flag in ['S+', 'H']:
+            # Mail Bytes
+            bytes_send = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('bytes_to_send', 0)
+            msg_len    = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('msg_size', 0)
+            self._fwd_BBS_q[bbs_call]['bbs_fwd_byte_c'] += bytes_send
+            self.set_bbs_statistic(bbs_call, 'mail_bytes_tx', msg_len)
+            # Mail Counter by Typ
+            typ = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {}).get(bid, {}).get('typ', '')
+            if typ == 'B':
+                self.set_bbs_statistic(bbs_call, 'mail_bl_tx', 1)
+            elif typ == 'P':
+                self.set_bbs_statistic(bbs_call, 'mail_pn_tx', 1)
+        # Mail Counter by Flag
+        if flag == 'H':
+            self.set_bbs_statistic(bbs_call, 'mail_tx_hold', 1)
+        elif flag == 'R':
+            self.set_bbs_statistic(bbs_call, 'mail_tx_rej', 1)
+        elif flag in ['EE', 'EO']:
+            self.set_bbs_statistic(bbs_call, 'mail_tx_error', 1)
+            #self._fwd_BBS_q[bbs_call]['bbs_fwd_error_c'] += 1
+
         return True
 
     def set_bbs_timeout(self, bbs_call: str):
@@ -998,18 +1021,12 @@ class BBS:
             BBS_LOG.error(log_tag + f"  bbs_fwd_q: {bbs_fwd_q}")
             BBS_LOG.error(log_tag + f"  bbs_fwd_next_q: {bbs_fwd_next_q}")
             return
-        if flag in ['S+', 'H']:
-            self._set_bbs_byte_c(bbs_call, bid)
-        else:
+        bbs_fwd_q[bid]['flag'] = flag
+        self._set_bbs_byte_c(bbs_call, bid)
+        if not flag in ['S+', 'H']:
             self._sub_block_c(bbs_call, bid)
         bbs_fwd_next_q.remove(bid)
-        bbs_fwd_q[bid]['flag'] = flag
-        """
-        BBS_LOG.debug(
-            log_tag + f"bbs-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_q', {})}")
-        BBS_LOG.debug(
-            log_tag + f"next-q: {self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_next_q', [])}")
-        """
+
         # self._process_bbs_next_fwd_q(bbs_call)
         return
 
@@ -1226,9 +1243,7 @@ class BBS:
         if time.time() < self._new_man_FWD_wait_t:
             return
         self._new_man_FWD_wait_t = time.time() + 10
-
         for fwd_bbs_call, fwd_bbs_cfg in self._fwd_cfg.items():
-
             if fwd_bbs_cfg:
                 autoconn_cfg = {
                     'task_typ':     TASK_TYP_FWD,
@@ -1850,8 +1865,17 @@ class BBS:
 
     ####################################################################################
     def set_error(self, bbs_call: str):
-        bbs_fwd_error_c = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_error_c', 0)
-        bbs_fwd_error_c += 1
+        try:
+            self._fwd_BBS_q[bbs_call]['bbs_fwd_error_c'] += 1
+        except Exception as ex:
+            logger.error(f"Error set Error Counter for: {bbs_call}")
+            logger.error(ex)
+            BBS_LOG.error(ex)
+        self.set_bbs_statistic(bbs_call, 'connect_e', 1)
+
+    ####################################################################################
+    def get_fwd_connections(self):
+        return self._fwd_connections
 
     ####################################################################################
     # Get it
@@ -1968,6 +1992,9 @@ class BBS:
 
     def set_all_pn_msg_notNew(self):
         self._db.bbs_set_all_pn_msg_notNew()
+
+    def set_all_pn_msg_notNew_by_call(self, call: str):
+        self._db.bbs_set_all_pn_msg_notNew_for_call(call)
 
     def get_new_pn_count_by_call(self, call: str):
         return self._db.bbs_get_new_pn_msgCount_for_Call(call)
@@ -2155,3 +2182,33 @@ class BBS:
 
     def get_port_handler(self):
         return self._port_handler
+
+    ############################################
+    # Statistics
+    def set_bbs_statistic(self, bbs_call: str, stat_key: str, val: int):
+        bbs_stat = self._fwd_BBS_q.get(bbs_call, {}).get('bbs_fwd_statistic', {})
+        if not bbs_stat:
+            logger.error(f'BBS-Statistic not found for: {bbs_call}')
+            BBS_LOG.error(f'BBS-Statistic not found for: {bbs_call}')
+            return
+        if stat_key not in bbs_stat:
+            logger.error(f'BBS-Statistic Key({stat_key}) not found in: {bbs_call} Stat')
+            BBS_LOG.error(f'BBS-Statistic Key({stat_key}) not found in: {bbs_call} Stat')
+            return
+        try:
+            bbs_stat[stat_key] += val
+        except Exception as ex:
+            logger.error(f'BBS-Statistic Error({bbs_call}): {ex}')
+            BBS_LOG.error(f'BBS-Statistic Error({bbs_call}): {ex}')
+            return
+
+    def _save_bbs_statistic(self):
+        for bbs_call, fwd_BBS_q in self._fwd_BBS_q.items():
+            POPT_CFG.set_fwd_statistics(
+                bbs_call=bbs_call,
+                stat_dict=fwd_BBS_q.get('bbs_fwd_statistic', getNew_fwdStatistic_cfg())
+                )
+
+    def reset_bbs_statistic(self):
+        for bbs_call, fwd_BBS_q in self._fwd_BBS_q.items():
+            fwd_BBS_q['bbs_fwd_statistic'] = getNew_fwdStatistic_cfg()

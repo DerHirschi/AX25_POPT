@@ -6,18 +6,16 @@ from tkinter import ttk, Menu
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
-from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
+from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number, get_strTab
 
 
 class FileTransferManager(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
-
-        self.overview_frame = None
         self._root_win = root
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self.overview_frame = None
         # self.port_handler = self.root.ax25_port_handler
-        self._lang = POPT_CFG.get_guiCFG_language()
         self.win_height = 600
         self.win_width = 1050
         self.style = root.style
@@ -59,8 +57,8 @@ class FileTransferManager(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['send_file'][self._lang], command=self._open_txFile_win)
-        menubar.add_cascade(label=STR_TABLE['file_1'][self._lang], menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('send_file'), command=self._open_txFile_win)
+        menubar.add_cascade(label=self._getTabStr('file_1'), menu=MenuVerb, underline=0)
 
     def destroy_win(self):
         self._root_win.settings_win = None

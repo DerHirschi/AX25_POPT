@@ -59,6 +59,7 @@ class NodeCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
+                               'CONV',
                                '?']
 
 

@@ -1,11 +1,9 @@
-import time
-
 import gtts
 from gtts import gTTS
 import threading
 import sys
 
-from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, LANGUAGE, CFG_sound_BELL
+from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
 from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import is_linux, is_windows, get_root_dir
 
@@ -17,6 +15,7 @@ elif is_windows():
 
 class POPT_Sound:
     def __init__(self):
+        self._quit     = False
         self._root_dir = get_root_dir()
         self._root_dir = self._root_dir.replace('/', '//')
         self._sound_th = None
@@ -26,9 +25,10 @@ class POPT_Sound:
             self.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.master_sprech_on = False
-        self._lang = POPT_CFG.get_guiCFG_language()
 
     def sound_play(self, snd_file: str, wait=True):
+        if self._quit:
+            return False
         if self.master_sound_on:
             if wait:
                 if self._sound_th is not None:
@@ -56,8 +56,11 @@ class POPT_Sound:
                 elif is_windows():
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
                 return True
+        return False
 
     def sprech(self, text: str):
+        if self._quit:
+            return False
         if self.master_sprech_on and self.master_sound_on:
             if text:
                 if self._sound_th is not None:
@@ -86,12 +89,12 @@ class POPT_Sound:
                             1: 'en',
                             2: 'nl',
                             3: 'fr',
-                            4: 'fi',
+                            4: 'cz',
                             5: 'pl',
                             6: 'pt',
                             7: 'it',
                             8: 'zh',
-                        }[self._lang]
+                        }[POPT_CFG.get_guiCFG_language()]
                         try:
                             # print("GTTS")
                             tts = gTTS(text=text,
@@ -114,8 +117,12 @@ class POPT_Sound:
     def bell_sound(self):
         """ fm mainGUI """
         self.sound_play(self._root_dir + CFG_sound_BELL, False)
-        time.sleep(0.22)
-        self.sound_play(self._root_dir + CFG_sound_BELL, False)
+
+    def get_sound_thread(self):
+        return self._sound_th
+
+    def close_sound(self):
+        self._quit = True
 
 
 SOUND = POPT_Sound()

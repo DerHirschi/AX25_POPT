@@ -2,7 +2,7 @@ import copy
 
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -18,14 +18,14 @@ class Main_CFG:
             ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
+            'bbs_fwd_statistics': {},
             # 'pms_home_bbs': getNew_BBS_FWD_cfg,
             ##########################
             # -- MH
             'mh_cfg': getNew_MH_cfg,
             ##########################
             # -- APRS
-            # 'aprs_station': getNew_APRS_Station_cfg,
-            'aprs_station': {},
+            'aprs_node_tab': {},
             'aprs_ais': getNew_APRS_ais_cfg,
             ##########################
             # -- GUI
@@ -33,6 +33,7 @@ class Main_CFG:
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': {},
             'gui_pacman': {},
+            'conn_history': [],
             ##########################
             # -- Beacon
             'beacon_tasks': [],
@@ -267,19 +268,33 @@ class Main_CFG:
 
     ####################
     # APRS
-    def get_CFG_aprs_station(self):
-        return self._config['aprs_station']
-
     def get_CFG_aprs_ais(self):
-        return self._config['aprs_ais']
+        return copy.deepcopy(self._config['aprs_ais'])
 
     def set_CFG_aprs_ais(self, data: dict):
-        self._config['aprs_ais'] = data
+        self._config['aprs_ais'] = copy.deepcopy(data)
 
+    def get_APRS_node_tab(self):
+        return self._config['aprs_node_tab']
+
+    def set_APRS_node_tab(self, node_tab: dict):
+        self._config['aprs_node_tab'] = node_tab
+
+    def get_APRS_beacon_cfg(self):
+        return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
     ########################################################
     # GUI
+    def set_guiCFG_style_name(self, style_name: str):
+        self._config['gui_main_parm']['gui_parm_style_name'] = str(style_name)
+
+    def get_guiCFG_style_name(self):
+        return self._config['gui_main_parm'].get('gui_parm_style_name', 'default')
+
+    def set_guiCFG_language(self, lang_index: int):
+        self._config['gui_main_parm']['gui_lang'] = int(lang_index)
+
     def get_guiCFG_language(self):
-        return int(self._config['gui_main_parm'].get('gui_lang', 0))
+        return int(self._config['gui_main_parm'].get('gui_lang', 1))
 
     def get_guiCFG_text_size(self):
         return int(self._config['gui_main_parm'].get('gui_parm_text_size', DEF_TEXTSIZE))
@@ -288,10 +303,23 @@ class Main_CFG:
         return tuple(self._config['gui_main_parm'].get('gui_cfg_txtWin_pos', (0, 1, 2)))
 
     def get_guiCFG_STYLE_NAME(self):
-        return int(self._config['gui_main_parm'].get('gui_lang', ('black', '#d9d9d9')))
+        return int(self._config['gui_main_parm'].get('gui_parm_style_name', ('black', '#d9d9d9')))
+
+    def set_guiCFG_locator(self, locator: str):
+        if not locator:
+            return False
+        locator = locator.replace(' ', '').replace('\n', '')
+        if len(locator) < 6:
+            return False
+        locator = locator[:6].upper() + locator[6:]
+        self._config['gui_main_parm']['gui_cfg_locator'] = str(locator)
+        return True
 
     def get_guiCFG_locator(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_locator', ''))
+
+    def set_guiCFG_qth(self, qth: str):
+        self._config['gui_main_parm']['gui_cfg_qth'] = str(qth)
 
     def get_guiCFG_qth(self):
         return str(self._config['gui_main_parm'].get('gui_cfg_qth', ''))
@@ -444,7 +472,7 @@ class Main_CFG:
 
     def del_pipe_CFG_fm_call(self, call: str):
         if not call:
-            return False
+            return
         for k in list(self.get_pipe_CFG().keys()):
             i = len(k) - len(call)
             if call == k[i:]:
@@ -490,6 +518,7 @@ class Main_CFG:
         self.del_pipe_CFG_fm_call(call=call)
         self.del_digi_CFG_fm_call(call=call)
         del_user_data(call=call)
+        return True
 
     ###########################################
     # Port
@@ -639,6 +668,15 @@ class Main_CFG:
     def get_BBS_AutoMail_cfg(self):
         return copy.deepcopy(self._config.get('bbs_main', getNew_BBS_cfg()).get('auto_mail_tasks', []))
 
+    def get_fwd_statistics(self, bbs_call: str):
+        return self._config.get('bbs_fwd_statistics', {}).get(bbs_call, getNew_fwdStatistic_cfg())
+
+    def set_fwd_statistics(self, bbs_call: str, stat_dict: dict):
+        try:
+            self._config['bbs_fwd_statistics'][bbs_call] = copy.deepcopy(stat_dict)
+        except Exception as ex:
+            logger.error(ex)
+
     ###########################################
     # Block List
     def get_block_list(self):
@@ -650,5 +688,14 @@ class Main_CFG:
     def set_block_list(self, block_tab: dict):
         self._config['block_list'] = block_tab
 
+    ############################################
+    # Conn History
+    def set_conn_hist(self, conn_hist: list):
+        conn_hist = list(conn_hist)
+        #conn_hist.reverse()
+        self._config['conn_history'] = list(conn_hist)
+
+    def get_conn_hist(self):
+        return list(self._config['conn_history'])
 
 POPT_CFG = Main_CFG()

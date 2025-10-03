@@ -3,7 +3,7 @@
 1: 'en'
 2: 'nl'
 3: 'fr'
-4: 'fi'
+4: 'cz'
 5: 'pl'
 6: 'pt'
 7: 'it'
@@ -11,6 +11,7 @@
 9: '?'
 
 Thanks to NL1NOD(Patrick) for the Dutch translations.
+Thanks to ClaudeMa for the France translations.
 """
 
 STR_TABLE = {
@@ -18,12 +19,12 @@ STR_TABLE = {
     #  ENG
     #  NL
     #  FR
-    #  FI
+    #  CZ
     #  PL
     #  PT
     #  IT
-    #  ?
-    #  ?
+    #  RU
+    #  UA
     'default_ctext': (
         # GER
         ('\n'
@@ -65,7 +66,7 @@ STR_TABLE = {
          '\n'
          ' # Dernière connexion le : $lastConnDate à : $lastConnTime\n'
          '\n'),
-        # FI
+        # CZ
         ('\n'
          '-= Hallo $destName, =-\n'
          '-= willkommen bei $ownCall ($distance km), =-\n'
@@ -228,8 +229,8 @@ STR_TABLE = {
     'bbs_new_user_reg3': (
         'Heimat-BBS         :',
         'Home-BBS           :',
-        'Thuis BBS          :',
-        'Accueil BBS        :',
+        'Thuis-BBS          :',
+        'Accueil-BBS        :',
         '',
         '',
         '',
@@ -822,11 +823,47 @@ STR_TABLE = {
         '',
         ''),
 
+    'delete_mh_history': (
+        'MH-Liste Löschen',
+        'Delete MH-List',
+        'MH-lijst verwijderen',
+        "Supprimer la liste MH",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_dx_history': (
-        'DX-History Löschen',
-        'Delete DX-History',
-        'Verwijder DX-History',
-        "Effacer l'historique DX",
+        'DX-Alarm Verlauf Löschen',
+        'Delete DX-Alarm History',
+        'Verwijder DX-Alarm History',
+        "Effacer l'historique DX-Alarm",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'delete_tracer_history': (
+        'Tracer-Verlauf Löschen',
+        'Delete Trace-History',
+        'Verwijder Tracer-History',
+        "Effacer l'historique Tracer",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'delete_conn_history': (
+        'Verbindungsverlauf löschen',
+        'Delete Connection-History',
+        'Wis de verbindingsgeschiedenis',
+        "Effacer l'historique des connexions",
         '',
         '',
         '',
@@ -845,6 +882,7 @@ STR_TABLE = {
         '',
         '',
         ''),
+
 
     'select_all': (
         'Alles auswählen',
@@ -967,10 +1005,10 @@ STR_TABLE = {
         ''),
 
     'aprs_mon': (
-        'APRS-Server Monitor',
-        'APRS-Server Monitor',
-        'APRS-Server Monitor',
-        'Moniteur APRS-Server',
+        'APRS Monitor',
+        'APRS Monitor',
+        'APRS Monitor',
+        'Moniteur APRS',
         '',
         '',
         '',
@@ -1324,6 +1362,18 @@ STR_TABLE = {
         '',
         '',
         '',
+        ''), # send_selected
+
+    'send_selected': (
+        'Auswahl senden',
+        'Send selected',
+        'Selectie verzenden',
+        'Envoyer la sélection',
+        '',
+        '',
+        '',
+        '',
+        '',
         ''),
 
     'clean_mon_win': (
@@ -1433,6 +1483,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'address': (
+        'Adresse',
+        'Address',
+        'Adres',
+        'Adresse',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'channel': (
         'Kanal',
         'Channel',
@@ -1486,6 +1548,18 @@ STR_TABLE = {
         'Main Page',
         'Hoofdpagina',
         'Page principale',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'password': (
+        'Passwort',
+        'Password',
+        'Wachtwoord',
+        'Mot de passe',
         '',
         '',
         '',
@@ -1891,6 +1965,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'comment': (
+        'Kommentar',
+        'Comment',
+        'Opmerking',
+        'Commentaire',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'aprs_settings': (
         'APRS-Einstellungen',
         'APRS-Settings',
@@ -1903,11 +1989,34 @@ STR_TABLE = {
         '',
         ''),
 
+    'aprs_server': (
+        'APRS-Server',
+        'APRS-Server',
+        'APRS-Server',
+        'APRS-Server',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'conn_2_aprs_server': (
+        'Zum APRS-Server verbinden',
+        'Connect to APRS server',
+        'Verbinding maken met APRS-server',
+        'Se connecter au serveur APRS',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     'aprs_pn_msg': (
-        'APRS Private Nachrichten',
-        'APRS Private Messages',
-        'APRS Prive berichten',
-        'Message APRS privés',
+        'APRS Messenger',
+        'APRS Messenger',
+        'APRS Messenger',
+        'APRS Messenger',
         '',
         '',
         '',
@@ -2364,6 +2473,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'time': (
+        'Zeit',
+        'Time',
+        'Tijd',
+        'Heure',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'date': (
         'Datum',
         'Date',
@@ -2736,6 +2857,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'connection_history': (
+        'Verbindungsverlauf',
+        'Connection history',
+        'Verbindingsgeschiedenis',
+        'Historique des connexions',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'user_db': (
         'User Datenbank',
         'User Database',
@@ -2748,6 +2881,17 @@ STR_TABLE = {
         '',
         ''),
 
+    'show_in_userDB': (
+        'In User-DB zeigen',
+        'Show in User-DB',
+        'Weergeven in Gebruikersdatabase',
+        'Afficher dans la base de données utilisateur',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
     # CLI
     'cmd_help_bell': (
         'Sysop Rufen',
@@ -3428,6 +3572,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_fwdinfo': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Zeigt Forward-Statistiken',
+        'Shows forward statistics',
+        'Toont voorwaartse statistieken',
+        'Affiche les statistiques avancées',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '<MSG#>: Liest die Nachricht mit der entspr. Nummer aus.',
@@ -3605,6 +3762,32 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_mr': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        'Markiert alle pers. Nachrichten als gelesen.',
+        'Marks all personal messages as read.',
+        'Markeert alle persoonlijke berichten als gelezen.',
+        'Marque tous les messages personnels comme lus.',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'box_cmd_mr_msg': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # {} Nachricht(en) wurde(n) als gelesen markiert.\r',
+        '\r # {} message(s) were marked as read.\r',
+        '\r # {} bericht(en) zijn gemarkeerd als gelezen.\r',
+        '\r # {} message(s) ont été marqués comme lus.\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_op': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Anzahl der Zeilen pro Seite. Nur OP aus.',
@@ -3646,7 +3829,7 @@ STR_TABLE = {
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # BOX: Du hast {} neu Mails.\r\r',
+        '\r # BOX: Du hast {} neue Mail(s).\r\r',
         '\r # BOX : You have {} new mails.\r\r',
         '\r # BOX: Je hebt {} nieuwe mails.\r\r',
         '\r # BOX : Vous avez {} nouveaux mails.\r\r',
@@ -3724,9 +3907,9 @@ STR_TABLE = {
 
     'box_r_no_msg_found': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r\r # Nachricht {} nicht gefunden ! \r\r',
+        '\r\r # Nachricht {} nicht gefunden !\r\r',
         '\r\r # Message {} not found! \r\r',
-        '\r\r # Bericht {} niet gevonden! \r\r',
+        '\r\r # Bericht {} niet gevonden!\r\r',
         '\r\r # Message {} non trouvé! \r\r',
         '',
         '',
@@ -3776,7 +3959,7 @@ STR_TABLE = {
 
     'box_msg_del': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Es wurden {} Nachrichten gelöscht.\r',
+        '\r # Es wurden {} Nachricht(en) gelöscht.\r',
         '\r # {} messages have been deleted.\r',
         '\r # {} berichten zijn verwijderd.\r',
         '\r # {} messages ont été supprimés.\r',
@@ -3789,7 +3972,7 @@ STR_TABLE = {
 
     'box_msg_del_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Nachrichte(n) {} wurde(n) gelöscht.\r',
+        '\r # Nachricht(en) {} wurde(n) gelöscht.\r',
         '\r # Message(s) {} have been deleted.\r',
         '\r # Berichte(n) {} zijn verwijderd.\r',
         '\r # {} Message(s) supprimés.\r',
@@ -4802,6 +4985,33 @@ STR_TABLE = {
         'Alle instellingen gaan verloren!'),
         ('Voulez-vous vraiment supprimer ce port? \n'
          'Tous les réglages seront perdus! '),
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+    ######################################
+    # Setup Wizard
+    'invalid_call_titel': (
+        'Ungültiger Call',
+        'Invalid Callsign',
+        'Ongeldige Call',
+        'Call invalide',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'invalid_call_msg': (
+        'Der eingegebene Sysop-Call ist ungültig',
+        'The entered sysop-call is invalid',
+        'De ingevoerde sysop-aanroep is ongeldig',
+        "L'appel sysop-call n'est pas valide",
         '',
         '',
         '',

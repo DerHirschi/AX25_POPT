@@ -58,6 +58,7 @@ class UserCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
+                               'CONV',
                                '?']
 
     def _s2(self):

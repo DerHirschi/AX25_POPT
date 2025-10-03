@@ -24,7 +24,8 @@ class AutoConnTask:
         #    {'cmd': 'c celle', 'dest_call': 'CEN0DE', 'wait': 0},
         #    {'cmd': 'm', 'dest_call': 'CE0BBS', 'wait': 0}
         #]
-        self._conf = conf
+        self._conf          = conf
+        self._port_handler  = port_handler
 
         if not self._conf.get('conn_script', {}):
             dest_call = self._conf.get('dest_call')
@@ -126,6 +127,10 @@ class AutoConnTask:
         # print(f"ConnTask {self._conf.get('task_typ', '')} END")
         if self.state_id:
             self._set_state_exec(0)
+        bbs = self._port_handler.get_bbs()
+        fwd_connections = bbs.get_fwd_connections()
+        if not fwd_connections:
+            self._port_handler.set_pmsFwdAlarm(False)
 
     def _end_connection(self):
         # 0

@@ -1,5 +1,7 @@
+from datetime import timedelta
+
 from bbs.bbs_constant import GET_MSG_STRUC
-from cfg.constant import LANGUAGE, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
+from cfg.constant import DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
     DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
     TASK_TYP_MAIL
 from schedule.popt_sched import getNew_schedule_config
@@ -74,7 +76,7 @@ def getNew_BBS_cfg():
         fwd_port_cfg    = {},           # Port CFGs
         home_bbs        = [],           # Used by GUI (newMSG)
         bin_mode        = True,         # Binary Mails (compressed)
-        enable_fwd      = True,         # False = PMS-Mode (No Forwarding) TODO: GUI option
+        enable_fwd      = True,         # False = PMS-Mode (No Forwarding)
         single_auto_conn= True,         # TODO: delete .. We have port_conn_limit Only one outgoing connection at a time
         auto_conn       = False,        # Allow Outgoing Connects
         # Path/Routing
@@ -163,6 +165,27 @@ def getNew_AUTOMAIL_task():
         env_vars        = False,
         scheduler_cfg   = dict(getNew_schedule_config()),
     )
+
+def getNew_fwdStatistic_cfg():
+    return dict(
+                mail_pn_rx      = 0,
+                mail_pn_tx      = 0,
+                mail_bl_rx      = 0,
+                mail_bl_tx      = 0,
+                mail_rx_hold    = 0,
+                mail_tx_hold    = 0,
+                mail_rx_rej     = 0,
+                mail_tx_rej     = 0,
+                mail_rx_error   = 0,
+                mail_tx_error   = 0,
+                # Bytes/Traffic Counter
+                mail_bytes_rx   = 0,
+                mail_bytes_tx   = 0,
+                bytes_rx        = 0,
+                bytes_tx        = 0,
+                connect_c       = 0,
+                connect_e       = 0,
+            )
 """
 def getNew_BBS_User_cfg():
     # UserDB Entry
@@ -185,7 +208,46 @@ def getNew_MH_cfg():
         # '_short_MH': deque([], maxlen=40),
     }
 
-
+def getNew_ConnHistory_struc(
+        ch_id: int,
+        port_id: int,
+        from_call: str,
+        own_call: str,
+        via: list,
+        locator: str,
+        distance: int,
+        typ: str,
+        conn_incoming: bool,
+        time,
+        disco: bool,
+        inter_connect: bool,
+        duration: timedelta,
+        tx_bytes_n: int,
+        rx_bytes_n: int,
+        tx_pack_n: int,
+        rx_pack_n: int,
+        image_typ: str,
+):
+    return dict(
+        ch_id=int(ch_id),
+        port_id=int(port_id),
+        from_call=str(from_call),
+        own_call=str(own_call),
+        via=list(via),
+        locator=str(locator),
+        distance=int(distance),
+        typ=str(typ),
+        conn_incoming=bool(conn_incoming),
+        time=time,
+        disco=bool(disco),
+        inter_connect=bool(inter_connect),
+        duration=duration,
+        tx_bytes_n=int(tx_bytes_n),
+        rx_bytes_n=int(rx_bytes_n),
+        tx_pack_n=int(tx_pack_n),
+        rx_pack_n=int(rx_pack_n),
+        image_typ=str(image_typ),
+    )
 #######################################
 # APRS
 def getNew_APRS_Station_cfg():
@@ -206,8 +268,6 @@ def getNew_APRS_ais_cfg():
         'ais_loc': '',
         'ais_lat': 0.0,
         'ais_lon': 0.0,
-        'add_new_user': False,
-        'ais_aprs_stations': {},
         'ais_host': ('cbaprs.dyndns.org', 27234),
         'ais_active': False,
         # Tracer Parameter
@@ -223,18 +283,33 @@ def getNew_APRS_ais_cfg():
         'be_tracer_alarm_hist': {},
         'be_tracer_active': False,
         'be_auto_tracer_active': False,
-        'aprs_msg_pool': {  # TODO > DB ?
+        'aprs_msg_pool': {
             "message": [],
             "bulletin": [],
-        }
+        },
+        'aprs_msg_ack_c': 0,
+        # Beacon
+        'aprs_beacons'      : {},
+
     }
 
+def getNew_APRS_beacon_cfg():
+    return dict(
+        be_scheduler_cfg    = dict(getNew_schedule_config()),
+        be_text             = '',
+        be_symbol           = '',
+        be_from             = 'NOCALL',
+        be_via              = '',
+        be_wide             = 0,
+        be_ports            = [],
+        be_enabled          = True,
+    )
 
 #######################################
 # GUI Parameter
 def getNew_maniGUI_parm():
     return dict(
-        gui_lang                    = int(LANGUAGE),
+        gui_lang                    = 1,
         gui_cfg_locator             = '',
         gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
@@ -277,13 +352,15 @@ def getNew_maniGUI_parm():
         gui_parm_main_pan_pos       = 400,
         gui_parm_side_pan_pos       = 300,
         gui_parm_text_pan_pos       = (300, 300),
+        gui_parm_mon_pw_pos         = 200,
+        gui_aprs_text_pan_pos       = (300, 300),
         #################
         # MAin GUI width and height
         gui_parm_main_width        = 1400,
         gui_parm_main_height       = 850,
         #################
         # Style name
-        gui_parm_style_name         = "classic"
+        gui_parm_style_name         = "default"
     )
 
 

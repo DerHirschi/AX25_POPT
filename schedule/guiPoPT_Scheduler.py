@@ -104,8 +104,9 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
             ttk.Label(min_frame, text=get_strTab('minutes', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(min_frame,
-                                     [(x - 1) * 5 for x in range(1, 13)],
-                                     'minutes'
+                                     [x * 5 for x in range(0, 12)],
+                                     'minutes',
+                                     6
                                      )
         if 'h' in sel_frames:
             h_frame = ttk.Frame(r_frame, borderwidth=5)
@@ -115,7 +116,8 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             ttk.Label(h_frame, text=get_strTab('hours', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(h_frame,
                                      list(range(24)),
-                                     'hours'
+                                     'hours',
+                                     6
                                      )
         if 'wd' in sel_frames:
             weekDay_frame = ttk.Frame(r_frame, borderwidth=5)
@@ -125,7 +127,8 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             ttk.Label(weekDay_frame, text=get_strTab('week_day', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(weekDay_frame,
                                      WEEK_DAYS_GE,
-                                     'week_days'
+                                     'week_days',
+                                     7
                                      )
 
         if 'm' in sel_frames:
@@ -136,7 +139,8 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             ttk.Label(month_frame, text=get_strTab('month', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(month_frame,
                                      list(range(1, 13)),
-                                     'month'
+                                     'month',
+                                     6
                                      )
 
         if 'md' in sel_frames:
@@ -147,7 +151,8 @@ class PoPT_Set_Scheduler(tk.Toplevel):
             ttk.Label(monthDay_frame, text=get_strTab('month_day', self._lang)).pack(side=tk.TOP, fill=tk.X, expand=False)
             self._init_select_frames(monthDay_frame,
                                      list(range(1, 32)),
-                                     'month_day'
+                                     'month_day',
+                                     7
                                      )
 
         self._set_vars_fm_conf()
@@ -191,7 +196,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
                   command=self._reset_all_selVars
                   ).pack(side=tk.RIGHT, expand=False)
 
-    def _init_select_frames(self, frame: ttk.Frame, sel_list: list, var_k):
+    def _init_select_frames(self, frame: ttk.Frame, sel_list: list, var_k, items_p_line=7):
         """
         :param frame: tk.Frame
         :param sel_list: list
@@ -218,7 +223,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
                 if var_k == 'minutes':
                     self._min_sel[el] = chk_btn
-                el_c = (el_c + 1) % 7
+                el_c = (el_c + 1) % items_p_line
         self._select_vars[var_k] = var_dict
 
     def _set_vars_fm_conf(self):
@@ -276,7 +281,7 @@ class PoPT_Set_Scheduler(tk.Toplevel):
 
     def _ok(self):
         self._set_vars_to_conf()
-        if self._root_win.scheduler_config_save_task:
+        if hasattr(self._root_win, 'scheduler_config_save_task'):
             self._root_win.scheduler_config_save_task()
         self._close()
 
@@ -284,3 +289,5 @@ class PoPT_Set_Scheduler(tk.Toplevel):
         self._root_win.schedule_win = None
         self.destroy()
 
+    def destroy_win(self):
+        self._close()

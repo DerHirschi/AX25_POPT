@@ -153,5 +153,5 @@ class PrivilegWin(tk.Toplevel):
         self._root_cl.settings_win = None
 
     def tasker(self):
-        pass
+        return False
 

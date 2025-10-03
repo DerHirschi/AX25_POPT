@@ -57,7 +57,7 @@ class GUINewUserEntry(tk.Toplevel):
         if not validate_ax25Call(inp):
             self._call_ent.focus()
             return
-        user_db = self._root_win.get_UserDB()
+        user_db = self._root_win.get_userDB()
         db_ent = user_db.get_entry(inp, add_new=True)
         if db_ent is None:
             self._call_ent.focus()

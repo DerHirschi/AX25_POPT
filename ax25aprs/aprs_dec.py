@@ -19,7 +19,7 @@ def parse_aprs_fm_ax25frame(ax25frame_conf: dict):
         return aprslib.parse(aprs_msg_input)
     except aprslib.UnknownFormat:
         return {}
-    except aprslib.ParseError as e:
+    except aprslib.ParseError:
         return {}
 
 
@@ -34,19 +34,19 @@ def parse_aprs_fm_aprsframe(aprs_frame):
         return {}
 
 
-def format_aprs_f_aprs_mon(aprs_frame, own_locator, add_new_user=False):
+def format_aprs_f_aprs_mon(aprs_frame, own_locator):
     # aprs_frame = "12:12:21", aprs_frame
     ret = f"{aprs_frame['rx_time'].strftime('%d/%m/%y %H:%M:%S')}: {aprs_frame['from']} to {aprs_frame['to']}"
     if aprs_frame['path']:
         ret += " via " + ' '.join(aprs_frame['path'])
     ret += ":\n"
 
-    msg = format_aprs_f_monitor(aprs_pack=aprs_frame, own_locator=own_locator, add_new_user=add_new_user)
+    msg = format_aprs_f_monitor(aprs_pack=aprs_frame, own_locator=own_locator)
 
     return ret + msg + '\n'
 
 
-def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, add_new_user=True):
+def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None):
     if ax25frame_conf:
         if ax25frame_conf.get('ctl_flag', '') != 'UI':
             return ''
@@ -57,13 +57,12 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
         return ''
     if not aprs_msg:
         return ''
-    # print(aprs_msg)
     symbol = '  '
-    ret, dist = format_aprs_msg(aprs_msg, own_locator, aprs_msg, add_new_user=add_new_user)
+    ret, dist = format_aprs_msg(aprs_msg, own_locator, aprs_msg)
     if 'subpacket' in aprs_msg.keys():
-        ret += '├►SUBPACKET    :\n' + format_aprs_msg(aprs_msg['subpacket'], own_locator, aprs_msg, add_new_user=add_new_user)[0]
+        ret += '├►SUBPACKET    :\n' + format_aprs_msg(aprs_msg['subpacket'], own_locator, aprs_msg)[0]
     if 'weather' in aprs_msg.keys():
-        ret += '├►WEATHER ☀☁   :\n' + format_aprs_msg(aprs_msg['weather'], own_locator, aprs_msg, add_new_user=add_new_user)[0]
+        ret += '├►WEATHER ☀☁   :\n' + format_aprs_msg(aprs_msg['weather'], own_locator, aprs_msg)[0]
         symbol = '☀☁'
     if 'format' in aprs_msg.keys():
         if 'message' == aprs_msg['format']:
@@ -130,7 +129,7 @@ def format_aprs_f_monitor(ax25frame_conf=None, own_locator='', aprs_pack=None, a
     return ret
 
 
-def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: aprslib.parse, add_new_user=True):
+def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: aprslib.parse):
     ret = ''
     dist = ''
     typ = ''
@@ -190,7 +189,7 @@ def format_aprs_msg(aprs_frame: aprslib.parse, own_locator, full_aprs_frame: apr
             typ = 'APRS-WX'
 
     if loc:
-        db_ent = USER_DB.get_entry(full_aprs_frame.get('from', ''), add_new=add_new_user)
+        db_ent = USER_DB.get_entry(full_aprs_frame.get('from', ''), add_new=False)
         if db_ent:
             db_ent.LOC = loc
             db_ent.Lat = aprs_frame['latitude']

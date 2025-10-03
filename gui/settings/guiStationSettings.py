@@ -350,31 +350,46 @@ class StatSetTab:
 
     def _chk_umbruch_ct(self, event=None):
         ind2 = str(int(float(self._c_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._c_text_ent.get(ind2,  self._c_text_ent.index(tk.INSERT)))
+        old_text = self._c_text_ent.get(ind2,  self._c_text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._c_text_ent.delete(ind2,  self._c_text_ent.index(tk.INSERT))
         self._c_text_ent.insert(tk.INSERT, text)
 
     def _chk_umbruch_it(self, event=None):
         ind2 = str(int(float(self._info_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._info_text_ent.get(ind2,  self._info_text_ent.index(tk.INSERT)))
+        old_text = self._info_text_ent.get(ind2,  self._info_text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._info_text_ent.delete(ind2,  self._info_text_ent.index(tk.INSERT))
         self._info_text_ent.insert(tk.INSERT, text)
 
     def _chk_umbruch_lit(self, event=None):
         ind2 = str(int(float(self._long_info_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._long_info_text_ent.get(ind2,  self._long_info_text_ent.index(tk.INSERT)))
+        old_text = self._long_info_text_ent.get(ind2,  self._long_info_text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._long_info_text_ent.delete(ind2,  self._long_info_text_ent.index(tk.INSERT))
         self._long_info_text_ent.insert(tk.INSERT, text)
 
     def _chk_umbruch_at(self, event=None):
         ind2 = str(int(float(self._akt_info_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._akt_info_text_ent.get(ind2,  self._akt_info_text_ent.index(tk.INSERT)))
+        old_text = self._akt_info_text_ent.get(ind2,  self._akt_info_text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._akt_info_text_ent.delete(ind2,  self._akt_info_text_ent.index(tk.INSERT))
         self._akt_info_text_ent.insert(tk.INSERT, text)
 
     def _chk_umbruch_bt(self, event=None):
         ind2 = str(int(float(self._bye_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._bye_text_ent.get(ind2,  self._bye_text_ent.index(tk.INSERT)))
+        old_text = self._bye_text_ent.get(ind2,  self._bye_text_ent.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._bye_text_ent.delete(ind2,  self._bye_text_ent.index(tk.INSERT))
         self._bye_text_ent.insert(tk.INSERT, text)
 

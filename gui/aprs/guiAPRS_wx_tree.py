@@ -4,7 +4,7 @@ from tkinter import ttk, Menu, messagebox
 from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.string_tab import STR_TABLE
+from fnc.str_fnc import get_strTab
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
 # from cfg.logger_config import logger
 
@@ -13,10 +13,9 @@ class WXWin(tk.Toplevel):
     # TODO all Delete WX-DATA
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win = root_win
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self._ais_obj = PORT_HANDLER.get_aprs_ais()
-        self._ais_obj.wx_tree_gui = self
+        self._root_win  = root_win
+        self._ais_obj   = PORT_HANDLER.get_aprs_ais()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
         self._rev_ent = False
@@ -133,8 +132,8 @@ class WXWin(tk.Toplevel):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
         MenuVerb = Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=STR_TABLE['del_all'][self._lang], command=self._delete_all_data)
-        menubar.add_cascade(label=STR_TABLE['data'][self._lang], menu=MenuVerb, underline=0)
+        MenuVerb.add_command(label=self._getTabStr('del_all'), command=self._delete_all_data)
+        menubar.add_cascade(label=self._getTabStr('data'), menu=MenuVerb, underline=0)
 
     def _init_tree_data(self):
         self._get_wx_data()
@@ -142,7 +141,6 @@ class WXWin(tk.Toplevel):
         self._update_tree()
 
     def update_tree_data(self):
-        # TODO Call fm guiMain Loop
         self._get_wx_data()
         self._format_tree_data()
         self._update_tree()
@@ -211,13 +209,13 @@ class WXWin(tk.Toplevel):
         if not self._ais_obj:
             return
         # self.lower()
-        if messagebox.askokcancel(title=STR_TABLE.get('msg_box_delete_data', ('', '', ''))[self._lang],
-                                  message=STR_TABLE.get('msg_box_delete_data_msg', ('', '', ''))[self._lang], parent=self):
+        if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
+                                  message=self._getTabStr('msg_box_delete_data_msg'),
+                                  parent=self):
             self._ais_obj.delete_wx_data()
             self.update_tree_data()
         # self.lift()
 
     def _close(self):
-        self._ais_obj.wx_tree_gui = None
         self._root_win.wx_window = None
         self.destroy()

@@ -1,4 +1,81 @@
 ###########################################################################################################
+# 2.120.x
+!!! Check requirements.txt (tkintermapview benötigt) !!!
+Fixes:
+- BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
+  wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
+  FWD-Warteschlange entfernt wird
+- Zeilenumbruch für APRS-Nachrichten
+- Eigene APRS-Nachrichten werden nicht angezeigt
+- Eingehende S&F-Forwardverbindung wird nicht Disconnected, wenn FWD
+  beendet ist.
+- S= Nachrichten (Nachricht wird bereits von einer anderen Station empfangen)
+  werden nicht erneut zum FWD angeboten.
+- S&F-Forwardverbindung: Header Parsing Error bei Bulletin Mails von WinBox
+- FWD-Statistik mail_bytes_tx Zähler hat falschen Wert erfasst
+- Asynchrone Ausgabe der "SYS-Nachrichten" (*** connected to ..., ...)
+- Probleme beim Sortieren der Statistik-Tabelle in Forwardwarteschlange-GUI
+- BBS: "Neue Benutzeranmeldung" Mail an Sysop wird in CLI-Sprache und nicht
+  in GUI Sprache gesendet
+
+Optimierung/Änderungen:
+- GUI Tasker-Warteschlange
+- Systemnachrichtenausgaben im Monitor beim Beenden von PoPT
+- Tasker für GUI FWD-Warteschlange
+- Rechtsklickmenü im QSO- und Vorschreibfenster
+- Programm-Ende Prozedur
+- Alte StringTab Aufrufe aufgeräumt
+- GUI-APRS-Server Monitor Update-Tasks
+- GUI-APRS-Messenger Update-Tasks
+- GUI-APRS-Messenger überarbeitet
+- Datenbank Abfragen
+- Zeilenumbruch-Check Methoden in diversen GUI's
+- Blacklist gilt jetzt auch für DIGI
+- APRS-Servermonitor überarbeitet
+- APRS-Servermonitor ist jetzt APRS-Monitor in dem APRS-Pakete
+  aus allen Quellen(Ports) angezeigt werden
+- MainGUI Tasker update_idletasks() wird jetzt nur wenn nötig ausgeführt
+- Gesendeter Text wird jetzt sofort nach der Eingabe im Vorschreibfenster,
+  im QSO-Fenster angezeigt und nicht, erst wenn das Paket gesendet wurde.
+- APRS-Einstellung-GUI überarbeitet
+- MH-Liste-GUI überarbeitet
+- MH Netzwerk-Graph(Net-Plot) ist jetzt in die MH-Liste GUI gewandert
+- APRS-Beacon-Tracer ist jetzt in die MH-GUI "gewandert"
+- Icons für Verbindungstypen in "Connects" Tabelle (Seiten-Fenster)
+
+Neue Implementierungen / Funktionen:
+- BBS Forward-Statistiken/Zähler in GUI FWD-Warteschlange
+- BBS Forward-Statistiken/Zähler Tabelle in GUI FWD-Warteschlange
+- CLI-CMD "(FWDI)NFO" gibt FWD-Statistik/Zähler zurück
+- CLI-CMD "(MR)" markiert alle pers. Nachrichten als gelesen.
+- APRS-Messenger: CQ-Calls (CQ*, ALL*, QST*) werden jetzt ausgewertet
+  und Sysop benachrichtigt bei Empfang eine CQ-Nachricht
+- APRS-Messenger: Tabelle für empfangende Bulletin Nachrichten
+- APRS-Icons für APRS-Monitor
+- "Node-Liste" im APRS-Monitor
+- "Reported Objects Liste" im APRS-Monitor
+- "WX-Paket Liste" im APRS-Monitor
+- "MSG-Paket Liste" im APRS-Monitor
+- "Bulletin-Paket Liste" im APRS-Monitor
+- Zusätzlicher Monitor in Tabellenansicht im Hauptfenster
+- QSO-Fenster Rechtsklick "Auswahl senden" - sendet ausgewählten Text oder
+  Kommando an Gegenstation
+- Möglichkeit APRS-Beacons zu senden via (HF & APSR-Server)
+- APRS-Map im APRS-Monitor
+- Karte/Map für MH-Liste GUI
+- Karte/Map für UserDB-Übersicht GUI
+- Karte/Map für UserDB Haupt-GUI
+- Tabelle für DX-Alarm-History in MH-Liste GUI
+- Tabelle für Verbindungsverlauf in Seitenfenter(Haupt-GUI)
+- Tabelle für Verbindungsverlauf in MH-Liste GUI
+- Tabelle für Verbindungsverlauf in BBS-Forwardwarteschlangen GUI
+- APRS-Icons (wenn bekannt) in MH-Liste
+- Simpler "First Setup" Wizard, mit Einstellungen für Sprache und
+  GUI-Style. (Wird nach und nach erweitert)
+- Simpler lokaler Converse-Mode (kein Ping-Pong Converse !)
+
+###########################################################################################################
+###########################################################################################################
 # 2.119.x
 Fixes:
 - Script-Error, wenn Port geschlossen wird (TNC an Seriellen Port)
@@ -33,6 +110,7 @@ Optimierung/Änderungen:
   ignoriert, solange die Initialisierung nicht vollständig abgeschlossen ist)
 - Unnötige updates der Forward-Warteschlange
 - Fehlende Übersetzungen vervollständigt by ClaudeMa
+- Fehlende Übersetzungen vervollständigt by Patric (NL1NOD)
 
 Neue Implementierungen / Funktionen:
 - Net/Rom INP decoder

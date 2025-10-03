@@ -2,7 +2,7 @@ import os
 import logging
 from datetime import datetime
 
-from cfg.constant import DEBUG_LOG, CFG_logging_path, CFG_data_path, CONSOLE_LOG
+from cfg.constant import DEBUG_LOG, CFG_logging_path, CFG_data_path, CONSOLE_LOG, BBS_DEBUG_LOG
 
 lg_msg = []
 # Data
@@ -36,6 +36,8 @@ logging.getLogger("aprslib").setLevel(logging.INFO)
 logging.getLogger("playsound").setLevel(logging.WARNING)
 logging.getLogger("gtts").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
+
 logging.basicConfig(
     # format="%(asctime)s - %(levelname)s - %(name)s: %(filename)s:%(funcName)s()> %(message)s",
     format=log_format,
@@ -79,7 +81,10 @@ BBS_LOG         = logging.getLogger('BBS')
 fileHandler_bbs = logging.FileHandler(f'{CFG_logging_path}bbs{dt_str}.log', mode='a')
 fileHandler_bbs.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
 # BBS_LOG.setLevel(logging.INFO)
-BBS_LOG.setLevel(log_level)
+if BBS_DEBUG_LOG:
+    BBS_LOG.setLevel(logging.DEBUG)
+else:
+    BBS_LOG.setLevel(logging.INFO)
 BBS_LOG.addHandler(fileHandler_bbs)
 if CONSOLE_LOG:
     streamHandler = logging.StreamHandler()

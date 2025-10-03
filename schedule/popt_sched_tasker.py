@@ -1,10 +1,10 @@
 import threading
 import time
-import traceback
 
-from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL
+from cfg.constant import TASK_TYP_FWD, TASK_TYP_BEACON, TASK_TYP_MAIL, TASK_TYP_APRS_BEACON
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
+from schedule.tasks.APRSbeaconTask import APRSbeaconTask
 from schedule.tasks.AutoConnTask import AutoConnTask
 from schedule.popt_sched import PoPTSchedule
 from schedule.tasks.BeaconTask import BeaconTask
@@ -14,14 +14,16 @@ class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
         self._port_handler = port_handler
         self._scheduled_tasks = {
-            TASK_TYP_FWD:    self._start_AutoConnTask,
-            TASK_TYP_BEACON: self._start_BeaconTask,
-            TASK_TYP_MAIL:   self._start_SchedMail_Task,
+            TASK_TYP_FWD:           self._start_AutoConnTask,
+            TASK_TYP_BEACON:        self._start_BeaconTask,
+            TASK_TYP_MAIL:          self._start_SchedMail_Task,
+            TASK_TYP_APRS_BEACON:   self._start_aprs_BeaconTask,
         }
         self._scheduled_tasks_q = []
         self.auto_connections = {}      # [AutoConnTask()]
         self._task_timer_1sec = time.time() + 1
         self._init_beacon_tasks()
+        self._init_aprs_beacon_tasks()
 
     def tasker(self):
         """ 0.5 Sek called fm Porthandler Loop """
@@ -67,7 +69,6 @@ class PoPTSchedule_Tasker:
 
     def _AutoConn_tasker(self):
         for k in list(self.auto_connections.keys()):
-            # print(f"AutoConn state_id: {self.auto_connections[k].state_id}")
             if not self.auto_connections[k].crone():
 
                 logger.debug(f"_AutoConn_tasker del: {k}")
@@ -76,7 +77,6 @@ class PoPTSchedule_Tasker:
                 except Exception as ex:
                     logger.error(
                         f"Fehler in _AutoConn_tasker: {ex}, Thread: {threading.current_thread().name}")
-                    traceback.print_exc()
                     raise ex
 
     def _is_AutoConn_maxConn(self, autoconn_cfg):
@@ -105,17 +105,46 @@ class PoPTSchedule_Tasker:
     def _start_BeaconTask(self, conf, sched_conf=None):
         is_glb_beacon = POPT_CFG.get_guiPARM_main_param_by_key('gui_cfg_beacon')
         if not is_glb_beacon:
-            return None
+            return
         if not conf.get('is_enabled', False):
-            return None
+            return
         if conf.get('own_call', 'NOCALL') == 'NOCALL':
-            return None
+            return
         if not conf.get('dest_call', ''):
-            return None
+            return
         if sched_conf:
             if not sched_conf.is_schedule():
-                return None
+                return
         beacon = BeaconTask(self._port_handler, conf)
+        beacon.send_it()
+
+    ####################################
+    # APRS Beacon Tasker
+    def reinit_aprs_beacon_tasks(self):
+        self.del_scheduler_Task_by_Typ(TASK_TYP_APRS_BEACON)
+        self._init_aprs_beacon_tasks()
+
+    def _init_aprs_beacon_tasks(self):
+        beacons_cfgs: dict = POPT_CFG.get_APRS_beacon_cfg()
+        for from_call, beacon_cfg in beacons_cfgs.items():
+            sched_cfg = beacon_cfg.get('be_scheduler_cfg', None)
+            beacon_cfg['task_typ'] = TASK_TYP_APRS_BEACON
+            if sched_cfg:
+                self.insert_scheduler_Task(sched_cfg, beacon_cfg)
+
+    def _start_aprs_BeaconTask(self, conf, sched_conf=None):
+        if not conf.get('be_enabled', False):
+            return
+        if conf.get('be_from', 'NOCALL') == 'NOCALL':
+            return
+        if not conf.get('be_ports', []):
+            return
+        if sched_conf:
+            if not sched_conf.is_schedule():
+
+                return
+
+        beacon = APRSbeaconTask(self._port_handler, conf)
         beacon.send_it()
 
     ####################################

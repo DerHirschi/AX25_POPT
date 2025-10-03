@@ -16,7 +16,7 @@ class BeaconTab:
     def __init__(self, root, tabclt: ttk.Notebook, beacon: dict):
         self._need_reinit = False
         self._tab_clt = tabclt
-        self._root = root
+        self._root_win = root
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
@@ -185,7 +185,7 @@ class BeaconTab:
         #################
         # Aus Datei
         call_x = 10
-        call_y = self._root.win_height - 180
+        call_y = self._root_win.win_height - 180
         # call_y = 100
         call_label = ttk.Label(self.own_tab, text=f"{self._getTabStr('text_fm_file')}:")
         call_label.place(x=call_x, y=call_y)
@@ -200,7 +200,7 @@ class BeaconTab:
         #################
         # Byte Zähler
         call_x = 885
-        call_y = self._root.win_height - 185
+        call_y = self._root_win.win_height - 185
         self._byte_count_var = tk.StringVar(self.own_tab, '')
         ttk.Label(self.own_tab,
                  textvariable=self._byte_count_var,
@@ -237,7 +237,7 @@ class BeaconTab:
     def _cmd_fm_call_set(self, event):
         self.beacon['own_call'] = str(self.from_select_var.get())
         _label_txt = '{} {}'.format(self.port_select_var.get(), self.from_select_var.get())
-        self._root.tabControl.tab(self._root.tab_list.index(self), text=_label_txt)
+        self._root_win.tabControl.tab(self._root_win.tab_list.index(self), text=_label_txt)
         # self._root.change_port(None)
         self._need_reinit = True
 
@@ -276,7 +276,7 @@ class BeaconTab:
             title='Open files',
             initialdir='data/',
             filetypes=filetypes,
-            parent=self._root)
+            parent=self._root_win)
         # self._root.lift()
         if filenames:
             self.be_txt_filename_var.set(filenames[0])
@@ -333,7 +333,7 @@ class BeaconTab:
             self.schedule_config['move'] = int(float(self.move_var.get()))
         except ValueError:
             pass
-        if not self._root.schedule_win:
+        if not self._root_win.schedule_win:
             PoPT_Set_Scheduler(self)
 
     def scheduler_config_save_task(self):
@@ -380,7 +380,7 @@ class BeaconSettings(ttk.Frame):
         ############################################
         self.tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=50)
-        self.tab_list: [ttk.Frame] = []
+        self.tab_list = []
         # Tab Frames
         for beacon in POPT_CFG.get_Beacon_tasks():
             port_id = beacon.get('port_id', 0)

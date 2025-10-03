@@ -5,6 +5,7 @@
 import time
 from datetime import datetime
 
+from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
 # from ax25.ax25Error import AX25ConnectionERROR
@@ -132,6 +133,7 @@ class AX25Conn:
         ax25_conf = ax25_frame.get_frame_conf()
         self.axip_add = tuple(ax25_conf.get('axip_add', ()))
         if rx:
+            self._incoming_conn     = True
             self.uid                = str(reverse_uid(ax25_conf.get('uid', '')))  # Unique ID for Connection
             self.to_call_str_add    = str(ax25_conf.get('from_call_str', ''))
             self.to_call_str        = str(ax25_conf.get('from_call_str', ''))
@@ -141,6 +143,7 @@ class AX25Conn:
             self.via_calls          = list(ax25_conf.get('via_calls_str', []))
             self.via_calls.reverse()
         else:
+            self._incoming_conn     = False
             self.uid                = str(ax25_conf.get('uid', ''))  # Unique ID for Connection
             self.to_call_str_add    = str(ax25_conf.get('to_call_str', ''))
             self.to_call_str        = str(ax25_conf.get('to_call_str', ''))
@@ -215,6 +218,8 @@ class AX25Conn:
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
         self.rx_byte_count = 0
+        self.tx_pack_count = 0
+        self.rx_pack_count = 0
         """ Connection Start Time """
         self.time_start = datetime.now()
         """ Zustandstabelle / States """
@@ -364,12 +369,14 @@ class AX25Conn:
             if type(data) is bytes:
                 self._link_holder_reset()
                 self.tx_buf_rawData += data
+                #self._send_gui_QSObuf_tx(data)
                 return True
         return False
 
     def _recv_data(self, data: bytes):
         # Statistic
         self.rx_byte_count += len(data)
+        self.rx_pack_count += 1
         """ Link/Node-DIGI """
         if self.is_link:
             self.LINK_rx_buff += data
@@ -782,16 +789,15 @@ class AX25Conn:
         return not bool(self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK)
 
     def _wait_for_disco(self):
-        if self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK:
-            return
-        self._await_disco = False
-        self.zustand_exec.change_state(4)
+        if self.is_buffer_empty():
+            self._await_disco = False
+            self.zustand_exec.change_state(4)
 
     def conn_cleanup(self):
         # logger.debug(f"conn_cleanup: {self.uid}\n"
         #       f"state: {self.zustand_exec.stat_index}\n")
         # self.bbsFwd_disc()
-
+        self.cli.cli_conn_cleanup()
         if self.tx_buf_ctl:
             #logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
@@ -803,7 +809,6 @@ class AX25Conn:
         self.own_port.del_connections(conn=self)
         self._port_handler.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
-        logger.debug(f'CLeanup {self.uid}: rx_tx_buf_guiData')
 
     def end_connection(self, reconn=True):
         logger.debug(f"end_connection: {self.uid}")
@@ -847,6 +852,11 @@ class AX25Conn:
         if self.zustand_exec.stat_index == 1:
             return True
         return False
+    ###############################################
+    def enter_converse_cli(self):
+        self.cli = ConverseCLI(self)
+        self._port_handler.update_conn_history(self, disco=False, inter_connect=True)
+        #self.cli_type = str(self.cli.cli_name)
 
     ###############################################
     # Timer usw
@@ -894,6 +904,7 @@ class AX25Conn:
             if new_state:
                 self.zustand_exec.change_state(new_state)
 
+    """
     def _send_gui_QSObuf_tx(self, data):
         # TODO send direct to GUI Buffer
         if self.ft_obj:
@@ -903,16 +914,15 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('TX', data)
         )
-        """
-        if not self._gui:
-            return
-        if not hasattr(self._gui, 'update_qso'):
-            return
-        self._gui.update_qso(self)     # TODO send to GUI Buffer
-        """
+    
+        #if not self._gui:
+        #    return
+        #if not hasattr(self._gui, 'update_qso'):
+        #    return
+        #self._gui.update_qso(self)     # TODO send to GUI Buffer
+    """
 
     def _send_gui_QSObuf_rx(self, data):
-        # TODO send to GUI Buffer
         if self.ft_obj:
             return
         if self.pipe:
@@ -920,13 +930,11 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('RX', data)
         )
-        """
-        if not self._gui:
-            return
-        if not hasattr(self._gui, 'update_qso'):
-            return
-        self._gui.update_qso(self)      # TODO send to GUI Buffer
-        """
+
+    def _send_gui_QSObuf_sysMsg(self, data):
+        self.rx_tx_buf_guiData.append(
+            ('SYS', data)
+        )
 
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
         # TODO AGAIN !!
@@ -1108,11 +1116,11 @@ class AX25Conn:
         if self.zustand_exec.ns == self.vr:  # !!!! Korrekt
             # Process correct I-Frame
             self.vr = count_modulo(int(self.vr))
-            try:
-                self._recv_data(bytes(self.zustand_exec.frame.payload))
-            except Exception as ex:
-                logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
-                logger.error(f"Exception:  {ex}")
+            #try:
+            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            #except Exception as ex:
+            #    logger.error(f"zustand_exec.frame: {self.zustand_exec.frame}")
+            #    logger.error(f"Exception:  {ex}")
             return True
         else:
             return False
@@ -1199,7 +1207,7 @@ class AX25Conn:
             # PAYLOAD !!
             pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
             new_axFrame.payload = self.tx_buf_rawData[:pac_len]
-            self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
+            #self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
             #####################################################################
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self.tx_buf_unACK[int(self.vs)] = new_axFrame       # Keep Packet until ACK/RR
@@ -1211,6 +1219,7 @@ class AX25Conn:
             self.set_T1()  # Re/Set T1
             # Statistics
             self.tx_byte_count += int(pac_len)
+            self.tx_pack_count += 1
 
     def send_UA(self):
         new_axFrame = self._get_new_ax25frame()
@@ -1269,13 +1278,17 @@ class AX25Conn:
     def send_sys_Msg_to_gui(self, data):
         if not data:
             return
-        lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-        LOG_BOOK.info(lb_msg)
-        LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
-        gui = self._port_handler.get_gui()
-        if not hasattr(gui, 'sysMsg_to_qso'):
-            return
-        gui.sysMsg_to_qso(data, self.ch_index)
+        if type(data) != list:
+            data = [data]
+        for msg in data:
+            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {msg}")
+            #gui = self._port_handler.get_gui()
+            #if not hasattr(gui, 'sysMsg_to_qso'):
+            #    return
+            # gui.sysMsg_to_qso(data, self.ch_index)
+            self._send_gui_QSObuf_sysMsg(msg)
 
     def accept_connection(self):
         self._port_handler.accept_new_connection(self)
@@ -1330,6 +1343,8 @@ class AX25Conn:
     def get_param_T2(self):
         return float(self._parm_T2)
 
+    def is_incoming_conn(self):
+        return bool(self._incoming_conn)
 ###########################################################################
 ###########################################################################
 ###########################################################################

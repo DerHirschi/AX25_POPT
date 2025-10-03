@@ -145,7 +145,10 @@ class BBS_newMSG(tk.Toplevel):
 
     def _on_key_release_inp_txt(self, event=None):
         ind2 = str(int(float(self._text.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self._text.get(ind2,  self._text.index(tk.INSERT)))
+        old_text = self._text.get(ind2,  self._text.index(tk.INSERT))
+        text = zeilenumbruch(old_text)
+        if old_text == text:
+            return
         self._text.delete(ind2,  self._text.index(tk.INSERT))
         self._text.insert(tk.INSERT, text)
 

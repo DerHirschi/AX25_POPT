@@ -938,12 +938,16 @@ class SQL_Database:
         query = "UPDATE pms_in_msg SET new=0 WHERE typ='P';"
         self._commit_query(query)
 
+    def bbs_set_all_pn_msg_notNew_for_call(self, call: str):
+        query = f"UPDATE pms_in_msg SET new=0 WHERE typ='P' and to_call='{call}';"
+        self._commit_query(query)
+
     def bbs_get_new_pn_msgCount_for_Call(self, call: str):
         query = ("SELECT MSGID, "
                  "COUNT(*) "
                  "FROM pms_in_msg "
                  f"WHERE NOT flag='DL' and to_call='{call}' and typ='P' and new=1;")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         try:
             return int(res[0][1])
         except (IndexError, ValueError):
@@ -969,7 +973,7 @@ class SQL_Database:
                  "WHERE NOT flag='DL' and "
                  "typ='B' and "
                  f"MSGID='{msg_id}';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         return res
 
     def bbs_get_bl_msg_Tab_for_GUI(self):
@@ -985,7 +989,7 @@ class SQL_Database:
                   "flag "
                   "FROM pms_in_msg "
                   "WHERE NOT flag='DL' and typ='B';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         return res
 
     def bbs_get_bl_msg_Tab_for_CLI(self):
@@ -1002,7 +1006,7 @@ class SQL_Database:
                  "WHERE NOT flag='DL' "
                  "and NOT flag='H' "
                  "and typ='B';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1026,7 +1030,7 @@ class SQL_Database:
                   "flag, "
                   "tx_time "
                   "FROM pms_fwd_q WHERE NOT flag='DL';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1043,7 +1047,7 @@ class SQL_Database:
                   "flag, "
                   "tx_time "
                   "FROM pms_out_msg WHERE NOT flag='DL';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1063,7 +1067,7 @@ class SQL_Database:
                  "FROM pms_fwd_q "
                  f"WHERE from_call in {user_str} "
                  "AND NOT flag='DL';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1083,7 +1087,7 @@ class SQL_Database:
                   "FWDID "
                   # "FROM pms_fwd_q WHERE flag='F';")
                   "FROM pms_fwd_q WHERE flag!='DL';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1102,7 +1106,7 @@ class SQL_Database:
                  "FROM pms_in_msg "
                  "WHERE flag='H';")
 
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1121,7 +1125,7 @@ class SQL_Database:
                  "FROM pms_in_msg "
                  "WHERE flag='DL';")
 
-        res = self._commit_query(query)
+        res = self._send_query(query)
         return res
 
     def bbs_get_trash_outTab_for_BBS_gui(self):
@@ -1139,7 +1143,7 @@ class SQL_Database:
                  "FROM pms_out_msg "
                  "WHERE flag='DL';")
 
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
 
@@ -1174,7 +1178,7 @@ class SQL_Database:
         # print(f"bbs_get_outMsg_by_BID res: {res}")
         return res
         """
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(res)
         return res
 
@@ -1189,7 +1193,7 @@ class SQL_Database:
                   "type "
                   "FROM pms_out_msg "
                   "WHERE flag='E';")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"bbs_get_sv_msg_Tab_for_GUI res: {res}")
         return res
 
@@ -1199,11 +1203,11 @@ class SQL_Database:
         query = ("SELECT * "
                   "FROM pms_out_msg "
                   f"WHERE MID='{mid}';")
-        return self._commit_query(query)
+        return self._send_query(query)
 
     def bbs_get_out_msg_for_GUI(self, bid: str):
         query       = "SELECT * FROM pms_out_msg WHERE BID=%s;"
-        return self._commit_query_bin(query, (bid,))
+        return self._send_query_bin(query, (bid,))
 
     def bbs_ack_fwdQ_by_FWD_ID(self, fwd_id: str, flag: str):
         tx_time = datetime.now().strftime(SQL_TIME_FORMAT)
@@ -1214,7 +1218,7 @@ class SQL_Database:
         query = ("SELECT BID, fwd_bbs_call "
                  "FROM pms_fwd_q "
                  f"WHERE FWDID='{fwd_id}';")
-        return self._commit_query(query)
+        return self._send_query(query)
 
     def bbs_ack_outMsg_by_BID(self, bid: str, flag: str):
         # pms_out_msg
@@ -1322,7 +1326,7 @@ class SQL_Database:
         query = ("SELECT MSGID "
                  "FROM pms_in_msg "
                  f"WHERE NOT flag='DL' and to_call='{call}' and typ='P' and new=0;")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         if not res:
             return []
 
@@ -1392,7 +1396,7 @@ class SQL_Database:
                  f"and NOT flag='DL' "
                  f"and to_call='{call}' "
                  f";")
-        ret = self._commit_query(query)
+        ret = self._send_query(query)
         query = ("UPDATE pms_in_msg SET flag='DL' "
                  f"WHERE MSGID in {id_str} "
                  f"and typ='P' "
@@ -1443,21 +1447,21 @@ class SQL_Database:
     # BBS/PMS Forward Path Ana
     def bbs_get_fwdPaths(self):
         q = "SELECT * FROM fwdPaths;"
-        return self._commit_query(q)
+        return self._send_query(q)
 
     def bbs_get_fwdPaths_lowHop(self, destBBS: str):
         q = ("SELECT fromBBS, hops, path "
              "FROM fwdPaths "
              f"WHERE destBBS='{destBBS}' "
              f"ORDER BY hops ;")
-        return self._commit_query(q)
+        return self._send_query(q)
 
     def bbs_get_fwdPaths_mostCurrent(self, destBBS: str):
         q = ("SELECT fromBBS, hops, path "
              "FROM fwdPaths "
              f"WHERE destBBS='{destBBS}' "
              f"ORDER BY lastUpdate DESC;")
-        return self._commit_query(q)
+        return self._send_query(q)
 
     def _fwd_paths_insert(self, path: list):
         """
@@ -1625,7 +1629,7 @@ class SQL_Database:
             'rain_since_midnight': 3.81,
             'luminosity': 0
         },
-        'port_id': 'I-NET',     # TODO Change 'I-NET' to 'SERVER'
+        'port_id': APRS_INET_PORT_ID,
         'rx_time': datetime.datetime(2023, 12, 8, 8, 7, 1, 574225),
         'locator': 'JN47gn98',
         'distance': 614.6}
@@ -1735,7 +1739,7 @@ class SQL_Database:
                  "`comment` "
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)});")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         # print(f"WX-RES {res}")
         if not res:
             return []
@@ -1765,7 +1769,7 @@ class SQL_Database:
                  "distance, "
                  "port_id "
                  f"FROM APRSwx WHERE `from_call`='{call}';")
-        ret = self._commit_query(query)
+        ret = self._send_query(query)
         if not ret:
             return []
         return ret
@@ -1789,7 +1793,7 @@ class SQL_Database:
                  "FROM APRSwx "
                  f"WHERE `ID` in ({', '.join(ids)}) "
                  f"ORDER BY CAST(distance as FLOAT) ASC;")
-        res = self._commit_query(query)
+        res = self._send_query(query)
         if not res:
             return []
         return res
@@ -1804,7 +1808,7 @@ class SQL_Database:
 
         # query = "SELECT `ID`,MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
         query = "SELECT MAX(`ID`),MAX(rx_time) FROM APRSwx GROUP BY `from_call`;"
-        ent_list = self._commit_query(query)
+        ent_list = self._send_query(query)
         if not ent_list:
             return []
         if not last_rx_days:
@@ -1902,7 +1906,7 @@ class SQL_Database:
         query = ("SELECT * "
                  "FROM PortStatistic "
                  f"WHERE port_id={port_id};")
-        ret = self._commit_query(query)
+        ret = self._send_query(query)
         if not ret:
             return []
         return ret

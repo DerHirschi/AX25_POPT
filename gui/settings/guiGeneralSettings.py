@@ -55,7 +55,7 @@ class GeneralSettings(ttk.Frame):
         qth_ent.pack(side=tk.LEFT)
         ############################################################
 
-        self._loc_var = tk.StringVar(self, value=conf.get('gui_cfg_locator', ''))
+        self._loc_var = tk.StringVar(self, value=POPT_CFG.get_guiCFG_locator())
         loc_frame = ttk.Frame(qth_loc_frame)
         loc_frame.pack(fill=tk.X, pady=8)
         ttk.Label(loc_frame, text='Locator: ').pack(side=tk.LEFT)
