@@ -1377,7 +1377,8 @@ class DefaultStat(object):
         self.ns = self.frame.ctl_byte.ns
         self.pf = self.frame.ctl_byte.pf
         self.cmd = self.frame.ctl_byte.cmd
-        {
+        ctl_tab = {
+            'SABME': self._rx_SABME,
             'SABM': self._rx_SABM,
             'DISC': self._rx_DISC,
             'UA': self._rx_UA,
@@ -1388,7 +1389,15 @@ class DefaultStat(object):
             'I': self._rx_I,
             'FRMR': self._rx_FRMR,
             'UI': self._rx_UI,
-        }[self.frame.ctl_byte.flag]()
+        }
+        if self.frame.ctl_byte.flag not in ctl_tab:
+            logger.warning(f"Unknown CLT-Byte:{self.frame.ctl_byte.flag}")
+            return
+        ctl_tab[self.frame.ctl_byte.flag]()
+
+    def _rx_SABME(self):
+        """ EAX.25 """
+        pass
 
     def _rx_SABM(self):
         self._cleanup()

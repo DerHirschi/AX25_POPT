@@ -60,6 +60,7 @@ Ideas/TODO's :
 
 - Soundsystem überarbeiten
   - Sprachausgabe überarbeiten
+  - Beep
 
 ✓ Haupt GUI überarbeiten
   ✓ Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
@@ -154,7 +155,10 @@ Ideas/TODO's :
 ✓ Logbuch
   - GUI Ausgabe/Auswertung
 
-- Converse Mode intern
+✓ Converse Mode intern
+  - mehrere Converse-Kanäle
+  - erweiterte Funktionen/Kommandos
+
 - Ping-Pong Converse
 
 - QSO Fenster/Tool
@@ -295,6 +299,7 @@ Ideas/TODO's :
 ✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
   ✓ PortFilter
+  ✓ Call-Filter - Monitor-Tabellenansicht
   - Call-Filter
   - U/UI - Frame Filter
 

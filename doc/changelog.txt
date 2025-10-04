@@ -1,5 +1,15 @@
 ###########################################################################################################
-# 2.120.x
+# 2.121.x
+Fixes:
+- Programm Crash wenn SABME(EAX.25) Frame empfangen wird
+
+Optimierung/Änderungen:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
+# 2.120.52
 !!! Check requirements.txt (tkintermapview benötigt) !!!
 Fixes:
 - BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen

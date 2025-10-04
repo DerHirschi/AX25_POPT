@@ -355,7 +355,7 @@ class BBS:
         if fwd_bbs_call:
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             self._db.bbs_insert_local_msg_to_fwd(new_msg)
-            self._build_new_fwd_Q()
+            #self._build_new_fwd_Q()
             return True
 
         # Local BBS
@@ -380,7 +380,7 @@ class BBS:
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             self._db.bbs_insert_local_msg_to_fwd(new_msg)
-            self._build_new_fwd_Q()
+            #self._build_new_fwd_Q()
             return True
 
         # Bulletins
@@ -398,7 +398,7 @@ class BBS:
                 ret = self._db.bbs_insert_msg_to_fwd(new_msg)
                 if not ret:
                     BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {new_msg}")
-            self._build_new_fwd_Q()
+            #self._build_new_fwd_Q()
             return True
 
         BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
@@ -444,7 +444,7 @@ class BBS:
             BBS_LOG.info(log_tag + f"Msg: {mid}  PN FWD to {fwd_bbs_call}")
             new_msg['fwd_bbs_call'] = fwd_bbs_call
             if self._db.bbs_insert_local_msg_to_fwd(new_msg):
-                self._build_new_fwd_Q()
+                #self._build_new_fwd_Q()
                 return bid, [fwd_bbs_call]
             return None
 
@@ -462,7 +462,7 @@ class BBS:
                 ret = self._db.bbs_insert_msg_to_fwd(new_msg)
                 if not ret:
                     BBS_LOG.error(log_tag + f"Can't insert Msg into FWD-Q: {new_msg}")
-            self._build_new_fwd_Q()
+            #self._build_new_fwd_Q()
             return bid, fwd_bbs_list
 
         BBS_LOG.error(log_tag + f"Error no BBS msgType: {msg_typ} - add_msg_to_fwd_by_id")
