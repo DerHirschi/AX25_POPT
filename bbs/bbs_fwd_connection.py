@@ -23,7 +23,10 @@ class BBSConnection:
         #self._mybbs_flag     = self._bbs.bbs_id_flag
         #self._my_stat_id     = self._bbs.my_stat_id
         # self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
+        self._mybbs_flag     = b''
+        self._my_stat_id     = None
         self._dest_stat_id   = None
+        ################################
         # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
         self._feat_flag      = []
@@ -40,20 +43,13 @@ class BBSConnection:
         self._send_next_time = []
         BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call} - TX: {tx}')
         ################################
+
+        ################################
         self._fwd_cfg: dict = self._bbs.get_fwdCfg(self._dest_bbs_call)
         if not self._fwd_cfg:
             BBS_LOG.error(f"No fwd_cfg found for {self._dest_bbs_call}")
             logger.error(f"No fwd_cfg found for {self._dest_bbs_call}")
             self.e = True
-        features_flag = self._bbs.features_flag
-        if all((self._bbs.get_pms_cfg().get('bin_mode', True),
-                self._fwd_cfg.get('bin_mode', False))):
-            features_flag = ["B"] + features_flag
-        else:
-            features_flag = features_flag
-        self._mybbs_flag = generate_sid(features_flag)
-        self._my_stat_id = get_station_id_obj(str(self._mybbs_flag))
-        self._mybbs_flag = self._mybbs_flag.encode('ASCII', 'ignore')
         ################################
         self._state_tab = {
             0: self._init_rev_fwd,
@@ -68,6 +64,15 @@ class BBSConnection:
         }
         ################################
         if not self.e:
+            features_flag = self._bbs.features_flag
+            if all((self._bbs.get_pms_cfg().get('bin_mode', True),
+                    self._fwd_cfg.get('bin_mode', False))):
+                features_flag = ["B"] + features_flag
+            else:
+                features_flag = features_flag
+            self._mybbs_flag = generate_sid(features_flag)
+            self._my_stat_id = get_station_id_obj(str(self._mybbs_flag))
+            self._mybbs_flag = self._mybbs_flag.encode('ASCII', 'ignore')
             self._state = 20
             if not tx:
                 BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
@@ -79,6 +84,9 @@ class BBSConnection:
 
 
     def _check_feature_flags(self):
+        if not self._my_stat_id:
+            BBS_LOG.error(f"No own State-ID !!!!")
+            return False
         for el in self._dest_stat_id.feat_flag:
             if el in self._my_stat_id.feat_flag:
                 self._feat_flag.append(str(el))
