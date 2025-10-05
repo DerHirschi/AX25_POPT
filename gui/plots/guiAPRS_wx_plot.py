@@ -64,9 +64,10 @@ class WXPlotWindow(tk.Toplevel):
         self.plot_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Initialize Matplotlib figure
-        self.fig = Figure(figsize=(10, 6), dpi=100)
+        self.fig = Figure(figsize=(5, 3), dpi=100)
         self.fig.set_facecolor('xkcd:light grey')
-        self.plot1 = self.fig.add_subplot(111)
+        self.plot1 = self.fig.add_subplot(1,1,1)
+        # self.plot1, self.plot2 = self.fig.subplots(1, 2, sharey=True)
         self.plot1.set_facecolor('#000000')
         self.plot2 = self.plot1.twinx()
         self.plot2.set_facecolor('#000000')

@@ -950,6 +950,8 @@ class BBS:
         send_limit   = fwd_port_cfg.get('send_limit', 1)
         if send_limit:
             send_limit = send_limit  * 1024
+        if not port_id in self._fwd_ports:
+            return True
         if self._fwd_ports[port_id].get('block_byte_c', 0) > send_limit and send_limit:
             # BBS_LOG.debug(self._logTag + f"Block limit reached Port({port_id}): {self._fwd_ports[port_id].get('block_byte_c', 0)} Bytes")
             # BBS_LOG.debug(self._logTag + f"  Block-T: {int((time.time() - self._fwd_ports[port_id].get('block_timer', 0)) / 60)} min")
