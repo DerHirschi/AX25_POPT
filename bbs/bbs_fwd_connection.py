@@ -3,7 +3,7 @@ import time
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     FWD_RESP_HLD, EOT, SOH, LF, STX
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail, generate_sid
 from cli.cliStationIdent import get_station_id_obj
 from fnc.str_fnc import find_eol
 from cfg.logger_config import logger, BBS_LOG
@@ -17,14 +17,15 @@ class BBSConnection:
         self._bbs            = bbs_obj
         self._db             = bbs_obj.get_db()
         self._userDB         = bbs_obj.get_userDB()
-        ###########
         self.e               = False
-        self._mybbs_flag     = self._bbs.bbs_id_flag
+        ###########
+        ###########
+        #self._mybbs_flag     = self._bbs.bbs_id_flag
+        #self._my_stat_id     = self._bbs.my_stat_id
         # self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
         self._dest_stat_id   = None
         # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
-        self._my_stat_id     = self._bbs.my_stat_id
         self._feat_flag      = []
         self._handshake      = False
         self._is_bin_mode    = False
@@ -44,6 +45,15 @@ class BBSConnection:
             BBS_LOG.error(f"No fwd_cfg found for {self._dest_bbs_call}")
             logger.error(f"No fwd_cfg found for {self._dest_bbs_call}")
             self.e = True
+        features_flag = self._bbs.features_flag
+        if all((self._bbs.get_pms_cfg().get('bin_mode', True),
+                self._fwd_cfg.get('bin_mode', False))):
+            features_flag = ["B"] + features_flag
+        else:
+            features_flag = features_flag
+        self._mybbs_flag = generate_sid(features_flag)
+        self._my_stat_id = get_station_id_obj(str(self._mybbs_flag))
+        self._mybbs_flag = self._mybbs_flag.encode('ASCII', 'ignore')
         ################################
         self._state_tab = {
             0: self._init_rev_fwd,

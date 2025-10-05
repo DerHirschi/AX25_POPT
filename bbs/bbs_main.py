@@ -63,22 +63,20 @@ class BBS:
         ##########################
         # BBS ID Flag ID(Header)
         if self._pms_cfg.get('bin_mode', True):
-            features_flag = ("B", "F", "M", "H")
+            features_flag = ["B", "F", "M", "H"]
         else:
-            features_flag = ("F", "M", "H")
+            features_flag = ["F", "M", "H"]
+        self.features_flag = ["F", "M", "H"]
         self.bbs_id_flag    = generate_sid(features=features_flag)
         # AB1FHMRX$
         # self.bbs_id_flag    = generate_sid(features=("A", "B", "1", "F", "M", "H", "R", "X"))
         # self.bbs_id_flag    = generate_sid(features=("B", "1", "F", "M", "H", "R", "X"))
-        self.my_stat_id     = get_station_id_obj(str(self.bbs_id_flag))
+        # self.my_stat_id     = get_station_id_obj(str(self.bbs_id_flag))
         try:
             self.bbs_id_flag   = self.bbs_id_flag.encode('ASCII')
         except UnicodeEncodeError:
             raise bbsInitError('UnicodeEncodeError')
-        if self.my_stat_id is None:
-            raise bbsInitError('my_stat_id is None')
-        if self.my_stat_id.e:
-            raise bbsInitError('my_stat_id.e Error')
+
         BBS_LOG.info(self._logTag + f"Flag: {self.bbs_id_flag}")
         #######################################
         # Set flag in FWD-Q  'SW' > 'S='
@@ -166,15 +164,15 @@ class BBS:
         else:
             features_flag = ("F", "M", "H")
         self.bbs_id_flag = generate_sid(features=features_flag)
-        self.my_stat_id  = get_station_id_obj(str(self.bbs_id_flag))
+
         try:
             self.bbs_id_flag = self.bbs_id_flag.encode('ASCII')
         except UnicodeEncodeError:
             raise bbsInitError('UnicodeEncodeError')
-        if self.my_stat_id is None:
-            raise bbsInitError('my_stat_id is None')
-        if self.my_stat_id.e:
-            raise bbsInitError('my_stat_id.e Error')
+        #if self.my_stat_id is None:
+        #    raise bbsInitError('my_stat_id is None')
+        #if self.my_stat_id.e:
+        #    raise bbsInitError('my_stat_id.e Error')
 
     def _build_fwd_port_vars(self):
         self._fwd_ports = {}  # Ports equivalent to port handler ports

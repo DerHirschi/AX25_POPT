@@ -95,6 +95,7 @@ class BBS_FWD_Settings(ttk.Frame):
         regio_var             = tk.StringVar(self, value=cfg.get('regio',                 ''))
         rev_fwd_var           = tk.BooleanVar(self, value=cfg.get('reverseFWD',           True))
         noConnect_var         = tk.BooleanVar(self, value=cfg.get('noConnect',            False))
+        bin_mode_var          = tk.BooleanVar(self, value=cfg.get('bin_mode',             False))
         conn_timeout_var      = tk.StringVar(self, value=cfg.get('t_o_next_conn',        '5'))
         dead_conn_timeout_var = tk.StringVar(self, value=cfg.get('t_o_dead_conn',        '5'))
 
@@ -182,6 +183,7 @@ class BBS_FWD_Settings(ttk.Frame):
         # R Frame
         rev_fwd_frame       = ttk.Frame(r_frame, borderwidth=10)
         noConnect           = ttk.Frame(r_frame, borderwidth=10)
+        binMode_f           = ttk.Frame(r_frame, borderwidth=10)
         allow_pn_auto_path  = ttk.Frame(r_frame, borderwidth=10)
         allow_pn_alt_path   = ttk.Frame(r_frame, borderwidth=10)
         conn_timeout_f      = ttk.Frame(r_frame, borderwidth=10)
@@ -190,6 +192,7 @@ class BBS_FWD_Settings(ttk.Frame):
         # Pack it
         rev_fwd_frame.pack(     side=tk.TOP, expand=False, fill=tk.X)
         noConnect.pack(         side=tk.TOP, expand=False, fill=tk.X)
+        binMode_f.pack(         side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_auto_path.pack(side=tk.TOP, expand=False, fill=tk.X)
         allow_pn_alt_path.pack( side=tk.TOP, expand=False, fill=tk.X)
         conn_timeout_f.pack(    side=tk.TOP, expand=False, fill=tk.X)
@@ -212,6 +215,13 @@ class BBS_FWD_Settings(ttk.Frame):
                        variable=noConnect_var,
                        state='Normal',
                        text=self._getTabStr('noConnect')).pack(side=tk.LEFT, expand=False)
+        #################
+        #################
+        # allow_rev_fwd
+        ttk.Checkbutton(binMode_f,
+                        variable=bin_mode_var,
+                        state="Normal",
+                        text="BIN-MODE (don't use with Open-BCM Stations)").pack(side=tk.LEFT, expand=False)
         #################
         #################
         # allow_pn_alt_path
@@ -259,6 +269,7 @@ class BBS_FWD_Settings(ttk.Frame):
             'axip_port_var'         : axip_port_var,
             'rev_fwd_var'           : rev_fwd_var,
             'noConnect_var'         : noConnect_var,
+            'bin_mode_var'          : bin_mode_var,
 
             #'bl_fwd'                : bl_fwd_var,
             #'pn_fwd'                : pn_fwd_var,
@@ -325,6 +336,7 @@ class BBS_FWD_Settings(ttk.Frame):
             axip_ip             = str(self._bbs_vars[k]['axip_var'].get())
             rev_fwd             = bool(self._bbs_vars[k]['rev_fwd_var'].get())
             noConnect           = bool(self._bbs_vars[k]['noConnect_var'].get())
+            bin_mode            = bool(self._bbs_vars[k]['bin_mode_var'].get())
 
             pn_fwd_alter_path   = bool(self._bbs_vars[k]['pn_fwd_alter_path'].get())
             try:
@@ -344,6 +356,7 @@ class BBS_FWD_Settings(ttk.Frame):
             fwd_bbs_cfg['axip_add']    = axip_ip, axip_port
             fwd_bbs_cfg['reverseFWD']  = rev_fwd
             fwd_bbs_cfg['noConnect']   = noConnect
+            fwd_bbs_cfg['bin_mode']    = bin_mode
 
             #fwd_bbs_cfg['bl_fwd']              = allow_bl_fwd
             #fwd_bbs_cfg['pn_fwd']              = allow_pn_fwd

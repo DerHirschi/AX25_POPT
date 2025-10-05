@@ -2,6 +2,7 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
+from bbs.bbs_fnc import generate_sid
 from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
@@ -129,9 +130,9 @@ class BoxCLI(DefaultCLI):
             self.change_cli_state(2)
             return "\r\r # BBS Error !! \r\r"
 
-        ret = bbs.bbs_id_flag.decode('ASCII', 'ignore') + '\r'
         pms_cfg: dict = bbs.get_pms_cfg()
         self.change_cli_state(1)
+        ret = bbs.bbs_id_flag.decode('ASCII', 'ignore') + '\r'
         if any((
                 self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
                 self._connection.bbs_connection,
@@ -139,6 +140,15 @@ class BoxCLI(DefaultCLI):
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
             # self._software_identifier()
+            features_flag = bbs.features_flag
+            if all((pms_cfg.get('bin_mode', True),
+                    pms_cfg.get('fwd_bbs_cfg', {}).get(self._to_call, {}).get('bin_mode', False))):
+                features_flag = ["B"] + features_flag
+            else:
+                features_flag = features_flag
+            bbs_id_flag = generate_sid(features=features_flag)
+            ret = bbs_id_flag + '\r'
+
             self._send_output(ret + self._get_ts_prompt(), env_vars=True)
             return ''
 

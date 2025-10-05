@@ -2,10 +2,12 @@
 # 2.121.x
 Fixes:
 - Programm Crash wenn SABME(EAX.25) Frame empfangen wird
+- Programm Crash durch BBS, wenn port nicht richtig initialisiert wurde
 
 Optimierung/Änderungen:
 
 Neue Implementierungen / Funktionen:
+- BBS: BIN-MODE optional wählbar für jewiligen FWD-Partner
 
 ###########################################################################################################
 ###########################################################################################################
