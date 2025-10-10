@@ -3,11 +3,11 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.121.3'
+VER = '2.121.4'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
-BBS_DEBUG_LOG   = False
+BBS_DEBUG_LOG   = True
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode

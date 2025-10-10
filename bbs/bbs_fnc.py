@@ -50,7 +50,11 @@ def parse_forward_header(header):
         tmp = hdr[5].split('_')
     else:
         tmp = hdr[5]
-    mid = tmp[0]
+    mid = ''
+    if all((not tmp, not hdr[5])):
+        return None
+    if tmp:
+        mid = tmp[0]
     recipient = ''
     if len(tmp) == 2:
         recipient = tmp[1]

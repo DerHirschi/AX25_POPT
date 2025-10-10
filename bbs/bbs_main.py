@@ -588,36 +588,48 @@ class BBS:
             msg_tab[x[0]] = x
         if msg_tab:
             BBS_LOG.debug(log_tag + f"msg_tab.keys()  : {msg_tab.keys()}")
-        new_bid_s   = []
+        new_fwd_id_s   = []
         for fwd_task in db_fwd_q:
-            q_bid           = fwd_task[1]
+            fwd_id          = fwd_task[0]
+            bid             = fwd_task[1]
             fwd_bbs_call    = fwd_task[9]
+            flag            = fwd_task[13]
             fwd_cfg         = self._fwd_cfg.get(fwd_bbs_call, {})
             fwd_bbs         = fwd_cfg.get('dest_call', '')
             bbs_fwd_q_cfg   = self._fwd_BBS_q.get(fwd_bbs_call, {})
             bbs_fwd_q       = bbs_fwd_q_cfg.get('bbs_fwd_q', {})
-            out_msg         = msg_tab.get(q_bid, [])
+            out_msg         = msg_tab.get(bid, [])
             if not out_msg:
                 BBS_LOG.error(log_tag + "Msg not found in DB Out-Tab")
-                BBS_LOG.error(log_tag + f"  q_bid  : {q_bid}")
+                BBS_LOG.error(log_tag + f"  q_bid  : {bid}")
                 BBS_LOG.error(log_tag + f"  msg_tab.K: {', '.join(list(msg_tab.keys()))}")
-                BBS_LOG.error(log_tag + f"  skipping BID: {q_bid}") # TODO Delete/Mark BID in db.fwd_q_tab
+                BBS_LOG.error(log_tag + f"  skipping BID: {bid}") # TODO Delete/Mark BID in db.fwd_q_tab
                 continue
             if not bbs_fwd_q_cfg:
                 BBS_LOG.error(log_tag + f"No BBS FWD-Q-CFG for: {fwd_bbs_call}")
                 # TODO Flag in BBS ?'EE'?
                 continue
             if not fwd_bbs:
-                BBS_LOG.error(log_tag + f"Error FWD-CFG ID for ({q_bid})")
+                BBS_LOG.error(log_tag + f"Error FWD-CFG ID for ({bid})")
                 for k, val in fwd_cfg.items():
                     BBS_LOG.error(log_tag + f"fwd_cfg ({k}): {val}")
                 continue
             if not fwd_cfg:
                 BBS_LOG.warning(log_tag + f"No Forward Config for {fwd_bbs_call}")
-                BBS_LOG.warning(log_tag + f"  skipping BID: {q_bid}")  # TODO Delete/Mark BID in db.fwd_q_tab
+                BBS_LOG.warning(log_tag + f"  skipping BID: {bid}")  # TODO Delete/Mark BID in db.fwd_q_tab
                 continue
-            if q_bid in bbs_fwd_q:
-                # BBS_LOG.debug(log_tag + f"BID ({q_bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
+            if bid in bbs_fwd_q:
+                if bbs_fwd_q.get(bid, {}).get('flag', '') == 'SW':
+                    bbs_fwd_q[bid]['flag'] = flag
+                    try:
+                        bbs_fwd_q[bid]['trys'] = int(fwd_task[14]) + 1
+                    except ValueError:
+                        bbs_fwd_q[bid]['trys'] = 1
+                    BBS_LOG.debug(log_tag + f"BID ({bid}) try to send again ({fwd_bbs_call})BBS-FWD-Q")
+                    if fwd_id not in new_fwd_id_s:
+                        new_fwd_id_s.append(fwd_id)
+                    continue
+                BBS_LOG.debug(log_tag + f"BID ({bid}) already in ({fwd_bbs_call})BBS-FWD-Q")
                 continue
 
             msg_sub: str = out_msg[1]
@@ -650,11 +662,10 @@ class BBS:
                 msg_size = len(msg_raw)
 
             try:
-                trys = fwd_task[14]
+                trys = int(fwd_task[14])
             except ValueError:
                 trys = 0
 
-            bid         = fwd_task[1]
             from_call   = fwd_task[3]
             to_call     = fwd_task[6]
             to_bbs      = fwd_task[7]
@@ -662,7 +673,7 @@ class BBS:
             typ         = fwd_task[12]
             fwd_header  = f"{typ} {from_call} {to_bbs_call} {to_call} {bid} {msg_size}"
             msg_to_fwd = dict(
-                fwd_id=         fwd_task[0],
+                fwd_id=         fwd_id,
                 bid=            bid,
                 mid=            fwd_task[2],
                 from_call=      from_call,
@@ -677,7 +688,7 @@ class BBS:
                 comp_rate    =  comp_ratio,
                 q_subject=      fwd_task[11],
                 typ=            typ,
-                flag=           fwd_task[13],
+                flag=           flag,
                 trys=           trys,
                 tx_time=        fwd_task[15],
                 # fwd_cfg=        fwd_cfg,
@@ -705,13 +716,13 @@ class BBS:
             BBS_LOG.debug(log_tag + f"  MID    : {msg_to_fwd.get('mid', '')}")
 
             bbs_fwd_q[bid] = msg_to_fwd
-            if bid not in new_bid_s:
-                new_bid_s.append(bid)
+            if fwd_id not in new_fwd_id_s:
+                new_fwd_id_s.append(fwd_id)
 
-        if new_bid_s:
+        if new_fwd_id_s:
             # Set Flag in DB
             BBS_LOG.debug(log_tag + f"DB set_fwd_q_fwdActive")
-            self._db.bbs_set_fwd_q_fwdActive(fwd_id_list=new_bid_s)
+            self._db.bbs_set_fwd_q_fwdActive(fwd_id_list=new_fwd_id_s)
 
     def _fwd_port_tasks(self):
         log_tag = self._logTag + 'FWD-Port-Task> '
@@ -1025,8 +1036,8 @@ class BBS:
         self._set_bbs_byte_c(bbs_call, bid)
         if not flag in ['S+', 'H']:
             self._sub_block_c(bbs_call, bid)
-        bbs_fwd_next_q.remove(bid)
 
+        bbs_fwd_next_q.remove(bid)
         # self._process_bbs_next_fwd_q(bbs_call)
         return
 

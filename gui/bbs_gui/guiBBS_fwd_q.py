@@ -691,7 +691,7 @@ class BBS_fwd_Q(tk.Toplevel):
             q_tree_data = []
             for bid, msg2fwd in bbs_q.items():
                 flag = msg2fwd.get('flag', '')
-                if flag == 'F':
+                if flag in ['F', 'S=']:
                     msg_in_q += 1
                     q_tree_data.append((
                         msg2fwd.get('bid'          , ''),

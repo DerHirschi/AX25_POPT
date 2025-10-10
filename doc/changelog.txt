@@ -3,11 +3,16 @@
 Fixes:
 - Programm Crash wenn SABME(EAX.25) Frame empfangen wird
 - Programm Crash durch BBS, wenn port nicht richtig initialisiert wurde
+- Programm Crash, wenn korrumpierter FWD-Header empfangen wird
+- BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
+  wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
+  FWD-Warteschlange entfernt wird (diesmal hoffentlich wirklich gefixt)
+- BBS-Fwd: "=" geflaggte Nachrichten werden nicht erneute zum Senden angeboten
 
 Optimierung/Änderungen:
 
 Neue Implementierungen / Funktionen:
-- BBS: BIN-MODE optional wählbar für jewiligen FWD-Partner
+- BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
 
 ###########################################################################################################
 ###########################################################################################################

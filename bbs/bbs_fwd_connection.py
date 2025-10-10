@@ -448,7 +448,7 @@ class BBSConnection:
             elif flag in FWD_LATER:
                 self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
                 self._send_next_time.append(fwd_id)
-                self._bbs.ack_next_fwd_q(fwd_id, 'S=')
+                self._bbs.ack_next_fwd_q(fwd_id, 'SW')
             elif flag == FWD_HLD:
                 self._bbs.send_sysop_msg(topic='HELD MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rHeld by {self._dest_bbs_call}')
                 self._tx_out_msg_by_bid(bids[i])
@@ -625,7 +625,6 @@ class BBSConnection:
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 #pn_check += FWD_RESP_REJ
                 continue
-            # if el[:2] == 'FB':
             if el[:2] in ['FB', 'FA']:
                 msg = parse_forward_header(el)
                 if not msg:
@@ -637,7 +636,7 @@ class BBSConnection:
                     self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                     pn_check += FWD_RESP_REJ
                     continue
-                bid = str(msg.get('bid_mid', ''))
+                bid  = str(msg.get('bid_mid', ''))
                 hold = False
                 # REJ_Tab
                 res_rej_tab = self._bbs.check_reject_tab(msg)

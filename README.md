@@ -155,7 +155,7 @@ $ python3 PoPT.py
     PR-Mail:  MD2SAW@MD2BBS.#SAW.SAA.DEU.EU
     E-Mail:   cb0saw@e-mail.de
     Terminal: MD2SAW via CB0SAW
-    CB0SAW Teamspeak3-/I-Net-/HF-Gateway/I-Gate AXIP: cb0saw-ddnss.de U 8093
+    CB0SAW Teamspeak3-/I-Net-/HF-Gateway/I-Gate AXIP: cb0saw.ddnss.de U 8093
 ```    
 
 ## Contribute
