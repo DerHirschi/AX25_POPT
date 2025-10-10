@@ -598,10 +598,8 @@ class BBSConnection:
             fwd_id  = self._get_fwd_id(bid)
             flag    = self._tx_fs_list[0]
             if flag in FWD_OK:
-                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
                 self._bbs.ack_next_fwd_q(fwd_id, 'S+')
             elif flag == FWD_HLD:
-                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
                 self._bbs.ack_next_fwd_q(fwd_id, 'H')
 
             self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]

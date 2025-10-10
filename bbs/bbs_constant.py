@@ -116,3 +116,28 @@ def GET_MSG_STRUC():
         flag=           '',
     )
 
+#############################################################
+# TODO Internal Message Flags (in DB)
+"""
+flags MSG OUT TAB & FWD Q TAB:
+F  = Forward (Set to FWD but not FWD Yet)
+E  = Entwurf/Draft (Default)
+S= = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
+S+ = Send (delivered to BBS)
+S- = Send (BBS already has msg)
+H  = Send (Message is accepted but will be held)
+R  = Reject (Message is rejected)
+EE = There is an error in the line
+EO = OFFSET Error not implemented yet TODO
+DL = Deleted MSG
+
+flags MSG IN TAB :
+IN  = Default (New Incoming)
+$   = New Incoming - Markt for Forward Check
+H  = New Incoming - Set Hold
+DL  = Deleted MSG
+
+flags in FWD Q Tab
+SW  = (BBS is already receiving MSG fm other BBS) Try again on next connect. Still connected
+S=  = Send (BBS is already receiving MSG fm other BBS) Try again on next connect.
+"""

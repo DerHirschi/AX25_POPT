@@ -696,9 +696,11 @@ class SQL_Database:
                   "fwd_bbs_call, "
                   "type, "
                   "subject, "
-                  "size "
+                  "size, "
+                  "flag "
                   # "FROM pms_fwd_q WHERE flag='F';")
-                  "FROM pms_fwd_q WHERE flag='F' or flag='S=';")
+                  # "FROM pms_fwd_q WHERE flag IN ('F', 'S=', '$');")
+                  "FROM pms_fwd_q;")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res

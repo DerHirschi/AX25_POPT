@@ -155,9 +155,11 @@ class PoPT_GUI_Main:
         self._root_dir  = get_root_dir()
         self._root_dir  = self._root_dir.replace('/', '//')
         ###############################
-        logger.info("GUI: Init APRS-Icon Tabs")
+        logger.info("GUI: Init APRS-Icon Tab 16x16")
         self._aprs_icon_tab_16  = build_aprs_icon_tab((16, 16))
+        logger.info("GUI: Init APRS-Icon Tab 24x24")
         self._aprs_icon_tab_24  = build_aprs_icon_tab((24, 24))
+        logger.info("GUI: Init Monitor-Tree-Icon Tab 16x16 & 32x16")
         self._rx_tx_icons       = {
             'rx':       get_image(CFG_gui_icon_path + '/pfeil_rechts_gruen.png'     ,size=(16, 16)),  # RX
             'tx':       get_image(CFG_gui_icon_path + '/pfeil_links_rot.png'        ,size=(16, 16)),     # TX
@@ -170,7 +172,8 @@ class PoPT_GUI_Main:
             'rx-dx':    get_image(CFG_gui_icon_path + '/dx_rx.png',    size=(32, 16)),
             'rx-block': get_image(CFG_gui_icon_path + '/block_rx.png', size=(32, 16)),
         }
-        self._conn_typ_icons       = {
+        logger.info("GUI: InitConnection-Typ-Icon Tab 16x16 & 32x16")
+        self._conn_typ_icons    = {
             # Connection Tab
             'USER':      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
             'NODE':      get_image(CFG_aprs_icon_path + '/0-78.png', size=(16, 16)),
@@ -195,10 +198,10 @@ class PoPT_GUI_Main:
             'DIGI-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
             'DIGI-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
 
-            'NO-CLI-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png', size=(32, 16)),
-            'NO-CLI-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png', size=(32, 16)),
+            'NO-CLI-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
+            'NO-CLI-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
             'NO-CLI-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
-            'NO-CLI-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png', size=(32, 16)),
+            'NO-CLI-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
 
             'PIPE-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/pipe_conn_out.png',  size=(32, 16)),
             'PIPE-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/pipe_conn_in.png',   size=(32, 16)),
@@ -223,7 +226,24 @@ class PoPT_GUI_Main:
             'CONV-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
 
         }
-        logger.info("GUI: Init APRS-Icon Tabs. Done")
+        logger.info("GUI: Init FWD-Q-Tree-Icon Tab 16x16")
+        self._fwd_q_flag_icons  = {
+            'F':       get_image(CFG_aprs_icon_path + '/1-55.png', size=(16, 16)),
+            'S+':      get_image(CFG_aprs_icon_path + '/1-56.png', size=(16, 16)),
+            'S-':      get_image(CFG_aprs_icon_path + '/1-03.png', size=(16, 16)),
+            'S=':      get_image(CFG_aprs_icon_path + '/0-67.png', size=(16, 16)),
+            'R':       get_image(CFG_aprs_icon_path + '/1-65.png', size=(16, 16)),
+            'H':       get_image(CFG_aprs_icon_path + '/1-67.png', size=(16, 16)),
+            'EE':      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
+        }
+        self._fwd_q_flag_icons.update(
+            {
+                'SW' : self._fwd_q_flag_icons['S='],
+                '$'  : self._fwd_q_flag_icons['F'],
+                'EO' : self._fwd_q_flag_icons['EE']
+            }
+        )
+        logger.info("GUI: Init Icon Tabs. Done")
         #####################
         # Global Cache Tab
         """
@@ -3961,6 +3981,9 @@ class PoPT_GUI_Main:
 
     def get_conn_typ_icon_16(self):
         return self._conn_typ_icons
+
+    def get_fwd_q_icon_16(self):
+        return self._fwd_q_flag_icons
 
     def get_ais_mon_gui(self):
         return self.aprs_mon_win
