@@ -154,6 +154,7 @@ class BBS:
                 BBS_LOG.info(self._logTag + "ReInit: FWD is disabled. BBS is in PMS Mode")
             BBS_LOG.info(self._logTag + 'ReInit: Auto Mail Tasks')
             self._reinit_scheduled_tasks()
+            #self._db.bbs_outMsg_release_all_wait()
             BBS_LOG.info(self._logTag + "ReInit: Done !")
             return True
         return False

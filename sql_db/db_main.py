@@ -1249,6 +1249,8 @@ class SQL_Database:
     def bbs_outMsg_release_all_wait(self):
         query = f"UPDATE pms_fwd_q SET flag='S=' WHERE flag='SW';"
         self._commit_query(query)
+        query = f"UPDATE pms_fwd_q SET flag='F' WHERE flag='$';"
+        self._commit_query(query)
 
 
     def pms_save_outMsg_by_MID(self, mid: str):
