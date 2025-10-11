@@ -1123,4 +1123,6 @@ class PortSettingsWin(ttk.Frame):
             threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
             # self._need_GUI_reinit = False
         """
+        if self._need_GUI_reinit:
+            PORT_HANDLER.unblock_all_ports()
         return self._need_GUI_reinit

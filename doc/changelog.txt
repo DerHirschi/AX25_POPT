@@ -10,6 +10,8 @@ Fixes:
 - BBS-Fwd: "=" geflaggte Nachrichten werden nicht erneute zum Senden angeboten
 - BBS-FWD: Aus der GUI aus gesendete Nachrichten lösen ein "Forward-Task" aus
   obwohl die Warteschlange noch nicht vollständig verarbeitet wurde
+- Eingehende Verbindungen werden geblockt bzw. der Port block wird nicht
+  freigegeben, wenn Port neu initialisiert wird
 
 Optimierung/Änderungen:
 - GUI Forward-Warteschlange: Filter und Icons implementiert

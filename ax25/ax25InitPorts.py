@@ -382,6 +382,7 @@ class AX25PortHandler(object):
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
 
+    """
     def reinit_all_ports(self):
         self.sysmsg_to_gui(get_strTab('all_port_reinit', POPT_CFG.get_guiCFG_language()))
         logger.info("PH: Reinit all Ports")
@@ -393,6 +394,7 @@ class AX25PortHandler(object):
         ##########################
         # Pipe-Tool Init
         self.set_diesel()
+    """
 
     def reinit_port(self, port_id: int):
         # if not self.ax25_ports.get(port_id, False):

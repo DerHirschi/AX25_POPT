@@ -336,7 +336,7 @@ class PoPT_GUI_Main:
         self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
         # Tasker
-        self._loop_delay                        = 50  # ms
+        self._loop_delay                        = 70  # ms
         self._parm_non_prio_task_timer          = 0.25  # s
         self._parm_non_non_prio_task_timer      = 1  # s
         self._parm_non_non_non_prio_task_timer  = 5  # s
