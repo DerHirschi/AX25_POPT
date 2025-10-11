@@ -42,7 +42,7 @@ class GPIO_DefaultFNC_OUT:
 
     def _gpioFNC_task(self):
         state_var = self._get_state_var()
-        gpio_val = self._get_gpio_val()
+        gpio_val  = self._get_gpio_val()
         if any((gpio_val is None, self._e)):
             return
 

@@ -335,7 +335,8 @@ class GPIO_pinSetup(tk.Toplevel):
         if not pin_fnc:
             messagebox.showerror(
                 self._getTabStr('gpio_fnc_setting_error_1'),
-                self._getTabStr('gpio_fnc_setting_error_2')
+                self._getTabStr('gpio_fnc_setting_error_2'),
+                parent=self
             )
 
 

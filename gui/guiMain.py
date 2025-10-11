@@ -2167,10 +2167,10 @@ class PoPT_GUI_Main:
 
     def _tasker_prio(self):
         """ Prio Tasks every Irritation """
-
         tasker_ret = False
         if hasattr(self._port_handler, 'tasker_gui_th'):
-            tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
+            # tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
+            ph_task = self._port_handler.tasker_gui_th()
         if hasattr(self.userDB_tree_win, 'tasker'):
             tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
         if hasattr(self.userdb_win, 'tasker'):

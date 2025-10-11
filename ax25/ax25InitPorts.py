@@ -175,7 +175,7 @@ class AX25PortHandler(object):
         """ 0.1 Sec (Mainloop Speed) """
         return any((
             self._bbs.tasker(),
-            False
+            self._gpio_tasker_q()
         ))
 
     def _05sec_task(self):
@@ -1333,6 +1333,11 @@ class AX25PortHandler(object):
             self._gpio.gpio_tasker()
             return
         return
+
+    def _gpio_tasker_q(self):
+        if hasattr(self._gpio, 'gpio_tasker_q'):
+            return self._gpio.gpio_tasker_q()
+        return False
 
     ##############################################################
     # Local Converse Mode

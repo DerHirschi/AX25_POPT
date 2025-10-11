@@ -17,7 +17,8 @@ Fixes:
 
 Optimierung/Änderungen:
 - GUI Forward-Warteschlange: Filter und Icons implementiert
-- BBS Tasker
+- BBS Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
+- GPIO Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner

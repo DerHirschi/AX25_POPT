@@ -17,8 +17,8 @@ class poptGPIO_main:
             raise IOError('No GPIO Device found !')
 
         ##################################
-        self._is_pms_alarm = False
-        self._is_aprs_alarm = False
+        self._is_pms_alarm   = False
+        self._is_aprs_alarm  = False
         self._is_sysop_alarm = False
         ##################################
         self._gpio_conf = POPT_CFG.get_gpio_cfg()
@@ -33,7 +33,8 @@ class poptGPIO_main:
             aprs_alarm=GPIO_APRS_PMAlarmOUT,
             sysop_alarm=GPIO_SYSOP_AlarmOUT,
         )
-        self._gpio_tasks = {}
+        self._gpio_task_q = []
+        self._gpio_tasks  = {}
         self._init_tasker_fm_conf()
 
         logger.info(self._logTag + "Init done..")
@@ -75,11 +76,19 @@ class poptGPIO_main:
         self._pin_cfg = {}
         self._init_fm_conf()
         ##################################
-        self._gpio_tasks = {}
+        self._gpio_task_q = []
+        self._gpio_tasks  = {}
         self._init_tasker_fm_conf()
         logger.info(self._logTag + "ReInit done..")
 
     #####################################################################
+    def gpio_tasker_q(self):
+        if not self._gpio_task_q:
+            return False
+        task = self._gpio_task_q.pop(0)
+        task()
+        return True
+
     def gpio_tasker(self):
         """ Called fm PortHandler 0.5 sec """
         for pin_name, pin_fnc in dict(self._gpio_tasks).items():
@@ -91,7 +100,7 @@ class poptGPIO_main:
                 del self._gpio_tasks[pin_name]
                 continue
             if hasattr(pin_fnc, 'gpioFNC_tasker'):
-                pin_fnc.gpioFNC_tasker()
+                self._gpio_task_q.append(pin_fnc.gpioFNC_tasker)
             else:
                 del self._gpio_tasks[pin_name]
                 continue
