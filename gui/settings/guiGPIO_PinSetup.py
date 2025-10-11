@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 from cfg.constant import GPIO_RANGE
 from cfg.default_config import getNew_gpio_pin_cfg
@@ -29,7 +29,7 @@ class GPIO_pinSetup(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
-        self._lang = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.title('GPIO')
         #####################################################
         self._root_win = root_win
@@ -99,7 +99,7 @@ class GPIO_pinSetup(tk.Toplevel):
 
         del_btn = ttk.Button(
             upper_frame,
-            text=get_strTab('delete', self._lang),
+            text=self._getTabStr('delete'),
             command=self._del_pin
         )
         del_btn.pack(side=tk.LEFT, )
@@ -200,7 +200,7 @@ class GPIO_pinSetup(tk.Toplevel):
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._save_btn)
         ok_btn.pack(side=tk.LEFT)
 
-        abort_btn = ttk.Button(btn_frame, text=get_strTab(str_key='cancel', lang_index=self._lang), command=self._abort_btn)
+        abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
         abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
 
     ######################################################
@@ -320,11 +320,11 @@ class GPIO_pinSetup(tk.Toplevel):
         try:
             # pin_id = int(self._pin_id_var.get())
             blink_timer = int(self._blink_var.get())
-            pin_fnc = self._pin_fnc_var.get()
+            pin_fnc     = self._pin_fnc_var.get()
         except ValueError:
             return False
         hold_timer = self._hold_var.get()
-        hold_off = self._hold_off_var.get()
+        hold_off   = self._hold_off_var.get()
         if not hold_off:
             hold_timer = None
         else:
@@ -333,7 +333,11 @@ class GPIO_pinSetup(tk.Toplevel):
             except ValueError:
                 return False
         if not pin_fnc:
-            return False
+            messagebox.showerror(
+                self._getTabStr('gpio_fnc_setting_error_1'),
+                self._getTabStr('gpio_fnc_setting_error_2')
+            )
+
 
         pol_high = dict(
             normal=1,
@@ -353,9 +357,12 @@ class GPIO_pinSetup(tk.Toplevel):
         gpio_cfg[pin_name] = dict(pin_cfg)
         POPT_CFG.set_gpio_cfg(gpio_cfg)
 
+        return True
+
     ######################################################
     def _save_btn(self):
-        self._save_cfg()
+        if not self._save_cfg():
+            return
         self._root_win.update_gpio_tree()
         self.destroy_win()
 

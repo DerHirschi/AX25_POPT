@@ -2293,6 +2293,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'gpio_fnc_setting_error_1': (
+        'Keine GPIO Funktion',
+        'No GPIO function',
+        'Geen GPIO-functie',
+        'Pas de fonction GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'gpio_fnc_setting_error_2': (
+        'Keine GPIO Funktion zugewiesen!',
+        'No GPIO function assigned!',
+        'Geen GPIO-functie toegewezen!',
+        "Aucune fonction GPIO attribuée !",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'Digipeater': (
         'Digipeater',
         'Digipeater',

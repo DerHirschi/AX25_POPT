@@ -636,10 +636,10 @@ class Main_CFG:
             gpio_conf[pin_name] = pin_cfg
         return dict(gpio_conf)
         """
-        return dict(self._config.get('gpio_cfg', getNew_gpio_cfg()))
+        return copy.deepcopy(self._config.get('gpio_cfg', getNew_gpio_cfg()))
 
     def set_gpio_cfg(self, gpio_cfg: dict):
-        self._config['gpio_cfg'] = dict(gpio_cfg)
+        self._config['gpio_cfg'] = copy.deepcopy(gpio_cfg)
 
     ###########################################
     # BBS

@@ -105,7 +105,7 @@ class poptGPIO_main:
             return False
         if pin_name in self._pin_cfg:
             logger.warning(self._logTag + f"{pin_name} already in Config")
-            return
+            return False
         self._pin_cfg[pin_name] = pin_conf
         if self._is_pinctrl:
             return self._setup_pinctrl_pin(pin_conf)
