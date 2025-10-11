@@ -13,6 +13,7 @@ Fixes:
 
 Optimierung/Änderungen:
 - GUI Forward-Warteschlange: Filter und Icons implementiert
+- BBS Tasker
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner

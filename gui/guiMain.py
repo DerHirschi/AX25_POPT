@@ -228,18 +228,18 @@ class PoPT_GUI_Main:
         }
         logger.info("GUI: Init FWD-Q-Tree-Icon Tab 16x16")
         self._fwd_q_flag_icons  = {
-            'F':       get_image(CFG_aprs_icon_path + '/1-55.png', size=(16, 16)),
-            'S+':      get_image(CFG_aprs_icon_path + '/1-56.png', size=(16, 16)),
-            'S-':      get_image(CFG_aprs_icon_path + '/1-03.png', size=(16, 16)),
-            'S=':      get_image(CFG_aprs_icon_path + '/0-67.png', size=(16, 16)),
-            'R':       get_image(CFG_aprs_icon_path + '/1-65.png', size=(16, 16)),
-            'H':       get_image(CFG_aprs_icon_path + '/1-67.png', size=(16, 16)),
-            'EE':      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
+            'F':       get_image(CFG_aprs_icon_path + '/1-26.png',      size=(16, 16)),
+            '$':       get_image(CFG_aprs_icon_path + '/0-82.png',      size=(16, 16)),
+            'S+':      get_image(CFG_gui_icon_path +  '/status_ok.png', size=(16, 16)),
+            'S-':      get_image(CFG_aprs_icon_path + '/1-06.png',      size=(16, 16)),
+            'S=':      get_image(CFG_aprs_icon_path + '/0-67.png',      size=(16, 16)),
+            'R':       get_image(CFG_aprs_icon_path + '/1-65.png',      size=(16, 16)),
+            'H':       get_image(CFG_aprs_icon_path + '/0-72.png',      size=(16, 16)),
+            'EE':      get_image(CFG_aprs_icon_path + '/1-78.png',      size=(16, 16)),
         }
         self._fwd_q_flag_icons.update(
             {
                 'SW' : self._fwd_q_flag_icons['S='],
-                '$'  : self._fwd_q_flag_icons['F'],
                 'EO' : self._fwd_q_flag_icons['EE']
             }
         )
@@ -2088,11 +2088,9 @@ class PoPT_GUI_Main:
         n = 25
         while any((self._tasker_q_prio, self._tasker_q)) and n:
             if self._tasker_q_prio:
-                task, arg = self._tasker_q_prio[0]
-                self._tasker_q_prio = self._tasker_q_prio[1:]
+                task, arg = self._tasker_q_prio.pop(0)
             elif self._tasker_q:
-                task, arg       = self._tasker_q[0]
-                self._tasker_q  = self._tasker_q[1:]
+                task, arg       = self._tasker_q.pop(0)
             else:
                 break
             if task == 'sysMsg_to_monitor':
@@ -2183,7 +2181,6 @@ class PoPT_GUI_Main:
             self._mh_win_task(),
             tasker_ret
         ))
-
 
     def _tasker_025_sec(self):
         """ 0.25 Sec """

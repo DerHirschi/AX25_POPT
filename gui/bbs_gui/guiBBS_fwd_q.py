@@ -88,6 +88,7 @@ class BBS_fwd_Q(tk.Toplevel):
             'sub',
             'size',
             'flag',
+            'tx_timer',
         )
 
         self._tree = ttk.Treeview(tree_frame, columns=columns, show='tree headings')
@@ -106,8 +107,9 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry(self._tree, 'sub'))
         self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry(self._tree, 'size'))
         self._tree.heading('flag', text='Flag', command=lambda: self._sort_entry(self._tree, 'flag'))
+        self._tree.heading('tx_timer', text='TX-Time', command=lambda: self._sort_entry(self._tree, 'tx_timer'))
 
-        self._tree.column("#0", anchor='w', stretch=tk.NO, width=45)
+        self._tree.column("#0", anchor='w', stretch=tk.NO, width=35)
         self._tree.column("FWDID", anchor='w', stretch=tk.NO, width=170)
         self._tree.column("BID", anchor='w', stretch=tk.NO, width=130)
         self._tree.column("from", anchor='w', stretch=tk.YES, width=190)
@@ -117,6 +119,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.column("sub", anchor='w', stretch=tk.YES, width=150)
         self._tree.column("size", anchor='w', stretch=tk.NO, width=60)
         self._tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        self._tree.column("tx_timer", anchor='w', stretch=tk.NO, width=160)
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
         ###
         btn_frame = ttk.Frame(tree_frame, width=150)
@@ -820,7 +823,7 @@ class BBS_fwd_Q(tk.Toplevel):
                 continue
             if all((
                 active_filter == 'active',
-                el[10] not in ['F', 'S=', '$']
+                el[10] not in ['F', 'S=', 'SW', '$']
             )):
                 continue
 
@@ -839,6 +842,7 @@ class BBS_fwd_Q(tk.Toplevel):
                     f'{el[8]}',   # sub
                     f'{el[9]}',   # size
                     f'{el[10]}',  # flag
+                    f'{el[11]}',  # tx-time
                 ), image))
 
     ##########################

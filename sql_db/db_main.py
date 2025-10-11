@@ -697,7 +697,8 @@ class SQL_Database:
                   "type, "
                   "subject, "
                   "size, "
-                  "flag "
+                  "flag, "
+                  "tx_time "
                   # "FROM pms_fwd_q WHERE flag='F';")
                   # "FROM pms_fwd_q WHERE flag IN ('F', 'S=', '$');")
                   "FROM pms_fwd_q;")

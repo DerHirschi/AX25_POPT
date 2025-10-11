@@ -152,7 +152,7 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
-            # self._prio_task()
+            self._prio_task()
             self._05sec_task()
             self._1sec_task()
             self._2sec_task()
@@ -163,8 +163,8 @@ class AX25PortHandler(object):
     def tasker_gui_th(self):
         if not self.is_running:
             return False
-        # self._prio_task()
         return any((
+            self._prio_task(),
             self._05sec_task(),
             self._1sec_task(),
             self._2sec_task(),
@@ -173,8 +173,10 @@ class AX25PortHandler(object):
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        # self._mh_task()
-        pass
+        return any((
+            self._bbs.tasker(),
+            False
+        ))
 
     def _05sec_task(self):
         """ 0.5 Sec """
