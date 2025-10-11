@@ -384,17 +384,20 @@ class MH:
     # MH Stuff
     def mh_task(self):  # TASKER
         """ Called fm Porthandler Tasker """
-        while self._lock:
+        if self._lock:
             logger.info('MH: Tasker, wait for Lock')
-            time.sleep(0.05)
+            return False
+        if not self._mh_inp_buffer:
+            return False
         self._lock = True
         for el in list(self._mh_inp_buffer):
             if not el.get('tx', False):
                 self._PortStat_input(el)
                 self._input_bw_calc(el)
                 self._mh_inp(el)
-            self._mh_inp_buffer = self._mh_inp_buffer[1:]
+            self._mh_inp_buffer.pop(0)
         self._lock = False
+        return True
 
     def mh_input(self, ax25frame_conf, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""

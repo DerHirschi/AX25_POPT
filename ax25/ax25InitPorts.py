@@ -142,7 +142,6 @@ class AX25PortHandler(object):
 
     def __del__(self):
         pass
-        # self.close_all_ports()
         # logger.info("Ende PoPT Ver.: {}".format(VER))
 
     #######################################################################
@@ -153,9 +152,12 @@ class AX25PortHandler(object):
     def _tasker(self):
         while self.is_running:
             self._prio_task()
-            self._05sec_task()
-            self._1sec_task()
-            self._2sec_task()
+            if self._05sec_task():
+                continue
+            if self._1sec_task():
+                continue
+            if self._2sec_task():
+                continue
             if not self.is_running:
                 return
             time.sleep(0.25)
@@ -163,13 +165,14 @@ class AX25PortHandler(object):
     def tasker_gui_th(self):
         if not self.is_running:
             return False
-        return any((
-            self._prio_task(),
-            self._05sec_task(),
-            self._1sec_task(),
-            self._2sec_task(),
-        ))
-
+        prio_t = self._prio_task()
+        if self._05sec_task():
+            return True
+        if self._1sec_task():
+            return True
+        if self._2sec_task():
+            return True
+        return prio_t
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
@@ -192,7 +195,7 @@ class AX25PortHandler(object):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
             self._port_watchdog_task()
-            self._mh_task()
+            self._mh_task()         # #################
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
             return True
@@ -224,7 +227,7 @@ class AX25PortHandler(object):
     #######################################################################
     # MH
     def _mh_task(self):
-        self._mh.mh_task()
+        return self._mh.mh_task()
 
     #######################################################################
     # Routing Table
