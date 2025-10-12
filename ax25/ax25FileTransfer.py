@@ -181,10 +181,10 @@ class FileTransport(object):
         self.time_start = 0
         self.tmp_param_wait = 0
         """ DEBUG """
-        self.debug_raw_data = b''
-        self.debug_last_frames = []
-        self.debug_trigger = False
-        self.debug_run = False
+        #self.debug_raw_data = b''
+        #self.debug_last_frames = []
+        #self.debug_trigger = False
+        #self.debug_run = False
 
         self.prot_dict = {
             FT_MODES[0]: TextMODE,

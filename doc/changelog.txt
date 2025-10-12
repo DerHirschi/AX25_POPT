@@ -22,6 +22,14 @@ Optimierung/Änderungen:
 - GPIO Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
 - Wenn Softwarekennung ermittelt wird nicht mehr nach weitere Softwarekennung
   gesucht. Verhindert das Auslesen von z.B. CLI.Monitor Anwendungen auf Noden
+- GUI Main Loop: Warteschlangen Tasker wird nach gewissen laufzeit unterbrochen
+  (nicht wie vorher nach x durchläufen)
+  (verbesserte GUI ansprechverhalten bei großen Lasten wie z.B. bei der
+  Übertragung von Dateien (Local Host zur eigenen Station als Benchmark))
+- GUI Monitor und Monitor-Tree Tasker performance optimiert
+  (Monitor u Mon-Tree sind bis zu 5 Minuten "nachgelaufen", obwohl die Datei-
+  übertragung bereits beendet war, seit geraumer Zeit. Sollte jetzt nicht
+  mehr vorkommen. Getestet auf einen PI4-4GB-RAM)
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner

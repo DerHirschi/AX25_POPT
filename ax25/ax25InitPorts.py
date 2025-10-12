@@ -21,7 +21,7 @@ from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25 import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START
+from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -895,8 +895,8 @@ class AX25PortHandler(object):
         ))
 
     def get_monitor_data(self):
-        data = list(self._monitor_buffer[:400])
-        self._monitor_buffer = self._monitor_buffer[len(data):]
+        data = list(self._monitor_buffer[:MON_BATCH_TO_PROCESS])  # 22 Pi4
+        self._monitor_buffer = self._monitor_buffer[MON_BATCH_TO_PROCESS:]
         return data
 
     ######################

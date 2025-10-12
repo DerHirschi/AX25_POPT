@@ -53,7 +53,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
-    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path
+    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, MON_BATCH_TASKS, GUI_TASKER_Q_RUNTIME, \
+    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_MAX_Q_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
@@ -346,6 +347,7 @@ class PoPT_GUI_Main:
         self._tasker_q_timer                    = time.time()
         self._win_gc_task_timer                 = time.time() + 1
         # Tasker Q
+        self._get_tasker_q_can_run              = lambda start_time, run_time: bool(run_time > time.time() - start_time)
         self._tasker_q                          = []
         self._tasker_q_prio                     = []
         #
@@ -2041,31 +2043,49 @@ class PoPT_GUI_Main:
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
-        q_tasker = self._tasker_queue()
+        timer_overall    = time.time()
+        burn_baby_burn   = False
+        self._tasker_queue()
         self._win_gc_tasker()
         if self._quit:
             if self._tasker_quit():
                 return
             # self.main_win.update_idletasks()
         else:
-            prio            = self._tasker_prio()
-            update_needed   = self._tasker_025_sec()
-            if not update_needed:
-                update_needed = self._tasker_1_sec()
+            timer = time.time()
+            self._tasker_prio()
+            t_delta = time.time() - timer
+            if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
+                logger.warning(f"GUI-Tasker._tasker_prio Overload: Loop needs {round(t_delta, 2)}s to process !!")
+                burn_baby_burn = True
+
+            update_needed = self._tasker_025_sec()
+            update_needed = any((self._tasker_1_sec(), update_needed))
             if not update_needed:
                 update_needed = self._tasker_5_sec()
-            if not update_needed:
-                update_needed = bool(any((prio, q_tasker)))
             if update_needed:
                 self.main_win.update_idletasks()
+        t_delta      = time.time() - timer_overall
+        tasker_Q_len = len(self._tasker_q)
+
+        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN or tasker_Q_len > GUI_TASKER_MAX_Q_UNTIL_BURN:
+            burn_baby_burn = True
+            logger.warning("GUI-Tasker Overload: !!")
+            logger.warning(f"  GUI-Tasker   : Loop needs {round(t_delta, 2)}s to process !!")
+            logger.warning(f"  GUI-Tasker-Q : {tasker_Q_len} Tasks !!")
+
+        if burn_baby_burn:
+            self._loop_delay = GUI_TASKER_BURN_DELAY
+        else:
+            self._loop_delay = GUI_TASKER_NOT_BURN_DELAY
         self.main_win.after(self._loop_delay, self._tasker)
 
     def _tasker_quit(self):
         if not self._port_handler.get_ph_end():
             return False
-        if self._tasker_q:
-            logger.info('GUI: Still jobs in _tasker_q')
-            return False
+        #if self._tasker_q:
+        #    logger.info('GUI: Still jobs in _tasker_q')
+        #    return False
         n = 0
         for gc_thread in self._thread_gc:
             if hasattr(gc_thread, 'is_alive'):
@@ -2083,85 +2103,93 @@ class PoPT_GUI_Main:
         return True
 
     def _tasker_queue(self):
-        if not self._tasker_q and not self._tasker_q_prio:
+        if all((not self._tasker_q, not self._tasker_q_prio)):
             return False
-        n = 25
-        while any((self._tasker_q_prio, self._tasker_q)) and n:
-            if self._tasker_q_prio:
+        start_time = time.time()
+        #n = 0
+        if self._tasker_q_prio:
+            while all((self._tasker_q_prio, self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME))):
                 task, arg = self._tasker_q_prio.pop(0)
-            elif self._tasker_q:
-                task, arg       = self._tasker_q.pop(0)
-            else:
-                break
-            if task == 'sysMsg_to_monitor':
-                self._sysMsg_to_monitor_task(arg)
-            elif self._quit:
-                n -= 1
-                continue
-            elif task == 'conn_btn_update':
-                self._conn_btn_update_task()
-            elif task == 'ch_status_update':
-                self._ch_status_update_task()
-            elif task == 'on_channel_status_change':
-                self._on_channel_status_change_task()
-            elif task == 'add_LivePath_plot':
-                node, ch_id, path = arg
-                self._add_LivePath_plot_task(node, ch_id, path)
-            elif task == 'resetHome_LivePath_plot':
-                ch_id = arg
-                self._resetHome_LivePath_plot_task(ch_id)
-            elif task == 'sysMsg_to_qso':
-                data, ch_index = arg
-                self.sysMsg_to_qso_task(data, ch_index)
-            elif task == 'dx_alarm':
-                self._dx_alarm_task()
-            elif task == 'tracer_alarm':
-                self._tracer_alarm_task()
-            elif task == 'reset_tracer_alarm':
-                self._reset_tracer_alarm_task()
-            elif task == 'reset_dx_alarm':
-                self._reset_dx_alarm_task()
-            elif task == 'pmsMail_alarm':
-                self._pmsMail_alarm_task()
-            elif task == 'reset_pmsMail_alarm':
-                self._reset_pmsMail_alarm_task()
-            elif task == 'pmsFwd_alarm':
-                self._pmsFwd_alarm_task()
-            elif task == 'reset_pmsFwd_alarm':
-                self._reset_pmsFwd_alarm_task()
-            elif task == 'set_diesel':
-                self._set_diesel_task()
-            elif task == 'reset_diesel':
-                self._reset_diesel_task()
-            elif task == 'set_rxEcho_icon':
-                alarm_set = arg
-                self._set_rxEcho_icon_task(alarm_set)
-            elif task == 'set_Beacon_icon':
-                alarm_set = arg
-                self._set_Beacon_icon_task(alarm_set)
-            elif task == 'set_port_block_warning':
-                self._set_port_block_warning_task()
-            elif task == 'reset_noty_bell_alarm':
-                self._reset_noty_bell_alarm_task()
-            elif task == 'set_noty_bell':
-                ch_id, msg = arg
-                self._set_noty_bell_task(ch_id, msg)
-            elif task == 'set_noty_bell_active':
-                self._set_noty_bell_active_task()
-            elif task == 'set_aprsMail_alarm':
-                self._set_aprsMail_alarm_task()
-            elif task == 'reset_aprsMail_alarm':
-                self._reset_aprsMail_alarm_task()
-            elif task == 'update_aprs_spooler':
-                self._update_aprs_spooler_task()
-            elif task == 'update_aprs_msg_win':
-                self._update_aprs_msg_win_task(arg)
-            #elif task == 'update_tracer_win':
-            #    self._update_tracer_win_task()
-            elif task == '_monitor_tree_update':
-                # No Prio
-                self._monitor_tree_update_task(arg)
-            n -= 1
+                if task == 'sysMsg_to_monitor':
+                    self._sysMsg_to_monitor_task(arg)
+                elif self._quit:
+                    #n += 1
+                    continue
+                elif task == 'conn_btn_update':
+                    self._conn_btn_update_task()
+                elif task == 'ch_status_update':
+                    self._ch_status_update_task()
+                elif task == 'on_channel_status_change':
+                    self._on_channel_status_change_task()
+                elif task == 'add_LivePath_plot':
+                    node, ch_id, path = arg
+                    self._add_LivePath_plot_task(node, ch_id, path)
+                elif task == 'resetHome_LivePath_plot':
+                    ch_id = arg
+                    self._resetHome_LivePath_plot_task(ch_id)
+                elif task == 'sysMsg_to_qso':
+                    data, ch_index = arg
+                    self.sysMsg_to_qso_task(data, ch_index)
+                elif task == 'dx_alarm':
+                    self._dx_alarm_task()
+                elif task == 'tracer_alarm':
+                    self._tracer_alarm_task()
+                elif task == 'reset_tracer_alarm':
+                    self._reset_tracer_alarm_task()
+                elif task == 'reset_dx_alarm':
+                    self._reset_dx_alarm_task()
+                elif task == 'pmsMail_alarm':
+                    self._pmsMail_alarm_task()
+                elif task == 'reset_pmsMail_alarm':
+                    self._reset_pmsMail_alarm_task()
+                elif task == 'pmsFwd_alarm':
+                    self._pmsFwd_alarm_task()
+                elif task == 'reset_pmsFwd_alarm':
+                    self._reset_pmsFwd_alarm_task()
+                elif task == 'set_diesel':
+                    self._set_diesel_task()
+                elif task == 'reset_diesel':
+                    self._reset_diesel_task()
+                elif task == 'set_rxEcho_icon':
+                    alarm_set = arg
+                    self._set_rxEcho_icon_task(alarm_set)
+                elif task == 'set_Beacon_icon':
+                    alarm_set = arg
+                    self._set_Beacon_icon_task(alarm_set)
+                elif task == 'set_port_block_warning':
+                    self._set_port_block_warning_task()
+                elif task == 'reset_noty_bell_alarm':
+                    self._reset_noty_bell_alarm_task()
+                elif task == 'set_noty_bell':
+                    ch_id, msg = arg
+                    self._set_noty_bell_task(ch_id, msg)
+                elif task == 'set_noty_bell_active':
+                    self._set_noty_bell_active_task()
+                elif task == 'set_aprsMail_alarm':
+                    self._set_aprsMail_alarm_task()
+                elif task == 'reset_aprsMail_alarm':
+                    self._reset_aprsMail_alarm_task()
+                elif task == 'update_aprs_spooler':
+                    self._update_aprs_spooler_task()
+                elif task == 'update_aprs_msg_win':
+                    self._update_aprs_msg_win_task(arg)
+                #elif task == 'update_tracer_win':
+                #    self._update_tracer_win_task()
+                #n += 1
+
+        if all((self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME), not self._quit , self._tasker_q)):
+            # Non Prio
+            while all((self._tasker_q, self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME))):
+                task, arg = self._tasker_q.pop(0)
+                if task == '_monitor_tree_update':
+                    self._monitor_tree_update_task(arg)
+                elif task == '_monitor_q_task':
+                    self._monitor_q_task(arg)
+                #n += 1
+
+        #tasker_q_len = len(self._tasker_q)
+        #if tasker_q_len > 100:
+        #logger.debug(f'GUI-Tasker Q: {n} Tasks finished')
 
         return True
 
@@ -2170,17 +2198,33 @@ class PoPT_GUI_Main:
         tasker_ret = False
         if hasattr(self._port_handler, 'tasker_gui_th'):
             # tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
-            ph_task = self._port_handler.tasker_gui_th()
+            timer = time.time()
+            self._port_handler.tasker_gui_th()
+            t_delta = time.time() - timer
+            if t_delta > 0.25:
+                logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
         if hasattr(self.userDB_tree_win, 'tasker'):
             tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
+
         if hasattr(self.userdb_win, 'tasker'):
             tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
-        return any((
-            self._monitor_task(),
-            self._ais_monitor_task(),
-            self._mh_win_task(),
-            tasker_ret
-        ))
+
+        #timer = time.time()
+        tasker_ret = any((self._monitor_task(), tasker_ret))
+        #t_delta = time.time() - timer
+        #if t_delta > 0.25:
+        #    logger.warning(f"_monitor_task: Loop needs {round(t_delta, 2)}s to process !!")
+        #timer = time.time()
+        tasker_ret = any((self._ais_monitor_task(), tasker_ret))
+        #t_delta = time.time() - timer
+        #if t_delta > 0.25:
+        #    logger.warning(f"_ais_monitor_task Overload: Loop needs {round(t_delta, 2)}s to process !!")
+        #timer = time.time()
+        tasker_ret = any((self._mh_win_task(), tasker_ret))
+        #t_delta = time.time() - timer
+        #if t_delta > 0.25:
+        #    logger.warning(f"_mh_win_task Overload: Loop needs {round(t_delta, 2)}s to process !!")
+        return tasker_ret
 
     def _tasker_025_sec(self):
         """ 0.25 Sec """
@@ -2602,53 +2646,76 @@ class PoPT_GUI_Main:
     """
 
     def _monitor_task(self):
-        mon_buff = self._port_handler.get_monitor_data()
-        if not mon_buff:
-            return False
+        for _n in range(MON_BATCH_TASKS):
+            mon_buff = self._port_handler.get_monitor_data()
+            if not mon_buff:
+                continue
+            new_mon_buff = []
+            for axframe_conf, port_conf, tx in mon_buff:
+                port_id = port_conf.get('parm_PortNr', -1)
+                axframe_conf['tx']        = tx
+                axframe_conf['port']      = port_id
+                axframe_conf['port_conf'] = port_conf
+                new_mon_buff.append(axframe_conf)
+                self._mon_pack_buff.append(dict(axframe_conf))
 
+            """ Monitor Tree """
+            self._monitor_tree_update(new_mon_buff)
+            """ Monitor """
+            self._add_tasker_q('_monitor_q_task',
+                               new_mon_buff,
+                               False)
+        return True
+
+    def _monitor_q_task(self, mon_batch: list):
+
+        self._mon_txt.configure(state="normal")
+        self._mon_txt_tags = set(self._mon_txt.tag_names(None))  # Cache Tags
+
+        full_text = ""
+        tags_to_add = []
         mon_conf = {
-            "port_name": '',
             "distance": bool(self.mon_dec_dist_var.get()),
             "aprs_dec": bool(self.mon_dec_aprs_var.get()),
-            "nr_dec"  : bool(self.mon_dec_nr_var.get()),
-            "hex_out" : bool(self.mon_dec_hex_var.get()),
+            "nr_dec": bool(self.mon_dec_nr_var.get()),
+            "hex_out": bool(self.mon_dec_hex_var.get()),
             "decoding": str(self.setting_mon_encoding.get()),
         }
-        tr = False
-        self._mon_txt.configure(state="normal")
-        for axframe_conf, port_conf, tx in mon_buff:
+
+        end_idx = self._mon_txt.index('end-1c')  # Cache Index
+        for axframe in mon_batch:
+            port_conf    = axframe.get('port_conf', {})
+            tx           = axframe.get('tx'       , False)
+            axframe_conf = axframe
             port_id = port_conf.get('parm_PortNr', -1)
-            axframe_conf['tx']   = tx
-            axframe_conf['port'] = port_id
-            self._monitor_tree_update(axframe_conf)
-
             mon_conf['port_name'] = port_conf.get('parm_PortName', '')
+
             mon_str = monitor_frame_inp(axframe_conf, mon_conf)
-
             var = tk_filter_bad_chars(mon_str)
-            ind = self._mon_txt.index('end-1c')
-            # TODO Autoscroll
-            if float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15:
-                tr = True
-            if tx:
-                tag = f"tx{port_id}"
-            else:
-                tag = f"rx{port_id}"
+            full_text += var
 
-            if tag in self._mon_txt.tag_names(None):
-                self._mon_txt.insert(tk.END, var, tag)
-            else:
-                self._mon_txt.insert(tk.END, var)
-                ind2 = self._mon_txt.index('end-1c')
-                self._mon_txt.tag_add(tag, ind, ind2)
+            ind_start = f"{end_idx} + {len(full_text) - len(var)}c"
+            tag = f"tx{port_id}" if tx else f"rx{port_id}"
+            tags_to_add.append((tag, ind_start, f"{ind_start} + {len(var)}c"))
 
-            self._mon_pack_buff.append(dict(axframe_conf))
+        # Batch-Insert
+        self._mon_txt.insert(tk.END, full_text)
 
+        # Batch-Tags
+        for tag, start, end in tags_to_add:
+            if tag in self._mon_txt_tags:
+                self._mon_txt.tag_add(tag, start, end)
+
+        # Periodisches Cleanup (statt pro Task)
         cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
         if cut_len > 0:
             self._mon_txt.delete('1.0', f"{cut_len}.0")
+
+        # Autoscroll
+        tr = float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15
         if tr or self.mon_scroll_var.get():
             self._see_end_mon_win()
+
         self._mon_txt.configure(state="disabled", exportselection=True)
         return True
 
@@ -2665,125 +2732,129 @@ class PoPT_GUI_Main:
     ###############################################################
     ###############################################################
     # Monitor Tree
-    def _monitor_tree_update(self, ax25pack_conf: dict):
-        self._add_tasker_q("_monitor_tree_update", ax25pack_conf, prio=False)
+    def _monitor_tree_update(self, ax25pack_batch: list):
+        self._add_tasker_q("_monitor_tree_update", ax25pack_batch, prio=False)
 
-    def _monitor_tree_update_task(self, ax25pack_conf: dict):
-        via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
-        ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
-        ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
-        cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
-        cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
-        pay_size  = len(ax25pack_conf.get('payload', b''))
-        payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
-        payload   = tk_filter_bad_chars(payload)
-        payload   = payload.replace('\n', ' ').replace('\r', ' ')
-        user_db   = self._port_handler.get_userDB()
-        from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
-        to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
-        from_call = ax25pack_conf.get('from_call_str', '')
-        to_call   = ax25pack_conf.get('to_call_str', '')
-        port      = ax25pack_conf.get('port', -1)
-        ctl       = ax25pack_conf.get('ctl_flag', '')
-        pid       = ax25pack_conf.get('pid_flag', '')
-        port_filter      = self._mon_tree_port_filter_var.get()
-        fm_call_filter   = self._mon_tree_fm_call_filter_var.get().split(' ')
-        to_call_filter   = self._mon_tree_to_call_filter_var.get().split(' ')
+    def _monitor_tree_update_task(self, ax25pack_batch: list):
+        is_scrolled_to_top  = self._mon_tree.yview()[0] == 0.0
+        user_db             = self._port_handler.get_userDB()
+        mh                  = self._get_mh()
 
-        fm_call_filter   = [str(x.upper()).replace(' ', '') for x in list(fm_call_filter)]
-        to_call_filter   = [str(x.upper()).replace(' ', '') for x in list(to_call_filter)]
+        port_filter         = self._mon_tree_port_filter_var.get()
+        fm_call_filter      = self._mon_tree_fm_call_filter_var.get().split(' ')
+        to_call_filter      = self._mon_tree_to_call_filter_var.get().split(' ')
 
-        while '' in fm_call_filter:
-            fm_call_filter.remove('')
-        while '' in to_call_filter:
-            to_call_filter.remove('')
-        #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
-        #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
+        fm_call_filter      = [str(x.upper()).replace(' ', '') for x in list(fm_call_filter)]
+        to_call_filter      = [str(x.upper()).replace(' ', '') for x in list(to_call_filter)]
 
-        if not all((
-            any((all((port_filter,     port_filter     == str(port) )),     not port_filter)),
-            any((all((fm_call_filter,  from_call       in fm_call_filter)), not fm_call_filter)),
-            any((all((to_call_filter,  to_call         in to_call_filter)), not to_call_filter)),
-            #all((ctl_pack_filter, ctl_pack_filter != ctl)),
-            #all((pid_pack_filter, pid_pack_filter != pid)),
-        )):
-            return
-        raw_from_call = str(from_call)
-        raw_to_call   = str(to_call)
-        if from_dist > 0:
-            from_call += f'({from_dist}km)'
+        for ax25pack_conf in ax25pack_batch:
 
-        if to_dist > 0:
-            to_call += f'({to_dist}km)'
+            via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
+            ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
+            ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
+            cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
+            cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
+            pay_size  = len(ax25pack_conf.get('payload', b''))
+            payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
+            payload   = tk_filter_bad_chars(payload)
+            payload   = payload.replace('\n', ' ').replace('\r', ' ')
+            from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
+            to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
+            from_call = ax25pack_conf.get('from_call_str', '')
+            to_call   = ax25pack_conf.get('to_call_str', '')
+            port      = ax25pack_conf.get('port', -1)
+            ctl       = ax25pack_conf.get('ctl_flag', '')
+            pid       = ax25pack_conf.get('pid_flag', '')
 
-        tree_data = (
-            ax25pack_conf.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-            port,
-            from_call,
-            to_call,
-            '>'.join(via),
-            ctl,
-            pid,
-            ns_nr,
-            cmd_pl,
-            pay_size,
-            payload,
-        )
-        is_scrolled_to_top = self._mon_tree.yview()[0] == 0.0
-        index = 0
+            while '' in fm_call_filter:
+                fm_call_filter.remove('')
+            while '' in to_call_filter:
+                to_call_filter.remove('')
+            #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
+            #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
 
-        is_tx = ax25pack_conf.get('tx', True)
-        icon_k = {
-            True:  'tx',
-            False: 'rx',
-        }.get(is_tx, True)
+            if not all((
+                any((all((port_filter,     port_filter     == str(port) )),     not port_filter)),
+                any((all((fm_call_filter,  from_call       in fm_call_filter)), not fm_call_filter)),
+                any((all((to_call_filter,  to_call         in to_call_filter)), not to_call_filter)),
+                #all((ctl_pack_filter, ctl_pack_filter != ctl)),
+                #all((pid_pack_filter, pid_pack_filter != pid)),
+            )):
+                return
+            raw_from_call = str(from_call)
+            raw_to_call   = str(to_call)
+            if from_dist > 0:
+                from_call += f'({from_dist}km)'
 
-        """
-            '', '-dx',
-            '', '-term',
-            '', '-node',
-            '', '-bbs',
-            '', '-block',
-        """
-        icon_k_k = ''
-        # Is DX ?
-        if not is_tx:
-            mh    = self._get_mh()
-            is_dx = mh.is_dx_alarm_f_call(raw_from_call)
-            if is_dx:
-                icon_k_k = '-dx'
+            if to_dist > 0:
+                to_call += f'({to_dist}km)'
 
-        # Is to own Station ?
-        block_list = POPT_CFG.get_block_list().get(port, {})
-        if is_tx:
-            own_station = POPT_CFG.get_stat_CFG_fm_call(raw_from_call.split('-')[0])
-            block_state = block_list.get(raw_to_call.split('-')[0], 0)
-        else:
-            own_station = POPT_CFG.get_stat_CFG_fm_call(raw_to_call.split('-')[0])
-            block_state = block_list.get(raw_from_call.split('-')[0], 0)
+            tree_data = (
+                ax25pack_conf.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
+                port,
+                from_call,
+                to_call,
+                '>'.join(via),
+                ctl,
+                pid,
+                ns_nr,
+                cmd_pl,
+                pay_size,
+                payload,
+            )
+            index = 0
 
-        if own_station:
-            if block_state:
-                icon_k_k = '-block'
+            is_tx = ax25pack_conf.get('tx', True)
+            icon_k = {
+                True:  'tx',
+                False: 'rx',
+            }.get(is_tx, True)
+
+            """
+                '', '-dx',
+                '', '-term',
+                '', '-node',
+                '', '-bbs',
+                '', '-block',
+            """
+            icon_k_k = ''
+            # Is DX ?
+            if not is_tx:
+                is_dx = mh.is_dx_alarm_f_call(raw_from_call)
+                if is_dx:
+                    icon_k_k = '-dx'
+
+            # Is to own Station ?
+            block_list = POPT_CFG.get_block_list().get(port, {})
+            if is_tx:
+                own_station = POPT_CFG.get_stat_CFG_fm_call(raw_from_call.split('-')[0])
+                block_state = block_list.get(raw_to_call.split('-')[0], 0)
             else:
-                icon_k_k = dict(
-                    USER=   '-term',
-                    NODE=   '-node',
-                    BOX=    '-bbs',
-                ).get(own_station.get('stat_parm_cli', ''), '')
+                own_station = POPT_CFG.get_stat_CFG_fm_call(raw_to_call.split('-')[0])
+                block_state = block_list.get(raw_from_call.split('-')[0], 0)
 
-        # Get Icon
-        icon_k += icon_k_k
-        image = self._rx_tx_icons.get(icon_k)
-        tree_data_f = [tk_filter_bad_chars(el) if type(el) == str else el for el in tree_data]
-        try:
-            self._mon_tree.image_ref = image
-            self._mon_tree.insert('', index, values=tree_data_f, image=image)
+            if own_station:
+                if block_state:
+                    icon_k_k = '-block'
+                else:
+                    icon_k_k = dict(
+                        USER=   '-term',
+                        NODE=   '-node',
+                        BOX=    '-bbs',
+                    ).get(own_station.get('stat_parm_cli', ''), '')
 
-        except tk.TclError as ex:
-            logger.warning("TCL Error in guiMain _monitor_tree_update")
-            logger.warning(ex)
-            return
+            # Get Icon
+            icon_k += icon_k_k
+            image = self._rx_tx_icons.get(icon_k)
+            tree_data_f = [tk_filter_bad_chars(el) if type(el) == str else el for el in tree_data]
+            try:
+                self._mon_tree.image_ref = image
+                self._mon_tree.insert('', index, values=tree_data_f, image=image)
+
+            except tk.TclError as ex:
+                logger.warning("TCL Error in guiMain _monitor_tree_update")
+                logger.warning(ex)
+                continue
 
         # Begrenze die Anzahl der Einträge
         tree_items = self._mon_tree.get_children()
