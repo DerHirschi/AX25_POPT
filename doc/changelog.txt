@@ -14,6 +14,7 @@ Fixes:
   freigegeben, wenn Port neu initialisiert wird
 - GPIO Einstellungen: GPIO ohne Funktionszuweisungen können gespeichert werden
   , werden aber nicht in der Übersicht angezeigt
+- GPIO-Tool: Sysop Alarm wird nicht resetet
 
 Optimierung/Änderungen:
 - GUI Forward-Warteschlange: Filter und Icons implementiert

@@ -1271,13 +1271,14 @@ class AX25PortHandler(object):
             self._gpio.set_sysop_alarm(True)
 
     def reset_noty_bell_PH(self):
-        if self._gui:
-            all_conn = self.get_all_connections()
-            for ch in all_conn.keys():
-                conn = all_conn[ch]
-                if conn:
-                    if conn.noty_bell:
-                        return
+        all_conn = self.get_all_connections()
+        for ch in all_conn.keys():
+            conn = all_conn[ch]
+            if conn:
+                if conn.noty_bell:
+                    return
+
+        if hasattr(self._gui, 'reset_noty_bell_alarm'):
             self._gui.reset_noty_bell_alarm()
 
         if hasattr(self._gpio, 'set_sysop_alarm'):

@@ -3286,7 +3286,7 @@ class PoPT_GUI_Main:
             return
         if conn.noty_bell:
             conn.noty_bell = False
-            self.reset_noty_bell_alarm()
+            self._port_handler.reset_noty_bell_PH()
 
     def reset_noty_bell_alarm(self):
         self._add_tasker_q("reset_noty_bell_alarm", None)
