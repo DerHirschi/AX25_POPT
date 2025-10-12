@@ -16,6 +16,8 @@ class Main_CFG:
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
             ##########################
+            'first_setup': False,
+            ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
             'bbs_fwd_statistics': {},
@@ -91,9 +93,13 @@ class Main_CFG:
 
         logger.info(f'--------Loaded CFGs --------')
         for conf_k, conf in self._config.items():
-            logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
+            try:
+                logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
+            except (TypeError, ValueError):
+                pass
         logger.info(f'-------- Loaded CFGs ENDE --------')
         logger.info('Main CFG: Init complete')
+
         ### DEV ################################################
         # self._config['1wire_cfg'] = getNew_1wire_cfg()
         # print(getNew_BBS_cfg())
@@ -160,9 +166,11 @@ class Main_CFG:
 
         logger.info(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
-            logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
-            # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
-
+            try:
+                logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
+                # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
+            except (TypeError, ValueError):
+                pass
         save_to_pickle_file(CFG_MAIN_data_file, dict(self._config))
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
@@ -257,6 +265,14 @@ class Main_CFG:
 
     def set_CFG_by_key(self, cfg_key: str, data):
         self._config[cfg_key] = data
+
+    ####################
+    # 1'st Setup Wizard
+    def get_first_setup(self):
+        return self._config.get('first_setup', False)
+
+    def set_first_setup(self, is_done: bool):
+        self._config['first_setup'] = bool(is_done)
 
     ####################
     # MH

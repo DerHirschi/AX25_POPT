@@ -1,6 +1,7 @@
 from cfg.cfg_fnc import init_dir_struct
 from cfg.constant import VER, DEBUG_LOG, POPT_BANNER
 from cfg.logger_config import logger, LOG_BOOK
+from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import is_windows
 
 for el in POPT_BANNER.split('\r')[1:-2]:
@@ -12,7 +13,7 @@ else:
 
 logger.info(f"DEBUG_LOG: {DEBUG_LOG}")
 first_setup  = init_dir_struct()  # Setting up Directory's
-if first_setup:
+if first_setup or not POPT_CFG.get_first_setup():
     from setup_wizard.wguiSetup_app import SetupWizardAPP
     SetupWizardAPP()
 

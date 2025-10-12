@@ -787,6 +787,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'next': (
+        'Weiter',
+        'Next',
+        'Volgende',
+        'Plus loin',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'back': (
+        'Zurück',
+        'Back',
+        'Rug',
+        'Dos',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_selected': (
         'Auswahl löschen',
         'Delete selection',
@@ -2403,9 +2427,10 @@ STR_TABLE = {
 
     'lob1': (
         'Lob: Das hast du sehr gut gemacht !!',
-        'Praise: You did very well!!',
-        'Dat heb je zeer goed gemaakt',
-        'Éloge : Vous vous êtes très bien débrouillés !',
+        'Praise: You did very well !!',
+        'Dat heb je zeer goed gemaakt !!',
+        'Éloge : Vous vous êtes très bien débrouillés !!',
+        'Éloge : Vous vous êtes très bien débrouillés !!',
         '',
         '',
         '',
@@ -5044,4 +5069,55 @@ STR_TABLE = {
         '',
         ''),
 
+    'wizard_done': (
+        'Die Einrichtung von PoPT ist jetzt abgeschlossen.',
+        'The setup of PoPT is now complete.',
+        'De installatie van PoPT is nu voltooid.',
+        "La configuration de PoPT est maintenant terminée.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'wizard_want_port_setup': (
+        'Willst du einen Port AX25 Port einrichten ?',
+        'Do you want to set up an AX25 port ?',
+        'Wilt u een AX25-poort instellen ?',
+        "Voulez-vous configurer un port AX25 ?",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'yes': (
+        'Ja',
+        'Yes',
+        'Ja',
+        "Oui",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'no': (
+        'Nein',
+        'No',
+        'Nee',
+        "Non",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 }

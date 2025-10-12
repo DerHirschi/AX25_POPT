@@ -123,10 +123,14 @@ class LocalConverse:
     def get_channels(self):
         return dict(self._channels)
 
+    def get_channel(self, ch_id: int):
+        return self._channels.get(ch_id, None)
+
     def get_channel_name(self, ch_id):
         if ch_id not in self._channels:
             return ''
         return self._channels[ch_id].get_channel_name()
+
     #####################################
     def close_converse(self):
         for ch_name, channel in self._channels.items():

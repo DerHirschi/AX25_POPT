@@ -19,9 +19,12 @@ Optimierung/Änderungen:
 - GUI Forward-Warteschlange: Filter und Icons implementiert
 - BBS Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
 - GPIO Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
+- Wenn Softwarekennung ermittelt wird nicht mehr nach weitere Softwarekennung
+  gesucht. Verhindert das Auslesen von z.B. CLI.Monitor Anwendungen auf Noden
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
+- CLI-CMD Converse: "U" - Gibt Lister der User im eigenen Kanal aus
 
 ###########################################################################################################
 ###########################################################################################################

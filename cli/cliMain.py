@@ -50,7 +50,8 @@ class DefaultCLI(object):
             if self._user_db_ent.CText:
                 self._c_text          = str(self._user_db_ent.CText)
 
-        self.stat_identifier    = get_station_id_obj(self._stat_identifier_str)
+        self.stat_identifier        = get_station_id_obj(self._stat_identifier_str)
+        self._stat_identifier_found = False
         #print(f"CLI STST ID : {self.stat_identifier}")
         #print(f"CLI STST str : {self._stat_identifier_str}")
 
@@ -341,8 +342,11 @@ class DefaultCLI(object):
 
     def _software_identifier(self):
         #print("SW-ID")
+        if self._stat_identifier_found:
+            return True
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
+            self._stat_identifier_found = True
             #print(f"SW-ID flag: {self.stat_identifier.feat_flag}")
             #print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
