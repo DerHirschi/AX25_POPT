@@ -4,7 +4,6 @@ mach nach,
 mach besser.
 """
 VER = '2.121.15'
-
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
 BBS_DEBUG_LOG   = True
