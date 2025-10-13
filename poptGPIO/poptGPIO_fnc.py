@@ -142,6 +142,14 @@ class GPIO_DefaultFNC_OUT:
         return
 
 #############################################################
+# Custom CLI CMD
+"""
+class GPIO_CUSTOM_CLI_CMD(GPIO_DefaultFNC_OUT):
+    def __init__(self, gpio, pin_cfg: dict):
+        GPIO_DefaultFNC_OUT.__init__(self, gpio=gpio, pin_cfg=pin_cfg)
+        self._logTag = 'Custom CLI-CMD: '
+"""
+#############################################################
 # DX-Alarm
 class GPIO_DXAlarmOUT(GPIO_DefaultFNC_OUT):
     def __init__(self, gpio, pin_cfg: dict):

@@ -39,11 +39,12 @@ class GPIO_pinSetup(tk.Toplevel):
         self._pin_cfg = '', {}
         self._is_pin_init = False
         self._pin_fnc_opt = dict(
-            dx_alarm=self._setup_output_pins,
-            conn_alarm=self._setup_output_pins,
-            pms_alarm=self._setup_output_pins,
-            aprs_alarm=self._setup_output_pins,
-            sysop_alarm=self._setup_output_pins,
+            dx_alarm        =self._setup_output_pins,
+            conn_alarm      =self._setup_output_pins,
+            pms_alarm       =self._setup_output_pins,
+            aprs_alarm      =self._setup_output_pins,
+            sysop_alarm     =self._setup_output_pins,
+            #custom_cli_cmd  =self._setup_output_pins,
         )
         self._output_task_names = []
         for el_k, el_fnc in self._pin_fnc_opt.items():
@@ -68,14 +69,14 @@ class GPIO_pinSetup(tk.Toplevel):
         self._pol_lable_var = tk.StringVar(self, value='Polarity: n.a')
         #####################################################
         main_f = ttk.Frame(self)
-        main_f.pack(fill=tk.BOTH, expand=True)
+        main_f.pack(fill='both', expand=True)
         #####################################################
         upper_frame = ttk.Frame(main_f)
-        upper_frame.pack(expand=False, fill=tk.X)
+        upper_frame.pack(expand=False, fill='x')
         # Pin Sel
         pin_opt_frame = ttk.Frame(upper_frame)
-        pin_opt_frame.pack(side=tk.LEFT, padx=10, pady=10)
-        ttk.Label(pin_opt_frame, text='PIN: ').pack(side=tk.LEFT, padx=5)
+        pin_opt_frame.pack(side='left', padx=10, pady=10)
+        ttk.Label(pin_opt_frame, text='PIN: ').pack(side='left', padx=5)
         min_pin = GPIO_RANGE[0]
         max_pin = GPIO_RANGE[1]
         pin_selector = ttk.Spinbox(pin_opt_frame,
@@ -87,7 +88,7 @@ class GPIO_pinSetup(tk.Toplevel):
                                   command=self._switch_pin_id,
                                   state='normal')
 
-        pin_selector.pack(side=tk.LEFT, padx=10)
+        pin_selector.pack(side='left', padx=10)
         # Init Btn
 
         setup_btn = ttk.Button(
@@ -95,33 +96,33 @@ class GPIO_pinSetup(tk.Toplevel):
             text='Setup',
             command=self.setup_pin_btn
         )
-        setup_btn.pack(side=tk.LEFT, padx=70,)
+        setup_btn.pack(side='left', padx=70,)
 
         del_btn = ttk.Button(
             upper_frame,
             text=self._getTabStr('delete'),
             command=self._del_pin
         )
-        del_btn.pack(side=tk.LEFT, )
+        del_btn.pack(side='left', )
 
         ###########################################
         # Parameter Frame
         param_frame = ttk.Frame(main_f)
-        param_frame.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+        param_frame.pack(expand=True, fill='both', padx=10, pady=10)
         ####
         param_frame_l = ttk.Frame(param_frame)
-        param_frame_l.pack(expand=True, fill=tk.BOTH, padx=10, pady=10, side=tk.LEFT)
+        param_frame_l.pack(expand=True, fill='both', padx=10, pady=10, side='left')
         #
-        ttk.Separator(param_frame, orient='vertical').pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        ttk.Separator(param_frame, orient='vertical').pack(side='left', fill='y', expand=True)
         #
         param_frame_r = ttk.Frame(param_frame, )
-        param_frame_r.pack(expand=True, fill=tk.BOTH, padx=5, pady=10, side=tk.LEFT)
+        param_frame_r.pack(expand=True, fill='both', padx=5, pady=10, side='left')
         ###########################################
         # param_frame_l
         ## FNC
         fnc_sel_frame = ttk.Frame(param_frame_l)
-        fnc_sel_frame.pack(fill=tk.X, pady=15)
-        ttk.Label(fnc_sel_frame, text='Function: ').pack(side=tk.LEFT, padx=5)
+        fnc_sel_frame.pack(fill='x', pady=15)
+        ttk.Label(fnc_sel_frame, text='Function: ').pack(side='left', padx=5)
         opt = [self._pin_fnc_var.get()] + list(self._pin_fnc_opt.keys())
         if not opt:
             opt = ['', '']
@@ -131,12 +132,12 @@ class GPIO_pinSetup(tk.Toplevel):
             *opt,
             command=self._select_pin_fnc,
         )
-        fnc_selector.pack(side=tk.LEFT, padx=5)
+        fnc_selector.pack(side='left', padx=5)
 
         ############ Blink
         blink_t_frame = ttk.Frame(param_frame_l)
-        blink_t_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(blink_t_frame, text='Blink Timer s').pack(side=tk.LEFT, padx=5)
+        blink_t_frame.pack(fill='x', pady=10)
+        ttk.Label(blink_t_frame, text='Blink Timer s').pack(side='left', padx=5)
         self._blink_sel = ttk.Spinbox(blink_t_frame,
                                       textvariable=self._blink_var,
                                       from_=0,
@@ -144,13 +145,13 @@ class GPIO_pinSetup(tk.Toplevel):
                                       increment=1,
                                       width=3
                                       )
-        self._blink_sel.pack(side=tk.LEFT, padx=5)
+        self._blink_sel.pack(side='left', padx=5)
         self._blink_var.set('1')
 
         ############ Hold
         hold_t_frame = ttk.Frame(param_frame_l)
-        hold_t_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(hold_t_frame, text='Hold Timer s').pack(side=tk.LEFT, padx=5)
+        hold_t_frame.pack(fill='x', pady=10)
+        ttk.Label(hold_t_frame, text='Hold Timer s').pack(side='left', padx=5)
         # opt = ['OFF'] + list(range(0, 600))
         # self._hold_sel = tk.OptionMenu(hold_t_frame, self._hold_var, *opt)
         self._hold_sel = ttk.Spinbox(hold_t_frame,
@@ -162,46 +163,51 @@ class GPIO_pinSetup(tk.Toplevel):
                                      # command=self._set_max_frame,
                                      state='normal')
 
-        self._hold_sel.pack(side=tk.LEFT, padx=5)
+        self._hold_sel.pack(side='left', padx=5)
 
         self._hold_off_sel = ttk.Checkbutton(hold_t_frame, text='On/Off', variable=self._hold_off_var)
-        self._hold_off_sel.pack(side=tk.LEFT, padx=15)
+        self._hold_off_sel.pack(side='left', padx=15)
 
         ############ POL
         pol_t_frame = ttk.Frame(param_frame_l)
-        pol_t_frame.pack(fill=tk.X, pady=10)
-        ttk.Label(pol_t_frame, text='Polarity').pack(side=tk.LEFT, padx=5)
+        pol_t_frame.pack(fill='x', pady=10)
+        ttk.Label(pol_t_frame, text='Polarity').pack(side='left', padx=5)
 
         opt = list(self._pol_opt.keys())
         self._pol_var.set('normal')
         opt = [self._pin_fnc_var.get()] + opt
         self._pol_sel = ttk.OptionMenu(pol_t_frame, self._pol_var, *opt)
-        self._pol_sel.pack(side=tk.LEFT, padx=5)
+        self._pol_sel.pack(side='left', padx=5)
+        ###########################################
+        # Custom CLI CMD's
+        #cli_cmd_f = ttk.Frame(param_frame_l)
+        #cli_cmd_f.pack(fill='x', pady=10)
+
         ###########################################
         # param_frame_r
         lable_frame_1 = ttk.Frame(param_frame_r)
         lable_frame_2 = ttk.Frame(param_frame_r)
         lable_frame_3 = ttk.Frame(param_frame_r)
         lable_frame_4 = ttk.Frame(param_frame_r)
-        lable_frame_1.pack(fill=tk.X)
-        lable_frame_2.pack(fill=tk.X)
-        lable_frame_3.pack(fill=tk.X)
-        lable_frame_4.pack(fill=tk.X)
+        lable_frame_1.pack(fill='x')
+        lable_frame_2.pack(fill='x')
+        lable_frame_3.pack(fill='x')
+        lable_frame_4.pack(fill='x')
 
-        ttk.Label(lable_frame_1, textvariable=self._init_lable_var).pack(pady=5, fill=tk.X, side=tk.LEFT)
-        ttk.Label(lable_frame_2, textvariable=self._dir_lable_var).pack(pady=5, fill=tk.X, side=tk.LEFT)
-        ttk.Label(lable_frame_3, textvariable=self._val_lable_var).pack(pady=5, fill=tk.X, side=tk.LEFT)
-        ttk.Label(lable_frame_4, textvariable=self._pol_lable_var).pack(pady=5, fill=tk.X, side=tk.LEFT)
+        ttk.Label(lable_frame_1, textvariable=self._init_lable_var).pack(pady=5, fill='x', side='left')
+        ttk.Label(lable_frame_2, textvariable=self._dir_lable_var).pack(pady=5, fill='x', side='left')
+        ttk.Label(lable_frame_3, textvariable=self._val_lable_var).pack(pady=5, fill='x', side='left')
+        ttk.Label(lable_frame_4, textvariable=self._pol_lable_var).pack(pady=5, fill='x', side='left')
 
         ###########################################
         # BTN
         btn_frame = ttk.Frame(main_f, height=50)
-        btn_frame.pack(expand=False, fill=tk.X, padx=10, pady=10)
+        btn_frame.pack(expand=False, fill='x', padx=10, pady=10)
         ok_btn = ttk.Button(btn_frame, text=' OK ', command=self._save_btn)
-        ok_btn.pack(side=tk.LEFT)
+        ok_btn.pack(side='left')
 
         abort_btn = ttk.Button(btn_frame, text=self._getTabStr('cancel'), command=self._abort_btn)
-        abort_btn.pack(side=tk.RIGHT, anchor=tk.E)
+        abort_btn.pack(side='right', anchor='e')
 
     ######################################################
     def setup_pin_btn(self):
@@ -338,7 +344,6 @@ class GPIO_pinSetup(tk.Toplevel):
                 self._getTabStr('gpio_fnc_setting_error_2'),
                 parent=self
             )
-
 
         pol_high = dict(
             normal=1,

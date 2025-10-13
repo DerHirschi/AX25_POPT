@@ -165,20 +165,18 @@ class AX25PortHandler(object):
     def tasker_gui_th(self):
         if not self.is_running:
             return False
-        prio_t = self._prio_task()
-        if self._05sec_task():
-            return True
-        if self._1sec_task():
-            return True
-        if self._2sec_task():
-            return True
-        return prio_t
+        # TODO Tasker-Q
+        ret = self._prio_task()
+        ret = any((self._05sec_task(), ret))
+        ret = any((self._1sec_task(),  ret))
+        ret = any((self._2sec_task(),  ret))
+        return ret
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
         return any((
-            self._bbs.tasker(),
-            self._gpio_tasker_q()
+            self._bbs.tasker(),     # bbs.tasker-q
+            self._gpio_tasker_q()   # gpio.tasker-q
         ))
 
     def _05sec_task(self):
@@ -677,7 +675,6 @@ class AX25PortHandler(object):
             # Conn History
             self.update_conn_history(conn, disco=True)
 
-    from datetime import datetime, timedelta
 
     def update_conn_history(self, conn, disco: bool, inter_connect: bool = False):
         # Opt by Grok-AI

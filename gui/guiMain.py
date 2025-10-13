@@ -54,7 +54,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
     PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
-    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
+    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
@@ -2865,9 +2865,11 @@ class PoPT_GUI_Main:
     def _monitor_tree_on_filter_chg(self):
         for i in self._mon_tree.get_children():
             self._mon_tree.delete(i)
-
-        for pack in self._mon_pack_buff:
-            self._monitor_tree_update(pack)
+        batch_len = MON_BATCH_TO_PROCESS
+        mon_buff = list(self._mon_pack_buff)
+        while mon_buff:
+            self._monitor_tree_update(mon_buff[:batch_len])
+            mon_buff = mon_buff[batch_len:]
 
     def _monitor_tree_on_filter_reset(self):
         self._mon_tree_port_filter_var.set('')
