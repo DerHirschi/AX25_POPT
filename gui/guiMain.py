@@ -53,8 +53,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
-    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, MON_BATCH_TASKS, GUI_TASKER_Q_RUNTIME, \
-    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_MAX_Q_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
+    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
+    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
@@ -2050,15 +2050,8 @@ class PoPT_GUI_Main:
         if self._quit:
             if self._tasker_quit():
                 return
-            # self.main_win.update_idletasks()
         else:
-            timer = time.time()
             self._tasker_prio()
-            t_delta = time.time() - timer
-            if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
-                logger.warning(f"GUI-Tasker._tasker_prio Overload: Loop needs {round(t_delta, 2)}s to process !!")
-                burn_baby_burn = True
-
             update_needed = self._tasker_025_sec()
             update_needed = any((self._tasker_1_sec(), update_needed))
             if not update_needed:
@@ -2066,13 +2059,10 @@ class PoPT_GUI_Main:
             if update_needed:
                 self.main_win.update_idletasks()
         t_delta      = time.time() - timer_overall
-        tasker_Q_len = len(self._tasker_q)
-
-        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN or tasker_Q_len > GUI_TASKER_MAX_Q_UNTIL_BURN:
+        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
             burn_baby_burn = True
             logger.warning("GUI-Tasker Overload: !!")
             logger.warning(f"  GUI-Tasker   : Loop needs {round(t_delta, 2)}s to process !!")
-            logger.warning(f"  GUI-Tasker-Q : {tasker_Q_len} Tasks !!")
 
         if burn_baby_burn:
             self._loop_delay = GUI_TASKER_BURN_DELAY
@@ -2646,25 +2636,24 @@ class PoPT_GUI_Main:
     """
 
     def _monitor_task(self):
-        for _n in range(MON_BATCH_TASKS):
-            mon_buff = self._port_handler.get_monitor_data()
-            if not mon_buff:
-                continue
-            new_mon_buff = []
-            for axframe_conf, port_conf, tx in mon_buff:
-                port_id = port_conf.get('parm_PortNr', -1)
-                axframe_conf['tx']        = tx
-                axframe_conf['port']      = port_id
-                axframe_conf['port_conf'] = port_conf
-                new_mon_buff.append(axframe_conf)
-                self._mon_pack_buff.append(dict(axframe_conf))
+        mon_buff = self._port_handler.get_monitor_data()
+        if not mon_buff:
+            return
+        new_mon_buff = []
+        for axframe_conf, port_conf, tx in mon_buff:
+            port_id = port_conf.get('parm_PortNr', -1)
+            axframe_conf['tx']        = tx
+            axframe_conf['port']      = port_id
+            axframe_conf['port_conf'] = port_conf
+            new_mon_buff.append(axframe_conf)
+            self._mon_pack_buff.append(dict(axframe_conf))
 
-            """ Monitor Tree """
-            self._monitor_tree_update(new_mon_buff)
-            """ Monitor """
-            self._add_tasker_q('_monitor_q_task',
-                               new_mon_buff,
-                               False)
+        """ Monitor Tree """
+        self._monitor_tree_update(new_mon_buff)
+        """ Monitor """
+        self._add_tasker_q('_monitor_q_task',
+                           new_mon_buff,
+                           False)
         return True
 
     def _monitor_q_task(self, mon_batch: list):
@@ -3228,8 +3217,7 @@ class PoPT_GUI_Main:
             self._Pacman.change_node(node=digi, ch_id=ch_id)
         self._Pacman.change_node(node=node, ch_id=ch_id)
         if ch_id == self.channel_index:
-            if not POPT_CFG.get_pacman_fix():
-                self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot(self, ch_id: int):
         self._add_tasker_q("resetHome_LivePath_plot", ch_id)
@@ -3239,8 +3227,8 @@ class PoPT_GUI_Main:
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
         if ch_id == self.channel_index:
-            if not POPT_CFG.get_pacman_fix():
-                self._Pacman.update_plot_f_ch(ch_id=ch_id)
+            #if not POPT_CFG.get_pacman_fix():
+            self._Pacman.update_plot_f_ch(ch_id=ch_id)
     # ENDConn Path Plot
     #######################################################################
 

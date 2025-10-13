@@ -62,13 +62,6 @@ class GeneralSettings(ttk.Frame):
         loc_ent = ttk.Entry(loc_frame, width=10, textvariable=self._loc_var)
         loc_ent.pack(side=tk.LEFT)
         ############################################################
-        self._pacmanFix_var = tk.BooleanVar(self, value=conf.get('gui_cfg_pacman_fix', True))
-        pacmanFix_frame = ttk.Frame(qth_loc_frame)
-        pacmanFix_frame.pack(fill=tk.X, pady=8)
-        # tk.Label(pacmanFix_frame, text='Pacman-FIX: ').pack(side=tk.LEFT)
-        pacmanFix_ent = ttk.Checkbutton(pacmanFix_frame, text='Pacman-FIX', variable=self._pacmanFix_var)
-        pacmanFix_ent.pack(side=tk.LEFT)
-        ############################################################
 
         ############################################################
         text_winPos_f = ttk.Frame(h_frame2_l)
@@ -190,7 +183,7 @@ class GeneralSettings(ttk.Frame):
         conf['gui_lang']                = int(lang_ind)
         conf['gui_cfg_locator']         = str(self._loc_var.get())
         conf['gui_cfg_qth']             = str(self._qth_var.get())
-        conf['gui_cfg_pacman_fix']      = bool(self._pacmanFix_var.get())
+        # conf['gui_cfg_pacman_fix']      = bool(self._pacmanFix_var.get())
         conf['gui_parm_style_name']     = str(self._style_var.get())
         text_pos = self._text_winPos_var.get()
         for cfg_k, text_cfg in self._winPos_tab.items():

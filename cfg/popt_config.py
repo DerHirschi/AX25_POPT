@@ -394,9 +394,10 @@ class Main_CFG:
             return
         self._config['gui_pacman'] = dict(data)
 
+    """
     def get_pacman_fix(self):
         return bool(self._config['gui_main_parm'].get('gui_cfg_pacman_fix', False))
-    """
+    
     def set_pacman_fix(self, value: bool):
         self._config['gui_main_parm']['gui_cfg_pacman_fix'] = bool(value)
     """

@@ -3,16 +3,15 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.121.15'
+VER = '2.121.16'
+
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
 BBS_DEBUG_LOG   = True
 """ Loop Tweaking """
-MON_BATCH_TO_PROCESS = 40       # Packets fm Monitor Buffer to Process fm GUI
-MON_BATCH_TASKS      = 2        # Monitor Batch Tasks (MON_BATCH_TO_PROCESS * MON_BATCH_TASKS)
+MON_BATCH_TO_PROCESS = 80       # Packets fm Monitor Buffer to Process fm GUI
 GUI_TASKER_Q_RUNTIME = 0.20     # gui._tasker_queue() Runtime until break
-GUI_TASKER_TIME_D_UNTIL_BURN = 0.22 # Max Time-Delta until loop delay   = GUI_TASKER_BURN_DELAY
-GUI_TASKER_MAX_Q_UNTIL_BURN  = 10   # Max tasker_q len until loop delay = GUI_TASKER_BURN_DELAY
+GUI_TASKER_TIME_D_UNTIL_BURN = 0.20 # Max Time-Delta until loop delay   = GUI_TASKER_BURN_DELAY
 GUI_TASKER_BURN_DELAY        = 1    # GUI-loop Delay
 GUI_TASKER_NOT_BURN_DELAY    = 90   # GUI-loop Delay
 """ Custom TNC KISSMODE INIT """
