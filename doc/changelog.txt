@@ -34,6 +34,7 @@ Optimierung/Änderungen:
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
 - CLI-CMD Converse: "U" - Gibt Lister der User im eigenen Kanal aus
+- CLI-CMD: "CSTAT" - Verbindungsstatistik der letzten 7 Tage
 
 ###########################################################################################################
 ###########################################################################################################

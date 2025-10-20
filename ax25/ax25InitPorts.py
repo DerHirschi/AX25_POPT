@@ -152,8 +152,7 @@ class AX25PortHandler(object):
     def _tasker(self):
         while self.is_running:
             self._prio_task()
-            if self._05sec_task():
-                continue
+            self._05sec_task()
             if self._1sec_task():
                 continue
             if self._2sec_task():

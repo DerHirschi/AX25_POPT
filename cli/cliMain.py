@@ -1,4 +1,5 @@
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 from cfg import constant
 from cfg.popt_config import POPT_CFG
@@ -98,8 +99,9 @@ class DefaultCLI(object):
             'LMH':      (0, self._cmd_mhl,                  'Long MYHeard List', False),
             'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
             'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
-            'LCSTATUS': (2, self._cmd_lcstatus, self._getTabStr_CLI('cmd_help_lcstatus'), False),
-            'CH':       (2, self._cmd_ch, self._getTabStr_CLI('cmd_help_ch'), False),
+            'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr_CLI('cmd_help_lcstatus'), False),
+            'CSTAT':    (2, self._cmd_cstats,               self._getTabStr_CLI('cmd_help_cstat'), False),
+            'CH':       (2, self._cmd_ch,                   self._getTabStr_CLI('cmd_help_ch'), False),
             # APRS Stuff
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
             'WX':       (0, self._cmd_wx, self._getTabStr_CLI('cmd_help_wx'), False),
@@ -1293,6 +1295,105 @@ class DefaultCLI(object):
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
         return ret + "\r"
+
+    def _cmd_cstats(self):
+        # By Grok-AI
+        end_date   = datetime.now()
+        start_date = end_date - timedelta(days=7)
+
+        # Verbindungshistorie abrufen (kompletter Datensatz)
+        mh = self._port_handler.get_MH()
+        if not hasattr(mh, 'get_conn_hist'):
+            return "\r # Error: Connection history not available !\r\r"
+
+        conn_hist = mh.get_conn_hist()
+
+        # Datenstruktur für die Statistik: days[date_obj][hour_int] = count
+        days = defaultdict(lambda: defaultdict(int))
+        total_duration = 0
+        unique_users = set()
+        total_connections = 0
+        #killed_messages = 0  # Annahme: Keine gelöschten Nachrichten
+        #read_messages = 0  # Annahme: Keine gelesenen Nachrichten
+
+        # Alle Tage im Zeitraum generieren (für vollständige Tabelle, auch bei 0-Verbindungen)
+        start_d = start_date.date()
+        end_d = end_date.date()
+        all_days = []
+        current = start_d
+        while current <= end_d:
+            all_days.append(current)
+            current += timedelta(days=1)
+        sorted_days = sorted(all_days)  # Sortiert nach Datum
+
+        # Verbindungen analysieren und filtern
+        for entry in conn_hist:
+            if not entry.get('disco', False):  # Nur abgeschlossene Verbindungen
+                continue
+            if entry.get('own_call', '').split('-')[0] != self._my_call_str.split('-')[0]:  # Nur zur eigenen Station
+                continue
+            conn_time = entry.get('time', datetime.min)
+            if not (start_date <= conn_time <= end_date):  # Filter nach Zeitraum
+                continue
+            duration = entry['duration'].total_seconds() / 60  # Dauer in Minuten
+            user = entry['from_call']
+
+            # Tag und Stunde extrahieren
+            day_key = conn_time.date()
+            hour_key = conn_time.hour  # int
+
+            # Zählen der Verbindungen pro Tag und Stunde
+            days[day_key][hour_key] += 1
+            total_duration += duration
+            unique_users.add(user)
+            total_connections += 1
+
+        # Ausgabe generieren
+        ret = '\r'
+        ret += f"{f'For the period from {start_date.day}-{start_date.month} to {end_date.day}-{end_date.month}.':^79}\r\r"
+
+        # Stundenüberschrift
+        hours_header = ' '.join(f'{h:02d}' for h in range(24))
+        ret += f"Da {hours_header} Totl\r"
+
+        # Daten pro Tag (alle Tage im Zeitraum, auch mit 0)
+        for day in sorted_days:
+            day_str = day.strftime('%d')
+            row = [days[day].get(h, 0) for h in range(24)]
+            total = sum(row)
+            row_str = ' '.join(f'{x if x > 0 else ".":>2}' for x in row)
+            ret += f'{day_str} {row_str} {total:>4}\r'
+
+        # Trennlinie (angepasst an 24 Stunden)
+        sep_line = ' '.join(['--'] * 24) + ' ----'
+        ret += sep_line + '\r'
+
+        # Gesamtsummen pro Stunde (über alle Tage)
+        hour_totals = [sum(days[d].get(h, 0) for d in sorted_days) for h in range(24)]
+        total_all = sum(hour_totals)
+        totals_str = ' '.join(f'{x:>2}' for x in hour_totals)  # >2 für Ausrichtung, " 0" oder " 3"
+        ret += f"Tt {totals_str} {total_all:>4}\r"
+        ret += '\r'
+
+        # Zusätzliche Metriken
+        total_minutes = int(total_duration)
+        mean_time_per_conn = total_minutes / total_connections if total_connections > 0 else 0
+        mean_time_per_user = total_minutes / len(unique_users) if unique_users else 0
+
+        ret += f"{'Total time of connections':<36}: {total_minutes:>3} minutes, ({total_minutes // 60:>2} H {total_minutes % 60:>2} mn).\r"
+        ret += f"{'Mean time per connection':<36}: {mean_time_per_conn:.1f} min/connection.\r"
+        ret += f"{'Total time per user':<36}: {mean_time_per_user:.1f} min/user.\r"
+        #ret += f"{'Number of killed messages':<36}: {killed_messages:>3}\r"
+        #ret += f"{'Number of read messages':<36}: {read_messages:>3}\r"
+        ret += f"{'Number of users':<36}: {len(unique_users)}\r"
+        unique_users = list(unique_users)
+        while len(unique_users) > 4:
+            ret += f"{'Users':<36}: {' '.join(unique_users[:5]):>3}\r"
+            unique_users = unique_users[5:]
+        if unique_users:
+            ret += f"{'Users':<36}: {' '.join(unique_users):>3}\r"
+
+        return ret + '\r'
 
     def _cmd_ch(self):
         if not self._parameter:

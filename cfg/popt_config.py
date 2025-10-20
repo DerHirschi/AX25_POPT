@@ -713,6 +713,6 @@ class Main_CFG:
         self._config['conn_history'] = list(conn_hist)
 
     def get_conn_hist(self):
-        return list(self._config['conn_history'])
+        return list(self._config.get('conn_history', []))
 
 POPT_CFG = Main_CFG()

@@ -110,6 +110,7 @@ class BoxCLI(DefaultCLI):
                               'POPT',
                               'HELP',
                               'CONV',
+                              'CSTAT',
                               '?']
 
         self._state_exec.update({

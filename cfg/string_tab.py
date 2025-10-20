@@ -3266,6 +3266,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_cstat': (
+        'Verbindungsstatistik der letzten 7 Tage',
+        'Connection statistics for the last 7 days',
+        'Verbindingsstatistieken van de afgelopen 7 dagen',
+        'Statistiques de connexion des 7 derniers jours',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_help_ch': (
         'Kurze Nachricht an Kanal senden. CH <Kanal> Nachricht',
         'Send short message to channel. CH <Channel> Message',

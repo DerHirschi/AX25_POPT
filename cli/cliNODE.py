@@ -60,6 +60,7 @@ class NodeCLI(DefaultCLI):
                                'POPT',
                                'HELP',
                                'CONV',
+                               'CSTAT',
                                '?']
 
 

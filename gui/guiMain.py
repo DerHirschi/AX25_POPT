@@ -337,7 +337,6 @@ class PoPT_GUI_Main:
         self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
         # Tasker
-        self._loop_delay                        = 70  # ms
         self._parm_non_prio_task_timer          = 0.25  # s
         self._parm_non_non_prio_task_timer      = 1  # s
         self._parm_non_non_non_prio_task_timer  = 5  # s
@@ -515,7 +514,7 @@ class PoPT_GUI_Main:
         self._port_handler.set_gui(self)
         #######################
         # LOOP LOOP LOOP
-        self.main_win.after(self._loop_delay, self._tasker)
+        self.main_win.after(GUI_TASKER_NOT_BURN_DELAY, self._tasker)
         logger.info('GUI: Init Done')
         logger.info("GUI: Unblocking Ports")
         self._port_handler.unblock_all_ports()
@@ -2044,8 +2043,7 @@ class PoPT_GUI_Main:
     # TASKER
     def _tasker(self):  # MAINLOOP
         timer_overall    = time.time()
-        burn_baby_burn   = False
-        self._tasker_queue()
+        self._tasker_queue(timer_overall)
         self._win_gc_tasker()
         if self._quit:
             if self._tasker_quit():
@@ -2060,15 +2058,11 @@ class PoPT_GUI_Main:
                 self.main_win.update_idletasks()
         t_delta      = time.time() - timer_overall
         if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
-            burn_baby_burn = True
             logger.warning("GUI-Tasker Overload: !!")
             logger.warning(f"  GUI-Tasker   : Loop needs {round(t_delta, 2)}s to process !!")
-
-        if burn_baby_burn:
-            self._loop_delay = GUI_TASKER_BURN_DELAY
+            self.main_win.after(GUI_TASKER_BURN_DELAY, self._tasker)
         else:
-            self._loop_delay = GUI_TASKER_NOT_BURN_DELAY
-        self.main_win.after(self._loop_delay, self._tasker)
+            self.main_win.after(GUI_TASKER_NOT_BURN_DELAY, self._tasker)
 
     def _tasker_quit(self):
         if not self._port_handler.get_ph_end():
@@ -2092,18 +2086,16 @@ class PoPT_GUI_Main:
             logger.warning(ex)
         return True
 
-    def _tasker_queue(self):
+    def _tasker_queue(self, start_time: time.time):
         if all((not self._tasker_q, not self._tasker_q_prio)):
             return False
-        start_time = time.time()
-        #n = 0
+
         if self._tasker_q_prio:
             while all((self._tasker_q_prio, self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME))):
                 task, arg = self._tasker_q_prio.pop(0)
                 if task == 'sysMsg_to_monitor':
                     self._sysMsg_to_monitor_task(arg)
                 elif self._quit:
-                    #n += 1
                     continue
                 elif task == 'conn_btn_update':
                     self._conn_btn_update_task()
@@ -2165,7 +2157,6 @@ class PoPT_GUI_Main:
                     self._update_aprs_msg_win_task(arg)
                 #elif task == 'update_tracer_win':
                 #    self._update_tracer_win_task()
-                #n += 1
 
         if all((self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME), not self._quit , self._tasker_q)):
             # Non Prio
@@ -2175,11 +2166,6 @@ class PoPT_GUI_Main:
                     self._monitor_tree_update_task(arg)
                 elif task == '_monitor_q_task':
                     self._monitor_q_task(arg)
-                #n += 1
-
-        #tasker_q_len = len(self._tasker_q)
-        #if tasker_q_len > 100:
-        #logger.debug(f'GUI-Tasker Q: {n} Tasks finished')
 
         return True
 
@@ -2191,7 +2177,7 @@ class PoPT_GUI_Main:
             timer = time.time()
             self._port_handler.tasker_gui_th()
             t_delta = time.time() - timer
-            if t_delta > 0.25:
+            if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
         if hasattr(self.userDB_tree_win, 'tasker'):
             tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
@@ -2199,21 +2185,9 @@ class PoPT_GUI_Main:
         if hasattr(self.userdb_win, 'tasker'):
             tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
 
-        #timer = time.time()
-        tasker_ret = any((self._monitor_task(), tasker_ret))
-        #t_delta = time.time() - timer
-        #if t_delta > 0.25:
-        #    logger.warning(f"_monitor_task: Loop needs {round(t_delta, 2)}s to process !!")
-        #timer = time.time()
+        tasker_ret = any((self._monitor_task(),     tasker_ret))
         tasker_ret = any((self._ais_monitor_task(), tasker_ret))
-        #t_delta = time.time() - timer
-        #if t_delta > 0.25:
-        #    logger.warning(f"_ais_monitor_task Overload: Loop needs {round(t_delta, 2)}s to process !!")
-        #timer = time.time()
-        tasker_ret = any((self._mh_win_task(), tasker_ret))
-        #t_delta = time.time() - timer
-        #if t_delta > 0.25:
-        #    logger.warning(f"_mh_win_task Overload: Loop needs {round(t_delta, 2)}s to process !!")
+        tasker_ret = any((self._mh_win_task(),      tasker_ret))
         return tasker_ret
 
     def _tasker_025_sec(self):
@@ -2865,7 +2839,7 @@ class PoPT_GUI_Main:
     def _monitor_tree_on_filter_chg(self):
         for i in self._mon_tree.get_children():
             self._mon_tree.delete(i)
-        batch_len = MON_BATCH_TO_PROCESS
+        batch_len = MON_BATCH_TO_PROCESS * 2
         mon_buff = list(self._mon_pack_buff)
         while mon_buff:
             self._monitor_tree_update(mon_buff[:batch_len])

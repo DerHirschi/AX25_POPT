@@ -59,6 +59,7 @@ class UserCLI(DefaultCLI):
                                'POPT',
                                'HELP',
                                'CONV',
+                               'CSTAT',
                                '?']
 
     def _s2(self):
