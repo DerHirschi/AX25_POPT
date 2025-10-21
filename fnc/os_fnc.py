@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 
 
 def is_linux():
@@ -8,6 +9,9 @@ def is_linux():
 
 def is_windows():
     return 'win' in sys.platform
+
+def is_macos():
+    return platform.system() == 'Darwin'
 
 """
 def is_raspberry():

@@ -5,9 +5,9 @@ import sys
 
 from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
 from cfg.popt_config import POPT_CFG
-from fnc.os_fnc import is_linux, is_windows, get_root_dir
+from fnc.os_fnc import is_linux, is_windows, get_root_dir, is_macos
 
-if is_linux():
+if any((is_linux(), is_macos())):
     from playsound import playsound
 elif is_windows():
     from winsound import PlaySound, SND_FILENAME, SND_NOWAIT
@@ -21,7 +21,7 @@ class POPT_Sound:
         self._sound_th = None
         guiCfg = POPT_CFG.load_guiPARM_main()
         self.master_sound_on = guiCfg.get('gui_cfg_sound', False)
-        if is_linux():
+        if any((is_linux(), is_macos())):
             self.master_sprech_on = guiCfg.get('gui_cfg_sprech', False)
         else:
             self.master_sprech_on = False
@@ -34,7 +34,7 @@ class POPT_Sound:
                 if self._sound_th is not None:
                     if not self._sound_th.is_alive():
                         self._sound_th.join()
-                        if is_linux():
+                        if any((is_linux(), is_macos())):
                             self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                             self._sound_th.start()
                         elif 'win' in sys.platform:
@@ -43,7 +43,7 @@ class POPT_Sound:
                             self._sound_th.start()
                         return True
                     return False
-                if is_linux():
+                if any((is_linux(), is_macos())):
                     self._sound_th = threading.Thread(target=playsound, args=(snd_file, True))
                     self._sound_th.start()
                 elif is_windows():
@@ -51,7 +51,7 @@ class POPT_Sound:
                     self._sound_th.start()
                 return True
             else:
-                if is_linux():
+                if any((is_linux(), is_macos())):
                     threading.Thread(target=playsound, args=(snd_file, True)).start()
                 elif is_windows():
                     threading.Thread(target=PlaySound, args=(snd_file, SND_FILENAME | SND_NOWAIT)).start()
@@ -82,7 +82,7 @@ class POPT_Sound:
                 text = text.replace('>>>', '>')
                 text = text.replace('<<<', '<')
 
-                if is_linux():
+                if is_linux() and not is_macos():
                     if self.master_sprech_on:
                         language = {
                             0: 'de',
