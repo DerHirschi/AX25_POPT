@@ -531,7 +531,7 @@ class BBSConnection:
             temp_stat_identifier = get_station_id_obj(li)
             if temp_stat_identifier is not None:
                 self._dest_stat_id = temp_stat_identifier
-                logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
+                #logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                 self._set_user_db_software_id()
                 if self._dest_stat_id.typ != 'BBS':
                     BBS_LOG.error("Gegenstation ist keine BBS !")

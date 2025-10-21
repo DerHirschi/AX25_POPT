@@ -423,7 +423,7 @@ class AX25DigiConnection:
                 return True
         if not self._conf_max_buff:
             return False
-        if len(self._rx_conn.tx_buf_rawData) > self._conf_max_buff:
+        if self._rx_conn.get_tx_buff_len() > self._conf_max_buff:
             return True
         return False
 
@@ -435,12 +435,12 @@ class AX25DigiConnection:
             return False
         if self._conf_max_n2:
             if self._tx_conn.n2 > self._conf_max_n2:
-                print(f"RNR n2: {self._tx_conn.n2}")
+                #print(f"RNR n2: {self._tx_conn.n2}")
                 return True
         if not self._conf_max_buff:
             return False
-        if len(self._tx_conn.tx_buf_rawData) > self._conf_max_buff:
-            print(f"RNR buff: {len(self._tx_conn.tx_buf_rawData)}")
+        if self._tx_conn.get_tx_buff_len() > self._conf_max_buff:
+            #print(f"RNR buff: {self._tx_conn.get_tx_buff_len()}")
             return True
         return False
 

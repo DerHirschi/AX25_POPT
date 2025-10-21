@@ -165,7 +165,7 @@ class AutoConnTask:
                 if not self._conn_script_w_state:
                     cmd += '\r'
                     cmd = cmd.encode('UTF-8', 'ignore')
-                    self._connection.tx_buf_rawData += cmd
+                    self._connection.send_data(cmd)
                     self._conn_script_w_state        = True
                     self._conn_script_to             = time.time() + self._conn_script_to_param
                     if wait:
@@ -215,12 +215,12 @@ class AutoConnTask:
     def _PMS_wait_rev_fwd_ended(self):
         # 4
         if not hasattr(self._connection, 'bbs_connection') or\
-            not hasattr(self._connection, 'tx_buf_rawData'):
+            not hasattr(self._connection, 'get_tx_buff_len'):
             self._ConnTask_ende()
             return
         if self._connection.bbs_connection:
             return
-        if self._connection.tx_buf_rawData:
+        if self._connection.get_tx_buff_len():
             return
         if self._connection:
             self._end_connection()

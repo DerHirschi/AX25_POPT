@@ -839,7 +839,7 @@ class SideTabbedFrame:
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
             duration = f"{self._getTabStr('time_connected')}: {get_time_delta(station.time_start)}"
-            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(len(station.tx_buf_rawData))
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(station.get_tx_buff_len())
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
             if station.is_link:
@@ -1085,7 +1085,7 @@ class SideTabbedFrame:
             self._rnr_var.set(conn.is_RNR)
             self._root_class.link_holder_var.set(conn.link_holder_on)
             self._cliRemote_var.set(conn.cli_remote)    # TODO CLI permissions
-            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(len(conn.tx_buf_rawData)))
+            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(conn.get_tx_buff_len()))
             self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
             self._t2_auto_var.set(conn.get_port_cfg().get('parm_T2_auto', True))
             if self._t2_auto_var.get():

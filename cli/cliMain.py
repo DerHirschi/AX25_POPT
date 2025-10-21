@@ -198,36 +198,37 @@ class DefaultCLI(object):
                     self._user_db_ent.cli_sidestop)):
                 self._send_out_sidestop(ret)
                 return
-            self._connection.tx_buf_rawData += ret
+            self._connection.send_data(ret)
 
     def _send_out_sidestop(self, cli_out: bytes):
         if not self._user_db_ent.cli_sidestop:
-            self._connection.tx_buf_rawData += cli_out
+            self._connection.send_data(cli_out)
             self.change_cli_state(1)
             return
         tmp = cli_out.split(b'\r')
         out_lines = b'\r'.join(tmp[:self._user_db_ent.cli_sidestop])
         self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.cli_sidestop:])
         if not self._tx_buffer:
-            self._connection.tx_buf_rawData += cli_out
+            self._connection.send_data(cli_out)
             self.change_cli_state(1)
             return
         if self._ss_state == 0:
             out_lines += self._getTabStr_CLI('op_prompt_0').encode(self._encoding[0], self._encoding[1])
         elif self._ss_state == 1:
             out_lines += self._getTabStr_CLI('op_prompt_1').encode(self._encoding[0], self._encoding[1])
-        self._connection.tx_buf_rawData += out_lines
+        self._connection.send_data(out_lines)
         self.change_cli_state(7)
 
     def _abort_send_out(self):
+        self._connection.clear_tx_buff()
         self._tx_buffer = b''
-        self._connection.tx_buf_rawData = (f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
-                                           + self._get_ts_prompt()).encode(self._encoding[0], 'ignore')
+        self._connection.send_data( (f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
+                                           + self._get_ts_prompt()).encode(self._encoding[0], 'ignore'))
 
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
         if (self._raw_input.upper() == b'A' + eol and
-            (self._connection.tx_buf_rawData
+            (self._connection.get_tx_buff_len()
             or self._tx_buffer)
         ):
             self._abort_send_out()
@@ -388,7 +389,7 @@ class DefaultCLI(object):
                 if temp_stat_identifier is not None:
                     self.stat_identifier = temp_stat_identifier
                     self._set_user_db_software_id()
-                    logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
+                    #logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                     return True
             return False
         elif not self._last_line and self.stat_identifier:
@@ -403,7 +404,7 @@ class DefaultCLI(object):
                     if self.stat_identifier.id_str != temp_stat_identifier.id_str:
                         self.stat_identifier = temp_stat_identifier
                         self._set_user_db_software_id()
-                        logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
+                        #logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                         return True
                     return True
         return False
@@ -1317,10 +1318,10 @@ class DefaultCLI(object):
         #read_messages = 0  # Annahme: Keine gelesenen Nachrichten
 
         # Alle Tage im Zeitraum generieren (für vollständige Tabelle, auch bei 0-Verbindungen)
-        start_d = start_date.date()
-        end_d = end_date.date()
+        start_d  = start_date.date()
+        end_d    = end_date.date()
         all_days = []
-        current = start_d
+        current  = start_d
         while current <= end_d:
             all_days.append(current)
             current += timedelta(days=1)
@@ -1339,7 +1340,7 @@ class DefaultCLI(object):
             user = entry['from_call']
 
             # Tag und Stunde extrahieren
-            day_key = conn_time.date()
+            day_key  = conn_time.date()
             hour_key = conn_time.hour  # int
 
             # Zählen der Verbindungen pro Tag und Stunde
@@ -1718,7 +1719,7 @@ class DefaultCLI(object):
                 self.change_cli_state(1)
                 return
             if self._raw_input.upper() == b'O' + eol:
-                self._connection.tx_buf_rawData += bytearray(self._tx_buffer)
+                self._connection.send_data(bytearray(self._tx_buffer))
                 self._tx_buffer = b''
                 self.change_cli_state(1)
                 return
@@ -1746,7 +1747,7 @@ class DefaultCLI(object):
 
     def _cron_s_quit(self):
         # self._connection: AX25Conn
-        if not self._connection.tx_buf_rawData and \
+        if not self._connection.get_tx_buff_len() and \
                 not self._connection.tx_buf_unACK and \
                 not self._connection.tx_buf_2send:
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:

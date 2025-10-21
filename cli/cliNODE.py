@@ -22,12 +22,14 @@ class NodeCLI(DefaultCLI):
                                'CONNECT',
                                'C!',
                                'CH',
+                               'CONV',
                                'PORT',
                                'MH',
                                'LMH',
                                'AXIP',
                                'DXLIST',
                                'LCSTATUS',
+                               'CSTAT',
                                # APRS
                                'ATR',
                                'WX',
@@ -59,8 +61,6 @@ class NodeCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
-                               'CONV',
-                               'CSTAT',
                                '?']
 
 

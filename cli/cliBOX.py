@@ -67,7 +67,9 @@ class BoxCLI(DefaultCLI):
         self._commands_cfg = ['QUIT',
                               'BYE',
                               'CH',
+                              'CONV',
                               'LCSTATUS',
+                              'CSTAT',
                               ## APRS
                               # 'ATR',
                               'WX',
@@ -109,8 +111,6 @@ class BoxCLI(DefaultCLI):
                               'VERSION',
                               'POPT',
                               'HELP',
-                              'CONV',
-                              'CSTAT',
                               '?']
 
         self._state_exec.update({
@@ -531,7 +531,7 @@ class BoxCLI(DefaultCLI):
                 if type(ret) is str:
                     ret = ret.encode(self._encoding[0], self._encoding[1])
                     ret = ret.replace(b'\n', b'\r')
-                self._connection.tx_buf_rawData += ret
+                self._connection.send_data(ret)
                 return
 
             if type(ret) is str:
@@ -550,7 +550,7 @@ class BoxCLI(DefaultCLI):
             )):
                 self._send_out_sidestop(ret)
                 return
-            self._connection.tx_buf_rawData += ret
+            self._connection.send_data(ret)
     ##############################################
     # BOX
     def _cmd_box_l_from(self):

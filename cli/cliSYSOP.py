@@ -21,12 +21,14 @@ class UserCLI(DefaultCLI):
                                'CONNECT',
                                'C!',
                                'CH',
+                               'CONV',
                                'PORT',
                                'MH',
                                'LMH',
                                'AXIP',
                                'DXLIST',
                                'LCSTATUS',
+                               'CSTAT',
                                # APRS
                                'ATR',
                                'WX',
@@ -58,8 +60,6 @@ class UserCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
-                               'CONV',
-                               'CSTAT',
                                '?']
 
     def _s2(self):

@@ -121,7 +121,7 @@ class AX25Pipe(object):
 
     def _tx_Proto(self):
         if self._connection:
-            self._connection.tx_buf_rawData += bytes(self._tx_data)
+            self._connection.send_data(bytes(self._tx_data))
             self._tx_data = b''
 
     def _set_parm_max_pac_timer(self):

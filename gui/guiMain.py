@@ -2397,8 +2397,10 @@ class PoPT_GUI_Main:
                 self.sysMsg_to_qso_task(qso_data[1], ch_id)
                 #self._update_qso_tx(conn, qso_data[1])
 
-            else:
+            elif qso_data[0] == 'RX':
                 self._update_qso_rx(conn, qso_data[1])
+            else:
+                self._update_qso_tx(conn, qso_data[1])
 
     def _update_qso_tx(self, conn, data):
         txt_enc = 'UTF-8'
@@ -3077,7 +3079,7 @@ class PoPT_GUI_Main:
 
                 tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
                 station.send_data(tmp_txt)
-                self._update_qso_tx(station, tmp_txt)
+                #self._update_qso_tx(station, tmp_txt)
                 self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 
