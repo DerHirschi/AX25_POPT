@@ -317,9 +317,7 @@ class FileTransport(object):
                 self.ft_set_wait_timer()
             else:
                 return False
-        if not self.connection.get_tx_buff_len() \
-                and not self.connection.tx_buf_2send \
-                and not self.connection.tx_buf_unACK:
+        if self.connection.is_tx_buff_empty():
             return True
         return False
 

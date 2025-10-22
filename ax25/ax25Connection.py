@@ -213,7 +213,6 @@ class AX25Conn:
         self.is_RNR: bool = False
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
-        # self.RTT = 0
         self.calc_irtt()
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
@@ -324,12 +323,7 @@ class AX25Conn:
         stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
         if not stat_cfg:
             stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call)
-        """
-        if not stat_cfg:
-            # stat_cfg = getNew_station_cfg()
-            # stat_cfg.setdefault('stat_parm_Call' , self.my_call_str)
-            raise AX25ConnectionERROR(self)
-        """
+
         self._stat_cfg = stat_cfg
         self._set_packet_param()
 
@@ -352,10 +346,6 @@ class AX25Conn:
     def handle_rx(self, ax25_frame):
         self._rx_buf_last_frame = ax25_frame
         self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
-        """
-        if ax25_frame.payload:
-            self.rx_buf_last_data = ax25_frame.payload
-        """
         self.set_T3()
 
     def handle_tx(self, ax25_frame):
@@ -1347,6 +1337,13 @@ class AX25Conn:
     def get_tx_buff(self):
         return bytearray(self.tx_buf_rawData)
 
+    def is_tx_buff_empty(self):
+        return not any((
+            self.tx_buf_rawData,
+            self.tx_buf_2send,
+            self.tx_buf_unACK,
+        ))
+
 ###########################################################################
 ###########################################################################
 ###########################################################################
@@ -1811,9 +1808,7 @@ class S5Ready(DefaultStat):
         else:
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
 
     def _rx_RNR(self):
@@ -1880,9 +1875,7 @@ class S6sendREJ(DefaultStat):
         if self._prozess_I_frame():
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.change_state(5)
 
@@ -1946,9 +1939,7 @@ class S7WaitForFinal(DefaultStat):
             # self.change_state(5)
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=True)
 
     def _rx_REJ(self):

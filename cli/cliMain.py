@@ -1747,9 +1747,7 @@ class DefaultCLI(object):
 
     def _cron_s_quit(self):
         # self._connection: AX25Conn
-        if not self._connection.get_tx_buff_len() and \
-                not self._connection.tx_buf_unACK and \
-                not self._connection.tx_buf_2send:
+        if self._connection.is_tx_buff_empty():
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
 

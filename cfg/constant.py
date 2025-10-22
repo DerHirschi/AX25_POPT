@@ -3,11 +3,11 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.121.20'
+VER = '2.121.21'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
-BBS_DEBUG_LOG   = True
+BBS_DEBUG_LOG   = False
 """ Loop Tweaking """
 MON_BATCH_TO_PROCESS = 80       # Packets fm Monitor Buffer to Process fm GUI
 GUI_TASKER_Q_RUNTIME = 0.20     # gui._tasker_queue() Runtime until break

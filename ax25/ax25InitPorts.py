@@ -1145,8 +1145,8 @@ class AX25PortHandler(object):
             except ValueError:
                 ssid = 0
             if ssid not in res_ssid:
-                logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
-                logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
+                #logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
+                #logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
                 continue
             res_ssid.remove(ssid)
         return res_ssid
