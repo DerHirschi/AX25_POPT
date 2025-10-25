@@ -11,7 +11,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.guiMsgBoxes import AskMsg
 from cfg.cfg_fnc import del_port_data
-from fnc.os_fnc import is_linux
+from fnc.os_fnc import is_linux, is_macos
 
 
 class PortSetTab:
@@ -25,7 +25,7 @@ class PortSetTab:
         self._need_reinit = False
         self._port_setting: dict = new_settings
         port_types = PORT_HANDLER.get_ax25types_keys()
-        if not is_linux():
+        if not is_linux() or is_macos():
             port_types.remove('AX25KERNEL')
         self.tab = ttk.Frame(tabclt)
         #################
@@ -737,7 +737,7 @@ class PortSetTab:
             # self.calc_baud.configure(state="normal")
 
             self._param1_label.configure(text='Port:')
-            if is_linux():
+            if is_linux() or is_macos():
                 self._param1_ent.destroy()
                 self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
                 self._param1_ent.configure(width=15)
@@ -764,6 +764,8 @@ class PortSetTab:
             else:
                 if is_linux():
                     self._param1_var.set('/dev/ttyS1')
+                elif is_macos():
+                    self._param1_var.set('/dev/tty.')
                 else:
                     self._param1_var.set('COM1')
             if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
