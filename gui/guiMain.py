@@ -1250,7 +1250,7 @@ class PoPT_GUI_Main:
             mon_txt_f = text_frame
 
 
-        stat_frame = ttk.Frame(self._TXT_mid_frame)
+        stat_frame = ttk.Frame(self._TXT_mid_frame, height=1)
         stat_frame.pack(side='bottom', fill='x',    expand=False)
         text_frame.pack(side='bottom', fill='both', expand=True)
         out_txt = tk.Text(mon_txt_f,
@@ -1265,16 +1265,17 @@ class PoPT_GUI_Main:
                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                 highlightthickness=0,
 
-                                )
+                          )
         # out_txt.tag_config("input", foreground="white")
         out_scrollbar = ttk.Scrollbar(
             mon_txt_f,
             orient='vertical',
             command=out_txt.yview
         )
-        out_txt.pack(side='left', fill='both', expand=True)
+        out_txt.pack(      side='left', fill='both', expand=True)
         out_scrollbar.pack(side='left', fill='y',    expand=False)
         out_txt.config(yscrollcommand=out_scrollbar.set)
+        ###############################################
         # Status bar
         name_f = ttk.Frame(stat_frame)
         qth_f  = ttk.Frame(stat_frame)
@@ -3475,7 +3476,7 @@ class PoPT_GUI_Main:
         status = '-------'
         typ = '-----'
         sw = '---------'
-        enc = ''
+        enc = 'UTF-8'
         conn = self.get_conn()
         if conn is not None:
             db_ent = conn.user_db_ent
@@ -3760,7 +3761,7 @@ class PoPT_GUI_Main:
                     enc = self._stat_info_encoding_var.get()
                 db_ent.Encoding = enc
         else:
-            self._stat_info_encoding_var.set('')
+            self._stat_info_encoding_var.set('UTF-8')
 
     ##########################################
     #
