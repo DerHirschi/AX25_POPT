@@ -1723,11 +1723,23 @@ STR_TABLE = {
         '',
         ''),
 
+    'seconds': (
+        'Sekunde(n)',
+        'Second(s)',
+        'Seconde(n)',
+        'Seconde(s)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'minutes': (
-        'Minuten',
-        'Minutes',
+        'Minute(n)',
+        'Minute(s)',
         'Minuut',
-        'Minutes',
+        'Minute(s)',
         '',
         '',
         '',
@@ -3290,6 +3302,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_rtt': (
+        'Paket Laufzeitmessung',
+        'Packet runtime measurement',
+        'Looptijdmeting',
+        "Mesure du temps d'exécution",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cli_no_wx_data': (
         'Keine Wetterdaten vorhanden.',
         'No WX data available',
@@ -3355,6 +3379,18 @@ STR_TABLE = {
         'Language not recognized! Possible languages: ',
         'Taal niet herkend! Mogelijke talen: ',
         'Langue non reconnue! Langues possibles : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_rtt_1': (
+        ' # Laufzeit hin und zurück: ',
+        ' # Round trip time: ',
+        ' # Reistijd heen en terug: ',
+        ' # Temps de trajet aller-retour : ',
         '',
         '',
         '',

@@ -70,6 +70,7 @@ class BoxCLI(DefaultCLI):
                               'CONV',
                               'LCSTATUS',
                               'CSTAT',
+                              'RTT',
                               ## APRS
                               # 'ATR',
                               'WX',

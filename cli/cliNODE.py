@@ -30,6 +30,7 @@ class NodeCLI(DefaultCLI):
                                'DXLIST',
                                'LCSTATUS',
                                'CSTAT',
+                               'RTT',
                                # APRS
                                'ATR',
                                'WX',

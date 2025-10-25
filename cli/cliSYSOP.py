@@ -29,6 +29,7 @@ class UserCLI(DefaultCLI):
                                'DXLIST',
                                'LCSTATUS',
                                'CSTAT',
+                               'RTT',
                                # APRS
                                'ATR',
                                'WX',

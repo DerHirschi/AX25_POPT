@@ -31,12 +31,13 @@ Optimierung/Änderungen:
   (Monitor u Mon-Tree sind bis zu 5 Minuten "nachgelaufen", obwohl die Datei-
   übertragung bereits beendet war, seit geraumer Zeit. Sollte jetzt nicht
   mehr vorkommen. Getestet auf einen PI4-4GB-RAM)
-- Diverse optimierungen für MacOS
+- Diverse Optimierungen für MacOS
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
 - CLI-CMD Converse: "U" - Gibt Lister der User im eigenen Kanal aus
 - CLI-CMD: "CSTAT" - Verbindungsstatistik der letzten 7 Tage
+- CLI-CMD: "RTT" - Laufzeitmessung
 
 ###########################################################################################################
 ###########################################################################################################

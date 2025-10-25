@@ -1293,7 +1293,7 @@ class PoPT_GUI_Main:
         sw_f.pack(  side='left', expand=True,  anchor="center", fill='x')
         stat_f.pack(side='left', expand=False, anchor="center")
         time_f.pack(side='left', expand=False, anchor="center", padx=7)
-        enc_f.pack( side='left', expand=True,  anchor="center", fill='x')
+        enc_f.pack( side='left', expand=False, anchor="center", fill='x')
 
         fg, bg = self._get_colorMap()
 
@@ -1408,7 +1408,7 @@ class PoPT_GUI_Main:
             relief = "flat",  # Flache Optik für ttk-ähnliches Aussehen
             highlightthickness = 0,
         )
-        txt_encoding_ent.pack(fill='x', expand=True)
+        txt_encoding_ent.pack(fill='x', expand=False)
 
         return out_txt
 

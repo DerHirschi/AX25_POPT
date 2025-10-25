@@ -102,6 +102,7 @@ class DefaultCLI(object):
             'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr_CLI('cmd_help_lcstatus'), False),
             'CSTAT':    (2, self._cmd_cstats,               self._getTabStr_CLI('cmd_help_cstat'), False),
             'CH':       (2, self._cmd_ch,                   self._getTabStr_CLI('cmd_help_ch'), False),
+            'RTT':      (2, self._cmd_rtt,                  self._getTabStr_CLI('cmd_help_rtt'), False),
             # APRS Stuff
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
             'WX':       (0, self._cmd_wx, self._getTabStr_CLI('cmd_help_wx'), False),
@@ -135,10 +136,11 @@ class DefaultCLI(object):
         self._commands      = {}
 
         self._str_cmd_exec = {
-            b'#REQUESTNAME:': self.str_cmd_req_name,
+            b'#REQUESTNAME:': self._str_cmd_req_name,
             b'#NAM#': self._cmd_set_name,
             b'#QTH#': self._cmd_set_qth,
             b'#LOC#': self._cmd_set_loc,
+            b'#RTT#': self._str_cmd_recv_rtt,
         }
 
         self._state_exec = {
@@ -472,11 +474,11 @@ class DefaultCLI(object):
         ret = ''
         self._new_last_line = inp_lines[-1]
         for li in inp_lines:
-            for str_cmd in list(self._str_cmd_exec.keys()):
-                if str_cmd in li:
+            for str_cmd, cmd_fnc in self._str_cmd_exec.items():
+                if li.startswith(str_cmd):
                     self._cmd = str_cmd
                     self._parameter = [li[len(str_cmd):]]
-                    ret = self._str_cmd_exec[str_cmd]()
+                    ret = cmd_fnc()
                     self._cmd = b''
                     self._send_output(ret, env_vars=False)
                     self._last_line = b''
@@ -1485,7 +1487,46 @@ class DefaultCLI(object):
         self._connection.enter_converse_cli()
 
     ##############################################
-    def str_cmd_req_name(self):
+    # RTT CMD
+    @staticmethod
+    def _cmd_rtt():
+        rtt_timer = str(datetime.now().strftime('%H:%M:%S.%f'))
+        return f"//E #RTT#{rtt_timer[:-3]}\r"
+
+    def _str_cmd_recv_rtt(self):
+        try:
+            timer_val   = self._parameter[0].decode(self._encoding[0], 'ignore')
+            dt_sent = datetime.strptime(timer_val + "000", '%H:%M:%S.%f')
+            dt_recv = datetime.now()
+
+            dt_sent_same_day = datetime.combine(dt_recv.date(), dt_sent.time())
+            dt_recv_same_day = dt_recv
+            # 4. Tagesüberlauf prüfen: wenn empfangen < gesendet → +1 Tag
+            if dt_recv_same_day < dt_sent_same_day:
+                dt_recv_same_day += timedelta(days=1)
+
+            # 5. Differenz berechnen
+            time_d = dt_recv_same_day - dt_sent_same_day
+            total_seconds = time_d.total_seconds()
+            # 6. In MM:SS.mmm umwandeln
+            minutes = int(total_seconds // 60)
+            seconds = int(total_seconds % 60)
+            milliseconds = int((total_seconds - int(total_seconds)) * 1000)
+
+            rtt_str = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+            str_to_snd = self._getTabStr_CLI('cmd_rtt_1')
+            if minutes:
+                str_to_snd += f"{minutes:02d} {self._getTabStr_CLI('minutes')} - "
+
+            str_to_snd += f"{seconds:02d}.{milliseconds:01d} {self._getTabStr_CLI('seconds')}"
+            return str_to_snd + '\r\r'
+
+        except Exception as ex:
+            logger.warning(f"RTT parse error: {ex}")
+            return ' # Error\r\r'
+
+    ##############################################
+    def _str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
         name = stat_cfg.get('stat_parm_Name', '')
         qth = POPT_CFG.get_guiCFG_qth()
@@ -1588,12 +1629,14 @@ class DefaultCLI(object):
         """
         ########################
         # Check String Commands
-        if not self._exec_str_cmd():
-            if self._check_abort_cmd():
-                return ''
-            self._input = self._raw_input
-            self._send_output(self._exec_cmd(), self._env_var_cmd)
-        self._last_line = self._new_last_line
+        if self._exec_str_cmd():
+            self._last_line = self._new_last_line   # TODO Cleanup this VAR mess
+            return ''
+        if self._check_abort_cmd():
+            return ''
+        self._input = self._raw_input               # TODO Cleanup this VAR mess
+        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self._last_line = self._new_last_line       # TODO Cleanup this VAR mess
         return ''
 
     def _s2(self):
