@@ -25,7 +25,7 @@ Raspberry Pi.
 
 ### Requirements
 - Python 3.6 or higher (other versions such as 3.11 see below)
-- Supported Platforms: Windows, Linux, Raspberry Pi
+- Supported Platforms: Windows, Linux, Raspberry Pi, macOS
 
 ## Installation
 Install all dependencies:
@@ -47,7 +47,38 @@ $ pip install --break-system-packages playsound pyserial aprslib
 $ sudo apt install python3-gst-1.0
 ```
 
-Optional: Install awthemes
+## Run
+``` sh
+$ python3 PoPT.py
+```
+
+
+## Install on MacOS (homebrew required):
+``` sh
+$ brew install python@3.12
+$ brew install python-tk
+$ brew install python-matplotlib
+$ cd AX25_POPT
+$ python3.12 -m venv venv
+$ source venv/bin/activate
+$ pip install PyObjC
+$ pip install -r requirements.txt
+$ python PoPT.py
+```
+
+#### Leave Environment:
+``` sh
+$ deactivate
+```
+
+#### To Start PoPT in Environment:
+``` sh
+$ cd AX25_POPT
+$ source venv/bin/activate
+$ python PoPT.py
+```
+
+## Optional: Install awthemes
 
 To enhance the visual appearance of PoPT, you can optionally install awthemes. Follow these steps:
 
@@ -57,11 +88,6 @@ To enhance the visual appearance of PoPT, you can optionally install awthemes. F
 2. Extract the contents of awthemes-10.4.0.zip into the data/ folder of your PoPT installation.
 
 Note: Ensure the extracted files are placed directly in the data/ directory to be recognized by PoPT.
-
-## Run
-``` sh
-$ python3 PoPT.py
-```
 
 ## Functions
 
