@@ -76,6 +76,8 @@ class DefaultCLI(object):
         self._sys_login         = None
         self.sysop_priv         = False
 
+        self._rtt_active        = False
+
         self._tx_buffer         = b''
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
@@ -243,7 +245,7 @@ class DefaultCLI(object):
         self._state_index = state
 
     def _is_prefix(self):
-        # Optimized by GROK (x.com)
+        # Optimized by GROK (x.com) TODO Again
         if not self.prefix:
             # Handle case where there is no prefix
             self._parameter = []
@@ -257,17 +259,18 @@ class DefaultCLI(object):
         lines = self._input.replace(b'\n', b'\r').split(b'\r')
 
         # Find the first non-empty line
+        line_w_cmd = b''
         for line in lines:
-            if line:
-                self._input = line
+            if line.startswith(self.prefix):
+                line_w_cmd = line
                 break
         else:
             # If no non-empty lines found
             return False
 
         # Check if the input starts with the prefix
-        if self._input.startswith(self.prefix):
-            cmd_part = self._input[len(self.prefix):].split(b' ', 1)
+        if line_w_cmd.startswith(self.prefix):
+            cmd_part = line_w_cmd[len(self.prefix):].split(b' ')
             self._cmd = cmd_part[0].upper().replace(b'\r', b'')
             self._parameter = cmd_part[1:] if len(cmd_part) > 1 else []
             self._input = self._parameter
@@ -447,9 +450,11 @@ class DefaultCLI(object):
                 return ret
             return ''
 
-        return f"\r # {self._getTabStr_CLI('cmd_not_known')}\r"
+        return ""
 
     def _exec_cmd(self):
+        if not self._last_line.endswith(b'\r'):
+            self._last_line += b'\r'
         self._input = self._last_line + self._input
         if self._is_prefix():
             return self._find_cmd()
@@ -559,10 +564,11 @@ class DefaultCLI(object):
     def _cmd_connect_exclusive(self):
         return self._cmd_connect(exclusive=True)
 
-    def _cmd_echo(self):  # Quit
+    def _cmd_echo(self):  # Echo
         ret = ''
         for el in self._parameter:
             ret += el.decode(self._encoding[0], self._encoding[1]) + ' '
+        self._skip_prompt = True
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
@@ -1488,12 +1494,18 @@ class DefaultCLI(object):
 
     ##############################################
     # RTT CMD
-    @staticmethod
-    def _cmd_rtt():
+    def _cmd_rtt(self):
         rtt_timer = str(datetime.now().strftime('%H:%M:%S.%f'))
+        self._skip_prompt = True
+        self._rtt_active  = True
+
         return f"//E #RTT#{rtt_timer[:-3]}\r"
 
     def _str_cmd_recv_rtt(self):
+        self._skip_prompt = False
+        if not self._rtt_active:
+            return ''
+        self._rtt_active = False
         try:
             timer_val   = self._parameter[0].decode(self._encoding[0], 'ignore')
             dt_sent = datetime.strptime(timer_val + "000", '%H:%M:%S.%f')
@@ -1513,16 +1525,21 @@ class DefaultCLI(object):
             seconds = int(total_seconds % 60)
             milliseconds = int((total_seconds - int(total_seconds)) * 1000)
 
-            rtt_str = f"{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
             str_to_snd = self._getTabStr_CLI('cmd_rtt_1')
             if minutes:
                 str_to_snd += f"{minutes:02d} {self._getTabStr_CLI('minutes')} - "
 
             str_to_snd += f"{seconds:02d}.{milliseconds:01d} {self._getTabStr_CLI('seconds')}"
-            return str_to_snd + '\r\r'
+            self._skip_prompt = False
+            str_to_snd += '\r\r'
+            if self.service_cli:
+                return str_to_snd + self._get_ts_prompt()
+            return str_to_snd
 
         except Exception as ex:
             logger.warning(f"RTT parse error: {ex}")
+            if self.service_cli:
+                return ' # Error\r\r' + self._get_ts_prompt()
             return ' # Error\r\r'
 
     ##############################################
