@@ -57,7 +57,6 @@ $ brew install python-matplotlib
 $ cd AX25_POPT
 $ python3 -m venv venv
 $ source venv/bin/activate
-$ pip install PyObjC
 $ pip install -r requirements.txt
 $ python PoPT.py
 ```
