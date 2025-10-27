@@ -55,7 +55,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
     PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS
-from fnc.os_fnc import is_linux, get_root_dir, is_macos
+from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
 from sound.popt_sound import SOUND
@@ -647,10 +647,14 @@ class PoPT_GUI_Main:
         self.setting_rx_echo.set(guiCfg.get('gui_cfg_rx_echo', False))
         self.set_rxEcho_icon(self.setting_rx_echo.get())
         self._port_handler.rx_echo_on = bool(self.setting_rx_echo.get())
+        """
         if is_linux() and not is_macos():
             self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
         else:
             self.setting_sprech.set(False)
+        """
+        self.setting_sprech.set(guiCfg.get('gui_cfg_sprech', False))
+        """"""
         self.setting_tracer.set(guiCfg.get('gui_cfg_tracer', False))
         self.setting_auto_tracer.set(guiCfg.get('gui_cfg_auto_tracer', False))
         self.setting_dx_alarm.set(guiCfg.get('gui_cfg_dx_alarm', True))

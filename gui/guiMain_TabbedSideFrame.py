@@ -6,7 +6,6 @@ from ax25.ax25dec_enc import PIDByte
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.os_fnc import is_linux
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab, conv_timestamp_delta
 from sound.popt_sound import SOUND
 
@@ -329,8 +328,8 @@ class SideTabbedFrame:
                                      command=self._chk_sprech_on
                                      )
         sprech_btn.place(x=10, y=35)
-        if not is_linux():
-            sprech_btn.configure(state='disabled')
+        #if not is_linux():
+        #sprech_btn.configure(state='disabled')
         # Global Bake
         ttk.Checkbutton(tab4_settings,
                         text=self._getTabStr('beacon'),

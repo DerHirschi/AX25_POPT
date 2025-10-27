@@ -33,13 +33,10 @@ Install all dependencies:
 $ sudo apt install python3-tk
 $ sudo apt install python3-pil python3-pil.imagetk
 $ sudo apt install python3-matplotlib
+$ cd AX25_POPT
+$ python3 -m venv venv
+$ source venv/bin/activate
 $ pip install -r requirements.txt
-```
-
-Install all dependencies for Python 3.11 (Thanks to Lars):
-``` sh
-$ sudo apt install python3-matplotlib python3-tk python3-crcmod python3-gtts python3-pip python3-networkx python3-minimal
-$ pip install --break-system-packages playsound pyserial aprslib
 ```
 
 **notice:** If problems with playsound on Debian OS:
@@ -49,17 +46,16 @@ $ sudo apt install python3-gst-1.0
 
 ## Run
 ``` sh
-$ python3 PoPT.py
+$ python PoPT.py
 ```
 
 
 ## Install on MacOS (homebrew required):
 ``` sh
-$ brew install python@3.12
 $ brew install python-tk
 $ brew install python-matplotlib
 $ cd AX25_POPT
-$ python3.12 -m venv venv
+$ python3 -m venv venv
 $ source venv/bin/activate
 $ pip install PyObjC
 $ pip install -r requirements.txt

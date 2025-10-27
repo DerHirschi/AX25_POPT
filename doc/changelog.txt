@@ -1,5 +1,6 @@
 ###########################################################################################################
 # 2.121.x
+!!! Check requirements.txt (playsound3 benötigt) !!!
 Fixes:
 - Programm Crash wenn SABME(EAX.25) Frame empfangen wird
 - Programm Crash durch BBS, wenn port nicht richtig initialisiert wurde
@@ -32,6 +33,7 @@ Optimierung/Änderungen:
   übertragung bereits beendet war, seit geraumer Zeit. Sollte jetzt nicht
   mehr vorkommen. Getestet auf einen PI4-4GB-RAM)
 - Diverse Optimierungen für MacOS
+- Sprachausgabe jetzt auch für Windows
 
 Neue Implementierungen / Funktionen:
 - BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
