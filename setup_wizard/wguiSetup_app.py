@@ -461,6 +461,7 @@ class SetupWizardAPP:
         self._set_lang()
         self._set_locator()
         self._set_qth()
+        POPT_CFG.save_MAIN_CFG_to_file()
         self._is_quit = True
         if self._after_id is not None:
             self.app_win.after_cancel(self._after_id)

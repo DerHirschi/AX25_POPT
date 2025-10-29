@@ -356,6 +356,7 @@ class Main_CFG:
                 # if type(data[conf_k]) is type(conf_k[conf_k]):
                 conf_data[conf_k] = data[conf_k]
         self._config['gui_main_parm'] = conf_data
+        return True
 
     def get_guiPARM_main_param_by_key(self, conf_key: str):
         return self._config.get('gui_main_parm', {}).get(conf_key, None)
@@ -453,6 +454,7 @@ class Main_CFG:
         if call not in self._config.get('digi_cfg', {}):
             return False
         del self._config['digi_cfg'][call]
+        return True
 
     ###########################################
     # PIPE
