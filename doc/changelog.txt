@@ -1,4 +1,15 @@
 ###########################################################################################################
+# 2.122.x
+Fixes:
+
+Optimierung/Änderungen:
+- Soundmodul lässt auch alte "playsound" library zu für kompatibilität
+  zu Python Ver < 3.8 (Nur bei Linux)
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.121.x
 !!! Check requirements.txt (playsound3 benötigt) !!!
 Fixes:

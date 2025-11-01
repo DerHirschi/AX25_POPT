@@ -4,8 +4,16 @@ import threading
 
 from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
 from cfg.popt_config import POPT_CFG
-from fnc.os_fnc import get_root_dir
-from playsound3 import playsound
+from fnc.os_fnc import get_root_dir, is_linux, is_macos
+
+try:
+    from playsound3 import playsound
+except ImportError as ex:
+    if is_linux() and not is_macos():
+        """ Python Ver < 3.8 """
+        from playsound import playsound
+    else:
+        raise ex
 
 
 class POPT_Sound:
