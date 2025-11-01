@@ -3924,12 +3924,25 @@ STR_TABLE = {
         '',
         ''),
 
+    'aprs_new_mail_ctext': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AC\r\r',
+        '\r # APRS: You have {} new message(s). Reading with AC\r\r',
+        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AC\r\r',
+        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AC\r\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '\r # BOX: Du hast {} neue Mail(s).\r\r',
-        '\r # BOX : You have {} new mails.\r\r',
+        '\r # BOX: You have {} new mails.\r\r',
         '\r # BOX: Je hebt {} nieuwe mails.\r\r',
-        '\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '\r # BOX: Vous avez {} nouveaux mails.\r\r',
         '',
         '',
         '',

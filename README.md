@@ -1,10 +1,10 @@
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=for-the-badge&logo=Raspberry-Pi)
+![MacOS](https://shields.io/badge/MacOS--9cf?logo=Apple&style=for-the-badge)
 
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
 # P.ython o.ther P.acket T.erminal
 ### AX25 Terminal (AX25_POPT)
 
@@ -20,14 +20,14 @@
 ## Overview
 **PoPT** is a modern, multi-platform terminal program for AX.25 Packet Radio.
 It supports versatile connections such as KISS over TCP/Serial, AXIP over UDP and Linux AX.25 Devices.
-Currently under development, tested on Python 3.6 and 3.8, it runs on Windows, Linux, and 
+Currently under development, tested on Python 3.11, it runs on Windows, Linux, MacOS, and 
 Raspberry Pi.
 
 ### Requirements
 - Python 3.6 or higher (other versions such as 3.11 see below)
-- Supported Platforms: Windows, Linux, Raspberry Pi, macOS
+- Supported Platforms: Windows, Linux, Raspberry Pi, MacOS
 
-## Installation
+## Install on Linux
 Install all dependencies:
 ``` sh
 $ sudo apt install python3-tk
@@ -52,10 +52,11 @@ $ python PoPT.py
 
 ## Install on MacOS (homebrew required):
 ``` sh
-$ brew install python-tk
+$ brew install python@3.12
+$ brew install python-tk@3.12
 $ brew install python-matplotlib
 $ cd AX25_POPT
-$ python3 -m venv venv
+$ python3.12 -m venv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
 $ python PoPT.py
@@ -133,6 +134,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
   - Bin
   - Textmode
   - Auto RNR-Mode (File transfer is paused by RNR state when other radio traffic is detected)
+- Local Converse-Mode
 
 #### QTH Locator Functions:
 - Author: 4X5DM
@@ -167,6 +169,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 ## Community & Support
 - **Forum:** [Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 - **Telegram:** [PoPT Support](https://t.me/poptsupport)
+- **X:** [@AX25_PoPT](https://x.com/AX25_PoPT)
 ```    
     8b   d8 888b. d88b .d88b.    db  Yb        dP  Sysop: Manuel
     8YbmdP8 8   8 " dP YPwww.   dPYb  Yb  db  dP  QTH: Salzwedel - JO52NU

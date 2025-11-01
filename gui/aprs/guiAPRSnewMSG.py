@@ -2,7 +2,6 @@ import datetime
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
 from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID
 from cfg.logger_config import logger
@@ -36,9 +35,10 @@ class NewMessageWindow(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         self.title(self._getTabStr('new_msg'))
-        #######################
-        if list(PORT_HANDLER.get_all_ports().keys()):
-            self._port_var            = tk.StringVar(self, value=str(list(PORT_HANDLER.get_all_ports().keys())[0]))
+        ############################################################
+        port_handler = self._aprs_root.get_PH_guiAPRS_msg_sys()
+        if list(port_handler.get_all_ports().keys()):
+            self._port_var            = tk.StringVar(self, value=str(list(port_handler.get_all_ports().keys())[0]))
         else:
             self._port_var            = tk.StringVar(self, value=APRS_INET_PORT_ID)
         if POPT_CFG.get_stat_CFG_keys():
@@ -60,7 +60,7 @@ class NewMessageWindow(tk.Toplevel):
         label1 = ttk.Label(top_frame, text="Port:")
         label1.pack(side=tk.LEFT, padx=5)
 
-        port_vals = [APRS_INET_PORT_ID] + list(PORT_HANDLER.get_all_ports().keys())
+        port_vals = [APRS_INET_PORT_ID] + list(port_handler.get_all_ports().keys())
         dropdown1 = ttk.Combobox(top_frame,
                                  width=3,
                                  values=port_vals,
@@ -153,7 +153,9 @@ class NewMessageWindow(tk.Toplevel):
                     aprs_pack['port_id'] = port_id
                     aprs_pack['rx_time'] = datetime.datetime.now()
                     #self._aprs_root.set_new_chat(aprs_pack)
-                    PORT_HANDLER.aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
+                    aprs_ais = self._aprs_root.get_aprs_ais()
+                    if hasattr(aprs_ais, 'send_pn_msg'):
+                        aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
                 self.destroy_win()
 
     def destroy_win(self):

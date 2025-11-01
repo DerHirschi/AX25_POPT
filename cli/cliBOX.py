@@ -12,12 +12,13 @@ from fnc.str_fnc import zeilenumbruch, find_eol
 
 
 class BoxCLI(DefaultCLI):
-    cli_name      = 'BOX'  # DON'T CHANGE!
-    service_cli   = True
-    prefix        = b''
-    sw_id         = BBS_SW_ID
-    can_sidestop  = True
-    new_mail_noty = True
+    cli_name            = 'BOX'  # DON'T CHANGE!
+    service_cli         = True
+    prefix              = b''
+    sw_id               = BBS_SW_ID
+    can_sidestop        = True
+    new_aprs_msg_noty   = True
+
     def __init__(self, connection):
         DefaultCLI.__init__(self, connection=connection)
 
@@ -180,6 +181,9 @@ class BoxCLI(DefaultCLI):
             )
             return ''
 
+        # New APRS Msg Noty
+        #ret += self._aprs_cText_noty()
+        # New BBS Msg Noty
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
             ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)

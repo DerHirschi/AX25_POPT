@@ -57,7 +57,7 @@ class AX25PortHandler(object):
         # self.routingTable = None
         self._gui               = None
         self._bbs               = None
-        self.aprs_ais           = None
+        self._aprs_ais          = None
         self._scheduled_tasker  = None
         #######################################################
         # VARs
@@ -499,15 +499,15 @@ class AX25PortHandler(object):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         logger.info("PH: APRS-AIS Init")
         if aprs_obj is None:
-            self.aprs_ais = APRS_ais(self)
+            self._aprs_ais = APRS_ais(self)
         else:
             logger.info("PH: APRS-AIS ReInit")
-            self.aprs_ais = aprs_obj
-        if self.aprs_ais is None:
+            self._aprs_ais = aprs_obj
+        if self._aprs_ais is None:
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
 
-        threading.Thread(target=self.aprs_ais.ais_rx_task).start()
+        threading.Thread(target=self._aprs_ais.ais_rx_task).start()
         gui = self.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):
             ais_mon_gui = gui.get_ais_mon_gui()
@@ -517,19 +517,19 @@ class AX25PortHandler(object):
         return True
 
     def _aprs_task(self):
-        if hasattr(self.aprs_ais, 'task'):
-            return self.aprs_ais.task()
+        if hasattr(self._aprs_ais, 'task'):
+            return self._aprs_ais.task()
         return False
 
     def _close_aprs_ais(self):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
-        if self.aprs_ais is None:
+        if self._aprs_ais is None:
             return False
         logger.info("PH: closing APRS-AIS ...")
-        self.aprs_ais.ais_close()
+        self._aprs_ais.ais_close()
         # self.aprs_ais.save_conf_to_file()
-        del self.aprs_ais
-        self.aprs_ais = None
+        del self._aprs_ais
+        self._aprs_ais = None
         return True
 
     ######################
@@ -1010,7 +1010,7 @@ class AX25PortHandler(object):
         return self._gui
 
     def get_aprs_ais(self):
-        return self.aprs_ais
+        return self._aprs_ais
 
     def get_all_ports_f_cfg(self):
         return dict(self.ax25_ports)

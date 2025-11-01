@@ -10,7 +10,7 @@ class UserCLI(DefaultCLI):
     prefix = b'//'
     sw_id = 'PoPT'
     can_sidestop = False
-    new_mail_noty = True
+    new_aprs_msg_noty = False
     # Extra CMDs for this CLI
 
     def init(self):

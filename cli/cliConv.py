@@ -10,7 +10,6 @@ class ConverseCLI(DefaultCLI):
     prefix = b'/'  # Kommando-Suffix
     sw_id = 'PoPT-Conv'
     can_sidestop = False
-    new_mail_noty = False
 
     def __init__(self, connection):
         super().__init__(connection)

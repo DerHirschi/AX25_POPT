@@ -777,7 +777,7 @@ class AISmonitor(tk.Toplevel):
             msg_text = f"{aprs_pack.get('response', '')} {aprs_pack.get('msgNo', '')}"
         return (
             aprs_pack.get('from', ''),
-            aprs_pack.get('addresse', '') if aprs_pack.get('addresse', '') else aprs_pack.get('to', ''),
+            aprs_pack.get('address', '') if aprs_pack.get('address', '') else aprs_pack.get('to', ''),
             aprs_pack.get('port_id', ''),
             aprs_pack.get('via', ''),
             '>'.join(aprs_pack.get('path', [])),

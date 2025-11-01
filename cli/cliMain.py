@@ -1,14 +1,14 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from cfg import constant
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV
+from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
+from fnc.os_fnc import is_macos, is_linux, is_windows
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
     convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
 from fnc.ax25_fnc import validate_ax25Call
@@ -17,12 +17,12 @@ from cfg.logger_config import logger
 
 
 class DefaultCLI(object):
-    cli_name = ''  # DON'T CHANGE!
-    service_cli = True
-    prefix = b'//'
-    sw_id = ''
-    can_sidestop = True
-    new_mail_noty = False
+    cli_name      = ''  # DON'T CHANGE!
+    service_cli   = True
+    prefix        = b'//'
+    sw_id         = ''
+    can_sidestop  = True
+    new_aprs_msg_noty = False
 
     def __init__(self, connection):
         self._logTag = f"CLI-{self.cli_name}: "
@@ -106,6 +106,7 @@ class DefaultCLI(object):
             'CH':       (2, self._cmd_ch,                   self._getTabStr_CLI('cmd_help_ch'), False),
             'RTT':      (2, self._cmd_rtt,                  self._getTabStr_CLI('cmd_help_rtt'), False),
             # APRS Stuff
+            #'ACHAT':    (2, self.,                          'APRS-Messenger', False),
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
             'WX':       (0, self._cmd_wx, self._getTabStr_CLI('cmd_help_wx'), False),
             # User/Station Info
@@ -181,9 +182,14 @@ class DefaultCLI(object):
 
     def init(self):
         pass
-
+    ##################################
+    # Helper
+    # TX-Stuff
     def _get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
+
+    def send_prompt(self):
+        self._send_output(self._get_ts_prompt(), env_vars=False)
 
     def _send_output(self, ret, env_vars=True):
         if ret:
@@ -222,7 +228,7 @@ class DefaultCLI(object):
             out_lines += self._getTabStr_CLI('op_prompt_1').encode(self._encoding[0], self._encoding[1])
         self._connection.send_data(out_lines)
         self.change_cli_state(7)
-
+    # TX-Abort-Stuff
     def _abort_send_out(self):
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
@@ -239,7 +245,7 @@ class DefaultCLI(object):
             self._last_line = b''
             return True
         return False
-
+    #
     def change_cli_state(self, state: int):
         # print(f"CLI change state: {state} - {self._state_index}")
         self._state_index = state
@@ -285,15 +291,15 @@ class DefaultCLI(object):
         return False
 
     def _load_fm_file(self, filename: str):
-        file_n = constant.CFG_data_path + \
-                 constant.CFG_usertxt_path + \
+        file_n = CFG_data_path + \
+                 CFG_usertxt_path + \
                  self._stat_cfg_index_call + '/' + \
                  filename
         out = get_str_fm_file(file_n)
         if out:
             return zeilenumbruch_lines(out)
         return ''
-
+    # Auto Baycom Login
     def start_baycom_login(self):
         if self._sys_login is None:
             if self._user_db_ent:
@@ -323,7 +329,7 @@ class DefaultCLI(object):
         self._sys_login.attempts = 1
         self.change_cli_state(6)
         return True
-
+    # Software ID
     def _send_sw_id(self):
         if not self.sw_id:
             return ""
@@ -339,7 +345,7 @@ class DefaultCLI(object):
                 except KeyError:
                     logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self._user_db_ent.Encoding}")
         flag = txt_enc + didadit + unknown
-        return '{' + f"{self.sw_id}-{constant.VER}-{flag}" + '}\r'
+        return '{' + f"{self.sw_id}-{VER}-{flag}" + '}\r'
 
     def _set_user_db_software_id(self):
         if self._user_db_ent:
@@ -368,17 +374,6 @@ class DefaultCLI(object):
             return True
         #print("SW ID False")
         return False
-
-    def _send_name_cmd_back(self):
-        stat_cfg: dict = self._connection.get_stat_cfg()
-        name = stat_cfg.get('stat_parm_Name', '')
-        if name:
-            if self.stat_identifier is not None:
-                if self.stat_identifier:
-                    if self.stat_identifier.typ == 'SYSOP':
-                        self._send_output(f'\r//N {name}\r', env_vars=False)
-                    else:
-                        self._send_output(f'\rN {name}\r', env_vars=False)
 
     def _find_sw_identifier(self):
         # print(f"find_stat_identifier self.stat_identifier: {self.stat_identifier}")
@@ -413,7 +408,37 @@ class DefaultCLI(object):
                         return True
                     return True
         return False
+    # Auto Name sharing #NAM#
+    def _send_name_cmd_back(self):
+        stat_cfg: dict = self._connection.get_stat_cfg()
+        name = stat_cfg.get('stat_parm_Name', '')
+        if name:
+            if self.stat_identifier is not None:
+                if self.stat_identifier:
+                    if self.stat_identifier.typ == 'SYSOP':
+                        self._send_output(f'\r//N {name}\r', env_vars=False)
+                    else:
+                        self._send_output(f'\rN {name}\r', env_vars=False)
+    # GUI
+    def _gui_channel_status_change(self):
+        gui = self._port_handler.get_gui()
+        if hasattr(gui, 'on_channel_status_change'):
+            gui.on_channel_status_change()
 
+    # APRS-Messanger C-Text Noty
+    def _aprs_cText_noty(self):
+        if not self.new_aprs_msg_noty:
+            return ''
+        aprs_ais = self._port_handler.get_aprs_ais()
+        if not hasattr(aprs_ais, 'get_pn_msg_for_call'):
+            return ''
+        my_aprs_msg = aprs_ais.get_pn_msg_for_call(self._to_call)
+        if not my_aprs_msg:
+            return ''
+        return self._getTabStr_CLI('aprs_new_mail_ctext').format(len(my_aprs_msg))
+
+    #########################################################
+    # CMD exec
     def _find_cmd(self):
         # TODO AGAIN
         if self._cmd:
@@ -491,9 +516,6 @@ class DefaultCLI(object):
                     return ret
         return ret
 
-    def send_prompt(self):
-        self._send_output(self._get_ts_prompt(), env_vars=False)
-
     def _decode_param(self, defaults=None):
         if defaults is None:
             defaults = []
@@ -515,13 +537,8 @@ class DefaultCLI(object):
                     tmp_parm = el
                 tmp.append(tmp_parm)
         self._parameter = list(tmp)
-
-    def _gui_channel_status_change(self):
-        gui = self._port_handler.get_gui()
-        if hasattr(gui, 'on_channel_status_change'):
-            gui.on_channel_status_change()
-
     #########################################################
+    # CMD
     def _cmd_connect(self, exclusive=False):
         self._decode_param()
         if not self._parameter:
@@ -572,8 +589,6 @@ class DefaultCLI(object):
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
-        # self._connection: AX25Conn
-        # self._connection.tx_buf_rawData += self.bye_text.encode(self.encoding[0], self.encoding[1])
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
         ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
@@ -583,12 +598,12 @@ class DefaultCLI(object):
 
     def _cmd_lang(self):
         if not self._parameter:
-            return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
+            return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
         self._decode_param()
-        if self._parameter[0].upper() in constant.LANG_IND.keys():
-            self._connection.set_user_db_language(constant.LANG_IND[self._parameter[0].upper()])
+        if self._parameter[0].upper() in LANG_IND.keys():
+            self._connection.set_user_db_language(LANG_IND[self._parameter[0].upper()])
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
-        return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(constant.LANG_IND.keys()))}\r'
+        return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
 
     def _cmd_dxlist(self):
         parm = 10
@@ -780,7 +795,8 @@ class DefaultCLI(object):
 
     def _cmd_wx(self):
         """ WX Stations """
-        if self._port_handler.aprs_ais is None:
+        aprs_ais = self._port_handler.get_aprs_ais()
+        if aprs_ais is None:
             return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
         parm = 10
         ret = ''
@@ -809,7 +825,10 @@ class DefaultCLI(object):
         return ret + '\r'
 
     def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        data       = list(self._port_handler.aprs_ais.get_wx_data_f_call(call))
+        aprs_ais = self._port_handler.get_aprs_ais()
+        if not hasattr(aprs_ais, 'get_wx_data_f_call'):
+            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
+        data       = list(aprs_ais.get_wx_data_f_call(call))
         if not data:
             return ''
         data.reverse()
@@ -847,8 +866,6 @@ class DefaultCLI(object):
             if  str(time_st) != str(init_time):
                 max_c += 1
                 if max_c <= max_ent:
-                    # graph_data.append({'temp': float(el[5])})
-                    # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
                     # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
                     td = el[15].split(' ')[-1]
                     # pres = f'{el[0]:.2f}'
@@ -961,7 +978,8 @@ class DefaultCLI(object):
 
     def _cmd_aprs_trace(self):
         """APRS Tracer"""
-        if self._port_handler.aprs_ais is None:
+        aprs_ais = self._port_handler.get_aprs_ais()
+        if aprs_ais is None:
             return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
         parm = 10
         if self._parameter:
@@ -969,24 +987,24 @@ class DefaultCLI(object):
                 parm = int(self._parameter[0])
             except ValueError:
                 pass
-        data = self._port_handler.aprs_ais.tracer_traces_get()
+        data = aprs_ais.tracer_traces_get()
         if not data:
             return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
-        intervall = self._port_handler.aprs_ais.be_tracer_interval
-        active = self._port_handler.aprs_ais.be_tracer_active
-        last_send = self._port_handler.aprs_ais.tracer_get_last_send()
-        last_send = get_timedelta_str_fm_sec(last_send, r_just=False)
+        intervall   = aprs_ais.be_tracer_interval
+        active      = aprs_ais.be_tracer_active
+        last_send   = aprs_ais.tracer_get_last_send()
+        last_send   = get_timedelta_str_fm_sec(last_send, r_just=False)
         if not active:
             intervall_str = 'off'
         else:
             intervall_str = str(intervall)
         # out = '\r # APRS-Tracer Beacon\r\r'
         out = '\r'
-        out += f'Tracer Port     : {self._port_handler.aprs_ais.be_tracer_port}\r'
-        out += f'Tracer Call     : {self._port_handler.aprs_ais.be_tracer_station}\r'
-        out += f'Tracer WIDE Path: {self._port_handler.aprs_ais.be_tracer_wide}\r'
+        out += f'Tracer Port     : {aprs_ais.be_tracer_port}\r'
+        out += f'Tracer Call     : {aprs_ais.be_tracer_station}\r'
+        out += f'Tracer WIDE Path: {aprs_ais.be_tracer_wide}\r'
         out += f'Tracer intervall: {intervall_str}\r'
-        out += f'Auto Tracer     : {constant.BOOL_ON_OFF.get(self._port_handler.aprs_ais.be_auto_tracer_active, False).lower()}\r'
+        out += f'Auto Tracer     : {BOOL_ON_OFF.get(aprs_ais.be_auto_tracer_active, False).lower()}\r'
         # out += f'APRS-Server     : {constant.BOOL_ON_OFF.get(self._port_handler.aprs_ais., False).lower()}\r'
         out += f'Last Trace send : {last_send}\r\r'
         out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
@@ -1026,13 +1044,27 @@ class DefaultCLI(object):
               '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
               '$$ |       $$$$$$  |   $$ |        $$ |\r' \
               '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
-              'Version: {}\r\r\r'.format(constant.VER)
+              f'Version: {VER}'
+        if is_macos():
+            ret += ' - MacOS'
+        elif is_linux():
+            ret += ' - Linux'
+        elif is_windows():
+            ret += ' - Windows'
+        ret += '\r\r'
         return ret
 
     @staticmethod
     def _cmd_ver():
         ret = '\r-= P.yton o.ther P.acket T.erminal =-\r' \
-              '-= Version: {} \r\r'.format(constant.VER)
+              f'-= Version: {VER}'
+        if is_macos():
+            ret += ' - MacOS'
+        elif is_linux():
+            ret += ' - Linux'
+        elif is_windows():
+            ret += ' - Windows'
+        ret += '\r\r'
         return ret
 
     def _cmd_i(self):
@@ -1487,12 +1519,9 @@ class DefaultCLI(object):
             return self._getTabStr_CLI('box_cmd_op2')
         return self._getTabStr_CLI('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
 
-
     def _cmd_conv(self):
         self._skip_prompt = True
         self._connection.enter_converse_cli()
-
-    ##############################################
     # RTT CMD
     def _cmd_rtt(self):
         rtt_timer = str(datetime.now().strftime('%H:%M:%S.%f'))
@@ -1525,7 +1554,8 @@ class DefaultCLI(object):
             seconds = int(total_seconds % 60)
             milliseconds = int((total_seconds - int(total_seconds)) * 1000)
 
-            str_to_snd = self._getTabStr_CLI('cmd_rtt_1')
+            str_to_snd = '\r'
+            str_to_snd += self._getTabStr_CLI('cmd_rtt_1')
             if minutes:
                 str_to_snd += f"{minutes:02d} {self._getTabStr_CLI('minutes')} - "
 
@@ -1613,22 +1643,15 @@ class DefaultCLI(object):
         pass
 
     ########################################################
-
+    # States
     def _s0(self):  # C-Text
         self._state_index = 1
         ret = self._send_sw_id()
         ret += self._c_text
-        # bbs = self._port_handler.get_bbs()
-        """
-        if hasattr(bbs, 'get_new_pn_count_by_call'):
-            new_mail = bbs.get_new_pn_count_by_call(self._to_call)
-            if new_mail:
-                ret += self._getTabStr('box_new_mail_ctext').format(new_mail)
-        """
-        if self.cli_name == 'USER':
-            self._send_output(ret, env_vars=True)
-            return ''
-        self._send_output(ret + self._get_ts_prompt(), env_vars=True)
+        #ret += self._aprs_cText_noty()
+        if self.cli_name != 'USER':
+            ret += self._get_ts_prompt()
+        self._send_output(ret, env_vars=True)
         return ''
 
     def _s1(self):
@@ -1799,7 +1822,8 @@ class DefaultCLI(object):
                 self._last_line = self._new_last_line
                 return
 
-
+    ########################################################
+    # Crone States (called fm tasker)
     @staticmethod
     def _cron_s0():
         """ Dummy for doing nothing """
@@ -1819,7 +1843,7 @@ class NoneCLI(DefaultCLI):
     # bye_text = ''
     prefix = b''
     can_sidestop = False
-    new_mail_noty = False
+    new_aprs_msg_noty = False
 
     def init(self):
         self._commands_cfg = []
