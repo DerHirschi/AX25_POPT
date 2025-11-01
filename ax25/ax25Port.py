@@ -1299,15 +1299,7 @@ class KISSSerial(AX25Port):
                 if self.kiss.device_kiss_end():
                     self.device.write(self.kiss.device_kiss_end())
                     time.sleep(1)
-            """
-            if is_linux():
-                try:
-                    self.device.flush()
-                except termios.error:
-                    logger.warning(self._logTag + f"Error while closing/flushing: termios.error")
-            else:
-                self.device.flush()
-            """
+
             time.sleep(1)
             if is_linux():
                 if hasattr(self.device, 'readall'):

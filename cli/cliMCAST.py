@@ -9,7 +9,6 @@ class MCastCLI(DefaultCLI):
     prefix = b''
     sw_id = 'PoPTMCast'
     can_sidestop = True
-    new_mail_noty = False
 
     # Extra CMDs for this CLI
 

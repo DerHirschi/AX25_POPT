@@ -1,18 +1,21 @@
 from cfg.cfg_fnc import init_dir_struct
 from cfg.constant import VER, DEBUG_LOG, POPT_BANNER
 from cfg.logger_config import logger, LOG_BOOK
-from fnc.os_fnc import is_windows
+from cfg.popt_config import POPT_CFG
+from fnc.os_fnc import is_windows, is_macos
 
 for el in POPT_BANNER.split('\r')[1:-2]:
     logger.info(el)
-if is_windows():
+if is_macos():
+    logger.info(f"Version: {VER} (MacOS) wird gestartet.")
+elif is_windows():
     logger.info(f"Version: {VER} (Windows) wird gestartet.")
 else:
     logger.info(f"Version: {VER} (Linux) wird gestartet.")
 
 logger.info(f"DEBUG_LOG: {DEBUG_LOG}")
 first_setup  = init_dir_struct()  # Setting up Directory's
-if first_setup:
+if first_setup or not POPT_CFG.get_first_setup():
     from setup_wizard.wguiSetup_app import SetupWizardAPP
     SetupWizardAPP()
 

@@ -1,5 +1,4 @@
 from ax25.ax25LocalConverse import LocalConverse
-from cfg.constant import LO_CONV_DEF_CH_NAME
 from cli.cliMain import DefaultCLI
 from fnc.str_fnc import get_time_delta
 
@@ -11,12 +10,11 @@ class ConverseCLI(DefaultCLI):
     prefix = b'/'  # Kommando-Suffix
     sw_id = 'PoPT-Conv'
     can_sidestop = False
-    new_mail_noty = False
 
     def __init__(self, connection):
         super().__init__(connection)
         self._converse: LocalConverse = self._port_handler.get_loConverse()
-        self._current_channel_id      = str(LO_CONV_DEF_CH_NAME)  # Standardkanal
+        self._current_channel_id      = 0  # Standardkanal
         ##########
         self._prev_cli = connection.cli
         self._connection.cli_type = str(self.cli_name)
@@ -26,9 +24,10 @@ class ConverseCLI(DefaultCLI):
 
     def init(self):
         """Initialisiert die verfügbaren Kommandos"""
-        self._commands_cfg = ['L', 'H', 'Q']
+        self._commands_cfg = ['L', 'H', 'Q', 'U']
         self._command_set = {
             'L': (0, self._cmd_list_channels,   'List available channels',  False),
+            'U': (0, self._cmd_list_users,      'List User in channel',     False),
             'H': (0, self._cmd_help,            'Show help',                False),
             'Q': (0, self._cmd_q,               'Quit',                     True),
         }
@@ -43,6 +42,20 @@ class ConverseCLI(DefaultCLI):
     def _remove_from_channel(self):
         """Entfernt die Verbindung aus einem Kanal"""
         self._converse.remove_participant(self._connection)
+
+    def _cmd_list_users(self):
+        ret = '\r--- User in this Channel ---\r'
+        my_channel = self._converse.get_channel(self._current_channel_id)
+
+        if hasattr(my_channel, 'get_channel_members'):
+            members = my_channel.get_channel_members()
+            for gui_ch, connection in members.items():
+                db_ent = self._user_db.get_entry(connection.to_call_str ,add_new=False)
+                name = db_ent.Name
+                ret += f" {connection.to_call_str} ({name})\r"
+            return ret
+
+        return ' # Error. Channel not Found\r'
 
     def _cmd_list_channels(self):
         """Listet alle verfügbaren Kanäle und deren Teilnehmerzahlen auf"""
@@ -113,9 +126,7 @@ class ConverseCLI(DefaultCLI):
 
     def _cron_s_quit(self):
         """Beendet die Verbindung, wenn keine Daten mehr zu senden sind"""
-        if not self._connection.tx_buf_rawData and \
-                not self._connection.tx_buf_unACK and \
-                not self._connection.tx_buf_2send:
+        if self._connection.is_tx_buff_empty():
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
         return ''

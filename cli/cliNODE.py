@@ -4,13 +4,10 @@ from cli.cliMain import DefaultCLI
 class NodeCLI(DefaultCLI):
     cli_name = 'NODE'  # DON'T CHANGE !
     service_cli = True
-    # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
-    # bye_text = '73 ...\r'
-    # prompt = 'PoPT-NODE>'
     prefix = b''
     sw_id = 'PoPTNode'
     can_sidestop = True
-    new_mail_noty = True
+    new_aprs_msg_noty = True
 
     # Extra CMDs for this CLI
 
@@ -22,12 +19,15 @@ class NodeCLI(DefaultCLI):
                                'CONNECT',
                                'C!',
                                'CH',
+                               'CONV',
                                'PORT',
                                'MH',
                                'LMH',
                                'AXIP',
                                'DXLIST',
                                'LCSTATUS',
+                               'CSTAT',
+                               'RTT',
                                # APRS
                                'ATR',
                                'WX',
@@ -59,7 +59,6 @@ class NodeCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
-                               'CONV',
                                '?']
 
 

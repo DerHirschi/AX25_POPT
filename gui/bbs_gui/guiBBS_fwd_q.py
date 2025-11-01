@@ -18,6 +18,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._bbs_obj               = port_handler.get_bbs()
         self._getTabStr             = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._conn_typ_icon_tab     = root_win.get_conn_typ_icon_16()
+        self._fwd_Q_icon_tab     = root_win.get_fwd_q_icon_16()
         ###################################
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
@@ -27,8 +28,6 @@ class BBS_fwd_Q(tk.Toplevel):
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._close)
-        self.attributes("-topmost", True)
-        self.attributes("-topmost", False)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -52,6 +51,7 @@ class BBS_fwd_Q(tk.Toplevel):
         self._old_conn_hist_len     = 0
         self._rev_conn_his          = False
         ##########################################################################################
+        self._fwd_q_filter_var          = tk.StringVar(self, value='')
         self._conn_hist_label_var       = tk.StringVar(self, value='')
         self._port_filter_var           = tk.StringVar(self, value='')
         self._typ_filter_var            = tk.StringVar(self, value='')
@@ -87,9 +87,11 @@ class BBS_fwd_Q(tk.Toplevel):
             'type',
             'sub',
             'size',
+            'flag',
+            'tx_timer',
         )
 
-        self._tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
+        self._tree = ttk.Treeview(tree_frame, columns=columns, show='tree headings')
         self._tree.pack(side='left', fill='both', expand=True)
         # add a scrollbar
         scrollbar = ttk.Scrollbar(tree_frame, orient='vertical', command=self._tree.yview)
@@ -104,14 +106,20 @@ class BBS_fwd_Q(tk.Toplevel):
         self._tree.heading('type', text='Type', command=lambda: self._sort_entry(self._tree, 'type'))
         self._tree.heading('sub', text=self._getTabStr('subject'), command=lambda: self._sort_entry(self._tree, 'sub'))
         self._tree.heading('size', text='Msg-Size', command=lambda: self._sort_entry(self._tree, 'size'))
-        self._tree.column("FWDID", anchor='w', stretch=tk.YES, width=170)
-        self._tree.column("BID", anchor='w', stretch=tk.YES, width=130)
+        self._tree.heading('flag', text='Flag', command=lambda: self._sort_entry(self._tree, 'flag'))
+        self._tree.heading('tx_timer', text='TX-Time', command=lambda: self._sort_entry(self._tree, 'tx_timer'))
+
+        self._tree.column("#0", anchor='w', stretch=tk.NO, width=35)
+        self._tree.column("FWDID", anchor='w', stretch=tk.NO, width=170)
+        self._tree.column("BID", anchor='w', stretch=tk.NO, width=130)
         self._tree.column("from", anchor='w', stretch=tk.YES, width=190)
         self._tree.column("to", anchor='w', stretch=tk.YES, width=190)
         self._tree.column("fwd_bbs_call", anchor='w', stretch=tk.YES, width=90)
-        self._tree.column("type", anchor='center', stretch=tk.YES, width=60)
+        self._tree.column("type", anchor='center', stretch=tk.NO, width=60)
         self._tree.column("sub", anchor='w', stretch=tk.YES, width=150)
-        self._tree.column("size", anchor='w', stretch=tk.YES, width=60)
+        self._tree.column("size", anchor='w', stretch=tk.NO, width=60)
+        self._tree.column("flag", anchor='w', stretch=tk.NO, width=60)
+        self._tree.column("tx_timer", anchor='w', stretch=tk.NO, width=160)
         self._tree.bind('<<TreeviewSelect>>', self._entry_selected)
         ###
         btn_frame = ttk.Frame(tree_frame, width=150)
@@ -119,11 +127,19 @@ class BBS_fwd_Q(tk.Toplevel):
         ttk.Button(btn_frame,
                   text=self._getTabStr('start_fwd'),
                   command=self._do_fwd
-                  ).pack()
+                  ).pack(padx=5, pady=5)
         ttk.Button(btn_frame,
                    text=self._getTabStr('delete'),
                    command=self._del_fwd_id
-                   ).pack()
+                   ).pack(padx=5)
+        filter_f = ttk.Frame(btn_frame)
+        filter_f.pack(fill='x', padx=5)
+        ttk.Label(filter_f, text='Filter: ').pack(side='left', anchor='w')
+        opt = ['active', 'active', ' all']
+        ttk.OptionMenu(filter_f,
+                       self._fwd_q_filter_var,
+                       *opt,
+                       command=lambda e: self._update_fwdQ_tree(force_update=True)).pack(side='left')
         ##########################################################################################
         # port_frame
 
@@ -691,7 +707,7 @@ class BBS_fwd_Q(tk.Toplevel):
             q_tree_data = []
             for bid, msg2fwd in bbs_q.items():
                 flag = msg2fwd.get('flag', '')
-                if flag == 'F':
+                if flag in ['F', 'S=']:
                     msg_in_q += 1
                     q_tree_data.append((
                         msg2fwd.get('bid'          , ''),
@@ -783,11 +799,15 @@ class BBS_fwd_Q(tk.Toplevel):
         for i in self._tree.get_children():
             self._tree.delete(i)
         for ret_ent in self._tree_data:
-            self._tree.insert('', 'end', values=ret_ent)
+            if ret_ent[1]:
+                self._tree.insert('', 'end', values=ret_ent[0], image=ret_ent[1])
+            else:
+                self._tree.insert('', 'end', values=ret_ent[0])
 
-    def _update_fwdQ_tree(self):
+    def _update_fwdQ_tree(self, force_update=False):
         data = list(self._bbs_obj.get_active_fwd_q_tab())
-        if self._data != data:
+        data.reverse()
+        if self._data != data or force_update:
             self._data = data
             self._format_tree_data()
             self._update_tree()
@@ -797,19 +817,33 @@ class BBS_fwd_Q(tk.Toplevel):
 
     def _format_tree_data(self):
         self._tree_data = []
+        active_filter = self._fwd_q_filter_var.get()
         for el in self._data:
+            if el[10] == 'DL':
+                continue
+            if all((
+                active_filter == 'active',
+                el[10] not in ['F', 'S=', 'SW', '$']
+            )):
+                continue
+
+            image = self._fwd_Q_icon_tab.get(el[10], None)
+
             from_call = f"{el[2]}@{el[3]}"
-            to_call = f"{el[4]}@{el[5]}"
-            self._tree_data.append((
-                f'{el[0]}',
-                f'{el[1]}',
-                f'{from_call}',
-                f'{to_call}',
-                f'{el[6]}',  # fwd BBS
-                f'{el[7]}',  # typ
-                f'{el[8]}',  # sub
-                f'{el[9]}',  # size
-            ))
+            to_call   = f"{el[4]}@{el[5]}"
+            self._tree_data.append(
+                ((
+                    f'{el[0]}',
+                    f'{el[1]}',
+                    f'{from_call}',
+                    f'{to_call}',
+                    f'{el[6]}',   # fwd BBS
+                    f'{el[7]}',   # typ
+                    f'{el[8]}',   # sub
+                    f'{el[9]}',   # size
+                    f'{el[10]}',  # flag
+                    f'{el[11]}',  # tx-time
+                ), image))
 
     ##########################
     # Connection History

@@ -213,7 +213,6 @@ class AX25Conn:
         self.is_RNR: bool = False
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
-        # self.RTT = 0
         self.calc_irtt()
         self.RTT_Timer = RTT(self)
         self.tx_byte_count = 0
@@ -324,12 +323,7 @@ class AX25Conn:
         stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
         if not stat_cfg:
             stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call)
-        """
-        if not stat_cfg:
-            # stat_cfg = getNew_station_cfg()
-            # stat_cfg.setdefault('stat_parm_Call' , self.my_call_str)
-            raise AX25ConnectionERROR(self)
-        """
+
         self._stat_cfg = stat_cfg
         self._set_packet_param()
 
@@ -352,10 +346,6 @@ class AX25Conn:
     def handle_rx(self, ax25_frame):
         self._rx_buf_last_frame = ax25_frame
         self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
-        """
-        if ax25_frame.payload:
-            self.rx_buf_last_data = ax25_frame.payload
-        """
         self.set_T3()
 
     def handle_tx(self, ax25_frame):
@@ -369,7 +359,7 @@ class AX25Conn:
             if type(data) is bytes:
                 self._link_holder_reset()
                 self.tx_buf_rawData += data
-                #self._send_gui_QSObuf_tx(data)
+                self._send_gui_QSObuf_tx(data)
                 return True
         return False
 
@@ -904,9 +894,8 @@ class AX25Conn:
             if new_state:
                 self.zustand_exec.change_state(new_state)
 
-    """
+
     def _send_gui_QSObuf_tx(self, data):
-        # TODO send direct to GUI Buffer
         if self.ft_obj:
             return
         if self.pipe:
@@ -914,13 +903,6 @@ class AX25Conn:
         self.rx_tx_buf_guiData.append(
             ('TX', data)
         )
-    
-        #if not self._gui:
-        #    return
-        #if not hasattr(self._gui, 'update_qso'):
-        #    return
-        #self._gui.update_qso(self)     # TODO send to GUI Buffer
-    """
 
     def _send_gui_QSObuf_rx(self, data):
         if self.ft_obj:
@@ -1345,6 +1327,23 @@ class AX25Conn:
 
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
+
+    def clear_tx_buff(self):
+        self.tx_buf_rawData = b''
+
+    def get_tx_buff_len(self):
+        return len(self.tx_buf_rawData)
+
+    def get_tx_buff(self):
+        return bytearray(self.tx_buf_rawData)
+
+    def is_tx_buff_empty(self):
+        return not any((
+            self.tx_buf_rawData,
+            self.tx_buf_2send,
+            self.tx_buf_unACK,
+        ))
+
 ###########################################################################
 ###########################################################################
 ###########################################################################
@@ -1377,7 +1376,8 @@ class DefaultStat(object):
         self.ns = self.frame.ctl_byte.ns
         self.pf = self.frame.ctl_byte.pf
         self.cmd = self.frame.ctl_byte.cmd
-        {
+        ctl_tab = {
+            'SABME': self._rx_SABME,
             'SABM': self._rx_SABM,
             'DISC': self._rx_DISC,
             'UA': self._rx_UA,
@@ -1388,7 +1388,15 @@ class DefaultStat(object):
             'I': self._rx_I,
             'FRMR': self._rx_FRMR,
             'UI': self._rx_UI,
-        }[self.frame.ctl_byte.flag]()
+        }
+        if self.frame.ctl_byte.flag not in ctl_tab:
+            logger.warning(f"Unknown CLT-Byte:{self.frame.ctl_byte.flag}")
+            return
+        ctl_tab[self.frame.ctl_byte.flag]()
+
+    def _rx_SABME(self):
+        """ EAX.25 """
+        pass
 
     def _rx_SABM(self):
         self._cleanup()
@@ -1619,7 +1627,7 @@ class S2Aufbau(DefaultStat):  # INIT TX
     def _accept(self):
         # print("S2 - ACCEPT")
         self._ax25conn.tx_buf_2send = []  # Clean Send Buffer.
-        self._ax25conn.tx_buf_rawData = b''  # Clean Send Buffer.
+        self._ax25conn.clear_tx_buff()    # Clean Send Buffer.
         self._ax25conn.n2 = 0
         self._ax25conn.accept_connection()
         self.change_state(5)
@@ -1693,7 +1701,7 @@ class S4Abbau(DefaultStat):
 
     def tx(self, ax25_frame):
         self._ax25conn.n2 = 0
-        self._ax25conn.tx_buf_rawData = b''
+        self._ax25conn.clear_tx_buff()
         self._ax25conn.tx_buf_2send = []
         self._ax25conn.tx_buf_unACK = {}
         self._ax25conn.send_DISC()
@@ -1800,9 +1808,7 @@ class S5Ready(DefaultStat):
         else:
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
 
     def _rx_RNR(self):
@@ -1869,9 +1875,7 @@ class S6sendREJ(DefaultStat):
         if self._prozess_I_frame():
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.change_state(5)
 
@@ -1935,9 +1939,7 @@ class S7WaitForFinal(DefaultStat):
             # self.change_state(5)
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif not self._ax25conn.tx_buf_unACK and \
-                    not self._ax25conn.tx_buf_2send and \
-                    not self._ax25conn.tx_buf_rawData:
+            elif self._ax25conn.is_tx_buff_empty():
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=True)
 
     def _rx_REJ(self):
@@ -2048,7 +2050,7 @@ class S8SelfNotReady(DefaultStat):
                     self._ax25conn.n2 += 1
                     self._ax25conn.set_T1()
 
-                if self._ax25conn.tx_buf_rawData and not self._ax25conn.tx_buf_unACK:
+                if self._ax25conn.get_tx_buff() and not self._ax25conn.tx_buf_unACK:
                     self._ax25conn.build_I_fm_raw_buf()
                     self._ax25conn.set_T1()
 

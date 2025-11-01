@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from cfg.cfg_fnc import exist_awthemes_path
-from cfg.constant import STYLES_AWTHEMES, STYLES_AWTHEMES_PATH, STYLES_BULD_IN_LINUX, STYLES_BULD_IN_WIN
+from cfg.constant import STYLES_AWTHEMES, STYLES_AWTHEMES_PATH, STYLES_BULD_IN_LINUX, STYLES_BULD_IN_WIN, \
+    CFG_aprs_icon_path
 from cfg.default_config import getNew_station_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -10,7 +11,7 @@ from fnc.ax25_fnc import validate_ax25Call
 from fnc.gui_fnc import get_image
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import get_strTab
-
+from UserDB.UserDBmain import USER_DB
 
 class SetupWizardAPP:
     def __init__(self):
@@ -19,11 +20,12 @@ class SetupWizardAPP:
         self.app_win.attributes('-topmost', True)
         #self.app_win.wm_attributes('-type', 'splash')
         #self.app_win.overrideredirect(True)
-        self._is_quit = False
-        self._current_step = 0  # Track the current wizard step
-        self._wizard_frames = []  # List to store wizard frames
-        self._after_id = None
-
+        self._is_quit           = False
+        self._current_step      = 0  # Track the current wizard step
+        self._wizard_frames     = []  # List to store wizard frames
+        self._want_port_setup   = False
+        self._after_id          = None
+        ############################################
         # Load and apply theme
         self._style_name = POPT_CFG.get_guiCFG_style_name()
         logger.info(f'loading Style: {self._style_name}')
@@ -63,16 +65,18 @@ class SetupWizardAPP:
             except Exception as ex:
                 logger.warning(f"Couldn't load popt.png: {ex}")
         self.app_win.protocol("WM_DELETE_WINDOW", self._abort)
-        window_width  = 350
-        window_height = 500
+        window_width  = 450
+        window_height = 670
         screen_width = self.app_win.winfo_screenwidth()
         screen_height = self.app_win.winfo_screenheight()
         x = (screen_width // 2) - (window_width // 2)
         y = (screen_height // 2) - (window_height // 2)
         self.app_win.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self.app_win.title('PoPT Setup')
         #################################################
         # Language settings
         self._lang = POPT_CFG.get_guiCFG_language()
+        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._opt_tab = {
             "Deutsch": 0,
             "English": 1,
@@ -81,13 +85,25 @@ class SetupWizardAPP:
             #"čeština": 4,
         }
         #################################################
-        self._lang_var     = tk.StringVar(self.app_win, value="English")
-        self._call_var     = tk.StringVar(self.app_win, value='')
-        self._name_var     = tk.StringVar(self.app_win, value='')
-        self._locator_var  = tk.StringVar(self.app_win, value=POPT_CFG.get_guiCFG_locator())
-        self._qth_var      = tk.StringVar(self.app_win, value=POPT_CFG.get_guiCFG_qth())
-        #################################################
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
+        self._next_btn_txt_var    = tk.StringVar(self.app_win, value=self._getTabStr('next'))
+        self._back_btn_txt_var    = tk.StringVar(self.app_win, value=self._getTabStr('back'))
+        self._cancel_btn_txt_var  = tk.StringVar(self.app_win, value=self._getTabStr('cancel'))
+        self._yes_btn_txt_var     = tk.StringVar(self.app_win, value=self._getTabStr('yes'))
+        self._no_btn_txt_var      = tk.StringVar(self.app_win, value=self._getTabStr('no'))
+
+
+        self._lang_label_txt_var        = tk.StringVar(self.app_win, value=f"{self._getTabStr('language')}: ")
+        self._name_label_txt_var        = tk.StringVar(self.app_win, value=f"{self._getTabStr('name')}: ")
+        self._port_setup_label_txt_var  = tk.StringVar(self.app_win, value=self._getTabStr('wizard_want_port_setup'))
+
+        self._done_label_txt_var        = tk.StringVar(self.app_win, value=self._getTabStr('wizard_done'))
+        self._done2_label_txt_var       = tk.StringVar(self.app_win, value=self._getTabStr('lob1'))
+        #
+        self._lang_var          = tk.StringVar(self.app_win, value="English")
+        self._call_var          = tk.StringVar(self.app_win, value='')
+        self._name_var          = tk.StringVar(self.app_win, value='')
+        self._locator_var       = tk.StringVar(self.app_win, value=POPT_CFG.get_guiCFG_locator())
+        self._qth_var           = tk.StringVar(self.app_win, value=POPT_CFG.get_guiCFG_qth())
         #################################################
         # Main frame
         self.main_frame = ttk.Frame(self.app_win)
@@ -111,18 +127,31 @@ class SetupWizardAPP:
         self._btn_frame = ttk.Frame(self.main_frame)
         self._btn_frame.pack(side='bottom', expand=False, fill='x', padx=10, pady=10)
 
-        self._back_btn = ttk.Button(self._btn_frame, text='Back', command=self._prev_step)
+        self._back_btn = ttk.Button(
+            self._btn_frame,
+            textvariable=self._back_btn_txt_var,
+            command=self._prev_step)
         self._back_btn.pack(side='left')
-        abort_btn = ttk.Button(self._btn_frame, text='Cancel', command=self._abort)
+
+        abort_btn = ttk.Button(
+            self._btn_frame,
+            textvariable=self._cancel_btn_txt_var,
+            command=self._abort)
         abort_btn.pack(side='left')
-        self._next_btn = ttk.Button(self._btn_frame, text='Next', command=self._next_step)
+
+        self._next_btn = ttk.Button(
+            self._btn_frame,
+            textvariable=self._next_btn_txt_var,
+            command=self._next_step)
         self._next_btn.pack(side='right')
 
-        self._update_buttons()  # Update button states initially
 
-        self._ok_btn = ttk.Button(self._btn_frame, text='OK', command=self._destroy_win)
+        self._ok_btn = ttk.Button(
+            self._btn_frame,
+            text='OK', command=self._destroy_win)
         self._ok_btn.pack(side='right', padx=5)
         ##########################################
+        self._update_buttons()  # Update button states initially
 
         # Show the first frame
         self._show_frame(0)
@@ -136,17 +165,20 @@ class SetupWizardAPP:
         #####################################################################
         # Frame 1: Language selection
         frame_1 = ttk.Frame(self._opt_container)
-        lang_frame  = ttk.Frame(frame_1)
-        theme_frame = ttk.Frame(frame_1)
-        lang_frame.pack(pady=5, fill='x')
-        theme_frame.pack(pady=5, fill='x')
+        f_1_main = ttk.Frame(frame_1)
+        f_1_main.pack(fill='x', pady=100)
+        lang_frame  = ttk.Frame(f_1_main)
+        theme_frame = ttk.Frame(f_1_main)
+        lang_frame.pack(padx=20, pady=10, fill='x')
+        theme_frame.pack(padx=20,pady=10, fill='x')
 
-        ttk.Label(lang_frame, text=f'{self._getTabStr("language")}: ').pack(side='left', padx=10)
+
+        ttk.Label(lang_frame, textvariable=self._lang_label_txt_var).pack(side='left', padx=10)
         opt = [self._lang_var.get()] + list(self._opt_tab.keys())
         ttk.OptionMenu(lang_frame,
                        self._lang_var,
                        *opt,
-                       command=lambda e: self._set_lang()).pack(side='left')
+                       command=lambda e: self._set_lang()).place(x=100, y=0)
 
         ##
         ttk.Label(theme_frame, text='Theme: ').pack(side='left', padx=10)
@@ -162,16 +194,18 @@ class SetupWizardAPP:
                        theme_var,
                        self._style_name,
                        *opt,
-                       command=lambda e: self._set_theme(theme_var.get())).pack(side='left')
+                       command=lambda e: self._set_theme(theme_var.get())).place(x=100, y=0)
 
         self._wizard_frames.append(frame_1)
         #####################################################################
         # Frame 2: Placeholder for another setting (e.g., theme selection)
         frame_2 = ttk.Frame(self._opt_container)
-        call_frame = ttk.Frame(frame_2)
-        name_frame = ttk.Frame(frame_2)
-        loc_frame  = ttk.Frame(frame_2)
-        qth_frame  = ttk.Frame(frame_2)
+        f_2_main = ttk.Frame(frame_2)
+        f_2_main.pack(fill='x',padx=20, pady=70)
+        call_frame = ttk.Frame(f_2_main)
+        name_frame = ttk.Frame(f_2_main)
+        loc_frame  = ttk.Frame(f_2_main)
+        qth_frame  = ttk.Frame(f_2_main)
         call_frame.pack(pady=5, fill='x')
         name_frame.pack(pady=5, fill='x')
         loc_frame.pack(pady=5, fill='x')
@@ -181,27 +215,110 @@ class SetupWizardAPP:
         ttk.Entry(call_frame,
                   textvariable=self._call_var,
                   width=10,
-                  ).pack(side='left')
+                  ).place(x=90, y=0)
         ################
-        ttk.Label(name_frame, text=f"{self._getTabStr('name')}: ").pack(side='left', padx=10)
+        # name
+        ttk.Label(name_frame,
+                  textvariable=self._name_label_txt_var
+                  ).pack(side='left', padx=10)
         ttk.Entry(name_frame,
                   textvariable=self._name_var,
                   width=20,
-                  ).pack(side='left')
+                  ).place(x=90, y=0)
         ################
+        # loc
         ttk.Label(loc_frame, text='Locator: ').pack(side='left', padx=10)
         ttk.Entry(loc_frame,
                   textvariable=self._locator_var,
                   width=9,
 
-                  ).pack(side='left')
+                  ).place(x=90, y=0)
         ################
+        # qth
         ttk.Label(qth_frame, text='QTH: ').pack(side='left', padx=10)
         ttk.Entry(qth_frame,
                   textvariable=self._qth_var,
                   width=20,
-                  ).pack(side='left')
+                  ).place(x=90, y=0)
         self._wizard_frames.append(frame_2)
+        #####################################################################
+        # Frame 3: Want Port Setup ?
+        """
+        frame_3 = ttk.Frame(self._opt_container)
+        f_3_main = ttk.Frame(frame_3)
+        f_3_main.pack(fill='x', padx=20, pady=80)
+        frame_3_1 = ttk.Frame(f_3_main)
+        frame_3_2 = ttk.Frame(f_3_main)
+        frame_3_1.pack(padx=10, pady=10)
+        frame_3_2.pack(padx=10, pady=20)
+        ttk.Label(frame_3_1, textvariable=self._port_setup_label_txt_var).pack()
+        # Yes
+        ttk.Button(frame_3_2,
+                   textvariable=self._yes_btn_txt_var,
+                   command=lambda : self._set_want_port_setup(False)
+                   ).pack(side='left', anchor='w')
+        # No
+        ttk.Button(frame_3_2,
+                   textvariable=self._no_btn_txt_var,
+                   command=lambda: self._set_want_port_setup(True)
+                   ).pack(side='right', anchor='e')
+
+        self._wizard_frames.append(frame_3)
+        #####################################################################
+        # Frame 4: Port Typ
+        frame_4  = ttk.Frame(self._opt_container)
+        port_f_1 = ttk.Frame(frame_4)
+        port_f_2 = ttk.Frame(frame_4, height=50)
+        port_f_3 = ttk.Frame(frame_4, height=50)
+        port_f_4 = ttk.Frame(frame_4, height=50)
+        port_f_1.pack(padx=10, pady=10)
+        port_f_2.pack(padx=10, pady=10, fill='x')
+        port_f_3.pack(padx=10, pady=10, fill='x')
+        port_f_4.pack(padx=10, pady=10, fill='x')
+        ttk.Label(port_f_1, text="Port Typ").pack()
+        # Kiss Serial
+        image = get_image(CFG_aprs_icon_path + '/0-44.png', size=(46, 46))
+        ser_kiss_btn = ttk.Button(
+            port_f_2,
+            #text='Serial KISS',
+            image=image
+        )
+        ser_kiss_btn.place(x=20, y=0)
+        ser_kiss_btn.image = image
+        ttk.Label(port_f_2, text='Kiss over Serial e.G. TNC2').place(x=100, y=0)
+        # TCP Serial
+        image = get_image(CFG_aprs_icon_path + '/0-43.png', size=(46, 46))
+        tcp_kiss_btn = ttk.Button(
+            port_f_3,
+            #text='TCPIP KISS',
+            image=image
+        )
+        tcp_kiss_btn.place(x=20, y=0)
+        tcp_kiss_btn.image = image
+        ttk.Label(port_f_3, text='Kiss over TCP-IP e.G. Direwolf').place(x=100, y=0)
+        # AXIP
+        image = get_image(CFG_aprs_icon_path + '/0-42.png', size=(46, 46))
+        axip_btn = ttk.Button(
+            port_f_4,
+            #text='AXIP',
+            image=image
+        )
+        axip_btn.place(x=20, y=0)
+        axip_btn.image = image
+        ttk.Label(port_f_4, text='AXIP via UDP').place(x=100, y=0)
+
+        self._wizard_frames.append(frame_4)
+        """
+        #####################################################################
+        # Frame end:
+        frame_end = ttk.Frame(self._opt_container)
+        frame_e1 = ttk.Frame(frame_end)
+        frame_e1.pack(padx=20, pady=100)
+        ttk.Label(frame_e1, textvariable=self._done_label_txt_var).pack()
+        ttk.Label(frame_e1, textvariable=self._done2_label_txt_var).pack()
+
+
+        self._wizard_frames.append(frame_end)
 
     def _show_frame(self, index):
         """Show the frame at the given index and hide others."""
@@ -215,22 +332,56 @@ class SetupWizardAPP:
 
     def _next_step(self):
         """Show the next frame in the wizard."""
+        if self._want_port_setup:
+            self._show_frame(len(self._wizard_frames) - 1)
+            return
+        if self._current_step == 1:
+            sysop_call = self._call_var.get().upper()
+            sysop_call = sysop_call.replace(' ', '').replace('\n', '')
+            call_valid = validate_ax25Call(sysop_call)
+            if not call_valid:
+                messagebox.showerror(
+                    self._getTabStr('invalid_call_titel'),
+                    self._getTabStr('invalid_call_msg'),
+                )
+                return
         if self._current_step < len(self._wizard_frames) - 1:
             self._show_frame(self._current_step + 1)
 
     def _prev_step(self):
         """Show the previous frame in the wizard."""
+        if self._want_port_setup:
+            if self._current_step == len(self._wizard_frames) - 1:
+                self._show_frame(2) # Want Port Setup ?
+                return
         if self._current_step > 0:
             self._show_frame(self._current_step - 1)
 
+    def _set_want_port_setup(self, var: bool):
+        self._want_port_setup = var
+        self._next_step()
 
-
+    ########################################################
+    #
     def _update_buttons(self):
         #Update the state of navigation buttons.
         self._back_btn.config(state='normal' if self._current_step > 0 else 'disabled')
         self._next_btn.config(state='normal' if self._current_step < len(self._wizard_frames) - 1 else 'disabled')
-        #self._ok_btn.config(state='normal' if self._current_step == len(self._wizard_frames) - 1 else 'disabled')
+        self._ok_btn.config(state='normal' if self._current_step == len(self._wizard_frames) - 1 else 'disabled')
 
+    def _update_language(self):
+        self._back_btn_txt_var.set(self._getTabStr('back'))
+        self._next_btn_txt_var.set(self._getTabStr('next'))
+        self._cancel_btn_txt_var.set(self._getTabStr('cancel'))
+        self._lang_label_txt_var.set(f"{self._getTabStr('language')}: ")
+        self._name_label_txt_var.set(f"{self._getTabStr('name')}: ")
+        self._port_setup_label_txt_var.set(self._getTabStr('wizard_want_port_setup'))
+        self._done_label_txt_var.set(self._getTabStr('wizard_done'))
+        self._done2_label_txt_var.set(self._getTabStr('lob1'))
+        self._yes_btn_txt_var.set(self._getTabStr('yes'))
+        self._no_btn_txt_var.set(self._getTabStr('no'))
+    ########################################################
+    #
 
     def _tasker(self):
         """Periodic task to keep the window responsive."""
@@ -243,6 +394,7 @@ class SetupWizardAPP:
         lang_id = self._lang_var.get()
         self._lang = int(self._opt_tab.get(lang_id, 1))
         POPT_CFG.set_guiCFG_language(int(self._lang))
+        self._update_language()
 
     def _set_theme(self, theme_name):
         """Update the selected theme."""
@@ -268,7 +420,6 @@ class SetupWizardAPP:
         POPT_CFG.set_guiCFG_qth(self._qth_var.get())
 
     def _set_sysop_call(self):
-
         sysop_call = self._call_var.get().upper()
         sysop_call = sysop_call.replace(' ', '').replace('\n', '')
         call_valid = validate_ax25Call(sysop_call)
@@ -280,7 +431,8 @@ class SetupWizardAPP:
             return False
         if POPT_CFG.get_stat_CFG_fm_call(sysop_call):
             logger.error(f"Sysop-Call({sysop_call}) already in CFG")
-            return False
+
+            return True
         name = self._name_var.get()
         name = name.replace(' ', '').replace('\n', '')
         stat_cfg = getNew_station_cfg()
@@ -288,22 +440,41 @@ class SetupWizardAPP:
         stat_cfg['stat_parm_Name'] = str(name)
         stat_cfg['stat_parm_cli']  = 'USER'
         POPT_CFG.set_stat_CFG_fm_conf(stat_cfg)
+        user_db_ent = USER_DB.get_entry(sysop_call, add_new=True)
+        user_db_ent.Name = str(name)
+        user_db_ent.TYP  = 'SYSOP'
+        user_db_ent.QTH  = str(self._qth_var.get())
+        user_db_ent.LOC  = str(self._locator_var.get())
+        user_db_ent.Language  = int(self._lang)
         return True
 
     def _destroy_win(self):
         """Clean up and close the window."""
+        POPT_CFG.set_first_setup(True)
+
         if not self._set_sysop_call():
+            self._is_quit = True
+            if self._after_id is not None:
+                self.app_win.after_cancel(self._after_id)
+            self.app_win.destroy()
             return
         self._set_lang()
         self._set_locator()
         self._set_qth()
+        POPT_CFG.save_MAIN_CFG_to_file()
         self._is_quit = True
         if self._after_id is not None:
             self.app_win.after_cancel(self._after_id)
         self.app_win.destroy()
 
     def _abort(self):
+        POPT_CFG.set_first_setup(True)
         self._is_quit = True
         if self._after_id is not None:
             self.app_win.after_cancel(self._after_id)
         self.app_win.destroy()
+
+
+if __name__ == "__main__":
+    CFG_aprs_icon_path = '../data/image/APRS_icons'
+    SetupWizardAPP()

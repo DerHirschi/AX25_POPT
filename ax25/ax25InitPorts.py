@@ -21,7 +21,7 @@ from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25 import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START
+from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -57,7 +57,7 @@ class AX25PortHandler(object):
         # self.routingTable = None
         self._gui               = None
         self._bbs               = None
-        self.aprs_ais           = None
+        self._aprs_ais          = None
         self._scheduled_tasker  = None
         #######################################################
         # VARs
@@ -142,7 +142,6 @@ class AX25PortHandler(object):
 
     def __del__(self):
         pass
-        # self.close_all_ports()
         # logger.info("Ende PoPT Ver.: {}".format(VER))
 
     #######################################################################
@@ -152,10 +151,12 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
-            # self._prio_task()
+            self._prio_task()
             self._05sec_task()
-            self._1sec_task()
-            self._2sec_task()
+            if self._1sec_task():
+                continue
+            if self._2sec_task():
+                continue
             if not self.is_running:
                 return
             time.sleep(0.25)
@@ -163,18 +164,19 @@ class AX25PortHandler(object):
     def tasker_gui_th(self):
         if not self.is_running:
             return False
-        # self._prio_task()
-        return any((
-            self._05sec_task(),
-            self._1sec_task(),
-            self._2sec_task(),
-        ))
-
+        # TODO Tasker-Q
+        ret = self._prio_task()
+        ret = any((self._05sec_task(), ret))
+        ret = any((self._1sec_task(),  ret))
+        ret = any((self._2sec_task(),  ret))
+        return ret
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        # self._mh_task()
-        pass
+        return any((
+            self._bbs.tasker(),     # bbs.tasker-q
+            self._gpio_tasker_q()   # gpio.tasker-q
+        ))
 
     def _05sec_task(self):
         """ 0.5 Sec """
@@ -190,7 +192,7 @@ class AX25PortHandler(object):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
             self._port_watchdog_task()
-            self._mh_task()
+            self._mh_task()         # #################
             self._tasker_1wire()
             self._task_timer_1sec = time.time() + 1
             return True
@@ -222,7 +224,7 @@ class AX25PortHandler(object):
     #######################################################################
     # MH
     def _mh_task(self):
-        self._mh.mh_task()
+        return self._mh.mh_task()
 
     #######################################################################
     # Routing Table
@@ -380,6 +382,7 @@ class AX25PortHandler(object):
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
         logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
 
+    """
     def reinit_all_ports(self):
         self.sysmsg_to_gui(get_strTab('all_port_reinit', POPT_CFG.get_guiCFG_language()))
         logger.info("PH: Reinit all Ports")
@@ -391,6 +394,7 @@ class AX25PortHandler(object):
         ##########################
         # Pipe-Tool Init
         self.set_diesel()
+    """
 
     def reinit_port(self, port_id: int):
         # if not self.ax25_ports.get(port_id, False):
@@ -495,15 +499,15 @@ class AX25PortHandler(object):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         logger.info("PH: APRS-AIS Init")
         if aprs_obj is None:
-            self.aprs_ais = APRS_ais(self)
+            self._aprs_ais = APRS_ais(self)
         else:
             logger.info("PH: APRS-AIS ReInit")
-            self.aprs_ais = aprs_obj
-        if self.aprs_ais is None:
+            self._aprs_ais = aprs_obj
+        if self._aprs_ais is None:
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
 
-        threading.Thread(target=self.aprs_ais.ais_rx_task).start()
+        threading.Thread(target=self._aprs_ais.ais_rx_task).start()
         gui = self.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):
             ais_mon_gui = gui.get_ais_mon_gui()
@@ -513,19 +517,19 @@ class AX25PortHandler(object):
         return True
 
     def _aprs_task(self):
-        if hasattr(self.aprs_ais, 'task'):
-            return self.aprs_ais.task()
+        if hasattr(self._aprs_ais, 'task'):
+            return self._aprs_ais.task()
         return False
 
     def _close_aprs_ais(self):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
-        if self.aprs_ais is None:
+        if self._aprs_ais is None:
             return False
         logger.info("PH: closing APRS-AIS ...")
-        self.aprs_ais.ais_close()
+        self._aprs_ais.ais_close()
         # self.aprs_ais.save_conf_to_file()
-        del self.aprs_ais
-        self.aprs_ais = None
+        del self._aprs_ais
+        self._aprs_ais = None
         return True
 
     ######################
@@ -670,7 +674,6 @@ class AX25PortHandler(object):
             # Conn History
             self.update_conn_history(conn, disco=True)
 
-    from datetime import datetime, timedelta
 
     def update_conn_history(self, conn, disco: bool, inter_connect: bool = False):
         # Opt by Grok-AI
@@ -888,8 +891,8 @@ class AX25PortHandler(object):
         ))
 
     def get_monitor_data(self):
-        data = list(self._monitor_buffer[:400])
-        self._monitor_buffer = self._monitor_buffer[len(data):]
+        data = list(self._monitor_buffer[:MON_BATCH_TO_PROCESS])  # 22 Pi4
+        self._monitor_buffer = self._monitor_buffer[MON_BATCH_TO_PROCESS:]
         return data
 
     ######################
@@ -1007,7 +1010,7 @@ class AX25PortHandler(object):
         return self._gui
 
     def get_aprs_ais(self):
-        return self.aprs_ais
+        return self._aprs_ais
 
     def get_all_ports_f_cfg(self):
         return dict(self.ax25_ports)
@@ -1142,8 +1145,8 @@ class AX25PortHandler(object):
             except ValueError:
                 ssid = 0
             if ssid not in res_ssid:
-                logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
-                logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
+                #logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
+                #logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
                 continue
             res_ssid.remove(ssid)
         return res_ssid
@@ -1264,13 +1267,14 @@ class AX25PortHandler(object):
             self._gpio.set_sysop_alarm(True)
 
     def reset_noty_bell_PH(self):
-        if self._gui:
-            all_conn = self.get_all_connections()
-            for ch in all_conn.keys():
-                conn = all_conn[ch]
-                if conn:
-                    if conn.noty_bell:
-                        return
+        all_conn = self.get_all_connections()
+        for ch in all_conn.keys():
+            conn = all_conn[ch]
+            if conn:
+                if conn.noty_bell:
+                    return
+
+        if hasattr(self._gui, 'reset_noty_bell_alarm'):
             self._gui.reset_noty_bell_alarm()
 
         if hasattr(self._gpio, 'set_sysop_alarm'):
@@ -1329,6 +1333,11 @@ class AX25PortHandler(object):
             self._gpio.gpio_tasker()
             return
         return
+
+    def _gpio_tasker_q(self):
+        if hasattr(self._gpio, 'gpio_tasker_q'):
+            return self._gpio.gpio_tasker_q()
+        return False
 
     ##############################################################
     # Local Converse Mode

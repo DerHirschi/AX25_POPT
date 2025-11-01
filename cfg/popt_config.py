@@ -16,6 +16,8 @@ class Main_CFG:
         # TODO RX-Echo CFG
         self._default_cfg_tab = {
             ##########################
+            'first_setup': False,
+            ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
             'bbs_fwd_statistics': {},
@@ -91,9 +93,13 @@ class Main_CFG:
 
         logger.info(f'--------Loaded CFGs --------')
         for conf_k, conf in self._config.items():
-            logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
+            try:
+                logger.info(f'Main CFG: load {conf_k} - Size: {len(conf)} - str_size: {len(str(conf))}')
+            except (TypeError, ValueError):
+                pass
         logger.info(f'-------- Loaded CFGs ENDE --------')
         logger.info('Main CFG: Init complete')
+
         ### DEV ################################################
         # self._config['1wire_cfg'] = getNew_1wire_cfg()
         # print(getNew_BBS_cfg())
@@ -160,9 +166,11 @@ class Main_CFG:
 
         logger.info(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
-            logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
-            # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
-
+            try:
+                logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
+                # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
+            except (TypeError, ValueError):
+                pass
         save_to_pickle_file(CFG_MAIN_data_file, dict(self._config))
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
@@ -259,6 +267,14 @@ class Main_CFG:
         self._config[cfg_key] = data
 
     ####################
+    # 1'st Setup Wizard
+    def get_first_setup(self):
+        return self._config.get('first_setup', False)
+
+    def set_first_setup(self, is_done: bool):
+        self._config['first_setup'] = bool(is_done)
+
+    ####################
     # MH
     def get_CFG_MH(self):
         return self._config['mh_cfg']
@@ -340,6 +356,7 @@ class Main_CFG:
                 # if type(data[conf_k]) is type(conf_k[conf_k]):
                 conf_data[conf_k] = data[conf_k]
         self._config['gui_main_parm'] = conf_data
+        return True
 
     def get_guiPARM_main_param_by_key(self, conf_key: str):
         return self._config.get('gui_main_parm', {}).get(conf_key, None)
@@ -378,9 +395,10 @@ class Main_CFG:
             return
         self._config['gui_pacman'] = dict(data)
 
+    """
     def get_pacman_fix(self):
         return bool(self._config['gui_main_parm'].get('gui_cfg_pacman_fix', False))
-    """
+    
     def set_pacman_fix(self, value: bool):
         self._config['gui_main_parm']['gui_cfg_pacman_fix'] = bool(value)
     """
@@ -436,6 +454,7 @@ class Main_CFG:
         if call not in self._config.get('digi_cfg', {}):
             return False
         del self._config['digi_cfg'][call]
+        return True
 
     ###########################################
     # PIPE
@@ -636,10 +655,10 @@ class Main_CFG:
             gpio_conf[pin_name] = pin_cfg
         return dict(gpio_conf)
         """
-        return dict(self._config.get('gpio_cfg', getNew_gpio_cfg()))
+        return copy.deepcopy(self._config.get('gpio_cfg', getNew_gpio_cfg()))
 
     def set_gpio_cfg(self, gpio_cfg: dict):
-        self._config['gpio_cfg'] = dict(gpio_cfg)
+        self._config['gpio_cfg'] = copy.deepcopy(gpio_cfg)
 
     ###########################################
     # BBS
@@ -696,6 +715,6 @@ class Main_CFG:
         self._config['conn_history'] = list(conn_hist)
 
     def get_conn_hist(self):
-        return list(self._config['conn_history'])
+        return list(self._config.get('conn_history', []))
 
 POPT_CFG = Main_CFG()

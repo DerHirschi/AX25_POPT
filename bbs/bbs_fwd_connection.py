@@ -3,7 +3,7 @@ import time
 from bbs.bbs_constant import FWD_RESP_REJ, FWD_RESP_LATER, FWD_RESP_OK, FWD_ERR_OFFSET, \
     FWD_ERR, FWD_REJ, FWD_HLD, FWD_LATER, FWD_N_OK, FWD_OK, EOM, CR, MSG_H_FROM, MSG_H_TO, STAMP, MSG_HEADER_ALL, \
     FWD_RESP_HLD, EOT, SOH, LF, STX
-from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail
+from bbs.bbs_fnc import parse_forward_header, parse_fwd_paths, parse_path_line, decode_bin_mail, generate_sid
 from cli.cliStationIdent import get_station_id_obj
 from fnc.str_fnc import find_eol
 from cfg.logger_config import logger, BBS_LOG
@@ -17,14 +17,18 @@ class BBSConnection:
         self._bbs            = bbs_obj
         self._db             = bbs_obj.get_db()
         self._userDB         = bbs_obj.get_userDB()
-        ###########
         self.e               = False
-        self._mybbs_flag     = self._bbs.bbs_id_flag
+        ###########
+        ###########
+        #self._mybbs_flag     = self._bbs.bbs_id_flag
+        #self._my_stat_id     = self._bbs.my_stat_id
         # self._dest_stat_id   = self._ax25_conn.cli.stat_identifier
+        self._mybbs_flag     = b''
+        self._my_stat_id     = None
         self._dest_stat_id   = None
+        ################################
         # self._bbs_fwd_cmd  = self._ax25_conn.cli.stat_identifier.bbs_rev_fwd_cmd
         self._dest_bbs_call  = str(self._ax25_conn.to_call_str).split('-')[0]
-        self._my_stat_id     = self._bbs.my_stat_id
         self._feat_flag      = []
         self._handshake      = False
         self._is_bin_mode    = False
@@ -38,6 +42,8 @@ class BBSConnection:
         self._tx_fs_list     = ''    # '++-='
         self._send_next_time = []
         BBS_LOG.info(self._logTag + f'New FWD Connection> {self._dest_bbs_call} - TX: {tx}')
+        ################################
+
         ################################
         self._fwd_cfg: dict = self._bbs.get_fwdCfg(self._dest_bbs_call)
         if not self._fwd_cfg:
@@ -58,6 +64,15 @@ class BBSConnection:
         }
         ################################
         if not self.e:
+            features_flag = self._bbs.features_flag
+            if all((self._bbs.get_pms_cfg().get('bin_mode', True),
+                    self._fwd_cfg.get('bin_mode', False))):
+                features_flag = ["B"] + features_flag
+            else:
+                features_flag = features_flag
+            self._mybbs_flag = generate_sid(features_flag)
+            self._my_stat_id = get_station_id_obj(str(self._mybbs_flag))
+            self._mybbs_flag = self._mybbs_flag.encode('ASCII', 'ignore')
             self._state = 20
             if not tx:
                 BBS_LOG.info(self._logTag + f'Incoming Connection> {self._dest_bbs_call}')
@@ -69,6 +84,9 @@ class BBSConnection:
 
 
     def _check_feature_flags(self):
+        if not self._my_stat_id:
+            BBS_LOG.error(f"No own State-ID !!!!")
+            return False
         for el in self._dest_stat_id.feat_flag:
             if el in self._my_stat_id.feat_flag:
                 self._feat_flag.append(str(el))
@@ -430,7 +448,7 @@ class BBSConnection:
             elif flag in FWD_LATER:
                 self._db.bbs_outMsg_wait_by_FWD_ID(fwd_id,)
                 self._send_next_time.append(fwd_id)
-                self._bbs.ack_next_fwd_q(fwd_id, 'S=')
+                self._bbs.ack_next_fwd_q(fwd_id, 'SW')
             elif flag == FWD_HLD:
                 self._bbs.send_sysop_msg(topic='HELD MAIL', msg=f'MSG: {bids[i]}\rFWD-ID: {fwd_id}\rHeld by {self._dest_bbs_call}')
                 self._tx_out_msg_by_bid(bids[i])
@@ -513,7 +531,7 @@ class BBSConnection:
             temp_stat_identifier = get_station_id_obj(li)
             if temp_stat_identifier is not None:
                 self._dest_stat_id = temp_stat_identifier
-                logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
+                #logger.debug(f"stat_identifier found!: {temp_stat_identifier}")
                 self._set_user_db_software_id()
                 if self._dest_stat_id.typ != 'BBS':
                     BBS_LOG.error("Gegenstation ist keine BBS !")
@@ -580,10 +598,8 @@ class BBSConnection:
             fwd_id  = self._get_fwd_id(bid)
             flag    = self._tx_fs_list[0]
             if flag in FWD_OK:
-                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'S+')
                 self._bbs.ack_next_fwd_q(fwd_id, 'S+')
             elif flag == FWD_HLD:
-                # self._db.bbs_act_outMsg_by_FWD_ID(fwd_id, 'H')
                 self._bbs.ack_next_fwd_q(fwd_id, 'H')
 
             self._tx_msg_BIDs   = self._tx_msg_BIDs[1:]
@@ -607,7 +623,6 @@ class BBSConnection:
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 #pn_check += FWD_RESP_REJ
                 continue
-            # if el[:2] == 'FB':
             if el[:2] in ['FB', 'FA']:
                 msg = parse_forward_header(el)
                 if not msg:
@@ -619,7 +634,7 @@ class BBSConnection:
                     self._bbs.set_bbs_statistic(self._dest_bbs_call, 'mail_rx_rej', 1)
                     pn_check += FWD_RESP_REJ
                     continue
-                bid = str(msg.get('bid_mid', ''))
+                bid  = str(msg.get('bid_mid', ''))
                 hold = False
                 # REJ_Tab
                 res_rej_tab = self._bbs.check_reject_tab(msg)

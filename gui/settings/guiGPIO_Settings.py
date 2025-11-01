@@ -113,6 +113,7 @@ class GPIOSettings(ttk.Frame):
 
         if self._gpio is None:
             return
+        self._gpio_conf = POPT_CFG.get_gpio_cfg()
 
         for pin_name, pin_conf in self._gpio_conf.items():
             pin_id = int(pin_conf.get('pin', 0))

@@ -119,6 +119,7 @@ def getNew_BBS_FWD_cfg():
         scheduler_cfg   = dict(getNew_schedule_config()),
         reverseFWD      = True,     # Scheduled FWD
         noConnect       = False,    # No outgoing connect
+        bin_mode        = False,    # Bin-Mode (OpenBCM False),
         t_o_dead_conn   = 5,        # Timeout Minutes,
         t_o_next_conn   = 5,        # Timeout Minutes,
         t_o_increment   = True,     # Increment Timeout after Fail attempt  # TODO GUI / Check Function
@@ -313,7 +314,7 @@ def getNew_maniGUI_parm():
         gui_cfg_locator             = '',
         gui_cfg_qth                 = '',
         # gui_cfg_pacman_fix = True = Disabling "Pacman-Autoupdate"-Function. Fix for "segmentation fault"/"Speicherzugriffsfehler" on Raspberry
-        gui_cfg_pacman_fix          = True,
+        # gui_cfg_pacman_fix          = True,
         gui_cfg_sound               = False,
         gui_cfg_sprech              = False,
         gui_cfg_beacon              = True,

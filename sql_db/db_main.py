@@ -696,9 +696,12 @@ class SQL_Database:
                   "fwd_bbs_call, "
                   "type, "
                   "subject, "
-                  "size "
+                  "size, "
+                  "flag, "
+                  "tx_time "
                   # "FROM pms_fwd_q WHERE flag='F';")
-                  "FROM pms_fwd_q WHERE flag='F' or flag='S=';")
+                  # "FROM pms_fwd_q WHERE flag IN ('F', 'S=', '$');")
+                  "FROM pms_fwd_q;")
         res = self._commit_query(query)
         # print(f"bbs_get_fwd_q_Tab res: {res}")
         return res
@@ -1245,6 +1248,8 @@ class SQL_Database:
 
     def bbs_outMsg_release_all_wait(self):
         query = f"UPDATE pms_fwd_q SET flag='S=' WHERE flag='SW';"
+        self._commit_query(query)
+        query = f"UPDATE pms_fwd_q SET flag='F' WHERE flag='$';"
         self._commit_query(query)
 
 

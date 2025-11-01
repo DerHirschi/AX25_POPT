@@ -2,6 +2,7 @@ from datetime import datetime
 
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
+from bbs.bbs_fnc import generate_sid
 from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
@@ -11,12 +12,13 @@ from fnc.str_fnc import zeilenumbruch, find_eol
 
 
 class BoxCLI(DefaultCLI):
-    cli_name      = 'BOX'  # DON'T CHANGE!
-    service_cli   = True
-    prefix        = b''
-    sw_id         = BBS_SW_ID
-    can_sidestop  = True
-    new_mail_noty = True
+    cli_name            = 'BOX'  # DON'T CHANGE!
+    service_cli         = True
+    prefix              = b''
+    sw_id               = BBS_SW_ID
+    can_sidestop        = True
+    new_aprs_msg_noty   = True
+
     def __init__(self, connection):
         DefaultCLI.__init__(self, connection=connection)
 
@@ -66,7 +68,10 @@ class BoxCLI(DefaultCLI):
         self._commands_cfg = ['QUIT',
                               'BYE',
                               'CH',
+                              'CONV',
                               'LCSTATUS',
+                              'CSTAT',
+                              'RTT',
                               ## APRS
                               # 'ATR',
                               'WX',
@@ -108,7 +113,6 @@ class BoxCLI(DefaultCLI):
                               'VERSION',
                               'POPT',
                               'HELP',
-                              'CONV',
                               '?']
 
         self._state_exec.update({
@@ -129,9 +133,9 @@ class BoxCLI(DefaultCLI):
             self.change_cli_state(2)
             return "\r\r # BBS Error !! \r\r"
 
-        ret = bbs.bbs_id_flag.decode('ASCII', 'ignore') + '\r'
         pms_cfg: dict = bbs.get_pms_cfg()
         self.change_cli_state(1)
+        ret = bbs.bbs_id_flag.decode('ASCII', 'ignore') + '\r'
         if any((
                 self._user_db_ent.TYP in NO_REMOTE_STATION_TYPE,
                 self._connection.bbs_connection,
@@ -139,6 +143,15 @@ class BoxCLI(DefaultCLI):
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
             # self._software_identifier()
+            features_flag = bbs.features_flag
+            if all((pms_cfg.get('bin_mode', True),
+                    pms_cfg.get('fwd_bbs_cfg', {}).get(self._to_call, {}).get('bin_mode', False))):
+                features_flag = ["B"] + features_flag
+            else:
+                features_flag = features_flag
+            bbs_id_flag = generate_sid(features=features_flag)
+            ret = bbs_id_flag + '\r'
+
             self._send_output(ret + self._get_ts_prompt(), env_vars=True)
             return ''
 
@@ -168,6 +181,9 @@ class BoxCLI(DefaultCLI):
             )
             return ''
 
+        # New APRS Msg Noty
+        #ret += self._aprs_cText_noty()
+        # New BBS Msg Noty
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
             ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
@@ -520,7 +536,7 @@ class BoxCLI(DefaultCLI):
                 if type(ret) is str:
                     ret = ret.encode(self._encoding[0], self._encoding[1])
                     ret = ret.replace(b'\n', b'\r')
-                self._connection.tx_buf_rawData += ret
+                self._connection.send_data(ret)
                 return
 
             if type(ret) is str:
@@ -539,7 +555,7 @@ class BoxCLI(DefaultCLI):
             )):
                 self._send_out_sidestop(ret)
                 return
-            self._connection.tx_buf_rawData += ret
+            self._connection.send_data(ret)
     ##############################################
     # BOX
     def _cmd_box_l_from(self):

@@ -57,9 +57,12 @@ Ideas/TODO's :
 ✓ Port Configs/Inits aufräumen/optimieren
 ✓ Port Configs/Inits aufräumen/optimieren (Threading)
 ✓ Port Configs/Inits aufräumen/optimieren (Var OPT/ Code OPT)
+- GUI Command Log
+- Command Log
 
 - Soundsystem überarbeiten
   - Sprachausgabe überarbeiten
+  - Beep
 
 ✓ Haupt GUI überarbeiten
   ✓ Schluss Prozedur überarbeiten (Disco alle Stationen, Warten bis Ports geschlossen usw.)
@@ -75,11 +78,12 @@ Ideas/TODO's :
 
 ✓ Loop Port oder einfach localhost via AXIP
   ✓ einfach 127.0.0.1 und eigenen AXIP Port die eigene Station/Node connecten)
-  Performance:
-  - ax25dec_enc.py überarbeiten
-  - ax25Connection.py aufräumen
-  ✓ ax25Statistics aufräumen
-  - ax25Statistics überarbeiten
+
+Performance/Opt:
+- ax25dec_enc.py überarbeiten
+- ax25Connection.py aufräumen
+✓ ax25Statistics aufräumen
+- ax25Statistics überarbeiten
 
 ✓ KISS
   ✓ kompatibilität TNC nur teilweise
@@ -89,6 +93,10 @@ Ideas/TODO's :
     ✓ RX/Decoding
     - TX/Decoding
     - Config / TX usw.
+
+- GUI zum konfigurieren und starten/stopen von Direwolf
+  - Direwolf Port in dem alle Einstellungen und die DW-Inztanz
+    gemanaged wird.
 
 - Telnet Port
 ✓ TCP-Server/Kiss Device Port (Pseudo TNC-EMU)
@@ -154,7 +162,10 @@ Ideas/TODO's :
 ✓ Logbuch
   - GUI Ausgabe/Auswertung
 
-- Converse Mode intern
+✓ Converse Mode intern
+  - mehrere Converse-Kanäle
+  - erweiterte Funktionen/Kommandos
+
 - Ping-Pong Converse
 
 - QSO Fenster/Tool
@@ -179,7 +190,9 @@ Ideas/TODO's :
     ✓ automatisiertes abarbeiten der FWD-Q
       ✓ überarbeiten
       ✓ mehr Steuer/Monitoring-Möglichkeiten (GUI)
-        - noch mehr
+        ✓ noch mehr
+        - GUI Command Log
+        - Command Log
     - Scheduled BL/PN FWD (z.B. nur Nachts)
     ✓ !Komprimierung (lzhuf)
     ✓ Hold   (Config u Handling)
@@ -196,6 +209,7 @@ Ideas/TODO's :
     ✓ L.. -CMDs
       ✓ Erweiterte L.. CMDs (Filter)
   ✓ Automatesierte Routingmails (Scheduler)
+  - Automatesierte Begrüßungsmail
   ✓ Automatesierte Statusmails (GPIO, 1-Wirer, usw.) (Scheduler)
   - Automatesierte WP-Requests an FBB-BBS
   - Auswertung und senden von WP-Mails (Siehe User-DB)
@@ -216,6 +230,11 @@ Ideas/TODO's :
   - News-Feed von Webseiten (z.B. WX-Daten, Wetterwarnungen)
   - FWD-Net-Plot Übersicht für jeweiligen FWD-Routen
   - Standalone BBS GUI (PoPT "Nur BBS Modus")
+  - Login Verfahren
+  - Passwortvergabe evtl. via E-Mail
+  - E-Mail Weilterleitung
+  - Abonieren von Bulletin (Weiterleitung oder Benachrichtigung
+    via PN oder E-Mail)
 
 ✓ Pipe-TOOL
   - Optional Header in Datei schreiben für jeden Frame
@@ -240,10 +259,12 @@ Ideas/TODO's :
   ✓ GPIO setzen wenn neue Mail im PMS
   ✓ GPIO setzen wenn neue APRS-Mail
   ✓ GPIO setzen wenn Sysop gerufen wird (//BELL)
+  - GPIO setzen für individuellen CLI-Befehl
 
+  - GPIO-Funktionen nach Zeitpaln aktivieren
   - GPIO pinctrl Übersicht GUI
-  - GPIO pinctrl Übersicht CLI (!Rechter!)
-  - GPIO Übersicht CLI (!Rechter!)
+  - GPIO pinctrl Übersicht CLI (!Rechte!)
+  - GPIO Übersicht CLI (!Rechte!)
   - GPIO (high/low) lesen und als $textVar setzen
   - Bake senden wenn GPIO (high/low) gesetzt ist
   - Auto-Connect und Befehl senden wenn GPIO (high/low) gesetzt ist
@@ -295,6 +316,7 @@ Ideas/TODO's :
 ✓ Optionale zusätzliche Monitorausgabe als Hex
 - Filter für Monitorausgabe
   ✓ PortFilter
+  ✓ Call-Filter - Monitor-Tabellenansicht
   - Call-Filter
   - U/UI - Frame Filter
 

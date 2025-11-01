@@ -181,10 +181,10 @@ class FileTransport(object):
         self.time_start = 0
         self.tmp_param_wait = 0
         """ DEBUG """
-        self.debug_raw_data = b''
-        self.debug_last_frames = []
-        self.debug_trigger = False
-        self.debug_run = False
+        #self.debug_raw_data = b''
+        #self.debug_last_frames = []
+        #self.debug_trigger = False
+        #self.debug_run = False
 
         self.prot_dict = {
             FT_MODES[0]: TextMODE,
@@ -253,12 +253,12 @@ class FileTransport(object):
             return False
         if self.pause:
             return False
-        if not self.connection.tx_buf_rawData:
+        if not self.connection.get_tx_buff_len():
             return True
         return False
 
     def ft_can_stop(self):
-        if not self.connection.tx_buf_rawData:
+        if not self.connection.get_tx_buff_len():
             return True
         return False
 
@@ -266,11 +266,11 @@ class FileTransport(object):
         self.ft_rx_buf = b''
         self.ft_tx_buf = b''
         if self.connection is not None:
-            self.connection.tx_buf_rawData = b''
+            self.connection.clear_tx_buff()
 
     def ft_recover_buff(self):
-        self.ft_tx_buf = bytes(self.connection.tx_buf_rawData) + self.ft_tx_buf
-        self.connection.tx_buf_rawData = b''
+        self.ft_tx_buf = self.connection.get_tx_buff() + self.ft_tx_buf
+        self.connection.clear_tx_buff()
 
     def ft_mode_wait_for_end(self):
         if self.ft_can_stop():
@@ -317,9 +317,7 @@ class FileTransport(object):
                 self.ft_set_wait_timer()
             else:
                 return False
-        if not self.connection.tx_buf_rawData \
-                and not self.connection.tx_buf_2send \
-                and not self.connection.tx_buf_unACK:
+        if self.connection.is_tx_buff_empty():
             return True
         return False
 
@@ -442,7 +440,7 @@ class FileTransport(object):
         time_spend = (time.time() - self.time_start)
         time_spend = datetime.timedelta(seconds=time_spend)
         if self.dir == 'TX':
-            data_in_buf = len(self.ft_tx_buf) + len(self.connection.tx_buf_rawData)
+            data_in_buf = len(self.ft_tx_buf) + self.connection.get_tx_buff_len()
             data_sendet = self.raw_data_len - data_in_buf
             time_remaining, baud_rate, percentage_completion = calculate_time_remaining(time_spend,
                                                                                         self.raw_data_len,
@@ -457,7 +455,7 @@ class FileTransport(object):
 
     def get_ft_info_percentage(self):
         if self.dir == 'TX':
-            data_in_buf = len(self.ft_tx_buf) + len(self.connection.tx_buf_rawData)
+            data_in_buf = len(self.ft_tx_buf) + self.connection.get_tx_buff_len()
             data_sendet = self.raw_data_len - data_in_buf
             return round(calculate_percentage(self.raw_data_len, data_sendet), 1)
         else:

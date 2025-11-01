@@ -787,6 +787,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'next': (
+        'Weiter',
+        'Next',
+        'Volgende',
+        'Plus loin',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'back': (
+        'Zurück',
+        'Back',
+        'Rug',
+        'Dos',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'delete_selected': (
         'Auswahl löschen',
         'Delete selection',
@@ -1699,11 +1723,23 @@ STR_TABLE = {
         '',
         ''),
 
+    'seconds': (
+        'Sekunde(n)',
+        'Second(s)',
+        'Seconde(n)',
+        'Seconde(s)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'minutes': (
-        'Minuten',
-        'Minutes',
+        'Minute(n)',
+        'Minute(s)',
         'Minuut',
-        'Minutes',
+        'Minute(s)',
         '',
         '',
         '',
@@ -2293,6 +2329,30 @@ STR_TABLE = {
         '',
         ''),
 
+    'gpio_fnc_setting_error_1': (
+        'Keine GPIO Funktion',
+        'No GPIO function',
+        'Geen GPIO-functie',
+        'Pas de fonction GPIO',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'gpio_fnc_setting_error_2': (
+        'Keine GPIO Funktion zugewiesen!',
+        'No GPIO function assigned!',
+        'Geen GPIO-functie toegewezen!',
+        "Aucune fonction GPIO attribuée !",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'Digipeater': (
         'Digipeater',
         'Digipeater',
@@ -2379,9 +2439,10 @@ STR_TABLE = {
 
     'lob1': (
         'Lob: Das hast du sehr gut gemacht !!',
-        'Praise: You did very well!!',
-        'Dat heb je zeer goed gemaakt',
-        'Éloge : Vous vous êtes très bien débrouillés !',
+        'Praise: You did very well !!',
+        'Dat heb je zeer goed gemaakt !!',
+        'Éloge : Vous vous êtes très bien débrouillés !!',
+        'Éloge : Vous vous êtes très bien débrouillés !!',
         '',
         '',
         '',
@@ -3217,11 +3278,35 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_cstat': (
+        'Verbindungsstatistik der letzten 7 Tage',
+        'Connection statistics for the last 7 days',
+        'Verbindingsstatistieken van de afgelopen 7 dagen',
+        'Statistiques de connexion des 7 derniers jours',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_help_ch': (
         'Kurze Nachricht an Kanal senden. CH <Kanal> Nachricht',
         'Send short message to channel. CH <Channel> Message',
         'Stuur een kort bericht naar het kanaal. CH <Kanaal> Bericht',
         'Envoyer un court message au canal. CH <Canal> Message',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_help_rtt': (
+        'Paket Laufzeitmessung',
+        'Packet runtime measurement',
+        'Looptijdmeting',
+        "Mesure du temps d'exécution",
         '',
         '',
         '',
@@ -3294,6 +3379,18 @@ STR_TABLE = {
         'Language not recognized! Possible languages: ',
         'Taal niet herkend! Mogelijke talen: ',
         'Langue non reconnue! Langues possibles : ',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_rtt_1': (
+        ' # Laufzeit hin und zurück: ',
+        ' # Round trip time: ',
+        ' # Reistijd heen en terug: ',
+        ' # Temps de trajet aller-retour : ',
         '',
         '',
         '',
@@ -3827,12 +3924,25 @@ STR_TABLE = {
         '',
         ''),
 
+    'aprs_new_mail_ctext': (
+        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
+        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AC\r\r',
+        '\r # APRS: You have {} new message(s). Reading with AC\r\r',
+        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AC\r\r',
+        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AC\r\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '\r # BOX: Du hast {} neue Mail(s).\r\r',
-        '\r # BOX : You have {} new mails.\r\r',
+        '\r # BOX: You have {} new mails.\r\r',
         '\r # BOX: Je hebt {} nieuwe mails.\r\r',
-        '\r # BOX : Vous avez {} nouveaux mails.\r\r',
+        '\r # BOX: Vous avez {} nouveaux mails.\r\r',
         '',
         '',
         '',
@@ -5020,4 +5130,55 @@ STR_TABLE = {
         '',
         ''),
 
+    'wizard_done': (
+        'Die Einrichtung von PoPT ist jetzt abgeschlossen.',
+        'The setup of PoPT is now complete.',
+        'De installatie van PoPT is nu voltooid.',
+        "La configuration de PoPT est maintenant terminée.",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'wizard_want_port_setup': (
+        'Willst du einen Port AX25 Port einrichten ?',
+        'Do you want to set up an AX25 port ?',
+        'Wilt u een AX25-poort instellen ?',
+        "Voulez-vous configurer un port AX25 ?",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'yes': (
+        'Ja',
+        'Yes',
+        'Ja',
+        "Oui",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'no': (
+        'Nein',
+        'No',
+        'Nee',
+        "Non",
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
 }

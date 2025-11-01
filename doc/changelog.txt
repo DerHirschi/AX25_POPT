@@ -1,5 +1,49 @@
 ###########################################################################################################
-# 2.120.x
+# 2.121.x
+!!! Check requirements.txt (playsound3 benötigt) !!!
+Fixes:
+- Programm Crash wenn SABME(EAX.25) Frame empfangen wird
+- Programm Crash durch BBS, wenn port nicht richtig initialisiert wurde
+- Programm Crash, wenn korrumpierter FWD-Header empfangen wird
+- BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen
+  wird, entsteht eine Endlosschleife, da die Nachricht nicht aus der
+  FWD-Warteschlange entfernt wird (diesmal hoffentlich wirklich gefixt)
+- BBS-Fwd: "=" geflaggte Nachrichten werden nicht erneute zum Senden angeboten
+- BBS-FWD: Aus der GUI aus gesendete Nachrichten lösen ein "Forward-Task" aus
+  obwohl die Warteschlange noch nicht vollständig verarbeitet wurde
+- Eingehende Verbindungen werden geblockt bzw. der Port block wird nicht
+  freigegeben, wenn Port neu initialisiert wird
+- GPIO Einstellungen: GPIO ohne Funktionszuweisungen können gespeichert werden,
+  werden aber nicht in der Übersicht angezeigt
+- GPIO-Tool: Sysop Alarm wird nicht resetet
+- Kein Echo der ausgeführten Kommandos im eigenen Terminal
+
+Optimierung/Änderungen:
+- GUI Forward-Warteschlange: Filter und Icons implementiert
+- BBS Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
+- GPIO Tasker: Zeitintensive prozesse werden in einer Warteschlange abarbeitet
+- Wenn Softwarekennung ermittelt wird nicht mehr nach weitere Softwarekennung
+  gesucht. Verhindert das Auslesen von z.B. CLI.Monitor Anwendungen auf Noden
+- GUI Main Loop: Warteschlangen Tasker wird nach gewissen laufzeit unterbrochen
+  (nicht wie vorher nach x durchläufen)
+  (verbesserte GUI ansprechverhalten bei großen Lasten wie z.B. bei der
+  Übertragung von Dateien (Local Host zur eigenen Station als Benchmark))
+- GUI Monitor und Monitor-Tree Tasker performance optimiert
+  (Monitor u Mon-Tree sind bis zu 5 Minuten "nachgelaufen", obwohl die Datei-
+  übertragung bereits beendet war, seit geraumer Zeit. Sollte jetzt nicht
+  mehr vorkommen. Getestet auf einen PI4-4GB-RAM)
+- Diverse Optimierungen für MacOS
+- Sprachausgabe jetzt auch für Windows
+
+Neue Implementierungen / Funktionen:
+- BBS: BIN-MODE optional wählbar für jeweiligen FWD-Partner
+- CLI-CMD Converse: "U" - Gibt Lister der User im eigenen Kanal aus
+- CLI-CMD: "CSTAT" - Verbindungsstatistik der letzten 7 Tage
+- CLI-CMD: "RTT" - Laufzeitmessung
+
+###########################################################################################################
+###########################################################################################################
+# 2.120.52
 !!! Check requirements.txt (tkintermapview benötigt) !!!
 Fixes:
 - BBS-Fwd: Wenn "=" (BBS is already receiving MSG fm other BBS) empfangen

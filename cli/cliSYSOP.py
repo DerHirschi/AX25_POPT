@@ -10,7 +10,7 @@ class UserCLI(DefaultCLI):
     prefix = b'//'
     sw_id = 'PoPT'
     can_sidestop = False
-    new_mail_noty = True
+    new_aprs_msg_noty = False
     # Extra CMDs for this CLI
 
     def init(self):
@@ -21,12 +21,15 @@ class UserCLI(DefaultCLI):
                                'CONNECT',
                                'C!',
                                'CH',
+                               'CONV',
                                'PORT',
                                'MH',
                                'LMH',
                                'AXIP',
                                'DXLIST',
                                'LCSTATUS',
+                               'CSTAT',
+                               'RTT',
                                # APRS
                                'ATR',
                                'WX',
@@ -58,7 +61,6 @@ class UserCLI(DefaultCLI):
                                'VERSION',
                                'POPT',
                                'HELP',
-                               'CONV',
                                '?']
 
     def _s2(self):
