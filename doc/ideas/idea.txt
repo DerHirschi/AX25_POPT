@@ -61,7 +61,7 @@ Ideas/TODO's :
 - Command Log
 
 - Soundsystem überarbeiten
-  - Sprachausgabe überarbeiten
+  ✓ Sprachausgabe überarbeiten
   - Beep
 
 ✓ Haupt GUI überarbeiten

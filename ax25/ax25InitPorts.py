@@ -58,7 +58,7 @@ class AX25PortHandler(object):
         self._gui               = None
         self._bbs               = None
         self._aprs_ais          = None
-        self._scheduled_tasker  = None
+        # self._scheduled_tasker  = None
         #######################################################
         # VARs
         self.ax25_ports         = {}
@@ -76,6 +76,9 @@ class AX25PortHandler(object):
         self._mh                = MH(self)
         self._mh.set_DB(self._db)
         #######################################################
+        # Init Sound Modul
+        self._sound             = SOUND
+        #######################################################
         # Init Routing Table
         logger.info("PH: Routing Table Init")
         # self._routingTable      = RoutingTable()
@@ -83,7 +86,8 @@ class AX25PortHandler(object):
         #######################################################
         # Scheduled Tasks
         logger.info("PH: Scheduled Tasks Init")
-        self._init_SchedTasker()
+        # self._init_SchedTasker()
+        self._scheduled_tasker = PoPTSchedule_Tasker(self)
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
@@ -151,12 +155,7 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
-            self._prio_task()
-            self._05sec_task()
-            if self._1sec_task():
-                continue
-            if self._2sec_task():
-                continue
+            self.tasker_gui_th()
             if not self.is_running:
                 return
             time.sleep(0.25)
@@ -174,8 +173,9 @@ class AX25PortHandler(object):
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
         return any((
-            self._bbs.tasker(),     # bbs.tasker-q
-            self._gpio_tasker_q()   # gpio.tasker-q
+            self._bbs.tasker(),         # bbs.tasker-q
+            self._gpio_tasker_q(),      # gpio.tasker-q
+            self._sound.sound_tasker()  # tasker-q
         ))
 
     def _05sec_task(self):
@@ -237,8 +237,8 @@ class AX25PortHandler(object):
 
     #######################################################################
     # scheduled Tasks
-    def _init_SchedTasker(self):
-        self._scheduled_tasker = PoPTSchedule_Tasker(self)
+    #def _init_SchedTasker(self):
+    #    self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
         if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
@@ -301,11 +301,18 @@ class AX25PortHandler(object):
             if port.device is not None:
                 ret = False
         return ret
-
+    ######################################################
+    #
     def close_popt(self):
         logger.info("PH: Closing PoPT")
         # self.block_all_ports(1)
         self.is_running = False
+        if self.close_sound_PH():
+            logger.info("PH: Sound Modul closed")
+        else:
+            # TODO Headless thread Garbage collector
+            logger.info("PH: Closing Sound Modul")
+
         logger.info("PH: Closing APRS-Client")
         self.sysmsg_to_gui("Closing APRS-Client")
         self._close_aprs_ais()
@@ -357,6 +364,13 @@ class AX25PortHandler(object):
     def get_ph_end(self):
         return self._ph_end
 
+    def close_sound_PH(self):
+        if self._sound.is_quit():
+            return True
+        self._sound.close_sound()
+        return False
+
+    #####################################################
     def close_port(self, port_id: int):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
@@ -611,9 +625,9 @@ class AX25PortHandler(object):
                 #    ch_index=ch_id
                 #)
                 if 0 < ch_id < SERVICE_CH_START:
-                    SOUND.new_conn_sound()
+                    self._sound.new_conn_sound()
                     speech = ' '.join(call_str.replace('-', ' '))
-                    SOUND.sprech(speech)
+                    self._sound.sprech(speech, wait=False)
 
             self._gui.add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
@@ -665,7 +679,7 @@ class AX25PortHandler(object):
                     ch_index=ch_id)
 
                 if ch_id < SERVICE_CH_START:
-                    SOUND.disco_sound()
+                    self._sound.disco_sound()
                 self._gui.resetHome_LivePath_plot(ch_id=ch_id)
                 self._gui.ch_status_update()
                 self._gui.conn_btn_update()
@@ -1032,6 +1046,15 @@ class AX25PortHandler(object):
         # TODO: Doppelte fnc cleanup
         return self.ax25_ports.get(port_id, None)
 
+    def get_MH(self):
+        return self._mh
+
+    def get_stat_timer(self):
+        return self._start_time
+
+    def get_sound_modul(self):
+        return self._sound
+
     ####################
     # Dual Port
     def set_dualPort_fm_cfg(self):
@@ -1150,12 +1173,6 @@ class AX25PortHandler(object):
                 continue
             res_ssid.remove(ssid)
         return res_ssid
-
-    def get_MH(self):
-        return self._mh
-
-    def get_stat_timer(self):
-        return self._start_time
 
     ###############################
     # BBS

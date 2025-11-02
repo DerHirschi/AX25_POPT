@@ -531,8 +531,8 @@ class PoPT_GUI_Main:
         self._set_port_blocking(1)
         self._port_handler.disco_all_Conn()
         self._quit = True
-        SOUND.close_sound()
-        self._thread_gc.append(SOUND.get_sound_thread())
+        self._port_handler.close_sound_PH()
+        self._thread_gc += SOUND.get_sound_thread()
         self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._port_handler.disco_all_Conn()
         self._Pacman.save_path_data()
@@ -1769,7 +1769,7 @@ class PoPT_GUI_Main:
     def _monitor_start_msg(self):
         # tmp_lang = int(self.language)
         # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        SOUND.sprech(random.choice(WELCOME_SPEECH))
+        SOUND.sprech(random.choice(WELCOME_SPEECH), wait=False)
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
@@ -1981,7 +1981,8 @@ class PoPT_GUI_Main:
     # Sound TODO !!!
     def _kanal_switch(self):
         """ Triggered on CH BTN Click """
-        threading.Thread(target=self._kanal_switch_sprech_th).start()
+        #threading.Thread(target=self._kanal_switch_sprech_th).start()
+        self._kanal_switch_sprech_th()
 
     def _kanal_switch_sprech_th(self):
         conn = self.get_conn(self.channel_index)
@@ -1999,19 +2000,19 @@ class PoPT_GUI_Main:
                 ch_vars.t2speech_buf = ''
                 SOUND.sprech('{} {} . {} .'.format(self._getTabStr('channel'),
                                                    self.channel_index,
-                                                   conn.to_call_str))
+                                                   conn.to_call_str), wait=False)
 
         else:
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
-                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
+                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index), wait=False)
             elif ch_vars.t2speech_buf:
                 if SOUND.sprech(ch_vars.t2speech_buf):
                     ch_vars.t2speech_buf = ''
                 else:
-                    SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
+                    SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index), wait=False)
             else:
-                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index))
+                SOUND.sprech('{} {} .'.format(self._getTabStr('channel'), self.channel_index), wait=False)
 
     def _check_sprech_ch_buf(self):
         conn = self.get_conn(self.channel_index)
@@ -2039,7 +2040,7 @@ class PoPT_GUI_Main:
                     if ch_vars.rx_beep_opt:
                         if ch_vars.rx_beep_tr:
                             ch_vars.rx_beep_tr = False
-                            SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP, False)
+                            SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP)
 
     # Sound
     ######################################################################
@@ -2604,7 +2605,7 @@ class PoPT_GUI_Main:
         if 'Lob: ' in var:
             var = var.split('Lob: ')
             if len(var) > 1:
-                SOUND.sprech(var[1])
+                SOUND.sprech(var[1], wait=False)
 
     """
     def update_monitor(self, ax25frame, port_conf, tx=False):
