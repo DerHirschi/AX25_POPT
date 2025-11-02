@@ -104,6 +104,8 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator) (AmigaTNC))
 
 #### Tools / Functions / Buildins
+  <img src="https://repository-images.githubusercontent.com/600855071/e2db0bca-43d0-4c66-815c-0dad85c4d500" width="60%" height="60%"/>
+
 - APRS
   - Weather data evaluation
   - Beacon Tracer
@@ -178,6 +180,9 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - **Forum:** [Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
 - **Telegram:** [PoPT Support](https://t.me/poptsupport)
 - **X:** [@AX25_PoPT](https://x.com/AX25_PoPT)
+
+  <img src="https://github.com/DerHirschi/AX25_POPT/blob/master/popt.png?raw=true" width="20%" height="20%"/>
+
 ```    
     8b   d8 888b. d88b .d88b.    db  Yb        dP  Sysop: Manuel
     8YbmdP8 8   8 " dP YPwww.   dPYb  Yb  db  dP  QTH: Salzwedel - JO52NU
