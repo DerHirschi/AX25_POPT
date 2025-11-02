@@ -31,7 +31,7 @@ Raspberry Pi.
 #### Option 1: 
 Using Install Script:
 ``` sh
-$ wget https://github.com/DerHirschi/AX25_POPT/blob/dev/doc/Scripts/install_popt.sh
+$ wget -O install_popt.sh https://raw.githubusercontent.com/DerHirschi/AX25_POPT/dev/doc/Scripts/install_popt.sh
 $ chmod +x install_popt.sh
 $ ./install_popt.sh
 ```
