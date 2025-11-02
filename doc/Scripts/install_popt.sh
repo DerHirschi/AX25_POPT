@@ -131,7 +131,7 @@ if [[ $REPLY =~ ^[JjYy]$ ]]; then
     set +e
     wget --quiet --timeout=20 --tries=2 \
         -O awthemes-10.4.0.zip \
-        "https://sourceforge.net/projects/tcl-awthemes/files/awthemes/10.4.0/awthemes-10.4.0.zip/download"
+        "https://sourceforge.net/projects/tcl-awthemes/files/awthemes-10.4.0.zip/download"
     WGET_EXIT=$?
     set -e
 

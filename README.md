@@ -27,7 +27,15 @@ Raspberry Pi.
 - Python 3.6 or higher (other versions such as 3.11 see below)
 - Supported Platforms: Windows, Linux, Raspberry Pi, MacOS
 
-## Install on Linux
+## Install on Linux (including Raspberry Pi)
+#### Option 1: 
+Using Install Script:
+``` sh
+$ wget -o install_popt.sh wget https://github.com/DerHirschi/AX25_POPT/blob/dev/doc/Scripts/install_popt.sh
+$ chmod +x install_popt.sh
+$ ./install_popt.sh
+```
+#### Option 2: Manual Installation
 Install all dependencies:
 ``` sh
 $ sudo apt install python3-tk
