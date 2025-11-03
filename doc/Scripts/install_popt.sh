@@ -229,24 +229,24 @@ case $CHOICE in
         ;;
 esac
 
-# Prüfe, ob Branch existiert
+# Prüfe, ob Branch lokal existiert
 if ! git show-ref --verify --quiet refs/heads/$BRANCH; then
-    echo "⚠️ Branch $BRANCH nicht lokal vorhanden → fetch remote..."
-    git fetch origin
+    echo "⚠️ Lokaler Branch $BRANCH nicht vorhanden → hole aus Remote..."
+    git fetch origin $BRANCH:$BRANCH 2>/dev/null || {
+        echo "❌ Remote-Branch $BRANCH nicht gefunden! Fallback auf master."
+        BRANCH="master"
+        git fetch origin $BRANCH:$BRANCH
+    }
 fi
 
-if git show-ref --verify --quiet refs/heads/$BRANCH; then
-    echo "🔀 Wechsle zu $BRANCH und update..."
-    git checkout $BRANCH
-    git pull origin $BRANCH
-    echo "✅ Update von $BRANCH abgeschlossen!"
-else
-    echo "❌ Branch $BRANCH nicht verfügbar auf remote. Verwende master."
-    git checkout master
-    git pull origin master
-    BRANCH="master"
-    echo "✅ Update von master abgeschlossen!"
-fi
+# Wechsle zum Branch (erstellt ihn, falls nötig)
+echo "🔀 Wechsle zu $BRANCH..."
+git checkout $BRANCH
+
+# Update
+echo "⬇️ Hole neueste Änderungen..."
+git pull origin $BRANCH
+echo "✅ Update von $BRANCH abgeschlossen!"
 
 # Neu installieren (venv + requirements)
 echo "📦 Neu installiere venv und Abhängigkeiten..."
