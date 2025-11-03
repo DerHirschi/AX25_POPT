@@ -1,10 +1,14 @@
 ###########################################################################################################
 # 2.122.x
 Fixes:
+- BBS: BID (Boxcall) wird nach verändern der Einstellungen erst nach Programm
+  neustart updated. Resultiert in  BID: 000001NOCALL
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet
 - gTTS optional. (Wenn nicht installiert, wird es auch nicht verwendet.)
+- Sprachausgabe/Sounds werden nicht unmittelbar nach dem Abschalten der
+  "Soundoption" beendet.
 
 Neue Implementierungen / Funktionen:
 

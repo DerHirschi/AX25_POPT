@@ -142,8 +142,9 @@ class BBS:
             self._fwd_port_cfg  = self._pms_cfg.get('fwd_port_cfg', {})
 
             BBS_LOG.info(self._logTag + "ReInit: Bulding Station-ID")
-            self._reinit_stationID_pmsFlag()
             self._set_pms_home_bbs()
+            self._reinit_stationID_pmsFlag()
+
             BBS_LOG.info(self._logTag + "ReInit: Init Scheduler")
             self._set_pms_fwd_schedule()
             BBS_LOG.info(self._logTag + "ReInit: Init Vars")
@@ -1191,6 +1192,7 @@ class BBS:
     # CFG Stuff
     def _set_pms_home_bbs(self):
         # Used in guiBBS_newMSG
+        self._own_bbs_address = f"{self._pms_cfg.get('user', '')}.{self._pms_cfg.get('regio', '')}"
         home_bbs = []
         for h_bbs_k, h_bbs_cfg in self._fwd_cfg.items():
             h_bbs_cfg: dict
