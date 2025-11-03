@@ -244,6 +244,7 @@ else
     echo "❌ Branch $BRANCH nicht verfügbar auf remote. Verwende master."
     git checkout master
     git pull origin master
+    BRANCH="master"
     echo "✅ Update von master abgeschlossen!"
 fi
 
@@ -262,6 +263,8 @@ if [ -f "$XDG_APPS_DIR/ax25-popt.desktop" ]; then
     sed -i "s|Icon=.*|Icon=$(pwd)/popt.png|" "$XDG_APPS_DIR/ax25-popt.desktop"
     update-desktop-database "$XDG_APPS_DIR" 2>/dev/null || true
 fi
+
+git checkout $BRANCH
 
 echo ""
 echo "🎉 Update abgeschlossen! Starte mit ./start_popt.sh neu."
