@@ -3,6 +3,7 @@
 Fixes:
 - BBS: BID (Boxcall) wird nach verändern der Einstellungen erst nach Programm
   neustart updated. Resultiert in  BID: 000001NOCALL
+- GUI-Probleme im "Neue Verbindung"-Fenster wenn andere Sprache ausgewählt ist
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet
