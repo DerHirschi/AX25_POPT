@@ -3,7 +3,7 @@ from datetime import datetime
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_constant import GET_MSG_STRUC, EOM
 from bbs.bbs_fnc import generate_sid
-from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND
+from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND, CLI_TYP_BOX
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
@@ -12,7 +12,7 @@ from fnc.str_fnc import zeilenumbruch, find_eol
 
 
 class BoxCLI(DefaultCLI):
-    cli_name            = 'BOX'  # DON'T CHANGE!
+    cli_name            = CLI_TYP_BOX  # DON'T CHANGE!
     service_cli         = True
     prefix              = b''
     sw_id               = BBS_SW_ID

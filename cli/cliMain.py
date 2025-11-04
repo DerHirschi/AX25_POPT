@@ -5,7 +5,8 @@ from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF
+from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
+    CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
@@ -1285,7 +1286,7 @@ class DefaultCLI(object):
                 if POPT_CFG.get_digi_CFG_for_Call(stations[0]).get('digi_enabled', False) and stations[0]:
                     digi = '(DIGI)'
                 if POPT_CFG.get_stat_CFG_fm_call(stations[0]):
-                    digi = f"{POPT_CFG.get_stat_CFG_fm_call(stations[0]).get('stat_parm_cli', 'NO-CLI').ljust(7)} " + digi
+                    digi = f"{POPT_CFG.get_stat_CFG_fm_call(stations[0]).get('stat_parm_cli', CLI_TYP_NO_CLI).ljust(7)} " + digi
 
                 ret += f" {str(port_id).ljust(2)} {name} {typ}  {stations[0].ljust(9)} {digi}\r"
                 for stat in stations[1:]:
@@ -1293,7 +1294,7 @@ class DefaultCLI(object):
                     if POPT_CFG.get_digi_CFG_for_Call(stat).get('digi_enabled', False):
                         digi = '(DIGI)'
                     if POPT_CFG.get_stat_CFG_fm_call(stat):
-                        digi = f"{POPT_CFG.get_stat_CFG_fm_call(stat).get('stat_parm_cli', 'NO-CLI').ljust(7)} " + digi
+                        digi = f"{POPT_CFG.get_stat_CFG_fm_call(stat).get('stat_parm_cli', CLI_TYP_NO_CLI).ljust(7)} " + digi
                     ret += f"                             {stat.ljust(9)} {digi}\r"
             else:
                 if port.dualPort_primaryPort:
@@ -1649,7 +1650,7 @@ class DefaultCLI(object):
         ret = self._send_sw_id()
         ret += self._c_text
         #ret += self._aprs_cText_noty()
-        if self.cli_name != 'USER':
+        if self.cli_name != CLI_TYP_SYSOP:
             ret += self._get_ts_prompt()
         self._send_output(ret, env_vars=True)
         return ''
@@ -1837,7 +1838,7 @@ class DefaultCLI(object):
 
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
-    cli_name = 'NO-CLI'  # DON'T CHANGE !
+    cli_name = CLI_TYP_NO_CLI  # DON'T CHANGE !
     service_cli = False
     # _c_text = ''
     # bye_text = ''

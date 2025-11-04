@@ -21,7 +21,8 @@ from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25 import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS
+from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_DIGI, \
+    CLI_TYP_PIPE
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -700,16 +701,16 @@ class AX25PortHandler(object):
         conn_typ  = conn.cli_type
 
         # Bestimme Verbindungstyp
-        if conn_typ == 'BOX' and POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
-            conn_typ = 'Task: FWD'
+        if conn_typ == CLI_TYP_BOX and POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
+            conn_typ = CLI_TYP_TASK_FWD
         elif conn.is_link:
             conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}' if hasattr(conn.LINK_Connection,
-                                                                             'to_call_str') else 'DIGI'
+                                                                             'to_call_str') else CLI_TYP_DIGI
         elif conn.pipe:
-            conn_typ = 'PIPE'
+            conn_typ = CLI_TYP_PIPE
 
         # Bestimme Bildtyp
-        image_typ = 'DIGI' if 'DIGI' in conn_typ else conn_typ
+        image_typ = CLI_TYP_DIGI if CLI_TYP_DIGI in conn_typ else conn_typ
         image_typ += '-DISCO' if disco else '-CONN'
         image_typ += '-INTER' if inter_connect else '-IN' if conn.is_incoming_conn() else '-OUT'
 

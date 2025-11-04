@@ -3,6 +3,7 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, messagebox, Menu
 
+from cfg.constant import CLI_TYP_BOX, CLI_TYP_TASK_FWD
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, format_number, conv_time_DE_str, conv_timestamp_delta
@@ -442,7 +443,7 @@ class BBS_fwd_Q(tk.Toplevel):
                        ).pack(side='left', anchor='w', )
 
         ttk.Label(f1, text='Typ: ').pack(side='left', anchor='w', padx=15)
-        opt = ['', '', 'FWD', 'BOX']
+        opt = ['', '', 'FWD', CLI_TYP_BOX]
         ttk.OptionMenu(f1,
                        self._typ_filter_var,
                        *opt,
@@ -862,14 +863,14 @@ class BBS_fwd_Q(tk.Toplevel):
             ent: dict
             port = ent.get('port_id', -1)
             typ  = ent.get('typ', '')
-            if typ not in ('BOX', 'Task: FWD'):
+            if typ not in (CLI_TYP_BOX, CLI_TYP_TASK_FWD):
                 continue
 
             if port_filter_var and port_filter_var != str(port):
                 continue
 
             if typ_filter_var and typ != {
-                'FWD': 'Task: FWD',
+                'FWD': CLI_TYP_TASK_FWD,
             }.get(typ_filter_var, typ_filter_var):
                 continue
 

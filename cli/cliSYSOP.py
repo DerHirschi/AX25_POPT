@@ -1,8 +1,9 @@
+from cfg.constant import CLI_TYP_SYSOP
 from cli.cliMain import DefaultCLI
 
 
 class UserCLI(DefaultCLI):
-    cli_name = 'USER'  # DON'T CHANGE !
+    cli_name = CLI_TYP_SYSOP  # DON'T CHANGE !
     service_cli = False
     # _c_text = '-= Test C-TEXT 2=-\r\r'  # Can overwrite in config
     # bye_text = '73 ...\r'

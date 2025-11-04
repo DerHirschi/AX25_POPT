@@ -3,7 +3,7 @@ from datetime import timedelta
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.constant import DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
     DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
-    TASK_TYP_MAIL
+    TASK_TYP_MAIL, CLI_TYP_NO_CLI
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -13,7 +13,7 @@ def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
         stat_parm_Name='',
-        stat_parm_cli='NO-CLI',
+        stat_parm_cli=CLI_TYP_NO_CLI,
         # Optional Parameter. Overrides Port Parameter
         stat_parm_PacLen=0,  # Max Pac len
         stat_parm_MaxFrame=0,  # Max (I) Frames

@@ -54,7 +54,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
     PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
-    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS
+    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, CLI_TYP_BOX, \
+    CLI_TYP_CONVERSE, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_NO_CLI
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
@@ -176,55 +177,55 @@ class PoPT_GUI_Main:
         logger.info("GUI: InitConnection-Typ-Icon Tab 16x16 & 32x16")
         self._conn_typ_icons    = {
             # Connection Tab
-            'USER':      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
-            'NODE':      get_image(CFG_aprs_icon_path + '/0-78.png', size=(16, 16)),
-            'DIGI':      get_image(CFG_aprs_icon_path + '/0-82.png', size=(16, 16)),
-            'PIPE':      get_image(CFG_aprs_icon_path + '/1-26.png', size=(16, 16)),
-            'BOX':       get_image(CFG_aprs_icon_path + '/0-34.png', size=(16, 16)),
-            'Task: FWD': get_image(CFG_aprs_icon_path + '/0-61.png', size=(16, 16)),
-            'CONV':      get_image(CFG_aprs_icon_path + '/1-54.png', size=(16, 16)),
+            CLI_TYP_SYSOP:      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
+            CLI_TYP_NODE:       get_image(CFG_aprs_icon_path + '/0-78.png', size=(16, 16)),
+            CLI_TYP_DIGI:       get_image(CFG_aprs_icon_path + '/0-82.png', size=(16, 16)),
+            CLI_TYP_PIPE:       get_image(CFG_aprs_icon_path + '/1-26.png', size=(16, 16)),
+            CLI_TYP_BOX:        get_image(CFG_aprs_icon_path + '/0-34.png', size=(16, 16)),
+            CLI_TYP_TASK_FWD:   get_image(CFG_aprs_icon_path + '/0-61.png', size=(16, 16)),
+            CLI_TYP_CONVERSE:   get_image(CFG_aprs_icon_path + '/1-54.png', size=(16, 16)),
             # Connection History Tab
-            'USER-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/term_conn_out.png',  size=(32, 16)),
-            'USER-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/term_conn_in.png',   size=(32, 16)),
-            'USER-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/term_disco_out.png', size=(32, 16)),
-            'USER-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/term_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_SYSOP}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/term_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_SYSOP}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/term_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_SYSOP}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/term_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_SYSOP}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/term_disco_in.png',  size=(32, 16)),
 
-            'NODE-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/node_conn_out.png',  size=(32, 16)),
-            'NODE-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/node_conn_in.png',   size=(32, 16)),
-            'NODE-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/node_disco_out.png', size=(32, 16)),
-            'NODE-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/node_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_NODE}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/node_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_NODE}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/node_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_NODE}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/node_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_NODE}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/node_disco_in.png',  size=(32, 16)),
 
-            'DIGI-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
-            'DIGI-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
-            'DIGI-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
-            'DIGI-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_DIGI}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_DIGI}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_DIGI}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_DIGI}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
 
-            'NO-CLI-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
-            'NO-CLI-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
-            'NO-CLI-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
-            'NO-CLI-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_NO_CLI}-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_NO_CLI}-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_NO_CLI}-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_NO_CLI}-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
 
-            'PIPE-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/pipe_conn_out.png',  size=(32, 16)),
-            'PIPE-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/pipe_conn_in.png',   size=(32, 16)),
-            'PIPE-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/pipe_disco_out.png', size=(32, 16)),
-            'PIPE-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/pipe_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_PIPE}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/pipe_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_PIPE}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/pipe_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_PIPE}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/pipe_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_PIPE}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/pipe_disco_in.png',  size=(32, 16)),
 
-            'BOX-CONN-OUT':       get_image(CFG_gui_conn_hist_path + '/bbs_conn_out.png',  size=(32, 16)),
-            'BOX-CONN-IN':        get_image(CFG_gui_conn_hist_path + '/bbs_conn_in.png',   size=(32, 16)),
-            'BOX-DISCO-OUT':      get_image(CFG_gui_conn_hist_path + '/bbs_disco_out.png', size=(32, 16)),
-            'BOX-DISCO-IN':       get_image(CFG_gui_conn_hist_path + '/bbs_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_BOX}-CONN-OUT':       get_image(CFG_gui_conn_hist_path + '/bbs_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_BOX}-CONN-IN':        get_image(CFG_gui_conn_hist_path + '/bbs_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_BOX}-DISCO-OUT':      get_image(CFG_gui_conn_hist_path + '/bbs_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_BOX}-DISCO-IN':       get_image(CFG_gui_conn_hist_path + '/bbs_disco_in.png',  size=(32, 16)),
 
-            'Task: FWD-CONN-OUT': get_image(CFG_gui_conn_hist_path + '/fwd_conn_out.png',  size=(32, 16)),
-            'Task: FWD-CONN-IN':  get_image(CFG_gui_conn_hist_path + '/fwd_conn_in.png',   size=(32, 16)),
-            'Task: FWD-DISCO-OUT':get_image(CFG_gui_conn_hist_path + '/fwd_disco_out.png', size=(32, 16)),
-            'Task: FWD-DISCO-IN': get_image(CFG_gui_conn_hist_path + '/fwd_disco_in.png',  size=(32, 16)),
+            f'{CLI_TYP_TASK_FWD}-CONN-OUT': get_image(CFG_gui_conn_hist_path + '/fwd_conn_out.png',  size=(32, 16)),
+            f'{CLI_TYP_TASK_FWD}-CONN-IN':  get_image(CFG_gui_conn_hist_path + '/fwd_conn_in.png',   size=(32, 16)),
+            f'{CLI_TYP_TASK_FWD}-DISCO-OUT':get_image(CFG_gui_conn_hist_path + '/fwd_disco_out.png', size=(32, 16)),
+            f'{CLI_TYP_TASK_FWD}-DISCO-IN': get_image(CFG_gui_conn_hist_path + '/fwd_disco_in.png',  size=(32, 16)),
 
-            'CONV-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/conv_conn_out.png',    size=(32, 16)),
-            'CONV-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/conv_conn_in.png',     size=(32, 16)),
-            'CONV-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/conv_disco_out.png',   size=(32, 16)),
-            'CONV-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/conv_disco_in.png',    size=(32, 16)),
-            'CONV-CONN-INTER':  get_image(CFG_gui_conn_hist_path + '/conv_conn_inter.png',  size=(32, 16)),
-            'CONV-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/conv_conn_out.png',    size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/conv_conn_in.png',     size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/conv_disco_out.png',   size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/conv_disco_in.png',    size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-CONN-INTER':  get_image(CFG_gui_conn_hist_path + '/conv_conn_inter.png',  size=(32, 16)),
+            f'{CLI_TYP_CONVERSE}-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
 
         }
         logger.info("GUI: Init FWD-Q-Tree-Icon Tab 16x16")
@@ -3500,12 +3501,12 @@ class PoPT_GUI_Main:
                     sw = db_ent.Software
                 enc = db_ent.Encoding
             if conn.is_link:
-                status = 'DIGI'
+                status = CLI_TYP_DIGI
                 if self._stat_info_status_var.get() != status:
                     self._stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )
             elif conn.pipe is not None:
-                status = 'PIPE'
+                status = CLI_TYP_PIPE
                 if self._stat_info_status_var.get() != status:
                     self._stat_info_status_var.set(status)
                     self.status_label.bind('<Button-1>', )

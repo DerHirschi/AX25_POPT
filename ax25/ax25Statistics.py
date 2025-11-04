@@ -6,7 +6,7 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
-from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
+from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT, CLI_TYP_DIGI
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
@@ -510,7 +510,7 @@ class MH:
         self._short_MH.append(ent)
 
         if digi:
-            USER_DB.set_typ(call_str=digi, add_new=False, typ='DIGI')
+            USER_DB.set_typ(call_str=digi, add_new=False, typ=CLI_TYP_DIGI)
         elif last_digi:
             self._mh_inp(data, last_digi)
 

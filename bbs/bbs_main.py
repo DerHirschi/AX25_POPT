@@ -31,7 +31,7 @@ from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlis
 from bbs.bbs_fwd_connection import BBSConnection
 from bbs.bbs_mail_import import get_mail_import
 from cfg.cfg_fnc import init_bbs_dir
-from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD
+from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD, CLI_TYP_BOX, CLI_TYP_SYSOP
 from cfg.default_config import getNew_BBS_Port_cfg, getNew_fwdStatistic_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG
@@ -1364,7 +1364,7 @@ class BBS:
         # CFGs
         local_theme     = self._pms_cfg.get('local_theme', [])
         local_dist      = [self._pms_cfg.get('user', '')] + self._pms_cfg.get('local_dist', [])
-        local_user      = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        local_user      = list(POPT_CFG.get_stat_CFGs_by_typ(CLI_TYP_SYSOP))
         # local_user     += ['SYSOP']     # TODO Swap
         # TODO local_user     += list(user_db.bla......)
         BBS_LOG.info(log_tag + f"Msg: {mid} - {recv_call}@{recv_bbs}")
@@ -1946,7 +1946,7 @@ class BBS:
             BBS_LOG.error(ex)
         self.set_bbs_statistic(bbs_call, 'connect_e', 1)
 
-    ####################################################################################
+    ###################################################################################
     def get_fwd_connections(self):
         return self._fwd_connections
 
@@ -1984,7 +1984,7 @@ class BBS:
         return self._db.bbs_get_out_Tab_for_GUI()
 
     def get_fwd_q_tab_pms(self):
-        local_user = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        local_user = list(POPT_CFG.get_stat_CFGs_by_typ(CLI_TYP_SYSOP))
         return self._db.bbs_get_fwd_q_Tab_for_PMS(pms_user=local_user)
 
     def get_fwd_q_tab_bbs(self):
@@ -2004,7 +2004,7 @@ class BBS:
         return self._db.bbs_get_pn_msg_Tab_for_GUI()
 
     def get_pn_msg_tab_pms_user(self):
-        local_user = list(POPT_CFG.get_stat_CFGs_by_typ('USER'))
+        local_user = list(POPT_CFG.get_stat_CFGs_by_typ(CLI_TYP_SYSOP))
         return self._db.bbs_get_pn_msg_Tab_for_PMS(pms_user=local_user)
 
     def get_bl_msg_tab(self):

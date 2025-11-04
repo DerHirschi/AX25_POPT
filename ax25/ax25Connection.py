@@ -5,6 +5,7 @@
 import time
 from datetime import datetime
 
+from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
@@ -302,12 +303,12 @@ class AX25Conn:
     # CLI INIT
     def _init_cli(self):
         del self.cli
-        cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', 'NO-CLI'))
+        cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', CLI_TYP_NO_CLI))
         self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
         self.cli_type = str(cli_key)
 
     def _reinit_cli(self):
-        if self.cli_type == 'Task: FWD':
+        if self.cli_type == CLI_TYP_TASK_FWD:
             #self.bbsFwd_init()
             return
         if self.pipe:

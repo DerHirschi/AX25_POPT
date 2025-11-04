@@ -3,7 +3,8 @@ from datetime import datetime
 from tkinter import ttk, TclError, messagebox
 
 from ax25.ax25dec_enc import PIDByte
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_DIGI, \
+    CLI_TYP_PIPE
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_time_delta, get_kb_str_fm_bytes, get_strTab, conv_timestamp_delta
@@ -884,9 +885,9 @@ class SideTabbedFrame:
             typ         = conn.cli_type
             bell        = conn.noty_bell
             ent_call    = str(conn.to_call_str)
-            if typ == 'BOX':
+            if typ == CLI_TYP_BOX:
                 if POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
-                    typ = 'Task: FWD'
+                    typ = CLI_TYP_TASK_FWD
 
             is_digi = False
             if conn.is_link:
@@ -894,9 +895,9 @@ class SideTabbedFrame:
                 if hasattr(conn.LINK_Connection, 'to_call_str'):
                     typ = f'DIGI {conn.LINK_Connection.to_call_str}'
                 else:
-                    typ = 'DIGI'
+                    typ = CLI_TYP_DIGI
             if conn.pipe:
-                typ = 'PIPE'
+                typ = CLI_TYP_PIPE
             ent = [
                 int(conn.ch_index),
                 ent_call,
@@ -906,7 +907,7 @@ class SideTabbedFrame:
                 timer,
             ]
             if is_digi:
-                typ = 'DIGI'
+                typ = CLI_TYP_DIGI
             image = self._conn_typ_icon_tab.get(typ, None)
             tags  = ('bell',) if bell else ()
 

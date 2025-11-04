@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 
 from cfg.cfg_fnc import exist_awthemes_path
 from cfg.constant import STYLES_AWTHEMES, STYLES_AWTHEMES_PATH, STYLES_BULD_IN_LINUX, STYLES_BULD_IN_WIN, \
-    CFG_aprs_icon_path
+    CFG_aprs_icon_path, CLI_TYP_SYSOP
 from cfg.default_config import getNew_station_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -438,7 +438,7 @@ class SetupWizardAPP:
         stat_cfg = getNew_station_cfg()
         stat_cfg['stat_parm_Call'] = str(sysop_call)
         stat_cfg['stat_parm_Name'] = str(name)
-        stat_cfg['stat_parm_cli']  = 'USER'
+        stat_cfg['stat_parm_cli']  = CLI_TYP_SYSOP
         POPT_CFG.set_stat_CFG_fm_conf(stat_cfg)
         user_db_ent = USER_DB.get_entry(sysop_call, add_new=True)
         user_db_ent.Name = str(name)

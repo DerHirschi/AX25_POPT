@@ -3,7 +3,7 @@ from copy import deepcopy
 from tkinter import ttk, scrolledtext
 
 from bbs.bbs_constant import GET_MSG_STRUC
-from cfg.constant import ENCODINGS, FONT, COLOR_MAP
+from cfg.constant import ENCODINGS, FONT, COLOR_MAP, CLI_TYP_SYSOP
 from cfg.default_config import getNew_AUTOMAIL_task
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -128,7 +128,7 @@ class BBSAutoMailSettings(ttk.Frame):
 
         ttk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
-        stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
+        stat_cfg = POPT_CFG.get_stat_CFGs_by_typ(CLI_TYP_SYSOP)
         opt      = [self._pms_cfg.get('user', '')] + list(stat_cfg.keys())
         if not opt:
             opt = ['']

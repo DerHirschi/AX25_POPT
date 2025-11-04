@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.122.2'
+VER = '2.122.3'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -451,3 +451,13 @@ TASK_TYP_MAIL           = 'AUTOMAIL'
 #######################################################
 # Local Converse Mode
 LO_CONV_DEF_CH_NAME = 'Default'
+#######################################################
+# CLI Types
+CLI_TYP_SYSOP    = 'USER'
+CLI_TYP_NODE     = 'NODE'
+CLI_TYP_DIGI     = 'DIGI'
+CLI_TYP_PIPE     = 'PIPE'
+CLI_TYP_BOX      = 'BOX'
+CLI_TYP_CONVERSE = 'CONV'
+CLI_TYP_NO_CLI   = 'NO-CLI'
+CLI_TYP_TASK_FWD = 'Task: FWD'

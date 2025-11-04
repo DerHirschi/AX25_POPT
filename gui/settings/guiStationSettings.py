@@ -4,7 +4,7 @@ from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP
+from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP, CLI_TYP_PIPE, CLI_TYP_NO_CLI
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
@@ -463,7 +463,7 @@ class StatSetTab:
 
     def chk_CLI(self, event=None):
         # print(self._cli_select_var.get())
-        if self._cli_select_var.get() != 'PIPE':
+        if self._cli_select_var.get() != CLI_TYP_PIPE:
             self._loop_timer.configure(state='disabled')
             self._tx_filename.configure(state='disabled')
             self._rx_filename.configure(state='disabled')
@@ -518,7 +518,7 @@ class StatSetTab:
         stat_is_digi = POPT_CFG.get_digi_is_enabled(stat_call)
         # stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
         # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
-        stat_cli_typ = self._new_station_setting.get('stat_parm_cli', 'NO-CLI')
+        stat_cli_typ = self._new_station_setting.get('stat_parm_cli', CLI_TYP_NO_CLI)
         stat_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
         stat_maxframe = self._new_station_setting.get('stat_parm_MaxFrame', 0)
         stat_qso_col_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
@@ -601,7 +601,7 @@ class StatSetTab:
             # self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
             self._cli_select_var.set(stat_cli_typ)
         else:
-            self._cli_select_var.set('PIPE')  # default value
+            self._cli_select_var.set(CLI_TYP_PIPE)  # default value
             self._c_text_ent.configure(state='disabled')
             self._bye_text_ent.configure(state='disabled')
             self._info_text_ent.configure(state='disabled')
@@ -642,7 +642,7 @@ class StatSetTab:
 
         # CLI
         cli_key = self._cli_select_var.get()
-        if cli_key not in ['PIPE']:
+        if cli_key not in [CLI_TYP_PIPE]:
             # self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
             # self.station_setting.stat_parm_pipe = False
             POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')

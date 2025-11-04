@@ -3,7 +3,7 @@ import copy
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg
-from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE
+from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE, CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
 from cfg.logger_config import logger
@@ -499,11 +499,11 @@ class Main_CFG:
 
     ###########################################
     # Station
-    def get_stat_CFGs_by_typ(self, typ='USER'):
+    def get_stat_CFGs_by_typ(self, typ=CLI_TYP_SYSOP):
         stat_cfg = dict(self._config.get('stat_cfgs', {}))
         ret = {}
         for call, stat_cfg in stat_cfg.items():
-            if stat_cfg.get('stat_parm_cli', 'NO-CLI') == typ:
+            if stat_cfg.get('stat_parm_cli', CLI_TYP_NO_CLI) == typ:
                 ret[str(call)] = dict(stat_cfg)
         return ret
 

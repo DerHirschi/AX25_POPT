@@ -69,8 +69,8 @@ class NewConnWin(tk.Toplevel):
         lower_btn_frame  = ttk.Frame(main_f, borderwidth=15)
 
         port_btn_frame.pack(  side=tk.TOP,    fill=tk.X, padx=10)
-        dest_call_frame.pack( side=tk.TOP,    fill=tk.X)
-        self._axip_frame.pack(side=tk.TOP,    fill=tk.X, padx=27)
+        dest_call_frame.pack( side=tk.TOP,    fill=tk.X, padx=20)
+        self._axip_frame.pack(side=tk.TOP,    fill=tk.X, padx=20)
         own_call_frame.pack(  side=tk.TOP,    fill=tk.X, padx=62)
         lower_btn_frame.pack( side=tk.BOTTOM, fill=tk.X)
 
@@ -93,10 +93,9 @@ class NewConnWin(tk.Toplevel):
 
         call_label = ttk.Label(dest_call_frame,
                               text=f"{self._getTabStr('ziel')}:",
-                              foreground='black',
                               font=("TkFixedFont", 11),
                               # height=1,
-                              width=5)
+                              )
         call_label.pack(side=tk.LEFT)
 
         vals = list(self._conn_hist.keys())
@@ -113,7 +112,7 @@ class NewConnWin(tk.Toplevel):
         # self._call_txt_inp.bind('<KeyRelease>',
         #                         lambda event: get_typed(event, self._chiefs, self.call_txt_inp_var, self._call_txt_inp))
         # self._call_txt_inp.bind('<Key>', lambda event: detect_pressed(event, self._call_txt_inp))
-        self._call_txt_inp.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self._call_txt_inp.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)
         ############
         # AXIP
         self._ax_ip_ip = \
