@@ -8,6 +8,7 @@ Fixes:
 - UserDB: Locator/Position wird nicht aktualisiert
 - Gewählte Sprache für CLI wird nicht aktualisiert bzw. erst na reconnect
   gesetzt.
+- Fehlerhafte aprs-pakete führen zum Program-crash
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet

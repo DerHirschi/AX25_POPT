@@ -609,9 +609,9 @@ class APRS_ais(object):
         if self._port_handler is None:
             return
         # ALARM / NOTY
-        if any((aprs_pack['address'] in POPT_CFG.get_stat_CFG_keys(),
-                aprs_pack['from'] in POPT_CFG.get_stat_CFG_keys(),
-                self.is_cq_call(aprs_pack['address'])
+        if any((aprs_pack.get('address', '') in POPT_CFG.get_stat_CFG_keys(),
+                aprs_pack.get('from', '') in POPT_CFG.get_stat_CFG_keys(),
+                self.is_cq_call(aprs_pack.get('address', ''))
                )):
             if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
                 self._port_handler.set_aprsMailAlarm_PH(True)
