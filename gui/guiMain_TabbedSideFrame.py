@@ -829,7 +829,7 @@ class SideTabbedFrame:
         tx_buff = 'TX-Buffer: --- kb'
         tx_count = 'TX: --- kb'
         rx_count = 'RX: --- kb'
-        station = self._root_class.get_conn(self._root_class.channel_index)
+        station = self._root_class.get_conn()
         if station is not None:
             if station.RTT_Timer.rtt_best == 999.0:
                 best = "Best: -1"

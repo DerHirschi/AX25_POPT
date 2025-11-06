@@ -2191,6 +2191,9 @@ class PoPT_GUI_Main:
 
         if hasattr(self.userdb_win, 'tasker'):
             tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
+        # Locator Calc Win
+        if hasattr(self.locator_calc_window, 'tasker'):
+            tasker_ret = any((self.locator_calc_window.tasker(), tasker_ret))
 
         tasker_ret = any((self._monitor_task(),     tasker_ret))
         tasker_ret = any((self._ais_monitor_task(), tasker_ret))

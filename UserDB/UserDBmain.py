@@ -11,7 +11,7 @@ from cfg.popt_config import POPT_CFG
 
 from fnc.ax25_fnc import call_tuple_fm_call_str, validate_ax25Call, validate_aprs_call
 from cfg.cfg_fnc import set_obj_att, cleanup_obj_dict, set_obj_att_fm_dict
-from fnc.loc_fnc import locator_to_coordinates, locator_distance, coordinates_to_locator
+from fnc.loc_fnc import locator_to_coordinates, locator_distance, coordinates_to_locator, clean_locator
 from fnc.str_fnc import conv_time_for_sorting, conv_time_DE_str, str_to_datetime
 from cfg.constant import CFG_user_db, MH_BEACON_FILTER, CFG_user_db_json
 
@@ -244,6 +244,7 @@ class UserDB:
         if not ent.LOC:
             ent.Distance = -1
             return False
+        ent.LOC = clean_locator(ent.LOC)
         ent.Distance = locator_distance(own_loc, ent.LOC)
         return True
 
