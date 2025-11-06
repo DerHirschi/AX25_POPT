@@ -176,24 +176,26 @@ class UserDB:
         logger.info("User-DB: Init complete")
 
     def get_entry(self, call_str: str, add_new=True):
-        # call_str = validate_ax25Call(call_str)
         if not hasattr(call_str, 'upper'):
             call_str = str(call_str)
+
         call_str = validate_aprs_call(call_str.upper())
-        if call_str:
-            call_tup = call_tuple_fm_call_str(call_str)
-            if call_str not in self.db.keys():
-                if call_tup[0] not in self.db.keys():
-                    if add_new:
-                        return self._new_entry(call_str)
-                    else:
-                        return None
-                else:
-                    # self.entry_var_upgrade(call_tup[0])
-                    return self.db[call_tup[0]]
-            # self.entry_var_upgrade(call_str)
+        if not call_str:
+            return None
+
+        if call_str in self.db.keys():
             return self.db[call_str]
+
+        call_tup = call_tuple_fm_call_str(call_str)
+        if call_tup[0] in self.db.keys():
+            return self.db[call_tup[0]]
+
+        if add_new:
+            # return self._new_entry(call_str)
+            return self._new_entry(call_tup[0]) # Ignore SSID
+
         return None
+
 
     def _new_entry(self, call_str):
         call_str = call_str.upper()
@@ -380,6 +382,15 @@ class UserDB:
             ent.LOC = coordinates_to_locator(ent.Lat, ent.Lon)
             return ent.Lat, ent.Lon, ent.LOC
         return 0, 0, ''
+
+    def set_location_fm_locator(self, call_str: str):
+        ent = self.get_entry(call_str, add_new=False)
+        if not ent:
+            return False
+        if not ent.LOC:
+            return False
+        ent.Lat, ent.Lon = locator_to_coordinates(ent.LOC)
+        return True
 
     def get_AXIP(self, call_str):
         ret = self.db.get(call_str, None)

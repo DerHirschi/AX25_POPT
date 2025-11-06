@@ -1,9 +1,13 @@
 ###########################################################################################################
 # 2.122.x
 Fixes:
-- BBS: BID (Boxcall) wird nach verändern der Einstellungen erst nach Programm
-  neustart updated. Resultiert in  BID: 000001NOCALL
-- GUI-Probleme im "Neue Verbindung"-Fenster wenn andere Sprache ausgewählt ist
+- BBS: BID (Boxcall) wird nach Verändern der Einstellungen erst nach Programm
+  neustart updated. Resultiert in BID: 000001NOCALL
+- GUI-Probleme im "Neue Verbindung"-Fenster, wenn andere Sprache ausgewählt
+  ist.
+- UserDB: Locator/Position wird nicht aktualisiert
+- Gewählte Sprache für CLI wird nicht aktualisiert bzw. erst na reconnect
+  gesetzt.
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet

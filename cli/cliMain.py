@@ -602,7 +602,8 @@ class DefaultCLI(object):
             return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
         self._decode_param()
         if self._parameter[0].upper() in LANG_IND.keys():
-            self._connection.set_user_db_language(LANG_IND[self._parameter[0].upper()])
+            self._cli_lang = int(LANG_IND.get(self._parameter[0].upper(), 1))
+            self._connection.set_user_db_language(self._cli_lang)
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
         return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
 

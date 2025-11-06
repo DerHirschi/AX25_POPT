@@ -388,7 +388,9 @@ class BoxCLI(DefaultCLI):
                     ret += '>'
                     self._send_output(ret)
                     return
-                self._connection.set_user_db_language(lang_opt)
+                self._cli_lang = lang_opt
+                self._connection.set_user_db_language(self._cli_lang)
+
             ret = self._getTabStr_CLI('bbs_new_user_reg1')
             if self._user_db_ent.Name:
                 ret += f" {self._user_db_ent.Name} ?\r"

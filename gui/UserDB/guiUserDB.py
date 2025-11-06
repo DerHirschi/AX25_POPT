@@ -798,8 +798,9 @@ class UserDB(tk.Toplevel):
 
 
         self._root_win.update_station_info()
-
         self._user_db.set_distance_for_all()
+        self._update_map()
+        self._draw_connection()
         #self._update_tree()
         self._db_ent = db_entry
         if hasattr(self._db_ent, 'call_str'):
@@ -809,52 +810,54 @@ class UserDB(tk.Toplevel):
         self._set_var_to_ent()
 
     def _save_vars(self):
-        if self._db_ent is not None:
-            self._db_ent.Name = str(self._name_var.get())
-            self._db_ent.QTH = str(self._qth_var.get())
-            self._db_ent.LOC = str(self._loc_var.get())
+        if self._db_ent is None:
+            return
+        self._db_ent.Name   = str(self._name_var.get())
+        self._db_ent.QTH    = str(self._qth_var.get())
+        self._db_ent.LOC    = str(self._loc_var.get())
 
-            self._db_ent.PRmail = str(self._prmail_var.get())
-            self._db_ent.Email = str(self._email_var.get())
-            self._db_ent.HTTP = str(self._http_var.get())
-            self._db_ent.Encoding = str(self._encoding_var.get())
-            self._db_ent.ZIP = str(self._zip_var.get())
-            self._db_ent.Land = str(self._land_var.get())
+        self._db_ent.PRmail = str(self._prmail_var.get())
+        self._db_ent.Email = str(self._email_var.get())
+        self._db_ent.HTTP = str(self._http_var.get())
+        self._db_ent.Encoding = str(self._encoding_var.get())
+        self._db_ent.ZIP = str(self._zip_var.get())
+        self._db_ent.Land = str(self._land_var.get())
 
-            self._db_ent.pac_len = int(self._pac_len_var.get())
-            self._db_ent.max_pac = int(self._max_pac_var.get())
-            self._db_ent.CText = str(self._ctext_ent.get(0.0, tk.END)[:-1])
-            self._db_ent.Info = str(self._info_ent.get(0.0, tk.END)[:-1])
+        self._db_ent.pac_len = int(self._pac_len_var.get())
+        self._db_ent.max_pac = int(self._max_pac_var.get())
+        self._db_ent.CText = str(self._ctext_ent.get(0.0, tk.END)[:-1])
+        self._db_ent.Info = str(self._info_ent.get(0.0, tk.END)[:-1])
 
-            self._db_ent.sys_pw = str(self._sys_password_ent.get(0.0, tk.END)[:-1])
-            self._db_ent.sys_pw_parm = [
-                int(self._fake_attempts_var.get()),
-                int(self._fill_char_var.get()),
-                str(self._login_cmd_var.get()),
-            ]
-            self._db_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
+        self._db_ent.sys_pw = str(self._sys_password_ent.get(0.0, tk.END)[:-1])
+        self._db_ent.sys_pw_parm = [
+            int(self._fake_attempts_var.get()),
+            int(self._fill_char_var.get()),
+            str(self._login_cmd_var.get()),
+        ]
+        self._db_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
 
-            self._db_ent.last_edit = conv_time_DE_str()
-            self._db_ent.TYP = str(self._typ_var.get())
-            if self._db_ent.TYP == 'SYSOP':
-                self._db_ent.Sysop_Call = ''
-            else:
-                tmp = str(self._sysop_var.get())
-                if tmp != self._db_ent.Sysop_Call:
-                    self._db_ent.Sysop_Call = tmp
-                    self._on_select_sysop()
-            axip_add = self._axip_add_var.get()
-            axip_add = axip_add.replace(' ', '')
-            axip_port = self._axip_port_var.get()
-            try:
-                axip_port = int(axip_port)
-            except ValueError:
-                axip_port = 0
-            self._db_ent.AXIP = (
-                axip_add,
-                axip_port
-            )
-            self._user_db.set_distance(self._db_ent.call_str)
+        self._db_ent.last_edit = conv_time_DE_str()
+        self._db_ent.TYP = str(self._typ_var.get())
+        if self._db_ent.TYP == 'SYSOP':
+            self._db_ent.Sysop_Call = ''
+        else:
+            tmp = str(self._sysop_var.get())
+            if tmp != self._db_ent.Sysop_Call:
+                self._db_ent.Sysop_Call = tmp
+                self._on_select_sysop()
+        axip_add  = self._axip_add_var.get()
+        axip_add  = axip_add.replace(' ', '')
+        axip_port = self._axip_port_var.get()
+        try:
+            axip_port = int(axip_port)
+        except ValueError:
+            axip_port = 0
+        self._db_ent.AXIP = (
+            axip_add,
+            axip_port
+        )
+        self._user_db.set_location_fm_locator(self._db_ent.call_str)
+        self._user_db.set_distance(self._db_ent.call_str)
         # self._root_win.gui_set_distance()
 
     def _clean_ent(self):
