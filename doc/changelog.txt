@@ -9,6 +9,7 @@ Fixes:
 - Gewählte Sprache für CLI wird nicht aktualisiert bzw. erst na reconnect
   gesetzt.
 - Fehlerhafte aprs-pakete führen zum Program-crash
+- Es wird immer nur ein Frame gesendet
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet

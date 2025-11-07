@@ -130,6 +130,14 @@ FESC  = b'\xDB'
 TFEND = b'\xDC'
 TFESC = b'\xDD'
 
+FESC_TFEND = b''.join([FESC, TFEND])    # "FEND is sent as FESC, TFEND"  /  0xC0 is sent as 0xDB 0xDC
+FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
+##############################################
+# KISS Data Frame CH 0
+KISS_DATA_FRAME_0            = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
+##############################################
+# Linux ax25Kernel-DEV Data Frame CH 0
+AX25KERNEL_DATA_FRAME_0     = lambda inp: DATA_FRAME_0 + inp
 
 class Kiss(object):
     def __init__(self, port_cfg: dict):
@@ -140,26 +148,18 @@ class Kiss(object):
         self._is_tnc_emu_kiss   = False
         # CFG Flags
         self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
-        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)
+        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd',  TNC_KISS_CMD_END)
         # SET TNC-Parameter
-        self._txd_frame    = FEND + KISS_TXD + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
+        self._txd_frame    = FEND + KISS_TXD +  bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
         self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
         self._slot_frame   = FEND + KISS_SLOT + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + FEND
         self._tail_frame   = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
         self._duplex_frame = FEND + KISS_DUPL + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + FEND
-        # KISS Data Frame CH 0
-        self._kiss_data_frame            = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
-        # Linux ax25Kernel-DEV Data Frame CH 0
-        self._ax25kernel_kiss_data_frame = lambda inp: DATA_FRAME_0 + inp
-        # "FEND is sent as FESC, TFEND"  /  0xC0 is sent as 0xDB 0xDC
-        self._FESC_TFEND = b''.join([FESC, TFEND])
-        # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
-        self._FESC_TFESC = b''.join([FESC, TFESC])
 
     def set_all_parameter(self):
         if not self.set_kiss_param:
             logger.info(f"Kiss: Set TNC-Parameter disabled !")
-            return
+            return b''
         return b''.join([
             self._txd_frame,
             self._pers_frame,
@@ -171,7 +171,7 @@ class Kiss(object):
     def set_all_parameter_ax25kernel(self):
         if not self.set_kiss_param:
             logger.info(f"Kiss: Set TNC-Parameter disabled !")
-            return
+            return []
         return [
             self._txd_frame[1:-1],
             self._pers_frame[1:-1],
@@ -308,15 +308,19 @@ class Kiss(object):
             return None
         if inp[1] / 16 not in range(0, 8):
             # No KISS-Data Frames 00, 10, 20, ...
+            logger.warning(f"De-Kiss: No KISS-Data Frames: {int(inp[1] / 16)} ")
+            logger.debug(f"> {inp}")
+            logger.debug(f"> {inp.hex()}")
             return None
         if inp[1] / 16 in range(1, 8):
-            logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
-
+            logger.warning(f"De-Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
+            logger.debug(f"> {inp}")
+            logger.debug(f"> {inp.hex()}")
         return inp[2:-1].replace(
-            self._FESC_TFESC,
+            FESC_TFESC,
             FESC
         ).replace(
-            self._FESC_TFEND,
+            FESC_TFEND,
             FEND
         )
 
@@ -336,13 +340,13 @@ class Kiss(object):
         if inp[0] / 16 not in range(0, 8):
             return None
         if int(inp[0] / 16) in range(1, 8):
-            logger.warning(f"Kiss: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
+            logger.warning(f"De-Kiss ax25Kernel: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
 
         return inp[1:].replace(
-            self._FESC_TFESC,
+            FESC_TFESC,
             FESC
         ).replace(
-            self._FESC_TFEND,
+            FESC_TFEND,
             FEND
         )
 
@@ -358,13 +362,13 @@ class Kiss(object):
         if not self.is_enabled:
             return inp
 
-        return self._kiss_data_frame(
+        return KISS_DATA_FRAME_0(
             inp.replace(
                 FESC,
-                self._FESC_TFESC
+                FESC_TFESC
             ).replace(
                 FEND,
-                self._FESC_TFEND
+                FESC_TFEND
             )
         )
 
@@ -380,13 +384,13 @@ class Kiss(object):
         if not self.is_enabled:
             return inp
 
-        return self._ax25kernel_kiss_data_frame(
+        return AX25KERNEL_DATA_FRAME_0(
             inp.replace(
                 FESC,
-                self._FESC_TFESC
+                FESC_TFESC
             ).replace(
                 FEND,
-                self._FESC_TFEND
+                FESC_TFEND
             )
         )
 
@@ -395,14 +399,14 @@ class Kiss(object):
     def device_kiss_end(self):
         if not self.set_kiss_param:
             logger.info(f"Kiss: KISS-END: Set TNC-Parameter disabled !")
-            return
+            return b''
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return self._END_TNC_DEFAULT
 
     def device_kiss_start_1(self):
         if not self.set_kiss_param:
             logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
-            return
+            return b''
         return self._START_TNC_DEFAULT
     #############################################################################
     def get_tnc_emu_status(self):

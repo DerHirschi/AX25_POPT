@@ -624,8 +624,11 @@ class APRS_ais(object):
 
     @staticmethod
     def _aprs_msg_sys_new_bn(aprs_pack: dict):
-        print(
-            f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack['port_id']} - {aprs_pack.get('message_text', '')}")
+        try:
+            print(f"aprs Bulletin-MSG fm {aprs_pack['from']} {aprs_pack['port_id']} - {aprs_pack.get('message_text', '')}")
+        except Exception as ex:
+            logger.debug('_aprs_msg_sys_new_bn: Dummy')
+            logger.debug(ex)
 
     # TX-Stuff
     def send_aprs_text_msg(self, answer_pack, msg='', with_ack=False):
@@ -692,7 +695,7 @@ class APRS_ais(object):
         pack['N']           = 0
         pack['send_timer']  = 0
         pack['msgNo']       = str(self._ack_counter)
-        pack['address_str'] = f"{pack['from']}:{pack['address']}"
+        pack['address_str'] = f"{pack.get('from', '')}:{pack.get('address', '')}"
         self._spooler_buffer[str(self._ack_counter)] = dict(pack)
         self._ack_counter   = (self._ack_counter + 1) % 99999
         return pack

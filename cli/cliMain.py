@@ -193,23 +193,24 @@ class DefaultCLI(object):
         self._send_output(self._get_ts_prompt(), env_vars=False)
 
     def _send_output(self, ret, env_vars=True):
-        if ret:
-            if type(ret) is str:
-                if env_vars:
-                    ret = replace_StringVARS(ret,
-                                             port=self._own_port,
-                                             port_handler=self._port_handler,
-                                             connection=self._connection,
-                                             user_db=self._user_db)
-                # ret = zeilenumbruch_lines(ret)
-                ret = ret.encode(self._encoding[0], self._encoding[1])
-                ret = ret.replace(b'\n', b'\r')
-            if all((
-                    self.can_sidestop,
-                    self._user_db_ent.cli_sidestop)):
-                self._send_out_sidestop(ret)
-                return
-            self._connection.send_data(ret)
+        if not ret:
+            return
+        if type(ret) is str:
+            if env_vars:
+                ret = replace_StringVARS(ret,
+                                         port=self._own_port,
+                                         port_handler=self._port_handler,
+                                         connection=self._connection,
+                                         user_db=self._user_db)
+            # ret = zeilenumbruch_lines(ret)
+            ret = ret.encode(self._encoding[0], self._encoding[1])
+            ret = ret.replace(b'\n', b'\r')
+        if all((
+                self.can_sidestop,
+                self._user_db_ent.cli_sidestop)):
+            self._send_out_sidestop(ret)
+            return
+        self._connection.send_data(ret)
 
     def _send_out_sidestop(self, cli_out: bytes):
         if not self._user_db_ent.cli_sidestop:

@@ -589,32 +589,33 @@ class AX25Port(object):
 
     def _tx_connection_buf(self):
         for conn_id, conn in self.connections.items():
-            if time.time() > conn.t2:
-                snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
-                if not snd_buf:
+            if time.time() < conn.t2:
+                continue
+            snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
+            if not snd_buf:
+                continue
+            conn.tx_buf_ctl = []
+            conn.tx_buf_2send = []
+            conn.REJ_is_set = False
+            for el in snd_buf:
+                # if el.digi_call and conn.is_link:
+                try:
+                    if conn.digi_call:
+                        # TODO Just check for digi_call while encoding
+                        # print(conn.digi_call)
+                        el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
+                    else:
+                        el.encode_ax25frame()
+                except Exception as ex:
+                    logger.error(ex)
                     continue
-                conn.tx_buf_ctl = []
-                conn.tx_buf_2send = []
-                conn.REJ_is_set = False
-                for el in snd_buf:
-                    # if el.digi_call and conn.is_link:
-                    try:
-                        if conn.digi_call:
-                            # TODO Just check for digi_call while encoding
-                            # print(conn.digi_call)
-                            el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
-                        else:
-                            el.encode_ax25frame()
-                    except Exception as ex:
-                        logger.error(ex)
-                        continue
-                    try:
-                        self.tx(frame=el)
-                    except AX25DeviceFAIL as e:
-                        raise e
-                    return True # CHECKME !!! Just one connection at fnc-call ??
-                    # Monitor
-                    # self._gui_monitor(ax25frame=el, tx=True)
+                try:
+                    self.tx(frame=el)
+                except AX25DeviceFAIL as e:
+                    raise e
+            return True # CHECKME !!! Just one connection at fnc-call ??
+            # Monitor
+            # self._gui_monitor(ax25frame=el, tx=True)
         return False
 
     def _tx_pipe_buf(self):
@@ -1128,8 +1129,6 @@ class KissTCP(AX25Port):
             except Exception as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
-                # self.device.shutdown(socket.SHUT_RDWR)
-                # self.device.close()
                 self.close_device()
                 raise AX25DeviceFAIL
 
@@ -1137,15 +1136,11 @@ class KissTCP(AX25Port):
                 kiss_start_cmd = self.kiss.device_kiss_start_1()
                 if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
 
-                    # self.device.sendall(self.kiss.device_kiss_start_1())
                     try:
                         self.device.sendall(self.kiss.device_kiss_start_1())
                         # print(self.device.recv(999))
                     except Exception as e:
-                        # print('{}'.format(e))
                         logger.error(f'Port {self.port_id}: {e}')
-                        # self.device.shutdown(socket.SHUT_RDWR)
-                        # self.device.close()
                         self.close_device()
                         raise AX25DeviceFAIL
                     else:
