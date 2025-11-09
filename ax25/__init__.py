@@ -1,3 +1,6 @@
+import crcmod
+crc_x25 = crcmod.predefined.mkCrcFun('x-25')
+#################################
 from ax25.ax25Port import KissTCP, KISSSerial, AXIP, AX25KernelDEV, TNC_EMU_TCP_SRV, TNC_EMU_TCP_CL
 
 AX25DeviceTAB = {

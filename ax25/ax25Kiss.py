@@ -85,8 +85,10 @@ b'\xff'     <- END KISS-MODE
 b'\x00'     <- END KISS-MODE
 
 """
+from ax25.ax25dec_enc import bytearray2hexstr
 from cfg.constant import TNC_KISS_CMD, TNC_KISS_CMD_END
 from cfg.logger_config import logger
+from ax25 import crc_x25
 
 #############################
 KISS_TXD  = b'\xC0\x01'
@@ -143,18 +145,42 @@ class Kiss(object):
     def __init__(self, port_cfg: dict):
         self.is_enabled         = port_cfg.get('parm_kiss_is_on', True)
         self.set_kiss_param     = port_cfg.get('parm_set_kiss_param', True)
+        self.fcs_mode           = port_cfg.get('parm_kiss_fcs_mode', 'auto')
+        self._port_id           = port_cfg.get('parm_PortNr', -1)
+        # TNC EMU Ctrl
         self._is_tnc_emu        = False
         self._is_tnc_emu_esc    = False
         self._is_tnc_emu_kiss   = False
+        # Auto FCS
+        self._no_crc_cont = 0
         # CFG Flags
-        self._START_TNC_DEFAULT = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
-        self._END_TNC_DEFAULT   = port_cfg.get('parm_kiss_end_cmd',  TNC_KISS_CMD_END)
+        self._START_TNC_KISS = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
+        self._END_TNC_KISS   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)
         # SET TNC-Parameter
         self._txd_frame    = FEND + KISS_TXD +  bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
         self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
         self._slot_frame   = FEND + KISS_SLOT + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + FEND
         self._tail_frame   = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
         self._duplex_frame = FEND + KISS_DUPL + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + FEND
+
+
+        # ██████████████████████████████████████████████████████████████
+        # ███ LOGGING BEI INIT █████████████████████████████████████████
+        # ██████████████████████████████████████████████████████████████
+        logger.info("═" * 60)
+        logger.info(f"KISS INITIALISIERT - Port {self._port_id}")
+        logger.info(f"  Enabled:          {self.is_enabled}")
+        #logger.info(f"  Multi-Channel:    {self.multi_channel}")
+        logger.info(f"  FCS Mode:         {self.fcs_mode.upper()} {'← DEFAULT FÜR DIREWOLF!' if port_cfg.get('parm_kiss_fcs_mode', 'auto') == 'off' else ''}")
+        logger.info(f"  Set KISS Params:  {self.set_kiss_param}")
+        logger.info(f"  Start-CMD: {self._START_TNC_KISS}")
+        logger.info(f"  END-CMD:   {self._END_TNC_KISS}")
+        logger.info(f"  TXD:       {port_cfg.get('parm_kiss_TXD', 35)}")
+        logger.info(f"  Pers:      {port_cfg.get('parm_kiss_Pers', 160)}")
+        logger.info(f"  Slot:      {port_cfg.get('parm_kiss_Slot', 30)}")
+        logger.info(f"  Tail:      {port_cfg.get('parm_kiss_Tail', 15)}")
+        logger.info(f"  Duplex:    {port_cfg.get('parm_kiss_F_Duplex', 0)}")
+        logger.info("═" * 60)
 
     def set_all_parameter(self):
         if not self.set_kiss_param:
@@ -181,7 +207,7 @@ class Kiss(object):
         ]
 
     ######################################################################
-    def _dec_tnc_emu_parameter(self, inp: bytes):
+    def _dec_tnc_emu_parameter(self, inp: bytearray):
         if not self._is_tnc_emu:
             logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in TNC-EMU-MODE> {inp}")
         if not all((self._is_tnc_emu, self._is_tnc_emu_kiss)):
@@ -219,7 +245,7 @@ class Kiss(object):
                 pass
 
     ######################################################################
-    def unknown_kiss_frame(self, inp: bytes):
+    def unknown_kiss_frame(self, inp: bytearray):
         if not self.is_enabled:
             return inp
         if inp.startswith(FEND + DATA_FRAME_0):
@@ -288,8 +314,18 @@ class Kiss(object):
         return False
 
     #############################################################
-    #
-    def de_kiss(self, inp: bytes):
+    # CRC
+    @staticmethod
+    def _get_crc(de_kissed_frame: bytearray):
+        crc = de_kissed_frame[-2:]
+        crc = int(bytearray2hexstr(crc[::-1]), 16)
+        pack = de_kissed_frame[:-2]
+        calc_crc = crc_x25(pack)
+        return pack, crc, calc_crc
+
+    #############################################################
+    # KISS it
+    def de_kiss(self, inp: bytearray):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -316,15 +352,44 @@ class Kiss(object):
             logger.warning(f"De-Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
             logger.debug(f"> {inp}")
             logger.debug(f"> {inp.hex()}")
-        return inp[2:-1].replace(
+        ###################################
+        # Escape
+        org_pack = inp[2:-1].replace(
             FESC_TFESC,
             FESC
         ).replace(
             FESC_TFEND,
             FEND
         )
+        ###################################
+        # CRC
+        if self.fcs_mode == 'off':
+            return org_pack
+        pack, crc, calc_crc = self._get_crc(org_pack)
+        if self.fcs_mode == 'on':
+            if crc != calc_crc:
+                logger.warning(f"KISS CRC-Check Port {self._port_id}")
+                logger.warning(f"  Pack-CRC ({crc}) != Clac-CRC ({calc_crc})")
+                logger.debug(  f"  Pack:     {inp}")
+                logger.debug(  f"  Pack-Hex: {inp.hex()}")
+            return pack
+        if self.fcs_mode == 'auto':
+            if crc != calc_crc:
+                logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
+                logger.info( "  No CRC Found")
+                self._no_crc_cont += 1
+                if self._no_crc_cont > 3:
+                    logger.info(f"  Turning off CRC Check on this Port")
+                    self.fcs_mode = 'off'
+                return org_pack
+            logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
+            logger.info(f"  CRC Found. Using CRC Check on this Port")
+            self.fcs_mode = 'on'
+            return pack
 
-    def de_kiss_ax25kernel(self, inp: bytes):
+        return org_pack
+
+    def de_kiss_ax25kernel(self, inp: bytearray):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -341,16 +406,44 @@ class Kiss(object):
             return None
         if int(inp[0] / 16) in range(1, 8):
             logger.warning(f"De-Kiss ax25Kernel: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
-
-        return inp[1:].replace(
+        ###################################
+        # Escape
+        org_pack = inp[1:].replace(
             FESC_TFESC,
             FESC
         ).replace(
             FESC_TFEND,
             FEND
         )
+        ###################################
+        # CRC
+        if self.fcs_mode == 'off':
+            return org_pack
+        pack, crc, calc_crc = self._get_crc(org_pack)
+        if self.fcs_mode == 'on':
+            if crc != calc_crc:
+                logger.warning(f"KISS CRC-Check Port {self._port_id}")
+                logger.warning(f"  Pack-CRC ({crc}) != Clac-CRC ({calc_crc})")
+                logger.debug(  f"  Pack:     {inp}")
+                logger.debug(  f"  Pack-Hex: {inp.hex()}")
+            return pack
+        if self.fcs_mode == 'auto':
+            if crc != calc_crc:
+                logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
+                logger.info( "  No CRC Found")
+                self._no_crc_cont += 1
+                if self._no_crc_cont > 3:
+                    logger.info(f"  Turning off CRC Check on this Port")
+                    self.fcs_mode = 'off'
+                return org_pack
+            logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
+            logger.info(f"  CRC Found. Using CRC Check on this Port")
+            self.fcs_mode = 'on'
+            return pack
 
-    def kiss(self, inp: bytes):
+        return org_pack
+
+    def kiss(self, inp: bytearray):
         """
         Code from: https://github.com/ampledata/kiss
         Recover special codes, per KISS spec.
@@ -361,6 +454,10 @@ class Kiss(object):
         """
         if not self.is_enabled:
             return inp
+
+        if self.fcs_mode == 'on':
+            calc_crc = crc_x25(inp)
+            inp = inp + calc_crc
 
         return KISS_DATA_FRAME_0(
             inp.replace(
@@ -372,7 +469,7 @@ class Kiss(object):
             )
         )
 
-    def kiss_ax25kernel(self, inp: bytes):
+    def kiss_ax25kernel(self, inp: bytearray):
         """
         Code from: https://github.com/ampledata/kiss
         Recover special codes, per KISS spec.
@@ -383,6 +480,10 @@ class Kiss(object):
         """
         if not self.is_enabled:
             return inp
+
+        if self.fcs_mode == 'on':
+            calc_crc = crc_x25(inp)
+            inp = inp + calc_crc
 
         return AX25KERNEL_DATA_FRAME_0(
             inp.replace(
@@ -401,13 +502,13 @@ class Kiss(object):
             logger.info(f"Kiss: KISS-END: Set TNC-Parameter disabled !")
             return b''
         # return b''.join([self.FEND, self.RETURN, self.FEND])
-        return self._END_TNC_DEFAULT
+        return self._END_TNC_KISS
 
-    def device_kiss_start_1(self):
+    def device_kiss_start(self):
         if not self.set_kiss_param:
             logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
             return b''
-        return self._START_TNC_DEFAULT
+        return self._START_TNC_KISS
     #############################################################################
     def get_tnc_emu_status(self):
         return self._is_tnc_emu, self._is_tnc_emu_kiss

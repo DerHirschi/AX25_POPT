@@ -2,12 +2,12 @@ import datetime
 import socket
 import serial
 import time
-import crcmod
+from ax25 import crc_x25
 
 from ax25.ax25UI_Pipe import AX25Pipe
 from fnc.os_fnc import is_linux
 
-crc_x25 = crcmod.predefined.mkCrcFun('x-25')
+
 
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
@@ -90,6 +90,22 @@ class AX25Port(object):
         except AX25DeviceFAIL:
             # raise AX25DeviceFAIL(self)  # TODO in PortINIT
             AX25DeviceFAIL(self)
+
+        # ██████████████████████████████████████████████████████████████
+        # ███ LOGGING BEI INIT █████████████████████████████████████████
+        # ██████████████████████████████████████████████████████████████
+        logger.info("═" * 60)
+        logger.info(f"Port INITIALISIERT - Port {self.port_id}")
+        logger.info(f"  Typ:          {self.port_typ}")
+        logger.info(f"  Port-Name:    {self.portname}")
+        logger.info(f"  Parameter:    {self._port_cfg.get('parm_PortParm', None)}")
+        logger.info(f"  KISS Enabled: {self._port_cfg.get('parm_kiss_is_on', True)}")
+        logger.info(f"  TXD:    {self._port_cfg.get('parm_kiss_TXD', 35)}")
+        logger.info(f"  Pers:   {self._port_cfg.get('parm_kiss_Pers', 160)}")
+        logger.info(f"  Slot:   {self._port_cfg.get('parm_kiss_Slot', 30)}")
+        logger.info(f"  Tail:   {self._port_cfg.get('parm_kiss_Tail', 15)}")
+        logger.info(f"  Duplex: {self._port_cfg.get('parm_kiss_F_Duplex', 0)}")
+        logger.info("═" * 60)
 
 
     def init(self):
@@ -1133,11 +1149,11 @@ class KissTCP(AX25Port):
                 raise AX25DeviceFAIL
 
             else:
-                kiss_start_cmd = self.kiss.device_kiss_start_1()
+                kiss_start_cmd = self.kiss.device_kiss_start()
                 if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
 
                     try:
-                        self.device.sendall(self.kiss.device_kiss_start_1())
+                        self.device.sendall(self.kiss.device_kiss_start())
                         # print(self.device.recv(999))
                     except Exception as e:
                         logger.error(f'Port {self.port_id}: {e}')
@@ -1251,13 +1267,13 @@ class KISSSerial(AX25Port):
                 time.sleep(1)
                 tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
                 logger.info(f"Port {self.port_id}: TNC-Banner: {tnc_banner}")
-                kiss_start_cmd = self.kiss.device_kiss_start_1()
+                kiss_start_cmd = self.kiss.device_kiss_start()
                 if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
 
                     # print(f"TNC-Banner: {tnc_banner}")
                     # self.device.flush()
                     try:
-                        self.device.write(self.kiss.device_kiss_start_1())
+                        self.device.write(self.kiss.device_kiss_start())
                         logger.info(f"Port {self.port_id}: TNC-MSG: {self.device.readall().decode('UTF-8', 'ignore')}")
                         self.set_kiss_parm()
                     except Exception as e:
@@ -1732,12 +1748,12 @@ class TNC_EMU_TCP_SRV(AX25Port):
             logger.info(
                 f'Port {self.port_id}: TNC-EMU Device: Client connection accepted. {self._tnc_emu_client_address}')
             self._tnc_emu_connection.settimeout(0.2)
-            kiss_start_cmd = self.kiss.device_kiss_start_1()
+            kiss_start_cmd = self.kiss.device_kiss_start()
             if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
 
                 # self.device.sendall(self.kiss.device_kiss_start_1())
                 try:
-                    self.device.sendall(self.kiss.device_kiss_start_1())
+                    self.device.sendall(self.kiss.device_kiss_start())
                     # print(self.device.recv(999))
                 except BrokenPipeError as e:
                     # print('{}'.format(e))
@@ -1911,7 +1927,7 @@ class TNC_EMU_TCP_CL(AX25Port):
             logger.info(
                 f'Port {self.port_id}: TNC-EMU Device: Server connection accepted. {self._tnc_emu_client_address}')
             self.device.settimeout(0.4)
-            kiss_start_cmd = self.kiss.device_kiss_start_1()
+            kiss_start_cmd = self.kiss.device_kiss_start()
             if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
                 try:
                     self.device.sendall(kiss_start_cmd)
