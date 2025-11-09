@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.122.7'
+VER = '2.122.7' # Rollback
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
