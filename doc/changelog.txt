@@ -10,6 +10,7 @@ Fixes:
   gesetzt.
 - Fehlerhafte aprs-pakete führen zum Program-crash
 - Es wird immer nur ein Frame gesendet
+- CLI: Seitenstop
 
 Optimierung/Änderungen:
 - Soundmodul überarbeitet

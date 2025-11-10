@@ -354,7 +354,10 @@ class AX25Conn:
             return False
         if not data:
             return False
-        if type(data) is not bytes:
+        if not any((
+                type(data) is bytes,
+                type(data) is bytearray,
+        )):
             return False
         self._link_holder_reset()
         self.tx_buf_rawData += data

@@ -1037,6 +1037,7 @@ class DefaultCLI(object):
             chart_type='bar',
             graph_height=8,
             graph_width=60,
+            bar_mode=True,
             expand=False
         )
         out += graph
@@ -1044,6 +1045,9 @@ class DefaultCLI(object):
         # Einzelne Ports
         for k in port_ids:
             if k not in port_bw or not port_bw[k]:
+                continue
+            if not sum(port_bw[k]):
+                out += f"\r\rPort {k}: {self._getTabStr_CLI('cli_no_data')}"
                 continue
             out += '\r\r'
             graph = generate_ascii_graph(
@@ -1053,6 +1057,7 @@ class DefaultCLI(object):
                 chart_type='bar',
                 graph_height=8,
                 graph_width=60,
+                bar_mode=True,
                 expand=False
             )
             out += graph
