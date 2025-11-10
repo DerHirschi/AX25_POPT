@@ -71,6 +71,8 @@ class BoxCLI(DefaultCLI):
                               'CONV',
                               'LCSTATUS',
                               'CSTAT',
+                              'PSTAT',
+                              'BWSTAT',
                               'RTT',
                               ## APRS
                               # 'ATR',

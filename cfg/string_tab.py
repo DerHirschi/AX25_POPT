@@ -1436,6 +1436,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'history': (
+        'Verlauf',
+        'History',
+        'Geschiedenis',
+        'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+
     'linkholder': (
         'Linkhalter',
         'Link holder',
@@ -3314,6 +3327,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_bwstat': (
+        'Bandauslastung letzten 10 Minuten',
+        'Band utilization last 10 minutes',
+        'Bandgebruik laatste 10 minuten',
+        "Utilisation du bracelet pendant 10 minutes",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cli_no_wx_data': (
         'Keine Wetterdaten vorhanden.',
         'No WX data available',
@@ -3522,6 +3547,42 @@ STR_TABLE = {
         '# Message sent to channel {} ({}).\r',
         '# Bericht verzonden naar kanaal {} ({}).\r',
         "# Message envoyé au canal {} ({}).\r",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_1': (
+        'Gesamte Bandauslastung (letzte 10 Minuten, alle Ports)',
+        'Total bandwidth utilization (last 10 minutes, all ports)',
+        'Totaal bandbreedtegebruik (laatste 10 minuten, alle poorten)',
+        'Utilisation totale de la bande passante (10 dernières minutes, tous ports)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_2': (
+        'Bandauslastung aller Ports (%) – 10-Minuten-Verlauf',
+        'Band utilization of all ports (%) – 10-minute trend',
+        'Bandgebruik van alle poorten (%) – 10-minutentrend',
+        'Utilisation de la bande passante de tous les ports (%) – Évolution sur 10 minutes',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_3': (
+        'Bandauslastung Port {} (%) – 10-Minuten-Verlauf',
+        'Band utilization port {} (%) – 10-minute trend',
+        'Bandgebruikpoort {} (%) – 10-minutentrend',
+        'Utilisation de la bande passante (%) – Tendance sur 10 minutes',
         '',
         '',
         '',

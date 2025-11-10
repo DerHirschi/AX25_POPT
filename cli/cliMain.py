@@ -6,7 +6,7 @@ from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
-    CLI_TYP_SYSOP, CLI_TYP_NO_CLI
+    CLI_TYP_SYSOP, CLI_TYP_NO_CLI, SQL_TIME_FORMAT
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
@@ -98,6 +98,8 @@ class DefaultCLI(object):
             'CONNECT':  (1, self._cmd_connect,              'Connect',           False),
             'C!':       (2, self._cmd_connect_exclusive,    'Connect Exclusive (No MH-Path-Lookup)', False),
             'PORT':     (1, self._cmd_port,                 'Ports',             False),
+            'PSTAT':    (2, self._cmd_pstat,                f"Port {self._getTabStr_CLI('statistic')}", False),
+            'BWSTAT':   (2, self._cmd_bwstat,               self._getTabStr_CLI('cmd_help_bwstat'), False),
             'MH':       (0, self._cmd_mh,                   'MYHeard List',      False),
             'LMH':      (0, self._cmd_mhl,                  'Long MYHeard List', False),
             'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
@@ -131,7 +133,7 @@ class DefaultCLI(object):
             'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'), False),
             #
             'VERSION':  (3, self._cmd_ver,                  'Version', False),
-            'POPT':     (0, self._cmd_popt_banner,          'PoPT Banner', False),
+            'POPT':     (4, self._cmd_popt_banner,          'PoPT Banner', False),
             'HELP':     (1, self._cmd_help, self._getTabStr_CLI('help'), False),
             'CONV':     (3, self._cmd_conv,                 'Converse', False),
             '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
@@ -795,6 +797,267 @@ class DefaultCLI(object):
         if not out:
             return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
+
+    def _cmd_pstat(self):
+        """ Port Statistiken (wie WX) """
+        mh = self._port_handler.get_MH()
+        if not mh:
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
+
+        parm = 168  # Standard: letzte 168 Stunden (7 Tage)
+        self._decode_param()
+        if self._parameter:
+            try:
+                parm = int(self._parameter[0])
+                if parm < 1:
+                    parm = 1
+                if parm > 168:  # max 7 Tage
+                    parm = 168
+            except ValueError:
+                pass
+
+        ret = self._get_pstat_cli_out(hours=parm)
+        return ret + '\r'
+
+    def _get_pstat_cli_out(self, hours=168):
+        mh = self._port_handler.get_MH()
+        if not mh:
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
+
+        port_cfg = dict(POPT_CFG.get_port_CFGs())
+        now = datetime.now()
+        start_time = now - timedelta(hours=hours)
+
+        # EXAKTE INDIzes aus deinem Plot-Script (getestet & 100% korrekt!)
+        TIME_IDX        = 1  # timestamt_dt
+        N_PACK_IDX      = 3  # Gesamt-Pakete
+        N_I_IDX         = 15  # I-Frames (Anzahl)
+        N_UI_IDX        = 24  # UI-Frames (Anzahl)
+        DATA_DOWN_IDX   = 27  # Payload ↓ (Bytes)
+        DATA_UP_IDX     = 26  # Total ↑ (mit Header) → DATA_UP = Total - Payload
+        N_REJ_IDX       = 19  # REJ
+
+        # Header
+        out = '\r'
+        out += f" Port-{self._getTabStr_CLI('statistic')} – {hours} {self._getTabStr_CLI('hours')}\r"
+        out += "─" * 79 + "\r"
+        out += "Port    Packets  I-Frames  UI       Bytes RX  Bytes TX  REJ  Bandwidth(10m Avg)\r"
+        out += "─────── ───────  ────────  ───────  ────────  ────────  ───  ──────────────────\r"
+        total_pac = total_i = total_ui = total_data_down = total_data_up = total_rej = 0
+        port_data_raw = {}  # für Graphen später speichern!
+
+        for port_id in self._port_handler.ax25_ports.keys():
+            port = self._port_handler.ax25_ports[port_id]
+            port_name = str(port.portname)[:4].ljust(4)
+
+            raw_data = mh.PortStat_get_data_by_port(port_id)
+            if not raw_data:
+                continue
+
+            port_data_raw[port_id] = raw_data  # speichern für Graph!
+            pac = i = ui = data_down = data_up = rej = 0
+
+            for row in raw_data:
+                try:
+                    ts_str = row[TIME_IDX]
+                    ts = convert_str_to_datetime(ts_str)
+                    if ts < start_time:
+                        continue
+
+                    pac       += row[N_PACK_IDX]
+                    i         += row[N_I_IDX]
+                    ui        += row[N_UI_IDX]
+                    data_down += row[DATA_DOWN_IDX]
+                    data_up   += row[DATA_UP_IDX] - row[DATA_DOWN_IDX]
+                    rej       += row[N_REJ_IDX]
+
+                except (IndexError, ValueError, TypeError) as e:
+                    logger.debug(f"PSTAT IndexError bei Port {port_id}: {e} | row: {row}")
+                    continue
+
+            total_pac       += pac
+            total_i         += i
+            total_ui        += ui
+            total_data_down += data_down
+            total_data_up   += data_up
+            total_rej       += rej
+
+            # Bandwidth (letzte 6 Samples = 1 Minute → 10s Avg)
+            bw_data = mh.get_bandwidth(port_id, baud=port_cfg.get(port_id, {}).get('parm_baud', 1200))
+            bw_avg = sum(bw_data) / len(bw_data) if bw_data else 0.0
+            bw_str = f"{bw_avg:5.1f}%"
+
+            out += (f"{port_id:2} {port_name} "
+                    f"{pac:7}  {i:8}  {ui:7}  "
+                    f" {data_down // 1024:6}k  "
+                    f" {data_up // 1024:6}k  "
+                    f"{rej:3}  {bw_str}\r")
+
+        # Gesamtzeile
+        out += "─────── ───────  ────────  ───────  ────────  ────────  ───  ──────────────────\r"
+        out += (f"        {total_pac:7}  {total_i:8}  {total_ui:7}  "
+                f" {total_data_down // 1024:6}k  "
+                f" {total_data_up // 1024:6}k  "
+                f"{total_rej:3}  Total\r")
+
+        # Bandbreiten-Graph (immer, auch bei >24h)
+        #out += '\r' + self._get_port_bw_cli_out()
+        # ============================
+        # 2. BALKEN-DIAGRAMME (NEU!)
+        # ============================
+        out += "\r\r" + "═" * 79 + "\r"
+        out += f" {self._getTabStr_CLI('history')} (Bytes) – {hours} {self._getTabStr_CLI('hours')}\r"
+        out += "═" * 79 + "\r\r"
+
+        # --- Gesamt über alle Ports ---
+        total_per_minute = defaultdict(int)
+        for port_id, raw_data in port_data_raw.items():
+            for row in raw_data:
+                try:
+                    ts_str = row[1]
+                    ts = convert_str_to_datetime(ts_str)
+                    if ts < start_time:
+                        continue
+                    minute_key = ts.strftime("%Y-%m-%d %H:%M")
+                    total_per_minute[minute_key] += row[DATA_UP_IDX]  # DATA_W_HEADER
+                except Exception as ex:
+                    logger.warning(ex)
+                    continue
+
+        if total_per_minute:
+            sorted_minutes = sorted(total_per_minute.items())
+            #dates = [t[0].split(" ")[0] for t in sorted_minutes]
+            #values = [t[1] for t in sorted_minutes]
+
+            # Auf Stunden reduzieren (für Lesbarkeit)
+            hourly = defaultdict(int)
+            hourly_count = defaultdict(int)
+            for (ts_str, bytes_val) in sorted_minutes:
+                hour_key = ts_str[:13] + ":00"
+                hourly[hour_key] += bytes_val
+                hourly_count[hour_key] += 1
+
+            graph_data = []
+            labels = []
+            for hk in sorted(hourly.keys()):
+                avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
+                graph_data.append({"total": avg_bytes})
+                labels.append(hk[11:13] + "h")
+
+            graph = generate_ascii_graph(
+                graph_data,
+                f"{self._getTabStr_CLI('history')} (Bytes) (all Ports) – {hours}h",
+                datasets={'total': '█'},
+                chart_type='bar',
+                graph_height=10,
+                graph_width=min(len(graph_data), 78),
+                bar_mode=True,
+                expand=True
+            )
+            out += graph + "\r\r"
+
+        # --- Einzelne Ports ---
+        for port_id in sorted(port_data_raw.keys()):
+            per_minute = defaultdict(int)
+            raw_data = port_data_raw[port_id]
+
+            for row in raw_data:
+                try:
+                    ts_str = row[1]
+                    ts = convert_str_to_datetime(ts_str)
+                    if ts < start_time:
+                        continue
+                    minute_key = ts.strftime("%Y-%m-%d %H:%M")
+                    per_minute[minute_key] += row[DATA_UP_IDX]
+                except Exception as ex:
+                    logger.debug(ex)
+                    continue
+
+            if not per_minute:
+                continue
+
+            sorted_minutes = sorted(per_minute.items())
+            hourly = defaultdict(int)
+            hourly_count = defaultdict(int)
+            for (ts_str, bytes_val) in sorted_minutes:
+                hour_key = ts_str[:13] + ":00"
+                hourly[hour_key] += bytes_val
+                hourly_count[hour_key] += 1
+
+            graph_data = []
+            for hk in sorted(hourly.keys()):
+                avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
+                graph_data.append({f"P{port_id}": avg_bytes})
+
+            port_name = self._port_handler.ax25_ports[port_id].portname
+            graph = generate_ascii_graph(
+                graph_data,
+                f"Port {port_id} – {port_name} – Bytes/min – {hours}h",
+                datasets={f"P{port_id}": '█'},
+                chart_type='bar',
+                graph_height=8,
+                graph_width=min(len(graph_data), 78),
+                bar_mode=True,
+                expand=True
+            )
+            out += graph + "\r\r"
+
+        return out + '\r\r'
+
+    def _cmd_bwstat(self):
+        mh = self._port_handler.get_MH()
+        if not mh:
+            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
+
+        out = f"\r {self._getTabStr_CLI('cmd_bwstat_1')}\r"
+        total_bw = []
+        port_bw  = {}
+        port_cfg = dict(POPT_CFG.get_port_CFGs())
+        port_ids = list(port_cfg.keys())
+
+        # KORREKTUR: port_bw richtig befüllen
+        for k in port_ids:
+            bw_list = mh.get_bandwidth(k, baud=port_cfg.get(k, {}).get('parm_baud', 1200))
+            port_bw[k] = bw_list[-60:]  # letzten 10 Minuten
+
+        # Gesamtbandbreite
+        for i in range(60):
+            bw_sum = 0
+            count = 0
+            for p in port_ids:
+                if p in port_bw and i < len(port_bw[p]):
+                    bw_sum += port_bw[p][-(i+1)]
+                    count += 1
+            total_bw.append(bw_sum / count if count else 0)
+
+        graph = generate_ascii_graph(
+            [{'total': v} for v in reversed(total_bw[-60:])],
+            self._getTabStr_CLI('cmd_bwstat_2'),
+            datasets={'total': '█'},
+            chart_type='bar',
+            graph_height=8,
+            graph_width=60,
+            expand=False
+        )
+        out += graph
+
+        # Einzelne Ports
+        for k in port_ids:
+            if k not in port_bw or not port_bw[k]:
+                continue
+            out += '\r\r'
+            graph = generate_ascii_graph(
+                [{f'P{k}': v} for v in port_bw[k]],
+                self._getTabStr_CLI('cmd_bwstat_3').format(k),
+                datasets={f'P{k}': '█'},
+                chart_type='bar',
+                graph_height=8,
+                graph_width=60,
+                expand=False
+            )
+            out += graph
+
+        return out + '\r\r'
 
     def _cmd_wx(self):
         """ WX Stations """

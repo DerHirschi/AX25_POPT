@@ -19,6 +19,8 @@ Optimierung/Änderungen:
 
 Neue Implementierungen / Funktionen:
 - Karte/Map für Locator-Rechner
+- CLI-CMD: "PSTAT" - Port Statistiken
+- CLI-CMD: "BWSTAT" - Port Bandauslastung letzten 10 Minuten
 
 ###########################################################################################################
 ###########################################################################################################

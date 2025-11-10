@@ -24,6 +24,8 @@ class UserCLI(DefaultCLI):
                                'CH',
                                'CONV',
                                'PORT',
+                               'PSTAT',
+                               'BWSTAT',
                                'MH',
                                'LMH',
                                'AXIP',

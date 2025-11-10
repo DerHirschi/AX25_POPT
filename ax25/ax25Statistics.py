@@ -367,18 +367,17 @@ class MH:
             self._bandwidth[port_id] = deque([0] * 60, maxlen=60)
 
     def get_bandwidth(self, port_id, baud=1200):
-        ret = []
-        now = datetime.now()
-        data = list(self._bandwidth.get(port_id, [0] * 60))
-        dif: timedelta = now - self._now_10sec
-        dif_10 = int(dif.seconds / 10)
-        for i in range(dif_10):
-            data.append(0)
-        data = data[-60:]
-        data.reverse()
-        for byt in data:
-            ret.append(((byt * 80) / baud))
-        return ret
+        if port_id not in self._bandwidth:
+            return [0.0] * 60
+
+        raw = list(self._bandwidth[port_id])[-60:]
+        while len(raw) < 60:
+            raw.append(0)
+
+        max_bytes_10s = (baud / 8.0) * 10.0
+        if max_bytes_10s <= 0:
+            return [0.0] * 60
+        return list(reversed([min((b / max_bytes_10s) * 100.0, 100.0) for b in raw][::]))
 
     #########################
     # MH Stuff
