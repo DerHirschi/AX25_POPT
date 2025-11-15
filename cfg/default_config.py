@@ -45,7 +45,7 @@ def getNew_port_cfg():
         # Connection Parameter
         parm_PacLen = 160,  # Max Pac len
         parm_MaxFrame = 3,  # Max (I) Frames
-
+        parm_MaxFrameAuto = True,
         parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
         ####################################
         # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early

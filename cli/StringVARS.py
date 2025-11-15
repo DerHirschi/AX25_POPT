@@ -151,10 +151,10 @@ def get_MaxFrame(port=None,
                  port_handler=None,
                  connection=None,
                  user_db=None):
-    if hasattr(connection, 'parm_MaxFrame'):
-        return str(connection.parm_MaxFrame)
+    if hasattr(connection, 'parm_MaxFrame') and hasattr(connection, 'parm_MaxFrameAuto'):
+        return f"{connection.parm_MaxFrame}" + (" Auto" if connection.parm_MaxFrameAuto else "")
     if hasattr(port, 'port_get_port_cfg'):
-        return str(port.port_get_port_cfg().get('parm_MaxFrame', 0))
+        return f"{port.port_get_port_cfg().get('parm_MaxFrame', 1)}" + (" Auto" if port.port_get_port_cfg().get('parm_MaxFrameAuto', True) else "")
     return '-'
 
 

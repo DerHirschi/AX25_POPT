@@ -2776,10 +2776,10 @@ STR_TABLE = {
         ''),
 
     'port_cfg_pac_len': (
-        'Paket Länge. 1 - 256',
-        'Packet length. 1-256',
-        'Pakket lengte. 1-256',
-        'Longueur trame. 1-256',
+        'Paket Länge. 30 - 256',
+        'Packet length. 30-256',
+        'Pakket lengte. 30-256',
+        'Longueur trame. 30-256',
         '',
         '',
         '',
@@ -2787,7 +2787,7 @@ STR_TABLE = {
         '',
         ''),
 
-    'port_cfg_pac_max': (
+    'port_cfg_pac_max': (   # Not used anymore ...
         'Max Paket Anzahl. 1 - 7',
         'Max Packets. 1 - 7',
         'Max pakketnummer. 1 - 7',

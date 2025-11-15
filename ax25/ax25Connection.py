@@ -119,6 +119,7 @@ class AX25Conn:
         self.port_name: str     = self._port_cfg.get('parm_PortName', '')
         self.parm_PacLen        = self._port_cfg.get('parm_PacLen', 160)  # Max Pac len
         self.parm_MaxFrame      = self._port_cfg.get('parm_MaxFrame', 3)  # Max (I) Frames
+        self.parm_MaxFrameAuto  = self._port_cfg.get('parm_MaxFrameAuto', True)  # Max (I) Frames
         self._parm_TXD          = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation !! Need to be high on AXIP for T1 calculation
         self._parm_Kiss_TXD     = 0
         self._parm_Kiss_Tail    = 0
@@ -212,6 +213,8 @@ class AX25Conn:
         """ S-Packet / CTL Vars"""
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
+        """ Max Frame Auto """
+        self._autoMaxFrameScore = 0
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
         self.calc_irtt()
@@ -1310,6 +1313,33 @@ class AX25Conn:
         is_service = self._is_service_connection()
         self._port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
 
+    ##############################################
+    # Auto Max Frame
+    def set_autoMaxFrameScore(self, in_decrement: bool):
+        """
+        :param in_decrement: True = increment, False = decrement
+        :return:
+        """
+        if not self.parm_MaxFrameAuto:
+            return
+        if in_decrement:
+             self._autoMaxFrameScore += 1
+             logger.debug(f"autoMaxFrameScore increment: {self._autoMaxFrameScore}")
+        else:
+             self._autoMaxFrameScore -= 1
+             logger.debug(f"autoMaxFrameScore decrement: {self._autoMaxFrameScore}")
+
+        if self._autoMaxFrameScore < 0:
+            self._autoMaxFrameScore = 0
+            self.parm_MaxFrame = max(1, (self.parm_MaxFrame - 1))
+            return
+        if self._autoMaxFrameScore > 1:
+            self._autoMaxFrameScore = 0
+            self.parm_MaxFrame = min( self._port_cfg.get('parm_MaxFrame', 3),
+                                     (self.parm_MaxFrame + 1))
+            return
+
+    ##############################################
     def _is_service_connection(self):
         return self.cli.service_cli
 
@@ -1790,6 +1820,7 @@ class S5Ready(DefaultStat):
     def _rx_RR(self):
         self._ax25conn.n2 = 0
         if self._delUNACK():
+            self._ax25conn.set_autoMaxFrameScore(True)
             self._ax25conn.set_T1(stop=True)
         # if self.pf or self.cmd:
         if self.cmd:
@@ -1800,6 +1831,7 @@ class S5Ready(DefaultStat):
     def _rx_REJ(self):
         self._ax25conn.n2 = 0
         self._delUNACK()
+        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self._ax25conn.set_T1(stop=True)
@@ -1896,6 +1928,7 @@ class S6sendREJ(DefaultStat):
 
         self._ax25conn.n2 = 0
         self._delUNACK()
+        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
         else:
@@ -1962,6 +1995,7 @@ class S7WaitForFinal(DefaultStat):
         self._ax25conn.resend_unACK_buf(1)
         # self.ax25conn.set_T1()    ?????????
         self._ax25conn.set_T1()
+        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             # self.rtt_timer.rtt_single_rx()
             self._ax25conn.set_T1(stop=True)
@@ -2026,6 +2060,7 @@ class S8SelfNotReady(DefaultStat):
     def _rx_REJ(self):
         self._ax25conn.n2 = 0
         self._delUNACK()
+        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
         else:

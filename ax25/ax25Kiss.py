@@ -151,9 +151,10 @@ class Kiss(object):
         # TNC Modes (KISS(+x-25 crc), SMACK)
         self._tnc_ch            = 0
         self._fcs_mode          = port_cfg.get('parm_kiss_fcs_mode', 'off') # 'on', 'off', 'auto'
+        self._can_smack_ext     = False     # Cfg. SMACK-EXT lookup (buggy)
+        #
         self._no_crc_count      = 0
         self._is_smack          = False
-        self._can_smack_ext     = False     # Cfg. SMACK-EXT lookup (buggy)
         self._is_smack_ext      = False     # SMACK-EXTENDED (The Firmware 2.42)
         # TNC EMU Ctrl
         self._is_tnc_emu        = False
