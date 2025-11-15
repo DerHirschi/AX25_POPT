@@ -89,6 +89,7 @@ from ax25.ax25dec_enc import bytearray2hexstr
 from cfg.constant import TNC_KISS_CMD, TNC_KISS_CMD_END
 from cfg.logger_config import logger
 from ax25 import crc_x25
+from fnc.crc_fnc import crc_smack
 
 #############################
 KISS_TXD  = b'\xC0\x01'
@@ -96,6 +97,7 @@ KISS_PERS = b'\xC0\x02'
 KISS_SLOT = b'\xC0\x03'
 KISS_TAIL = b'\xC0\x04'
 KISS_DUPL = b'\xC0\x05'
+# KISS_DUPL = b'\xC0\x0F' # CRC-Mode ???
 ##############################################
 # KISS
 DATA_FRAME_0  = b'\x00'     # Channel 0
@@ -145,14 +147,18 @@ class Kiss(object):
     def __init__(self, port_cfg: dict):
         self.is_enabled         = port_cfg.get('parm_kiss_is_on', True)
         self.set_kiss_param     = port_cfg.get('parm_set_kiss_param', True)
-        self.fcs_mode           = port_cfg.get('parm_kiss_fcs_mode', 'auto')
         self._port_id           = port_cfg.get('parm_PortNr', -1)
+        # TNC Modes (KISS(+x-25 crc), SMACK)
+        self._tnc_ch            = 0
+        self._fcs_mode          = port_cfg.get('parm_kiss_fcs_mode', 'off') # 'on', 'off', 'auto'
+        self._no_crc_count      = 0
+        self._is_smack          = False
+        self._can_smack_ext     = False     # Cfg. SMACK-EXT lookup (buggy)
+        self._is_smack_ext      = False     # SMACK-EXTENDED (The Firmware 2.42)
         # TNC EMU Ctrl
         self._is_tnc_emu        = False
         self._is_tnc_emu_esc    = False
         self._is_tnc_emu_kiss   = False
-        # Auto FCS
-        self._no_crc_cont = 0
         # CFG Flags
         self._START_TNC_KISS = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
         self._END_TNC_KISS   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)
@@ -163,7 +169,6 @@ class Kiss(object):
         self._tail_frame   = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
         self._duplex_frame = FEND + KISS_DUPL + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + FEND
 
-
         # ██████████████████████████████████████████████████████████████
         # ███ LOGGING BEI INIT █████████████████████████████████████████
         # ██████████████████████████████████████████████████████████████
@@ -171,7 +176,7 @@ class Kiss(object):
         logger.info(f"KISS INITIALISIERT - Port {self._port_id}")
         logger.info(f"  Enabled:          {self.is_enabled}")
         #logger.info(f"  Multi-Channel:    {self.multi_channel}")
-        logger.info(f"  FCS Mode:         {self.fcs_mode.upper()} {'← DEFAULT FÜR DIREWOLF!' if port_cfg.get('parm_kiss_fcs_mode', 'auto') == 'off' else ''}")
+        logger.info(f"  FCS Mode:         {self._fcs_mode.upper()} {'← DEFAULT FÜR DIREWOLF!' if port_cfg.get('parm_kiss_fcs_mode', 'auto') == 'off' else ''}")
         logger.info(f"  Set KISS Params:  {self.set_kiss_param}")
         logger.info(f"  Start-CMD: {self._START_TNC_KISS}")
         logger.info(f"  END-CMD:   {self._END_TNC_KISS}")
@@ -302,12 +307,16 @@ class Kiss(object):
             if int(inp[1] / 16) in range(1, 8):
                 logger.warning(f"Kiss: Received Frame for TNC-CH {int(inp[1] / 16)}. Multi-Channel TNCs are not supported yet.")
                 logger.warning(f"Kiss: {inp}")
+                # TODO
+                self._tnc_ch = int(inp[1] / 16)
                 return True
             # if inp.startswith(FEND + SMACK_FRAME_0):
             if int(inp[1] / 16) in range(8, 16):
                 logger.warning(f"Kiss: Received Frame for TNC-SMACK-CH {inp[1] - 128}. Multi-Channel TNCs are not supported yet.")
-                logger.warning(f"Kiss: SMACK is not supported yet.")
+                #logger.warning(f"Kiss: SMACK is not supported yet.")
                 logger.warning(f"Kiss: {inp}")
+                self._is_smack = True
+                self._fcs_mode = 'on'
                 return True
             logger.warning(f"Kiss: TNC KISS Frames ? > {inp}")
             return True
@@ -322,6 +331,16 @@ class Kiss(object):
         pack = de_kissed_frame[:-2]
         calc_crc = crc_x25(pack)
         return pack, crc, calc_crc
+
+    @staticmethod
+    def _get_smack_crc(de_kissed_frame: bytearray):
+        if len(de_kissed_frame) < 2:
+            return de_kissed_frame, 0, 0
+
+        crc_received = int.from_bytes(de_kissed_frame[-2:], 'little')
+        pack = de_kissed_frame[:-2]
+        calc_crc = crc_smack(pack)
+        return pack, crc_received, calc_crc
 
     #############################################################
     # KISS it
@@ -342,52 +361,69 @@ class Kiss(object):
             return None
         if not inp.startswith(FEND):
             return None
-        if inp[1] / 16 not in range(0, 8):
+        if inp[1] / 16 not in range(0, 16):
             # No KISS-Data Frames 00, 10, 20, ...
-            logger.warning(f"De-Kiss: No KISS-Data Frames: {int(inp[1] / 16)} ")
+            logger.warning(f"De-Kiss: No KISS/SMACK-Data Frames: {int(inp[1] / 16)} ")
             logger.debug(f"> {inp}")
             logger.debug(f"> {inp.hex()}")
             return None
-        if inp[1] / 16 in range(1, 8):
-            logger.warning(f"De-Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
-            logger.debug(f"> {inp}")
-            logger.debug(f"> {inp.hex()}")
-        ###################################
-        # Escape
-        org_pack = inp[2:-1].replace(
-            FESC_TFESC,
-            FESC
-        ).replace(
-            FESC_TFEND,
-            FEND
-        )
-        ###################################
-        # CRC
-        if self.fcs_mode == 'off':
-            return org_pack
-        pack, crc, calc_crc = self._get_crc(org_pack)
-        if self.fcs_mode == 'on':
-            if crc != calc_crc:
-                logger.warning(f"KISS CRC-Check Port {self._port_id}")
-                logger.warning(f"  Pack-CRC ({crc}) != Clac-CRC ({calc_crc})")
-                logger.debug(  f"  Pack:     {inp}")
-                logger.debug(  f"  Pack-Hex: {inp.hex()}")
-            return pack
-        if self.fcs_mode == 'auto':
-            if crc != calc_crc:
-                logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
-                logger.info( "  No CRC Found")
-                self._no_crc_cont += 1
-                if self._no_crc_cont > 3:
-                    logger.info(f"  Turning off CRC Check on this Port")
-                    self.fcs_mode = 'off'
-                return org_pack
-            logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
-            logger.info(f"  CRC Found. Using CRC Check on this Port")
-            self.fcs_mode = 'on'
-            return pack
 
-        return org_pack
+        if self._is_smack_ext:
+            # SMACK-EXT
+            self._tnc_ch = int(inp[1] / 16)
+            org_pack     = inp[1:-1]
+            return self._do_smack_ext_crc_in_packet(org_pack)
+
+        if inp[1] / 16 in range(0, 8):
+            # KISS & SMACK-EXT
+            #logger.debug(f"De-Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
+            #logger.debug(f"> {inp}")
+            #logger.debug(f"> {inp.hex()}")
+            # TODO
+            self._tnc_ch = int(inp[1] / 16)
+            org_pack     = inp[1:-1]
+            ###################################
+            # SMACK-EXT Erkennung (vor Escaping!) ---
+            if self._can_smack_ext:
+                if len(org_pack) >= 3:
+                    seq_byte = org_pack[-3]
+                    crc_low  = org_pack[-2]
+                    data     = org_pack[:-3]
+
+                    calc_full = crc_x25(data) ^ 0xFFFF
+                    calc_low  = calc_full & 0xFF
+
+                    if calc_low == crc_low:
+                        logger.info(f"SMACK-EXT ERKANNT! SEQ=0x{seq_byte:02x} | Port {self._port_id}")
+                        self._is_smack_ext = True
+                        self._fcs_mode = 'on'
+                        self._no_crc_count = 0
+                        return data[1:]
+
+                if self._is_smack_ext:
+                    return None
+            ###################################
+            # Escape KISS
+            org_pack = org_pack.replace(
+                FESC_TFESC,
+                FESC
+            ).replace(
+                FESC_TFEND,
+                FEND
+            )
+            return self._do_kiss_crc_in_packet(org_pack)
+
+        if int(inp[1] / 16) in range(8, 16):
+            # SMACK
+            logger.warning(f"De-Kiss: Receiving SMACK packet on TNC Channel: {int(inp[1] / 16)} ")
+            # logger.warning(f"Kiss: SMACK is not supported yet.")
+            logger.warning(f"Kiss: {inp}")
+            self._tnc_ch   = int(inp[1] / 16)
+            self._is_smack = True
+            self._fcs_mode = 'on'
+            org_pack = inp[1:-1]
+            return self._do_smack_crc_in_packet(org_pack)
+        return None
 
     def de_kiss_ax25kernel(self, inp: bytearray):
         """
@@ -415,59 +451,80 @@ class Kiss(object):
             FESC_TFEND,
             FEND
         )
-        ###################################
-        # CRC
-        if self.fcs_mode == 'off':
-            return org_pack
-        pack, crc, calc_crc = self._get_crc(org_pack)
-        if self.fcs_mode == 'on':
-            if crc != calc_crc:
-                logger.warning(f"KISS CRC-Check Port {self._port_id}")
-                logger.warning(f"  Pack-CRC ({crc}) != Clac-CRC ({calc_crc})")
-                logger.debug(  f"  Pack:     {inp}")
-                logger.debug(  f"  Pack-Hex: {inp.hex()}")
-            return pack
-        if self.fcs_mode == 'auto':
-            if crc != calc_crc:
-                logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
-                logger.info( "  No CRC Found")
-                self._no_crc_cont += 1
-                if self._no_crc_cont > 3:
-                    logger.info(f"  Turning off CRC Check on this Port")
-                    self.fcs_mode = 'off'
-                return org_pack
-            logger.info(f"KISS CRC-Check (Auto Mode) Port {self._port_id}")
-            logger.info(f"  CRC Found. Using CRC Check on this Port")
-            self.fcs_mode = 'on'
-            return pack
+        return self._do_kiss_crc_in_packet(org_pack)
 
-        return org_pack
+    def _do_kiss_crc_in_packet(self, org_pack: bytearray):
+        if self._fcs_mode == 'off':
+            return org_pack[1:]
 
+        pack, recv_crc, calc_crc = self._get_crc(org_pack)
+        if recv_crc == calc_crc:
+            if self._fcs_mode == 'auto':
+                logger.info(f"KISS CRC OK → using KISS | Port {self._port_id}")
+                self._fcs_mode = 'on'
+            return pack[1:]
+
+        if self._fcs_mode == 'auto':
+            logger.info("KISS CRC failed → no valid mode")
+            self._no_crc_count += 1
+            if self._no_crc_count > 3:
+                self._fcs_mode = 'off'
+            return org_pack[1:]
+
+        logger.warning(f"KISS CRC failed | Port {self._port_id}")
+        return org_pack[1:]
+
+    def _do_smack_crc_in_packet(self, org_pack: bytearray):
+        # SMACK
+        pack, crc, calc_crc = self._get_smack_crc(org_pack)
+        if crc == calc_crc:
+            return pack[1:]
+
+        logger.debug(f"SMACK CRC-Check Port {self._port_id}")
+        logger.debug(f"  Pack-CRC ({crc}) != Clac-CRC ({calc_crc})")
+        logger.debug(f"  Pack:     {org_pack}")
+        logger.debug(f"  Pack-Hex: {org_pack.hex()}")
+        return None
+
+    @staticmethod
+    def _do_smack_ext_crc_in_packet(org_pack: bytearray):
+        if len(org_pack) < 3:
+            return None
+
+        seq_byte = org_pack[-3]
+        crc_low = org_pack[-2]
+        data = org_pack[:-3]
+
+        calc_full = crc_x25(data) ^ 0xFFFF
+        calc_low = calc_full & 0xFF
+
+        if calc_low == crc_low:
+            logger.debug(f"SMACK-EXT CRC OK | SEQ=0x{seq_byte:02x}")
+            return data[1:]
+        else:
+            logger.debug(f"SMACK-EXT CRC failed | recv=0x{crc_low:02x} != calc=0x{calc_low:02x}")
+            return None
+
+    ######################################################
     def kiss(self, inp: bytearray):
-        """
-        Code from: https://github.com/ampledata/kiss
-        Recover special codes, per KISS spec.
-        "If the FESC_TFESC or FESC_TFEND escaped codes appear in the data received,
-        they need to be recovered to the original codes. The FESC_TFESC code is
-        replaced by FESC code and FESC_TFEND is replaced by FEND code."
-        - http://en.wikipedia.org/wiki/KISS_(TNC)#Description
-        """
         if not self.is_enabled:
             return inp
 
-        if self.fcs_mode == 'on':
-            calc_crc = crc_x25(inp)
-            inp = inp + calc_crc
+        if self._fcs_mode == 'on':
+            if self._is_smack:
+                calc_crc = crc_smack(inp)  # ← SMACK CRC!
+                inp = inp + calc_crc.to_bytes(2, 'little')  # ← Little-Endian!
+            else:
+                calc_crc = crc_x25(inp)
+                inp = inp + calc_crc
 
-        return KISS_DATA_FRAME_0(
-            inp.replace(
-                FESC,
-                FESC_TFESC
-            ).replace(
-                FEND,
-                FESC_TFEND
+        # SMACK braucht KEIN Escaping!
+        if self._is_smack:
+            return FEND + SMACK_FRAME_0 + inp + FEND
+        else:
+            return KISS_DATA_FRAME_0(
+                inp.replace(FESC, FESC_TFESC).replace(FEND, FESC_TFEND)
             )
-        )
 
     def kiss_ax25kernel(self, inp: bytearray):
         """
@@ -481,7 +538,7 @@ class Kiss(object):
         if not self.is_enabled:
             return inp
 
-        if self.fcs_mode == 'on':
+        if self._fcs_mode == 'on':
             calc_crc = crc_x25(inp)
             inp = inp + calc_crc
 
@@ -512,3 +569,5 @@ class Kiss(object):
     #############################################################################
     def get_tnc_emu_status(self):
         return self._is_tnc_emu, self._is_tnc_emu_kiss
+
+

@@ -21,13 +21,13 @@ class AX25Pipe(object):
         if not pipe_cfg and connection:
             pipe_cfg = getNew_pipe_cfg()
         if connection:
-            pipe_cfg['pipe_parm_own_call'] = str(connection.my_call_str)
-            pipe_cfg['pipe_parm_address_str'] = f'{connection.to_call_str} ' + ' '.join(connection.via_calls)
-            pipe_cfg['pipe_parm_port'] = int(connection.own_port.port_id)
-            pipe_cfg['pipe_parm_Proto'] = True
-            pipe_cfg['pipe_parm_permanent'] = False
-            pipe_cfg['pipe_parm_PacLen'] = 0
-            pipe_cfg['pipe_parm_MaxFrame'] = 0
+            pipe_cfg['pipe_parm_own_call']      = str(connection.my_call_str)
+            pipe_cfg['pipe_parm_address_str']   = f'{connection.to_call_str} ' + ' '.join(connection.via_calls)
+            pipe_cfg['pipe_parm_port']          = int(connection.own_port.port_id)
+            pipe_cfg['pipe_parm_Proto']         = True
+            pipe_cfg['pipe_parm_permanent']     = False
+            pipe_cfg['pipe_parm_PacLen']        = 0
+            pipe_cfg['pipe_parm_MaxFrame']      = 0
             # pipe_cfg['pipe_parm_pipe_tx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-tx.txt'
             # pipe_cfg['pipe_parm_pipe_rx'] = f'{connection.ch_index}-{connection.my_call_str}-{connection.to_call_str}-rx.txt'
 
@@ -44,6 +44,7 @@ class AX25Pipe(object):
             raise AttributeError
 
         if not validate_ax25Call(pipe_cfg.get('pipe_parm_own_call', '')):
+            logger.error(f"No valid ax25-Call> {pipe_cfg.get('pipe_parm_own_call', '')}")
             raise AttributeError
 
         logger.debug("New Pipe !")
@@ -67,6 +68,8 @@ class AX25Pipe(object):
         for call in self._via_calls:
             if call:
                 if not validate_ax25Call(call):
+                    logger.error(f"No valid ax25-Call> {call}")
+
                     raise AttributeError
 
         if self._connection:
@@ -80,11 +83,11 @@ class AX25Pipe(object):
             )
         self._max_pac_timer = time.time()
         self._tx_file_check_timer = time.time()
-        """ Buffers buffers buffers. We have Ram, so we need more buffer. !! TODO CLEANUP !! """
-        self._tx_data = b''
-        self._rx_data = b''
+        """ Buffers buffers buffers. """
+        self._tx_data = bytearray()
+        self._rx_data = bytearray()
         self.tx_frame_buf = []
-        """ Protocoled Pipe """
+        """ Proto Pipe """
 
     def cron_exec(self):
         if self._tx_filename or self._rx_filename:
@@ -121,8 +124,8 @@ class AX25Pipe(object):
 
     def _tx_Proto(self):
         if self._connection:
-            self._connection.send_data(bytes(self._tx_data))
-            self._tx_data = b''
+            self._connection.send_data(bytearray(self._tx_data))
+            self._tx_data = bytearray()
 
     def _set_parm_max_pac_timer(self):
         self._max_pac_timer = self._parm_max_pac_timer + time.time()
@@ -153,7 +156,7 @@ class AX25Pipe(object):
                 else:
                     try:
                         with open(self._tx_filename, 'wb') as f:
-                            pass
+                            f.write(b'')
                     except (PermissionError, FileNotFoundError):
                         self.e_count += 1
                         return False

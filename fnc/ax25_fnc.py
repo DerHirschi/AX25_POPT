@@ -63,7 +63,7 @@ def get_list_fm_viaStr(via_str: str):
 
 def build_ax25uid(from_call_str,
                   to_call_str,
-                  via_calls: [] = None,
+                  via_calls: [] or None = None,
                   dec=True):
     if via_calls is None:
         via_calls = []

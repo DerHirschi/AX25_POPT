@@ -79,7 +79,7 @@ class DefaultCLI(object):
 
         self._rtt_active        = False
 
-        self._tx_buffer         = b''
+        self._tx_buffer         = bytearray()
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # self._user_db_ent.cli_sidestop = 20
@@ -2068,24 +2068,24 @@ class DefaultCLI(object):
             return
         if self._ss_state == 0:
             if self._raw_input.upper() == b'A' + eol:
-                self._tx_buffer = b''
+                self._tx_buffer = bytearray()
                 self.send_prompt()
                 self.change_cli_state(1)
                 return
             if self._raw_input.upper() == b'O' + eol:
                 self._connection.send_data(bytearray(self._tx_buffer))
-                self._tx_buffer = b''
+                self._tx_buffer = bytearray()
                 self.change_cli_state(1)
                 return
         if self._ss_state == 1:
             if self._raw_input.upper() == b'A' + eol:
-                self._tx_buffer = b''
+                self._tx_buffer = bytearray()
                 self.send_prompt()
                 self.change_cli_state(1)
                 return
 
             if self._raw_input.upper().startswith(b'R'):
-                self._tx_buffer = b''
+                self._tx_buffer = bytearray()
                 self.change_cli_state(1)
                 self._last_line = b''
                 self._input = self._raw_input

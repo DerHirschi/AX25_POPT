@@ -127,8 +127,11 @@ def locator_to_coordinates(locator):
             lat += 1 / 11520
 
         return round(lat, 6), round(lon, 6)
+    except ValueError:
+        return 0, 0
+
     except Exception as ex:
-        logger.error(f"locator_to_coordinates: {ex}")
+        logger.warning(f"locator_to_coordinates: {ex}")
         return 0, 0
 
 """
