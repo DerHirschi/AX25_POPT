@@ -1135,6 +1135,7 @@ class AX25Conn:
             pac = self.tx_buf_unACK[index_list[i]]
             pac.ctl_byte.nr = self.vr
             self.tx_buf_2send.append(pac)
+        self.set_autoMaxFrameScore(False)
 
     def exec_cli(self, inp=b''):
         """ CLI Processing like sending C-Text ... """
@@ -1831,7 +1832,6 @@ class S5Ready(DefaultStat):
     def _rx_REJ(self):
         self._ax25conn.n2 = 0
         self._delUNACK()
-        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self._ax25conn.set_T1(stop=True)
@@ -1928,7 +1928,6 @@ class S6sendREJ(DefaultStat):
 
         self._ax25conn.n2 = 0
         self._delUNACK()
-        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
         else:
@@ -1995,7 +1994,6 @@ class S7WaitForFinal(DefaultStat):
         self._ax25conn.resend_unACK_buf(1)
         # self.ax25conn.set_T1()    ?????????
         self._ax25conn.set_T1()
-        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             # self.rtt_timer.rtt_single_rx()
             self._ax25conn.set_T1(stop=True)
@@ -2060,7 +2058,6 @@ class S8SelfNotReady(DefaultStat):
     def _rx_REJ(self):
         self._ax25conn.n2 = 0
         self._delUNACK()
-        self._ax25conn.set_autoMaxFrameScore(False)
         if self.pf:
             self._ax25conn.send_RNR(pf_bit=self.pf, cmd_bit=False)
         else:
