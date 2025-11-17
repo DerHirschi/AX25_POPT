@@ -123,7 +123,7 @@ class AX25Conn:
         self._parm_TXD          = self._port_cfg.get('parm_TXD', 400)  # TX Delay for RTT Calculation !! Need to be high on AXIP for T1 calculation
         self._parm_Kiss_TXD     = 0
         self._parm_Kiss_Tail    = 0
-        if self.own_port.kiss.is_enabled:
+        if self.own_port.tnc_protocol.is_enabled:
             self._parm_Kiss_TXD     = self._port_cfg.get('parm_kiss_TXD', 35)
             self._parm_Kiss_Tail    = self._port_cfg.get('parm_kiss_Tail', 15)
         self._parm_T2           = int(self._port_cfg.get('parm_T2', 2888))  # T2 (Response Delay Timer) Default: 2888 / (parm_baud / 100)
@@ -1335,7 +1335,7 @@ class AX25Conn:
             self.parm_MaxFrame = max(1, (self.parm_MaxFrame - 1))
             return
         if self._autoMaxFrameScore > 1:
-            self._autoMaxFrameScore = 0
+            self._autoMaxFrameScore = 1
             self.parm_MaxFrame = min( self._port_cfg.get('parm_MaxFrame', 3),
                                      (self.parm_MaxFrame + 1))
             return

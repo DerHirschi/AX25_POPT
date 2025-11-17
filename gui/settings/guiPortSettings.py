@@ -436,7 +436,6 @@ class PortSetTab:
         f_x = 480
         f_y = 340
         f_height = 180
-        bg_cl = 'grey80'
         mon_col_frame = ttk.Frame(self.tab, width=440, height=f_height)
         #mon_col_frame.configure(bg=bg_cl)
         mon_col_frame.place(x=f_x, y=height - f_y)
@@ -622,7 +621,7 @@ class PortSetTab:
         param_next_line = 0
         typ = self._port_select_var.get()
         new_port_cfg = getNew_port_cfg()
-        if typ == 'KISSTCP':
+        if typ in ('KISSTCP', 'AGWPE-TCP'):
             self._kiss_txd.configure(state="normal")
             self._kiss_pers.configure(state="normal")
             self._kiss_tail.configure(state="normal")
@@ -911,6 +910,7 @@ class PortSetTab:
             tmp_param = (self._param1_var.get(), 0)
 
         self._port_setting['parm_PortParm'] = tmp_param
+        print(self._port_setting['parm_PortParm'])
         # Pseudo TXD
         try:
             self._port_setting['parm_TXD'] = int(self._p_txd_var.get())
@@ -995,6 +995,7 @@ class PortSetTab:
             return False
         POPT_CFG.set_port_CFG_fm_id(self._port_setting.get('parm_PortNr', -1),
                                     self._port_setting)
+        return True
 
     def _t2_auto_check(self):
         if self._t2_auto_var.get():

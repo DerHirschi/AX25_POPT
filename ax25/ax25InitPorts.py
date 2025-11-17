@@ -176,7 +176,7 @@ class AX25PortHandler(object):
         return any((
             self._bbs.tasker(),         # bbs.tasker-q
             self._gpio_tasker_q(),      # gpio.tasker-q
-            self._sound.sound_tasker()  # tasker-q
+            self._sound.sound_tasker(), # tasker-q
         ))
 
     def _05sec_task(self):
@@ -961,14 +961,14 @@ class AX25PortHandler(object):
 
                     # self._all_pipe_cfgs[call] = pipe
 
-
     def _pipeTool_task(self):
         for port_id, port in self.ax25_ports.items():
-            if port.device_is_running:
-                for pipe_uid, pipe in port.pipes.items():
-                    if pipe:
-                        # print(f"PipeCron: {pipe_uid}")
-                        pipe.cron_exec()
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                if pipe:
+                    # print(f"PipeCron: {pipe_uid}")
+                    pipe.cron_exec()
 
     def get_all_pipes(self):
         ret = []

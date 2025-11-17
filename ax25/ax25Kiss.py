@@ -143,10 +143,15 @@ KISS_DATA_FRAME_0            = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
 # Linux ax25Kernel-DEV Data Frame CH 0
 AX25KERNEL_DATA_FRAME_0     = lambda inp: DATA_FRAME_0 + inp
 
-class Kiss(object):
+
+
+
+class Kiss:
     def __init__(self, port_cfg: dict):
+        self.protocol_name =    'KISS'
+
         self.is_enabled         = port_cfg.get('parm_kiss_is_on', True)
-        self.set_kiss_param     = port_cfg.get('parm_set_kiss_param', True)
+        self.set_param          = port_cfg.get('parm_set_kiss_param', True)
         self._port_id           = port_cfg.get('parm_PortNr', -1)
         # TNC Modes (KISS(+x-25 crc), SMACK)
         self._tnc_ch            = 0
@@ -178,7 +183,7 @@ class Kiss(object):
         logger.info(f"  Enabled:          {self.is_enabled}")
         #logger.info(f"  Multi-Channel:    {self.multi_channel}")
         logger.info(f"  FCS Mode:         {self._fcs_mode.upper()} {'← DEFAULT FÜR DIREWOLF!' if port_cfg.get('parm_kiss_fcs_mode', 'auto') == 'off' else ''}")
-        logger.info(f"  Set KISS Params:  {self.set_kiss_param}")
+        logger.info(f"  Set KISS Params:  {self.set_param}")
         logger.info(f"  Start-CMD: {self._START_TNC_KISS}")
         logger.info(f"  END-CMD:   {self._END_TNC_KISS}")
         logger.info(f"  TXD:       {port_cfg.get('parm_kiss_TXD', 35)}")
@@ -189,7 +194,7 @@ class Kiss(object):
         logger.info("═" * 60)
 
     def set_all_parameter(self):
-        if not self.set_kiss_param:
+        if not self.set_param:
             logger.info(f"Kiss: Set TNC-Parameter disabled !")
             return b''
         return b''.join([
@@ -201,7 +206,7 @@ class Kiss(object):
         ])
 
     def set_all_parameter_ax25kernel(self):
-        if not self.set_kiss_param:
+        if not self.set_param:
             logger.info(f"Kiss: Set TNC-Parameter disabled !")
             return []
         return [
@@ -251,7 +256,7 @@ class Kiss(object):
                 pass
 
     ######################################################################
-    def unknown_kiss_frame(self, inp: bytearray):
+    def unknown_kiss_frame(self, inp: bytes):
         if not self.is_enabled:
             return inp
         if inp.startswith(FEND + DATA_FRAME_0):
@@ -326,7 +331,7 @@ class Kiss(object):
     #############################################################
     # CRC
     @staticmethod
-    def _get_crc(de_kissed_frame: bytearray):
+    def _get_crc(de_kissed_frame: bytes):
         crc = de_kissed_frame[-2:]
         crc = int(bytearray2hexstr(crc[::-1]), 16)
         pack = de_kissed_frame[:-2]
@@ -334,7 +339,7 @@ class Kiss(object):
         return pack, crc, calc_crc
 
     @staticmethod
-    def _get_smack_crc(de_kissed_frame: bytearray):
+    def _get_smack_crc(de_kissed_frame: bytes):
         if len(de_kissed_frame) < 2:
             return de_kissed_frame, 0, 0
 
@@ -345,7 +350,7 @@ class Kiss(object):
 
     #############################################################
     # KISS it
-    def de_kiss(self, inp: bytearray):
+    def decode_tnc(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -454,7 +459,7 @@ class Kiss(object):
         )
         return self._do_kiss_crc_in_packet(org_pack)
 
-    def _do_kiss_crc_in_packet(self, org_pack: bytearray):
+    def _do_kiss_crc_in_packet(self, org_pack: bytes):
         if self._fcs_mode == 'off':
             return org_pack[1:]
 
@@ -475,7 +480,7 @@ class Kiss(object):
         logger.warning(f"KISS CRC failed | Port {self._port_id}")
         return org_pack[1:]
 
-    def _do_smack_crc_in_packet(self, org_pack: bytearray):
+    def _do_smack_crc_in_packet(self, org_pack: bytes):
         # SMACK
         pack, crc, calc_crc = self._get_smack_crc(org_pack)
         if crc == calc_crc:
@@ -488,7 +493,7 @@ class Kiss(object):
         return None
 
     @staticmethod
-    def _do_smack_ext_crc_in_packet(org_pack: bytearray):
+    def _do_smack_ext_crc_in_packet(org_pack: bytes):
         if len(org_pack) < 3:
             return None
 
@@ -507,7 +512,7 @@ class Kiss(object):
             return None
 
     ######################################################
-    def kiss(self, inp: bytearray):
+    def encode_tnc(self, inp: bytearray):
         if not self.is_enabled:
             return inp
 
@@ -555,15 +560,15 @@ class Kiss(object):
 
 
     #############################################################################
-    def device_kiss_end(self):
-        if not self.set_kiss_param:
+    def device_end(self):
+        if not self.set_param:
             logger.info(f"Kiss: KISS-END: Set TNC-Parameter disabled !")
             return b''
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return self._END_TNC_KISS
 
-    def device_kiss_start(self):
-        if not self.set_kiss_param:
+    def device_start(self):
+        if not self.set_param:
             logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
             return b''
         return self._START_TNC_KISS

@@ -24,6 +24,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: "BWSTAT" - Port Bandauslastung letzten 10 Minuten
 - Auto Max-Frame: Max-Frame wird automatisch angepasst, je nach Qualität
   der Verbindung.
+- Port-Typ: AGWPE-TCP
 
 ###########################################################################################################
 ###########################################################################################################

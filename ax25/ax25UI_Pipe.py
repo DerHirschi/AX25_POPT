@@ -47,24 +47,19 @@ class AX25Pipe(object):
             logger.error(f"No valid ax25-Call> {pipe_cfg.get('pipe_parm_own_call', '')}")
             raise AttributeError
 
-        logger.debug("New Pipe !")
-        for p_name, param in pipe_cfg.items():
-            logger.debug(f"{p_name}: {param}")
-        logger.debug(f"Conn: {connection}")
-
-        self._pipe_cfg = pipe_cfg
-        self._tx_filename = pipe_cfg.get('pipe_parm_pipe_tx', '')
-        self._rx_filename = pipe_cfg.get('pipe_parm_pipe_rx', '')
-        self._parm_tx_file_check_timer = pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)
+        self._pipe_cfg                  = pipe_cfg
+        self._tx_filename               = pipe_cfg.get('pipe_parm_pipe_tx', '')
+        self._rx_filename               = pipe_cfg.get('pipe_parm_pipe_rx', '')
+        self._parm_tx_file_check_timer  = pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)
         # self._port_id = int(pipe_cfg.get('pipe_parm_port', -1))
-        self._parm_pac_len = pipe_cfg.get('pipe_parm_PacLen', 128)
-        self._parm_max_pac = pipe_cfg.get('pipe_parm_MaxFrame', 3)
-        self._parm_max_pac_timer = pipe_cfg.get('pipe_parm_MaxPacDelay', 30)
+        self._parm_pac_len              = pipe_cfg.get('pipe_parm_PacLen', 128)
+        self._parm_max_pac              = pipe_cfg.get('pipe_parm_MaxFrame', 3)
+        self._parm_max_pac_timer        = pipe_cfg.get('pipe_parm_MaxPacDelay', 30)
         # self._isProto = pipe_cfg.get('pipe_parm_Proto', True)
-        self._add_str = pipe_cfg.get('pipe_parm_address_str', '')
-        self._own_call = pipe_cfg.get('pipe_parm_own_call', '')
-        self._dest_call = self._add_str.split(' ')[0]
-        self._via_calls = self._add_str.split(' ')[1:]
+        self._add_str                   = pipe_cfg.get('pipe_parm_address_str', '')
+        self._own_call                  = pipe_cfg.get('pipe_parm_own_call', '')
+        self._dest_call                 = self._add_str.split(' ')[0]
+        self._via_calls                 = self._add_str.split(' ')[1:]
         for call in self._via_calls:
             if call:
                 if not validate_ax25Call(call):
@@ -81,13 +76,20 @@ class AX25Pipe(object):
                 via_calls=self._via_calls,
                 dec = False
             )
-        self._max_pac_timer = time.time()
-        self._tx_file_check_timer = time.time()
+        self._max_pac_timer         = time.time()
+        self._tx_file_check_timer   = time.time()
         """ Buffers buffers buffers. """
-        self._tx_data = bytearray()
-        self._rx_data = bytearray()
-        self.tx_frame_buf = []
+        self._tx_data       = bytearray()
+        self._rx_data       = bytearray()
+        self.tx_frame_buf   = []
         """ Proto Pipe """
+        # Debug output
+        logger.debug("═" * 60)
+        logger.debug("New AX25Pipe initialized")
+        for key, val in pipe_cfg.items():
+            logger.debug(f"  {key}: {val}")
+        logger.debug(f"  Connection: {connection}")
+        logger.debug("═" * 60)
 
     def cron_exec(self):
         if self._tx_filename or self._rx_filename:
@@ -95,46 +97,51 @@ class AX25Pipe(object):
             self._tx_cron()
 
     def _tx_file_cron(self):
-        if self._tx_file_check_timer < time.time():
-            self._tx_file_check_timer = time.time() + self._parm_tx_file_check_timer
-            """"""
-            self._load_tx_buff_fm_file()
+        if self._tx_file_check_timer > time.time():
+            return
+        self._tx_file_check_timer = time.time() + self._parm_tx_file_check_timer
+        """"""
+        self._load_tx_buff_fm_file()
 
     def _tx_cron(self):
-        if self._tx_data:
-            if self._check_parm_max_pac_timer():
-                self._tx_unProto()
-                self._tx_Proto()
+        if not self._tx_data:
+            return
+        if not self._check_parm_max_pac_timer():
+            return
+        self._tx_unProto()
+        self._tx_Proto()
 
     def _tx_unProto(self):
-        if self._connection is None:
-            while len(self.tx_frame_buf) < self._parm_max_pac and self._tx_data:
-                new_frame = AX25Frame()
-                new_frame.from_call.call_str = self._own_call
-                new_frame.to_call.call_str = self._dest_call
-                new_frame.via_calls = via_calls_fm_str(' '.join(self._via_calls))
-                new_frame.ctl_byte.UIcByte()
-                new_frame.pid_byte.pac_types[int(self._pipe_cfg.get('pipe_parm_pid', 0xf0))]()
-                new_frame.ctl_byte.cmd = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
-                new_frame.ctl_byte.pf = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
-                new_frame.payload = self._tx_data[:min(len(self._tx_data), self._parm_pac_len)]
-                self._tx_data = self._tx_data[min(len(self._tx_data), self._parm_pac_len):]
-                new_frame.encode_ax25frame()
-                self.tx_frame_buf.append(new_frame)
+        if self._connection:
+            return
+        while len(self.tx_frame_buf) < self._parm_max_pac and self._tx_data:
+            new_frame = AX25Frame()
+            new_frame.from_call.call_str = self._own_call
+            new_frame.to_call.call_str = self._dest_call
+            new_frame.via_calls = via_calls_fm_str(' '.join(self._via_calls))
+            new_frame.ctl_byte.UIcByte()
+            new_frame.pid_byte.pac_types[int(self._pipe_cfg.get('pipe_parm_pid', 0xf0))]()
+            new_frame.ctl_byte.cmd = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[0]
+            new_frame.ctl_byte.pf = self._pipe_cfg.get('pipe_parm_cmd_pf', (False, False))[1]
+            new_frame.payload = self._tx_data[:min(len(self._tx_data), self._parm_pac_len)]
+            self._tx_data = self._tx_data[min(len(self._tx_data), self._parm_pac_len):]
+            new_frame.encode_ax25frame()
+            self.tx_frame_buf.append(new_frame)
 
     def _tx_Proto(self):
-        if self._connection:
-            self._connection.send_data(bytearray(self._tx_data))
-            self._tx_data = bytearray()
+        if not self._connection:
+            return
+        self._connection.send_data(bytearray(self._tx_data))
+        self._tx_data = bytearray()
 
     def _set_parm_max_pac_timer(self):
         self._max_pac_timer = self._parm_max_pac_timer + time.time()
 
     def _check_parm_max_pac_timer(self):
-        if self._max_pac_timer < time.time():
-            self._set_parm_max_pac_timer()
-            return True
-        return False
+        if self._max_pac_timer > time.time():
+            return False
+        self._set_parm_max_pac_timer()
+        return True
 
     def handle_rx(self, ax25_frame):
         self._rx_data += ax25_frame.payload
@@ -144,46 +151,49 @@ class AX25Pipe(object):
         self._rx_data += raw_data
         return self._save_rx_buff_to_file()
 
+    # ====================================================================
+    # Pipe <> File
     def _load_tx_buff_fm_file(self):
-        if self._tx_filename:
-            if check_file:
-                try:
-                    with open(self._tx_filename, 'rb') as f:
-                        self._tx_data += f.read()
-                except (PermissionError, FileNotFoundError):
-                    self.e_count += 1
-                    return False
-                else:
-                    try:
-                        with open(self._tx_filename, 'wb') as f:
-                            f.write(b'')
-                    except (PermissionError, FileNotFoundError):
-                        self.e_count += 1
-                        return False
-                self.e_count = 0
-                return True
-            else:
-                self.e_count += 1
-                return False
+        if not self._tx_filename:
+            return False
+        if not check_file:
+            self.e_count += 1
+            return False
+        try:
+            with open(self._tx_filename, 'rb') as f:
+                self._tx_data += f.read()
+        except (PermissionError, FileNotFoundError):
+            self.e_count += 1
+            return False
+        try:
+            with open(self._tx_filename, 'wb') as f:
+                f.write(b'')
+        except (PermissionError, FileNotFoundError):
+            self.e_count += 1
+            return False
+        self.e_count = 0
         return True
 
     def _save_rx_buff_to_file(self):
-        if self._rx_filename:
-            if self._rx_data:
-                if check_file(self._rx_filename):
-                    try:
-                        with open(self._rx_filename, 'ab') as f:
-                            f.write(self._rx_data)
-                            self._rx_data = b''
-                            self.e_count = 0
-                            return True
-                    except (PermissionError, FileNotFoundError):
-                        self.e_count += 1
-                        return False
-                self.e_count += 1
-                return False
+        if not self._rx_filename:
+            return False
+        if not self._rx_data:
+            return True
+        if not check_file(self._rx_filename):
+            self.e_count += 1
+            return False
+        try:
+            with open(self._rx_filename, 'ab') as f:
+                f.write(self._rx_data)
+                self._rx_data = b''
+        except (PermissionError, FileNotFoundError):
+            self.e_count += 1
+            return False
+        self.e_count = 0
         return True
 
+    # ====================================================================
+    # Getter
     def get_cfg_fm_pipe(self):
         return self._pipe_cfg
 

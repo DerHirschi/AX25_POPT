@@ -346,7 +346,7 @@ class PipeToolSettings(tk.Toplevel):
 
         self.tabControl = ttk.Notebook(main_f, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
-        self.tab_list: [ttk.Frame] = []
+        self.tab_list = []
         all_pipes = PORT_HANDLER.get_all_pipes()
         for pipe in all_pipes:
             pipe_cfg = pipe.get_cfg_fm_pipe()
@@ -434,7 +434,7 @@ class PipeToolSettings(tk.Toplevel):
             label_txt = f"{len(self.tab_list)}"
             tab = PipeTab(self, pipe=dummy_pipe, connection=conn)
             self.tabControl.add(tab.own_tab, text=label_txt)
-            self.tabControl.select(len(self.tab_list))
+            #self.tabControl.select(len(self.tab_list))
             self.tab_list.append(tab)
 
     def _del_btn_cmd(self):
