@@ -239,7 +239,7 @@ class AGWPEHandler:
             logger.info(f"  Reserved:  {reserved.hex()}")
             logger.info(f"  Ports:     {capabilities}")
 
-            return {
+            decoded_data =  {
                 'port': port,
                 'data_kind': data_kind,
                 'pid': pid,
@@ -249,6 +249,7 @@ class AGWPEHandler:
                 'reserved': reserved,
                 'capabilities': capabilities
             }
+            return None
 
         except Exception as e:
             logger.error(f"AGWPE G-Frame decode error: {e}")
@@ -281,7 +282,7 @@ class AGWPEHandler:
             if data_len > 0:
                 logger.info(f"  Data:      {data.decode('ascii', errors='ignore')}")
 
-            return {
+            decoded_data = {
                 'port': port,
                 'data_kind': data_kind,
                 'pid': pid,
@@ -291,6 +292,7 @@ class AGWPEHandler:
                 'reserved': reserved,
                 'response_data': data.decode('ascii', errors='ignore') if data_len > 0 else ''
             }
+            return None
 
         except Exception as e:
             logger.error(f"AGWPE k-Frame decode error: {e}")
