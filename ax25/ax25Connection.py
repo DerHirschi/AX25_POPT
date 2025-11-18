@@ -1114,6 +1114,8 @@ class AX25Conn:
     def delUNACK(self):
         if ((self.zustand_exec.nr - 1) % 8) in self.tx_buf_unACK.keys():
             self._del_unACK_buf()
+            if not self.tx_buf_unACK:
+                self._set_autoMaxFrameScore(True)
             return True
         return False
 
@@ -1135,7 +1137,7 @@ class AX25Conn:
             pac = self.tx_buf_unACK[index_list[i]]
             pac.ctl_byte.nr = self.vr
             self.tx_buf_2send.append(pac)
-        self.set_autoMaxFrameScore(False)
+        self._set_autoMaxFrameScore(False)
 
     def exec_cli(self, inp=b''):
         """ CLI Processing like sending C-Text ... """
@@ -1316,7 +1318,7 @@ class AX25Conn:
 
     ##############################################
     # Auto Max Frame
-    def set_autoMaxFrameScore(self, in_decrement: bool):
+    def _set_autoMaxFrameScore(self, in_decrement: bool):
         """
         :param in_decrement: True = increment, False = decrement
         :return:
@@ -1335,7 +1337,7 @@ class AX25Conn:
             self.parm_MaxFrame = max(1, (self.parm_MaxFrame - 1))
             return
         if self._autoMaxFrameScore > 1:
-            self._autoMaxFrameScore = 1
+            self._autoMaxFrameScore = 0
             self.parm_MaxFrame = min( self._port_cfg.get('parm_MaxFrame', 3),
                                      (self.parm_MaxFrame + 1))
             return
@@ -1821,7 +1823,6 @@ class S5Ready(DefaultStat):
     def _rx_RR(self):
         self._ax25conn.n2 = 0
         if self._delUNACK():
-            self._ax25conn.set_autoMaxFrameScore(True)
             self._ax25conn.set_T1(stop=True)
         # if self.pf or self.cmd:
         if self.cmd:

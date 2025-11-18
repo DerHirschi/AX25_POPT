@@ -11,25 +11,6 @@ class AGWPEHandler:
         self._call_from = call_from.encode()[:10]
         self._app_name  = self._call_from  # App Name
 
-    def login_K_Mode(self):
-        # return b''
-        header = bytearray(36)  # 36 Header + 36 Data = 72 Bytes
-        header[0] = self._agwpe_channel
-        header[4] = 0x6B  # 'k'
-        header[8:18] = self._app_name
-        header[18:28] = self._call_from  # User Call
-        header[28:32] = (0).to_bytes(4, 'little')  # DataLen = 36
-        header[32:36] = b'\x00\x00\x00\x00'  # Reserved
-
-        # --- 36 Bytes Data (beliebig, aber oft Version + Info) ---
-        #data = bytearray(36)
-        #data[0:8] = b'PoPT v2'  # App + Version
-        #data[8:36] = b'\x00' * 28  # Rest null
-        #header[37:72] = data
-
-        logger.debug(f"AGWPE LOGIN: Channel={self._agwpe_channel}, App='PoPT', Call='{self._call_from.decode().rstrip(chr(0))}'")
-        return bytes(header)
-
     def _R_frame(self):
         # return b''
         header = bytearray(36)  # 36 Header + 36 Data = 72 Bytes
@@ -40,7 +21,6 @@ class AGWPEHandler:
         header[28:32] = (0).to_bytes(4, 'little')  # DataLen = 36
         header[32:36] = b'\x00\x00\x00\x00'  # Reserved
 
-        logger.debug(f"AGWPE LOGIN: Channel={self._agwpe_channel}, App='PoPT', Call='{self._call_from.decode().rstrip(chr(0))}'")
         return bytes(header)
 
     def _G_frame(self):
@@ -66,7 +46,7 @@ class AGWPEHandler:
         return bytes(header)
 
     """
-    def login_frame(self):
+    def _P_frame(self):
         # return b''
         header = bytearray(36)  # 36 Header + 36 Data = 72 Bytes
         header[0] = self._agwpe_channel
@@ -80,15 +60,14 @@ class AGWPEHandler:
         user_name =  'test1'.ljust(255, '\x00').encode('ASCII', 'ignore')
         passw     =  'test'.ljust(255, '\x00').encode('ASCII', 'ignore')
 
-
         logger.debug(f"AGWPE LOGIN: Channel={self._agwpe_channel}, App='PoPT', Call='{self._call_from.decode().rstrip(chr(0))}'")
         return bytes(header + user_name + passw)
     """
 
-    def encode_tnc(self, ax25_frame: bytes):
+    def _K_frame(self, ax25_frame: bytes):
         """ Sending 'K' Frames with raw ax25-frame """
-        data_kind = 0x4B  # Data Frame
-        data_len = len(ax25_frame)
+        data_kind   = 0x4B  # Data Frame
+        data_len    = len(ax25_frame)
         data_len += 1
 
         # --- 36-Byte Header ---
@@ -105,6 +84,11 @@ class AGWPEHandler:
 
         return bytes(packet)
 
+    def encode_tnc(self, ax25_frame: bytes):
+        return self._K_frame(ax25_frame)
+
+    #######################################################
+    # Decoding
     def decode_tnc(self, raw: bytes):
         if len(raw) < 36:
             return None
@@ -132,11 +116,11 @@ class AGWPEHandler:
         reserved        = raw[32:36]
         expected_len    = 36 + data_len
         if len(raw) != expected_len:
-            logger.warning(f"AGWPE RX R: Length mismatch: got {len(raw)}, expected {expected_len}")
+            logger.warning(f"AGWPE RX K: Length mismatch: got {len(raw)}, expected {expected_len}")
             return None
 
         if reserved != b'\x00\x00\x00\x00':
-            logger.debug(f"AGWPE RX R: Non-zero reserved field: {reserved.hex()}")
+            logger.debug(f"AGWPE RX K: Non-zero reserved field: {reserved.hex()}")
 
         # --- AX.25 Data extrahieren ---
         ax25_data = raw[36:36 + data_len]
@@ -151,7 +135,7 @@ class AGWPEHandler:
 
         # --- Erfolgreich! ---
         logger.debug(
-            f"AGWPE RX R: {call_from} → {call_to} | Port {port} | Len {data_len} | PID 0x{pid:02X} | tnc_ch: {tnc_ch}")
+            f"AGWPE RX K: {call_from} → {call_to} | Port {port} | Len {data_len} | PID 0x{pid:02X} | tnc_ch: {tnc_ch}")
         return bytearray(ax25_data[1:])
 
     @staticmethod
@@ -299,10 +283,12 @@ class AGWPEHandler:
             return None
 
     #####################################################
-    def start_cmd(self):
+    @staticmethod
+    def start_cmd():
         return b''
 
-    def end_cmd(self):
+    @staticmethod
+    def end_cmd():
         return b''
 
     def device_start(self):

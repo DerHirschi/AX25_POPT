@@ -218,7 +218,7 @@ class Kiss:
         ]
 
     ######################################################################
-    def _dec_tnc_emu_parameter(self, inp: bytearray):
+    def _dec_tnc_emu_parameter(self, inp: bytes):
         if not self._is_tnc_emu:
             logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in TNC-EMU-MODE> {inp}")
         if not all((self._is_tnc_emu, self._is_tnc_emu_kiss)):
