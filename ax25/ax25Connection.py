@@ -215,6 +215,7 @@ class AX25Conn:
         self.is_RNR: bool = False
         """ Max Frame Auto """
         self._autoMaxFrameScore = 0
+        self._is_resented       = False
         """ Timer Calculation & other Data for Statistics"""
         self.IRTT = 0
         self.calc_irtt()
@@ -1115,7 +1116,9 @@ class AX25Conn:
         if ((self.zustand_exec.nr - 1) % 8) in self.tx_buf_unACK.keys():
             self._del_unACK_buf()
             if not self.tx_buf_unACK:
-                self._set_autoMaxFrameScore(True)
+                if not self._is_resented:
+                    self._set_autoMaxFrameScore(True)
+                self._is_resented = False
             return True
         return False
 
@@ -1138,6 +1141,7 @@ class AX25Conn:
             pac.ctl_byte.nr = self.vr
             self.tx_buf_2send.append(pac)
         self._set_autoMaxFrameScore(False)
+        self._is_resented = True
 
     def exec_cli(self, inp=b''):
         """ CLI Processing like sending C-Text ... """
