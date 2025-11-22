@@ -214,6 +214,7 @@ class AX25Conn:
         self.REJ_is_set: bool = False
         self.is_RNR: bool = False
         """ Max Frame Auto """
+        self._MaxFrameCFG       = 0
         self._autoMaxFrameScore = 0
         self._is_resented       = False
         """ Timer Calculation & other Data for Statistics"""
@@ -1329,6 +1330,8 @@ class AX25Conn:
         """
         if not self.parm_MaxFrameAuto:
             return
+        if not self._MaxFrameCFG:
+            self._MaxFrameCFG = int(self.parm_MaxFrame)
         if in_decrement:
              self._autoMaxFrameScore += 1
              logger.debug(f"autoMaxFrameScore increment: {self._autoMaxFrameScore}")
@@ -1338,12 +1341,15 @@ class AX25Conn:
 
         if self._autoMaxFrameScore < 0:
             self._autoMaxFrameScore = 0
-            self.parm_MaxFrame = max(1, (self.parm_MaxFrame - 1))
+            self.parm_MaxFrame = max(1,
+                                     (self.parm_MaxFrame - 1)
+                                     )
             return
         if self._autoMaxFrameScore > 1:
-            self._autoMaxFrameScore = 0
-            self.parm_MaxFrame = min( self._port_cfg.get('parm_MaxFrame', 3),
-                                     (self.parm_MaxFrame + 1))
+            self._autoMaxFrameScore = 1
+            self.parm_MaxFrame = min(self._MaxFrameCFG,
+                                     (self.parm_MaxFrame + 1)
+                                     )
             return
 
     ##############################################
