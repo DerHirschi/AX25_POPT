@@ -173,6 +173,7 @@ class AX25PortHandler(object):
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
+        self._pipeTool_task()
         return any((
             self._bbs.tasker(),         # bbs.tasker-q
             self._gpio_tasker_q(),      # gpio.tasker-q
@@ -203,7 +204,6 @@ class AX25PortHandler(object):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
             self._bbs.main_cron()
-            self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
             return True
         return False
@@ -314,21 +314,30 @@ class AX25PortHandler(object):
             # TODO Headless thread Garbage collector
             logger.info("PH: Closing Sound Modul")
 
+        # APRS
         logger.info("PH: Closing APRS-Client")
         self.sysmsg_to_gui("Closing APRS-Client")
         self._close_aprs_ais()
+        # GPIO
         if hasattr(self._gpio, 'close_gpio_pins'):
             logger.info("PH: Closing GPIO")
             self.sysmsg_to_gui("Closing GPIO")
             self._gpio.close_gpio_pins()
+        # Pipes
+        logger.info("PH: Closing Pipes")
+        self._close_all_pipes()
+        self._wait_for_pipe_thread()
+        # Ports
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.sysmsg_to_gui(f"Closing Port {k}")
             self.close_port(k)
+        # BBS
         if hasattr(self._bbs, 'close'):
             logger.info("PH: Closing BBS")
             self.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
+        # MH
         if self._mh:
             logger.info("PH: Saving MH-Data")
             self.sysmsg_to_gui("Saving MH-Data")
@@ -338,6 +347,7 @@ class AX25PortHandler(object):
             self._mh.save_PortStat()
             self.sysmsg_to_gui("Saving Connection History")
             self._mh.save_conn_hist()
+        # 1-Wire
         if self._update_1wire_th is not None:
             self.sysmsg_to_gui("Closing 1-Wire Thread")
             n = 0
@@ -966,20 +976,56 @@ class AX25PortHandler(object):
             if not port.device_is_running:
                 continue
             for pipe_uid, pipe in port.pipes.items():
-                if pipe:
-                    # print(f"PipeCron: {pipe_uid}")
+                if hasattr(pipe, 'cron_exec'):
                     pipe.cron_exec()
 
     def get_all_pipes(self):
         ret = []
-        # for pipe_uid, pipe in self._all_pipes.items():
         for port_id, port in self.ax25_ports.items():
-            if port.device_is_running:
-                for pipe_uid, pipe in port.pipes.items():
-                    # print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
-                    logger.debug(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
-                    ret.append(pipe)
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                logger.debug(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                ret.append(pipe)
         return ret
+    
+    def _get_all_pipe_threads(self):
+        ret = []
+        logger.debug("Pipe Thread geta")
+        for port_id, port in self.ax25_ports.items():
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                logger.debug(f" -Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                if not hasattr(pipe, 'get_thread'):
+                    continue
+                ret.append(pipe.get_thread())
+        return ret
+    
+    def _wait_for_pipe_thread(self):
+        pipes = self.get_all_pipes()
+        logger.info(f"Checking for Pipe Threads in {len(pipes)} Pipes..")
+        n = 0
+        for pipe in pipes:
+            n += 1
+            if not hasattr(pipe, 'get_thread'):
+                continue
+            pipe_thread: threading.Thread = pipe.get_thread()
+            while pipe_thread.is_alive():
+                logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
+                pipe_thread.join(timeout=1)
+
+    def _close_all_pipes(self):
+        pipes = self.get_all_pipes()
+        logger.info(f"Closing {len(pipes)} Pipes..")
+        n = 0
+        for pipe in pipes:
+            n += 1
+            logger.info(f"  Closing Pipe {n}")
+            if not hasattr(pipe, 'close_pipe'):
+                continue
+            pipe.close_pipe(disco_ax25=True)
+
 
     """
     def add_pipe_PH(self, pipe):

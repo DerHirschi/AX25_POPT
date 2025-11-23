@@ -856,7 +856,15 @@ class AX25Port(object):
         if pipe is None and not pipe_cfg:
             return False
         if pipe is None:
-            pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            try:
+                pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            except AttributeError:
+                logger.error(f"Port {self.port_id}: AttributeError while adding AX25Pipe")
+                return False
+            except Exception as ex:
+                logger.error(f"Port {self.port_id}: Error while adding AX25Pipe")
+                logger.error(ex)
+                return False
         self.pipes[pipe.get_pipe_uid()] = pipe
         return True
 
@@ -1289,7 +1297,7 @@ class KISSSerial(AX25Port):
             try:
                 self.device = serial.Serial(self._port_param[0],
                                             self._port_param[1],
-                                            timeout=0.3,
+                                            timeout=0.4,
                                             #write_timeout=0.3
                                             )
                 self.device_is_running = True

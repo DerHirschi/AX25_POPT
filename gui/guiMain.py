@@ -523,9 +523,6 @@ class PoPT_GUI_Main:
         self.main_win.mainloop()
 
     ##############################################################
-    def __del__(self):
-        pass
-
     def _destroy_win(self):
         if self._quit:
             return
@@ -2459,7 +2456,7 @@ class PoPT_GUI_Main:
         my_call = str(conn.my_call)
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         out = data.decode(txt_enc, 'ignore')
-        out = out.replace('\r', '\n')
+        out = out.replace('\n\r','\n').replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer

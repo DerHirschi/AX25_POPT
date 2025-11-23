@@ -137,7 +137,10 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - Remote Commands / CLI
 - GPIO Functions (capable switch GPIO's on PI and other GPIO-Devices) (root rights needed)
 - 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
-- Pipe-Tool (Certain traffic or connections can be redirected to a file)
+- Pipe-Tool 
+  - Certain traffic or connections can be redirected to a file
+  - Certain connections can be redirected to a TCP-Server
+  - Certain connections can be redirected to a TCP-Client
 - Filetransfer
   - YAPP
   - AutoBin

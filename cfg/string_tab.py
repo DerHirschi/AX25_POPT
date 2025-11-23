@@ -2691,6 +2691,7 @@ STR_TABLE = {
         '',
         ''),
 
+    # Pipe Tool
     'pipetool_settings': (
         'Pipe-Tool Einstellungen',
         'Pipe-Tool Settings',
@@ -2751,6 +2752,67 @@ STR_TABLE = {
         '',
         ''),
 
+    'ax25_param': (
+        'AX.25 Verbindungsparameter',
+        'AX.25 connection parameters',
+        'AX.25 verbindingsparameters',
+        'Paramètres de connexion AX.25',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'packet_timing_param': (
+        'Paket- & Timing-Parameter',
+        'Package & timing parameters',
+        'Pakket- en timingparameters',
+        'Paramètres du package et du calendrier',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'backen_config': (
+        'Backend Konfiguration',
+        'Backend configuration',
+        'Backend-configuratie',
+        'Configuration du back-end',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'net_ser_opt': (
+        'Netzwerk / Seriell Optionen',
+        'Network / Serial Options',
+        'Netwerk-/seriële opties',
+        'Options réseau/série',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'serial_interface': (
+        'Serielle Schnittstelle',
+        'Serial interface',
+        'Seriële interface',
+        'Interface série',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    # #####
     'port_cfg_std_parm': (
         'Standard Parameter. Werden genutzt wenn nirgendwo anders (Station/Client) definiert.',
         'Default parameters. Are used if not defined anywhere else (station/client).',

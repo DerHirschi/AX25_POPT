@@ -5,7 +5,7 @@
 import time
 from datetime import datetime
 
-from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI
+from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI, CLI_TYP_PIPE
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
@@ -289,7 +289,8 @@ class AX25Conn:
                     self.cli.change_cli_state(state=1)
         else:
             """ Init Pipe """
-            self.set_pipe(pipe_cfg)
+            if not self.set_pipe(pipe_cfg):
+                self._await_disco = True
         """ Init State Tab """
         if rx:
             self.set_T1()
@@ -519,12 +520,23 @@ class AX25Conn:
     #############################
     # Proto PIPE
     def _pipe_rx(self, raw_data: b''):
-        if self.pipe is None:
+        if not hasattr(self.pipe, 'handle_rx_rawdata') and \
+                not hasattr(self.pipe, 'is_error'):
             return False
-        self.pipe.handle_rx_rawdata(raw_data)
+
+        if self.pipe.is_error():
+            logger.error(f"Pipe Error ({self.uid}): Disconnecting fm {self.to_call_str}")
+            pipe_data = self.pipe.get_tx_data()
+            if pipe_data:
+                self.send_data(pipe_data)
+            self.conn_disco()
+        if self.pipe.handle_rx_rawdata(raw_data):
+            return True
         return True
 
     def set_pipe(self, pipe_cfg=None):
+        self.cli      = NoneCLI(self)
+        self.cli_type = CLI_TYP_PIPE
         if not pipe_cfg:
             pipe_cfg = POPT_CFG.get_pipe_CFG().get(f'{self.own_port.port_id}-{self.my_call_str}', getNew_pipe_cfg())
         # print(f"Set Pipe: {pipe_cfg}")
@@ -533,8 +545,9 @@ class AX25Conn:
                 connection=self,
                 pipe_cfg=pipe_cfg
             )
-        except AttributeError:
+        except Exception as ex:
             logger.error("Conn: Pipe Error (AX25Conn-set_pipe())")
+            logger.error(ex)
             return False
         if pipe_cfg.get('pipe_parm_PacLen', 0):
             self.parm_PacLen = pipe_cfg.get('pipe_parm_PacLen', self.parm_PacLen)
@@ -543,14 +556,14 @@ class AX25Conn:
         if not self.own_port.add_pipe(pipe=pipe):
             logger.error("Conn: Port no Pipe")
             return False
-        self.cli = NoneCLI(self)
-        self.cli_type = ''
-        self.pipe = pipe
+        self.pipe       = pipe
         return True
 
     def _del_pipe(self):
         if self.pipe:
             self.own_port.del_pipe(self.pipe)
+            if hasattr(self.pipe, 'close_pipe'):
+                self.pipe.close_pipe()
             self.pipe = None
             # self._reinit_cli()
             return True
