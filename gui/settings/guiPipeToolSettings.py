@@ -402,7 +402,7 @@ class PipeToolSettings(tk.Toplevel):
         self._port_handler = root.get_PH_mainGUI()
         ##########################
         main_f = ttk.Frame(self)
-        main_f.pack(fill=tk.BOTH, expand=True)
+        main_f.pack(fill='both', expand=True)
         ##########################
         # OK, Save, Cancel
         ok_bt = ttk.Button(main_f,

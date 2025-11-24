@@ -79,9 +79,9 @@ class SettingsMain(tk.Toplevel):
         # Nix Tree
         style = ttk.Style(self)
         style.configure('lefttab.TNotebook', tabposition='wn')
-        self._tabControl = ttk.Notebook(main_f, style='lefttab.TNotebook')
+        self._tabControl = ttk.Notebook(main_f, style='lefttab.TNotebook', height=580)
         # self._tabControl.bind('<<NotebookTabChanged>>', self._tab_change)
-        self._tabControl.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+        self._tabControl.pack(expand=False, fill='x', padx=10, pady=10)
         # Tab Vars
         self._tab_list = {}
         for strTab_name, frame in self._win_tab.items():
