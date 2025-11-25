@@ -27,6 +27,7 @@ Neue Implementierungen / Funktionen:
 - Port-Typ: AGWPE-TCP
 - Pipe-Tool: AX25 Pipe > TCP-Server
 - Pipe-Tool: AX25 Pipe > TCP-Client
+- Pipe-Tool: AX25 Pipe > Serial Device
 
 ###########################################################################################################
 ###########################################################################################################

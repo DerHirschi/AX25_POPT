@@ -117,6 +117,7 @@ class AX25Pipe(object):
             logger.info(f"Pipe Tool Backend ({self._backend_typ}) Init done..")
         # Serial
         elif self._backend_typ == 'serial':
+            self._be_serial_init()
             logger.info(f"Pipe Tool Backend ({self._backend_typ}) Init done..")
         # TCP-Client
         elif self._backend_typ == 'tcp-client':
@@ -139,7 +140,7 @@ class AX25Pipe(object):
         if self._backend_typ == 'file':
             self._file_cron()
         elif self._backend_typ == 'serial':
-            pass
+            self._be_serial_cron()
         elif self._backend_typ == 'tcp-client':
             self._be_tcp_client_cron()
         elif self._backend_typ == 'tcp-server':
@@ -211,7 +212,7 @@ class AX25Pipe(object):
         if self._backend_typ == 'file':
             return self._save_rx_buff_to_file()
         elif self._backend_typ == 'serial':
-            return False
+            return self._be_serial_tx()
         elif self._backend_typ == 'tcp-client':
             return self._be_tcp_client_tx()
         elif self._backend_typ == 'tcp-server':
@@ -282,7 +283,6 @@ class AX25Pipe(object):
     # Pipe <> TCP Server
     def _be_tcp_server_init(self):
         server_ip, server_port = self._pipe_cfg.get('pipe_be_address', ('0.0.0.0', 8023))
-        """ Debugging """
         # server_ip, server_port = ('0.0.0.0', 25522)
 
         if not all((check_ip_add_format(server_ip), server_port)):
@@ -401,7 +401,6 @@ class AX25Pipe(object):
         send_at_init                = self._pipe_cfg.get('pipe_be_send_at_init',      '')
         flush_rx_at_init            = self._pipe_cfg.get('pipe_be_flush_rx_at_init',  False)
         c_text                      = self._pipe_cfg.get('pipe_parm_c_text',          '')
-        """ Debugging """
         # Resolve Domain name
         client_ip = get_ip_by_hostname(client_address)
 
@@ -546,13 +545,11 @@ class AX25Pipe(object):
             return
 
     # ====================================================================
-    # TODO Pipe <> Serial
+    # Pipe <> Serial
     def _be_serial_init(self):
         ser_port, ser_baud = self._pipe_cfg.get('pipe_be_address', ('', 0))
         send_at_init       = self._pipe_cfg.get('pipe_be_send_at_init', '')
         flush_rx_at_init   = self._pipe_cfg.get('pipe_be_flush_rx_at_init', False)
-        """ Debugging """
-        ser_port, ser_baud = ("/dev/pts/100", 115200)
 
         if not all((ser_port, ser_baud)):
             logger.error(f"Pipe ({self._backend_typ}) no Serial-Port or Serial-Baud configured!")
@@ -580,6 +577,7 @@ class AX25Pipe(object):
             self._rx_data += send_at_init.encode(self._parm_txt_encoder, 'ignore')
             self._be_serial_tx()
 
+    """
     def _be_serial_reinit(self):
         if self._is_error_limit():
             if self._is_running or self._connection:
@@ -589,7 +587,7 @@ class AX25Pipe(object):
         logger.info(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
         self.close_pipe(wait=True)
         try:
-            self._be_tcp_client_init()
+            self._be_serial_init()
             self.e_count = 0
             return True
         except Exception as ex:
@@ -600,15 +598,66 @@ class AX25Pipe(object):
             self.e_count = 10
             self.close_pipe(disco_ax25=True)
             return False
+    """
 
     def _be_serial_cron(self):
-        pass
+        if self._backend_loop_timer > time.time():
+            return
+        if self._is_error_limit():
+            self.close_pipe(disco_ax25=True)
+            self._backend_loop_timer = time.time() + 5
+            return
+
+        if hasattr(self._work_thread, 'is_alive'):
+            if self._work_thread.is_alive():
+                return
+        if hasattr(self._work_thread, 'join'):
+            self._work_thread.join()
+        self._backend_loop_timer = time.time() + 0.5
+
+        self._work_thread = threading.Thread(target=self._be_serial_rx)
+        self._work_thread.start()
 
     def _be_serial_tx(self):
-        pass
+        """ AX25 RX > Serial TX """
+        run_timer = time.time()
+        if not self._is_running or self._is_error_limit():
+            return False
+        data = self._rx_data
+        self._rx_data = bytearray()
+        try:
+            self._device.write(data)
+            logger.debug(f"Pipe ({self._backend_typ}) Runtime TX: {round((time.time() - run_timer), 2)} Sec.")
+            return True
+
+        except Exception as ex:
+            logger.error(f"Pipe ({self._backend_typ}): can't Connect to Serial Device !!")
+            logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
+            logger.error(f"  {ex}")
+            self.e_count = 10
+            self._tx_data += ' # Pipe Error: Connection Error\r'.encode(self._parm_txt_encoder, 'ignore')
+            self.close_pipe(disco_ax25=True)
+            return False
 
     def _be_serial_rx(self):
-        pass
+        """ Serial Device RX > AX25 TX """
+        if not self._is_running or self._is_error_limit():
+            return
+        while self._is_running and not self._is_error_limit():
+            try:
+                data = self._device.read()
+                if not data:
+                    return
+                self._tx_data += data
+            except Exception as ex:
+                logger.error(f"Pipe ({self._backend_typ}): can't read from Serial Device !!")
+                logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
+                logger.error(f"  {ex}")
+                self._is_running = False
+                self.e_count = 10
+                self._tx_data += ' # Pipe Error: Connection Error to Server\r'.encode(self._parm_txt_encoder, 'ignore')
+                self.close_pipe(disco_ax25=True)
+                return
 
     ################################################
     # End

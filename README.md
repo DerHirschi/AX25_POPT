@@ -141,6 +141,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
   - Certain traffic or connections can be redirected to a file
   - Certain connections can be redirected to a TCP-Server
   - Certain connections can be redirected to a TCP-Client
+  - Certain connections can be redirected to a Serial Device
 - Filetransfer
   - YAPP
   - AutoBin

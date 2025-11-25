@@ -246,7 +246,7 @@ class StatSetTab:
                               'file',
                               'tcp-server',
                               'tcp-client',
-                              # 'serial'
+                              'serial'
                           ],
                           state="readonly", width=15)
         cb.pack(side="left", padx=8)
