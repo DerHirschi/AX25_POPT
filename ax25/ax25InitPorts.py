@@ -53,6 +53,7 @@ class AX25PortHandler(object):
         self.is_running         = True
         self._ph_end            = False
         self._glb_port_blocking = 1
+        self._thread_gc         = []
         ###########################
         # Moduls
         # self.routingTable = None
@@ -223,6 +224,16 @@ class AX25PortHandler(object):
                     #logger.info(f"Try to reinit Port {port_id}")
                     #threading.Thread(target=self.reinit_port, args=(port_id, )).start()
     #######################################################################
+    # Thread GC
+    def _wait_for_GC_threads(self):
+        n = 0
+        for th in self._thread_gc:
+            if hasattr(th, 'is_alive'):
+                n += 1
+                while th.is_alive():
+                    logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
+                    th.join(timeout=1)
+    #######################################################################
     # MH
     def _mh_task(self):
         return self._mh.mh_task()
@@ -370,6 +381,8 @@ class AX25PortHandler(object):
         logger.info("PH: Saving MainCFG")
         self.sysmsg_to_gui("Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        logger.info("PH: Checking GC-Threads..")
+        self._wait_for_GC_threads()
         self._ph_end = True
 
     def get_ph_end(self):
@@ -422,6 +435,13 @@ class AX25PortHandler(object):
     """
 
     def reinit_port(self, port_id: int):
+        reinit_th = threading.Thread(target=self._reinit_port_th, args=(port_id, ))
+        reinit_th.start()
+        self._thread_gc.append(reinit_th)
+        self.set_diesel()
+
+
+    def _reinit_port_th(self, port_id: int):
         # if not self.ax25_ports.get(port_id, False):
         #     return False
         self.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
@@ -432,7 +452,6 @@ class AX25PortHandler(object):
         self._init_port(port_id=port_id)
         ##########################
         # Pipe-Tool Init
-        self.set_diesel()
 
     def set_kiss_param_all_ports(self):
         for port_id, port in self.ax25_ports.items():
