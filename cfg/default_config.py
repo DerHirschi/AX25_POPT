@@ -431,7 +431,7 @@ def getNew_pipe_cfg():
         pipe_parm_backend           ='file', # 'file', 'serial', 'tcp-server', 'tcp-client'
         pipe_parm_pipe_loop_timer   =10,
         pipe_parm_c_text            = '',
-        pipe_parm_txt_encoder       = 'UTF-8',
+        # pipe_parm_txt_encoder       = 'UTF-8',
         # File <> Pipe
         pipe_parm_pipe_tx           ='',
         pipe_parm_pipe_rx           ='',
@@ -439,7 +439,7 @@ def getNew_pipe_cfg():
         pipe_be_c_address             = ('', 0),
         pipe_be_send_at_init          = '', # Send to Pipe (not to AX25) at init
         pipe_be_flush_rx_at_init      = False,
-        pipe_be_reinit_conn           = False,
+        # pipe_be_reinit_conn           = False,
     )
 
 #######################################

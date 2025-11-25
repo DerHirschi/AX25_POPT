@@ -65,7 +65,8 @@ class AX25Pipe(object):
         self._parm_pac_len              = pipe_cfg.get('pipe_parm_PacLen', 128)
         self._parm_max_pac              = pipe_cfg.get('pipe_parm_MaxFrame', 3)
         self._parm_max_pac_timer        = pipe_cfg.get('pipe_parm_MaxPacDelay', 30)
-        self._parm_txt_encoder          = pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8')
+        # self._parm_txt_encoder          = pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8')
+        self._parm_txt_encoder          = 'UTF-8'   # For Status Text send frm CLI to User
 
         if self._connection:
             self._uid = str(self._connection.uid)
@@ -281,8 +282,6 @@ class AX25Pipe(object):
     # Pipe <> TCP Server
     def _be_tcp_server_init(self):
         server_ip, server_port = self._pipe_cfg.get('pipe_be_address', ('0.0.0.0', 8023))
-        #send_at_init           = self._pipe_cfg.get('pipe_be_send_at_init', '')
-        #flush_rx_at_init       = self._pipe_cfg.get('pipe_be_flush_rx_at_init', False)
         """ Debugging """
         # server_ip, server_port = ('0.0.0.0', 25522)
 
@@ -343,8 +342,6 @@ class AX25Pipe(object):
             return
         send_at_init     = self._pipe_cfg.get('pipe_be_send_at_init', '')
         c_text           = self._pipe_cfg.get('pipe_parm_c_text', '')
-        #send_at_init = 'test to server\r'
-        #c_text       = 'pipe C-text\r'
         if send_at_init:
             self._rx_data += send_at_init.encode(self._parm_txt_encoder, 'ignore')
             self._be_tcp_server_tx()
@@ -405,8 +402,6 @@ class AX25Pipe(object):
         flush_rx_at_init            = self._pipe_cfg.get('pipe_be_flush_rx_at_init',  False)
         c_text                      = self._pipe_cfg.get('pipe_parm_c_text',          '')
         """ Debugging """
-        # client_address, client_port = ('ax25n0.packetradio-salzwedel.de', 25522)
-        # client_address, client_port = ('127.0.0.1', 25522)
         # Resolve Domain name
         client_ip = get_ip_by_hostname(client_address)
 
@@ -435,14 +430,6 @@ class AX25Pipe(object):
             #if hasattr(socket, 'TCP_KEEPINTVL'):
             #    self._device.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)  # alle 5s eine Probe
             self._device.settimeout(0.4)
-        except ConnectionRefusedError as ex:
-            logger.error(f"Pipe ({self._backend_typ}): Connection Refused !!")
-            logger.error(f"  Address: {client_address}")
-            logger.error(f"  IP     : {client_ip}")
-            logger.error(f"  Port   : {client_port}")
-            self.e_count = 10
-            self.close_pipe()
-            raise ex
         except Exception as ex:
             logger.error(f"Pipe ({self._backend_typ}): can't Connect to Server !!")
             logger.error(f"  Address: {client_address}")
@@ -450,6 +437,7 @@ class AX25Pipe(object):
             logger.error(f"  Port   : {client_port}")
             logger.error(f"  {ex}")
             self.e_count = 10
+            self.close_pipe()
             raise ex
 
         if flush_rx_at_init:
@@ -472,6 +460,7 @@ class AX25Pipe(object):
         if c_text:
             self._tx_data += c_text.encode(self._parm_txt_encoder, 'ignore')
 
+    """
     def _be_tcp_client_reinit(self):
         if self._is_error_limit():
             if self._is_running or self._connection:
@@ -492,6 +481,7 @@ class AX25Pipe(object):
             self.e_count = 10
             self.close_pipe(disco_ax25=True)
             return False
+    """
 
     def _be_tcp_client_cron(self):
         if self._backend_loop_timer > time.time():
@@ -520,36 +510,11 @@ class AX25Pipe(object):
         try:
             self._device.sendall(data)
             return True
-        except ConnectionRefusedError:
-            logger.error(f"Pipe ({self._backend_typ}): Connection Refused !!")
-            logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self._tx_data += ' # Pipe Error: Connection refused by Serve\r'.encode(self._parm_txt_encoder, 'ignore')
-            self.e_count = 10
-            self.close_pipe()
-            return False
-        except ConnectionError:
-            logger.warning(f"Pipe ({self._backend_typ}): Connection Error to Server !!")
-            logger.warning(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self._tx_data += ' # Pipe Error: Connection Error\r'.encode(self._parm_txt_encoder, 'ignore')
-            if not self._pipe_cfg.get('pipe_be_reinit_conn', False):
-                self.close_pipe()
-                return False
-            logger.info(f"  Try to reconnecting to {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            if not self._be_tcp_client_reinit():
-                self.e_count += 1
-                logger.error(f"  Reconnecting to {self._pipe_cfg.get('pipe_be_address', ('', 0))} failed !!")
-                logger.error(f"  Error Counter: {self.e_count}")
-                self.close_pipe()
-                return False
-            logger.info(f"  Successfully reconnected to {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self._rx_data = data + self._rx_data
-            return self._be_tcp_client_tx()
 
         except Exception as ex:
             logger.error(f"Pipe ({self._backend_typ}): can't Connect to Server !!")
             logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
             logger.error(f"  {ex}")
-            self._is_running = False
             self.e_count = 10
             self._tx_data += ' # Pipe Error: Connection Error\r'.encode(self._parm_txt_encoder, 'ignore')
             self.close_pipe(disco_ax25=True)
@@ -563,51 +528,19 @@ class AX25Pipe(object):
             data = self._device.recv(4096)
             if not data:
                 logger.info(f"Pipe ({self._backend_typ}): Connection closed by Server !!")
-                if not self._pipe_cfg.get('pipe_be_reinit_conn', False):
-                    self.close_pipe(disco_ax25=True)
-                    return
-                self._tx_data += f' # Pipe Error: Try to reconnecting to Server\r'.encode(self._parm_txt_encoder,
-                                                                                          'ignore')
-                if not self._be_tcp_client_reinit():
-                    self.e_count += 1
-                    logger.error(f"  Reconnecting to {self._pipe_cfg.get('pipe_be_address', ('', 0))} failed !!")
-                    logger.error(f"  Error Counter: {self.e_count}")
-                    self.close_pipe()
-                    return
+                self.e_count = 10
+                self.close_pipe(disco_ax25=True)
+                return
             self._tx_data += data
             return
         except socket.timeout:
             return
-        except ConnectionRefusedError:
-            logger.error(f"Pipe ({self._backend_typ}): Connection Refused !!")
-            logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self.e_count = 10
-            self._tx_data += ' # Pipe Error: Connection refused by Server\r'.encode(self._parm_txt_encoder, 'ignore')
-            self.close_pipe(disco_ax25=True)
-            return
-        except ConnectionError:
-            logger.warning(f"Pipe ({self._backend_typ}): Connection Error to Server !!")
-            logger.warning(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            if not self._pipe_cfg.get('pipe_be_reinit_conn', False):
-                self.close_pipe()
-                self._tx_data += ' # Pipe Error: Connection Error\r'.encode(self._parm_txt_encoder, 'ignore')
-                return
-            logger.info(f"  Try to reconnecting to {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self._tx_data += f' # Pipe Error: Try to reconnecting to Server\r'.encode(self._parm_txt_encoder, 'ignore')
-            if not self._be_tcp_client_reinit():
-                self.e_count += 1
-                logger.error(f"  Reconnecting to {self._pipe_cfg.get('pipe_be_address', ('', 0))} failed !!")
-                logger.error(f"  Error Counter: {self.e_count}")
-                self.close_pipe()
-                return
-            logger.info(f"  Successfully reconnected to {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
-            self._be_tcp_client_rx()
         except Exception as ex:
             logger.error(f"Pipe ({self._backend_typ}): can't Connect to Server !!")
             logger.error(f"  Address: {self._pipe_cfg.get('pipe_be_address', ('', 0))}")
             logger.error(f"  {ex}")
             self._is_running = False
-            self.e_count += 1
+            self.e_count = 10
             self._tx_data += ' # Pipe Error: Connection Error to Server\r'.encode(self._parm_txt_encoder, 'ignore')
             self.close_pipe(disco_ax25=True)
             return

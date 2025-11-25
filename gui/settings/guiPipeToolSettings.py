@@ -223,14 +223,14 @@ class PipeTab:
         self.ctext_var = tk.StringVar(value=self.pipe_cfg.get('pipe_parm_c_text', ''))
         ttk.Entry(self.frm_net, textvariable=self.ctext_var, width=70).grid(row=row, column=1, columnspan=2,
                                                                             sticky="we", padx=8)
-
+        """
         row += 1
         ttk.Label(self.frm_net, text="Encoding:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
         self.encoding_var = tk.StringVar(value=self.pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8'))
         ttk.Combobox(self.frm_net, textvariable=self.encoding_var,
                      values=['UTF-8', 'CP437', 'ISO-8859-1', 'ASCII', 'latin1'], state="readonly", width=15).grid(
             row=row, column=1, sticky="w", padx=8)
-
+        """
         self.frm_net.columnconfigure(1, weight=1)
 
         # ===================================================================
@@ -514,7 +514,7 @@ class PipeToolSettings(tk.Toplevel):
             # pipe_cfg['pipe_be_reinit_conn'] = bool(tab.reinit_var.get() if backend == 'tcp-client' else False)
             pipe_cfg['pipe_be_reinit_conn'] = False
             pipe_cfg['pipe_parm_c_text'] = tab.ctext_var.get()
-            pipe_cfg['pipe_parm_txt_encoder'] = tab.encoding_var.get()
+            #pipe_cfg['pipe_parm_txt_encoder'] = tab.encoding_var.get()
 
             if conn:
                 conn.set_pipe(pipe_cfg=pipe_cfg)

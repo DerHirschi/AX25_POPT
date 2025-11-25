@@ -73,7 +73,7 @@ class StatSetTab:
         self._send_init_var     = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_be_send_at_init', ''))
         self._flush_rx_var      = tk.BooleanVar(self.own_tab,value=pipe_cfg.get('pipe_be_flush_rx_at_init', False))
         self._pipe_ctext_var    = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_c_text', ''))
-        self._pipe_encoding_var = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8'))
+        # self._pipe_encoding_var = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8'))
         self._serial_port_var   = tk.StringVar(self.own_tab, )
         self._baudrate_var      = tk.StringVar(self.own_tab, value="9600")
         addr = pipe_cfg.get('pipe_be_address', ('0.0.0.0', 8023))
@@ -308,13 +308,13 @@ class StatSetTab:
         ttk.Label(self.frm_net, text="C-Text:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
         ttk.Entry(self.frm_net, textvariable=self._pipe_ctext_var, width=70).grid(row=row, column=1, columnspan=2,
                                                                             sticky="we", padx=8)
-
+        """
         row += 1
         ttk.Label(self.frm_net, text="Encoding:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
         ttk.Combobox(self.frm_net, textvariable=self._pipe_encoding_var,
                      values=['UTF-8', 'CP437', 'ISO-8859-1', 'ASCII', 'latin1'], state="readonly", width=15).grid(
             row=row, column=1, sticky="w", padx=8)
-
+        """
         self.frm_net.columnconfigure(1, weight=1)
 
         # ===================================================================
@@ -610,7 +610,7 @@ class StatSetTab:
             new_pipe_cfg['pipe_parm_c_text']         = self._pipe_ctext_var.get()
             new_pipe_cfg['pipe_be_flush_rx_at_init'] = bool(self._flush_rx_var.get())
             new_pipe_cfg['pipe_be_reinit_conn']      = False
-            new_pipe_cfg['pipe_parm_txt_encoder']    = self._pipe_encoding_var.get()
+            #new_pipe_cfg['pipe_parm_txt_encoder']    = self._pipe_encoding_var.get()
 
             POPT_CFG.set_pipe_CFG(new_pipe_cfg)
 
