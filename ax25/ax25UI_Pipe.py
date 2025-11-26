@@ -14,7 +14,6 @@ from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
 
 
 class AX25Pipe(object):
-    # TODO: Serial Pipe
     def __init__(self,
                  connection=None,
                  pipe_cfg: dict=None,
@@ -135,7 +134,9 @@ class AX25Pipe(object):
     # Crone
     def cron_exec(self):
         """ Called fm Port Handler """
-        if not self._is_running or self._is_error_limit():
+        if not self._is_running:
+            return
+        if self._backend_loop_timer > time.time():
             return
         if self._backend_typ == 'file':
             self._file_cron()
@@ -227,7 +228,9 @@ class AX25Pipe(object):
     def _file_cron(self):
         if not self._pipe_cfg.get('pipe_parm_pipe_tx', ''):
             return
-        if self._backend_loop_timer > time.time():
+        if self._is_error_limit():
+            self.close_pipe(disco_ax25=True)
+            self._backend_loop_timer = time.time() + 5
             return
         if hasattr(self._work_thread, 'is_alive'):
             if self._work_thread.is_alive():
@@ -303,8 +306,6 @@ class AX25Pipe(object):
         self._is_running = True
 
     def _be_tcp_server_cron(self):
-        if self._backend_loop_timer > time.time():
-            return
         if self._is_error_limit():
             self.close_pipe(disco_ax25=True)
             self._backend_loop_timer = time.time() + 5
@@ -483,8 +484,6 @@ class AX25Pipe(object):
     """
 
     def _be_tcp_client_cron(self):
-        if self._backend_loop_timer > time.time():
-            return
         if self._is_error_limit():
             self.close_pipe(disco_ax25=True)
             self._backend_loop_timer = time.time() + 5
@@ -601,8 +600,6 @@ class AX25Pipe(object):
     """
 
     def _be_serial_cron(self):
-        if self._backend_loop_timer > time.time():
-            return
         if self._is_error_limit():
             self.close_pipe(disco_ax25=True)
             self._backend_loop_timer = time.time() + 5

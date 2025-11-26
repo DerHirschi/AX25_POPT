@@ -174,7 +174,6 @@ class AX25PortHandler(object):
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        self._pipeTool_task()
         return any((
             self._bbs.tasker(),         # bbs.tasker-q
             self._gpio_tasker_q(),      # gpio.tasker-q
@@ -187,6 +186,7 @@ class AX25PortHandler(object):
             self._Sched_task()
             self._aprs_task()
             self._gpio_task()
+            self._pipeTool_task()
             self._task_timer_05sec = time.time() + 0.5
             return True
         return False

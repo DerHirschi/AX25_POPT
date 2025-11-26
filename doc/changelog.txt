@@ -1,4 +1,15 @@
 ###########################################################################################################
+# 2.123.x
+Fixes:
+
+Optimierung/Änderungen:
+- Pipe-Tool Schleife performance optimiert (CPU-Last)
+
+Neue Implementierungen / Funktionen:
+
+
+###########################################################################################################
+###########################################################################################################
 # 2.122.x
 Fixes:
 - BBS: BID (Boxcall) wird nach Verändern der Einstellungen erst nach Programm
