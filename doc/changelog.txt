@@ -1,4 +1,40 @@
 ###########################################################################################################
+# 2.122.x
+Fixes:
+- BBS: BID (Boxcall) wird nach Verändern der Einstellungen erst nach Programm
+  neustart updated. Resultiert in BID: 000001NOCALL
+- GUI-Probleme im "Neue Verbindung"-Fenster, wenn andere Sprache ausgewählt
+  ist.
+- UserDB: Locator/Position wird nicht aktualisiert
+- Gewählte Sprache für CLI wird nicht aktualisiert bzw. erst na reconnect
+  gesetzt.
+- Fehlerhafte aprs-pakete führen zum Program-crash
+- Es wird immer nur ein Frame gesendet
+- CLI: Seitenstop
+
+Optimierung/Änderungen:
+- Soundmodul überarbeitet
+- gTTS optional. (Wenn nicht installiert, wird es auch nicht verwendet.)
+- Sprachausgabe/Sounds werden nicht unmittelbar nach dem Abschalten der
+  "Soundoption" beendet.
+- Pipe Tool und Pipe-Tool GUI's aufgeräumt
+- Port reinit Prozedur nach ändern/einstellen von Port parametern.
+  (Reinit läuft jetzt als extra Thread um die GUI nicht zu blockieren.)
+- Baken MH-Liste listet jetzt nur Calls ohne SID
+
+Neue Implementierungen / Funktionen:
+- Karte/Map für Locator-Rechner
+- CLI-CMD: "PSTAT" - Port Statistiken
+- CLI-CMD: "BWSTAT" - Port Bandauslastung letzten 10 Minuten
+- Auto Max-Frame: Max-Frame wird automatisch angepasst, je nach Qualität
+  der Verbindung.
+- Port-Typ: AGWPE-TCP
+- Pipe-Tool: AX25 Pipe > TCP-Server
+- Pipe-Tool: AX25 Pipe > TCP-Client
+- Pipe-Tool: AX25 Pipe > Serial Device
+
+###########################################################################################################
+###########################################################################################################
 # 2.121.x
 !!! Check requirements.txt (playsound3 benötigt) !!!
 Fixes:

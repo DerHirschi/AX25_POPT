@@ -1,8 +1,9 @@
+from cfg.constant import CLI_TYP_NODE
 from cli.cliMain import DefaultCLI
 
 
 class NodeCLI(DefaultCLI):
-    cli_name = 'NODE'  # DON'T CHANGE !
+    cli_name = CLI_TYP_NODE  # DON'T CHANGE !
     service_cli = True
     prefix = b''
     sw_id = 'PoPTNode'
@@ -21,13 +22,15 @@ class NodeCLI(DefaultCLI):
                                'CH',
                                'CONV',
                                'PORT',
+                               'PSTAT',
+                               'BWSTAT',
+                               'RTT',
                                'MH',
                                'LMH',
                                'AXIP',
                                'DXLIST',
                                'LCSTATUS',
                                'CSTAT',
-                               'RTT',
                                # APRS
                                'ATR',
                                'WX',

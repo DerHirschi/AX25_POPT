@@ -2,15 +2,16 @@ import datetime
 import socket
 import serial
 import time
-import crcmod
+from ax25 import crc_x25
 
 from ax25.ax25UI_Pipe import AX25Pipe
 from fnc.os_fnc import is_linux
 
-crc_x25 = crcmod.predefined.mkCrcFun('x-25')
+
 
 from ax25.ax25Digi import AX25DigiConnection
 from ax25.ax25Kiss import Kiss
+from ax25.ax25AGWPE import AGWPEHandler
 from ax25.ax25Connection import AX25Conn
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
@@ -45,7 +46,7 @@ class AX25Port(object):
         if not self._port_cfg:
             logger.error(f"{self._logTag}No Config !!!")
             raise AX25DeviceFAIL(self)
-        self.kiss           = Kiss(self._port_cfg)
+
         self._port_param    = self._port_cfg.get('parm_PortParm', ('', 0))
         self.portname       = self._port_cfg.get('parm_PortName', '')
         self.port_typ       = self._port_cfg.get('parm_PortTyp', '')
@@ -55,6 +56,14 @@ class AX25Port(object):
         self._TXD = time.time()
         # CONFIG ENDE
         #############
+        """ KISS / AGWPE - TNC Protocol """
+        """
+        if self.port_id == 4:
+            self.tnc_protocol   = AGWPEHandler(self._port_cfg)
+        else:
+            self.tnc_protocol   = Kiss(self._port_cfg)
+        """
+        self.tnc_protocol = None
         """ DIGI """
         # self.digi_calls = self._port_cfg.parm_Digi_calls
         self._parm_digi_TXD = self._port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
@@ -85,19 +94,34 @@ class AX25Port(object):
         ##############
         # AXIP VARs
         # self.axip_anti_spam = {}
+        """
         try:
             self.init()
         except AX25DeviceFAIL:
             # raise AX25DeviceFAIL(self)  # TODO in PortINIT
             AX25DeviceFAIL(self)
+        """
+
+        # ██████████████████████████████████████████████████████████████
+        # ███ LOGGING BEI INIT █████████████████████████████████████████
+        # ██████████████████████████████████████████████████████████████
+        logger.info("═" * 60)
+        logger.info(f"Port INITIALISIERT - Port {self.port_id}")
+        logger.info(f"  Typ:          {self.port_typ}")
+        logger.info(f"  Port-Name:    {self.portname}")
+        logger.info(f"  Parameter:    {self._port_cfg.get('parm_PortParm', None)}")
+        logger.info(f"  KISS Enabled: {self._port_cfg.get('parm_kiss_is_on', True)}")
+        logger.info(f"  TXD:    {self._port_cfg.get('parm_kiss_TXD', 35)}")
+        logger.info(f"  Pers:   {self._port_cfg.get('parm_kiss_Pers', 160)}")
+        logger.info(f"  Slot:   {self._port_cfg.get('parm_kiss_Slot', 30)}")
+        logger.info(f"  Tail:   {self._port_cfg.get('parm_kiss_Tail', 15)}")
+        logger.info(f"  Duplex: {self._port_cfg.get('parm_kiss_F_Duplex', 0)}")
+        logger.info("═" * 60)
 
 
     def init(self):
         pass
 
-    def __del__(self):
-        self.close()
-        # self._loop_is_running = False
 
     def set_kiss_parm(self):
         pass
@@ -457,7 +481,7 @@ class AX25Port(object):
 
     def delete_digi_conn(self, uid: str):
         if uid in self._digi_connections.keys():
-            print(f"DIGI-Conn DEL: {uid}")
+            # print(f"DIGI-Conn DEL: {uid}")
             del self._digi_connections[uid]
 
     def _cleanup_digi_conn(self):
@@ -589,32 +613,33 @@ class AX25Port(object):
 
     def _tx_connection_buf(self):
         for conn_id, conn in self.connections.items():
-            if time.time() > conn.t2:
-                snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
-                if not snd_buf:
+            if time.time() < conn.t2:
+                continue
+            snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
+            if not snd_buf:
+                continue
+            conn.tx_buf_ctl = []
+            conn.tx_buf_2send = []
+            conn.REJ_is_set = False
+            for el in snd_buf:
+                # if el.digi_call and conn.is_link:
+                try:
+                    if conn.digi_call:
+                        # TODO Just check for digi_call while encoding
+                        # print(conn.digi_call)
+                        el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
+                    else:
+                        el.encode_ax25frame()
+                except Exception as ex:
+                    logger.error(ex)
                     continue
-                conn.tx_buf_ctl = []
-                conn.tx_buf_2send = []
-                conn.REJ_is_set = False
-                for el in snd_buf:
-                    # if el.digi_call and conn.is_link:
-                    try:
-                        if conn.digi_call:
-                            # TODO Just check for digi_call while encoding
-                            # print(conn.digi_call)
-                            el.digi_check_and_encode(call=conn.digi_call, h_bit_enc=True)
-                        else:
-                            el.encode_ax25frame()
-                    except Exception as ex:
-                        logger.error(ex)
-                        continue
-                    try:
-                        self.tx(frame=el)
-                    except AX25DeviceFAIL as e:
-                        raise e
-                    return True # CHECKME !!! Just one connection at fnc-call ??
-                    # Monitor
-                    # self._gui_monitor(ax25frame=el, tx=True)
+                try:
+                    self.tx(frame=el)
+                except AX25DeviceFAIL as e:
+                    raise e
+            return True # CHECKME !!! Just one connection at fnc-call ??
+            # Monitor
+            # self._gui_monitor(ax25frame=el, tx=True)
         return False
 
     def _tx_pipe_buf(self):
@@ -831,7 +856,15 @@ class AX25Port(object):
         if pipe is None and not pipe_cfg:
             return False
         if pipe is None:
-            pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            try:
+                pipe = AX25Pipe(pipe_cfg=pipe_cfg)
+            except AttributeError:
+                logger.error(f"Port {self.port_id}: AttributeError while adding AX25Pipe")
+                return False
+            except Exception as ex:
+                logger.error(f"Port {self.port_id}: Error while adding AX25Pipe")
+                logger.error(ex)
+                return False
         self.pipes[pipe.get_pipe_uid()] = pipe
         return True
 
@@ -1110,9 +1143,19 @@ class AX25Port(object):
     def get_block_incoming_conn(self):
         return self._block_incoming_conn
 
-
-
+########################################################
+# KISS
 class KissTCP(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
     def init(self):
         if self._loop_is_running:
             # print("KISS TCP INIT")
@@ -1128,24 +1171,17 @@ class KissTCP(AX25Port):
             except Exception as e:
                 logger.error(f'Port {self.port_id}:Error. Cant connect to KISS TCP Device {self._port_param}')
                 logger.error('{}'.format(e))
-                # self.device.shutdown(socket.SHUT_RDWR)
-                # self.device.close()
                 self.close_device()
                 raise AX25DeviceFAIL
 
             else:
-                kiss_start_cmd = self.kiss.device_kiss_start_1()
-                if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
-
-                    # self.device.sendall(self.kiss.device_kiss_start_1())
+                start_cmd = self.tnc_protocol.device_start()
+                if all((self.tnc_protocol.is_enabled, start_cmd, self.tnc_protocol.set_param)):
                     try:
-                        self.device.sendall(self.kiss.device_kiss_start_1())
+                        self.device.sendall(start_cmd)
                         # print(self.device.recv(999))
                     except Exception as e:
-                        # print('{}'.format(e))
                         logger.error(f'Port {self.port_id}: {e}')
-                        # self.device.shutdown(socket.SHUT_RDWR)
-                        # self.device.close()
                         self.close_device()
                         raise AX25DeviceFAIL
                     else:
@@ -1191,9 +1227,12 @@ class KissTCP(AX25Port):
         #self.ende = True
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None and self.device_is_running:
+        if self.tnc_protocol.protocol_name != 'KISS':
+            return
+        if self.tnc_protocol.is_enabled and self.device is not None and self.device_is_running:
+
             try:
-                self.device.sendall(self.kiss.set_all_parameter())
+                self.device.sendall(self.tnc_protocol.set_all_parameter())
             except Exception as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 logger.error('{}'.format(e))
@@ -1209,13 +1248,14 @@ class KissTCP(AX25Port):
             raise AX25DeviceERROR(e, self)
 
         if recv_buff:
-            de_kiss_fr = self.kiss.de_kiss(recv_buff)
+            #print(recv_buff)
+            de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
             if de_kiss_fr is not None:
                 ret = RxBuf()
-                ret.raw_data = bytes(de_kiss_fr)
+                ret.raw_data   = bytes(de_kiss_fr)
                 ret.kiss_frame = bytes(recv_buff)
                 return ret
-            if self.kiss.unknown_kiss_frame(recv_buff):
+            if self.tnc_protocol.unknown_kiss_frame(recv_buff):
                 return None
             return None
         else:
@@ -1223,7 +1263,7 @@ class KissTCP(AX25Port):
 
     def _tx_device(self, frame):
         try:
-            self.device.sendall(self.kiss.kiss(frame.data_bytes))
+            self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
         except Exception as e:
             logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self._port_param}')
@@ -1240,12 +1280,26 @@ class KissTCP(AX25Port):
         ############################################
 
 class KISSSerial(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
+
 
     def init(self):
         if self._loop_is_running:
             logger.info("KISS Serial INIT")
             try:
-                self.device = serial.Serial(self._port_param[0], self._port_param[1], timeout=0.3)
+                self.device = serial.Serial(self._port_param[0],
+                                            self._port_param[1],
+                                            timeout=0.4,
+                                            #write_timeout=0.3
+                                            )
                 self.device_is_running = True
             except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
@@ -1256,13 +1310,13 @@ class KISSSerial(AX25Port):
                 time.sleep(1)
                 tnc_banner = self.device.readall().decode('UTF-8', 'ignore')
                 logger.info(f"Port {self.port_id}: TNC-Banner: {tnc_banner}")
-                kiss_start_cmd = self.kiss.device_kiss_start_1()
-                if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
+                kiss_start_cmd = self.tnc_protocol.device_start()
+                if all((self.tnc_protocol.is_enabled, kiss_start_cmd, self.tnc_protocol.set_param)):
 
                     # print(f"TNC-Banner: {tnc_banner}")
                     # self.device.flush()
                     try:
-                        self.device.write(self.kiss.device_kiss_start_1())
+                        self.device.write(self.tnc_protocol.device_start())
                         logger.info(f"Port {self.port_id}: TNC-MSG: {self.device.readall().decode('UTF-8', 'ignore')}")
                         self.set_kiss_parm()
                     except Exception as e:
@@ -1295,9 +1349,9 @@ class KISSSerial(AX25Port):
             return
         try:
             # Deactivate KISS Mode on TNC
-            if self.kiss.is_enabled:
-                if self.kiss.device_kiss_end():
-                    self.device.write(self.kiss.device_kiss_end())
+            if self.tnc_protocol.is_enabled:
+                if self.tnc_protocol.device_end():
+                    self.device.write(self.tnc_protocol.device_end())
                     time.sleep(1)
 
             time.sleep(1)
@@ -1316,9 +1370,11 @@ class KISSSerial(AX25Port):
         # self.ende = True
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None:
+        if self.tnc_protocol.protocol_name != 'KISS':
+            return
+        if self.tnc_protocol.is_enabled and self.device is not None:
             try:
-                self.device.write(self.kiss.set_all_parameter())
+                self.device.write(self.tnc_protocol.set_all_parameter())
             # except serial.portNotOpenError:
             except Exception as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
@@ -1327,7 +1383,7 @@ class KISSSerial(AX25Port):
                 raise AX25DeviceFAIL
 
     def _rx(self):
-        recv_buff = b''
+        recv_buff = bytearray()
         while self._loop_is_running and self.device_is_running:
             #self.port_w_dog = time.time()
             try:
@@ -1349,13 +1405,13 @@ class KISSSerial(AX25Port):
                     raise AX25DeviceERROR
 
             if recv_buff:
-                de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
                 if de_kiss_fr is not None:
                     ret = RxBuf()
                     ret.raw_data = bytes(de_kiss_fr)
                     ret.kiss_frame = bytes(recv_buff)
                     return ret
-                if self.kiss.unknown_kiss_frame(recv_buff):
+                if self.tnc_protocol.unknown_kiss_frame(recv_buff):
                     recv_buff = b''
                     return None
 
@@ -1379,7 +1435,7 @@ class KISSSerial(AX25Port):
             raise AX25DeviceERROR
 
         try:
-            self.device.write(self.kiss.kiss(frame.data_bytes))
+            self.device.write(self.tnc_protocol.encode_tnc(frame.data_bytes))
         except Exception as e:
             logger.warning(
                 f'Port {self.port_id}: Error. Cant send Packet to KISS Serial Device. Try Reinit Device {self._port_param}')
@@ -1394,6 +1450,15 @@ class KISSSerial(AX25Port):
                 raise AX25DeviceERROR
 
 class AXIP(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
     def init(self):
 
         if self._loop_is_running:
@@ -1539,6 +1604,15 @@ class AXIP(AX25Port):
     """
 
 class AX25KernelDEV(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
     def init(self):
         if self._loop_is_running:
             # print("KISS TCP INIT")
@@ -1565,7 +1639,7 @@ class AX25KernelDEV(AX25Port):
                 raise AX25DeviceFAIL
 
             else:
-                if all((self.kiss.is_enabled, self.kiss.set_kiss_param)):
+                if all((self.tnc_protocol.is_enabled, self.tnc_protocol.set_param)):
                     self.set_kiss_parm()
                 return
 
@@ -1605,9 +1679,11 @@ class AX25KernelDEV(AX25Port):
             # print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None and self.device_is_running:
+        if self.tnc_protocol.protocol_name != 'KISS':
+            return
+        if self.tnc_protocol.is_enabled and self.device is not None and self.device_is_running:
             try:
-                frame = self.kiss.set_all_parameter_ax25kernel()
+                frame = self.tnc_protocol.set_all_parameter_ax25kernel()
                 for el in frame:
                     self.device.sendall(el)
             except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
@@ -1625,13 +1701,13 @@ class AX25KernelDEV(AX25Port):
             raise AX25DeviceERROR(e, self)
 
         if recv_buff:
-            de_kiss_fr = self.kiss.de_kiss_ax25kernel(recv_buff)
+            de_kiss_fr = self.tnc_protocol.de_kiss_ax25kernel(recv_buff)
             if de_kiss_fr is not None:
                 ret = RxBuf()
                 ret.raw_data = bytes(de_kiss_fr)
                 ret.kiss_frame = bytes(recv_buff)
                 return ret
-            if self.kiss.unknown_kiss_frame(recv_buff):
+            if self.tnc_protocol.unknown_kiss_frame(recv_buff):
                 return None
             return None
         else:
@@ -1639,7 +1715,7 @@ class AX25KernelDEV(AX25Port):
 
     def _tx_device(self, frame):
         try:
-            self.device.sendall(self.kiss.kiss_ax25kernel(frame.data_bytes))
+            self.device.sendall(self.tnc_protocol.kiss_ax25kernel(frame.data_bytes))
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
             logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self._port_param}')
             logger.error('{}'.format(e))
@@ -1650,12 +1726,21 @@ class AX25KernelDEV(AX25Port):
                 raise AX25DeviceFAIL
 
 class TNC_EMU_TCP_SRV(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
     def init(self):
         if self._loop_is_running:
             logger.info(f'Port {self.port_id}: TNC-EMU-TCP-SRV INIT')
             sock_timeout = 1
-            self.kiss.is_enabled = True
-            self.kiss.set_kiss_param = False
+            self.tnc_protocol.is_enabled = True
+            self.tnc_protocol.set_param = False
 
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1717,9 +1802,11 @@ class TNC_EMU_TCP_SRV(AX25Port):
             # print("KISS TCP FINALLY")
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None and self.device_is_running and self.kiss.set_kiss_param:
+        if self.tnc_protocol.protocol_name != 'KISS':
+            return
+        if self.tnc_protocol.is_enabled and self.device is not None and self.device_is_running and self.tnc_protocol.set_param:
             try:
-                self.device.sendall(self.kiss.set_all_parameter())
+                self.device.sendall(self.tnc_protocol.set_all_parameter())
             except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 logger.error('{}'.format(e))
@@ -1737,12 +1824,12 @@ class TNC_EMU_TCP_SRV(AX25Port):
             logger.info(
                 f'Port {self.port_id}: TNC-EMU Device: Client connection accepted. {self._tnc_emu_client_address}')
             self._tnc_emu_connection.settimeout(0.2)
-            kiss_start_cmd = self.kiss.device_kiss_start_1()
-            if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
+            kiss_start_cmd = self.tnc_protocol.device_start()
+            if all((self.tnc_protocol.is_enabled, kiss_start_cmd, self.tnc_protocol.set_param)):
 
                 # self.device.sendall(self.kiss.device_kiss_start_1())
                 try:
-                    self.device.sendall(self.kiss.device_kiss_start_1())
+                    self.device.sendall(self.tnc_protocol.device_start())
                     # print(self.device.recv(999))
                 except BrokenPipeError as e:
                     # print('{}'.format(e))
@@ -1769,13 +1856,13 @@ class TNC_EMU_TCP_SRV(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
                 if recv_buff:
-                    de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                    de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
                     if de_kiss_fr is not None:
                         ret = RxBuf()
                         ret.raw_data = bytes(de_kiss_fr)
                         ret.kiss_frame = bytes(recv_buff)
                         return ret
-                    if self.kiss.unknown_kiss_frame(recv_buff):
+                    if self.tnc_protocol.unknown_kiss_frame(recv_buff):
                         recv_buff = b''
 
                 else:
@@ -1791,7 +1878,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
             return
         ###################################
         try:
-            self._tnc_emu_connection.sendall(self.kiss.kiss(frame.data_bytes))
+            self._tnc_emu_connection.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
         except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
             logger.warning(
                 f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')
@@ -1809,11 +1896,20 @@ class TNC_EMU_TCP_SRV(AX25Port):
                 raise AX25DeviceFAIL
 
 class TNC_EMU_TCP_CL(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = Kiss(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
     def init(self):
         if self._loop_is_running:
             logger.info(f'Port {self.port_id}: TNC-EMU-TCP-CLIENT INIT')
-            self.kiss.is_enabled = True
-            self.kiss.set_kiss_param = False
+            self.tnc_protocol.is_enabled = True
+            self.tnc_protocol.set_param = False
 
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1880,12 +1976,14 @@ class TNC_EMU_TCP_CL(AX25Port):
                 self.device.close()
 
     def set_kiss_parm(self):
-        if self.kiss.is_enabled and self.device is not None and self.device_is_running and self.kiss.set_kiss_param:
-            kiss_cmd = self.kiss.set_all_parameter()
+        if self.tnc_protocol.protocol_name != 'KISS':
+            return
+        if self.tnc_protocol.is_enabled and self.device is not None and self.device_is_running and self.tnc_protocol.set_param:
+            kiss_cmd = self.tnc_protocol.set_all_parameter()
             if not kiss_cmd:
                 return
             try:
-                self.device.sendall(self.kiss.set_all_parameter())
+                self.device.sendall(self.tnc_protocol.set_all_parameter())
             except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:
                 logger.error(f"Port {self.port_id}: SetKiss Failed !! {e}")
                 logger.error('{}'.format(e))
@@ -1916,8 +2014,8 @@ class TNC_EMU_TCP_CL(AX25Port):
             logger.info(
                 f'Port {self.port_id}: TNC-EMU Device: Server connection accepted. {self._tnc_emu_client_address}')
             self.device.settimeout(0.4)
-            kiss_start_cmd = self.kiss.device_kiss_start_1()
-            if all((self.kiss.is_enabled, kiss_start_cmd, self.kiss.set_kiss_param)):
+            kiss_start_cmd = self.tnc_protocol.device_start()
+            if all((self.tnc_protocol.is_enabled, kiss_start_cmd, self.tnc_protocol.set_param)):
                 try:
                     self.device.sendall(kiss_start_cmd)
                 except BrokenPipeError as e:
@@ -1948,13 +2046,13 @@ class TNC_EMU_TCP_CL(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
             if recv_buff:
-                de_kiss_fr = self.kiss.de_kiss(recv_buff)
+                de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
                 if de_kiss_fr is not None:
                     ret = RxBuf()
                     ret.raw_data = bytes(de_kiss_fr)
                     ret.kiss_frame = bytes(recv_buff)
                     return ret
-                if self.kiss.unknown_kiss_frame(recv_buff):
+                if self.tnc_protocol.unknown_kiss_frame(recv_buff):
                     recv_buff = b''
 
             else:
@@ -1967,7 +2065,7 @@ class TNC_EMU_TCP_CL(AX25Port):
 
     def _tx_device(self, frame):
         try:
-            self.device.sendall(self.kiss.kiss(frame.data_bytes))
+            self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
         except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
             logger.warning(
                 f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')
@@ -1988,3 +2086,124 @@ class TNC_EMU_TCP_CL(AX25Port):
             except AX25DeviceFAIL:
                 logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
                 raise AX25DeviceFAIL
+########################################################
+# AGWPE
+class AGWPE_TCP(AX25Port):
+    def __init__(self, port_id: int, port_handler):
+        super().__init__(port_id, port_handler)
+        self.tnc_protocol = AGWPEHandler(self._port_cfg)
+        try:
+            self.init()
+        except AX25DeviceFAIL:
+            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
+            AX25DeviceFAIL(self)
+
+    def init(self):
+        if self._loop_is_running:
+            # print("KISS TCP INIT")
+            logger.info(f'Port {self.port_id}: AGWPE TCP INIT')
+            sock_timeout = 0.2
+            # self.kiss = b'\x00'
+            self.device = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
+            try:
+                self.device.settimeout(sock_timeout)
+                self.device.connect(self._port_param)
+                self.device_is_running = True
+
+            except Exception as e:
+                logger.error(f'Port {self.port_id}:Error. Cant connect to AGWPE TCP Device {self._port_param}')
+                logger.error('{}'.format(e))
+                self.close_device()
+                raise AX25DeviceFAIL
+
+            start_seq = self.tnc_protocol.device_start()
+
+            for start_cmd in start_seq:
+                try:
+                    self.device.sendall(start_cmd)
+                    # print(self.device.recv(999))
+                except Exception as e:
+                    logger.error(f'Port {self.port_id}: {e}')
+                    self.close_device()
+                    raise AX25DeviceFAIL
+                try:
+                    recv_buff = self.device.recv(999)
+                    self.tnc_protocol.decode_tnc(recv_buff)
+                except socket.timeout:
+                    pass
+                except Exception as e:
+                    raise AX25DeviceERROR(e, self)
+            logger.info(f'Port {self.port_id}: AGWPE TCP INIT Done...')
+
+
+    def close_device(self):
+        self._loop_is_running = False
+        if self.device is None:
+            self.device_is_running = False
+            return
+        try:
+            # Deactivate KISS Mode on TNC
+            """
+            if self.kiss.is_enabled:
+                self.device.sendall(self.kiss.device_kiss_end())
+            """
+            self.device.shutdown(socket.SHUT_RDWR)
+            self.device.close()
+        except Exception as e:
+            logger.error(f"Port {self.port_id}: Error while closing Port !")
+            logger.error(f"Port {self.port_id}: {e}")
+            self.device_is_running = False
+            if self.device is not None:
+                try:
+                    self.device.close()
+                except Exception as e:
+                    logger.error(f"Port {self.port_id}: Error while closing Port !")
+                    logger.error(f"Port {self.port_id}: {e}")
+
+        finally:
+            self.device_is_running = False
+            if self.device is not None:
+                self.device.close()
+            # print("KISS TCP FINALLY")
+        #self.ende = True
+
+    def _rx(self):
+        #self.port_w_dog = time.time()
+        try:
+            recv_buff = self.device.recv(999)
+        except socket.timeout:
+            return None
+        except Exception as e:
+            raise AX25DeviceERROR(e, self)
+
+        if recv_buff:
+            #print(recv_buff)
+            de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
+            if de_kiss_fr is not None:
+                ret = RxBuf()
+                ret.raw_data   = bytes(de_kiss_fr)
+                ret.kiss_frame = bytes(recv_buff)
+                return ret
+            #if self.tnc_protocol.unknown_kiss_frame(recv_buff):
+            #    return None
+            return None
+        else:
+            return None
+
+    def _tx_device(self, frame):
+        try:
+            self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
+            # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')
+        except Exception as e:
+            logger.error(f'Port {self.port_id}: Error. Cant send Packet to KISS TCP Device. Try Reinit Device {self._port_param}')
+            logger.error('{}'.format(e))
+            try:
+                self.init()
+            except Exception as e:
+                logger.error(f'Port {self.port_id}: Error. Reinit Failed !! {self._port_param}')
+                logger.error(f"Port {self.port_id}: Error: {e}")
+                raise AX25DeviceFAIL
+        # else:
+        #     self._mh.bw_mon_inp(frame, self.port_id)
+
+        ############################################

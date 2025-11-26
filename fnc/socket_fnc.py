@@ -1,10 +1,15 @@
 import socket
 
+from cfg.logger_config import logger
+
 
 def get_ip_by_hostname(socket_add: ''):
     try:
         return socket.gethostbyname(socket_add)
     except socket.gaierror:
+        return ''
+    except Exception as ex:
+        logger.error(f"get_ip_by_hostname: {ex}")
         return ''
 
 

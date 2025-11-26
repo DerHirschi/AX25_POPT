@@ -21,7 +21,8 @@ from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25 import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS
+from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_DIGI, \
+    CLI_TYP_PIPE
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -52,13 +53,14 @@ class AX25PortHandler(object):
         self.is_running         = True
         self._ph_end            = False
         self._glb_port_blocking = 1
+        self._thread_gc         = []
         ###########################
         # Moduls
         # self.routingTable = None
         self._gui               = None
         self._bbs               = None
         self._aprs_ais          = None
-        self._scheduled_tasker  = None
+        # self._scheduled_tasker  = None
         #######################################################
         # VARs
         self.ax25_ports         = {}
@@ -76,6 +78,9 @@ class AX25PortHandler(object):
         self._mh                = MH(self)
         self._mh.set_DB(self._db)
         #######################################################
+        # Init Sound Modul
+        self._sound             = SOUND
+        #######################################################
         # Init Routing Table
         logger.info("PH: Routing Table Init")
         # self._routingTable      = RoutingTable()
@@ -83,7 +88,8 @@ class AX25PortHandler(object):
         #######################################################
         # Scheduled Tasks
         logger.info("PH: Scheduled Tasks Init")
-        self._init_SchedTasker()
+        # self._init_SchedTasker()
+        self._scheduled_tasker = PoPTSchedule_Tasker(self)
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
@@ -151,12 +157,7 @@ class AX25PortHandler(object):
 
     def _tasker(self):
         while self.is_running:
-            self._prio_task()
-            self._05sec_task()
-            if self._1sec_task():
-                continue
-            if self._2sec_task():
-                continue
+            self.tasker_gui_th()
             if not self.is_running:
                 return
             time.sleep(0.25)
@@ -173,9 +174,11 @@ class AX25PortHandler(object):
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
+        self._pipeTool_task()
         return any((
-            self._bbs.tasker(),     # bbs.tasker-q
-            self._gpio_tasker_q()   # gpio.tasker-q
+            self._bbs.tasker(),         # bbs.tasker-q
+            self._gpio_tasker_q(),      # gpio.tasker-q
+            self._sound.sound_tasker(), # tasker-q
         ))
 
     def _05sec_task(self):
@@ -202,7 +205,6 @@ class AX25PortHandler(object):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
             self._bbs.main_cron()
-            self._pipeTool_task()
             self._task_timer_2sec = time.time() + 2
             return True
         return False
@@ -222,6 +224,16 @@ class AX25PortHandler(object):
                     #logger.info(f"Try to reinit Port {port_id}")
                     #threading.Thread(target=self.reinit_port, args=(port_id, )).start()
     #######################################################################
+    # Thread GC
+    def _wait_for_GC_threads(self):
+        n = 0
+        for th in self._thread_gc:
+            if hasattr(th, 'is_alive'):
+                n += 1
+                while th.is_alive():
+                    logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
+                    th.join(timeout=1)
+    #######################################################################
     # MH
     def _mh_task(self):
         return self._mh.mh_task()
@@ -237,8 +249,8 @@ class AX25PortHandler(object):
 
     #######################################################################
     # scheduled Tasks
-    def _init_SchedTasker(self):
-        self._scheduled_tasker = PoPTSchedule_Tasker(self)
+    #def _init_SchedTasker(self):
+    #    self._scheduled_tasker = PoPTSchedule_Tasker(self)
 
     def insert_SchedTask(self, sched_cfg, conf):
         if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
@@ -301,26 +313,42 @@ class AX25PortHandler(object):
             if port.device is not None:
                 ret = False
         return ret
-
+    ######################################################
+    #
     def close_popt(self):
         logger.info("PH: Closing PoPT")
         # self.block_all_ports(1)
         self.is_running = False
+        if self.close_sound_PH():
+            logger.info("PH: Sound Modul closed")
+        else:
+            # TODO Headless thread Garbage collector
+            logger.info("PH: Closing Sound Modul")
+
+        # APRS
         logger.info("PH: Closing APRS-Client")
         self.sysmsg_to_gui("Closing APRS-Client")
         self._close_aprs_ais()
+        # GPIO
         if hasattr(self._gpio, 'close_gpio_pins'):
             logger.info("PH: Closing GPIO")
             self.sysmsg_to_gui("Closing GPIO")
             self._gpio.close_gpio_pins()
+        # Pipes
+        logger.info("PH: Closing Pipes")
+        self._close_all_pipes()
+        self._wait_for_pipe_thread()
+        # Ports
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PH: Closing Port {k}")
             self.sysmsg_to_gui(f"Closing Port {k}")
             self.close_port(k)
+        # BBS
         if hasattr(self._bbs, 'close'):
             logger.info("PH: Closing BBS")
             self.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
+        # MH
         if self._mh:
             logger.info("PH: Saving MH-Data")
             self.sysmsg_to_gui("Saving MH-Data")
@@ -330,6 +358,7 @@ class AX25PortHandler(object):
             self._mh.save_PortStat()
             self.sysmsg_to_gui("Saving Connection History")
             self._mh.save_conn_hist()
+        # 1-Wire
         if self._update_1wire_th is not None:
             self.sysmsg_to_gui("Closing 1-Wire Thread")
             n = 0
@@ -352,11 +381,20 @@ class AX25PortHandler(object):
         logger.info("PH: Saving MainCFG")
         self.sysmsg_to_gui("Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
+        logger.info("PH: Checking GC-Threads..")
+        self._wait_for_GC_threads()
         self._ph_end = True
 
     def get_ph_end(self):
         return self._ph_end
 
+    def close_sound_PH(self):
+        if self._sound.is_quit():
+            return True
+        self._sound.close_sound()
+        return False
+
+    #####################################################
     def close_port(self, port_id: int):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
@@ -397,6 +435,13 @@ class AX25PortHandler(object):
     """
 
     def reinit_port(self, port_id: int):
+        reinit_th = threading.Thread(target=self._reinit_port_th, args=(port_id, ))
+        reinit_th.start()
+        self._thread_gc.append(reinit_th)
+        self.set_diesel()
+
+
+    def _reinit_port_th(self, port_id: int):
         # if not self.ax25_ports.get(port_id, False):
         #     return False
         self.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
@@ -407,7 +452,6 @@ class AX25PortHandler(object):
         self._init_port(port_id=port_id)
         ##########################
         # Pipe-Tool Init
-        self.set_diesel()
 
     def set_kiss_param_all_ports(self):
         for port_id, port in self.ax25_ports.items():
@@ -611,9 +655,9 @@ class AX25PortHandler(object):
                 #    ch_index=ch_id
                 #)
                 if 0 < ch_id < SERVICE_CH_START:
-                    SOUND.new_conn_sound()
+                    self._sound.new_conn_sound()
                     speech = ' '.join(call_str.replace('-', ' '))
-                    SOUND.sprech(speech)
+                    self._sound.sprech(speech, wait=False)
 
             self._gui.add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
@@ -665,7 +709,7 @@ class AX25PortHandler(object):
                     ch_index=ch_id)
 
                 if ch_id < SERVICE_CH_START:
-                    SOUND.disco_sound()
+                    self._sound.disco_sound()
                 self._gui.resetHome_LivePath_plot(ch_id=ch_id)
                 self._gui.ch_status_update()
                 self._gui.conn_btn_update()
@@ -686,16 +730,16 @@ class AX25PortHandler(object):
         conn_typ  = conn.cli_type
 
         # Bestimme Verbindungstyp
-        if conn_typ == 'BOX' and POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
-            conn_typ = 'Task: FWD'
+        if conn_typ == CLI_TYP_BOX and POPT_CFG.get_BBS_FWD_cfg(ent_call.split('-')[0]):
+            conn_typ = CLI_TYP_TASK_FWD
         elif conn.is_link:
             conn_typ = f'DIGI {conn.LINK_Connection.to_call_str}' if hasattr(conn.LINK_Connection,
-                                                                             'to_call_str') else 'DIGI'
+                                                                             'to_call_str') else CLI_TYP_DIGI
         elif conn.pipe:
-            conn_typ = 'PIPE'
+            conn_typ = CLI_TYP_PIPE
 
         # Bestimme Bildtyp
-        image_typ = 'DIGI' if 'DIGI' in conn_typ else conn_typ
+        image_typ = CLI_TYP_DIGI if CLI_TYP_DIGI in conn_typ else conn_typ
         image_typ += '-DISCO' if disco else '-CONN'
         image_typ += '-INTER' if inter_connect else '-IN' if conn.is_incoming_conn() else '-OUT'
 
@@ -946,25 +990,61 @@ class AX25PortHandler(object):
 
                     # self._all_pipe_cfgs[call] = pipe
 
-
     def _pipeTool_task(self):
         for port_id, port in self.ax25_ports.items():
-            if port.device_is_running:
-                for pipe_uid, pipe in port.pipes.items():
-                    if pipe:
-                        # print(f"PipeCron: {pipe_uid}")
-                        pipe.cron_exec()
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                if hasattr(pipe, 'cron_exec'):
+                    pipe.cron_exec()
 
     def get_all_pipes(self):
         ret = []
-        # for pipe_uid, pipe in self._all_pipes.items():
         for port_id, port in self.ax25_ports.items():
-            if port.device_is_running:
-                for pipe_uid, pipe in port.pipes.items():
-                    # print(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
-                    logger.debug(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
-                    ret.append(pipe)
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                logger.debug(f"Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                ret.append(pipe)
         return ret
+    
+    def _get_all_pipe_threads(self):
+        ret = []
+        logger.debug("Pipe Thread geta")
+        for port_id, port in self.ax25_ports.items():
+            if not port.device_is_running:
+                continue
+            for pipe_uid, pipe in port.pipes.items():
+                logger.debug(f" -Pipe Port-ID: {port_id} - uid: {pipe_uid}")
+                if not hasattr(pipe, 'get_thread'):
+                    continue
+                ret.append(pipe.get_thread())
+        return ret
+    
+    def _wait_for_pipe_thread(self):
+        pipes = self.get_all_pipes()
+        logger.info(f"Checking for Pipe Threads in {len(pipes)} Pipes..")
+        n = 0
+        for pipe in pipes:
+            n += 1
+            if not hasattr(pipe, 'get_thread'):
+                continue
+            pipe_thread: threading.Thread = pipe.get_thread()
+            while pipe_thread.is_alive():
+                logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
+                pipe_thread.join(timeout=1)
+
+    def _close_all_pipes(self):
+        pipes = self.get_all_pipes()
+        logger.info(f"Closing {len(pipes)} Pipes..")
+        n = 0
+        for pipe in pipes:
+            n += 1
+            logger.info(f"  Closing Pipe {n}")
+            if not hasattr(pipe, 'close_pipe'):
+                continue
+            pipe.close_pipe(disco_ax25=True)
+
 
     """
     def add_pipe_PH(self, pipe):
@@ -1031,6 +1111,15 @@ class AX25PortHandler(object):
     def get_port_by_id(self, port_id: int):
         # TODO: Doppelte fnc cleanup
         return self.ax25_ports.get(port_id, None)
+
+    def get_MH(self):
+        return self._mh
+
+    def get_stat_timer(self):
+        return self._start_time
+
+    def get_sound_modul(self):
+        return self._sound
 
     ####################
     # Dual Port
@@ -1150,12 +1239,6 @@ class AX25PortHandler(object):
                 continue
             res_ssid.remove(ssid)
         return res_ssid
-
-    def get_MH(self):
-        return self._mh
-
-    def get_stat_timer(self):
-        return self._start_time
 
     ###############################
     # BBS

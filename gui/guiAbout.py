@@ -49,12 +49,12 @@ class About(tk.Toplevel):
         label.place(x=x, y=y)
         x = 40
         y = 45
-        txt1 = 'by MD2SAW'
+        txt1 = 'by MD2SAW (CB-Radio)'
         label = ttk.Label(main_f, text=txt1)
         label.place(x=x, y=y)
         x = 40
         y = 70
-        txt1 = 'Mit Unterstützung der CB-Funk PR-Community'
+        txt1 = 'Mit Unterstützung der PR-Community'
         label = ttk.Label(main_f, text=txt1)
         label.place(x=x, y=y)
         x = 40

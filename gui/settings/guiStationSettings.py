@@ -1,165 +1,42 @@
-import tkinter
-from tkinter import ttk
+import tkinter as tk
+from tkinter import ttk, messagebox
 from tkinter import filedialog as fd
 from tkinter import scrolledtext
 from tkinter.colorchooser import askcolor
+# Automatische Port-Erkennung
+import serial.tools.list_ports
 
-from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP
+from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP, CLI_TYP_PIPE, CLI_TYP_NO_CLI
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
+from cfg.popt_config import POPT_CFG
 from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
 from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch, get_strTab
-from gui.guiMsgBoxes import *
+from gui.guiMsgBoxes import AskMsg, call_vali_warning
 
 
 class StatSetTab:
     def __init__(self, new_setting, tabclt: ttk.Notebook, root):
-        # self.ports_sett: {int: DefaultPort} = main_stt_win.ax25_porthandler.ax25_port_settings
-        height = 600
-        width  = 1059
         self._root_win     = root
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._get_colorMap = lambda: COLOR_MAP.get(root.style_name, ('black', '#d9d9d9'))
-        # self.style = main_stt_win.style
-        self.own_tab = ttk.Frame(tabclt)
-
+        self.own_tab       = ttk.Frame(tabclt)
+        #########################################################################
+        # Config
         self._new_station_setting = new_setting
-        # self.station_setting = setting
         self._stat_call = self._new_station_setting.get('stat_parm_Call', 'NOCALL')
-        #################
-        # Call
-        call_x = 20
-        call_y = 570
-        call_label = ttk.Label(self.own_tab, text=f'{self._getTabStr("call")}:')
-        call_label.place(x=call_x, y=height - call_y)
-        self.call = ttk.Entry(self.own_tab, width=10)
-        self.call.place(x=call_x + 55, y=height - call_y)
-        # self.call.insert(tk.END, self._stat_call)
-        #################
-        # CLI
-        cli_x = 280
-        cli_y = 570
-        cli_label = ttk.Label(self.own_tab, text='Station-Typ:')
-        cli_label.place(x=cli_x, y=height - cli_y)
-        self._cli_select_var = tk.StringVar(self.own_tab)
-        self._cli_opt = CLI_OPT
-        opt = list(self._cli_opt.keys())
-        opt = [self._cli_select_var.get()] + opt
-        cli = ttk.OptionMenu(self.own_tab, self._cli_select_var, *opt, command=self.chk_CLI)
-        # cli.configure(width=8, height=1)
-        cli.place(x=cli_x + 115, y=height - cli_y - 2)
 
-        #################
-        # MaxPac
-        max_pac_x = 20
-        max_pac_y = 500
-        max_pac_label = ttk.Label(self.own_tab, text='Max-Pac:')
-        max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
-        self._max_pac_select_var = tk.StringVar(self.own_tab)
-        # self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
-        self._max_pac = ttk.Spinbox(self.own_tab,
-                                    textvariable=self._max_pac_select_var,
-                                    from_=0,
-                                    to=7,
-                                    increment=1,
-                                    width=2)
-        # self._max_pac.configure(width=4, height=1)
-        self._max_pac.place(x=max_pac_x + 78, y=height - max_pac_y - 5)
-
-        #################
-        # PacLen
-        pac_len_x = 180
-        pac_len_y = 500
-        pac_len_label = ttk.Label(self.own_tab, text='Pac-Len:')
-        pac_len_label.place(x=pac_len_x, y=height - pac_len_y)
-        self._pac_len = ttk.Entry(self.own_tab, width=3)
-        self._pac_len.place(x=pac_len_x + 75, y=height - pac_len_y)
-        # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
-
-        #################
-        # DIGI
-        """
-        digi_x = 305
-        digi_y = 500
-        self._digi_set_var = tk.BooleanVar()
-        digi = tk.Checkbutton(self.own_tab,
-                              text='DIGI',
-                              width=4,
-                              variable=self._digi_set_var,
-                              )
-        digi.place(x=digi_x, y=height - digi_y)
-        """
-        # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
-        ##################
-        # Smart DIGI
-        ###############################
-        # Right Side ( Name, QTH, LOC )
-        self.own_tab.rowconfigure(0, minsize=5, weight=0)
-        self.own_tab.columnconfigure(0, minsize=550, weight=0)
-        self.own_tab.columnconfigure(1, weight=1)
-        f_height = 135
-        r_side_frame = ttk.Frame(self.own_tab, width=435, height=f_height)
-        #r_side_frame.configure(bg='grey80')
-        r_side_frame.grid(column=1, row=1)
-        #################
-        # Name
-        name_x = 10
-        name_y = 120
-        name_label = ttk.Label(r_side_frame, text=f'{self._getTabStr("name")}:')
-        name_label.place(x=name_x, y=f_height - name_y)
-        self._name = ttk.Entry(r_side_frame, width=15)
-        self._name.place(x=name_x + 75, y=f_height - name_y)
-        # self._name.insert(tk.END, str(self.station_setting.stat_parm_Name))
-        #################
-        # QTH
-        """
-        qth_x = 10
-        qth_y = 90
-        qth_label = tk.Label(r_side_frame, text='QTH:')
-        qth_label.place(x=qth_x, y=f_height - qth_y)
-        self._qth = tk.Entry(r_side_frame, width=30)
-        self._qth.place(x=qth_x + 75, y=f_height - qth_y)
-        self._qth.insert(tk.END, str(POPT_CFG.get_guiCFG_qth()))
-        self._qth.configure(state='disabled')
-        #################
-        # LOC
-        loc_x = 10
-        loc_y = 60
-        loc_label = tk.Label(r_side_frame, text='LOC:')
-        loc_label.place(x=loc_x, y=f_height - loc_y)
-        self._loc = tk.Entry(r_side_frame, width=6)
-        self._loc.place(x=loc_x + 75, y=f_height - loc_y)
-        self._loc.insert(tk.END, str(POPT_CFG.get_guiCFG_locator()))
-        self._loc.configure(state='disabled')
-        """
-        ############################
-        # Tabs for C-Text and so on
-        # Root Tab
-        digi_x = 20
-        digi_y = 460
-        # Root Tab
-        self._textTab = ttk.Notebook(self.own_tab, height=height - 330, width=width - (digi_x * 4))
-        self._textTab.place(x=digi_x, y=height - digi_y)
-        self._textTab.place(x=digi_x, y=height - digi_y)
-        # C-Text
-        tab_ctext = ttk.Frame(self._textTab)
-        tab_ctext.rowconfigure(0, minsize=2, weight=0)
-        tab_ctext.rowconfigure(1, minsize=100, weight=1)
-        tab_ctext.rowconfigure(2, minsize=2, weight=0)
-        tab_ctext.columnconfigure(0, minsize=2, weight=0)
-        tab_ctext.columnconfigure(1, minsize=900, weight=1)
-        tab_ctext.columnconfigure(2, minsize=2, weight=0)
-
-        c_text = self._load_fm_file(self._stat_call + '.ctx')
-        b_text = self._load_fm_file(self._stat_call + '.btx')
-        i_text = self._load_fm_file(self._stat_call + '.itx')
+        c_text  = self._load_fm_file(self._stat_call + '.ctx')
+        b_text  = self._load_fm_file(self._stat_call + '.btx')
+        i_text  = self._load_fm_file(self._stat_call + '.itx')
         li_text = self._load_fm_file(self._stat_call + '.litx')
-        a_text = self._load_fm_file(self._stat_call + '.atx')
+        a_text  = self._load_fm_file(self._stat_call + '.atx')
+
         if c_text is None:
-            c_text = self._getTabStr('default_ctext')
+            c_text = zeilenumbruch_lines(self._getTabStr('default_ctext'))
         if b_text is None:
-            b_text = ''
+            b_text = zeilenumbruch_lines(self._getTabStr('default_btext'))
         if i_text is None:
             i_text = ''
         if li_text is None:
@@ -167,130 +44,306 @@ class StatSetTab:
         if a_text is None:
             a_text = ''
 
+        stat_call       = self._new_station_setting.get('stat_parm_Call', '')
+        stat_name       = self._new_station_setting.get('stat_parm_Name', '')
+        stat_cli_typ    = self._new_station_setting.get('stat_parm_cli', CLI_TYP_NO_CLI)
+        stat_paclen     = self._new_station_setting.get('stat_parm_PacLen', 0)
+        stat_maxframe   = self._new_station_setting.get('stat_parm_MaxFrame', 0)
+        # Pipe
+        pipe_cfg        = POPT_CFG.get_pipe_CFG_fm_UID(stat_call, -1)
+        #########################################################################
+        # Vars
+        self._qso_fg_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
+        self._qso_bg_tx = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
+        self._qso_fg_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
+        #########################################################################
+        # Gui-Vars
+        self.call_var         = tk.StringVar(self.own_tab, value=stat_call)
+        self._cli_select_var  = tk.StringVar(self.own_tab, value=stat_cli_typ)
+        self._name_var        = tk.StringVar(self.own_tab, value=stat_name)
+        self._max_pac_var     = tk.StringVar(self.own_tab, value=str(stat_maxframe))
+        self._len_pac_var     = tk.StringVar(self.own_tab, value=str(stat_paclen))
+        # Pipe
+        self._backend_var       = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_backend', 'file'))
+        self._tx_filename_var   = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_pipe_tx', ''))
+        self._rx_filename_var   = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_pipe_rx', ''))
+        self._loop_timer_var    = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_pipe_loop_timer', 10))
+        self._max_pac_delay_var = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_MaxPacDelay', 30))
+        self._addr_var          = tk.StringVar(self.own_tab)
+        self._send_init_var     = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_be_send_at_init', ''))
+        self._flush_rx_var      = tk.BooleanVar(self.own_tab,value=pipe_cfg.get('pipe_be_flush_rx_at_init', False))
+        self._pipe_ctext_var    = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_c_text', ''))
+        # self._pipe_encoding_var = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_txt_encoder', 'UTF-8'))
+        self._serial_port_var   = tk.StringVar(self.own_tab, )
+        self._baudrate_var      = tk.StringVar(self.own_tab, value="9600")
+        addr = pipe_cfg.get('pipe_be_address', ('0.0.0.0', 8023))
+        self._addr_var.set(f"{addr[0]}:{addr[1]}" if isinstance(addr, (tuple, list)) else str(addr))
+        # Vorbelegung aus Config
+        baud_rates = ['9600', '19200', '38400', '57600', '115200', '230400', '460800', '921600']
+        if isinstance(addr, (tuple, list)) and len(addr) >= 2:
+            if addr[0].startswith('/dev/') or addr[0].startswith('COM'):
+                self._serial_port_var.set(addr[0])
+                self._baudrate_var.set(str(addr[1]) if addr[1] in baud_rates else "115200")
 
+        #########################################################################
+        # Frames
+        upper_frame = ttk.Frame(self.own_tab)
+        tab_frame   = ttk.Frame(self.own_tab)
+        upper_frame.pack(fill='x',    expand=False)
+        tab_frame.pack(  fill='both', expand=True, padx=5, pady=5)
+        # =======================================================================
+        # Upper Frame
+        u_frame = ttk.Frame(upper_frame)
+        l_frame = ttk.Frame(upper_frame)
+        u_frame.pack(padx=5, pady=10,fill='x')
+        l_frame.pack(padx=5, pady=10,fill='x')
+        # u_frame
+        call_f = ttk.Frame(u_frame)
+        cli_f  = ttk.Frame(u_frame)
+        name_f = ttk.Frame(u_frame)
+        call_f.pack(side='left', padx=10)
+        cli_f.pack( side='left', padx=50)
+        name_f.pack(side='left', padx=50)
+        # l_frame
+        maxPac_f = ttk.Frame(l_frame)
+        lenPac_f = ttk.Frame(l_frame)
+        maxPac_f.pack(side='left', padx=10)
+        lenPac_f.pack(side='left', padx=30)
+        #########################################################################
+        # Call
+        ttk.Label(call_f, text=f'{self._getTabStr("call")}:').pack(side='left', padx=5)
+        self.call = ttk.Entry(call_f,
+                              textvariable=self.call_var,
+                              width=10)
+        self.call.pack(side='left')
+        # self.call.insert(tk.END, self._stat_call)
+        #########################################################################
+        # CLI
+        ttk.Label(cli_f, text='Station-Typ:').pack(side='left', padx=5)
+        opt = list(CLI_OPT.keys())
+        opt = [self._cli_select_var.get()] + opt
+        cli = ttk.OptionMenu(cli_f, self._cli_select_var, *opt, command=self.chk_CLI)
+        cli.pack(side='left')
+        #################
+        # Name
+        ttk.Label(name_f, text=f'{self._getTabStr("name")}:').pack(side='left', padx=5)
+        self._name = ttk.Entry(
+            name_f,
+            textvariable=self._name_var,
+            width=15)
+        self._name.pack(side='left')
+        #################
+        # MaxPac
+        ttk.Label(maxPac_f, text='Max-Pac:').pack(side='left', padx=5)
+        self._max_pac = ttk.Spinbox(maxPac_f,
+                                    textvariable=self._max_pac_var,
+                                    from_=0,
+                                    to=7,
+                                    increment=1,
+                                    width=2)
+        self._max_pac.pack(side='left')
+        #################
+        # PacLen
+        ttk.Label(lenPac_f, text='Pac-Len:').pack(side='left', padx=5)
+        self._pac_len = ttk.Entry(lenPac_f,
+                                  textvariable=self._len_pac_var,
+                                  width=3)
+        self._pac_len.pack(side='left')
 
-        # self.c_text_ent = tk.Text(tab_ctext, bg='white', font=("Courier", 12))
+        # ========================================================================================
+        # ========================================================================================
+        # Tabs for C-Text and so on
+        # Root Tab
+        self._textTab = ttk.Notebook(tab_frame)
+        self._textTab.pack(fill='both', expand=True)
+        # ########################################################################################
+        # ========================================================================================
+        # C-Text Tab
+        tab_ctext = ttk.Frame(self._textTab)
+        tab_ctext.pack(expand=True, fill='both')
+
         self._c_text_ent = tk.Text(tab_ctext, font=("Courier", 12))
-        self._c_text_ent.configure(width=80, height=11)
-        # self.c_text_ent.place(x=5, y=15)
-        self._c_text_ent.grid(row=1, column=1)
-        # self.c_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_ctext)
+        self._c_text_ent.configure(width=80)
+        self._c_text_ent.pack(fill='y', padx=50, pady=40)
         self._c_text_ent.insert(tk.END, c_text)
 
-        # Bye Text
+        # ########################################################################################
+        # ========================================================================================
+        # Bye Text Tab
         tab_byetext = ttk.Frame(self._textTab)
-        tab_byetext.rowconfigure(0, minsize=2, weight=0)
-        tab_byetext.rowconfigure(1, minsize=100, weight=1)
-        tab_byetext.rowconfigure(2, minsize=2, weight=0)
-        tab_byetext.columnconfigure(0, minsize=2, weight=0)
-        tab_byetext.columnconfigure(1, minsize=900, weight=1)
-        tab_byetext.columnconfigure(2, minsize=2, weight=0)
-        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        tab_byetext.pack(expand=True, fill='both')
+
         self._bye_text_ent = tk.Text(tab_byetext, font=("Courier", 12))
-        self._bye_text_ent.configure(width=80, height=11)
-        # self.bye_text_ent.place(x=5, y=15)
-        self._bye_text_ent.grid(row=1, column=1)
-        # self.bye_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_bye_text)
+        self._bye_text_ent.configure(width=80)
+        self._bye_text_ent.pack(fill='y', padx=50, pady=40)
         self._bye_text_ent.insert(tk.END, b_text)
 
-        # Info Text
+        # ########################################################################################
+        # ========================================================================================
+        # Info Text Tab
         tab_infotext = ttk.Frame(self._textTab)
-        tab_infotext.rowconfigure(0, minsize=2, weight=0)
-        tab_infotext.rowconfigure(1, minsize=100, weight=1)
-        tab_infotext.rowconfigure(2, minsize=2, weight=0)
-        tab_infotext.columnconfigure(0, minsize=2, weight=0)
-        tab_infotext.columnconfigure(1, minsize=900, weight=1)
-        tab_infotext.columnconfigure(2, minsize=2, weight=0)
-        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        tab_infotext.pack(expand=True, fill='both')
+
         self._info_text_ent = tk.scrolledtext.ScrolledText(tab_infotext, font=("Courier", 12))
-        self._info_text_ent.configure(width=80, height=11)
-        # self.bye_text_ent.place(x=5, y=15)
-        self._info_text_ent.grid(row=1, column=1)
-        # self.info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_itext)
+        self._info_text_ent.configure(width=80)
+        self._info_text_ent.pack(fill='y', padx=50, pady=20)
         self._info_text_ent.insert(tk.END, i_text)
 
-        # Info Text
+        # ########################################################################################
+        # ========================================================================================
+        # Long Info Text Tab
         tab_loinfotext = ttk.Frame(self._textTab)
-        tab_loinfotext.rowconfigure(0, minsize=2, weight=0)
-        tab_loinfotext.rowconfigure(1, minsize=100, weight=1)
-        tab_loinfotext.rowconfigure(2, minsize=2, weight=0)
-        tab_loinfotext.columnconfigure(0, minsize=2, weight=0)
-        tab_loinfotext.columnconfigure(1, minsize=900, weight=1)
-        tab_loinfotext.columnconfigure(2, minsize=2, weight=0)
-        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        tab_loinfotext.pack(expand=True, fill='both')
+
         self._long_info_text_ent = tk.scrolledtext.ScrolledText(tab_loinfotext, font=("Courier", 12))
-        self._long_info_text_ent.configure(width=80, height=11)
-        # self.bye_text_ent.place(x=5, y=15)
-        self._long_info_text_ent.grid(row=1, column=1)
-        # self.long_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_longitext)
+        self._long_info_text_ent.configure(width=80)
+        self._long_info_text_ent.pack(fill='y', padx=50, pady=20)
         self._long_info_text_ent.insert(tk.END, li_text)
 
-        # Status Text
+        # ########################################################################################
+        # ========================================================================================
+        # Status Text Tab
         tab_akttext = ttk.Frame(self._textTab)
-        tab_akttext.rowconfigure(0, minsize=2, weight=0)
-        tab_akttext.rowconfigure(1, minsize=100, weight=1)
-        tab_akttext.rowconfigure(2, minsize=2, weight=0)
-        tab_akttext.columnconfigure(0, minsize=2, weight=0)
-        tab_akttext.columnconfigure(1, minsize=900, weight=1)
-        tab_akttext.columnconfigure(2, minsize=2, weight=0)
-        # self.bye_text_ent = tk.Text(tab_byetext, bg='white', font=("Courier", 12))
+        tab_akttext.pack(expand=True, fill='both')
+
         self._akt_info_text_ent = tk.scrolledtext.ScrolledText(tab_akttext, font=("Courier", 12))
-        self._akt_info_text_ent.configure(width=80, height=11)
-        # self.bye_text_ent.place(x=5, y=15)
-        self._akt_info_text_ent.grid(row=1, column=1)
-        # self.akt_info_text_ent.insert(tk.END, self.station_setting.stat_parm_cli_akttext)
+        self._akt_info_text_ent.configure(width=80)
+        self._akt_info_text_ent.pack(fill='y', padx=50, pady=20)
         self._akt_info_text_ent.insert(tk.END, a_text)
+
         # ########################################################################################
-        # ########################################################################################
-        # Pipe
+        # ========================================================================================
+        # Pipe Tab
         tab_pipe = ttk.Frame(self._textTab)
-        # TX-File Check Timer
-        _x = 10
-        _y = 10
 
-        ttk.Label(tab_pipe, text='TX-File Check Timer (sek/sec):').place(x=_x, y=_y)
-        self._loop_timer_var = tk.StringVar(tab_pipe)
-        # self.loop_timer_var.set(self.pipe.parm_tx_file_check_timer)
-        self._loop_timer = ttk.Spinbox(tab_pipe,
-                                      from_=5,
-                                      to=360,
-                                      increment=5,
-                                      width=3,
-                                      textvariable=self._loop_timer_var,
-                                      # command=self.set_max_frame,
-                                      # state='disabled'
-                                      )
-        self._loop_timer.place(x=_x + 270, y=_y)
-        #################
-        # TX FILE
-        _x = 10
-        _y = 60
-        ttk.Label(tab_pipe, text=f"{self._getTabStr('tx_file')}:").place(x=_x, y=_y)
-        self._tx_filename_var = tk.StringVar(tab_pipe)
-        # self._tx_filename_var.set(self.pipe.tx_filename)
-        self._tx_filename = ttk.Entry(tab_pipe, textvariable=self._tx_filename_var, width=50)
-        # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        self._tx_filename.place(x=_x + 140, y=_y)
-        ttk.Button(tab_pipe,
-                  text=f"{self._getTabStr('file_1')}",
-                  command=lambda: self.select_files(tx=True),
-                  ).place(x=_x + 710, y=_y - 2)
-        #################################
-        # RX FILE
-        _x = 10
-        _y = 100
-        ttk.Label(tab_pipe, text=f"{self._getTabStr('rx_file')}:").place(x=_x, y=_y)
-        self._rx_filename_var = tk.StringVar(tab_pipe)
-        # self.rx_filename_var.set(self.pipe.rx_filename)
-        self._rx_filename = ttk.Entry(tab_pipe, textvariable=self._rx_filename_var, width=50)
-        # self._tx_filename.bind("<KeyRelease>", self.on_key_press_filename_ent)
-        self._rx_filename.place(x=_x + 140, y=_y)
-        ttk.Button(tab_pipe,
-                  text=f"{self._getTabStr('file_1')}",
-                  command=lambda: self.select_files(tx=False)
-                  ).place(x=_x + 710, y=_y - 2)
+        # ===================================================================
+        # 2. AX.25 Timing & Paketparameter
+        # ===================================================================
+        frm_pac = ttk.LabelFrame(tab_pipe, text=f" {self._getTabStr('packet_timing_param')} ")
+        frm_pac.pack(fill="x", padx=10, pady=8)
 
-        # Individual Colors for QSO Window
+        row = 0
+
+        ttk.Label(frm_pac, text="Max Pac Delay (s):").grid(row=row, column=4, sticky="w", padx=20)
+        ttk.Spinbox(frm_pac, values=[str(x * 10) for x in range(1, 37)], textvariable=self._max_pac_delay_var,
+                    width=6).grid(row=row, column=5, padx=8)
+
+        #row += 1
+        ttk.Label(frm_pac, text="TX-File Check Timer (s):").grid(row=row, column=0, sticky="w", padx=8, pady=4)
+        ttk.Spinbox(frm_pac, from_=5, to=360, increment=5, textvariable=self._loop_timer_var, width=6).grid(row=row,
+                                                                                                           column=1,
+                                                                                                           padx=8)
+
+        # ===================================================================
+        # 3. Backend Auswahl
+        # ===================================================================
+        frm_backend = ttk.LabelFrame(tab_pipe, text=f" {self._getTabStr('backen_config')} ")
+        frm_backend.pack(fill="x", padx=10, pady=8)
+
+        ttk.Label(frm_backend, text="Backend:").pack(side="left", padx=8, pady=6)
+        cb = ttk.Combobox(frm_backend, textvariable=self._backend_var,
+                          values=[
+                              'file',
+                              'tcp-server',
+                              'tcp-client',
+                              'serial'
+                          ],
+                          state="readonly", width=15)
+        cb.pack(side="left", padx=8)
+        cb.bind("<<ComboboxSelected>>", lambda e: self._update_backend_fields())
+
+        # ===================================================================
+        # 4. File-Backend (immer sichtbar bei 'file')
+        # ===================================================================
+        self.frm_file = ttk.LabelFrame(tab_pipe, text=" File Backend ")
+        self.frm_file.pack(fill="x", padx=10, pady=8)
+
+        row = 0
+        ttk.Label(self.frm_file, text=f"{self._getTabStr('tx_file')}:", width=12).grid(row=row, column=0, sticky="w",
+                                                                                       padx=8, pady=4)
+        ttk.Entry(self.frm_file, textvariable=self._tx_filename_var, width=60).grid(row=row, column=1, sticky="we",
+                                                                                   padx=8)
+        ttk.Button(self.frm_file, text="...", width=3, command=lambda: self._select_files(tx=True)).grid(row=row,
+                                                                                                         column=2,
+                                                                                                         padx=4)
+
+        row += 1
+        ttk.Label(self.frm_file, text=f"{self._getTabStr('rx_file')}:", width=12).grid(row=row, column=0, sticky="w",
+                                                                                       padx=8, pady=4)
+        ttk.Entry(self.frm_file, textvariable=self._rx_filename_var, width=60).grid(row=row, column=1, sticky="we",
+                                                                                   padx=8)
+        ttk.Button(self.frm_file, text="...", width=3, command=lambda: self._select_files(tx=False)).grid(row=row,
+                                                                                                          column=2,
+                                                                                                          padx=4)
+
+        self.frm_file.columnconfigure(1, weight=1)
+
+        # ===================================================================
+        # 5. TCP / Serial gemeinsame Optionen (nur für tcp-server, tcp-client, serial)
+        # ===================================================================
+        self.frm_net = ttk.LabelFrame(tab_pipe, text=f" {self._getTabStr('net_ser_opt')} ")
+        # wird später gepackt
+
+        row = 0
+        # --- Address / Port (nur für TCP) ---
+        self.lbl_addr = ttk.Label(self.frm_net, text=f"{self._getTabStr('address')} / {self._getTabStr('port')}:")
+        self.lbl_addr.grid(row=row, column=0, sticky="w", padx=8, pady=4)
+        self.ent_addr = ttk.Entry(self.frm_net, textvariable=self._addr_var, width=30)
+        self.ent_addr.grid(row=row, column=1, columnspan=2, sticky="we", padx=8)
+
+        row += 1
+        ttk.Label(self.frm_net, text="Send at Init:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
+        ttk.Entry(self.frm_net, textvariable=self._send_init_var, width=50).grid(row=row, column=1, columnspan=2,
+                                                                                sticky="we", padx=8)
+
+        row += 1
+        self.flush_cb = ttk.Checkbutton(self.frm_net, text="Flush RX at Connect", variable=self._flush_rx_var)
+        self.flush_cb.grid(row=row, column=1, sticky="w", padx=8, pady=2)
+
+        # self.reinit_var = tk.BooleanVar(value=self.pipe_cfg.get('pipe_be_reinit_conn', False))
+        # self.reinit_cb = ttk.Checkbutton(self.frm_net, text="Auto-Reconnect (TCP-Client)", variable=self.reinit_var)
+        # self.reinit_cb.grid(row=row, column=2, sticky="w", padx=40, pady=2)
+
+        row += 1
+        ttk.Label(self.frm_net, text="C-Text:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
+        ttk.Entry(self.frm_net, textvariable=self._pipe_ctext_var, width=70).grid(row=row, column=1, columnspan=2,
+                                                                            sticky="we", padx=8)
+        """
+        row += 1
+        ttk.Label(self.frm_net, text="Encoding:").grid(row=row, column=0, sticky="w", padx=8, pady=4)
+        ttk.Combobox(self.frm_net, textvariable=self._pipe_encoding_var,
+                     values=['UTF-8', 'CP437', 'ISO-8859-1', 'ASCII', 'latin1'], state="readonly", width=15).grid(
+            row=row, column=1, sticky="w", padx=8)
+        """
+        self.frm_net.columnconfigure(1, weight=1)
+
+        # ===================================================================
+        # 6. Serial-spezifische Optionen (separat!)
+        # ===================================================================
+        self.frm_serial = ttk.LabelFrame(tab_pipe, text=f" {self._getTabStr('serial_interface')} ")
+
+        row = 0
+        ttk.Label(self.frm_serial, text="Serial Port:").grid(row=row, column=0, sticky="w", padx=8, pady=6)
+        available_ports = [p.device for p in serial.tools.list_ports.comports()]
+        if not available_ports:
+            available_ports = ['/dev/ttyUSB0', '/dev/ttyACM0', 'COM3', 'COM4']
+        self.cb_serial_port = ttk.Combobox(self.frm_serial, textvariable=self._serial_port_var, values=available_ports,
+                                           width=20)
+        self.cb_serial_port.grid(row=row, column=1, padx=8, pady=6)
+
+        ttk.Label(self.frm_serial, text="Baudrate:").grid(row=row, column=2, sticky="w", padx=20)
+        self.cb_baud = ttk.Combobox(self.frm_serial,
+                                    textvariable=self._baudrate_var,
+                                    values=baud_rates,
+                                    width=12,
+                                    state="readonly")
+        self.cb_baud.grid(row=row, column=3, padx=8, pady=6)
+
+        self.frm_serial.columnconfigure(1, weight=1)
+
+        # ########################################################################################
+        # ========================================================================================
+        # Individual Colors for QSO Window Tab
         tab_colors = ttk.Frame(self._textTab)
 
         self._color_example_text = tk.Text(tab_colors,
@@ -323,86 +376,43 @@ class StatSetTab:
                   text='RX-Text',
                   command=lambda: self._choose_color('rx_fg')
                   ).place(x=20, y=140)
-        # stat_qso_col_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
-        # stat_qso_col_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
-        # stat_qso_col_bg = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
-        self._qso_fg_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
-        self._qso_bg_tx = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
-        self._qso_fg_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
 
-        self._textTab.add(tab_ctext, text=self._getTabStr('c_text'))
-        self._textTab.add(tab_byetext, text=self._getTabStr('q_text'))
-        self._textTab.add(tab_infotext, text=self._getTabStr('i_text'))
-        self._textTab.add(tab_loinfotext, text=self._getTabStr('li_text'))
-        self._textTab.add(tab_akttext, text=self._getTabStr('news_text'))
-        self._textTab.add(tab_pipe, text='Pipe')
-        self._textTab.add(tab_colors, text=self._getTabStr('qso_win_color'))
+        # ===========================================================================================
+        #
+        self._textTab.add(tab_ctext,        text=self._getTabStr('c_text'))
+        self._textTab.add(tab_byetext,      text=self._getTabStr('q_text'))
+        self._textTab.add(tab_infotext,     text=self._getTabStr('i_text'))
+        self._textTab.add(tab_loinfotext,   text=self._getTabStr('li_text'))
+        self._textTab.add(tab_akttext,      text=self._getTabStr('news_text'))
+        self._textTab.add(tab_pipe,         text='Pipe')
+        self._textTab.add(tab_colors,       text=self._getTabStr('qso_win_color'))
 
-        self._c_text_ent.bind("<KeyRelease>", self._chk_umbruch_ct)
-        self._info_text_ent.bind("<KeyRelease>", self._chk_umbruch_it)
-        self._long_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_lit)
-        self._akt_info_text_ent.bind("<KeyRelease>", self._chk_umbruch_at)
-        self._bye_text_ent.bind("<KeyRelease>", self._chk_umbruch_bt)
-        try:
-            self._update_vars_fm_cfg()
-        except tk.TclError:
-            return
+        self._c_text_ent.bind(          "<KeyRelease>", lambda e:self._chk_umbruch(self._c_text_ent))
+        self._info_text_ent.bind(       "<KeyRelease>", lambda e:self._chk_umbruch(self._info_text_ent))
+        self._long_info_text_ent.bind(  "<KeyRelease>", lambda e:self._chk_umbruch(self._long_info_text_ent))
+        self._akt_info_text_ent.bind(   "<KeyRelease>", lambda e:self._chk_umbruch(self._akt_info_text_ent))
+        self._bye_text_ent.bind(        "<KeyRelease>", lambda e:self._chk_umbruch(self._bye_text_ent))
+        self._update_backend_fields()
+        if pipe_cfg:
+            self._textTab.select(5)
 
-    def _chk_umbruch_ct(self, event=None):
-        ind2 = str(int(float(self._c_text_ent.index(tk.INSERT)))) + '.0'
-        old_text = self._c_text_ent.get(ind2,  self._c_text_ent.index(tk.INSERT))
+    @staticmethod
+    def _chk_umbruch(tx_widget: tk.Text):
+        ind2 = str(int(float(tx_widget.index(tk.INSERT)))) + '.0'
+        old_text = tx_widget.get(ind2, tx_widget.index(tk.INSERT))
         text = zeilenumbruch(old_text)
         if old_text == text:
             return
-        self._c_text_ent.delete(ind2,  self._c_text_ent.index(tk.INSERT))
-        self._c_text_ent.insert(tk.INSERT, text)
+        tx_widget.delete(ind2, tx_widget.index(tk.INSERT))
+        tx_widget.insert(tk.INSERT, text)
 
-    def _chk_umbruch_it(self, event=None):
-        ind2 = str(int(float(self._info_text_ent.index(tk.INSERT)))) + '.0'
-        old_text = self._info_text_ent.get(ind2,  self._info_text_ent.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
-        if old_text == text:
-            return
-        self._info_text_ent.delete(ind2,  self._info_text_ent.index(tk.INSERT))
-        self._info_text_ent.insert(tk.INSERT, text)
-
-    def _chk_umbruch_lit(self, event=None):
-        ind2 = str(int(float(self._long_info_text_ent.index(tk.INSERT)))) + '.0'
-        old_text = self._long_info_text_ent.get(ind2,  self._long_info_text_ent.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
-        if old_text == text:
-            return
-        self._long_info_text_ent.delete(ind2,  self._long_info_text_ent.index(tk.INSERT))
-        self._long_info_text_ent.insert(tk.INSERT, text)
-
-    def _chk_umbruch_at(self, event=None):
-        ind2 = str(int(float(self._akt_info_text_ent.index(tk.INSERT)))) + '.0'
-        old_text = self._akt_info_text_ent.get(ind2,  self._akt_info_text_ent.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
-        if old_text == text:
-            return
-        self._akt_info_text_ent.delete(ind2,  self._akt_info_text_ent.index(tk.INSERT))
-        self._akt_info_text_ent.insert(tk.INSERT, text)
-
-    def _chk_umbruch_bt(self, event=None):
-        ind2 = str(int(float(self._bye_text_ent.index(tk.INSERT)))) + '.0'
-        old_text = self._bye_text_ent.get(ind2,  self._bye_text_ent.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
-        if old_text == text:
-            return
-        self._bye_text_ent.delete(ind2,  self._bye_text_ent.index(tk.INSERT))
-        self._bye_text_ent.insert(tk.INSERT, text)
 
     def _load_fm_file(self, filename: str):
         file_n = CFG_data_path + \
                       CFG_usertxt_path + \
                       self._stat_call + '/' + \
                       filename
-        """
-        if out:
-            return out
-        return ''
-        """
+
         ret = get_str_fm_file(file_n)
         if ret is None:
             return ''
@@ -419,29 +429,21 @@ class StatSetTab:
         return ''
 
     def _choose_color(self, fg_bg: str):
-        # self._main_cl.settings_win.attributes("-topmost", False)
-        # self._main_cl.settings_win.lower()
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
                            title=self._getTabStr('text_color'), parent=self._root_win)
-            # self._main_cl.settings_win.lift()
             if not col:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_fg_tx = str(col[1])
             self._color_example_text.configure(fg=str(col[1]))
         elif fg_bg == 'tx_bg':
             col = askcolor(self._qso_bg_tx,
                            title=self._getTabStr('text_color'), parent=self._root_win)
-            # self._main_cl.settings_win.lift()
             if not col:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_bg_tx = str(col[1])
             self._color_example_text.configure(bg=str(col[1]))
@@ -449,24 +451,19 @@ class StatSetTab:
         elif fg_bg == 'rx_fg':
             col = askcolor(self._qso_fg_rx,
                            title=self._getTabStr('text_color'), parent=self._root_win)
-            # self._main_cl.settings_win.lift()
             if not col:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             if col[1] is None:
-                # self._main_cl.settings_win.attributes("-topmost", True)
                 return
             self._qso_fg_rx = str(col[1])
             self._color_example_text_rx.configure(fg=str(col[1]))
-        # self._main_cl.settings_win.lift()
-        # self._main_cl.settings_win.attributes("-topmost", True)
 
     def chk_CLI(self, event=None):
         # print(self._cli_select_var.get())
-        if self._cli_select_var.get() != 'PIPE':
-            self._loop_timer.configure(state='disabled')
-            self._tx_filename.configure(state='disabled')
-            self._rx_filename.configure(state='disabled')
+        if self._cli_select_var.get() != CLI_TYP_PIPE:
+            #self._loop_timer.configure(state='disabled')
+            #self._tx_filename.configure(state='disabled')
+            #self._rx_filename.configure(state='disabled')
             # self.cli_select_var.set(self.station_setting.stat_parm_cli.cli_name)
             self._c_text_ent.configure(state='normal')
             self._bye_text_ent.configure(state='normal')
@@ -482,147 +479,73 @@ class StatSetTab:
             self._long_info_text_ent.configure(state='disabled')
             self._akt_info_text_ent.configure(state='disabled')
 
-            self._loop_timer.configure(state='normal')
-            self._tx_filename.configure(state='normal')
-            self._rx_filename.configure(state='normal')
+            #self._loop_timer.configure(state='normal')
+            #self._tx_filename.configure(state='normal')
+            #self._rx_filename.configure(state='normal')
 
-            # pipe = self.station_setting.stat_parm_pipe
-            # self._tx_filename_var.set(pipe.tx_filename)
-            # self._rx_filename_var.set(pipe.rx_filename)
             # self.loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
             self._textTab.select(5)
 
-    def select_files(self, tx=True):
-        # self.main_cl.attributes("-topmost", False)
-        # self.root.lower
+    def _update_backend_fields(self):
+        backend = self._backend_var.get()
+
+        if backend == 'file':
+            self.frm_file.pack(fill="x", padx=10, pady=8)
+            self.frm_net.pack_forget()
+            self.frm_serial.pack_forget()
+
+        elif backend in ['tcp-server', 'tcp-client']:
+            self.frm_file.pack_forget()
+            self.frm_net.pack(fill="x", padx=10, pady=8)
+            self.frm_serial.pack_forget()
+
+            # Address-Feld anzeigen
+            self.lbl_addr.grid()
+            self.ent_addr.grid()
+
+            # Auto-Reconnect nur bei TCP-Client
+            if backend == 'tcp-client':
+                # self.reinit_cb.grid()
+                self.flush_cb.grid()
+            else:
+                # self.reinit_cb.grid_remove()
+                self.flush_cb.grid_remove()
+
+        elif backend == 'serial':
+            self.frm_file.pack_forget()
+            self.frm_net.pack(fill="x", padx=10, pady=8)
+            self.frm_serial.pack(fill="x", padx=10, pady=8)
+
+            # Address-Feld verstecken, Serial-Felder anzeigen
+            self.lbl_addr.grid_remove()
+            self.ent_addr.grid_remove()
+            #self.reinit_cb.grid_remove()  # macht bei Serial keinen Sinn
+
+        else:
+            self.frm_file.pack_forget()
+            self.frm_net.pack_forget()
+            self.frm_serial.pack_forget()
+
+    def _select_files(self, tx=True):
         filetypes = (
             ('text files', '*.txt'),
             ('All files', '*.*')
         )
-        # self._main_cl.settings_win.lower()
         filenames = fd.askopenfilenames(
             title='Open files',
             initialdir='data/',
             filetypes=filetypes,
             parent=self._root_win)
-        # self._main_cl.settings_win.lift()
         if filenames:
             if tx:
                 self._tx_filename_var.set(filenames[0])
             else:
                 self._rx_filename_var.set(filenames[0])
 
-    def _update_vars_fm_cfg(self):
-        stat_call = self._new_station_setting.get('stat_parm_Call', '')
-        stat_name = self._new_station_setting.get('stat_parm_Name', '')
-        stat_is_digi = POPT_CFG.get_digi_is_enabled(stat_call)
-        # stat_is_digi = self._new_station_setting.get('stat_parm_is_Digi', False)
-        # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
-        stat_cli_typ = self._new_station_setting.get('stat_parm_cli', 'NO-CLI')
-        stat_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
-        stat_maxframe = self._new_station_setting.get('stat_parm_MaxFrame', 0)
-        stat_qso_col_tx = self._new_station_setting.get('stat_parm_qso_col_text_tx', 'white')
-        stat_qso_col_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
-        stat_qso_col_bg = self._new_station_setting.get('stat_parm_qso_col_bg', 'black')
-
-        self._qso_bg_tx = stat_qso_col_bg
-        self._qso_fg_tx = stat_qso_col_tx
-        self._qso_fg_rx = stat_qso_col_rx
-        self._color_example_text.configure(bg=stat_qso_col_bg)
-        self._color_example_text_rx.configure(bg=stat_qso_col_bg)
-
-        self._color_example_text.configure(fg=stat_qso_col_tx)
-        self._color_example_text_rx.configure(fg=stat_qso_col_rx)
-
-        # CALL
-        self.call.delete(0, tk.END)
-        # self.call.insert(tk.END, self.station_setting.stat_parm_Call)
-        self.call.insert(tk.END, stat_call)
-        # CLI
-        # self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
-        self._cli_select_var.set(stat_cli_typ)
-        # Name
-        self._name.delete(0, tk.END)
-        # self._name.insert(tk.END, self.station_setting.stat_parm_Name)
-        self._name.insert(tk.END, stat_name)
-        # QTH
-
-        # Ports
-
-        # MaxPac
-        # self._max_pac_select_var.set(str(self.station_setting.stat_parm_MaxFrame))  # default value
-        self._max_pac_select_var.set(str(stat_maxframe))  # default value
-        self._max_pac.update()
-        # PacLen
-        try:
-            self._pac_len.delete(0, tk.END)
-        except tkinter.TclError:
-            raise tkinter.TclError
-        # self._pac_len.insert(tk.END, str(self.station_setting.stat_parm_PacLen))
-        self._pac_len.insert(tk.END, str(stat_paclen))
-        # DIGI
-        # self._digi_set_var.set(self.station_setting.stat_parm_is_Digi)
-
-        # self._digi_set_var.set(stat_is_digi)
-        # self.digi.select()
-        c_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.ctx'))
-        b_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.btx'))
-        i_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.itx'))
-        li_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.litx'))
-        a_text = zeilenumbruch_lines(self._load_fm_file(self._stat_call + '.atx'))
-        if not c_text:
-            c_text = zeilenumbruch_lines(self._getTabStr('default_ctext'))
-        if not b_text:
-            b_text = zeilenumbruch_lines(self._getTabStr('default_btext'))
-
-        # C-Text
-        self._c_text_ent.delete('1.0', tk.END)
-        self._c_text_ent.insert(tk.END, c_text)
-        # Bye Text
-        self._bye_text_ent.delete('1.0', tk.END)
-        self._bye_text_ent.insert(tk.END, b_text)
-        # Info Text
-        self._info_text_ent.delete('1.0', tk.END)
-        self._info_text_ent.insert(tk.END,i_text)
-        # Long Info Text
-        self._long_info_text_ent.delete('1.0', tk.END)
-        self._long_info_text_ent.insert(tk.END, li_text)
-        # News Text
-        self._akt_info_text_ent.delete('1.0', tk.END)
-        self._akt_info_text_ent.insert(tk.END, a_text)
-
-        pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(stat_call, -1)
-        # get(self.station_setting.stat_parm_Call, {})
-
-        if not pipe_cfg:
-            self._loop_timer.configure(state='disabled')
-            self._tx_filename.configure(state='disabled')
-            self._rx_filename.configure(state='disabled')
-            # self._cli_select_var.set(self.station_setting.stat_parm_cli_cfg.get('cli_typ', 'NO-CLI'))
-            self._cli_select_var.set(stat_cli_typ)
-        else:
-            self._cli_select_var.set('PIPE')  # default value
-            self._c_text_ent.configure(state='disabled')
-            self._bye_text_ent.configure(state='disabled')
-            self._info_text_ent.configure(state='disabled')
-            self._long_info_text_ent.configure(state='disabled')
-            self._akt_info_text_ent.configure(state='disabled')
-
-            # pipe = pipe_cfg.get('stat_parm_pipe', None)
-            # self._tx_filename_var.set(pipe.tx_filename)
-            self._tx_filename_var.set(pipe_cfg.get('pipe_parm_pipe_tx', ''))
-            # self._rx_filename_var.set(pipe.rx_filename)
-            self._rx_filename_var.set(pipe_cfg.get('pipe_parm_pipe_rx', ''))
-            # self._loop_timer_var.set(str(pipe.parm_tx_file_check_timer))
-            self._loop_timer_var.set(str(pipe_cfg.get('pipe_parm_pipe_loop_timer', 10)))
-            self._textTab.select(5)
-
     def set_vars_to_cfg(self):
         # CALL
-        call = self.call.get().upper()
-
-        self.call.delete(0, tk.END)
-        self.call.insert(tk.END, call)
+        call = self.call_var.get().upper()
+        self.call_var.set(call)
         old_call = str(self._new_station_setting.get('stat_parm_Call', ''))
         self._stat_call = str(call)
         # self.station_setting.stat_parm_Call = call
@@ -631,68 +554,78 @@ class StatSetTab:
         var_paclen = self._new_station_setting.get('stat_parm_PacLen', 0)
         try:
             # MaxPac
-            var_maxpac = int(self._max_pac_select_var.get())
+            var_maxpac = int(self._max_pac_var.get())
             # PacLen
-            var_paclen = int(self._pac_len.get())
+            var_paclen = int(self._len_pac_var.get())
         except ValueError:
             pass
 
-        # self.station_setting.stat_parm_MaxFrame = var_maxpac
-        # self.station_setting.stat_parm_PacLen = var_paclen
-
         # CLI
         cli_key = self._cli_select_var.get()
-        if cli_key not in ['PIPE']:
-            # self.station_setting.stat_parm_cli = self._cli_opt[cli_key]
-            # self.station_setting.stat_parm_pipe = False
+        if cli_key not in [CLI_TYP_PIPE]:
             POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')
-            # self.station_setting.stat_parm_cli = cli_key
-            # pass
         else:
-            # self.station_setting.stat_parm_pipe = True
-            # self.station_setting.stat_parm_cli = 'NO-CLI'
+            # PIPE
             POPT_CFG.del_pipe_CFG(f'{-1}-{old_call}')
             new_pipe_cfg = getNew_pipe_cfg()
-            # new_pipe_cfg = self._cli_opt[cli_key]
-            new_pipe_cfg['pipe_parm_own_call'] = call
-            new_pipe_cfg['pipe_parm_pipe_tx'] = str(self._tx_filename_var.get())
-            new_pipe_cfg['pipe_parm_pipe_rx'] = str(self._rx_filename_var.get())
+            new_pipe_cfg['pipe_parm_own_call']  = call
+            new_pipe_cfg['pipe_parm_pipe_tx']   = str(self._tx_filename_var.get())
+            new_pipe_cfg['pipe_parm_pipe_rx']   = str(self._rx_filename_var.get())
             try:
                 new_pipe_cfg['pipe_parm_pipe_loop_timer'] = int(self._loop_timer_var.get())
             except ValueError:
                 new_pipe_cfg['pipe_parm_pipe_loop_timer'] = 10
-            new_pipe_cfg['pipe_parm_PacLen'] = var_paclen
-            new_pipe_cfg['pipe_parm_MaxFrame'] = var_maxpac
-            new_pipe_cfg['pipe_parm_Proto'] = True
-            new_pipe_cfg['pipe_parm_permanent'] = True
-            new_pipe_cfg['pipe_parm_port'] = -1
+            new_pipe_cfg['pipe_parm_PacLen']        = var_paclen
+            new_pipe_cfg['pipe_parm_MaxFrame']      = var_maxpac
+            new_pipe_cfg['pipe_parm_Proto']         = True
+            new_pipe_cfg['pipe_parm_permanent']     = True
+            new_pipe_cfg['pipe_parm_port']          = -1
+
+            new_pipe_cfg['pipe_parm_MaxPacDelay']   = int(self._max_pac_delay_var.get())
+
+            # Backend-spezifische Adresse korrekt speichern
+            backend = self._backend_var.get()
+            new_pipe_cfg['pipe_parm_backend'] = backend
+
+            if backend in ['tcp-server', 'tcp-client']:
+                addr_str = self._addr_var.get().strip()
+                if ':' in addr_str:
+                    ip, port = addr_str.split(':', 1)
+                    port = int(port)
+                else:
+                    ip, port = addr_str, 8023
+                new_pipe_cfg['pipe_be_address'] = (ip.strip(), port)
+
+            elif backend == 'serial':
+                port = self._serial_port_var.get().strip()
+                try:
+                    baud = int(self._baudrate_var.get())
+                except Exception as _ex:
+                    _ex = _ex
+                    baud = 9600
+                new_pipe_cfg['pipe_be_address'] = (port, baud)
+
+            # Rest wie gehabt
+            new_pipe_cfg['pipe_be_send_at_init']     = self._send_init_var.get()
+            new_pipe_cfg['pipe_parm_c_text']         = self._pipe_ctext_var.get()
+            new_pipe_cfg['pipe_be_flush_rx_at_init'] = bool(self._flush_rx_var.get())
+            new_pipe_cfg['pipe_be_reinit_conn']      = False
+            #new_pipe_cfg['pipe_parm_txt_encoder']    = self._pipe_encoding_var.get()
 
             POPT_CFG.set_pipe_CFG(new_pipe_cfg)
 
+        #######################################################
         # self.station_setting.stat_parm_cli_cfg = dict(stat_parm_cli_cfg)
         self._save_to_file(self._stat_call + '.ctx', self._c_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.btx', self._bye_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.itx', self._info_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.litx', self._long_info_text_ent.get('1.0', tk.END)[:-1])
         self._save_to_file(self._stat_call + '.atx', self._akt_info_text_ent.get('1.0', tk.END)[:-1])
-        # Name
-        # self.station_setting.stat_parm_Name = self._name.get()
-        #######################################################
-        # QTH
-        # self._gui.own_qth = str(self._qth.get())
-        # LOC   TODO: Filter
-        # self._gui.own_loc = str(self._loc.get())
-        #######################################################
-        # COLORS
-        # self.station_setting.stat_parm_qso_col_text_tx = self._qso_fg_tx
-        # self.station_setting.stat_parm_qso_col_bg = self._qso_bg_tx
-        # self.station_setting.stat_parm_qso_col_text_rx = self._qso_fg_rx
 
-        #######################################################
         #######################################################
         # New CFG
         self._new_station_setting['stat_parm_Call']             = str(call)
-        self._new_station_setting['stat_parm_Name']             = str(self._name.get())
+        self._new_station_setting['stat_parm_Name']             = str(self._name_var.get())
         # self._new_station_setting['stat_parm_is_Digi'] = bool(self._digi_set_var.get())
         self._new_station_setting['stat_parm_cli']              = str(cli_key)
         self._new_station_setting['stat_parm_PacLen']           = int(var_paclen)
@@ -701,20 +634,11 @@ class StatSetTab:
         self._new_station_setting['stat_parm_qso_col_text_rx']  = str(self._qso_fg_rx)
         self._new_station_setting['stat_parm_qso_col_bg']       = str(self._qso_bg_tx)
 
-        # cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())
-        """
-        digi_cfg = POPT_CFG.get_digi_CFG_for_Call(call)
-        digi_cfg.update(dict(
-            digi_enabled=bool(self._digi_set_var.get()),
-        ))
-        POPT_CFG.set_digi_CFG_f_call(call, digi_cfg)
-        """
+
         if old_call != call:
             POPT_CFG.del_stat_CFG_fm_call(old_call)
 
         POPT_CFG.set_digi_CFG_f_call(call, POPT_CFG.get_digi_CFG_for_Call(call))
-        # self._new_station_setting['stat_parm_Digi_cfg'] = dict(digi_cfg)
-        # stat_cli_cfg = self._new_station_setting.get('stat_parm_cli_cfg', getNew_CLI_cfg())   # TODO
 
     def get_new_stat_sett(self):
         return self._new_station_setting
@@ -722,44 +646,40 @@ class StatSetTab:
 class StationSettingsWin(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
         ttk.Frame.__init__(self, tabctl)
-        # self._root_win = main_cl
-        self._lang      = POPT_CFG.get_guiCFG_language()
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._old_cfg   = self._get_config()
-        self.win_height = 600
-        self.win_width  = 1059
         self.style_name = root_win.style_name
         ####################################
+        # Frames
+        upper_frame = ttk.Frame(self)
+        btn_frame   = ttk.Frame(self)
+        btn_frame.pack(  fill='x',   expand=False, pady=10, padx=10)
+        upper_frame.pack(fill='both', expand=True)
+        ####################################
         # New Station, Del Station Buttons
-        new_st_bt = ttk.Button(self,
+        new_st_bt = ttk.Button(btn_frame,
                               text=self._getTabStr('new_stat'),
-                              # font=("TkFixedFont", 15),
-                              # bg="green",
-                              #height=1,
                               width=10,
                               command=self._new_stat_btn_cmd)
-        del_st_bt = tk.Button(self,
+        del_st_bt = tk.Button(btn_frame,
                               text=self._getTabStr('delete'),
-                              # font=("TkFixedFont", 15),
                               bg="red3",
-                              #height=1,
                               width=10,
                               command=self._del_station_btn,
                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                               highlightthickness=0,
                               )
 
-        new_st_bt.place(x=20, y=self.win_height - 590)
-        del_st_bt.place(x=self.win_width - 141, y=self.win_height - 590)
+        new_st_bt.pack(side='left',  anchor='w')
+        del_st_bt.pack(side='right', anchor='e')
         ####################################
         # Tab
-
         # Root Tab
-        self._tabControl = ttk.Notebook(self, height=self.win_height - 140, width=self.win_width - 40)
-        self._tabControl.place(x=20, y=self.win_height - 550)
+        self._tabControl = ttk.Notebook(upper_frame)
+        self._tabControl.pack(fill='both', expand=True)
         # Tab Vars
         # self.tab_index = 0
-        self._tab_list: [ttk.Frame] = []
+        self._tab_list = []
         # Tab Frames ( Station Setting )
         new_stat_settings = POPT_CFG.get_stat_CFGs()
         for k, cfg in new_stat_settings.items():
@@ -769,34 +689,25 @@ class StationSettingsWin(ttk.Frame):
 
     def _call_vali(self):
         for el in self._tab_list:
-            call = el.call.get().upper()
+            call = el.call_var.get().upper()
             if not validate_ax25Call(call):
-                #self.settings_win.lower()
                 call_vali_warning(self)
-                #self.settings_win.lift()
                 el.call.select_range(0, 'end')
                 return False
         return True
 
     def _set_all_vars_to_cfg(self):
-        """
-        for k in self.all_port_settings.keys():
-            self.all_port_settings[k].parm_Stations = []
-        """
         if not self._call_vali():
-            return False
+            return
         dbl_calls = []
         for el in self._tab_list:
-            call = el.call.get().upper()
+            call = el.call_var.get().upper()
             if call not in dbl_calls:
                 el.set_vars_to_cfg()
                 self._tabControl.tab(self._tab_list.index(el), text=call)
                 dbl_calls.append(call)
             else:
-                el.call.delete(0, tk.END)
-                el.call.insert(tk.END, getNew_station_cfg().get('stat_parm_Call', 'NOCALL'))
-
-        # PORT_HANDLER.update_digi_setting()
+                el.call_var.set(getNew_station_cfg().get('stat_parm_Call', 'NOCALL'))
 
     def _save_cfg_to_file(self):
         for conf in self._tab_list:
@@ -805,20 +716,14 @@ class StationSettingsWin(ttk.Frame):
                 POPT_CFG.set_stat_CFG_fm_conf(new_stat_conf)
 
     def _new_stat_btn_cmd(self):
-        # sett = DefaultStation()
         new_sett = getNew_station_cfg()
         tab = StatSetTab(new_sett, self._tabControl, self)
         self._tabControl.add(tab.own_tab, text=new_sett.get('stat_parm_Call', 'NOCALL'))
         self._tabControl.select(len(self._tab_list))
         self._tab_list.append(tab)
-        # print(self._tabControl.index('current'))
 
     def _del_station_btn(self):
-        #self.settings_win.attributes("-topmost", False)
-        # self.lower()
         msg = AskMsg(titel=self._getTabStr('del_station_hint_1'), message=self._getTabStr('del_station_hint_2'), parent_win=self)
-        # self.lift()
-        # self.settings_win.lift()
         if msg:
             try:
                 ind = self._tabControl.index('current')
@@ -826,10 +731,8 @@ class StationSettingsWin(ttk.Frame):
                 pass
             else:
                 tab: StatSetTab = self._tab_list[ind]
-                call = tab.call.get()
+                call = tab.call_var.get()
                 POPT_CFG.del_stat_CFG_fm_call(call=call)   # Del Pipe-CFG
-                # POPT_CFG.del_stat_CFG_fm_call(call=call)   # Del Digi-CFG
-                # del_user_data(call)
                 del self._tab_list[ind]
                 self._tabControl.forget(ind)
 
@@ -838,8 +741,6 @@ class StationSettingsWin(ttk.Frame):
         else:
             messagebox.showinfo(self._getTabStr('aborted'), self._getTabStr('lob3'), parent=self)
             #self._root_win.sysMsg_to_monitor(STR_TABLE['hin2'][self._lang])
-        #self.settings_win.lift()
-        # self.settings_win.attributes("-topmost", True)
 
     @staticmethod
     def _get_config():

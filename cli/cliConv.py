@@ -1,11 +1,12 @@
 from ax25.ax25LocalConverse import LocalConverse
+from cfg.constant import CLI_TYP_CONVERSE, CLI_TYP_SYSOP
 from cli.cliMain import DefaultCLI
 from fnc.str_fnc import get_time_delta
 
 
 
 class ConverseCLI(DefaultCLI):
-    cli_name = 'CONV'  # Name der CLI
+    cli_name = CLI_TYP_CONVERSE  # Name der CLI
     service_cli = False
     prefix = b'/'  # Kommando-Suffix
     sw_id = 'PoPT-Conv'
@@ -83,7 +84,7 @@ class ConverseCLI(DefaultCLI):
         ret = f"\r*** {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r"
         ret += "*** Converse session terminated.\r\r"
         self._send_output(ret, env_vars=True)
-        if not self._connection.cli_type == 'USER':
+        if not self._connection.cli_type == CLI_TYP_SYSOP:
             self._connection.cli.send_prompt()
         # self._crone_state_index = 100  # Quit State
         return ''

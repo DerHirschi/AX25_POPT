@@ -1436,6 +1436,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'history': (
+        'Verlauf',
+        'History',
+        'Geschiedenis',
+        'Historique',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+
     'linkholder': (
         'Linkhalter',
         'Link holder',
@@ -2678,6 +2691,7 @@ STR_TABLE = {
         '',
         ''),
 
+    # Pipe Tool
     'pipetool_settings': (
         'Pipe-Tool Einstellungen',
         'Pipe-Tool Settings',
@@ -2738,6 +2752,67 @@ STR_TABLE = {
         '',
         ''),
 
+    'ax25_param': (
+        'AX.25 Verbindungsparameter',
+        'AX.25 connection parameters',
+        'AX.25 verbindingsparameters',
+        'Paramètres de connexion AX.25',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'packet_timing_param': (
+        'Paket- & Timing-Parameter',
+        'Package & timing parameters',
+        'Pakket- en timingparameters',
+        'Paramètres du package et du calendrier',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'backen_config': (
+        'Backend Konfiguration',
+        'Backend configuration',
+        'Backend-configuratie',
+        'Configuration du back-end',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'net_ser_opt': (
+        'Netzwerk / Seriell Optionen',
+        'Network / Serial Options',
+        'Netwerk-/seriële opties',
+        'Options réseau/série',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'serial_interface': (
+        'Serielle Schnittstelle',
+        'Serial interface',
+        'Seriële interface',
+        'Interface série',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    # #####
     'port_cfg_std_parm': (
         'Standard Parameter. Werden genutzt wenn nirgendwo anders (Station/Client) definiert.',
         'Default parameters. Are used if not defined anywhere else (station/client).',
@@ -2763,10 +2838,10 @@ STR_TABLE = {
         ''),
 
     'port_cfg_pac_len': (
-        'Paket Länge. 1 - 256',
-        'Packet length. 1-256',
-        'Pakket lengte. 1-256',
-        'Longueur trame. 1-256',
+        'Paket Länge. 30 - 256',
+        'Packet length. 30-256',
+        'Pakket lengte. 30-256',
+        'Longueur trame. 30-256',
         '',
         '',
         '',
@@ -2774,7 +2849,7 @@ STR_TABLE = {
         '',
         ''),
 
-    'port_cfg_pac_max': (
+    'port_cfg_pac_max': (   # Not used anymore ...
         'Max Paket Anzahl. 1 - 7',
         'Max Packets. 1 - 7',
         'Max pakketnummer. 1 - 7',
@@ -3314,6 +3389,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_bwstat': (
+        'Bandauslastung letzten 10 Minuten',
+        'Band utilization last 10 minutes',
+        'Bandgebruik laatste 10 minuten',
+        "Utilisation du bracelet pendant 10 minutes",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cli_no_wx_data': (
         'Keine Wetterdaten vorhanden.',
         'No WX data available',
@@ -3522,6 +3609,42 @@ STR_TABLE = {
         '# Message sent to channel {} ({}).\r',
         '# Bericht verzonden naar kanaal {} ({}).\r',
         "# Message envoyé au canal {} ({}).\r",
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_1': (
+        'Gesamte Bandauslastung (letzte 10 Minuten, alle Ports)',
+        'Total bandwidth utilization (last 10 minutes, all ports)',
+        'Totaal bandbreedtegebruik (laatste 10 minuten, alle poorten)',
+        'Utilisation totale de la bande passante (10 dernières minutes, tous ports)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_2': (
+        'Bandauslastung aller Ports (%) – 10-Minuten-Verlauf',
+        'Band utilization of all ports (%) – 10-minute trend',
+        'Bandgebruik van alle poorten (%) – 10-minutentrend',
+        'Utilisation de la bande passante de tous les ports (%) – Évolution sur 10 minutes',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_bwstat_3': (
+        'Bandauslastung Port {} (%) – 10-Minuten-Verlauf',
+        'Band utilization port {} (%) – 10-minute trend',
+        'Bandgebruikpoort {} (%) – 10-minutentrend',
+        'Utilisation de la bande passante (%) – Tendance sur 10 minutes',
         '',
         '',
         '',

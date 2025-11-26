@@ -6,7 +6,7 @@ from datetime import timedelta
 import pickle
 
 from UserDB.UserDBmain import USER_DB
-from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT
+from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT, CLI_TYP_DIGI
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
@@ -367,18 +367,17 @@ class MH:
             self._bandwidth[port_id] = deque([0] * 60, maxlen=60)
 
     def get_bandwidth(self, port_id, baud=1200):
-        ret = []
-        now = datetime.now()
-        data = list(self._bandwidth.get(port_id, [0] * 60))
-        dif: timedelta = now - self._now_10sec
-        dif_10 = int(dif.seconds / 10)
-        for i in range(dif_10):
-            data.append(0)
-        data = data[-60:]
-        data.reverse()
-        for byt in data:
-            ret.append(((byt * 80) / baud))
-        return ret
+        if port_id not in self._bandwidth:
+            return [0.0] * 60
+
+        raw = list(self._bandwidth[port_id])[-60:]
+        while len(raw) < 60:
+            raw.append(0)
+
+        max_bytes_10s = (baud / 8.0) * 10.0
+        if max_bytes_10s <= 0:
+            return [0.0] * 60
+        return list(reversed([min((b / max_bytes_10s) * 100.0, 100.0) for b in raw][::]))
 
     #########################
     # MH Stuff
@@ -510,7 +509,7 @@ class MH:
         self._short_MH.append(ent)
 
         if digi:
-            USER_DB.set_typ(call_str=digi, add_new=False, typ='DIGI')
+            USER_DB.set_typ(call_str=digi, add_new=False, typ=CLI_TYP_DIGI)
         elif last_digi:
             self._mh_inp(data, last_digi)
 
@@ -671,12 +670,20 @@ class MH:
         ret = ''
         mh_keys = list(tmp.keys())
         n = 0
-        for k in mh_keys[:max_ent]:
+        c = 0
+        dbl = []
+        for k in mh_keys:
             if n == 6:
                 n = 0
                 ret += '\r'
-            ret += f"{tmp[k].own_call} "
-            n += 1
+            call = f"{tmp[k].own_call.split('-')[0]} "
+            if call not in dbl:
+                dbl.append(call)
+                ret += call
+                n += 1
+                c += 1
+            if c >= max_ent:
+                return ret
         return ret
 
     def reset_mainMH(self):

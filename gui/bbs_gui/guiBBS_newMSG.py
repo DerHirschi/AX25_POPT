@@ -7,7 +7,7 @@ from ax25.ax25InitPorts import PORT_HANDLER
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
-from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP, F_KEY_TAB_LINUX, F_KEY_TAB_WIN
+from cfg.constant import FONT, ENCODINGS, DEV_PRMAIL_ADD, COLOR_MAP, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, CLI_TYP_SYSOP
 from cli.StringVARS import replace_StringVARS
 from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.os_fnc import is_linux
@@ -196,7 +196,7 @@ class BBS_newMSG(tk.Toplevel):
 
         ttk.Label(from_frame, text=f"{self._getTabStr('from')}: ").pack(side=tk.LEFT, expand=False)
 
-        stat_cfg = POPT_CFG.get_stat_CFGs_by_typ('USER')
+        stat_cfg = POPT_CFG.get_stat_CFGs_by_typ(CLI_TYP_SYSOP)
         opt      = list(stat_cfg.keys())
         if opt:
             self._from_call_var.set(opt[0])

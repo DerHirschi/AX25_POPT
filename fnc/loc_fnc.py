@@ -1,7 +1,9 @@
 import math
+import re
 from math import floor
 
 from cfg.constant import ASCII_0, ASCII_A, ASCII_a
+from cfg.logger_config import logger
 
 
 def decimal_degrees_to_aprs(latitude, longitude):
@@ -45,6 +47,10 @@ def locator_distance(locator1, locator2):
 
     return round(distance, 1)
 
+def clean_locator(loc: str):
+    """Entfernt alles außer A–Z, 0–9 und macht alles uppercase"""
+    import re
+    return re.sub(r'[^A-Z0-9]', '', loc.upper())[:10]
 
 """
 Source: https://github.com/4x1md/qth_locator_functions
@@ -74,16 +80,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-
-
 def locator_to_coordinates(locator):
-    """
+    # By Grok 3 AI
+    '''
+    Converts QTH locator to latitude and longitude (CENTER OF CELL).
+    Returns (lat, lon) as floats.
+    '''
+    # --- BEREINIGE Locator ---
+    try:
+        qth = re.sub(r'[^A-Z0-9]', '', locator.upper())
+        if len(qth) not in (4, 6, 8, 10):
+            return 0, 0
+
+        qth = locator.upper()
+
+        lon = -180.0
+        lat = -90.0
+
+        lon += (ord(qth[0]) - 65) * 20
+        lat += (ord(qth[1]) - 65) * 10
+
+        lon += int(qth[2]) * 2
+        lat += int(qth[3]) * 1
+
+        if len(qth) >= 6:
+            lon += (ord(qth[4]) - 65) * (2 / 24)
+            lat += (ord(qth[5]) - 65) * (1 / 24)
+
+        if len(qth) >= 8:
+            lon += int(qth[6]) * (2 / 240)
+            lat += int(qth[7]) * (1 / 240)
+
+        if len(qth) == 10:
+            lon += (ord(qth[8]) - 65) * (2 / 5760)
+            lat += (ord(qth[9]) - 65) * (1 / 5760)
+
+        # Zentriere im Raster
+        if len(qth) == 6:
+            lon += 1 / 24
+            lat += 1 / 48
+        elif len(qth) == 8:
+            lon += 1 / 240
+            lat += 1 / 480
+        elif len(qth) == 10:
+            lon += 1 / 5760
+            lat += 1 / 11520
+
+        return round(lat, 6), round(lon, 6)
+    except ValueError:
+        return 0, 0
+
+    except Exception as ex:
+        logger.warning(f"locator_to_coordinates: {ex}")
+        return 0, 0
+
+"""
+def locator_to_coordinates(locator):
+    '''
         Source: https://github.com/4x1md/qth_locator_functions
         License location: doc/qth_locator_functions-master/LICENSE
         Created on Mar 3, 2017
 
         @author: 4X5DM
-    """
+    '''
     '''
     Converts QTH locator to latitude and longitude in decimal format.
     Gets QTH locator as string.
@@ -143,7 +202,7 @@ def locator_to_coordinates(locator):
 
     return lat, lon
 
-
+"""
 def coordinates_to_locator(latitude, longitude):
     """
         Source: https://github.com/4x1md/qth_locator_functions
@@ -214,4 +273,3 @@ def coordinates_to_locator(latitude, longitude):
         qth_locator += chr(lat_ext_sq + ASCII_0)
 
     return qth_locator
-

@@ -535,14 +535,14 @@ class AX25Frame:
         self.digi_call = conf.get('digi_call', '')          # Own DIGI Call to set C-BIT
         self.axip_add = conf.get('axip_add', ('', 0))       # For AXIP Handling
 
-        self.payload = b''                                  # Payload
+        self.payload = bytearray()                                  # Payload
         self.data_len = 0
 
         self.rx_time = datetime.datetime.now()
         self.ctl_byte = CByte()
         self.pid_byte = PIDByte()
         self.is_digipeated = True                           # Is running through all Digi's ?
-        self.data_bytes = b''                               # AX25-Frame decoded Raw-Data
+        self.data_bytes = bytearray()                                # AX25-Frame decoded Raw-Data
         self._netrom_cfg = {}
 
     def get_frame_conf(self):

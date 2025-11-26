@@ -1,4 +1,4 @@
-from cfg.constant import APRS_POS_BEACON_COMMENT_MAX, APRS_SW_ID
+from cfg.constant import APRS_POS_BEACON_COMMENT_MAX, APRS_SW_ID, CLI_TYP_SYSOP
 from cfg.popt_config import POPT_CFG
 from cli.StringVARS import replace_StringVARS
 from cfg.logger_config import logger
@@ -83,7 +83,7 @@ class APRSbeaconTask:
         """
         from_call        = aprs_beacon_cfg.get('be_from', 'NOCALL')
         stat_cfg         = POPT_CFG.get_stat_CFG_fm_call(from_call)
-        if stat_cfg.get('stat_parm_cli', '') == 'USER':
+        if stat_cfg.get('stat_parm_cli', '') == CLI_TYP_SYSOP:
             msg_typ = '='
         else:
             msg_typ = '!'

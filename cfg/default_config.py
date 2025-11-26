@@ -3,7 +3,7 @@ from datetime import timedelta
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.constant import DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_TX_COL, DEF_PORT_MON_RX_COL, \
     DEF_PORT_MON_BG_COL, TNC_KISS_CMD, TNC_KISS_CMD_END, DEF_STAT_QSO_BG_COL, DEF_TEXTSIZE, TASK_TYP_BEACON, \
-    TASK_TYP_MAIL
+    TASK_TYP_MAIL, CLI_TYP_NO_CLI
 from schedule.popt_sched import getNew_schedule_config
 
 
@@ -13,7 +13,7 @@ def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
         stat_parm_Name='',
-        stat_parm_cli='NO-CLI',
+        stat_parm_cli=CLI_TYP_NO_CLI,
         # Optional Parameter. Overrides Port Parameter
         stat_parm_PacLen=0,  # Max Pac len
         stat_parm_MaxFrame=0,  # Max (I) Frames
@@ -45,7 +45,7 @@ def getNew_port_cfg():
         # Connection Parameter
         parm_PacLen = 160,  # Max Pac len
         parm_MaxFrame = 3,  # Max (I) Frames
-
+        parm_MaxFrameAuto = True,
         parm_StationCalls = [],  # def in __init__    Keys for Station Parameter  # TODO ? Bullshit ?
         ####################################
         # parm_T1 = 1800        # T1 (Response Delay Timer) activated if data come in to prev resp to early
@@ -418,20 +418,28 @@ def getNew_digi_cfg():
 # PIPE CFG
 def getNew_pipe_cfg():
     return dict(
-        pipe_parm_own_call='',
-        pipe_parm_address_str='',
-        pipe_parm_port=-1,          # -1 All
-        pipe_parm_pipe_tx='',
-        pipe_parm_pipe_rx='',
-        pipe_parm_cmd_pf=(False, False),
-        pipe_parm_pid=0xf0,
-        pipe_parm_PacLen=128,
-        pipe_parm_MaxFrame=3,
-        pipe_parm_MaxPacDelay=30,
-        pipe_parm_pipe_loop_timer=10,
-        pipe_parm_Proto=True,
-        pipe_parm_permanent=False,
-
+        pipe_parm_own_call          ='',
+        pipe_parm_address_str       ='',
+        pipe_parm_port              =-1,          # -1 All
+        pipe_parm_cmd_pf            =(False, False),
+        pipe_parm_pid               =0xf0,
+        pipe_parm_PacLen            =128,
+        pipe_parm_MaxFrame          =3,
+        pipe_parm_MaxPacDelay       =30,
+        pipe_parm_Proto             =True,
+        pipe_parm_permanent         =False,
+        pipe_parm_backend           ='file', # 'file', 'serial', 'tcp-server', 'tcp-client'
+        pipe_parm_pipe_loop_timer   =10,
+        pipe_parm_c_text            = '',
+        # pipe_parm_txt_encoder       = 'UTF-8',
+        # File <> Pipe
+        pipe_parm_pipe_tx           ='',
+        pipe_parm_pipe_rx           ='',
+        # Backend Param
+        pipe_be_c_address             = ('', 0),
+        pipe_be_send_at_init          = '', # Send to Pipe (not to AX25) at init
+        pipe_be_flush_rx_at_init      = False,
+        # pipe_be_reinit_conn           = False,
     )
 
 #######################################

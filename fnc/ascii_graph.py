@@ -199,7 +199,8 @@ def generate_ascii_graph(data, titel, datasets, expand=False, x_scale=True, bar_
                 if closest_key:
                     char = datasets[closest_key]
             line_str += char
-        output += line_str.rstrip() + "\n"
+        # output += line_str.rstrip() + "\n"
+        output += line_str + "\n"
 
     # X-axis
     x_axis = "      +"
@@ -210,5 +211,6 @@ def generate_ascii_graph(data, titel, datasets, expand=False, x_scale=True, bar_
         x_axis += "-" * graph_width
     output += x_axis.rstrip() + "\n"
 
-    return output.rstrip()  # Remove any trailing newlines at the end
+    # return output.rstrip()  # Remove any trailing newlines at the end
+    return '\n'.join(line.rstrip() for line in output.split('\n')).rstrip()
 

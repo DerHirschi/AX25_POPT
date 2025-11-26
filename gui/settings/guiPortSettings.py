@@ -414,23 +414,28 @@ class PortSetTab:
         max_pac_label = ttk.Label(self.tab, text='Max Pac:')
 
         opt_max_pac = list(range(1, 8))
-        self._max_pac_var = tk.StringVar(self.tab)
+        self._max_pac_var       = tk.StringVar( self.tab,
+                                                value=str(self._port_setting.get('parm_MaxFrame',
+                                                                                 new_cfg.get('parm_MaxFrame', 3))))
+        self._max_pac_auto_var  = tk.BooleanVar(self.tab,
+                                                value=self._port_setting.get('parm_MaxFrameAuto',
+                                                                             new_cfg.get('parm_MaxFrameAuto', True)))
         # self._max_pac_var.set(str(self._port_setting.parm_MaxFrame))  # default value
-        self._max_pac_var.set(str(self._port_setting.get('parm_MaxFrame', new_cfg.get('parm_MaxFrame', 3))))  # default value
         opt_max_pac = [self._max_pac_var.get()] + opt_max_pac
         max_pac = ttk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
         #max_pac.configure(width=4, height=1)
-        max_pac_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
         max_pac_label.place(x=max_pac_x, y=height - max_pac_y)
         max_pac.place(x=max_pac_x + 80, y=height - max_pac_y)
-        max_pac_help.place(x=max_pac_x + 80 + 70, y=height - max_pac_y)
 
+        #max_pac_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_max'))
+        #max_pac_help.place(x=max_pac_x + 80 + 70, y=height - max_pac_y)
+        max_pac_a_check = ttk.Checkbutton(self.tab, text="Max Pac Auto", variable=self._max_pac_auto_var)
+        max_pac_a_check.place(x=max_pac_x + 80 + 70, y=height - max_pac_y)
         ####################################
         # Monitor COLOR Selector SIDE Frame
         f_x = 480
         f_y = 340
         f_height = 180
-        bg_cl = 'grey80'
         mon_col_frame = ttk.Frame(self.tab, width=440, height=f_height)
         #mon_col_frame.configure(bg=bg_cl)
         mon_col_frame.place(x=f_x, y=height - f_y)
@@ -616,7 +621,7 @@ class PortSetTab:
         param_next_line = 0
         typ = self._port_select_var.get()
         new_port_cfg = getNew_port_cfg()
-        if typ == 'KISSTCP':
+        if typ in ('KISSTCP', 'AGWPE-TCP'):
             self._kiss_txd.configure(state="normal")
             self._kiss_pers.configure(state="normal")
             self._kiss_tail.configure(state="normal")
@@ -905,6 +910,7 @@ class PortSetTab:
             tmp_param = (self._param1_var.get(), 0)
 
         self._port_setting['parm_PortParm'] = tmp_param
+        print(self._port_setting['parm_PortParm'])
         # Pseudo TXD
         try:
             self._port_setting['parm_TXD'] = int(self._p_txd_var.get())
@@ -943,9 +949,10 @@ class PortSetTab:
         # N 2
         self._port_setting['parm_N2'] = int(self._n2.get())
         # Port Default Packet Length
-        self._port_setting['parm_PacLen'] = int(self._pac_len.get())
+        self._port_setting['parm_PacLen'] = max(30, min(256, int(self._pac_len.get())))
         # Port Default Max Pac
         self._port_setting['parm_MaxFrame'] = int(self._max_pac_var.get())
+        self._port_setting['parm_MaxFrameAuto'] = bool(self._max_pac_auto_var.get())
         # Monitor COLOR Selector SIDE Frame
         # TX
         # self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
@@ -988,6 +995,7 @@ class PortSetTab:
             return False
         POPT_CFG.set_port_CFG_fm_id(self._port_setting.get('parm_PortNr', -1),
                                     self._port_setting)
+        return True
 
     def _t2_auto_check(self):
         if self._t2_auto_var.get():

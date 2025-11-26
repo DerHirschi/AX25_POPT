@@ -6,7 +6,8 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, Menu, messagebox
 from ax25.ax25Statistics import MyHeard
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, \
+    CLI_TYP_DIGI, CLI_TYP_PIPE
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, format_number
@@ -236,7 +237,7 @@ class MHWin(tk.Toplevel):
         # f1
         ttk.Label(f1, text='Filter: ').pack(side='left', anchor='w', padx=10)
         ttk.Label(f1, text='Typ: ').pack(side='left', anchor='w', padx=15)
-        opt = [self._typ_filter_var.get(), '', 'USER', 'NODE', 'DIGI', 'BOX', 'FWD', 'PIPE']
+        opt = [self._typ_filter_var.get(), '', CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_BOX, 'FWD', CLI_TYP_PIPE]
         ttk.OptionMenu(f1,
                        self._typ_filter_var,
                        *opt,
@@ -616,7 +617,7 @@ class MHWin(tk.Toplevel):
                 continue
 
             if typ_filter_var and typ != {
-                'FWD': 'Task: FWD',
+                'FWD': CLI_TYP_TASK_FWD,
             }.get(typ_filter_var, typ_filter_var):
                 continue
 
@@ -878,7 +879,7 @@ class MHWin(tk.Toplevel):
         symbol   = ais.get_symbol_fm_node_tab(call) # ('', '')
         stat_typ = user_db.get_typ(call)
 
-        # Beispiel-Implementierung: Zuweisung basierend auf Stationstyp
+        # Zuweisung basierend auf Stationstyp
         icon_map = {
             'BBS':   self._aprs_icon_tab_24.get('/B', default_icon),
             'NODE':  self._aprs_icon_tab_24.get('/r', default_icon),
