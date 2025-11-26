@@ -20,6 +20,7 @@ Optimierung/Änderungen:
 - Pipe Tool und Pipe-Tool GUI's aufgeräumt
 - Port reinit Prozedur nach ändern/einstellen von Port parametern.
   (Reinit läuft jetzt als extra Thread um die GUI nicht zu blockieren.)
+- Baken MH-Liste listet jetzt nur Calls ohne SID
 
 Neue Implementierungen / Funktionen:
 - Karte/Map für Locator-Rechner

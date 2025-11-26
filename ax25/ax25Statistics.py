@@ -670,12 +670,20 @@ class MH:
         ret = ''
         mh_keys = list(tmp.keys())
         n = 0
-        for k in mh_keys[:max_ent]:
+        c = 0
+        dbl = []
+        for k in mh_keys:
             if n == 6:
                 n = 0
                 ret += '\r'
-            ret += f"{tmp[k].own_call} "
-            n += 1
+            call = f"{tmp[k].own_call.split('-')[0]} "
+            if call not in dbl:
+                dbl.append(call)
+                ret += call
+                n += 1
+                c += 1
+            if c >= max_ent:
+                return ret
         return ret
 
     def reset_mainMH(self):
