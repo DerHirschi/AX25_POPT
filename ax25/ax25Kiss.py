@@ -410,13 +410,8 @@ class Kiss:
                     return None
             ###################################
             # Escape KISS
-            org_pack = org_pack.replace(
-                FESC_TFESC,
-                FESC
-            ).replace(
-                FESC_TFEND,
-                FEND
-            )
+            org_pack = org_pack.replace(FESC_TFEND, FEND)
+            org_pack = org_pack.replace(FESC_TFESC, FESC)
             return self._do_kiss_crc_in_packet(org_pack)
 
         if int(inp[1] / 16) in range(8, 16):
@@ -431,7 +426,7 @@ class Kiss:
             return self._do_smack_crc_in_packet(org_pack)
         return None
 
-    def de_kiss_ax25kernel(self, inp: bytearray):
+    def de_kiss_ax25kernel(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -450,13 +445,10 @@ class Kiss:
             logger.warning(f"De-Kiss ax25Kernel: Receiving packet on TNC Channel: {int(inp[0] / 16)} ")
         ###################################
         # Escape
-        org_pack = inp[1:].replace(
-            FESC_TFESC,
-            FESC
-        ).replace(
-            FESC_TFEND,
-            FEND
-        )
+        org_pack = inp[1:]
+        org_pack = org_pack.replace(FESC_TFEND, FEND)
+        org_pack = org_pack.replace(FESC_TFESC, FESC)
+
         return self._do_kiss_crc_in_packet(org_pack)
 
     def _do_kiss_crc_in_packet(self, org_pack: bytes):
@@ -528,9 +520,9 @@ class Kiss:
         if self._is_smack:
             return FEND + SMACK_FRAME_0 + inp + FEND
         else:
-            return KISS_DATA_FRAME_0(
-                inp.replace(FESC, FESC_TFESC).replace(FEND, FESC_TFEND)
-            )
+            inp = inp.replace(FESC, FESC_TFESC)
+            inp = inp.replace(FEND, FESC_TFEND)
+            return KISS_DATA_FRAME_0(inp)
 
     def kiss_ax25kernel(self, inp: bytearray):
         """
@@ -548,15 +540,10 @@ class Kiss:
             calc_crc = crc_x25(inp)
             inp = inp + calc_crc
 
-        return AX25KERNEL_DATA_FRAME_0(
-            inp.replace(
-                FESC,
-                FESC_TFESC
-            ).replace(
-                FEND,
-                FESC_TFEND
-            )
-        )
+        inp = inp.replace(FESC, FESC_TFESC)
+        inp = inp.replace(FEND, FESC_TFEND)
+
+        return AX25KERNEL_DATA_FRAME_0(inp)
 
 
     #############################################################################
