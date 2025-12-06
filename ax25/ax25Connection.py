@@ -1222,29 +1222,20 @@ class AX25Conn:
     def _del_unACK_buf(self):
         if self._nr == -1:  # Check if right Packet
             return
-        print('=' * 50)
-        print(f"del unack UID : {self.uid} - NR: {self._nr}")
-        print(f"unackBuff : {self.tx_buf_unACK.keys()}")
         while list(self.tx_buf_unACK.keys())[0] != self._nr if self.tx_buf_unACK else False:
             old_vs = min(self.tx_buf_unACK.keys())  # ältestes Paket
             del self.tx_buf_unACK[old_vs]
             self.RTT_Timer.rtt_rx(old_vs)
-        print(f"unackBuff nach del: {self.tx_buf_unACK.keys()}")
-        print('=' * 50)
 
     def resend_unACK_buf(self, max_pac=None):
         if not self.tx_buf_unACK:
             return
-        print('=' * 50)
-        print(f"Resend UNACK UID : {self.uid} - NR: {self._nr}")
-        print(f"unackBuff : {self.tx_buf_unACK.keys()}")
 
         if max_pac is None:
             max_pac = self.parm_MaxFrame
         index_list = list(self.tx_buf_unACK.keys())
         for i in range(min(max_pac, len(index_list))):
             pac = self.tx_buf_unACK[index_list[i]]
-            print(f"Resend VS: {pac.ctl_byte.ns}")
             pac.ctl_byte.nr = self.vr
             self.tx_buf_2send.append(pac)
         self.set_T1()
@@ -1264,23 +1255,15 @@ class AX25Conn:
     def build_I_fm_raw_buf(self):
         if not (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData) or self.tx_buf_unACK:
             return
-        if self.tx_buf_unACK:
-            print('=' * 50)
-            print(f"build I UID: {self.uid}")
-            print(f"unack buff: {self.tx_buf_unACK.keys()}")
         while (len(self.tx_buf_unACK) < self.parm_MaxFrame and
                (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData)):
             self._send_I(False)
-
-        print(f"unack buff nach : {self.tx_buf_unACK.keys()}")
-        print('=' * 50)
 
     def _send_I(self, pf_bit=False):
         """
         :param pf_bit: bool
         True if RX a REJ Packet
         """
-        print(f'send I: VS: {self.vs} ')
         #####################################################################
         # AX25Frame Init                        #
         new_axFrame = self._get_new_ax25frame() # Get preseted AX25Frame
