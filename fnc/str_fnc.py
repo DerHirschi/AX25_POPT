@@ -324,3 +324,6 @@ def find_eol(msg: bytes):
         if tmp_eol in msg:
             return tmp_eol
     return CR
+
+def version_tuple(v: str):
+    return tuple(int(x) for x in v.split('.'))

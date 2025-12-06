@@ -1,12 +1,21 @@
 ###########################################################################################################
 # 2.123.x
 Fixes:
+- KISS Decoder (fehlerhaftes Escaping)
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)
+- Haupteinstellungen GUI > Allgemeine Einstellungen GUI überarbeitet
+- AX25 Protokoll L3 > T1 wird nicht gestoppt wenn REJ empfangen wird
+  (Führ zu lange Wartezeiten bis reagiert wird)
 
 Neue Implementierungen / Funktionen:
-
+- CLI-CMD: "CHIST" - zeigt Verbindungsverlauf
+- PoPT-Remote-Protokoll zum Fernsteuern von Stationen.
+- Remote Monitor (nutzt das PoPT-Remote-Protokoll).
+  Überträgt Monitordaten von entfernter PoPT-Node und stellt
+  sie aufbereitet in der HostGUI da. (Ähnlich wie die Monitorausgabe
+  bei TNN nur viel effizienter aufgrund von Datenkomprimierung)
 
 ###########################################################################################################
 ###########################################################################################################

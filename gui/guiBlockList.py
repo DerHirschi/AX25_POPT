@@ -13,7 +13,7 @@ class BlockList(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._main      = main_win
         self.style      = self._main.style
-        self.title('Black List')
+        self.title('Block List')
         self.geometry(f"640x480+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(True, True)

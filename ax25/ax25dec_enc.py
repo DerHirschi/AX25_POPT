@@ -641,79 +641,82 @@ class AX25Frame:
                 if ca.call_str == self.digi_call:
                     tr = False
 
-    def decode_ax25frame(self, hexstr=b''):
-        if hexstr:
-            self.data_bytes = hexstr
-        if self.data_bytes and len(self.data_bytes) > 14:
-
-            try:
-                self.to_call.dec_call(self.data_bytes[:7])
-                # print("ToCall > {}".format(self.hexstr[:7]))
-            except IndexError:
-                logger.error("DEC: Index ERROR To Call !")
-                raise AX25DecodingERROR(self)
-            try:
-                self.from_call.dec_call(self.data_bytes[7:14])
-                # print("FromCall > {}".format(self.hexstr[7:14]))
-            except IndexError:
-                logger.error("DEC: Index ERROR From Call !")
-                raise AX25DecodingERROR(self)
-            n = 2
-            if not self.from_call.s_bit:
-                while True:
-                    tmp = Call()
-                    try:
-                        tmp.dec_call(self.data_bytes[7 * n: 7 + 7 * n])
-                        # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
-                    except IndexError:
-                        logger.error("DEC: Index ERROR Via Call !")
-                        # print("Index ERROR Via Call!!!!!!!!!!")
-                        raise AX25DecodingERROR(self)
-                    self.via_calls.append(tmp)
-                    n += 1
-                    if tmp.s_bit:
-                        break
-
-            index = 7 * n
-            # Dec C-Byte
-            try:
-                self.ctl_byte.dec_cbyte(self.data_bytes[index])
-            except (AX25DecodingERROR, IndexError) as e:
-                logger.error('Decoding Error !! {}'.format(e))
-                logger.error('Decoding Error !! MSG: {}'.format(self.data_bytes))
-                logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
-                logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
-                raise AX25DecodingERROR(self)
-
-            # Get Command Bits
-            if self.to_call.c_bit and not self.from_call.c_bit:
-                self.ctl_byte.cmd = True
-            elif not self.to_call.c_bit and self.from_call.c_bit:
-                self.ctl_byte.cmd = False
-            # Get PID if available
-            if self.ctl_byte.pid:
-                index += 1
-                try:
-                    self.pid_byte.decode(self.data_bytes[index])
-                except IndexError:
-                    raise AX25DecodingERROR(self)
-            if self.ctl_byte.info:
-                index += 1
-                if self.ctl_byte.flag == 'FRMR':
-                    self.payload = decode_FRMR(self.data_bytes[index:])
-                else:
-                    self.payload = self.data_bytes[index:]
-                self.data_len = len(self.payload)
-            # Check if all Digi s have repeated the packet
-            self._set_check_h_bits(dec=True)
-            # Build address UID
-            self._build_uid(dec=True)
-            if not self._validate():
-                raise AX25DecodingERROR(self)
-
-            self._decode_netrom()
-        else:
+    def decode_ax25frame(self, raw_data=b''):
+        if not raw_data:
+            logger.warning('No Data to decode')
             raise AX25DecodingERROR(self)
+        if len(raw_data) < 15:
+            logger.warning(f'raw_data < 15: len: {len(raw_data)}')
+            raise AX25DecodingERROR(self)
+        self.data_bytes = raw_data
+
+        try:
+            self.to_call.dec_call(self.data_bytes[:7])
+            # print("ToCall > {}".format(self.hexstr[:7]))
+        except IndexError:
+            logger.error("DEC: Index ERROR To Call !")
+            raise AX25DecodingERROR(self)
+        try:
+            self.from_call.dec_call(self.data_bytes[7:14])
+            # print("FromCall > {}".format(self.hexstr[7:14]))
+        except IndexError:
+            logger.error("DEC: Index ERROR From Call !")
+            raise AX25DecodingERROR(self)
+        n = 2
+        if not self.from_call.s_bit:
+            while True:
+                tmp = Call()
+                try:
+                    tmp.dec_call(self.data_bytes[7 * n: 7 + 7 * n])
+                    # print("Via Call N:{} > {}".format(n, self.hexstr[7 * n: 14 * n]))
+                except IndexError:
+                    logger.error("DEC: Index ERROR Via Call !")
+                    # print("Index ERROR Via Call!!!!!!!!!!")
+                    raise AX25DecodingERROR(self)
+                self.via_calls.append(tmp)
+                n += 1
+                if tmp.s_bit:
+                    break
+
+        index = 7 * n
+        # Dec C-Byte
+        try:
+            self.ctl_byte.dec_cbyte(self.data_bytes[index])
+        except (AX25DecodingERROR, IndexError) as e:
+            logger.error('Decoding Error !! {}'.format(e))
+            logger.error('Decoding Error !! MSG: {}'.format(self.data_bytes))
+            logger.error('Decoding Error !! FM_CALL: {}'.format(self.from_call.call_str))
+            logger.error('Decoding Error !! TO_CALL: {}'.format(self.to_call.call_str))
+            raise AX25DecodingERROR(self)
+
+        # Get Command Bits
+        if self.to_call.c_bit and not self.from_call.c_bit:
+            self.ctl_byte.cmd = True
+        elif not self.to_call.c_bit and self.from_call.c_bit:
+            self.ctl_byte.cmd = False
+        # Get PID if available
+        if self.ctl_byte.pid:
+            index += 1
+            try:
+                self.pid_byte.decode(self.data_bytes[index])
+            except IndexError:
+                raise AX25DecodingERROR(self)
+        if self.ctl_byte.info:
+            index += 1
+            if self.ctl_byte.flag == 'FRMR':
+                self.payload = decode_FRMR(self.data_bytes[index:])
+            else:
+                self.payload = self.data_bytes[index:]
+            self.data_len = len(self.payload)
+        # Check if all Digi s have repeated the packet
+        self._set_check_h_bits(dec=True)
+        # Build address UID
+        self._build_uid(dec=True)
+        if not self._validate():
+            raise AX25DecodingERROR(self)
+
+        self._decode_netrom()
+
 
     def _decode_netrom(self):
         if self.pid_byte.hex != 0xCF:

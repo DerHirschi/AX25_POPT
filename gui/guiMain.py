@@ -22,6 +22,7 @@ from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiRemoteMon import RemoteMonitorGUI
 from gui.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
 #from gui.plots.gui_ConnPath_plot import ConnPathsPlot
@@ -255,8 +256,9 @@ class PoPT_GUI_Main:
         """
         #####################
         # Buffer
-        self.connect_history    = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
-        self._mon_pack_buff     = deque([] * 10000, maxlen=10000)
+        self.connect_history        = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
+        self._mon_pack_buff         = deque([] * 10000, maxlen=10000)
+        self._remote_mon_pack_buff  = {}
         #####################
         # GUI VARS
         # GLb Setting Vars
@@ -315,7 +317,7 @@ class PoPT_GUI_Main:
         all_ports = self._port_handler.ax25_ports
         for port_id in all_ports:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
-            self.mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
+            self.mon_port_on_vars[port_id].set(True)
         self.mon_port_var.set('0')
         # Monitor Tree
         self._mon_tree_port_filter_var       = tk.StringVar(self.main_win, value='')
@@ -377,7 +379,8 @@ class PoPT_GUI_Main:
         self.dualPort_settings_win  = None
         self.dualPortMon_win        = None
         self.block_list_win         = None
-        #self.routingTab_win         = None
+        self.routingTab_win         = None
+        self.remote_mon_win         = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -536,6 +539,7 @@ class PoPT_GUI_Main:
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
+            self.new_conn_win,
             self.settings_win,
             self.mh_window,
             self.wx_window,
@@ -551,7 +555,8 @@ class PoPT_GUI_Main:
             self.dualPort_settings_win,
             self.dualPortMon_win,
             self.block_list_win,
-            #self.routingTab_win,
+            self.routingTab_win,
+            self.remote_mon_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -840,6 +845,9 @@ class PoPT_GUI_Main:
                               command=lambda: self._open_settings_window('priv_win'),
                               underline=0)
         MenuTools.add_separator()
+        MenuTools.add_command(label='Remote Monitor',
+                              command=lambda: self.open_window('remote_monitor'),
+                              underline=0)
         MenuTools.add_command(label='Dual-Port Monitor',
                               command=lambda: self.open_window('dualPort_monitor'),
                               underline=0)
@@ -1433,7 +1441,7 @@ class PoPT_GUI_Main:
 
         mon_txt = tk.Text(mon_txt_f,
                               background=MON_SYS_MSG_CLR_BG,
-                              foreground=MON_SYS_MSG_CLR_BG,
+                              foreground=MON_SYS_MSG_CLR_FG,
                               font=(FONT, self.text_size),
                               height=30,
                               width=5,
@@ -2170,6 +2178,14 @@ class PoPT_GUI_Main:
                     self._monitor_tree_update_task(arg)
                 elif task == '_monitor_q_task':
                     self._monitor_q_task(arg)
+                elif task == '_remote_monitor_update_task':
+                    rem_mon_data, remote_uid = arg
+                    self._remote_monitor_update_task(rem_mon_data ,remote_uid)
+                elif task == '_remote_monitor_response_update_task':
+                    rem_mon_data, remote_uid = arg
+                    self._remote_monitor_response_update_task(rem_mon_data ,remote_uid)
+                elif task == '_init_popt_remote_task':
+                    self._init_popt_remote_task(arg)
 
         return True
 
@@ -2234,10 +2250,10 @@ class PoPT_GUI_Main:
                 self._rx_beep_sound()
                 if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
-            """
-            if hasattr(self.routingTab_win, 'tasker'):
-                self.routingTab_win.tasker()
-            """
+
+            #if hasattr(self.routingTab_win, 'tasker'):
+            #    self.routingTab_win.tasker()
+
             """
             if self.MSG_Center is not None:
                 self.MSG_Center.tasker()
@@ -2622,14 +2638,18 @@ class PoPT_GUI_Main:
         mon_buff = self._port_handler.get_monitor_data()
         if not mon_buff:
             return
-        new_mon_buff = []
-        for axframe_conf, port_conf, tx in mon_buff:
-            port_id = port_conf.get('parm_PortNr', -1)
-            axframe_conf['tx']        = tx
-            axframe_conf['port']      = port_id
-            axframe_conf['port_conf'] = port_conf
-            new_mon_buff.append(axframe_conf)
+        new_mon_buff        = []
+        for axframe_conf in mon_buff:
+            port_id = axframe_conf.get('port', -1)
+
             self._mon_pack_buff.append(dict(axframe_conf))
+            if port_id not in self.mon_port_on_vars:
+                logger.error(f"_monitor_task: port_id ({port_id}) not in mon_port_on_vars({self.mon_port_on_vars.keys()})")
+                continue
+            if not self.mon_port_on_vars[port_id].get():
+                continue
+
+            new_mon_buff.append(axframe_conf)
 
         """ Monitor Tree """
         self._monitor_tree_update(new_mon_buff)
@@ -2637,7 +2657,7 @@ class PoPT_GUI_Main:
         self._add_tasker_q('_monitor_q_task',
                            new_mon_buff,
                            False)
-        return True
+        return
 
     def _monitor_q_task(self, mon_batch: list):
 
@@ -2887,6 +2907,64 @@ class PoPT_GUI_Main:
     """
 
     ###############################################################
+    # Remote Monitor
+    # === Init
+    def init_popt_remote(self, connection):
+        """ Init fm Connection """
+        self._add_tasker_q("_init_popt_remote_task", str(connection.uid), prio=False)
+
+    def _init_popt_remote_task(self, uid: str):
+        if uid in self._remote_mon_pack_buff:
+            return
+        self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
+        # Update Remote Mon GUI if open
+        if hasattr(self.remote_mon_win, 'rem_mon_init'):
+            self.remote_mon_win.rem_mon_init(uid)
+
+    # === TX Cmds
+    """
+    def send_rem_mon_start(self, cfg: dict, uid: str):
+        conn = self._port_handler.get_connections_by_uid(uid)
+        if not hasattr(conn, 'get_remote_mon'):
+            logger.error(f"Can't find Connection UID ({uid})")
+            return
+        remote_mon = conn.get_remote_mon()
+        remote_mon.cmd_start_gui_remote_mon(cfg)
+
+    def send_rem_mon_stop(self, uid: str):
+        conn = self._port_handler.get_connections_by_uid(uid)
+        if not hasattr(conn, 'get_remote_mon'):
+            logger.error(f"Can't find Connection UID ({uid})")
+            return
+        remote_mon = conn.get_remote_mon()
+        remote_mon.cmd_stop_gui_remote_mon()
+    """
+    # === RX
+    def remote_monitor_response_update(self, resp: str, remote_uid: str):
+        self._add_tasker_q("_remote_monitor_response_update_task", (resp, remote_uid), prio=False)
+
+    def _remote_monitor_response_update_task(self, resp: str, remote_uid: str):
+        # Update Remote Mon GUI if open
+        if hasattr(self.remote_mon_win, 'rem_mon_response'):
+            self.remote_mon_win.rem_mon_response(resp, remote_uid)
+
+    def remote_monitor_update(self, ax25pack: dict, remote_uid: str):
+        self._add_tasker_q("_remote_monitor_update_task", (ax25pack, remote_uid), prio=False)
+
+    def _remote_monitor_update_task(self, rem_mon_ax25conf: dict, remote_uid: str):
+        if not rem_mon_ax25conf:
+            return
+        if remote_uid not in self._remote_mon_pack_buff:
+            self._remote_mon_pack_buff[remote_uid] = deque([] * 10000, maxlen=10000)
+        self._remote_mon_pack_buff[remote_uid].append(rem_mon_ax25conf)
+        # Update Remote Mon GUI if open
+        if hasattr(self.remote_mon_win, 'rem_mon_update'):
+            self.remote_mon_win.rem_mon_update(rem_mon_ax25conf, remote_uid)
+
+    # === Getta
+    def get_remote_monitor_pack_buffer(self):
+        return dict(self._remote_mon_pack_buff)
+    ###############################################################
     # Dual Port
     def _dualPort_monitor_task(self):
         if not hasattr(self.dualPortMon_win, 'dB_mon_tasker'):
@@ -2947,6 +3025,7 @@ class PoPT_GUI_Main:
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
+            'remote_monitor': (self.remote_mon_win, RemoteMonitorGUI),
 
             # TODO .......
 
@@ -3022,7 +3101,7 @@ class PoPT_GUI_Main:
 
     ##################
     # Routing tab win
-    """
+
     def open_RoutingTab_win(self):
         if hasattr(self.routingTab_win, 'lift'):
             self.routingTab_win.lift()
@@ -3032,8 +3111,8 @@ class PoPT_GUI_Main:
                 self.routingTab_win.close()
                 self.routingTab_win = None
                 return
-        #RoutingTableWindow(self, self._port_handler.get_RoutingTable())
-    """
+        # RoutingTableWindow(self, self._port_handler.get_RoutingTable())
+
     #######################################################
     """
     def gui_set_distance(self):
@@ -3220,22 +3299,7 @@ class PoPT_GUI_Main:
     def _kaffee(self):
         self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
-        #APRSymbolTab(self)
-        # self.open_RoutingTab_win()
-        #print(self._inp_txt.cget('height'))
-        #print(self._pw.sashpos(0))
-        #self._pw.sashpos(0, 20)
-        # self._inp_txt.configure(height= 200)
-        # self._port_handler.set_dxAlarm()
-        # self._port_handler.set_tracerAlarm()
-        # ## self._port_handler.debug_Connections()
-        # self._Alarm_Frame.set_pmsMailAlarm()
-        # self.set_noty_bell()
-        # self._do_bbs_fwd()
-        # self.conn_task = AutoConnTask()
-        # print(get_mail_import())
-        #self._save_pw_pos()
-        #self._load_pw_pos()
+        #self.open_RoutingTab_win()
 
     def _do_pms_autoFWD(self):
         self._port_handler.get_bbs().start_man_autoFwd()
@@ -4022,6 +4086,9 @@ class PoPT_GUI_Main:
 
     def get_conn_typ_icon_16(self):
         return self._conn_typ_icons
+
+    def get_rx_tx_icons(self):
+        return self._rx_tx_icons
 
     def get_fwd_q_icon_16(self):
         return self._fwd_q_flag_icons

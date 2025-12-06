@@ -131,3 +131,6 @@ class ConverseCLI(DefaultCLI):
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
         return ''
+
+    def cli_update_monitor(self, ax25frame_conf: dict):
+        pass

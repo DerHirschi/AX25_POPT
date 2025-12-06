@@ -8,7 +8,17 @@ from schedule.popt_sched import getNew_schedule_config
 
 
 #######################################
-# Station CFG
+# Log CFG
+"""
+def getNew_Log_cfg():
+    return dict(
+        log_level       = 'INFO',
+        bbs_log_level   = 'INFO',
+        log_to_console  = True
+    )
+"""
+#######################################
+# # Station CFG
 def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
@@ -196,6 +206,17 @@ def getNew_BBS_User_cfg():
         homeBBS         = '',
     )
 """
+#######################################
+# Remote Monitor
+def getNew_remote_mon_cfg():
+    return dict(
+            cli_mon   = False,
+            gui_mon   = False,
+            mon_port  = 0,
+            incl_call = [], # Call Filter
+            excl_call = [], # Call Filter
+        )
+
 #######################################
 # MH / Port-Stat
 def getNew_MH_cfg():

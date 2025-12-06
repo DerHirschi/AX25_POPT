@@ -500,7 +500,7 @@ class SideTabbedFrame:
             ttk.Checkbutton(tab6_monitor,
                             text=f"Port {port_id}",
                             variable=self._root_class.mon_port_on_vars[port_id],
-                            command=self._chk_mon_port_filter
+                            # command=self._chk_mon_port_filter
                             ).place(x=x, y=y)
             i += 1
             # self._mon_port_on_vars[port_id].set(all_ports[port_id].monitor_out)
@@ -747,11 +747,13 @@ class SideTabbedFrame:
             self._root_class.mon_call_var.set(vals[0])
         self._mon_call_ent.configure(values=vals)
 
+    """
     def _chk_mon_port_filter(self):
         port_handler = self._root_class.get_PH_mainGUI()
         all_ports = port_handler.ax25_ports
         for port_id in all_ports:
             all_ports[port_id].monitor_out = self._root_class.mon_port_on_vars[port_id].get()
+    """
 
     def update_mon_port_id(self):
         port_handler = self._root_class.get_PH_mainGUI()

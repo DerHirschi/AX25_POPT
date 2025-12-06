@@ -18,6 +18,9 @@ class Main_CFG:
             ##########################
             'first_setup': False,
             ##########################
+            # Logging
+            #'log_cfg': getNew_Log_cfg,
+            ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
             'bbs_fwd_statistics': {},
@@ -403,6 +406,15 @@ class Main_CFG:
         self._config['gui_main_parm']['gui_cfg_pacman_fix'] = bool(value)
     """
 
+    #################################################
+    # Log CFG
+    """
+    def get_log_CFG(self):
+        return dict(self._config.get('log_cfg', getNew_Log_cfg()))
+
+    def set_log_CFG(self, cfg: dict):
+        self._config['log_cfg'] = dict(cfg)
+    """
     #################################################
     # Beacon
     def get_Beacon_tasks(self):

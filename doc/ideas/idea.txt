@@ -246,6 +246,7 @@ Performance/Opt:
   - IT-Sicherheit (Syspw, Token o.Ä.)
   - Remote Config    (Von Host GUI aus)
   - Remote Steuerung (Von Host GUI aus)
+  ✓ Remote Monitor (Monitor Ausgabe erfolgt über Host GUI)
 
 - Remote-GPIO Tool für PI (Idee von Lars)
   - 1Wire Sensoren lesen
@@ -324,10 +325,11 @@ Performance/Opt:
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
-✓ Autoscrolling überarbeiten.
+- Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI.
 - Drucker Ausgabe vom QSO
   - kompatibel mit Nadeldrucker
+- ANSI-Color support
 
 - Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR/DRM?)
   Oder:

@@ -1,3 +1,4 @@
+""" Opt by Grok AI """
 import tkinter as tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
@@ -11,186 +12,194 @@ from fnc.str_fnc import get_strTab
 
 class GeneralSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
-        ttk.Frame.__init__(self, tabctl)
-        ################################
+        super().__init__(tabctl)
         self._root_win = root_win
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._getTabStr = lambda key: get_strTab(key, POPT_CFG.get_guiCFG_language())
         self._lang = POPT_CFG.get_guiCFG_language()
-        conf: dict = POPT_CFG.load_guiPARM_main()
+
+        conf = POPT_CFG.load_guiPARM_main()
         self._fg_rx = conf.get('gui_cfg_vor_col', 'white')
         self._fg_tx = conf.get('gui_cfg_vor_tx_col', '#25db04')
         self._bg_tx = conf.get('gui_cfg_vor_bg_col', 'black')
-        #####################
-        frame1 = ttk.Frame(self)
-        frame1.pack(fill=tk.BOTH, expand=True)
-        ############################################################
-        h_frame1_l =ttk.Frame(frame1)
-        h_frame1_l.pack(expand=True)
-        h_frame2_l =ttk.Frame(frame1)
-        h_frame2_l.pack(expand=True)
-        ############################################################
-        lang_frame =ttk.Frame(h_frame1_l)
-        lang_frame.pack(side=tk.LEFT,  expand=True, padx=30)
-        qth_loc_frame =ttk.Frame(h_frame1_l)
-        qth_loc_frame.pack(side=tk.LEFT, expand=True, padx=30)
-        ############################################################
-        self._lang_var = tk.StringVar(self)
-        for land, land_id in LANG_IND.items():
-            if land_id == self._lang:
-                self._lang_var.set(land)
-        opt = list(LANG_IND.keys())
-        ttk.Label(lang_frame, text=f'{self._getTabStr("language")}: ').pack(side=tk.LEFT)
-        opt = [self._lang_var.get()] + opt
-        lang_ent =ttk.OptionMenu(lang_frame,
-                                 self._lang_var,
-                                       *opt,
-                                 )
-        lang_ent.pack(side=tk.LEFT)
-        ############################################################
-        self._qth_var = tk.StringVar(self, value=conf.get('gui_cfg_qth', ''))
-        qth_frame = ttk.Frame(qth_loc_frame)
-        qth_frame.pack(fill=tk.X, pady=8)
-        ttk.Label(qth_frame, text='QTH: ').pack(side=tk.LEFT)
-        qth_ent = ttk.Entry(qth_frame, width=25, textvariable=self._qth_var)
-        qth_ent.pack(side=tk.LEFT)
-        ############################################################
 
-        self._loc_var = tk.StringVar(self, value=POPT_CFG.get_guiCFG_locator())
-        loc_frame = ttk.Frame(qth_loc_frame)
-        loc_frame.pack(fill=tk.X, pady=8)
-        ttk.Label(loc_frame, text='Locator: ').pack(side=tk.LEFT)
-        loc_ent = ttk.Entry(loc_frame, width=10, textvariable=self._loc_var)
-        loc_ent.pack(side=tk.LEFT)
-        ############################################################
+        self._build_ui(conf)
 
-        ############################################################
-        text_winPos_f = ttk.Frame(h_frame2_l)
-        text_winPos_f.pack(fill=tk.X, pady=8)
-        ttk.Label(text_winPos_f, text=f"{self._getTabStr('text_winPos')}:").pack(side=tk.LEFT, padx=4)
-        winPos_cfg =  conf.get('gui_cfg_txtWin_pos', (0, 1, 2))
+    def _build_ui(self, conf):
+        # Hauptcontainer mit Padding
+        main_container = ttk.Frame(self, padding="20 15")
+        main_container.pack(fill=tk.BOTH, expand=True)
+        main_container.grid_columnconfigure(0, weight=1)
+        main_container.grid_columnconfigure(1, weight=1)
+
+        # ==================== 1. Sprache & Standort ====================
+        loc_lang_frame = ttk.LabelFrame(main_container, text=self._getTabStr("language") + " & QTH", padding="15 10")
+        #loc_lang_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
+        loc_lang_frame.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 15))
+
+        # Sprache
+        ttk.Label(loc_lang_frame, text=self._getTabStr("language") + ":").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self._lang_var = tk.StringVar(value=[k for k, v in LANG_IND.items() if v == self._lang][0])
+        lang_menu = ttk.OptionMenu(loc_lang_frame, self._lang_var, self._lang_var.get(), *LANG_IND.keys())
+        lang_menu.grid(row=0, column=1, sticky="w")
+
+        # QTH
+        ttk.Label(loc_lang_frame, text="QTH:").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(8, 0))
+        self._qth_var = tk.StringVar(value=conf.get('gui_cfg_qth', ''))
+        ttk.Entry(loc_lang_frame, textvariable=self._qth_var, width=30).grid(row=1, column=1, sticky="w", pady=(8, 0))
+
+        # Locator
+        ttk.Label(loc_lang_frame, text="Locator:").grid(row=2, column=0, sticky="w", padx=(0, 10), pady=(8, 0))
+        self._loc_var = tk.StringVar(value=POPT_CFG.get_guiCFG_locator())
+        ttk.Entry(loc_lang_frame, textvariable=self._loc_var, width=15).grid(row=2, column=1, sticky="w", pady=(8, 0))
+
+        # ==================== RECHTS: Logging-Einstellungen ====================
+        """
+        log_conf = POPT_CFG.get_log_CFG()
+        
+        log_frame = ttk.LabelFrame(main_container, text=" Logging & Debug", padding="15 3")
+        log_frame.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=(0, 10))
+
+        # Log-Level (Hauptlog)
+        ttk.Label(log_frame, text="Log-Level:").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self._log_level_var = tk.StringVar(value=log_conf.get('log_level', 'INFO'))
+        log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        ttk.OptionMenu(log_frame, self._log_level_var, self._log_level_var.get(), *log_levels).grid(row=0, column=1,
+                                                                                                    sticky="w")
+
+        # BBS Log-Level (separat, falls vorhanden)
+        ttk.Label(log_frame, text="BBS Log-Level:").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(10, 0))
+        self._bbs_log_level_var = tk.StringVar(value=log_conf.get('bbs_log_level', 'WARNING'))
+        ttk.OptionMenu(log_frame, self._bbs_log_level_var, self._bbs_log_level_var.get(), *log_levels).grid(row=1,
+                                                                                                            column=1,
+                                                                                                            sticky="w",
+                                                                                                            pady=(10,
+                                                                                                                  0))
+
+        # Log in Konsole ausgeben
+        self._console_log_var = tk.BooleanVar(value=log_conf.get('log_to_console', True))
+        ttk.Checkbutton(log_frame,
+                        text=self._getTabStr('consol_log'),
+                        variable=self._console_log_var).grid(row=2, column=0, columnspan=2, sticky="w", pady=(15, 0))
+        
+        """
+        # ==================== 2. Fensteranordnung & Style ====================
+        layout_style_frame = ttk.LabelFrame(main_container, text="Layout & Design", padding="15 10")
+        layout_style_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 15))
+
+        # Textfenster-Reihenfolge
+        ttk.Label(layout_style_frame, text=self._getTabStr('text_winPos') + ":").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        winPos_cfg = conf.get('gui_cfg_txtWin_pos', (0, 1, 2))
         self._winPos_tab = {
-            (0, 1, 2): 'TX/QSO/Monitor',    # tx/qso/mon
-            (1, 0, 2): 'QSO/TX/Monitor',    # qso/tx/mon
-            (1, 2, 0): 'Monitor/TX/QSO',    # mon/tx/qso
-            (2, 1, 0): 'Monitor/QSO/TX',    # mon/qso/tx
-            #(0, 2, 1): 'TX/Monitor/QSO',    # tx/mon/qso
-            #(2, 0, 1): 'QSO/Monitor/TX',    # qso/mon/tx
+            (0, 1, 2): 'TX → QSO → Monitor',
+            (1, 0, 2): 'QSO → TX → Monitor',
+            (1, 2, 0): 'Monitor → TX → QSO',
+            (2, 1, 0): 'Monitor → QSO → TX',
         }
-        self._text_winPos_var = tk.StringVar(self, value=self._winPos_tab.get(winPos_cfg, 'TX/QSO/Monitor'))
-        cfg_opt = [self._text_winPos_var.get()]
-        for k, txt_cfg in self._winPos_tab.items():
-            cfg_opt.append(txt_cfg)
-        text_winPos_ent = ttk.OptionMenu(text_winPos_f, self._text_winPos_var, *cfg_opt)
-        text_winPos_ent.pack(side=tk.LEFT)
+        current_text = self._winPos_tab.get(winPos_cfg, 'TX → QSO → Monitor')
+        self._text_winPos_var = tk.StringVar(value=current_text)
+        pos_menu = ttk.OptionMenu(layout_style_frame, self._text_winPos_var, current_text, *self._winPos_tab.values())
+        pos_menu.grid(row=0, column=1, sticky="w")
 
-        ############################################################
-        style_f = ttk.Frame(h_frame2_l)
-        style_f.pack()
-        ttk.Label(style_f, text="Style").pack(side=tk.LEFT, padx=3)
-        self._style_var = tk.StringVar(self, value=conf.get('gui_parm_style_name', 'default'))
-        if is_linux():
-            opt = STYLES_BULD_IN_LINUX
-        else:
-            opt = STYLES_BULD_IN_WIN
+        # Style Auswahl
+        ttk.Label(layout_style_frame, text="Theme/Style:").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(8, 0))
+        self._style_var = tk.StringVar(value=conf.get('gui_parm_style_name', 'default'))
+        styles = STYLES_BULD_IN_LINUX if is_linux() else STYLES_BULD_IN_WIN
         if exist_awthemes_path():
-            opt += STYLES_AWTHEMES
-        self._style_var.set(conf.get('gui_parm_style_name', 'default'))
-        opt = [self._style_var.get()] + opt
-        style_opt_men = ttk.OptionMenu(
-            style_f,
-            self._style_var,
-            *opt
+            styles += STYLES_AWTHEMES
+        style_menu = ttk.OptionMenu(layout_style_frame, self._style_var, self._style_var.get(), *styles)
+        style_menu.grid(row=1, column=1, sticky="w", pady=(8, 0))
+
+        # ==================== 3. Farben Vorschau (PreWrite-Fenster) ====================
+        color_frame = ttk.LabelFrame(main_container, text=f"TX/RX-{self._getTabStr('text_color')} {self._getTabStr('prewritewin')}", padding="15 10")
+        color_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 15))
+
+        # Vorschau-Textfeld
+        self._color_example_text = tk.Text(
+            color_frame,
+            height=6,
+            width=50,
+            font=('Courier New', 11, 'bold'),
+            background=self._bg_tx,
+            foreground=self._fg_tx,
+            relief="flat",
+            padx=10,
+            pady=8,
+            spacing1=4,
+            spacing3=4
         )
-        style_opt_men.pack(side=tk.LEFT)
-        ############################################################
-        vorsch_col_frame = ttk.Frame(h_frame2_l, )
-        vorsch_col_frame.pack()
-        ################
-        ttk.Label(h_frame2_l, text=f"{get_strTab('prewritewin', self._lang)}:").pack(pady=15)
+        self._color_example_text.pack(pady=(0, 10), fill=tk.X)
 
-        self._color_example_text = tk.Text(h_frame2_l,
-                                           height=5,
-                                           width=40,
-                                           font=('Courier', 11),
-                                           background=self._bg_tx,
-                                           relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                           highlightthickness=0,
-                                           )
+        # Beispieltext einfügen
+        self._update_preview_text()
 
-        self._color_example_text.pack()
+        # Farbauswahl-Buttons
+        btn_frame = ttk.Frame(color_frame)
+        btn_frame.pack(fill=tk.X)
+
+        ttk.Button(btn_frame, text=f"TX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('tx_fg')).pack(side=tk.LEFT, padx=8)
+        ttk.Button(btn_frame, text=f"RX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('rx_fg')).pack(side=tk.LEFT, padx=8)
+        ttk.Button(btn_frame, text=self._getTabStr('backgrund'), command=lambda: self._choose_color('tx_bg')).pack(side=tk.LEFT, padx=8)
+
+    def _update_preview_text(self):
+        self._color_example_text.delete("1.0", tk.END)
         self._color_example_text.tag_config('sendet', foreground=self._fg_tx, background=self._bg_tx)
         self._color_example_text.tag_config('prewrite', foreground=self._fg_rx, background=self._bg_tx)
-        self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... \n', )
-        self._color_example_text.tag_add('sendet', 0.0, tk.INSERT)
-        ind = str(self._color_example_text.index(tk.INSERT))
-        self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ', )
-        self._color_example_text.tag_add('prewrite', ind, tk.END)
-        fg_btn_frame = ttk.Frame(h_frame2_l)
-        fg_btn_frame.pack()
-        # FG
-        ttk.Button(fg_btn_frame,
-                  text='TX-Text',
-                  command=lambda: self._choose_color('tx_fg')
-                  ).pack(side=tk.LEFT, padx=10, pady=5)
-        # FG
-        ttk.Button(fg_btn_frame,
-                  text='RX-Text',
-                  command=lambda: self._choose_color('rx_fg')
-                  ).pack(side=tk.LEFT, padx=10)
-        # BG
-        ttk.Button(h_frame2_l,
-                  text='BG',
-                  command=lambda: self._choose_color('tx_bg')
-                  ).pack()
 
+        text1 = "► DE DL1ABC PQ23 599 599\n"
+        text2 = "DL1ABC DE PQ23 599 599 KN\n"
 
-    def _choose_color(self, fg_bg: str):
-        if fg_bg == 'tx_fg':
-            col = askcolor(self._fg_tx,
-                           title=get_strTab('text_color', self._lang), parent=self._root_win)
-            if not col:
-                return
-            if col[1] is None:
-                return
-            self._fg_tx = str(col[1])
-        elif fg_bg == 'tx_bg':
-            col = askcolor(self._bg_tx,
-                           title=get_strTab('text_color', self._lang), parent=self._root_win)
-            if not col:
-                return
-            if col[1] is None:
-                return
-            self._bg_tx = str(col[1])
-        elif fg_bg == 'rx_fg':
-            col = askcolor(self._fg_rx,
-                           title=get_strTab('text_color', self._lang), parent=self._root_win)
-            if not col:
-                return
-            if col[1] is None:
-                return
-            self._fg_rx = str(col[1])
-        self._color_example_text.tag_config('sendet', foreground=self._fg_tx, background=self._bg_tx)
-        self._color_example_text.tag_config('prewrite', foreground=self._fg_rx, background=self._bg_tx)
+        self._color_example_text.insert(tk.END, text1, 'sendet')
+        self._color_example_text.insert(tk.END, text2, 'prewrite')
         self._color_example_text.configure(background=self._bg_tx)
 
+    def _choose_color(self, mode: str):
+        current = {'tx_fg': self._fg_tx, 'rx_fg': self._fg_rx, 'tx_bg': self._bg_tx}[mode]
+        result = askcolor(current, title="Farbe wählen", parent=self._root_win)
+        if not result or result[1] is None:
+            return
+
+        new_color = result[1]
+        if mode == 'tx_fg':
+            self._fg_tx = new_color
+        elif mode == 'rx_fg':
+            self._fg_rx = new_color
+        elif mode == 'tx_bg':
+            self._bg_tx = new_color
+
+        self._update_preview_text()
+
     def save_config(self):
-        conf: dict = POPT_CFG.load_guiPARM_main()
-        old_conf   = dict(conf)
-        lang_ind   = LANG_IND.get(self._lang_var.get(), LANGUAGE)
-        conf['gui_cfg_vor_col']         = str(self._fg_rx)
-        conf['gui_cfg_vor_tx_col']      = str(self._fg_tx)
-        conf['gui_cfg_vor_bg_col']      = str(self._bg_tx)
-        conf['gui_lang']                = int(lang_ind)
-        conf['gui_cfg_locator']         = str(self._loc_var.get())
-        conf['gui_cfg_qth']             = str(self._qth_var.get())
-        # conf['gui_cfg_pacman_fix']      = bool(self._pacmanFix_var.get())
-        conf['gui_parm_style_name']     = str(self._style_var.get())
-        text_pos = self._text_winPos_var.get()
-        for cfg_k, text_cfg in self._winPos_tab.items():
-            if text_pos == text_cfg:
-                conf['gui_cfg_txtWin_pos'] = cfg_k
+        conf = POPT_CFG.load_guiPARM_main()
+        old_conf = dict(conf)
+
+        # Sprache
+        conf['gui_lang'] = int(LANG_IND.get(self._lang_var.get(), LANGUAGE))
+
+        # QTH & Locator
+        conf['gui_cfg_qth'] = self._qth_var.get().strip()
+        conf['gui_cfg_locator'] = self._loc_var.get().strip().upper()
+
+        # Style
+        conf['gui_parm_style_name'] = self._style_var.get()
+
+        # Fensterreihenfolge
+        selected_text = self._text_winPos_var.get()
+        for key, text in self._winPos_tab.items():
+            if text == selected_text:
+                conf['gui_cfg_txtWin_pos'] = key
                 break
+
+        # Farben
+        conf['gui_cfg_vor_col'] = self._fg_rx
+        conf['gui_cfg_vor_tx_col'] = self._fg_tx
+        conf['gui_cfg_vor_bg_col'] = self._bg_tx
+        """
+        log_conf = POPT_CFG.get_log_CFG()
+        log_conf['bbs_log_level']   = self._bbs_log_level_var.get()
+        log_conf['log_level']       = self._log_level_var.get()
+        log_conf['log_to_console']  = self._console_log_var.get()
+        POPT_CFG.set_log_CFG(log_conf)
+        """
+
         POPT_CFG.set_guiPARM_main(conf)
-        if old_conf == conf:
-            return False
-        return True
+        return old_conf != conf

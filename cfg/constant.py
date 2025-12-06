@@ -3,11 +3,11 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.0'
+VER = '2.123.1'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
-BBS_DEBUG_LOG   = True
+BBS_DEBUG_LOG   = False
 """ Loop Tweaking """
 MON_BATCH_TO_PROCESS = 80       # Packets fm Monitor Buffer to Process fm GUI
 GUI_TASKER_Q_RUNTIME = 0.20     # gui._tasker_queue() Runtime until break
@@ -130,7 +130,12 @@ STATION_ID_BBS = [
 STATION_ID_MCAST = [    # TODO Just Dummy yet
     'PoPTMCast',
 ]
-
+"""
+POPT_CMD_LIST = {
+    '2.123.1': ['PREMON'],
+}
+"""
+# Encoding
 ENCODINGS = (
     'CP437',
     'ASCII',
@@ -461,3 +466,8 @@ CLI_TYP_BOX      = 'BOX'
 CLI_TYP_CONVERSE = 'CONV'
 CLI_TYP_NO_CLI   = 'NO-CLI'
 CLI_TYP_TASK_FWD = 'Task: FWD'
+#######################################################
+# Remote Monitor
+# Response
+REM_MON_RESP_START = 'rsp_start'
+REM_MON_RESP_STOP  = 'rsp_stop'

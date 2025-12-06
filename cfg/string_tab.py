@@ -464,6 +464,19 @@ STR_TABLE = {
         '',
         ''),
 
+
+    'consol_log': (
+        'Logausgabe in der Konsole',
+        'Log output in the console',
+        'Logboekuitvoer in de console',
+        'Consignez la sortie dans la console',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'call_vali_warning_1': (
         'Call Format!',
         'Call format!',
@@ -1942,6 +1955,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'backgrund': (
+        'Hintergrund',
+        'Backgrund',
+        'Achtergrond',
+        'Arrière-plan',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+
     'mon_color': (
         'Monitor Farben',
         'Monitor Colors',
@@ -3365,6 +3391,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_chist': (
+        'Verbindungsverlauf (letzte 30 Tage)',
+        'Connection History (last 30 days)',
+        'Verbindingsgeschiedenis (laatste 30 dagen)',
+        'Historique des connexions (30 derniers jours)',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'cmd_help_ch': (
         'Kurze Nachricht an Kanal senden. CH <Kanal> Nachricht',
         'Send short message to channel. CH <Channel> Message',
@@ -3651,6 +3689,31 @@ STR_TABLE = {
         '',
         '',
         ''),
+
+    'last_30_days': (
+        'letzte 30 Tage',
+        'last 30 days',
+        'laatste 30 dagen',
+        '30 derniers jours',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
+    'cmd_chist_tab': (
+        'Datum      Zeit     Dauer   Call      Port  Locator / Distanz\r',
+        'Date       Time     Dur.    Call      Port  Locator / Distance\r',
+        'Datum      Tijd     Duur    Call      Port  Locator / Afstand\r',
+        'Date       Temps    Durée   Call      Port  Locator / Distance\r',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     #####################################################
     # MCast
 

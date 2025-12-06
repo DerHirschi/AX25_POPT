@@ -6,7 +6,7 @@ from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25LocalConverse import LocalConverse
 from ax25.ax25Multicast import ax25Multicast
 from cfg.default_config import getNew_ConnHistory_struc
-# from ax25.ax25RoutingTable import RoutingTable
+#from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
 from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
@@ -69,7 +69,9 @@ class AX25PortHandler(object):
         self.rx_echo            = {}
         self.rx_echo_on         = False
         #######################################################
-        self._monitor_buffer    = []
+        self._monitor_buffer            = []
+        self._remote_monitor_buffer_tx  = []
+        self._remote_monitor_buffer_rx  = []
         #######################################################
         # Init UserDB
         self._userDB            = USER_DB
@@ -82,8 +84,8 @@ class AX25PortHandler(object):
         self._sound             = SOUND
         #######################################################
         # Init Routing Table
-        logger.info("PH: Routing Table Init")
-        # self._routingTable      = RoutingTable()
+        #logger.info("PH: Routing Table Init")
+        #self._routingTable      = RoutingTable()
         self._routingTable      = None  # NetRom TODO
         #######################################################
         # Scheduled Tasks
@@ -197,6 +199,7 @@ class AX25PortHandler(object):
             self._port_watchdog_task()
             self._mh_task()         # #################
             self._tasker_1wire()
+            self._update_remote_monitor_task()
             self._task_timer_1sec = time.time() + 1
             return True
         return False
@@ -240,10 +243,6 @@ class AX25PortHandler(object):
 
     #######################################################################
     # Routing Table
-    """
-    def _init_RoutingTable(self):
-        self.routingTable = RoutingTable(self)
-    """
     def get_RoutingTable(self):
         return self._routingTable
 
@@ -926,19 +925,39 @@ class AX25PortHandler(object):
 
     ######################################
     # Monitor Buffer Stuff
-    def update_monitor(self, ax25frame_conf: dict, port_conf: dict, tx=False):
+    def update_monitor(self, ax25frame_conf: dict):
         """ Called from AX25Conn """
-        self._monitor_buffer.append((
-            ax25frame_conf,
-            port_conf,
-            bool(tx)
-        ))
+        self._monitor_buffer.append(ax25frame_conf)
+        self._remote_monitor_buffer_tx.append(ax25frame_conf)
 
     def get_monitor_data(self):
         data = list(self._monitor_buffer[:MON_BATCH_TO_PROCESS])  # 22 Pi4
         self._monitor_buffer = self._monitor_buffer[MON_BATCH_TO_PROCESS:]
         return data
 
+    ######################################
+    # Remote Monitor Stuff
+    def _update_remote_monitor_task(self):
+        """ Remote Monitor over ax25 | 1 Sec Task"""
+        data = list(self._remote_monitor_buffer_tx[:15])  # 22 Pi4
+        self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[15:]
+        for conn_id, conn in self.get_all_connections().items():
+            for ax25frame_conf in data:
+                conn.remote_monitor_update(ax25frame_conf)
+
+    def handle_remote_monitor_rx(self, ax25pack: dict, remote_uid: str):
+        """ Called fm RemoteMonitor._remote_mon_rx_process """
+        if not hasattr(self._gui, 'remote_monitor_update'):
+            logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
+            return
+        self._gui.remote_monitor_update(ax25pack, remote_uid)
+
+    def handle_remote_monitor_response(self, resp: str, remote_uid: str):
+        """ Called fm RemoteMonitor """
+        if not hasattr(self._gui, 'remote_monitor_response_update'):
+            logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
+            return
+        self._gui.remote_monitor_response_update(resp, remote_uid)
     ######################
     # RX-ECHO Handling
     def rx_echo_input(self, ax_frame, receiving_port_id):
@@ -954,21 +973,6 @@ class AX25PortHandler(object):
                         logger.debug(self._logTag +
                             f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")
                         rx_echo_var.tx_buff.append(ax_frame)
-    """
-    def rx_echo_input(self, ax_frame, port_id):
-        from_call = ax_frame.from_call.call_str
-        for k in self.rx_echo.keys():
-            rx_echo_var = self.rx_echo[k]
-            if port_id != rx_echo_var.port_id:
-                for port in list(rx_echo_var.rx_ports):
-                    if rx_echo_var.rx_ports[port]:
-                        if from_call in rx_echo_var.rx_ports[port]:
-                            if k in self.rx_echo[port].tx_ports.keys():
-                                rx_echo_var.tx_buff.append(ax_frame)
-                    else:
-                        if k in self.rx_echo[port].tx_ports.keys():
-                            rx_echo_var.tx_buff.append(ax_frame)
-    """
 
     ###################################################
     # Pipe-Tool
@@ -1172,26 +1176,37 @@ class AX25PortHandler(object):
 
     ##################################
     #
+    def get_connections_by_uid(self, uid: str):
+        for port_id, port in self.ax25_ports.items():
+            if not port:
+                continue
+            all_port_conn = port.connections
+            if uid not in all_port_conn:
+                continue
+            return all_port_conn[uid]
+        return None
+
     def get_all_connections(self, with_null=False):
         # TODO Need a better solution to get all connections
         ret = {}
         for port_id, port in self.ax25_ports.items():
-            if port:
-                all_port_conn = port.connections
-                for conn_key, conn in all_port_conn.items():
-                    if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
-                        while conn.ch_index in ret:
-                            # print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
-                            logger.warning(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
-                            conn.ch_index += 1  # FIXME
+            if not port:
+                continue
+            all_port_conn = port.connections
+            for conn_key, conn in all_port_conn.items():
+                if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
+                    while conn.ch_index in ret:
+                        # print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                        logger.warning(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                        conn.ch_index += 1  # FIXME
+                    ret[conn.ch_index] = conn
+                    """
+                    if conn.ch_index not in ret:
                         ret[conn.ch_index] = conn
-                        """
-                        if conn.ch_index not in ret:
-                            ret[conn.ch_index] = conn
-                        else:
-                            print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
-                            conn.ch_index += 1  # FIXME
-                        """
+                    else:
+                        print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                        conn.ch_index += 1  # FIXME
+                    """
         return dict(ret)
 
     def get_all_digiConn(self):

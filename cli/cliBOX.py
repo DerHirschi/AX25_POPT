@@ -71,6 +71,7 @@ class BoxCLI(DefaultCLI):
                               'CONV',
                               'LCSTATUS',
                               'CSTAT',
+                              'CHIST',
                               'PSTAT',
                               'BWSTAT',
                               'RTT',
@@ -130,6 +131,7 @@ class BoxCLI(DefaultCLI):
                 not hasattr(bbs, 'get_new_pn_count_by_call'),
                 not hasattr(bbs, 'get_pms_cfg'),
                 not hasattr(bbs, 'send_sysop_msg'),
+                not hasattr(self._user_db_ent, 'TYP'),
         )):
             logger.error(self._logTag + "_s0: No BBS !!")
             self.change_cli_state(2)

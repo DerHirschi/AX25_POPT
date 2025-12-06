@@ -76,7 +76,6 @@ class AX25Port(object):
         self.connections        = {}
         #############
         # VARS
-        self.monitor_out    = True
         self._mh            = self._port_handler.get_MH()
         #############
         """ Dual Port """
@@ -162,7 +161,7 @@ class AX25Port(object):
     def _tx_out(self, frame):
         setattr(frame, 'rx_time', datetime.datetime.now())
         # frame.rx_time = datetime.datetime.now()
-        self._gui_monitor(ax25frame=frame, tx=True)
+        self._update_monitor(ax25frame=frame, tx=True)
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
         try:
             self._tx_device(frame)
@@ -280,7 +279,7 @@ class AX25Port(object):
             if rTable is None:
                 return True
             ax25_frame_conf['port_id'] = int(self.port_id)
-            rTable.NetRom_UI_rx(ax25_frame_conf)
+            # rTable.NetRom_UI_rx(ax25_frame_conf)
             # NetRom_decode_UI(ax25_frame_conf)
             return True
         """
@@ -516,11 +515,11 @@ class AX25Port(object):
             logger.error(f'Port {self.port_id}: port_handler AttributeError (get_RoutingTable)')
             return
         rTab = self._port_handler.get_RoutingTable()
-        rTab.update(ax25_conf)
+        if hasattr(rTab, 'update'):
+            rTab.update(ax25_conf)
         # rTab.debug_out()
         return
     """
-
     #################################################
     def _process_rx_buf(self, buf):
         self._set_TXD()
@@ -542,7 +541,7 @@ class AX25Port(object):
         ax25frame_conf['port_id']   = int(self.port_id)     # TODO using port_id fm this cfg
         # self._update_routingTab(ax25frame_conf)
         if not self._rx_dualPort_handler(ax25_frame=ax25frame):
-            self._gui_monitor(ax25frame=ax25frame, tx=False)
+            self._update_monitor(ax25frame=ax25frame, tx=False)
             self._mh_input(ax25frame_conf, tx=False)
             if hasattr(self._mcast_server, 'mcast_update_member_ip'):
                 self._mcast_server.mcast_update_member_ip(ax25frame=ax25frame)
@@ -572,7 +571,7 @@ class AX25Port(object):
             return True
         self.dualPort_primaryPort.dualPort_lastRX = frame_raw
         # Monitor
-        self._gui_monitor(ax25frame=ax25_frame, tx=False)
+        self._update_monitor(ax25frame=ax25_frame, tx=False)
         # DualPort Monitor
         self._dualPort_monitor_input(ax25frame=ax25_frame, tx=False)
         # MH / Port-Statistic
@@ -1066,13 +1065,12 @@ class AX25Port(object):
             for uid, conn in self.connections.items():
                 conn.ft_reset_timer(ax25_frame.addr_uid)
 
-    def _gui_monitor(self, ax25frame, tx: bool = True):
-        if self.monitor_out:
-            self._port_handler.update_monitor(
-                # monitor_frame_inp(ax25frame, self._port_cfg),
-                ax25frame_conf=dict(ax25frame.get_frame_conf()),
-                port_conf=dict(self._port_cfg),
-                tx=tx)
+    def _update_monitor(self, ax25frame, tx: bool = True):
+        axframe_conf = ax25frame.get_frame_conf()
+        axframe_conf['tx'] = bool(tx)
+        axframe_conf['port'] = int(self.port_id)
+        axframe_conf['port_conf'] = dict(self._port_cfg)
+        self._port_handler.update_monitor(ax25frame_conf=axframe_conf)
 
     def _mh_input(self, ax25frame_conf, tx: bool):
         # MH / Port-Statistic

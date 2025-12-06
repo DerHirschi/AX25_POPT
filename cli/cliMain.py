@@ -1,20 +1,22 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from cfg.default_config import getNew_remote_mon_cfg
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
-    CLI_TYP_SYSOP, CLI_TYP_NO_CLI, SQL_TIME_FORMAT
+    CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str, version_tuple
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
+
 
 
 class DefaultCLI(object):
@@ -106,8 +108,12 @@ class DefaultCLI(object):
             'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
             'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr_CLI('cmd_help_lcstatus'), False),
             'CSTAT':    (2, self._cmd_cstats,               self._getTabStr_CLI('cmd_help_cstat'), False),
+            'CHIST':    (3, self._cmd_chist,                self._getTabStr_CLI('cmd_help_chist'), False),
             'CH':       (2, self._cmd_ch,                   self._getTabStr_CLI('cmd_help_ch'), False),
             'RTT':      (2, self._cmd_rtt,                  self._getTabStr_CLI('cmd_help_rtt'), False),
+            # Remote Monitor
+            # 'PREMON':   (2, self._cmd_set_gui_remote_mon,   "PoPT Remote Monitor", False),
+
             # APRS Stuff
             #'ACHAT':    (2, self.,                          'APRS-Messenger', False),
             'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
@@ -333,6 +339,7 @@ class DefaultCLI(object):
         self._sys_login.attempts = 1
         self.change_cli_state(6)
         return True
+
     # Software ID
     def _send_sw_id(self):
         if not self.sw_id:
@@ -365,7 +372,8 @@ class DefaultCLI(object):
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
             self._stat_identifier_found = True
-            #print(f"SW-ID flag: {self.stat_identifier.feat_flag}")
+            #print(f"SW-ID flag: {self.stat_identifier.software}")
+            #print(f"SW-ID flag: {self.stat_identifier.version}")
             #print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
             if self.stat_identifier.knows_me is not None:
                 if not self.stat_identifier.knows_me:
@@ -375,6 +383,7 @@ class DefaultCLI(object):
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
             #print("SW ID True")
+            self._init_popt_remote()
             return True
         #print("SW ID False")
         return False
@@ -423,6 +432,19 @@ class DefaultCLI(object):
                         self._send_output(f'\r//N {name}\r', env_vars=False)
                     else:
                         self._send_output(f'\rN {name}\r', env_vars=False)
+    ###################################
+    # Init PoPT Remote (Monitor)
+    def _init_popt_remote(self):
+        stat_id = self.stat_identifier
+        if not 'PoPT' in stat_id.software:
+            return
+        if version_tuple(stat_id.version) < version_tuple('2.123.1'):
+            return
+        gui = self._get_gui()
+        if not hasattr(gui, 'init_popt_remote'):
+            return
+        gui.init_popt_remote(self._connection)
+
     # GUI
     def _gui_channel_status_change(self):
         gui = self._port_handler.get_gui()
@@ -1707,6 +1729,68 @@ class DefaultCLI(object):
 
         return ret + '\r'
 
+    def _cmd_chist(self):
+        """Connection History der eigenen Station (letzte 30 Tage)"""
+        mh = self._port_handler.get_MH()
+        if not hasattr(mh, 'get_conn_hist'):
+            return f"\r # {self._getTabStr_CLI('cli_no_data')}\r\r"
+
+        # Nur abgeschlossene Verbindungen zu unserer eigenen Station
+        own_call_base = self._my_call_str.split('-')[0].upper()
+        conn_hist = mh.get_conn_hist()
+
+        now = datetime.now()
+        start_time = now - timedelta(days=30)
+
+        entries = []
+        for e in conn_hist:
+            if not e.get('disco', False):
+                continue
+            if e.get('own_call', '').split('-')[0].upper() != own_call_base:
+                continue
+            if 'Task:' in e.get('typ', ''):
+                continue
+            ts = e.get('time', None)
+            if not ts or ts < start_time:
+                continue
+            entries.append(e)
+
+        # Sortierung: neueste zuerst
+        entries.sort(key=lambda x: x.get('time', datetime.min), reverse=True)
+
+        if not entries:
+            return f"\r # {self._getTabStr_CLI('cli_no_data')}\r\r"
+
+        out = "\r"
+        out += f" Connection-History {own_call_base} – {self._getTabStr_CLI('last_30_days')} ({len(entries)} {self._getTabStr_CLI('connections')})\r"
+        out += "─" * 71 + "\r"
+        out += self._getTabStr_CLI('cmd_chist_tab')
+        out += "────────── ──────── ──────  ───────── ────  ──────────────────────\r"
+
+        for e in entries:
+            ts = e.get('time')
+            duration = e.get('duration', timedelta())
+            dur_str = f"{duration.seconds // 60:02d}:{duration.seconds % 60:02d}"
+            if duration.days:
+                dur_str = f"{duration.days}d {dur_str}"
+
+            from_call = e.get('from_call', '???')
+            port = e.get('port_id', '')
+            db_ent = USER_DB.get_entry(from_call, add_new=False)
+
+            loc_dist = ""
+            if db_ent:
+                if db_ent.LOC:
+                    loc_dist = db_ent.LOC.ljust(8)
+                if db_ent.Distance != -1:
+                    loc_dist += f"  / {db_ent.Distance} km"
+
+            out += f"{ts.strftime('%d.%m.%Y')} {ts.strftime('%H:%M')}    {str(dur_str).ljust(6)}  {from_call.ljust(9)} {str(port).ljust(4)}  {loc_dist[:30]}\r"
+
+        out += "─" * 79 + "\r"
+        return out + "\r"
+
+
     def _cmd_ch(self):
         if not self._parameter:
             return self._getTabStr_CLI('ch_cmd_param_error')
@@ -1843,6 +1927,13 @@ class DefaultCLI(object):
                 return ' # Error\r\r' + self._get_ts_prompt()
             return ' # Error\r\r'
 
+    # PoPT Remote Monitor
+    def _cmd_set_gui_remote_mon(self):
+        remote_monitor_conf = getNew_remote_mon_cfg()
+        remote_monitor_conf['gui_mon']  = True
+        remote_monitor_conf['mon_port'] = 0
+        self._connection.set_remote_mon(remote_monitor_conf)
+
     ##############################################
     def _str_cmd_req_name(self):
         stat_cfg: dict = self._connection.get_stat_cfg()
@@ -1894,6 +1985,7 @@ class DefaultCLI(object):
 
     ##############################################
     def cli_exec(self, inp=b''):
+        """ Exec on RX """
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
         if ret:
@@ -1909,9 +2001,16 @@ class DefaultCLI(object):
         ret = self._cron_state_exec[self._crone_state_index]()
         if ret:
             self._send_output(ret, env_vars=False)
+
+    def cli_update_monitor(self, ax25frame_conf:dict):
+        pass
+
     ########################################################
     def cli_conn_cleanup(self):
         pass
+
+    def _get_gui(self):
+        return self._port_handler.get_gui()
 
     ########################################################
     # States
@@ -2135,3 +2234,6 @@ class NoneCLI(DefaultCLI):
 
     def _baycom_auto_login(self):
         return False
+
+    def cli_update_monitor(self, ax25frame_conf: dict):
+        pass
