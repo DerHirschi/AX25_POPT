@@ -441,14 +441,18 @@ class AX25PortHandler(object):
 
 
     def _reinit_port_th(self, port_id: int):
-        # if not self.ax25_ports.get(port_id, False):
-        #     return False
         self.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PH: Reinit Port {port_id}")
         #self.disco_conn_fm_port(port_id)
         self.close_port(port_id)
         time.sleep(1)  # Cooldown for Device
-        self._init_port(port_id=port_id)
+        if not self._init_port(port_id=port_id):
+            return
+        try:
+            port = self.ax25_ports[port_id]
+            port.set_block_incoming_conn(0)
+        except Exception as ex:
+            logger.error(f"PH: Error Reinit port: {ex}")
         ##########################
         # Pipe-Tool Init
 

@@ -87,7 +87,6 @@ class RemMonGUITab(ttk.Frame):
                                 width=5,
                                 bd=0,
                                 borderwidth=0,
-                                # state="disabled",
                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                 highlightthickness=0,
                                 )

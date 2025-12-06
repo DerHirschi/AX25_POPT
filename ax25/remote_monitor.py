@@ -178,12 +178,11 @@ class RemoteMonitor:
             #logger.debug(f"SEQ: {self._tx_seq}")
             #logger.debug(f"Hex: {bytearray2hexstr(data_to_send)}")
             #logger.debug('= Gesendet ENDE' + '=' * 35)
-            self._connection.send_data(data_to_send, gui_echo=False)
+            self._connection.send_remote_data(data_to_send)
             #self._tx_seq += 1
     #############################################
     # Encoding
-    @staticmethod
-    def _encode_remote_mon_frame(ax25frame_conf: dict):
+    def _encode_remote_mon_frame(self, ax25frame_conf: dict):
         ax25_rawFrame   = ax25frame_conf.get('ax25_raw', b'')
         tx              = ax25frame_conf.get('tx', False)
         port_id         = ax25frame_conf.get('port', 0)
@@ -192,31 +191,12 @@ class RemoteMonitor:
         ax25_data = bytearray()
         ax25_data += dec_rx_time
         ax25_data += ax25_rawFrame
-        # LZHUF it
-        lzhuf = LZHUF_Comp()
-        compressed_ax25 = lzhuf.encode(ax25_data)
-        send_compressed = True if len(compressed_ax25) < len(ax25_data) else False
-        # send_compressed = False
-        if send_compressed:
-            # print("Send Remote Mon Pack:")
-            # print(f"  Len Org     : {len(ax25_rawFrame)}")
-            # print(f"  Len Comp    : {len(compressed_ax25)}")
-            # print(f"  Comp Ratio  : {len(ax25_rawFrame) / len(compressed_ax25)}")
-            data = compressed_ax25
-        else:
-            data = ax25_data
 
-        # Escaping
-        data = data.replace(FESC, FESC_TFESC)
-        data = data.replace(FEND, FESC_TFEND)
-        # Building Packet
-        data_to_send = bytearray()
-        data_to_send += REM_MON_FLAG  # C0 F0
-        data_to_send += pack_6bit_int_and_bool(value=int(port_id), flag1=tx, flag2=send_compressed)
-        data_to_send += len(data).to_bytes(2, 'little')
-        data_to_send += data
-
-        return data_to_send
+        return self._encode_remote_frame(
+            opt_id=int(port_id),
+            tx=tx,
+            data=ax25_data
+        )
 
     @staticmethod
     def _encode_remote_frame(opt_id: int, tx: bool, data: bytes):
@@ -395,7 +375,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=20, tx=True, data=data)
         if not data2send:
             return
-        self._connection.send_data(data2send, gui_echo=False)
+        self._connection.send_remote_data(data2send)
 
     def _rx_cmd_gui_remote_mon(self, payload: bytes):
         """ RX Start CMD """
@@ -434,7 +414,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=20, tx=False, data=b'')
         if not data2send:
             return
-        self._connection.send_data(data2send, gui_echo=False)
+        self._connection.send_remote_data(data2send)
 
     def _rx_resp_cmd_start_gui_remote_mon(self):
         """ RX Respond Stop CMD """
@@ -449,7 +429,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=21, tx=True, data=b'')
         if not data2send:
             return
-        self._connection.send_data(data2send, gui_echo=False)
+        self._connection.send_remote_data(data2send)
 
     def _rx_cmd_stop_gui_remote_mon(self):
         """ RX Stop CMD """
@@ -465,7 +445,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=21, tx=False, data=b'')
         if not data2send:
             return
-        self._connection.send_data(data2send, gui_echo=False)
+        self._connection.send_remote_data(data2send)
 
     def _rx_resp_cmd_stop_gui_remote_mon(self):
         """ RX Respond Stop CMD """
@@ -480,7 +460,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=22, tx=True, data=b'')
         if not data2send:
             return
-        self._connection.send_data(data2send, gui_echo=False)
+        self._connection.send_remote_data(data2send)
 
     def _rx_cmd_disco(self):
         """ RX Start Disco CMD """

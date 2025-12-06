@@ -136,7 +136,7 @@ class AutoConnTask:
         # 0
         if not self._connection:
             return
-        if not self._connection.is_buffer_empty():
+        if not self._connection.is_tx_buff_empty():
             return
         self._connection.conn_disco()
 

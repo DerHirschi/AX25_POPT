@@ -166,8 +166,11 @@ class AX25Conn:
         self.tx_buf_unACK = {}     # Buffer for UNACK I-Frames
         self.rx_buf_last_data = bytearray()     # Buffers for last Frame
         """ IO Buffer For GUI / CLI """
-        self.rx_buf_rawData = bytearray()       # Buffer RX QSO for AutoConnTask
-        self.tx_buf_rawData = bytearray()       # Buffer for TX RAW Data that is not packed yet into a Frame
+        self._tx_buf_prio_lock    = False       # Thread locking
+        self._tx_buf_prio_rawData = bytearray() # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_lock      = False          # Threading TX-Buffer lock
+        self.rx_buf_rawData    = bytearray()    # Buffer RX QSO for AutoConnTask
+        self.tx_buf_rawData    = bytearray()    # Buffer for TX RAW Data that is not packed yet into a Frame
         self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
@@ -363,7 +366,7 @@ class AX25Conn:
             if int(self.user_db_ent.max_pac):
                 self.parm_MaxFrame = int(self.user_db_ent.max_pac)
 
-    ###############################################
+    ###################################################################
     # Converse Interconnect
     def enter_converse_cli(self):
         self.cli = ConverseCLI(self)
@@ -371,29 +374,64 @@ class AX25Conn:
         #self.cli_type = str(self.cli.cli_name)
 
     ###################################################################
-    # Zustand EXECs
-    def handle_rx(self, ax25_frame):
-        self._nr = int(ax25_frame.ctl_byte.nr)
-        self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
-        self.set_T3()
+    # TX / RX Handling
+    def _wait_tx_buf_lock(self, fnc_f_log='--'):
+        while self._tx_buf_lock:
+            logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
+            time.sleep(0.02)
+        self._tx_buf_lock = True
+
+
+    def _wait_tx_buf_prio_lock(self, fnc_f_log='--'):
+        while self._tx_buf_prio_lock:
+            logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
+            time.sleep(0.02)
+        self._tx_buf_prio_lock = True
 
     def send_data(self, data, gui_echo=True, file_trans=False):
         if self.ft_obj is not None and not file_trans:
             return False
         if not data:
             return False
-        if not any((
-                type(data) is bytes,
-                type(data) is bytearray,
-        )):
+        if not isinstance(data, (bytes, bytearray)):
+            logger.error(f"Incorrect Datatype: data({type(data)}) should be bytes or bytearray")
             return False
         self._link_holder_reset()
+        self._wait_tx_buf_lock('send_data')
         self.tx_buf_rawData += data
+        self._tx_buf_lock = False
         if gui_echo:
             self._send_gui_QSObuf_tx(data)
         return True
 
+    def send_remote_data(self, data):
+        if self.ft_obj is not None:
+            return False
+        if not data:
+            return False
+        if not isinstance(data, (bytes, bytearray)):
+            logger.error(f"Incorrect Datatype: data({type(data)}) should be bytes or bytearray")
+            return False
+        self._link_holder_reset()
+        self._wait_tx_buf_prio_lock('send_remote_data')
+        # Prio Data. Insert before tx_buf
+        self._tx_buf_prio_rawData += data
+        self._tx_buf_prio_lock     = False
+        return True
+
+    def handle_rx(self, ax25_frame):
+        """
+        self.zustand_exec.state_rx_handle >
+        self.zustand_exec._rx_I           >
+        self.prozess_I_frame              >
+        self._recv_data
+        """
+        self._nr = int(ax25_frame.ctl_byte.nr)
+        self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
+        self.set_T3()
+
     def _recv_data(self, data: bytes):
+        """ Called fm self.prozess_I_frame() """
         # Statistic
         self.rx_byte_count += len(data)
         self.rx_pack_count += 1
@@ -408,15 +446,15 @@ class AX25Conn:
         """ BBS/PMS-FWD """
         if self._bbsFwd_rx(data):
             return
-        """ Remote Monitor """
-        data = self._remote_mon_rx(data)
-        if not data:
-            self.rx_buf_last_data = data
-            return
         """ FT """
         self._ft_check_incoming_ft(data)
         if self._ft_handle_rx(data):
             self.rx_buf_last_data = bytearray()
+            return
+        """ Remote Monitor """
+        data = self._remote_mon_rx(data)
+        if not data:
+            self.rx_buf_last_data = data
             return
         self._send_gui_QSObuf_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
@@ -428,6 +466,8 @@ class AX25Conn:
         self.exec_cli(data)
         return
 
+    #############################
+    # Crone
     def exec_cron(self):
         """ DefaultStat.cron() """
         ###############################################
@@ -527,7 +567,6 @@ class AX25Conn:
         if self.bbs_connection is None:
             logger.error("PMS: bbs_connection is None")
             return False
-        # print("Done: bbsFwd_start_reverse")
         return True
 
     def bbsFwd_start_reverse(self):
@@ -722,10 +761,12 @@ class AX25Conn:
         if self.link_holder_on:
             if self.link_holder_timer < time.time():
                 self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
+                self._wait_tx_buf_lock('_link_holder_cron')
                 self.tx_buf_rawData += self.link_holder_text.encode(self._encoding, 'ignore')
-
+                self._tx_buf_lock = False
     ###############################
     # LINKS Linked/DIGI Connections
+    # TODO: tx buffer thread lock
     def _link_crone(self):
         if self.is_link and self.LINK_Connection is not None:
             self.LINK_Connection.tx_buf_rawData += bytes(self.LINK_rx_buff)
@@ -868,7 +909,7 @@ class AX25Conn:
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
-                if not self.is_buffer_empty():
+                if not self.is_tx_buff_empty():
                     self._await_disco = True
                     # logger.debug("DISCO and buff not NULL !!")
                     """
@@ -879,11 +920,8 @@ class AX25Conn:
                 else:
                     self.zustand_exec.change_state(4)
 
-    def is_buffer_empty(self):
-        return not bool(self.tx_buf_rawData or self.tx_buf_2send or self.tx_buf_unACK)
-
     def _wait_for_disco(self):
-        if self.is_buffer_empty():
+        if self.is_tx_buff_empty():
             self._await_disco = False
             self.zustand_exec.change_state(4)
 
@@ -1075,8 +1113,10 @@ class AX25Conn:
     def calc_irtt(self):
         header_len      = 16 + len(self.via_calls) * 7
         init_t2: float  = (((self.parm_PacLen + header_len) * 8) / self._parm_baud) * 1000
+        #pac_len         = 256
+        #init_t2: float  = (((pac_len + header_len) * 8) / self._parm_baud) * 1000
         irit = (init_t2 +
-                self._parm_TXD +
+                #self._parm_TXD + # Pseudo TXD
                 (self._parm_Kiss_TXD * 10) +
                 (self._parm_Kiss_Tail * 10)
                 )
@@ -1199,10 +1239,11 @@ class AX25Conn:
         return pac
 
     def build_I_fm_raw_buf(self):
-        if not self.tx_buf_rawData:
+        if not (self._tx_buf_prio_rawData or self.tx_buf_rawData):
             return
-        while len(self.tx_buf_unACK) < self.parm_MaxFrame \
-                and self.tx_buf_rawData:
+
+        while (len(self.tx_buf_unACK) < self.parm_MaxFrame and
+               (self._tx_buf_prio_rawData or self.tx_buf_rawData)):
             self._send_I(False)
 
     def _send_I(self, pf_bit=False):
@@ -1210,31 +1251,49 @@ class AX25Conn:
         :param pf_bit: bool
         True if RX a REJ Packet
         """
-        # A bit of Mess TODO Try to Cleanup
-        if not self.tx_buf_rawData:
+        if not (self._tx_buf_prio_rawData or self.tx_buf_rawData):
             return
-        new_axFrame = self._get_new_ax25frame()
-        new_axFrame.ctl_byte.pf = bool(pf_bit)  # Poll/Final Bit / True if REJ is received
-        new_axFrame.ctl_byte.nr = self.vr  # Receive PAC Counter
-        new_axFrame.ctl_byte.ns = int(self.vs)  # Send PAC Counter
-        new_axFrame.ctl_byte.IcByte()  # Set C-Byte
-        new_axFrame.pid_byte.text()  # Set PID-Byte to TEXT
-        # PAYLOAD !!
-        pac_len = min(self.parm_PacLen, len(self.tx_buf_rawData))
-        new_axFrame.payload = self.tx_buf_rawData[:pac_len]
-        #self._send_gui_QSObuf_tx(self.tx_buf_rawData[:pac_len])
         #####################################################################
-        self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
-        self.tx_buf_unACK[int(self.vs)] = new_axFrame       # Keep Packet until ACK/RR
-        self.tx_buf_2send.append(new_axFrame)
-        # RTT
-        self.RTT_Timer.set_rtt_timer(int(self.vs), int(pac_len))
-        # !!! COUNT VS !!!
+        # AX25Frame Init
+        new_axFrame = self._get_new_ax25frame() # Get preseted AX25Frame
+        new_axFrame.ctl_byte.pf = bool(pf_bit)  # Poll/Final Bit / True if REJ is received
+        new_axFrame.ctl_byte.nr = self.vr       # Receive PAC Counter OBJ (keeping vr updated)
+        new_axFrame.ctl_byte.ns = int(self.vs)  # Send PAC Counter
+        new_axFrame.ctl_byte.IcByte()           # Set C-Byte
+        new_axFrame.pid_byte.text()             # Set PID-Byte to TEXT
+        #####################################################################
+        # PAYLOAD !!                         #
+        data, data_len     = bytearray(), 0  #
+        # Prio (Remote Protocol)             #
+        if self._tx_buf_prio_rawData:        #-------#
+            self._wait_tx_buf_prio_lock('_send_I')   # Thread lock
+            data                     += self._tx_buf_prio_rawData[:self.parm_PacLen]
+            data_len                  = len(data)    #
+            self._tx_buf_prio_rawData = self._tx_buf_prio_rawData[data_len:]
+            self._tx_buf_prio_lock    = False        # Thread lock
+        # Non Prio Data                              #--#
+        if self.tx_buf_rawData and data_len < self.parm_PacLen:
+            pac_len = int(self.parm_PacLen) - data_len  #
+            self._wait_tx_buf_lock('_send_I')           # Thread lock
+            data               += self.tx_buf_rawData[:pac_len]
+            self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
+            self._tx_buf_lock   = False       #---------# Thread lock
+        new_axFrame.payload = bytes(data)     # Put payload into AX25-Frame
+        data_len            = len(data)       # Keep data length for RTT
+        #####################################################################
+        self.tx_buf_unACK[int(self.vs)] = new_axFrame # Keep Packet until ACK/RR
+        self.tx_buf_2send.append(new_axFrame)         #
+        #####################################################################
+        # RTT                                                       #
+        self.RTT_Timer.set_rtt_timer(int(self.vs), int(data_len))   #
+        #####################################################################
+        # !!! COUNT VS !!!                    # AX25 L3 Flow-CTRL
         self.vs = count_modulo(int(self.vs))  # Increment VS Modulo 8
-        self.set_T1()  # Re/Set T1
-        # Statistics
-        self.tx_byte_count += int(pac_len)
-        self.tx_pack_count += 1
+        self.set_T1()                         # Re/Set T1
+        #####################################################################
+        # Statistics                          #
+        self.tx_byte_count += int(data_len)   # Byte Counter
+        self.tx_pack_count += 1               # Packet Counter
 
     def send_UA(self):
         new_axFrame = self._get_new_ax25frame()
@@ -1366,7 +1425,7 @@ class AX25Conn:
                                      )
             return
         if self._autoMaxFrameScore > 1:
-            self._autoMaxFrameScore = 1
+            self._autoMaxFrameScore = 0
             self.parm_MaxFrame = min(self._MaxFrameCFG,
                                      (self.parm_MaxFrame + 1)
                                      )
@@ -1891,8 +1950,6 @@ class S5Ready(DefaultStat):
         self.change_state(9)
 
     def tx(self):
-        if not self._ax25conn.tx_buf_rawData:
-            return
         if time.time() < self._ax25conn.t1:
             return
         self._ax25conn.build_I_fm_raw_buf()
@@ -1923,7 +1980,7 @@ class S5Ready(DefaultStat):
                 self._ax25conn.n2 += 1
                 self._ax25conn.set_T1()
 
-            if self._ax25conn.tx_buf_rawData and not self._ax25conn.tx_buf_unACK:
+            if not self._ax25conn.tx_buf_unACK:
                 self._ax25conn.build_I_fm_raw_buf()
                 # self._ax25conn.set_T1() # Set by _build_I
 
@@ -2129,7 +2186,7 @@ class S8SelfNotReady(DefaultStat):
                     self._ax25conn.n2 += 1
                     self._ax25conn.set_T1()
 
-                if self._ax25conn.get_tx_buff() and not self._ax25conn.tx_buf_unACK:
+                if not self._ax25conn.tx_buf_unACK:
                     self._ax25conn.build_I_fm_raw_buf()
                     # self._ax25conn.set_T1()
 

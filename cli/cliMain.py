@@ -864,7 +864,7 @@ class DefaultCLI(object):
         out += f" Port-{self._getTabStr_CLI('statistic')} – {hours} {self._getTabStr_CLI('hours')}\r"
         out += "─" * 79 + "\r"
         out += "Port    Packets  I-Frames  UI       Bytes RX  Bytes TX  REJ  Bandwidth(10m Avg)\r"
-        out += "─────── ───────  ────────  ───────  ────────  ────────  ───  ──────────────────\r"
+        out += "------- -------  --------  -------  --------  --------  ---  ------------------\r"
         total_pac = total_i = total_ui = total_data_down = total_data_up = total_rej = 0
         port_data_raw = {}  # für Graphen später speichern!
 
@@ -916,7 +916,7 @@ class DefaultCLI(object):
                     f"{rej:3}  {bw_str}\r")
 
         # Gesamtzeile
-        out += "─────── ───────  ────────  ───────  ────────  ────────  ───  ──────────────────\r"
+        out += "------- -------  --------  -------  --------  --------  ---  ------------------\r"
         out += (f"        {total_pac:7}  {total_i:8}  {total_ui:7}  "
                 f" {total_data_down // 1024:6}k  "
                 f" {total_data_up // 1024:6}k  "

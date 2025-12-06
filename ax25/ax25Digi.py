@@ -272,13 +272,13 @@ class AX25DigiConnection:
     def _disco_tx_conn(self):
         if self._tx_conn:
             if self._tx_conn.get_state():
-                if self._tx_conn.is_buffer_empty():
+                if self._tx_conn.is_tx_buff_empty():
                     self._tx_conn.conn_disco()
 
     def _disco_rx_conn(self):
         if self._rx_conn:
             if self._rx_conn.get_state():
-                if self._rx_conn.is_buffer_empty():
+                if self._rx_conn.is_tx_buff_empty():
                     self._rx_conn.conn_disco()
 
     def _UI_digi(self, ax25_frame):

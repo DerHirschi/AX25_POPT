@@ -617,6 +617,7 @@ class AX25Port(object):
             snd_buf = list(conn.tx_buf_ctl) + list(conn.tx_buf_2send)
             if not snd_buf:
                 continue
+            # TODO Buffer handling in ax25Conn
             conn.tx_buf_ctl = []
             conn.tx_buf_2send = []
             conn.REJ_is_set = False
@@ -637,8 +638,6 @@ class AX25Port(object):
                 except AX25DeviceFAIL as e:
                     raise e
             return True # CHECKME !!! Just one connection at fnc-call ??
-            # Monitor
-            # self._gui_monitor(ax25frame=el, tx=True)
         return False
 
     def _tx_pipe_buf(self):

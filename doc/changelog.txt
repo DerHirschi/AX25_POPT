@@ -2,11 +2,14 @@
 # 2.123.x
 Fixes:
 - KISS Decoder (fehlerhaftes Escaping)
+- Eingehende Verbindungen werden geblockt bzw. der Port block wird nicht
+  freigegeben, wenn Port neu initialisiert wird.
+  (Schon wieder, da die reinit Prozedur verändert wurde in der Vorversion)
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)
 - Haupteinstellungen GUI > Allgemeine Einstellungen GUI überarbeitet
-- AX25 Protokoll L3 > T1 wird nicht gestoppt wenn REJ empfangen wird
+- AX25 Protokoll L3 > T1 wird nicht gestoppt, wenn REJ empfangen wird
   (Führ zu lange Wartezeiten bis reagiert wird)
 
 Neue Implementierungen / Funktionen:
