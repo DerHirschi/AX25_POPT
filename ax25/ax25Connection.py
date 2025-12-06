@@ -166,11 +166,12 @@ class AX25Conn:
         self.tx_buf_unACK = {}     # Buffer for UNACK I-Frames
         self.rx_buf_last_data = bytearray()     # Buffers for last Frame
         """ IO Buffer For GUI / CLI """
-        self._tx_buf_prio_lock    = False       # Thread locking
-        self._tx_buf_prio_rawData = bytearray() # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prio_lock = False          # Thread locking
+        self._tx_buf_prio_Q: list[bytes] = []   # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prio_Rest = bytearray()    # Buffer Prio-Frame Rest Data (Remote Protocol)
         self._tx_buf_lock      = False          # Threading TX-Buffer lock
-        self.rx_buf_rawData    = bytearray()    # Buffer RX QSO for AutoConnTask
         self.tx_buf_rawData    = bytearray()    # Buffer for TX RAW Data that is not packed yet into a Frame
+        self.rx_buf_rawData    = bytearray()    # Buffer RX QSO for AutoConnTask
         self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
@@ -389,6 +390,8 @@ class AX25Conn:
         self._tx_buf_prio_lock = True
 
     def send_data(self, data, gui_echo=True, file_trans=False):
+        if self._await_disco:
+            return False
         if self.ft_obj is not None and not file_trans:
             return False
         if not data:
@@ -404,7 +407,9 @@ class AX25Conn:
             self._send_gui_QSObuf_tx(data)
         return True
 
-    def send_remote_data(self, data):
+    def send_remote_data(self, data, prio=False):
+        if self._await_disco:
+            return False
         if self.ft_obj is not None:
             return False
         if not data:
@@ -413,10 +418,15 @@ class AX25Conn:
             logger.error(f"Incorrect Datatype: data({type(data)}) should be bytes or bytearray")
             return False
         self._link_holder_reset()
-        self._wait_tx_buf_prio_lock('send_remote_data')
-        # Prio Data. Insert before tx_buf
-        self._tx_buf_prio_rawData += data
-        self._tx_buf_prio_lock     = False
+        # Thread Lock
+        if prio:
+            self._wait_tx_buf_prio_lock('send_remote_data')
+            self._tx_buf_prio_Q = [data] + self._tx_buf_prio_Q
+            self._tx_buf_prio_lock     = False
+        else:
+            self._wait_tx_buf_prio_lock('send_remote_data')
+            self._tx_buf_prio_Q.append(data)
+            self._tx_buf_prio_lock     = False
         return True
 
     def handle_rx(self, ax25_frame):
@@ -1239,11 +1249,11 @@ class AX25Conn:
         return pac
 
     def build_I_fm_raw_buf(self):
-        if not (self._tx_buf_prio_rawData or self.tx_buf_rawData):
+        if not (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData):
             return
 
         while (len(self.tx_buf_unACK) < self.parm_MaxFrame and
-               (self._tx_buf_prio_rawData or self.tx_buf_rawData)):
+               (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData)):
             self._send_I(False)
 
     def _send_I(self, pf_bit=False):
@@ -1251,10 +1261,8 @@ class AX25Conn:
         :param pf_bit: bool
         True if RX a REJ Packet
         """
-        if not (self._tx_buf_prio_rawData or self.tx_buf_rawData):
-            return
         #####################################################################
-        # AX25Frame Init
+        # AX25Frame Init                        #
         new_axFrame = self._get_new_ax25frame() # Get preseted AX25Frame
         new_axFrame.ctl_byte.pf = bool(pf_bit)  # Poll/Final Bit / True if REJ is received
         new_axFrame.ctl_byte.nr = self.vr       # Receive PAC Counter OBJ (keeping vr updated)
@@ -1264,13 +1272,20 @@ class AX25Conn:
         #####################################################################
         # PAYLOAD !!                         #
         data, data_len     = bytearray(), 0  #
-        # Prio (Remote Protocol)             #
-        if self._tx_buf_prio_rawData:        #-------#
-            self._wait_tx_buf_prio_lock('_send_I')   # Thread lock
-            data                     += self._tx_buf_prio_rawData[:self.parm_PacLen]
-            data_len                  = len(data)    #
-            self._tx_buf_prio_rawData = self._tx_buf_prio_rawData[data_len:]
-            self._tx_buf_prio_lock    = False        # Thread lock
+        # Prio Rest  (Remote Protocol)       #
+        if self._tx_buf_prio_Rest:           #
+            data    += self._tx_buf_prio_Rest[:self.parm_PacLen]
+            data_len = len(data)             #
+            self._tx_buf_prio_Rest = self._tx_buf_prio_Rest[data_len:]
+        # Prio (Remote Protocol)             #-------#
+        while self._tx_buf_prio_Q and data_len < self.parm_PacLen:
+            self._wait_tx_buf_prio_lock('_send_I')  # Thread lock
+            prio_pack = self._tx_buf_prio_Q.pop(0)
+            self._tx_buf_prio_lock = False          # Thread lock
+            pac_len                = int(self.parm_PacLen) - data_len
+            data                  += prio_pack[:pac_len]
+            data_len               = len(data)      #
+            self._tx_buf_prio_Rest = prio_pack[pac_len:]
         # Non Prio Data                              #--#
         if self.tx_buf_rawData and data_len < self.parm_PacLen:
             pac_len = int(self.parm_PacLen) - data_len  #
@@ -1278,6 +1293,7 @@ class AX25Conn:
             data               += self.tx_buf_rawData[:pac_len]
             self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
             self._tx_buf_lock   = False       #---------# Thread lock
+        # No more Buffer to check             #
         new_axFrame.payload = bytes(data)     # Put payload into AX25-Frame
         data_len            = len(data)       # Keep data length for RTT
         #####################################################################
@@ -1432,6 +1448,7 @@ class AX25Conn:
             return
 
     ##############################################
+    # Gettaa
     def _is_service_connection(self):
         return self.cli.service_cli
 
@@ -1450,11 +1467,26 @@ class AX25Conn:
     def get_param_T2(self):
         return float(self._parm_T2)
 
+    def get_remote_mon(self):
+        return self._remote_monitor
+
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
 
+    ###################################
+    # I/O Buffers
+    def clear_tx_buff_prio(self):
+        self._wait_tx_buf_prio_lock('clear_tx_buff_prio')
+        self._tx_buf_prio_Q: list[bytes] = []
+        self._tx_buf_prio_lock = False
+
     def clear_tx_buff(self):
-        self.tx_buf_rawData = b''
+        self._wait_tx_buf_lock('clear_tx_buff')
+        self.tx_buf_rawData = bytearray()
+        self._tx_buf_lock   = False
+        #self._tx_buf_prio_Rest = bytearray()
+        #self._tx_buf_prio_Q: list[bytes] = []
+
 
     def get_tx_buff_len(self):
         return len(self.tx_buf_rawData)
@@ -1467,13 +1499,12 @@ class AX25Conn:
 
     def is_tx_buff_empty(self):
         return not any((
+            # self._tx_buf_prio_Q,
+            self._tx_buf_prio_Rest,
             self.tx_buf_rawData,
             self.tx_buf_2send,
             self.tx_buf_unACK,
         ))
-
-    def get_remote_mon(self):
-        return self._remote_monitor
 
 ###########################################################################
 ###########################################################################

@@ -1,5 +1,6 @@
 import random
 import time
+import re
 from datetime import datetime, timedelta
 import string
 from bbs.bbs_constant import EOL, CR
@@ -12,18 +13,38 @@ def get_kb_str_fm_bytes(len_: int):
     return f"{len_/1024:.2f} kb"
 
 
+# Entfernt ALLES, was in tkinter Probleme macht – außer \n und \r
+_TK_DANGEROUS_CHARS = re.compile(
+    r"[\U00010000-\U0010FFFF"    # Alle Zeichen außerhalb BMP (4-Byte-Emojis etc.)
+    r"\x00-\x09\x0b\x0c\x0e-\x1f"  # C0-Steuerzeichen außer \n (0x0A) und \r (0x0D)
+    r"\x7f-\x9f"                  # DELETE + C1-Steuerzeichen
+    r"\ufeff"                     # BOM
+    r"\u200b-\u200f"              # Zero-Width Space, Joiner, etc.
+    r"\u202a-\u202e"              # BiDi-Steuerzeichen (LRE, RLE, PDF, ...)
+    r"\u2066-\u2069"              # Arabic/Persian Isolates
+    r"\ufff9-\ufffb"              # Interlinear Annotation (sehr selten, aber bösartig)
+    r"]+",
+    re.UNICODE
+)
+
+def tk_filter_bad_chars(text: str):
+    if not text:
+        return ""
+    text = text.encode("utf-16", "surrogatepass").decode("utf-16", "ignore")
+    text = _TK_DANGEROUS_CHARS.sub("", text)
+    return text.replace("\r\n", "\n").replace("\r", "\n")  # einheitliche Zeilenumbrüche
+
+"""
 def tk_filter_bad_chars(inp: str):
-    """
-    Fix for:
-    _tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
-    Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
-    """
+    #Fix for:
+    #_tkinter.TclError: character U+1f449 is above the range (U+0000-U+FFFF) allowed by Tcl
+    #Source: https://itecnote.com/tecnote/python-tkinter-tclerror-character-u1f449-is-above-the-range-u0000-uffff-allowed-by-tcl/
     char_list = [inp[j] for j in range(len(inp)) if ord(inp[j]) in range(65536)]
     inp = ''
     for j in char_list:
         inp = inp + j
     return inp
-
+"""
 
 def time_to_decimal(dt):
     total_minutes = dt.hour * 60 + dt.minute + dt.second / 60.0  # Gesamtminuten seit Mitternacht

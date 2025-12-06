@@ -462,7 +462,7 @@ class RemMonGUITab(ttk.Frame):
         pay_size = len(ax25pack_conf.get('payload', b''))
         payload = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
         payload = tk_filter_bad_chars(payload)
-        payload = payload.replace('\n', ' ').replace('\r', ' ')
+        payload = payload.replace('\n', ' ')
         #from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
         #to_dist = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
         from_call = ax25pack_conf.get('from_call_str', '')

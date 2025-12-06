@@ -102,9 +102,8 @@ class SideTabbedFrame:
         self._max_frame.place(x=10 + 80, y=parm_y)
         parm_y = 55
         p_l_label = ttk.Label(tab1_kanal, text='Pac Len:')
-        vals = []
-        for i in range(256):
-            vals.append(str(i + 1))
+        vals = ['40'] + [str(min((x * 10), 256)) for x in range(5, 27)]
+
         self._pac_len = ttk.Combobox(tab1_kanal,
                                        width=4,
                                        textvariable=self._pac_len_var,

@@ -2431,7 +2431,7 @@ class PoPT_GUI_Main:
             txt_enc = str(conn.user_db_ent.Encoding)
         my_call_str = str(conn.my_call_str)
         my_call = str(conn.my_call)
-        inp = data.decode(txt_enc, 'ignore').replace('\r', '\n')
+        inp = data.decode(txt_enc, 'ignore')
         inp = tk_filter_bad_chars(inp)
 
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
@@ -2472,7 +2472,6 @@ class PoPT_GUI_Main:
         my_call = str(conn.my_call)
         Ch_var = self.get_ch_var(ch_index=conn.ch_index)
         out = data.decode(txt_enc, 'ignore')
-        out = out.replace('\n\r','\n').replace('\r', '\n')
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer
@@ -2749,7 +2748,7 @@ class PoPT_GUI_Main:
             pay_size  = len(ax25pack_conf.get('payload', b''))
             payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
             payload   = tk_filter_bad_chars(payload)
-            payload   = payload.replace('\n', ' ').replace('\r', ' ')
+            payload   = payload.replace('\n', ' ')
             from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
             to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
             from_call = ax25pack_conf.get('from_call_str', '')

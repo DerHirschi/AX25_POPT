@@ -375,11 +375,11 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=20, tx=True, data=data)
         if not data2send:
             return
-        self._connection.send_remote_data(data2send)
+        self._connection.send_remote_data(data2send, prio=True)
 
     def _rx_cmd_gui_remote_mon(self, payload: bytes):
         """ RX Start CMD """
-        data = payload.decode('UTF-8', 'ignore')
+        data  = payload.decode('UTF-8', 'ignore')
         param = data.split(':')
         if len(param) != 3:
             logger.error("Parameter Error (_start_gui_remote_mon): ")
@@ -414,7 +414,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=20, tx=False, data=b'')
         if not data2send:
             return
-        self._connection.send_remote_data(data2send)
+        self._connection.send_remote_data(data2send, prio=True)
 
     def _rx_resp_cmd_start_gui_remote_mon(self):
         """ RX Respond Stop CMD """
@@ -429,7 +429,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=21, tx=True, data=b'')
         if not data2send:
             return
-        self._connection.send_remote_data(data2send)
+        self._connection.send_remote_data(data2send, prio=True)
 
     def _rx_cmd_stop_gui_remote_mon(self):
         """ RX Stop CMD """
@@ -437,15 +437,18 @@ class RemoteMonitor:
             gui_mon=False,
         )
         print(f"set_remote_mon: {cfg}")
-        self._tx_resp_cmd_stop_gui_remote_mon()
         self._remote_mon_conf.update(cfg)
+        # Clear remote-protocol buffer
+        self._connection.clear_tx_buff_prio()
+        # Send Response
+        self._tx_resp_cmd_stop_gui_remote_mon()
 
     def _tx_resp_cmd_stop_gui_remote_mon(self):
         """ TX Respond Stop CMD """
         data2send = self._encode_remote_frame(opt_id=21, tx=False, data=b'')
         if not data2send:
             return
-        self._connection.send_remote_data(data2send)
+        self._connection.send_remote_data(data2send, prio=True)
 
     def _rx_resp_cmd_stop_gui_remote_mon(self):
         """ RX Respond Stop CMD """
@@ -460,7 +463,7 @@ class RemoteMonitor:
         data2send = self._encode_remote_frame(opt_id=22, tx=True, data=b'')
         if not data2send:
             return
-        self._connection.send_remote_data(data2send)
+        self._connection.send_remote_data(data2send, prio=True)
 
     def _rx_cmd_disco(self):
         """ RX Start Disco CMD """
