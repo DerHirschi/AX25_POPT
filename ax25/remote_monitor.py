@@ -9,17 +9,16 @@ from fnc.lzhuf import LZHUF_Comp
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from fnc.str_fnc import version_tuple
 
-REM_MON_FLAG = b'\xC0\xF0'
-# REM_MON_ESC  = b'\xDA\xDF\xF0'
+REM_MON_FLAG = b'\x8D\x81'
 ##############################################
 # ESC & END Flags
-FEND  = b'\xC0'
-FESC  = b'\xDA'
-TFEND = b'\xDF'
-TFESC = b'\xD0'
+FEND  = b'\x8D'
+FESC  = b'\x8F'
+TFEND = b'\x92'
+TFESC = b'\x9B'
 
-FESC_TFEND = b''.join([FESC, TFEND])    # "FEND is sent as FESC, TFEND"  /  0xC0 is sent as 0xDB 0xDC
-FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
+FESC_TFEND = b''.join([FESC, TFEND])    # "FEND is sent as FESC, TFEND"  /  0x8D is sent as 0x8F 0x92
+FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0x8F is sent as 0x8F 0x9B
 
 def pack_6bit_int_and_bool(value: int, flag1: bool = False, flag2: bool = False):
     """

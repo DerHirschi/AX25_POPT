@@ -1928,11 +1928,13 @@ class DefaultCLI(object):
             return ' # Error\r\r'
 
     # PoPT Remote Monitor
+    """
     def _cmd_set_gui_remote_mon(self):
         remote_monitor_conf = getNew_remote_mon_cfg()
         remote_monitor_conf['gui_mon']  = True
         remote_monitor_conf['mon_port'] = 0
         self._connection.set_remote_mon(remote_monitor_conf)
+    """
 
     ##############################################
     def _str_cmd_req_name(self):
