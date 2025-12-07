@@ -89,7 +89,7 @@ from ax25.ax25dec_enc import bytearray2hexstr
 from cfg.constant import TNC_KISS_CMD, TNC_KISS_CMD_END
 from cfg.logger_config import logger
 from ax25 import crc_x25
-from fnc.crc_fnc import crc_smack
+from fnc.crc_fnc import crc16_ccitt
 
 #############################
 KISS_TXD  = b'\xC0\x01'
@@ -345,7 +345,7 @@ class Kiss:
 
         crc_received = int.from_bytes(de_kissed_frame[-2:], 'little')
         pack = de_kissed_frame[:-2]
-        calc_crc = crc_smack(pack)
+        calc_crc = crc16_ccitt(pack)
         return pack, crc_received, calc_crc
 
     #############################################################
@@ -510,7 +510,7 @@ class Kiss:
 
         if self._fcs_mode == 'on':
             if self._is_smack:
-                calc_crc = crc_smack(inp)  # ← SMACK CRC!
+                calc_crc = crc16_ccitt(inp)  # ← SMACK CRC!
                 inp = inp + calc_crc.to_bytes(2, 'little')  # ← Little-Endian!
             else:
                 calc_crc = crc_x25(inp)

@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.6'
+VER = '2.123.7'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -467,7 +467,3 @@ CLI_TYP_CONVERSE = 'CONV'
 CLI_TYP_NO_CLI   = 'NO-CLI'
 CLI_TYP_TASK_FWD = 'Task: FWD'
 #######################################################
-# Remote Monitor
-# Response
-REM_MON_RESP_START = 'rsp_start'
-REM_MON_RESP_STOP  = 'rsp_stop'

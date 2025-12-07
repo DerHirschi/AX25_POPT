@@ -18,7 +18,7 @@ from cfg.logger_config import logger, LOG_BOOK
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from ax25.remote_monitor import RemoteMonitor
+from ax25.prp_remote import PRPremote
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND
@@ -180,8 +180,8 @@ class AX25Conn:
         self.is_link_remote     = False
         self.digi_call          = ''
         self.is_digi            = False
-        """ Remote Monitor """
-        self._remote_monitor = RemoteMonitor(self._port_handler, self)
+        """ PoPT Remote Protocol (PRP) """
+        self._prp_remote = PRPremote(self._port_handler, self)
         """ Port Variablen"""
         # TODO Private / Clean Up / OPT
         self.vs  = 0   # Sendefolgenummer     / N(S) = V(R)  TX
@@ -462,7 +462,7 @@ class AX25Conn:
             self.rx_buf_last_data = bytearray()
             return
         """ Remote Monitor """
-        data = self._remote_mon_rx(data)
+        data = self._prp_rx(data)
         if not data:
             self.rx_buf_last_data = data
             return
@@ -553,16 +553,17 @@ class AX25Conn:
         return True
 
     ##########################################################
-    # Remote Monitor
+    # PoPT Remote Protocol (PRP)
+    def _prp_rx(self, data: bytes):
+        return self._prp_remote.prp_rx(data)
+
+    # PRP - Remote Monitor - PoPT Remote Protocol (PRP)
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler.update_monitor() """
-        self._remote_monitor.remote_monitor_update(ax25frame_conf)
-
-    def _remote_mon_rx(self, data: bytes):
-        return self._remote_monitor.remote_mon_rx(data)
+        self._prp_remote.remote_monitor_update(ax25frame_conf)
 
     def set_remote_mon(self, rem_mon_conf: dict):
-        self._remote_monitor.update_cfg(rem_mon_conf)
+        self._prp_remote.update_cfg(rem_mon_conf)
 
     ##########################################################
     # BBS_FWD Stuff
@@ -1476,7 +1477,7 @@ class AX25Conn:
         return float(self._parm_T2)
 
     def get_remote_mon(self):
-        return self._remote_monitor
+        return self._prp_remote
 
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
