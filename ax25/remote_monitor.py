@@ -367,7 +367,7 @@ class RemoteMonitor:
         if not self._check_version():
             return
 
-        port_id = cfg.get('port', 0)
+        port_id = cfg.get('mon_port', 0)
         incl_filter = ','.join(cfg.get('incl_call', []))
         excl_filter = ','.join(cfg.get('excl_call', []))
 
