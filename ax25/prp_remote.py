@@ -229,7 +229,7 @@ def unpack_6bit_int_and_bool(data):
     if len(data) < 1:
         raise ValueError("Mindestens ein Byte erforderlich")
 
-    byte = data[0]
+    byte  = data[0]
     value = byte & 0b00111111  # Bits 0–5
     flag1 = bool(byte & 0b01000000)  # Bit 6 → 64
     flag2 = bool(byte & 0b10000000)  # Bit 7 → 128
@@ -269,6 +269,76 @@ def unpack_time_hms_to_datetime(data: bytes):
     # Heutiges Datum + empfangene Uhrzeit
     return datetime.datetime.now().replace(hour=hh, minute=mm, second=ss, microsecond=0)
 
+# --------------------------------------------------------------
+# PRP-METADATEN-DECODER (nur Header, keine Payload-Dekodierung!)
+# --------------------------------------------------------------
+# Rückgabe: dict mit:
+#   'prp_frames'    → Anzahl enthaltener PRP-Frames (bei Batch)
+#   'opt_id'        → 0–63 (Port-ID oder Steuerbefehl)
+#   'tx'            → True = gesendet, False = empfangen
+#   'compressed'    → True wenn F2=1 (LZHUF)
+#   'payload_len'   → Länge des (escaped) Payloads
+#   'is_batch'      → True wenn OPT-ID == 63
+#   'raw_len'      → Gesamtlänge des PRP-Pakets
+# --------------------------------------------------------------
+
+def decode_prp_metadata(raw_ax25_payload: bytes):
+    """
+    Vorlage by Grok AI
+    Schneller PRP-Header-Parser für Monitor – nur Metadaten, keine Dekompression, kein Unescaping.
+    Gibt None zurück, wenn kein gültiges PRP-Paket erkannt wurde.
+    """
+    # TODO bessere PRP-Paket validierung.
+    #  PRP-Frames mit unbekannter OPT und unplausibler len werden als PRP dekodiert.
+    payload_len = len(raw_ax25_payload)
+    if payload_len < 5:  # Min: FLAG(2) + OPT(1) + LEN(2)
+        return None, None
+
+    i          = 0
+    prp_frames = []
+    rest_data  = bytearray()
+    while i < payload_len:
+        # < 5 Bytes, Paket kann nicht ausgewertet werden.
+        if payload_len - i < 5:
+            rest_data += raw_ax25_payload[i:]
+            return prp_frames, rest_data
+
+        if raw_ax25_payload[i:i + 2] != PRP_FLAG:
+            rest_data += raw_ax25_payload[i].to_bytes(1)
+            i         += 1
+            continue
+
+        try:
+            opt_byte  = int(raw_ax25_payload[2]).to_bytes(1)
+            prp_len   = int.from_bytes(raw_ax25_payload[3:5], 'little')
+            total_len = 5 + prp_len + 2  # Header(5) + Payload + CRC(2)
+
+            opt_id, tx_flag, compressed = unpack_6bit_int_and_bool(opt_byte)
+
+            is_batch = (opt_id == 63)
+
+            prp_frames.append({
+                'is_prp'        : True,
+                'opt_id'        : opt_id,
+                'port_id'       : opt_id if opt_id < 20 else None,
+                'tx'            : tx_flag,
+                'compressed'    : compressed,
+                'payload_len'   : prp_len,
+                'total_len'     : total_len,
+                'is_batch'      : is_batch,
+                'ctl_type'      : 'PRP-Batch' if is_batch else
+                                  ('PRP-Mon' if opt_id < 20 else 'PRP-Cmd'),
+            })
+            i = i + total_len
+
+        except Exception as ex:
+            null = ex   # Make IDE happy
+            rest_data += raw_ax25_payload[i].to_bytes(1)
+            i         += 1
+            continue
+
+    return prp_frames, rest_data
+
 class PRPremote:
     def __init__(self, port_handler , connection):
         self._port_handler      = port_handler
@@ -291,18 +361,18 @@ class PRPremote:
         # Login
         self._login_nonce   = None
         self._password_hash = None  # sha256(password)
-        self._is_login_ok   = lambda : self._remote_states.get('login_ok', False)
+        self._is_login_ok   = lambda      : self._remote_states.get('login_ok', False)
         self._set_login_ok  = lambda is_ok: self._remote_states.update({'login_ok': is_ok})
 
         ################################
         # Batch Mode
-        self._max_batch_paylod = 1512 # Bytes
-        self._min_batch_packet = 4    # PRP-Frames
-        self._batch_buffer     = []
-        self._batch_timer_par  = 15
-        self._batch_timer      = time.time() + self._batch_timer_par
-        self._is_batch_mode    = lambda : self._remote_states.get('batch_mode', False)
-        self._set_batch_mode   = lambda is_on: self._remote_states.update({'batch_mode': is_on})
+        self._max_batch_payload = 1024 # Max Raw-Data(PRP-Frames size) Threshold for Batch
+        self._min_batch_packet  = 4    # Min PRP-Frames to send as Batch
+        self._batch_buffer      = []   # Buffer ax25frame_conf Buffer
+        self._batch_timer_par   = 30   # Sec. Wait for gathering PRP-Frames for Batch
+        self._batch_timer       = time.time() + self._batch_timer_par
+        self._is_batch_mode     = lambda      : self._remote_states.get('batch_mode', False)
+        self._set_batch_mode    = lambda is_on: self._remote_states.update({'batch_mode': is_on})
 
     #######################################
     # Tasker
@@ -432,7 +502,7 @@ class PRPremote:
         """ Batch Mode 63 """
         if opt_id == PRP_OPT_PRP_BATCH:
             if tx:
-                self._rx_prp_batch(payload)
+                self._prp_rx_batch(payload)
             else:
                 pass
             return None
@@ -457,15 +527,15 @@ class PRPremote:
             n          += 1
             # Max Rohdaten Größe erreicht ?
             batch_data_len = len(batch_data)
-            if (batch_data_len >= self._max_batch_paylod and
+            if (batch_data_len >= self._max_batch_payload and
                 len(prp_frames) - n > self._min_batch_packet) :
                 data2send = self._encode_prp_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
                 if not data2send:
                     batch_data = bytearray()
                     continue
-                print(f"Sende Batch len      : {len(batch_data)} Bytes")
-                print(f"Sende Batch-Paket len: {len(data2send)} Bytes")
-                print(f"Comp Ratio           : {len(batch_data) / len(data2send)}")
+                logger.debug(f"Sende Batch len      : {len(batch_data)} Bytes")
+                logger.debug(f"Sende Batch-Paket len: {len(data2send)} Bytes")
+                logger.debug(f"Comp Ratio           : {len(batch_data) / len(data2send)}")
                 self._connection.send_remote_data(data2send, prio=False)
                 batch_data = bytearray()
         # Und den Rest
@@ -473,9 +543,9 @@ class PRPremote:
             data2send = self._encode_prp_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
             if not data2send:
                 return
-            print(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
-            print(f"Sende Batch-Paket Rest len: {len(data2send)} Bytes")
-            print(f"Comp Ratio Rest           : {len(batch_data) / len(data2send)}")
+            logger.debug(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
+            logger.debug(f"Sende Batch-Paket Rest len: {len(data2send)} Bytes")
+            logger.debug(f"Comp Ratio Rest           : {len(batch_data) / len(data2send)}")
             self._connection.send_remote_data(data2send, prio=False)
 
     def prp_rx(self, data: bytes):
@@ -530,6 +600,32 @@ class PRPremote:
             return b''
 
         return bytes(rest_data)
+
+    # ====== PRP Batch Mode
+    def _prp_rx_batch(self, payload: bytes):
+        """ Empfange PRP-Paket Batch """
+        data_len  = len(payload)
+        i         = 0
+        while i < data_len:
+            if payload[i:i + 2] != PRP_FLAG:
+                logger.warning("PRP-Batch: PRP_FLAG not found in Datastream")
+                logger.warning(f" Payload HEX: {bytearray2hexstr(payload)}")
+                logger.warning(f" Index      : {i}")
+                i += 1
+                continue
+            length    = int.from_bytes(payload[i + 3:i + 5], 'little')
+            #        Header(5)+ len+ CRC(2)
+            frame_end = i + 5 + length + 2
+            # Komplettes Frame extrahiert!
+            rem_mon_pack = payload[i:frame_end]
+            try:
+                self._prp_rx_process(rem_mon_pack)
+            except EncodingWarning:
+                logger.warning("PRP-Batch: Data Chunk:")
+                logger.warning(f" Payload HEX: {bytearray2hexstr(payload)}")
+                logger.warning(f" Index      : {i}")
+            # Springe zum nächsten Byte nach dem Frame
+            i = frame_end
 
     def _prp_rx_process(self, rem_mon_frame: bytes):
         try:
@@ -590,6 +686,11 @@ class PRPremote:
                 not to_call   in incl_filter
             ): return
 
+        # CLI Monitor Output
+        if self._remote_mon_conf.get('cli_mon', False):
+            # TODO
+            self._connection.cli.cli_update_monitor(ax25frame_conf)
+
         # Batch Mode
         if self._is_batch_mode():
             self._batch_buffer.append(ax25frame_conf)
@@ -597,11 +698,6 @@ class PRPremote:
         # PoPT Remote Monitor
         elif self._remote_mon_conf.get('gui_mon', False):
             self._encode_remote_mon_frame(ax25frame_conf)
-
-        # CLI Monitor Output
-        if self._remote_mon_conf.get('cli_mon', False):
-            # TODO
-            self._connection.cli.cli_update_monitor(ax25frame_conf)
 
 
     def _remote_monitor_batch_update(self):
@@ -632,8 +728,8 @@ class PRPremote:
             ax25frame = self._batch_buffer.pop(0)
             # Batch zu klein. Sende Frames einzeln
             if not send_as_batch:
+                # Auto Compressed
                 self._encode_remote_mon_frame(ax25frame)
-                print("Single Packet send")
                 continue
 
             # PoPT Remote Monitor
@@ -863,27 +959,6 @@ class PRPremote:
         print("LOGOUT erfolgreich!")
         self._set_login_ok(False)
         self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
-
-    # =============================
-    # ====== PRP Batch Mode
-    def _rx_prp_batch(self, payload: bytes):
-        """ Empfange PRP-Paket Batch """
-        data_len  = len(payload)
-        for i in range(data_len):
-            if payload[i:i + 2] != PRP_FLAG:
-                continue
-            length    = int.from_bytes(payload[i + 3:i + 5], 'little')
-            #        Header(5)+ len+ CRC(2)
-            frame_end = i + 5 + length + 2
-            # Komplettes Frame extrahiert!
-            rem_mon_pack = payload[i:frame_end]
-            try:
-                self._prp_rx_process(rem_mon_pack)
-            except EncodingWarning:
-                logger.debug("PRP BATCH: Data Chunk:")
-                logger.debug(f"PRP:   DATA  : {payload}")
-                logger.debug(f"PRP:   DATA H: {bytearray2hexstr(payload)}")
-
 
     ##############################################
     # CTL Local

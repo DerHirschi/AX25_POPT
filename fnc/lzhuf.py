@@ -556,7 +556,7 @@ class LZHUF_Comp:
 
 
 if __name__ == '__main__':
-    test_str = "12345  bla bla ===== fg fg fg".encode('UTF-8')
+    test_str = (b"12345  bla bla ===== fg fg fg " * 10)
     huff_com         = LZHUF_Comp()
     compressed_msg   = huff_com.encode(test_str)
     decompressed_msg = huff_com.decode(compressed_msg)
