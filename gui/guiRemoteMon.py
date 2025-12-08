@@ -578,15 +578,15 @@ class RemMonGUITab(ttk.Frame):
             """ Disables all Btn's till response """
             pass
         elif opt == 'cmd_login':
-            self._login_btn.configure(state='disabled')
+            self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='disabled')
             return
         elif opt == PRP_RM_RESP_LOGIN:
-            self._login_btn.configure(state='disabled')
+            self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='normal')
             return
         elif opt == PRP_RM_RESP_LOGOUT:
-            self._login_btn.configure(state='normal')
+            self._login_btn.configure( state='normal')
             self._logout_btn.configure(state='disabled')
             return
         elif opt == 'connected':

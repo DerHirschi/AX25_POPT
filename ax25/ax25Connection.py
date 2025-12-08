@@ -504,6 +504,7 @@ class AX25Conn:
         if self._bbsFwd_cron():
             return True
         if self._cron_cli():
+            self._prp_cron()
             self._link_holder_cron()
         return True
 
@@ -561,6 +562,10 @@ class AX25Conn:
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler.update_monitor() """
         self._prp_remote.remote_monitor_update(ax25frame_conf)
+
+    def _prp_cron(self):
+        self._prp_remote.tasker()
+        return True
 
     def set_remote_mon(self, rem_mon_conf: dict):
         self._prp_remote.update_cfg(rem_mon_conf)

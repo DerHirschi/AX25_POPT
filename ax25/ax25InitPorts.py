@@ -139,6 +139,7 @@ class AX25PortHandler(object):
         self._task_timer_05sec  = time.time() + 0.5
         self._task_timer_1sec   = time.time() + 1
         self._task_timer_2sec   = time.time() + 2
+        self._task_timer_5sec   = time.time() + 5
         if not gui_app:
             self._init_PH_tasker()
         #######################################################
@@ -172,6 +173,7 @@ class AX25PortHandler(object):
         ret = any((self._05sec_task(), ret))
         ret = any((self._1sec_task(),  ret))
         ret = any((self._2sec_task(),  ret))
+        # ret = any((self._5sec_task(),  ret))
         return ret
 
     def _prio_task(self):
@@ -209,6 +211,14 @@ class AX25PortHandler(object):
         if time.time() > self._task_timer_2sec:
             self._bbs.main_cron()
             self._task_timer_2sec = time.time() + 2
+            return True
+        return False
+
+    def _5sec_task(self):
+        """ 5 Sec """
+        if time.time() > self._task_timer_5sec:
+            # self._update_remote_monitor_batch_task()
+            self._task_timer_5sec = time.time() + 5
             return True
         return False
 
@@ -943,8 +953,8 @@ class AX25PortHandler(object):
     # Remote Monitor Stuff
     def _update_remote_monitor_task(self):
         """ Remote Monitor over ax25 | 1 Sec Task"""
-        data = list(self._remote_monitor_buffer_tx[:15])  # 22 Pi4
-        self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[15:]
+        data = list(self._remote_monitor_buffer_tx[:30])  # 22 Pi4
+        self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
         for conn_id, conn in self.get_all_connections().items():
             for ax25frame_conf in data:
                 conn.remote_monitor_update(ax25frame_conf)
