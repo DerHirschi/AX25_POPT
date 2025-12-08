@@ -354,7 +354,7 @@ class PRPremote:
         self._remote_states = dict(
             gui_rem_mon=False,
             login_ok=False,
-            batch_mode=True,
+            batch_mode='auto',  # 'auto', 'on', 'off'
         )
 
         ################################
@@ -366,13 +366,14 @@ class PRPremote:
 
         ################################
         # Batch Mode
-        self._max_batch_payload = 1024 # Max Raw-Data(PRP-Frames size) Threshold for Batch
-        self._min_batch_packet  = 4    # Min PRP-Frames to send as Batch
-        self._batch_buffer      = []   # Buffer ax25frame_conf Buffer
-        self._batch_timer_par   = 30   # Sec. Wait for gathering PRP-Frames for Batch
-        self._batch_timer       = time.time() + self._batch_timer_par
-        self._is_batch_mode     = lambda      : self._remote_states.get('batch_mode', False)
-        self._set_batch_mode    = lambda is_on: self._remote_states.update({'batch_mode': is_on})
+        self._max_batch_payload  = 1024 # Max Raw-Data(PRP-Frames size) Threshold for Batch
+        self._min_batch_packet   = 4    # Min PRP-Frames to send as Batch
+        self._batch_buffer       = []   # Buffer ax25frame_conf Buffer
+        self._batch_timer_par    = 30   # Sec. Wait for gathering PRP-Frames for Batch
+        self._batch_timer        = time.time() + self._batch_timer_par
+        self._is_batch_mode      = lambda : True if not self._remote_states.get('batch_mode', 'auto') == 'off' else False
+        self._is_batch_mode_auto = lambda : True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
+        self._set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
 
     #######################################
     # Tasker
@@ -666,12 +667,12 @@ class PRPremote:
             return
 
         if ((
-                to_call == self._connection.to_call_str_add and
+                to_call   == self._connection.to_call_str_add and
                 from_call == self._connection.my_call_str_add
             ) or
             (
                     from_call == self._connection.to_call_str_add and
-                    to_call == self._connection.my_call_str_add
+                    to_call   == self._connection.my_call_str_add
             )): return
 
         # Exclude Filter
@@ -692,28 +693,32 @@ class PRPremote:
             self._connection.cli.cli_update_monitor(ax25frame_conf)
 
         # Batch Mode
-        if self._is_batch_mode():
+        if (self._is_batch_mode() or
+           # Auto Batch Mode
+           (self._is_batch_mode_auto() and not self._connection.is_remote_empty_tx_buff())
+        ):
             self._batch_buffer.append(ax25frame_conf)
+            return
 
-        # PoPT Remote Monitor
-        elif self._remote_mon_conf.get('gui_mon', False):
+        # PoPT Remote Monitor GUI
+        if self._remote_mon_conf.get('gui_mon', False):
             self._encode_remote_mon_frame(ax25frame_conf)
 
 
     def _remote_monitor_batch_update(self):
         """ Batch Mode Task """
-        if not self._is_batch_mode():
+        if not self._batch_buffer:
             return
 
         # Buffer Limit
         is_buffer_limit = True if len(self._batch_buffer) > 30 else False
 
-        # Task Timer
+        # Nicht Task Timer und nicht Buffer-Limit
         if self._batch_timer > time.time() and not is_buffer_limit:
             return
 
         # Sammeln, solange AX25Conn noch was zum Senden hat
-        if self._connection.get_remote_prio_q() and not is_buffer_limit:
+        if self._connection.is_remote_empty_tx_buff() and not is_buffer_limit:
             return
 
         # Reset Task Timer

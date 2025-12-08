@@ -169,20 +169,19 @@ class AX25PortHandler(object):
         if not self.is_running:
             return False
         # TODO Tasker-Q
-        ret = self._prio_task()
-        ret = any((self._05sec_task(), ret))
-        ret = any((self._1sec_task(),  ret))
-        ret = any((self._2sec_task(),  ret))
         # ret = any((self._5sec_task(),  ret))
-        return ret
+        return (self._prio_task()  or
+                self._05sec_task() or
+                self._1sec_task()  or
+                self._2sec_task())
 
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        return any((
-            self._bbs.tasker(),         # bbs.tasker-q
-            self._gpio_tasker_q(),      # gpio.tasker-q
-            self._sound.sound_tasker(), # tasker-q
-        ))
+        return (
+            self._bbs.tasker()    or      # bbs.tasker-q
+            self._gpio_tasker_q() or      # gpio.tasker-q
+            self._sound.sound_tasker()    # tasker-q
+        )
 
     def _05sec_task(self):
         """ 0.5 Sec """

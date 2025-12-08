@@ -64,19 +64,19 @@ class POPT_Sound:
     def _sound_stop_tasker(self):
         if self.master_sound_on:
             return
-        if any((
-            self._sound_th,
+        if (
+            self._sound_th or
             self._bg_sound_th,
-        )):
+        ):
             self._stop_all_sound()
 
     def _speech_tasker_q(self):
         if not self._speech_tasks:
             return False
-        if not all((
-                self.master_sound_on,
+        if not (
+                self.master_sound_on and
                 self.master_sprech_on
-        )):
+        ):
             self._speech_tasks = []
             return False
         if hasattr(self._sound_th, 'is_alive'):
@@ -109,11 +109,11 @@ class POPT_Sound:
         if not GTTS_AVAILABLE:
             return None
 
-        if not all((
-                self.master_sprech_on,
-                self.master_sound_on,
+        if not (
+                self.master_sprech_on and
+                self.master_sound_on  and
                 text
-        )):
+        ):
             return None
 
         lang_cfg = self._get_speech_lang()
@@ -156,11 +156,11 @@ class POPT_Sound:
         if not GTTS_AVAILABLE:
             return False
 
-        if not all((
-            self.master_sprech_on,
-            self.master_sound_on,
+        if not (
+            self.master_sprech_on and
+            self.master_sound_on  and
             text
-        )):
+        ):
             return False
         if wait:
             text = text.replace('\r', '\n')

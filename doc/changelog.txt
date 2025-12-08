@@ -11,14 +11,21 @@ Optimierung/Änderungen:
 - Haupteinstellungen GUI > Allgemeine Einstellungen GUI überarbeitet
 - AX25 Protokoll L3 > T1 wird nicht gestoppt, wenn REJ empfangen wird
   (Führ zu lange Wartezeiten bis reagiert wird)
+- Monitor Decoder Performance optimiert
+- Schleifen Performance optimiert
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "CHIST" - zeigt Verbindungsverlauf
-- PoPT-Remote-Protokoll zum Fernsteuern von Stationen.
+- PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
+  - Sicheres Login Verfahren
+  - Batch Mode (mehrere unkomprimierte PRP-Frames werden gesammelt und
+    zusammengefasst zu einem, komprimierten PRP-Batch-Paket.
+    (erhöht die Effizienz beim Komprimieren))
 - Remote Monitor (nutzt das PoPT-Remote-Protokoll).
   Überträgt Monitordaten von entfernter PoPT-Node und stellt
   sie aufbereitet in der HostGUI da. (Ähnlich wie die Monitorausgabe
   bei TNN nur viel effizienter aufgrund von Datenkomprimierung)
+- Monitor Decoder: PRP-Frame Decoder (Nur Metadaten werden ausgewertet)
 
 ###########################################################################################################
 ###########################################################################################################

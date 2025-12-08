@@ -1,4 +1,5 @@
 import copy
+import datetime
 import time
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -349,31 +350,34 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         for i in self._messages_treeview.get_children():
             self._messages_treeview.delete(i)
 
-        for form_msg in self._aprs_pn_msg:
-            if all((
-                form_msg['address'] == self._sender_var.get(),
-                form_msg['from'] == self._chat_address[0]
-            )):
+        for from_msg in self._aprs_pn_msg:
+            if not from_msg.get('address', '') and from_msg.get('addresse', ''):
+                # Fix für alte Daten struktur
+                from_msg['address'] = from_msg.get('addresse', '')
+            if (
+                from_msg.get('address', '')  == self._sender_var.get() and
+                from_msg.get('from', '')     == self._chat_address[0]
+            ):
                 tag = 'is_chat'
-            elif form_msg['address'] in POPT_CFG.get_stat_CFG_keys() \
-                    or form_msg['from'] in POPT_CFG.get_stat_CFG_keys()\
-                    or self._aprs_ais.is_cq_call(form_msg['address']):
+            elif from_msg.get('address', '') in POPT_CFG.get_stat_CFG_keys() \
+                    or from_msg.get('from', '') in POPT_CFG.get_stat_CFG_keys()\
+                    or self._aprs_ais.is_cq_call(from_msg.get('address', '')):
                 tag = 'is_own'
             else:
                 tag = 'not_own'
 
             tree_data = (
-                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
-                     f"{form_msg.get('port_id', '-')}",
-                     f"{form_msg['from']}",
-                     f"{form_msg['address']}",
-                     f"{form_msg.get('via', '')}",
-                     f"{'>'.join(form_msg.get('path', []))}",
-                     f"{form_msg.get('msgNo', '')}",
-                     f"{form_msg.get('message_text', '')}",
+                     f"{from_msg.get('rx_time', datetime.datetime.now()).strftime('%d/%m/%y %H:%M:%S')}",
+                     f"{from_msg.get('port_id', '-')}",
+                     f"{from_msg.get('from', '')}",
+                     f"{from_msg.get('address', '')}",
+                     f"{from_msg.get('via', '')}",
+                     f"{'>'.join(from_msg.get('path', []))}",
+                     f"{from_msg.get('msgNo', '')}",
+                     f"{from_msg.get('message_text', '')}",
                  )
             if hasattr(self._aprs_ais, 'get_symbol_fm_node_tab'):
-                symbol = self._aprs_ais.get_symbol_fm_node_tab(form_msg.get('from'))
+                symbol = self._aprs_ais.get_symbol_fm_node_tab(from_msg.get('from'))
                 image  = self._aprs_icon_tab.get(symbol, None)
             else:
                 image = None

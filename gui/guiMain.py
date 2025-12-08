@@ -2062,8 +2062,8 @@ class PoPT_GUI_Main:
                 return
         else:
             self._tasker_prio()
-            update_needed = self._tasker_025_sec()
-            update_needed = any((self._tasker_1_sec(), update_needed))
+            update_needed = (self._tasker_025_sec() or
+                             self._tasker_1_sec())
             if not update_needed:
                 update_needed = self._tasker_5_sec()
             if update_needed:
@@ -2099,11 +2099,11 @@ class PoPT_GUI_Main:
         return True
 
     def _tasker_queue(self, start_time: time.time):
-        if all((not self._tasker_q, not self._tasker_q_prio)):
+        if not self._tasker_q and not self._tasker_q_prio:
             return False
 
         if self._tasker_q_prio:
-            while all((self._tasker_q_prio, self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME))):
+            while self._tasker_q_prio and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
                 task, arg = self._tasker_q_prio.pop(0)
                 if task == 'sysMsg_to_monitor':
                     self._sysMsg_to_monitor_task(arg)
@@ -2170,9 +2170,9 @@ class PoPT_GUI_Main:
                 #elif task == 'update_tracer_win':
                 #    self._update_tracer_win_task()
 
-        if all((self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME), not self._quit , self._tasker_q)):
+        if self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME) and not self._quit and self._tasker_q:
             # Non Prio
-            while all((self._tasker_q, self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME))):
+            while self._tasker_q and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
                 task, arg = self._tasker_q.pop(0)
                 if task == '_monitor_tree_update':
                     self._monitor_tree_update_task(arg)
@@ -2192,6 +2192,7 @@ class PoPT_GUI_Main:
     def _tasker_prio(self):
         """ Prio Tasks every Irritation """
         tasker_ret = False
+
         if hasattr(self._port_handler, 'tasker_gui_th'):
             # tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
             timer = time.time()
@@ -2199,18 +2200,22 @@ class PoPT_GUI_Main:
             t_delta = time.time() - timer
             if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
+
         if hasattr(self.userDB_tree_win, 'tasker'):
-            tasker_ret = any((self.userDB_tree_win.tasker(), tasker_ret))
+            tasker_ret = self.userDB_tree_win.tasker()    or tasker_ret
 
         if hasattr(self.userdb_win, 'tasker'):
-            tasker_ret = any((self.userdb_win.tasker(), tasker_ret))
+            tasker_ret = self.userdb_win.tasker()         or tasker_ret
+
         # Locator Calc Win
         if hasattr(self.locator_calc_window, 'tasker'):
-            tasker_ret = any((self.locator_calc_window.tasker(), tasker_ret))
+            tasker_ret = self.locator_calc_window.tasker() or tasker_ret
 
-        tasker_ret = any((self._monitor_task(),     tasker_ret))
-        tasker_ret = any((self._ais_monitor_task(), tasker_ret))
-        tasker_ret = any((self._mh_win_task(),      tasker_ret))
+        tasker_ret = (tasker_ret               or
+                      self._monitor_task()     or
+                      self._ais_monitor_task() or
+                      self._mh_win_task()
+                      )
         return tasker_ret
 
     def _tasker_025_sec(self):
@@ -2220,12 +2225,14 @@ class PoPT_GUI_Main:
             #####################
             # self._aprs_task()
             # self._monitor_task()
-            ret = self._dualPort_monitor_task()
-            ret = any((self._update_qso_win(),    ret))
-            ret = any((self._SideFrame_tasker(),  ret))
-            ret = any((self._update_status_bar(), ret))
+            ret = (self._dualPort_monitor_task() or
+                   self._update_qso_win()        or
+                   self._SideFrame_tasker()      or
+                   self._update_status_bar()
+                   )
+
             if self._flip025:
-                ret = any((self._AlarmIcon_tasker05(), ret))
+                ret = self._AlarmIcon_tasker05() or ret
             #####################
             self._flip025 = not self._flip025
             return ret
@@ -2366,15 +2373,15 @@ class PoPT_GUI_Main:
 
     def _SideFrame_tasker(self):
         if self._flip025:
-            return any((
-                self.tabbed_sideFrame.tasker(),
+            return (
+                self.tabbed_sideFrame.tasker() or
                 self.tabbed_sideFrame.on_ch_stat_change()
-            ))
+            )
 
-        return any((
-            self.tabbed_sideFrame2.tasker(),
+        return (
+            self.tabbed_sideFrame2.tasker() or
             self.tabbed_sideFrame2.on_ch_stat_change()
-        ))
+        )
 
     def _check_port_blocking_task(self):
         if hasattr(self._port_handler, 'get_glb_port_blocking'):
@@ -2764,14 +2771,12 @@ class PoPT_GUI_Main:
             #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
             #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
 
-            if not all((
-                any((all((port_filter,     port_filter     == str(port) )),     not port_filter)),
-                any((all((fm_call_filter,  from_call       in fm_call_filter)), not fm_call_filter)),
-                any((all((to_call_filter,  to_call         in to_call_filter)), not to_call_filter)),
-                #all((ctl_pack_filter, ctl_pack_filter != ctl)),
-                #all((pid_pack_filter, pid_pack_filter != pid)),
-            )):
-                return
+            if not (
+                    ((port_filter and port_filter == str(port))       or not port_filter)    and
+                    ((fm_call_filter and from_call in fm_call_filter) or not fm_call_filter) and
+                    ((to_call_filter and to_call in to_call_filter)   or not to_call_filter)
+
+            ): return
             raw_from_call = str(from_call)
             raw_to_call   = str(to_call)
             if from_dist > 0:
