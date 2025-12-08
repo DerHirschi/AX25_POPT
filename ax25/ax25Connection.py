@@ -1484,6 +1484,9 @@ class AX25Conn:
     def get_remote_mon(self):
         return self._prp_remote
 
+    def get_remote_prio_q(self):
+        return self._tx_buf_prio_Q
+
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
 

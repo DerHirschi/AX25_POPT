@@ -296,7 +296,7 @@ class PRPremote:
 
         ################################
         # Batch Mode
-        self._max_batch_paylod = 1024 # Bytes
+        self._max_batch_paylod = 1512 # Bytes
         self._min_batch_packet = 4    # PRP-Frames
         self._batch_buffer     = []
         self._batch_timer_par  = 15
@@ -308,11 +308,9 @@ class PRPremote:
     # Tasker
     def tasker(self):
         """ Called fm ax25Conn """
-        if self._batch_timer < time.time():
-            self.remote_monitor_batch_update()
-            self._batch_timer = time.time() + self._batch_timer_par
-            return True
-        return False
+        self._remote_monitor_batch_update()
+
+        return True
     #######################################
     # PRP ENC/DEC
     @staticmethod
@@ -555,11 +553,6 @@ class PRPremote:
             not self._remote_mon_conf.get('gui_mon', False)):
             return
 
-        if self._is_batch_mode():
-            self._batch_buffer.append(ax25frame_conf)
-            if not self._remote_mon_conf.get('cli_mon', False):
-                return
-
         port_id = ax25frame_conf.get('port', -1)
         if port_id != self._remote_mon_conf.get('mon_port', -2):
             return
@@ -597,67 +590,46 @@ class PRPremote:
                 not to_call   in incl_filter
             ): return
 
+        # Batch Mode
+        if self._is_batch_mode():
+            self._batch_buffer.append(ax25frame_conf)
+
+        # PoPT Remote Monitor
+        elif self._remote_mon_conf.get('gui_mon', False):
+            self._encode_remote_mon_frame(ax25frame_conf)
+
         # CLI Monitor Output
         if self._remote_mon_conf.get('cli_mon', False):
             # TODO
             self._connection.cli.cli_update_monitor(ax25frame_conf)
-        # PoPT Remote Monitor
-        if self._remote_mon_conf.get('gui_mon', False) and not self._is_batch_mode():
-            self._encode_remote_mon_frame(ax25frame_conf)
 
-    def remote_monitor_batch_update(self):
-        """  """
-        if not self._remote_mon_conf.get('gui_mon', False) or not self._is_batch_mode():
+
+    def _remote_monitor_batch_update(self):
+        """ Batch Mode Task """
+        if not self._is_batch_mode():
             return
 
-        ax25frame_to_send  = []
-        # Filter Batch
-        while self._batch_buffer:
-            ax25frame_conf = self._batch_buffer.pop(0)
-            port_id        = ax25frame_conf.get('port', -1)
-            if port_id != self._remote_mon_conf.get('mon_port', -2):
-                continue
+        # Buffer Limit
+        is_buffer_limit = True if len(self._batch_buffer) > 30 else False
 
-            from_call   = ax25frame_conf.get('from_call_str', '')
-            to_call     = ax25frame_conf.get('to_call_str', '')
-            frame_uid   = ax25frame_conf.get('uid', '')
-            my_uid      = str(self._connection.uid)
-            my_uid_rev  = reverse_uid(my_uid)
-            incl_filter = self._remote_mon_conf.get('incl_call', [])
-            excl_filter = self._remote_mon_conf.get('excl_call', [])
+        # Task Timer
+        if self._batch_timer > time.time() and not is_buffer_limit:
+            return
 
-            # Own Connection Filter
-            if frame_uid == my_uid or frame_uid == my_uid_rev:
-                continue
+        # Sammeln, solange AX25Conn noch was zum Senden hat
+        if self._connection.get_remote_prio_q() and not is_buffer_limit:
+            return
 
-            if ((to_call   == self._connection.to_call_str_add and
-                 from_call == self._connection.my_call_str_add)
-                or
-                (from_call == self._connection.to_call_str_add and
-                 to_call   == self._connection.my_call_str_add)
-                ):
-                continue
-
-            # Exclude Filter
-            if (from_call in excl_filter or
-                to_call   in excl_filter):
-                continue
-
-            # Include Filter
-            if incl_filter:
-                if (
-                    not from_call in incl_filter and
-                    not to_call   in incl_filter
-                ):
-                    continue
-            ax25frame_to_send.append(ax25frame_conf)
+        # Reset Task Timer
+        self._batch_timer = time.time() + self._batch_timer_par
 
         # Send as Batch or Single ?
-        batch_len     = len(ax25frame_to_send)
+        batch_len     = len(self._batch_buffer)
         send_as_batch = False if batch_len <= self._min_batch_packet else True
 
         batch_data: list[bytes] = []
-        for ax25frame in ax25frame_to_send:
+        while self._batch_buffer:
+            ax25frame = self._batch_buffer.pop(0)
             # Batch zu klein. Sende Frames einzeln
             if not send_as_batch:
                 self._encode_remote_mon_frame(ax25frame)
