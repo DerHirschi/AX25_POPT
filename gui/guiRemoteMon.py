@@ -5,7 +5,7 @@ from tkinter import ttk
 
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
-from ax25.prp_remote import PRP_RM_RESP_START, PRP_RM_RESP_STOP
+from ax25.prp_remote import PRP_RM_RESP_START, PRP_RM_RESP_STOP, PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, tk_filter_bad_chars
@@ -204,24 +204,38 @@ class RemMonGUITab(ttk.Frame):
             command=lambda: self._cmd_start_rem_mon(),
             state='disabled'
         )
+        self._login_btn = ttk.Button(
+            btn_f1,
+            text="Login",
+            command=lambda: self._cmd_login(),
+            #state='disabled'
+        )
         self._start_btn.pack( side='left', padx=15)
         self._update_btn.pack(side='left', padx=15)
+        self._login_btn.pack( side='left', padx=15)
 
         # f2
         self._stop_btn = ttk.Button(
-            button_f,
+            btn_f2,
             text="Stop",
             command=lambda : self._cmd_stop_rem_mon(),
             state='disabled'
         )
         self._disco_btn = ttk.Button(
-            button_f,
+            btn_f2,
             text="Disconnect",
             command=lambda: self._cmd_disco(),
             state='disabled'
         )
+        self._logout_btn = ttk.Button(
+            btn_f2,
+            text="Logout",
+            command=lambda: self._cmd_logout(),
+            state='disabled'
+        )
         self._stop_btn.pack(  side='left', padx=15)
         self._disco_btn.pack( side='left', padx=15)
+        self._logout_btn.pack(side='left', padx=15)
 
     def _init_mon_ctl_frame(self, frame: ttk.Frame):
         ############################
@@ -405,6 +419,18 @@ class RemMonGUITab(ttk.Frame):
         if hasattr(remote_mon, 'cmd_disco'):
             remote_mon.cmd_disco()
             self._change_btn_states()
+
+    def _cmd_login(self):
+        remote_mon = self._get_remote_mon()
+        if hasattr(remote_mon, 'cmd_login_request'):
+            remote_mon.cmd_login_request('test1234') # TODO
+            self._change_btn_states('cmd_login')
+
+    def _cmd_logout(self):
+        remote_mon = self._get_remote_mon()
+        if hasattr(remote_mon, 'cmd_logout'):
+            remote_mon.cmd_logout()
+            self._change_btn_states('cmd_login')
     #######################################
     # Update Date
     def update_rem_mon(self, rem_mon_pack: dict):
@@ -551,6 +577,18 @@ class RemMonGUITab(ttk.Frame):
         if opt == 'cmd_send':
             """ Disables all Btn's till response """
             pass
+        elif opt == 'cmd_login':
+            self._login_btn.configure(state='disabled')
+            self._logout_btn.configure(state='disabled')
+            return
+        elif opt == PRP_RM_RESP_LOGIN:
+            self._login_btn.configure(state='disabled')
+            self._logout_btn.configure(state='normal')
+            return
+        elif opt == PRP_RM_RESP_LOGOUT:
+            self._login_btn.configure(state='normal')
+            self._logout_btn.configure(state='disabled')
+            return
         elif opt == 'connected':
             """ Connected """
             start_btn_state = 'normal'

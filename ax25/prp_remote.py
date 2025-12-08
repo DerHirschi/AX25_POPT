@@ -15,11 +15,11 @@ Version 1.1  –  Dezember 2025
 +--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
    0         1        2        3         4             5 ...  5+L-1      L+5    L+6
 
-  • FLAG-Sequenz      = immer 0x8D 0x81        - 2 Bytes
-  • OPTBYTE           = siehe Abschnitt 2      - 1 Byte
-  • LEN               = Länge des PAYLOADs     - 2 Bytes
+  • FLAG-Sequenz      = immer 0x8D 0x81              - 2 Bytes
+  • OPTBYTE           = siehe Abschnitt 2            - 1 Byte
+  • LEN               = Länge des PAYLOADs(Escaped)  - 2 Bytes
   • PAYLOAD           = escaped, ggf. vorher LZHUF-komprimiert
-  • CRC               = CRC16                  - 2 Bytes
+  • CRC               = CRC16                        - 2 Bytes
 
 CRC16-CCITT: Polynomial 0x1021, Init 0xFFFF, Final-XOR 0x0000 (KISS-Standard)
 
@@ -72,9 +72,12 @@ Beispiel (16:47:08):
 
 OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
 -------+--------------------+---------------------+------------------------
- 20    | Remote-Mon START   | ACK START           | siehe 5.1
+ 20    | Remote-Mon START   | ACK START           | "port:incl:excl" (UTF-8) / leer (siehe 5.1)
  21    | Remote-Mon STOP    | ACK STOP            | leer
  22    | Disconnect         | (kein ACK)          | leer
+ 23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
+ 24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
+ 25    | Logout             | ACK Logout          | leer
 
 5.1 START-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
 
@@ -98,40 +101,47 @@ Beispiele:
 7. Komplettes Beispiel (Monitor-Frame, Port 13, TX, nicht komprimiert)
 ══════════════════════════════════════════════════════════════════════════
 
-Angenommenes Payload nach Escaping: 26 Byte
-z. B. Zeit 16:47:08 + kurzes AX.25-Frame → escaped Payload = 26 Byte
-
+Payload nach Escaping: 26 Byte
 Gesendet wird (Hex):
 
-8D 81 6D 1A 00 16 47 08 A0 84 ... (26 Byte Payload) ... A7 3F
+8D 81 6D 1A 00 16 47 08 A0 84 ... (26 Byte escaped Payload) ... A7 3F
 
 Aufschlüsselung:
 8D 81     → Flag
-6D        → OPTBYTE = 0b01101101 → Port 13, TX=1, komprimiert=0
-1A 00     → Länge = 26 Byte Payload (nach Un-Escaping)
+6D        → OPTBYTE = 0b01101101 → Port 13, TX=1, F2=0
+1A 00     → LEN = 26 (little-endian, = 0x001A)
 16 47 08  → BCD-Zeit 16:47:08
-...       → Rest des AX25-Frames
-A7 3F     → CRC16-CCITT über alles ab Byte 2 (OPTBYTE) bis letztes Payload-Byte
-            (in diesem Beispiel: CRC = 0x3FA7)
+...       → escaped AX.25-Frame
+A7 3F     → CRC16 über Bytes 2 bis 30 (OPTBYTE bis letztes Payload-Byte)
 
 ══════════════════════════════════════════════════════════════════════════
 8. Zusammenfassungstabelle
 ══════════════════════════════════════════════════════════════════════════
 
 ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
------------+----------------------------+----------------------------------------
+-----------+----------------------------+---------------------------------
  0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
+ --        | -------------------------- | --------------------------------
  20        | Remote-Mon START           | "port:incl:excl" (nur bei CMD)
  20        | ACK START                  | leer
  21        | Remote-Mon STOP            | leer
  21        | ACK STOP                   | leer
  22        | Disconnect                 | leer
+ --        | -------------------------- | --------------------------------
+ 23        | Login Request              | leer
+ 23        | ACK Login Request          | 6-Byte Nonce
+ 24        | Login Response             | SHA256(pw_hash+nonce)
+ 24        | ACK Login Response         | b'OK or b'FAIL'
+ 25        | Logout                     | leer
+ 25        | ACK Logout                 | leer
 
 ══════════════════════════════════════════════════════════════════════════
 Ende der Spezifikation
 ══════════════════════════════════════════════════════════════════════════
 """
 import datetime
+import hashlib
+import os
 
 from ax25.ax25Error import AX25DecodingERROR
 from cfg.default_config import getNew_remote_mon_cfg
@@ -142,12 +152,12 @@ from fnc.lzhuf import LZHUF_Comp
 from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from fnc.str_fnc import version_tuple
 
-##################################################
+####################################################################################
 PRP_SW_RESTR  = 'PoPTNode'  # Software restriction
 PRP_VER_RESTR = '2.123.7'   # Version restriction
-##################################################
+####################################################################################
 PRP_FLAG = b'\x8D\x81'      # PRP Flag
-##################################################
+####################################################################################
 # ESC & END Flags
 PRP_FEND  = b'\x8D'
 PRP_FESC  = b'\x8F'
@@ -156,15 +166,23 @@ PRP_TFESC = b'\x9B'
 
 PRP_FESC_TFEND = b''.join([PRP_FESC, PRP_TFEND])    # "FEND is sent as FESC, TFEND"  /  0x8D is sent as 0x8F 0x92
 PRP_FESC_TFESC = b''.join([PRP_FESC, PRP_TFESC])    # "FESC is sent as FESC, TFESC"  /  0x8F is sent as 0x8F 0x9B
-##################################################
+####################################################################################
 # OPT-ID ≥ 20
-PRP_OPT_RM_START    = 20 # Remote Monitor Start/Update
-PRP_OPT_RM_STOP     = 21 # Remote Monitor Stop
-PRP_OPT_DISCO       = 22 # Connection (soft)Disco
-##################################################
+PRP_OPT_RM_START        = 20 # Remote Monitor Start/Update
+PRP_OPT_RM_STOP         = 21 # Remote Monitor Stop
+PRP_OPT_DISCO           = 22 # Connection (soft)Disco
+PRP_OPT_LOGIN_REQ       = 23 # Login Request
+PRP_OPT_LOGIN_RESP      = 24 # Login Response
+PRP_OPT_LOGOUT          = 25 # Logout
+####################################################################################
 # Response (GUI Handling)
 PRP_RM_RESP_START   = 'rsp_start'   # Remote Monitor Start/Update
 PRP_RM_RESP_STOP    = 'rsp_stop'    # Remote Monitor Stop
+PRP_RM_RESP_LOGIN   = 'rsp_login'   # Remote Login OK
+PRP_RM_RESP_LOGOUT  = 'rsp_logout'  # Remote Login FAILED | Logout
+####################################################################################
+DBUG_PW = 'test1234'
+
 
 def pack_6bit_int_and_bool(value: int, flag1: bool = False, flag2: bool = False):
     """
@@ -190,7 +208,6 @@ def pack_6bit_int_and_bool(value: int, flag1: bool = False, flag2: bool = False)
 
     return bytes([byte_value])
 
-
 def unpack_6bit_int_and_bool(data):
     """
     by Grok-AI
@@ -208,7 +225,6 @@ def unpack_6bit_int_and_bool(data):
 
     return value, flag1, flag2
 
-
 def pack_time_hms(datetime_now):
     """
     by Grok-AI
@@ -225,7 +241,6 @@ def pack_time_hms(datetime_now):
         (mm // 10 << 4) | (mm % 10),  # Minute  00–59 → 0x00–0x59
         (ss // 10 << 4) | (ss % 10),  # Sekunde 00–59 → 0x00–0x59
     ])
-
 
 def unpack_time_hms_to_datetime(data: bytes):
     """
@@ -252,10 +267,14 @@ class PRPremote:
         # States
         self._remote_states = dict(
             gui_rem_mon=False,
+            login_ok=False,
         )
-        # Debugging
-        self._tx_seq = 0
-        self._rx_seq = 0
+        # Login
+        self._login_nonce   = None
+        #self._password      = None
+        self._password_hash = None  # sha256(password)
+        self._is_login_ok   = lambda : self._remote_states.get('login_ok', False)
+        self._set_login_ok  = lambda is_ok: self._remote_states.update({'login_ok': is_ok})
 
     #######################################
     # PRP ENC/DEC
@@ -290,6 +309,7 @@ class PRPremote:
         # length = data[3:5] # little
         payload  = data[5:-2]
         checksum = data[-2:]
+        ################################################################
         # Checking Checksum
         crc16    = crc16_ccitt(data[2:-2])
         if crc16 != checksum:
@@ -300,15 +320,17 @@ class PRPremote:
             logger.error(f"PRP:   ORG: {data}")
             logger.error(f"PRP:   HEX: {bytearray2hexstr(data)}")
             raise EncodingWarning
+        ################################################################
         # Unescaping
         payload = payload.replace(PRP_FESC_TFEND, PRP_FEND)
         payload = payload.replace(PRP_FESC_TFESC, PRP_FESC)
-        # Decoding
+        ################################################################
+        # Decoding OPT Byte
         opt_id, tx, is_compressed = unpack_6bit_int_and_bool(opt_byte)
         if is_compressed:
-            lzhuf = LZHUF_Comp()
+            lzhuf   = LZHUF_Comp()
             payload = lzhuf.decode(payload)
-
+        ################################################################
         # 0 - 19 = Port ID
         if opt_id in range(20):
             try:
@@ -322,28 +344,54 @@ class PRPremote:
                 logger.warning(f'Remote Monitor: ax25_frame hex {bytearray2hexstr(payload)}')
                 logger.warning("-------------------------------------------------------------------")
                 return None
+        ################################################################
         # 20 - 63 = CMD'S
-        # TX = Send CMD(True) / ACK CMD(False) /
+        # TX = Send CMD(True) / Response CMD(False) /
+        """ Remote Monitor Start """
         if opt_id == PRP_OPT_RM_START:
-            """ Remote Monitor Start """
             if tx:
                 self._rx_cmd_gui_remote_mon(payload)
             else:
                 self._rx_resp_cmd_start_gui_remote_mon()
             return None
+
+        """ Remote Monitor Stop """
         if opt_id == PRP_OPT_RM_STOP:
-            """ Remote Monitor Stop """
             if tx:
                 self._rx_cmd_stop_gui_remote_mon()
             else:
                 self._rx_resp_cmd_stop_gui_remote_mon()
             return None
+
+        """ Disconnect """
         if opt_id == PRP_OPT_DISCO:
-            """ Disconnect """
             if tx:
                 self._rx_cmd_disco()
             return None
 
+        """ Login Request """
+        if opt_id == PRP_OPT_LOGIN_REQ:
+            if tx:
+                self._rx_cmd_login_request()
+            else:
+                self._rx_cmd_login_challenge(payload)
+            return None
+
+        """ Login Response """
+        if opt_id == PRP_OPT_LOGIN_RESP:
+            if tx:
+                self._rx_cmd_login_response(payload)
+            else:
+                self._rx_cmd_login_ack(payload)
+            return None
+
+        """ Logout"""
+        if opt_id == PRP_OPT_LOGOUT:
+            if tx:
+                self._rx_cmd_logout()
+            else:
+                self._rx_cmd_logout_response()
+            return None
         return None
 
     #############################################
@@ -606,6 +654,95 @@ class PRPremote:
     def _rx_cmd_disco(self):
         """ RX Start Disco CMD """
         self._connection.conn_disco()
+
+    # =============================
+    # ====== Login Stuff
+    def cmd_login_request(self, password: str):
+        """Client fordert Login-Challenge an"""
+        if not self._check_version():
+            return
+        # TODO Password fm DB or GUI
+        self._password_hash = hashlib.sha256(DBUG_PW.encode()).digest()
+        self._prp_tx(PRP_OPT_LOGIN_REQ, tx_flag=True, data=b'', prio=True)
+
+    def _rx_cmd_login_request(self):
+        """Client fordert Login-Challenge an"""
+        nonce = os.urandom(16)
+        self._login_nonce = nonce
+        self._prp_tx(PRP_OPT_LOGIN_REQ, tx_flag=False, data=nonce, prio=True)
+
+    def _rx_cmd_login_challenge(self, payload):
+        """Client erhält Nonce vom Server"""
+        self._login_nonce = payload
+        print("LOGIN Challenge erhalten.")
+        self._cmd_login_send_response()
+
+    def _cmd_login_send_response(self):
+        if not self._login_nonce:
+            print("Keine Challenge empfangen!")
+            return
+
+        h = hashlib.sha256(self._password_hash + self._login_nonce).digest()
+        self._prp_tx(PRP_OPT_LOGIN_RESP, tx_flag=True, data=h, prio=True)
+
+    def _rx_cmd_login_response(self, payload):
+        """Server prüft kryptografische Antwort"""
+        # TODO password_hash fm userdb
+        password = DBUG_PW
+        password_hash = hashlib.sha256(password.encode()).digest()
+
+        if not self._login_nonce or not password_hash:
+            self._send_login_ack(False)
+            return
+
+        expected = hashlib.sha256(password_hash + self._login_nonce).digest()
+
+        if expected == payload:
+            print('Login accepted !')
+            self._set_login_ok(True)
+            self._send_login_ack(True)
+        else:
+            print('Login failed !')
+            self._set_login_ok(False)
+            self._send_login_ack(False)
+
+        self._login_nonce   = None
+        self._password_hash = None
+
+    def _send_login_ack(self, ok: bool):
+        data = b"OK" if ok else b"FAIL"
+        self._prp_tx(PRP_OPT_LOGIN_RESP, tx_flag=False, data=data, prio=True)
+
+    def _rx_cmd_login_ack(self, payload):
+        answer = payload.decode("ascii", "ignore")
+        if answer == "OK":
+            self._set_login_ok(True)
+            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGIN, self._connection.uid)
+            print("LOGIN erfolgreich!")
+        else:
+            self._set_login_ok(False)
+            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
+            print("LOGIN fehlgeschlagen!")
+
+    # =============================
+    # ====== Logout Stuff
+    def cmd_logout(self):
+        """ Client sendet Logout """
+        if not self._check_version():
+            return
+        self._prp_tx(PRP_OPT_LOGOUT, tx_flag=True, data=b'', prio=True)
+
+    def _rx_cmd_logout(self):
+        """ Server bestätigt Logout """
+        print('Received Logout CMD')
+        self._set_login_ok(False)
+        self._prp_tx(PRP_OPT_LOGOUT, tx_flag=False, data=b'', prio=True)
+
+    def _rx_cmd_logout_response(self):
+        """ Client empfängt Logout bestätigung """
+        print("LOGOUT erfolgreich!")
+        self._set_login_ok(False)
+        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
 
     ##############################################
     # CTL Local
