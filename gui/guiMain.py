@@ -2952,7 +2952,7 @@ class PoPT_GUI_Main:
         if hasattr(self.remote_mon_win, 'rem_mon_response'):
             self.remote_mon_win.rem_mon_response(resp, remote_uid)
 
-    def remote_monitor_update(self, ax25pack: dict, remote_uid: str):
+    def remote_monitor_update_gui(self, ax25pack: dict, remote_uid: str):
         self._add_tasker_q("_remote_monitor_update_task", (ax25pack, remote_uid), prio=False)
 
     def _remote_monitor_update_task(self, rem_mon_ax25conf: dict, remote_uid: str):

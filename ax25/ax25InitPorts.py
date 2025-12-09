@@ -956,14 +956,14 @@ class AX25PortHandler(object):
         self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
         for conn_id, conn in self.get_all_connections().items():
             for ax25frame_conf in data:
-                conn.remote_monitor_update(ax25frame_conf)
+                conn.remote_monitor_update_tx(ax25frame_conf)
 
     def handle_remote_monitor_rx(self, ax25pack: dict, remote_uid: str):
         """ Called fm RemoteMonitor._remote_mon_rx_process """
-        if not hasattr(self._gui, 'remote_monitor_update'):
+        if not hasattr(self._gui, 'remote_monitor_update_gui'):
             logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
             return
-        self._gui.remote_monitor_update(ax25pack, remote_uid)
+        self._gui.remote_monitor_update_gui(ax25pack, remote_uid)
 
     def handle_remote_monitor_response(self, resp: str, remote_uid: str):
         """ Called fm RemoteMonitor """

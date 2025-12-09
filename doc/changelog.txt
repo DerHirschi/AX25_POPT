@@ -21,6 +21,9 @@ Neue Implementierungen / Funktionen:
   - Batch Mode (mehrere unkomprimierte PRP-Frames werden gesammelt und
     zusammengefasst zu einem, komprimierten PRP-Batch-Paket.
     (erhöht die Effizienz beim Komprimieren))
+  - CLI-ESC Mode: Daten die mit PRP gesendet wurden können an den
+    normalen Datenstrom(QSO) weitergereicht werden.
+    Ermöglicht das Senden/Empfangen mit Datenkompression.
 - Remote Monitor (nutzt das PoPT-Remote-Protokoll).
   Überträgt Monitordaten von entfernter PoPT-Node und stellt
   sie aufbereitet in der HostGUI da. (Ähnlich wie die Monitorausgabe

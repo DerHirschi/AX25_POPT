@@ -439,21 +439,22 @@ class RemMonGUITab(ttk.Frame):
 
     def _update_mon_txt(self, rem_mon_pack: dict):
         end_idx = self._mon_txt.index('end-1c')  # Cache Index
-        self._mon_txt.configure(state="normal")
-        mon_conf = {
-            "distance": False,
-            "port_name": 'REM',
-            "aprs_dec": bool(self._mon_dec_aprs_var.get()),
-            "nr_dec":   bool(self._mon_dec_nr_var.get()),
-            "hex_out":  bool(self._mon_dec_hex_var.get()),
-            "decoding": str(self._setting_mon_encoding.get()),
-        }
         # Get Data fm packet
-        tx = rem_mon_pack.get('tx', False)
+        tx      = rem_mon_pack.get('tx', False)
+        port_id = rem_mon_pack.get('port', 0)
+        mon_conf = {
+            "distance":  False,
+            "port_name": f'P:{port_id}',
+            "aprs_dec":  bool(self._mon_dec_aprs_var.get()),
+            "nr_dec":    bool(self._mon_dec_nr_var.get()),
+            "hex_out":   bool(self._mon_dec_hex_var.get()),
+            "decoding":  str(self._setting_mon_encoding.get()),
+        }
         # Get fancy Monitor Output
         mon_str  = monitor_frame_inp(rem_mon_pack, mon_conf)
         mon_text = tk_filter_bad_chars(mon_str)
         # Insert
+        self._mon_txt.configure(state="normal")
         self._mon_txt.insert(tk.END, mon_text)
         # Add Tag
         tag = 'TX' if tx else 'RX'
@@ -687,11 +688,11 @@ class RemoteMonitorGUI(tk.Toplevel):
             self._tabctl.add(tab, text=label_txt)
             self._tab_list[remote_uid] = tab
         else:
-            try:
-                self._tab_list[remote_uid].update_rem_mon(rem_mon_ax25conf)
-            except Exception as ex:
-                logger.error("Remote Mon > rem_mon_update")
-                logger.error(ex)
+            #try:
+            self._tab_list[remote_uid].update_rem_mon(rem_mon_ax25conf)
+            #except Exception as ex:
+            #    logger.error("Remote Mon > rem_mon_update")
+            #    logger.error(ex)
 
     def rem_mon_response(self, response: str, remote_uid: str):
         try:

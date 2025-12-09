@@ -157,22 +157,31 @@ class AX25Conn:
         self.ch_index: int = 0
         self._my_locator = POPT_CFG.get_guiCFG_locator()
         """ Station CFG Parameter """
-        self._stat_cfg = {}
+        self._stat_cfg      = {}
         self._my_call_alias = ''
         self._to_call_alias = ''
-        """ IO Buffer Packet For Handling """
+        """ IO Buffer AX25 Packet Handling """
         self.tx_buf_ctl   = []     # Buffer for CTL (S) Frame to send on next Cycle
         self.tx_buf_2send = []     # Buffer for Sending. Will be processed in ax25PortHandler
         self.tx_buf_unACK = {}     # Buffer for UNACK I-Frames
         self.rx_buf_last_data = bytearray()     # Buffers for last Frame
+        """ TX Buffer for PRP """
+        self._tx_buf_prp_lock                = False        # Thread locking
+        self._tx_buf_prp_prio_lock           = False        # Thread locking
+        self._tx_buf_prp_Q: list[bytes]      = []           # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_prio_Q: list[bytes] = []           # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_Rest                = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
         """ IO Buffer For GUI / CLI """
-        self._tx_buf_prio_lock = False          # Thread locking
-        self._tx_buf_prio_Q: list[bytes] = []   # Buffer Prio Data (Remote Protocol)
-        self._tx_buf_prio_Rest = bytearray()    # Buffer Prio-Frame Rest Data (Remote Protocol)
         self._tx_buf_lock      = False          # Threading TX-Buffer lock
         self.tx_buf_rawData    = bytearray()    # Buffer for TX RAW Data that is not packed yet into a Frame
-        self.rx_buf_rawData    = bytearray()    # Buffer RX QSO for AutoConnTask
-        self.rx_tx_buf_guiData = []         # Buffer for GUI QSO Window ('TX', data), ('RX', data)
+
+        self._is_tx_buffer     = lambda : (self._tx_buf_prp_Rest   or
+                                           self._tx_buf_prp_prio_Q or
+                                           self._tx_buf_prp_Q      or
+                                           self.tx_buf_rawData)
+        # RX
+        self.rx_buf_rawData    = bytearray()  # Buffer RX QSO for AutoConnTask
+        self.rx_tx_buf_guiData = []           # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
         self.LINK_rx_buff       = bytearray()
@@ -376,20 +385,28 @@ class AX25Conn:
 
     ###################################################################
     # TX / RX Handling
+    # ========= Thread Locks
     def _wait_tx_buf_lock(self, fnc_f_log='--'):
         while self._tx_buf_lock:
             logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
             time.sleep(0.02)
         self._tx_buf_lock = True
 
-
-    def _wait_tx_buf_prio_lock(self, fnc_f_log='--'):
-        while self._tx_buf_prio_lock:
+    def _wait_tx_buf_prp_lock(self, fnc_f_log='--'):
+        while self._tx_buf_prp_lock:
             logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
             time.sleep(0.02)
-        self._tx_buf_prio_lock = True
+        self._tx_buf_prp_lock = True
 
+    def _wait_tx_buf_prp_prio_lock(self, fnc_f_log='--'):
+        while self._tx_buf_prp_prio_lock:
+            logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
+            time.sleep(0.02)
+        self._tx_buf_prp_prio_lock = True
+
+    # ========= TX
     def send_data(self, data, gui_echo=True, file_trans=False):
+        """ Normale Daten von CLI oder GUI """
         if self._await_disco:
             return False
         if self.ft_obj is not None and not file_trans:
@@ -400,6 +417,12 @@ class AX25Conn:
             logger.error(f"Incorrect Datatype: data({type(data)}) should be bytes or bytearray")
             return False
         self._link_holder_reset()
+        # Send via PRP System
+        if self._prp_remote.prp_tx_esc_cli(data):
+            if gui_echo:
+                self._send_gui_QSObuf_tx(data)
+            return True
+        # Thread Lock
         self._wait_tx_buf_lock('send_data')
         self.tx_buf_rawData += data
         self._tx_buf_lock = False
@@ -408,6 +431,7 @@ class AX25Conn:
         return True
 
     def send_remote_data(self, data, prio=False):
+        """ PRP-Frames vom PRP Encoder """
         if self._await_disco:
             return False
         if self.ft_obj is not None:
@@ -420,15 +444,58 @@ class AX25Conn:
         self._link_holder_reset()
         # Thread Lock
         if prio:
-            self._wait_tx_buf_prio_lock('send_remote_data')
-            self._tx_buf_prio_Q = [data] + self._tx_buf_prio_Q
-            self._tx_buf_prio_lock     = False
+            self._wait_tx_buf_prp_prio_lock('send_remote_data')
+            self._tx_buf_prp_prio_Q.append(data)
+            self._tx_buf_prp_prio_lock = False
         else:
-            self._wait_tx_buf_prio_lock('send_remote_data')
-            self._tx_buf_prio_Q.append(data)
-            self._tx_buf_prio_lock     = False
+            self._wait_tx_buf_prp_lock('send_remote_data')
+            self._tx_buf_prp_Q.append(data)
+            self._tx_buf_prp_lock     = False
         return True
 
+    def _get_payload_fm_tx_buffer(self):
+        """ TX-Buffer / PRP-Buffer / PRP-Prio-Buffer """
+        ######################################
+        # PAYLOAD !!                         #
+        data, data_len = bytearray(), 0      #
+        ######################################
+        # PRP Rest  (Remote Protocol)        #
+        if self._tx_buf_prp_Rest:            #
+            data += self._tx_buf_prp_Rest[:self.parm_PacLen]
+            data_len              = len(data)
+            self._tx_buf_prp_Rest = self._tx_buf_prp_Rest[data_len:]
+        #############################################
+        # PRP Prio (Remote Protocol)                #---#
+        while self._tx_buf_prp_prio_Q and data_len < self.parm_PacLen:
+            self._wait_tx_buf_prp_prio_lock('_send_I')  # Thread lock
+            prp_pack = self._tx_buf_prp_prio_Q.pop(0)   # Get next PRP Packet fm prio Q
+            self._tx_buf_prp_prio_lock = False          # Thread lock
+            pac_len               = int(self.parm_PacLen) - data_len
+            data                 += prp_pack[:pac_len]  #
+            data_len              = len(data)           #
+            self._tx_buf_prp_Rest = prp_pack[pac_len:]  #
+        #################################################
+        # PRP (Remote Protocol)                         #
+        while self._tx_buf_prp_Q and data_len < self.parm_PacLen:
+            self._wait_tx_buf_prp_lock('_send_I')       # Thread lock
+            prp_pack = self._tx_buf_prp_Q.pop(0)        # Get next PRP Packet fm Q
+            self._tx_buf_prp_lock = False               # Thread lock
+            pac_len               = int(self.parm_PacLen) - data_len
+            data                 += prp_pack[:pac_len]  #
+            data_len              = len(data)           #
+            self._tx_buf_prp_Rest = prp_pack[pac_len:]  #
+        #################################################
+        # Normal TX Buffer                              #
+        if self.tx_buf_rawData and data_len < self.parm_PacLen:
+            pac_len = int(self.parm_PacLen) - data_len  #
+            self._wait_tx_buf_lock('_send_I')           # Thread lock
+            data               += self.tx_buf_rawData[:pac_len]
+            self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
+            self._tx_buf_lock   = False       #---------# Thread lock
+        #######################################
+        return data
+
+    # ========= RX
     def handle_rx(self, ax25_frame):
         """
         self.zustand_exec.state_rx_handle >
@@ -439,6 +506,18 @@ class AX25Conn:
         self._nr = int(ax25_frame.ctl_byte.nr)
         self.zustand_exec.state_rx_handle(ax25_frame=ax25_frame)
         self.set_T3()
+
+    def prozess_I_frame(self):
+        self.set_T2()
+        ns = self.zustand_exec.ns
+        if ns == self.vr:
+            self.vr = count_modulo(self.vr)
+            self._recv_data(bytes(self.zustand_exec.frame.payload))
+            self.delUNACK()  # ACKs verarbeiten
+            return True
+        else:
+            # Duplikat oder außerhalb Fenster → stillschweigend ignorieren
+            return False
 
     def _recv_data(self, data: bytes):
         """ Called fm self.prozess_I_frame() """
@@ -475,6 +554,107 @@ class AX25Conn:
         """ CLI """
         self.exec_cli(data)
         return
+
+    #############################
+    # I/O Buffer Helper
+    def clear_tx_buff_prp(self):
+        self._wait_tx_buf_prp_lock('clear_tx_buff_prp')
+        self._tx_buf_prp_Q: list[bytes] = []
+        self._tx_buf_prp_lock = False
+
+    def clear_tx_buff(self):
+        self._wait_tx_buf_lock('clear_tx_buff')
+        self.tx_buf_rawData = bytearray()
+        self._tx_buf_lock   = False
+        #self._tx_buf_prio_Rest = bytearray()
+        #self._tx_buf_prio_Q: list[bytes] = []
+
+    #############################
+    # AX25 Frame Buffer Handling
+    def delUNACK(self):
+        if ((self.zustand_exec.nr - 1) % 8) in self.tx_buf_unACK.keys():
+            self._del_unACK_buf()
+            if not self.tx_buf_unACK:
+                if not self._is_resented:
+                    self._set_autoMaxFrameScore(True)
+                self._is_resented = False
+                self.set_T1(stop=True)
+                self.set_T2(stop=True)
+                return True
+            self.set_T1()
+        return False
+
+    def _del_unACK_buf(self):
+        if self._nr == -1:  # Check if right Packet
+            return
+        for i in list(self.tx_buf_unACK.keys()):
+            if i == self._nr:
+                break
+            del self.tx_buf_unACK[i]
+            # RTT
+            self.RTT_Timer.rtt_rx(i)
+
+    def resend_unACK_buf(self, max_pac=None):
+        if not self.tx_buf_unACK:
+            return
+
+        if max_pac is None:
+            max_pac = self.parm_MaxFrame
+
+        index_list = list(self.tx_buf_unACK.keys())
+        for i in range(min(max_pac, len(index_list))):
+            pac = self.tx_buf_unACK[index_list[i]]
+            pac.ctl_byte.nr = self.vr
+            self.tx_buf_2send.append(pac)
+
+        self.set_T1()
+        # Auto Max-Frame
+        self._set_autoMaxFrameScore(False)
+        self._is_resented = True
+
+    #############################
+    # GUI I/O
+    def _send_gui_QSObuf_tx(self, data):
+        """ to QSO """
+        if self.ft_obj:
+            return
+        if self.pipe:
+            return
+        self.rx_tx_buf_guiData.append(
+            ('TX', data)
+        )
+
+    def _send_gui_QSObuf_rx(self, data):
+        """ to QSO """
+        if self.ft_obj:
+            return
+        if self.pipe:
+            return
+        self.rx_tx_buf_guiData.append(
+            ('RX', data)
+        )
+
+    def _send_gui_QSObuf_sysMsg(self, data):
+        """ to QSO """
+        self.rx_tx_buf_guiData.append(
+            ('SYS', data)
+        )
+
+    def send_sys_Msg_to_gui(self, data):
+        """ to QSO """
+        if not data:
+            return
+        if type(data) != list:
+            data = [data]
+        for msg in data:
+            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {msg}")
+            #gui = self._port_handler.get_gui()
+            #if not hasattr(gui, 'sysMsg_to_qso'):
+            #    return
+            # gui.sysMsg_to_qso(data, self.ch_index)
+            self._send_gui_QSObuf_sysMsg(msg)
 
     #############################
     # Crone
@@ -559,7 +739,7 @@ class AX25Conn:
         return self._prp_remote.prp_rx(data)
 
     # PRP - Remote Monitor - PoPT Remote Protocol (PRP)
-    def remote_monitor_update(self, ax25frame_conf: dict):
+    def remote_monitor_update_tx(self, ax25frame_conf: dict):
         """ Called fm port_handler.update_monitor() """
         self._prp_remote.remote_monitor_update(ax25frame_conf)
 
@@ -1004,14 +1184,6 @@ class AX25Conn:
 
     ######################################################################
     # Timer usw
-    def set_T2auto(self, t2_auto=True):
-        self._port_cfg['parm_T2_auto'] = bool(t2_auto)
-        self.calc_irtt()
-
-    def set_T2var(self, t2: int):
-        self._port_cfg['parm_T2'] = min(max(int(t2), 10), 5000)
-        self.calc_irtt()
-
     def set_RNR(self):
         if not self.is_RNR:
             self.send_RNR()
@@ -1048,114 +1220,14 @@ class AX25Conn:
             if new_state:
                 self.zustand_exec.change_state(new_state)
 
-    def _send_gui_QSObuf_tx(self, data):
-        if self.ft_obj:
-            return
-        if self.pipe:
-            return
-        self.rx_tx_buf_guiData.append(
-            ('TX', data)
-        )
-
-    def _send_gui_QSObuf_rx(self, data):
-        if self.ft_obj:
-            return
-        if self.pipe:
-            return
-        self.rx_tx_buf_guiData.append(
-            ('RX', data)
-        )
-
-    def _send_gui_QSObuf_sysMsg(self, data):
-        self.rx_tx_buf_guiData.append(
-            ('SYS', data)
-        )
-
-    def _set_dest_call_fm_data_inp(self, raw_data: b''):
-        # TODO AGAIN !!
-        data = self.rx_buf_last_data + raw_data
-        # tmp_raw = bytes(raw_data)
-        if b'\r' not in data:
-            return False
-        data = data.split(b'\r')[:-1]
-        for line in data:
-            # tmp_raw = tmp_raw.replace(line + b'\r', b'')
-            if not any((line.lower().startswith(b'*** connected to '),
-                    line.lower().startswith(b'*** reconnected to '))):
-                continue
-            tmp_line = line.decode('ASCII', 'ignore')
-            tmp_data = tmp_line.split(' to ')[-1]
-            # tmp_data = tmp_data.decode('ASCII', 'ignore')
-            # TODO Conn/reconn fnc
-            if ':' in tmp_data:
-                tmp_call = tmp_data.split(':')
-                self.to_call_str = tmp_call[1].replace(' ', '')
-                self._to_call_alias = tmp_call[0].replace(' ', '')
-            else:
-                self.to_call_str = tmp_data.replace(' ', '')
-                self._to_call_alias = ''
-            self.tx_byte_count  = 0
-            self.rx_byte_count  = 0
-            self.rx_buf_rawData = bytearray()
-            self._set_user_db_ent()
-            #self._set_packet_param()
-            self._reinit_cli()
-            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-            lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
-            LOG_BOOK.info(lb_msg)
-            LOG_BOOK.info(lb_msg_1)
-            gui = self._port_handler.get_gui()
-
-            if hasattr(gui, 'add_LivePath_plot') and hasattr(gui, 'on_channel_status_change'):
-                # TODO
-                speech = ' '.join(self.to_call_str.replace('-', ' '))
-                SOUND.sprech(speech)
-
-                gui.add_LivePath_plot(node=str(self.to_call_str),
-                                            ch_id=int(self.ch_index))
-                gui.on_channel_status_change()
-            # Maybe it's better to look at the whole string (include last frame)?
-            return True
-        return False
-
-    def _get_rtt(self):
-        auto = False  # TODO
+    # ====== Mr.T
+    def set_T2auto(self, t2_auto=True):
+        self._port_cfg['parm_T2_auto'] = bool(t2_auto)
         self.calc_irtt()
-        if auto:
-            return self.RTT_Timer.get_rtt_avrg() * 1000
-        else:
-            return self.IRTT
 
-    def calc_irtt(self):
-        header_len      = 16 + len(self.via_calls) * 7
-        init_t2: float  = (((self.parm_PacLen + header_len) * 8) / self._parm_baud) * 1000
-        #pac_len         = 256
-        #init_t2: float  = (((pac_len + header_len) * 8) / self._parm_baud) * 1000
-        irit = (init_t2 +
-                #self._parm_TXD + # Pseudo TXD
-                (self._parm_Kiss_TXD * 10) +
-                (self._parm_Kiss_Tail * 10)
-                )
-        if self._port_cfg.get('parm_T2_auto', True):
-            self._parm_T2   = float(irit / 1000)
-        else:
-            self._parm_T2   = float(self._port_cfg.get('parm_T2', 2888)) / 1000
-
-        if self.via_calls:
-            hops = (len(self.via_calls) + 1) * 2
-            self.IRTT: float = max((irit * hops), 50)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
-        else:
-            self.IRTT: float = max((irit * 2), 50)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
-
-        # print(f"IRIT    : {self.IRTT}")
-        # print(f"parm_T2 : {self._parm_T2}")
-        """
-        self.IRTT = max(self.IRTT, 10)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
-        self.IRTT       = irit * 2
-        """
-
-        # print('parm_T2: {}'.format(self.parm_T2))
-        # print('IRTT: {}'.format(self.IRTT))
+    def set_T2var(self, t2: int):
+        self._port_cfg['parm_T2'] = min(max(int(t2), 10), 5000)
+        self.calc_irtt()
 
     def set_T1(self, stop=False):
         if stop:
@@ -1196,63 +1268,87 @@ class AX25Conn:
         else:
             self.t3 = float(self._parm_T3 + time.time())
 
-    def prozess_I_frame(self):
-        self.set_T2()
-        ns = self.zustand_exec.ns
-        if ns == self.vr:
-            self.vr = count_modulo(self.vr)
-            self._recv_data(bytes(self.zustand_exec.frame.payload))
-            self.delUNACK()  # ACKs verarbeiten
-            return True
-        #elif (self.vr <= ns < self.vr + self.parm_MaxFrame) % 8:
-        #    # Echtes Loch → REJ
-        #    self.send_REJ(pf_bit=self.zustand_exec.pf)
-        #    self.set_T1()
-        #    self.zustand_exec.change_state(6)
-        #    return False
+    # ====== RTT Calc
+    def _get_rtt(self):
+        auto = False  # TODO
+        self.calc_irtt()
+        if auto:
+            return self.RTT_Timer.get_rtt_avrg() * 1000
         else:
-            # Duplikat oder außerhalb Fenster → stillschweigend ignorieren
-            return False
+            return self.IRTT
 
-    def delUNACK(self):
-        if ((self.zustand_exec.nr - 1) % 8) in self.tx_buf_unACK.keys():
-            self._del_unACK_buf()
-            if not self.tx_buf_unACK:
-                if not self._is_resented:
-                    self._set_autoMaxFrameScore(True)
-                self._is_resented = False
-                self.set_T1(stop=True)
-                self.set_T2(stop=True)
-                return True
-            self.set_T1()
-        return False
+    def calc_irtt(self):
+        header_len      = 16 + len(self.via_calls) * 7
+        init_t2: float  = (((self.parm_PacLen + header_len) * 8) / self._parm_baud) * 1000
+        #pac_len         = 256
+        #init_t2: float  = (((pac_len + header_len) * 8) / self._parm_baud) * 1000
+        irit = (init_t2 +
+                #self._parm_TXD + # Pseudo TXD
+                (self._parm_Kiss_TXD * 10) +
+                (self._parm_Kiss_Tail * 10)
+                )
+        if self._port_cfg.get('parm_T2_auto', True):
+            self._parm_T2   = float(irit / 1000)
+        else:
+            self._parm_T2   = float(self._port_cfg.get('parm_T2', 2888)) / 1000
 
-    def _del_unACK_buf(self):
-        if self._nr == -1:  # Check if right Packet
+        if self.via_calls:
+            hops = (len(self.via_calls) + 1) * 2
+            self.IRTT: float = max((irit * hops), 50)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        else:
+            self.IRTT: float = max((irit * 2), 50)     # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+
+        # print(f"IRIT    : {self.IRTT}")
+        # print(f"parm_T2 : {self._parm_T2}")
+        """
+        self.IRTT = max(self.IRTT, 10)  # TODO seems not right!!!!!!!!!!!!!!!!!!!!
+        self.IRTT       = irit * 2
+        """
+
+        # print('parm_T2: {}'.format(self.parm_T2))
+        # print('IRTT: {}'.format(self.IRTT))
+
+    # ====== Auto Max Frame
+    def _set_autoMaxFrameScore(self, in_decrement: bool):
+        """
+        :param in_decrement: True = increment, False = decrement
+        :return:
+        """
+        if not self.parm_MaxFrameAuto:
             return
-        for i in list(self.tx_buf_unACK.keys()):
-            if i == self._nr:
-                break
-            del self.tx_buf_unACK[i]
-            # RTT
-            self.RTT_Timer.rtt_rx(i)
+        if not self._MaxFrameCFG:
+            self._MaxFrameCFG = int(self.parm_MaxFrame)
+        if in_decrement:
+             self._autoMaxFrameScore += 1
+             #logger.debug(f"autoMaxFrameScore increment: {self._autoMaxFrameScore}")
+        else:
+             self._autoMaxFrameScore -= 1
+             #logger.debug(f"autoMaxFrameScore decrement: {self._autoMaxFrameScore}")
 
-
-    def resend_unACK_buf(self, max_pac=None):
-        if not self.tx_buf_unACK:
+        if self._autoMaxFrameScore < 0:
+            self._autoMaxFrameScore = 0
+            self.parm_MaxFrame = max(1,
+                                     (self.parm_MaxFrame - 1)
+                                     )
+            return
+        if self._autoMaxFrameScore > 1:
+            self._autoMaxFrameScore = 0
+            self.parm_MaxFrame = min(self._MaxFrameCFG,
+                                     (self.parm_MaxFrame + 1)
+                                     )
             return
 
-        if max_pac is None:
-            max_pac = self.parm_MaxFrame
-        index_list = list(self.tx_buf_unACK.keys())
-        for i in range(min(max_pac, len(index_list))):
-            pac = self.tx_buf_unACK[index_list[i]]
-            pac.ctl_byte.nr = self.vr
-            self.tx_buf_2send.append(pac)
-        self.set_T1()
-        self._set_autoMaxFrameScore(False)
-        self._is_resented = True
+    ##################################
+    # Build AX25 Frames
+    # ====== AX25 Max Pac
+    def build_I_fm_raw_buf(self):
+        if self.tx_buf_unACK or not self._is_tx_buffer():
+            return
+        while (len(self.tx_buf_unACK) < self.parm_MaxFrame and
+               self._is_tx_buffer()):
+            self._send_I(False)
 
+    # ====== AX25 Frames
     def _get_new_ax25frame(self):
         return AX25Frame(dict(
             uid=str(self.uid),
@@ -1262,13 +1358,6 @@ class AX25Conn:
             axip_add=tuple(self.axip_add),
             digi_call=str(self.digi_call)
         ))
-
-    def build_I_fm_raw_buf(self):
-        if not (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData) or self.tx_buf_unACK:
-            return
-        while (len(self.tx_buf_unACK) < self.parm_MaxFrame and
-               (self._tx_buf_prio_Q or self._tx_buf_prio_Rest or self.tx_buf_rawData)):
-            self._send_I(False)
 
     def _send_I(self, pf_bit=False):
         """
@@ -1284,35 +1373,15 @@ class AX25Conn:
         new_axFrame.ctl_byte.IcByte()           # Set C-Byte
         new_axFrame.pid_byte.text()             # Set PID-Byte to TEXT
         #####################################################################
-        # PAYLOAD !!                         #
-        data, data_len     = bytearray(), 0  #
-        # Prio Rest  (Remote Protocol)       #
-        if self._tx_buf_prio_Rest:           #
-            data    += self._tx_buf_prio_Rest[:self.parm_PacLen]
-            data_len = len(data)             #
-            self._tx_buf_prio_Rest = self._tx_buf_prio_Rest[data_len:]
-        # Prio (Remote Protocol)             #-------#
-        while self._tx_buf_prio_Q and data_len < self.parm_PacLen:
-            self._wait_tx_buf_prio_lock('_send_I')  # Thread lock
-            prio_pack = self._tx_buf_prio_Q.pop(0)
-            self._tx_buf_prio_lock = False          # Thread lock
-            pac_len                = int(self.parm_PacLen) - data_len
-            data                  += prio_pack[:pac_len]
-            data_len               = len(data)      #
-            self._tx_buf_prio_Rest = prio_pack[pac_len:]
-        # Non Prio Data                              #--#
-        if self.tx_buf_rawData and data_len < self.parm_PacLen:
-            pac_len = int(self.parm_PacLen) - data_len  #
-            self._wait_tx_buf_lock('_send_I')           # Thread lock
-            data               += self.tx_buf_rawData[:pac_len]
-            self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
-            self._tx_buf_lock   = False       #---------# Thread lock
-        # No more Buffer to check             #
-        new_axFrame.payload = bytes(data)     # Put payload into AX25-Frame
-        data_len            = len(data)       # Keep data length for RTT
+        # PAYLOAD !!                            #
+        data = self._get_payload_fm_tx_buffer() # Get Data fm TX-Buffer / PRP-Buffer / PRP-Prio-Buffer
+        #####################################################################
+        # Put Payload into ax25 Frame           #
+        new_axFrame.payload = bytes(data)       # Put payload into AX25-Frame
+        data_len            = len(data)         # Keep data length for RTT
         #####################################################################
         self.tx_buf_unACK[int(self.vs)] = new_axFrame # Keep Packet until ACK/RR
-        self.tx_buf_2send.append(new_axFrame)         #
+        self.tx_buf_2send.append(new_axFrame)         # ax25 Frame Buffer
         #####################################################################
         # RTT                                                       #
         self.RTT_Timer.set_rtt_timer(int(self.vs), int(data_len))   #
@@ -1379,21 +1448,8 @@ class AX25Conn:
         # ??? if not self.REJ_is_set:
         # self.REJ_is_set = True
 
-    def send_sys_Msg_to_gui(self, data):
-        if not data:
-            return
-        if type(data) != list:
-            data = [data]
-        for msg in data:
-            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-            LOG_BOOK.info(lb_msg)
-            LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {msg}")
-            #gui = self._port_handler.get_gui()
-            #if not hasattr(gui, 'sysMsg_to_qso'):
-            #    return
-            # gui.sysMsg_to_qso(data, self.ch_index)
-            self._send_gui_QSObuf_sysMsg(msg)
-
+    ######################################
+    # New Connection Handling
     def accept_connection(self):
         self._set_user_db_ent()
         self._port_handler.accept_new_connection(self)
@@ -1430,36 +1486,53 @@ class AX25Conn:
         is_service = self._is_service_connection()
         self._port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
 
-    ##############################################
-    # Auto Max Frame
-    def _set_autoMaxFrameScore(self, in_decrement: bool):
-        """
-        :param in_decrement: True = increment, False = decrement
-        :return:
-        """
-        if not self.parm_MaxFrameAuto:
-            return
-        if not self._MaxFrameCFG:
-            self._MaxFrameCFG = int(self.parm_MaxFrame)
-        if in_decrement:
-             self._autoMaxFrameScore += 1
-             #logger.debug(f"autoMaxFrameScore increment: {self._autoMaxFrameScore}")
-        else:
-             self._autoMaxFrameScore -= 1
-             #logger.debug(f"autoMaxFrameScore decrement: {self._autoMaxFrameScore}")
+    # ======= Interconnect Lookup
+    def _set_dest_call_fm_data_inp(self, raw_data: b''):
+        # TODO AGAIN !!
+        data = self.rx_buf_last_data + raw_data
+        # tmp_raw = bytes(raw_data)
+        if b'\r' not in data:
+            return False
+        data = data.split(b'\r')[:-1]
+        for line in data:
+            # tmp_raw = tmp_raw.replace(line + b'\r', b'')
+            if not any((line.lower().startswith(b'*** connected to '),
+                    line.lower().startswith(b'*** reconnected to '))):
+                continue
+            tmp_line = line.decode('ASCII', 'ignore')
+            tmp_data = tmp_line.split(' to ')[-1]
+            # tmp_data = tmp_data.decode('ASCII', 'ignore')
+            # TODO Conn/reconn fnc
+            if ':' in tmp_data:
+                tmp_call = tmp_data.split(':')
+                self.to_call_str = tmp_call[1].replace(' ', '')
+                self._to_call_alias = tmp_call[0].replace(' ', '')
+            else:
+                self.to_call_str = tmp_data.replace(' ', '')
+                self._to_call_alias = ''
+            self.tx_byte_count  = 0
+            self.rx_byte_count  = 0
+            self.rx_buf_rawData = bytearray()
+            self._set_user_db_ent()
+            #self._set_packet_param()
+            self._reinit_cli()
+            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+            lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
+            LOG_BOOK.info(lb_msg)
+            LOG_BOOK.info(lb_msg_1)
+            gui = self._port_handler.get_gui()
 
-        if self._autoMaxFrameScore < 0:
-            self._autoMaxFrameScore = 0
-            self.parm_MaxFrame = max(1,
-                                     (self.parm_MaxFrame - 1)
-                                     )
-            return
-        if self._autoMaxFrameScore > 1:
-            self._autoMaxFrameScore = 0
-            self.parm_MaxFrame = min(self._MaxFrameCFG,
-                                     (self.parm_MaxFrame + 1)
-                                     )
-            return
+            if hasattr(gui, 'add_LivePath_plot') and hasattr(gui, 'on_channel_status_change'):
+                # TODO
+                speech = ' '.join(self.to_call_str.replace('-', ' '))
+                SOUND.sprech(speech)
+
+                gui.add_LivePath_plot(node=str(self.to_call_str),
+                                            ch_id=int(self.ch_index))
+                gui.on_channel_status_change()
+            # Maybe it's better to look at the whole string (include last frame)?
+            return True
+        return False
 
     ##############################################
     # Gettaa
@@ -1484,32 +1557,17 @@ class AX25Conn:
     def get_remote_mon(self):
         return self._prp_remote
 
-    def is_remote_empty_tx_buff(self):
-        return bool(self._tx_buf_prio_Q) or bool(self._tx_buf_prio_Rest)
-
-    """
-    def get_remote_prio_q(self):
-        return self._tx_buf_prio_Q
-    """
+    def can_send_next_prp_batch(self):
+        """ Prüfen ob prp-tx-buffer noch voll ist """
+        return (
+                bool(self._tx_buf_prp_Q) or
+                bool(len(self._tx_buf_prp_Rest) > (self.parm_PacLen * self.parm_MaxFrame))
+                )
 
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
 
-    ###################################
-    # I/O Buffers
-    def clear_tx_buff_prio(self):
-        self._wait_tx_buf_prio_lock('clear_tx_buff_prio')
-        self._tx_buf_prio_Q: list[bytes] = []
-        self._tx_buf_prio_lock = False
-
-    def clear_tx_buff(self):
-        self._wait_tx_buf_lock('clear_tx_buff')
-        self.tx_buf_rawData = bytearray()
-        self._tx_buf_lock   = False
-        #self._tx_buf_prio_Rest = bytearray()
-        #self._tx_buf_prio_Q: list[bytes] = []
-
-
+    # ========= I/O Buffers
     def get_tx_buff_len(self):
         return len(self.tx_buf_rawData)
 
@@ -1520,13 +1578,8 @@ class AX25Conn:
         return bytearray(self.tx_buf_rawData)
 
     def is_tx_buff_empty(self):
-        return not any((
-            # self._tx_buf_prio_Q,
-            self._tx_buf_prio_Rest,
-            self.tx_buf_rawData,
-            self.tx_buf_2send,
-            self.tx_buf_unACK,
-        ))
+        return not self.tx_buf_unACK or not self._is_tx_buffer()
+
 
 ###########################################################################
 ###########################################################################

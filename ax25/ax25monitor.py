@@ -93,7 +93,10 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
             elif prp_meta['port_id'] is not None:
                 out_str += f"[PRP-Monitor] port={prp_meta['port_id']} ({'TX' if prp_meta['tx'] else 'RX'}) len={prp_meta['payload_len']}"
             else:
-                out_str += f"[PRP-CTL] opt={prp_meta['opt_id']} tx={int(prp_meta['tx'])} len={prp_meta['payload_len']}"
+
+                ctl_typ  = prp_meta['opt_typ']
+                ctl_typ  = f"({ctl_typ})" if ctl_typ else ""
+                out_str += f"[PRP-CTL]{ctl_typ} opt={prp_meta['opt_id']} tx={int(prp_meta['tx'])} len={prp_meta['payload_len']}"
             if prp_meta['compressed']:
                 out_str += " (compressed)\n"
             else:
@@ -118,7 +121,6 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
         if not rest_data and not hex_out:
             return out_str
         payload = rest_data
-
 
     # ==============================
     # Hex, hex
