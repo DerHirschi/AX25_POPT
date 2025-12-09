@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.14'
+VER = '2.123.15'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -202,6 +202,7 @@ ASCII_A = 65
 ASCII_a = 97
 
 # GUI Stuff
+DEFAULT_BG               = '#121212'   # Sehr dunkles Grau/Schwarz
 DEF_TEXTSIZE             = 13
 FONT                     = "Courier"
 TEXT_SIZE_STATUS         = 10
@@ -214,20 +215,26 @@ PARAM_MAX_MON_LEN        = 100000
 PARAM_MAX_MON_WIDTH      = 100
 PARAM_MAX_MON_TREE_ITEMS = 5000
 MON_SYS_MSG_CLR_FG       = 'red'
-MON_SYS_MSG_CLR_BG       = '#000000'
+MON_SYS_MSG_CLR_BG       = DEFAULT_BG
 CFG_TR_DX_ALARM_BG_CLR   = '#55ed9f'
 GUI_DISABLED_CLR         = '#b1b1b3'
 # Station Default
 DEF_STAT_QSO_TX_COL      = '#ffffff'
 DEF_STAT_QSO_RX_COL      = '#00ff06'
-DEF_STAT_QSO_BG_COL      = '#000000'
+DEF_STAT_QSO_BG_COL      = DEFAULT_BG
 # QSO SysMSG
 DEF_QSO_SYSMSG_FG        = '#fc7126'
-DEF_QSO_SYSMSG_BG        = '#000000'
+DEF_QSO_SYSMSG_BG        = DEFAULT_BG
+# QSO PRP CLI-ESC Status
+CLR_QSO_PRP_STATUS_TX   = '#FF5555'     # Helles Rot
+CLR_QSO_PRP_STATUS_RX   = '#50FA7B'     # Helles Grün
+CLR_QSO_PRP_STATUS_BG   = DEFAULT_BG
+TAG_QSO_PRP_STATUS_TX   = 'PRP-TX'
+TAG_QSO_PRP_STATUS_RX   = 'PRP-RX'
 # Port Default
 DEF_PORT_MON_TX_COL      = 'medium violet red'
 DEF_PORT_MON_RX_COL      = 'green'
-DEF_PORT_MON_BG_COL      = '#000000'
+DEF_PORT_MON_BG_COL      = DEFAULT_BG
 # APRS-MONITOR
 APRS_MAX_TREE_ITEMS     = 10000
 APRS_MAX_BUFFER         = 5000

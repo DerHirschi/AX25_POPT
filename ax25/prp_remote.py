@@ -169,7 +169,7 @@ from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
 from fnc.str_fnc import version_tuple
 
 ####################################################################################
-PRP_SW_RESTR             = 'PoPTNode'  # Software restriction
+PRP_SW_RESTR             = 'PoPT'      # Software restriction
 PRP_VER_RESTR            = '2.123.7'   # Version restriction
 PRP_VER_RESTR_BATCH_MODE = '2.123.9'   # Version restriction
 ####################################################################################
@@ -388,9 +388,13 @@ class PRPremote:
 
         #################################
         # Decoding Resterampe
-        self._rest_buffer    = bytearray()
-        self._next_pack_len  = 0 # Zum Berechnen des der Größe des Restpaketes
-        self.get_rest_len    = lambda : self._next_pack_len - len(self._rest_buffer) # für GUI
+        self._rest_buffer       = bytearray()
+
+        #################################
+        # Status
+        self._next_pack_meta: None | tuple  = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
+        self._last_pack_meta: None | tuple  = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
+        # self.get_rest_len       = lambda : self._next_pack_len[1] - len(self._rest_buffer) # für GUI
 
         #################################
         # Remote Monitor
@@ -424,8 +428,8 @@ class PRPremote:
 
         #################################
         # CLI ESC
-        self._is_cli_esc_mode  = lambda: self._remote_states.get('cli_esc', False)
-        self._set_cli_esc_mode = lambda is_on: self._remote_states.update({'cli_esc': is_on})
+        self._is_cli_esc_mode   = lambda: self._remote_states.get('cli_esc', False)
+        self._set_cli_esc_mode  = lambda is_on: self._remote_states.update({'cli_esc': is_on})
 
     #####################################
     # Tasker (ax25Conn)
@@ -436,21 +440,30 @@ class PRPremote:
 
     #####################################
     # PRP ENC/DEC
-    @staticmethod
-    def _encode_prp_frame(opt_id: int, tx: bool, data: bytes, compress=True):
+    def _encode_prp_frame(self, opt_id: int, tx: bool, data: bytes, compress=True, send_uncompressed=True):
         send_compressed = False
+        data_len        = len(data)
+        comp_data_len   = len(data)
         if data:
             if compress:
                 # LZHUF it
                 lzhuf = LZHUF_Comp()
                 compressed_data = lzhuf.encode(data)
-                if len(compressed_data) < len(data):
+                len_compressed = len(compressed_data)
+                if len_compressed < data_len:
+                    comp_data_len   = len_compressed
                     send_compressed = True
                     data = compressed_data
+            # Wenn nicht zu komprimieren geht und nicht send_uncompressed, nicht senden!
+            # Für CLI-ESC Mode
+            if not send_compressed and not send_uncompressed:
+                return None
             # Escaping
             data = data.replace(PRP_FESC, PRP_FESC_TFESC)
             data = data.replace(PRP_FEND, PRP_FESC_TFEND)
 
+        # Meta Date für Status Msg
+        self._last_pack_meta = data_len, comp_data_len
         # Building Packet
         data_to_send  = bytearray()
         data_to_send += pack_6bit_int_and_bool(value=int(opt_id), flag1=tx, flag2=send_compressed)
@@ -575,11 +588,21 @@ class PRPremote:
 
     #####################################
     # I/O - TX/RX
-    def _prp_tx(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, compress=True):
-        data2send = self._encode_prp_frame(opt_id=opt_id, tx=tx_flag, data=data, compress=compress)
+    def _prp_tx(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, compress=True, send_uncompressed=True):
+        data2send = self._encode_prp_frame(
+            opt_id=opt_id,
+            tx=tx_flag,
+            data=data,
+            compress=compress,
+            send_uncompressed=send_uncompressed
+        )
         if not data2send:
-            return
+            # Lösche Meta Daten für Status Meldungen
+            self._last_pack_meta = None
+            return False
+        # An AX25Conn senden
         self._connection.send_remote_data(data2send, prio=prio)
+        return True
 
     def prp_rx(self, data: bytes):
         # Opt by Grok-AI
@@ -587,14 +610,15 @@ class PRPremote:
         if self._rest_buffer:
             data = self._rest_buffer + data
             self._rest_buffer = bytearray()
+
         rest_data  = bytearray()  # Sammelt den Non-Remote-Monitor-Stream
+        data_len   = len(data)
         i = 0
-        data_len = len(data)
 
         while i < data_len:
             # Suche nächsten Frame-Start (8D 81)
             if data[i:i + 2] == PRP_FLAG:
-                self._next_pack_len = 0
+                self._next_pack_meta = None
                 # Potenzieller Frame-Start gefunden
                 if i + 5 > data_len:
                     # Header unvollständig -> puffern
@@ -606,15 +630,19 @@ class PRPremote:
                 frame_end = i + 5 + length + 2
 
                 if frame_end > data_len:
+                    # Frame Status
+                    opt_id, _, _        = unpack_6bit_int_and_bool(data[i + 2:i + 3])
+                    self._next_pack_meta = opt_id, length
+
                     # Frame unvollständig -> puffern
                     self._rest_buffer   = data[i:]
-                    self._next_pack_len = length
                     break
 
                 # Komplettes Frame extrahiert!
                 rem_mon_pack = data[i:frame_end]
                 try:
                     rest_data += self._prp_rx_process(rem_mon_pack)
+                    self._next_pack_meta = None
                 except EncodingWarning:
                     logger.debug("PRP: Data Chunk:")
                     logger.debug(f"PRP:   DATA  : {data}")
@@ -719,16 +747,24 @@ class PRPremote:
         """ Empfange CLI Escape """
         return payload
 
-    def prp_tx_esc_cli(self, payload: bytes, compress=True, prio=True):
-        """ Sende CLI Escape """
+    def prp_tx_esc_cli(self, payload: bytes):
+        """ Sende CLI Escape - AX25Conn.send_data() """
+        # ESC-CLI Mode ist deaktiviert
         if not self._is_cli_esc_mode():
             return False
-        self._prp_tx(opt_id=PRP_OPT_ESC_CLI,
-                     tx_flag=True,
-                     data=payload,
-                     prio=prio,
-                     compress=compress)
-        return True
+        # Wird nur gesendet, wenn es sich lohnt (Komprimierung)
+        send_as_prp = self._prp_tx(opt_id=PRP_OPT_ESC_CLI,
+                                   tx_flag=            True,
+                                   data=               payload,
+                                   prio=               True,
+                                   compress=           True,
+                                   send_uncompressed=  False
+                                   )
+        # Wenn gesendet nicht gesendet, lösche Metadaten für Status MSG
+        if not send_as_prp:
+            self._last_pack_meta = None
+        # Zurück zur AX25Conn.send_data()
+        return send_as_prp
 
     #####################################
     # Remote Monitor
@@ -884,6 +920,9 @@ class PRPremote:
 
         self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=True, data=data, prio=True)
 
+        # FIXME DeleteMe Testing
+        self._set_cli_esc_mode(True)
+
     def _rx_cmd_gui_remote_mon(self, payload: bytes):
         """ RX Start CMD """
         data  = payload.decode('UTF-8', 'ignore')
@@ -915,6 +954,8 @@ class PRPremote:
         print(f"set_remote_mon: {cfg}")
         self._tx_resp_cmd_start_gui_remote_mon()
         self._remote_mon_conf.update(cfg)
+        # FIXME DeleteMe Testing
+        self._set_cli_esc_mode(True)
 
     def _tx_resp_cmd_start_gui_remote_mon(self):
         """ TX Respond Stop CMD """
@@ -1065,7 +1106,7 @@ class PRPremote:
     # Helper
     def _check_version(self):
         stat_id = self._connection.cli.stat_identifier
-        if stat_id.software != PRP_SW_RESTR:
+        if PRP_SW_RESTR not in stat_id.software:
             logger.warning(f"PRP: This function is just available with {PRP_SW_RESTR}. {stat_id.software}")
             return False
         if version_tuple(stat_id.version) < version_tuple(PRP_VER_RESTR):
@@ -1073,6 +1114,45 @@ class PRPremote:
             logger.warning(f"PRP: Version >= {PRP_VER_RESTR}")
             return False
         return True
+
+    #####################################
+    # CLI-ESC Status Meldungen für gui.QSO
+    def get_cli_esc_send_status(self):
+        """
+        Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
+        """
+        if self._last_pack_meta is None:
+            return None
+
+        len_payload, len_compressed = self._last_pack_meta
+        compression_ratio = round((len_payload / len_compressed) * 100)
+
+        return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed} Bytes / {len_payload} Bytes"
+
+    def get_incomplete_cli_esc_status(self):
+        """
+        Gibt den Status eines unvollständigen CLI-ESC-Frames zurück, falls vorhanden.
+        """
+        if self._next_pack_meta is None or len(self._rest_buffer) < 5:
+            return None  # Kein unvollständiges Frame oder Header unvollständig
+
+        # Nur für CLI-ESC (OPT 62, TX-Flag)
+        if self._next_pack_meta[0] != PRP_OPT_ESC_CLI:
+            return None
+
+        # Berechne Fortschritt
+        total_bytes    = 7 + self._next_pack_meta[1]  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
+        received_bytes = len(self._rest_buffer)
+        if received_bytes >= total_bytes:
+            return None  # Vollständig (sollte nicht passieren, aber sicher)
+
+        # Baue String zusammen
+        percent = int((received_bytes / total_bytes) * 100)
+        pr_ten  = round(percent / 10)
+        pr_rest = 10 - pr_ten
+        # Download Bar
+        bar     = f"[{'#' * pr_ten}{'.' * pr_rest}]"
+        return f"PRP ▼ {bar}({percent}%) - {max(0, received_bytes - 7)} Bytes / {self._next_pack_meta[1]} Bytes"
 
     #####################################
     # Getta

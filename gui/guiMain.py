@@ -56,7 +56,8 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
     PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, CLI_TYP_BOX, \
-    CLI_TYP_CONVERSE, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_NO_CLI
+    CLI_TYP_CONVERSE, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_NO_CLI, \
+    TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
     build_aprs_icon_tab, get_image
@@ -1577,7 +1578,8 @@ class PoPT_GUI_Main:
         if all_stat_cfg:
             self._qso_txt.configure(state="normal")
         guiCFG = POPT_CFG.load_guiPARM_main()
-
+        # ==========================
+        # QSO Call/Station Tags
         for call in list(all_stat_cfg.keys()):
             stat_cfg = all_stat_cfg[call]
             tx_fg = stat_cfg.get('stat_parm_qso_col_text_tx', DEF_STAT_QSO_TX_COL)
@@ -1601,27 +1603,43 @@ class PoPT_GUI_Main:
                                      selectbackground=rx_fg,
                                      selectforeground=tx_bg,
                                      )
-            self._qso_txt.tag_config('SYS-MSG',
-                                     foreground=DEF_QSO_SYSMSG_FG,
-                                     background=DEF_QSO_SYSMSG_BG,
-                                     selectbackground=DEF_QSO_SYSMSG_FG,
-                                     selectforeground=DEF_QSO_SYSMSG_BG,
-                                     )
-            self._qso_txt.tag_config('TX-NOCALL',
-                                     foreground='#ffffff',
-                                     background='#000000',
-                                     selectbackground='#ffffff',
-                                     selectforeground='#000000',
-                                     )
-            self._qso_txt.tag_config('RX-NOCALL',
-                                     foreground='#000000',
-                                     background='#ffffff',
-                                     selectbackground='#000000',
-                                     selectforeground='#ffffff',
-                                     )
+        # ==========================
+        # QSO Sys Msg / Status Msg Tags
+        self._qso_txt.tag_config('SYS-MSG',
+                                 foreground=DEF_QSO_SYSMSG_FG,
+                                 background=DEF_QSO_SYSMSG_BG,
+                                 selectbackground=DEF_QSO_SYSMSG_FG,
+                                 selectforeground=DEF_QSO_SYSMSG_BG,
+                                 )
+        self._qso_txt.tag_config('TX-NOCALL',
+                                 foreground='#ffffff',
+                                 background='#000000',
+                                 selectbackground='#ffffff',
+                                 selectforeground='#000000',
+                                 )
+        self._qso_txt.tag_config('RX-NOCALL',
+                                 foreground='#000000',
+                                 background='#ffffff',
+                                 selectbackground='#000000',
+                                 selectforeground='#ffffff',
+                                 )
+        # PRP CLI-ESC Status MSG
+        self._qso_txt.tag_config(TAG_QSO_PRP_STATUS_TX,
+                                 foreground=CLR_QSO_PRP_STATUS_TX,
+                                 background=CLR_QSO_PRP_STATUS_BG,
+                                 selectbackground=CLR_QSO_PRP_STATUS_TX,
+                                 selectforeground=CLR_QSO_PRP_STATUS_BG,
+                                 )
+        self._qso_txt.tag_config(TAG_QSO_PRP_STATUS_RX,
+                                 foreground=CLR_QSO_PRP_STATUS_RX,
+                                 background=CLR_QSO_PRP_STATUS_BG,
+                                 selectbackground=CLR_QSO_PRP_STATUS_RX,
+                                 selectforeground=CLR_QSO_PRP_STATUS_BG,
+                                 )
 
         self._qso_txt.configure(state="disabled")
         self._mon_txt.configure(state="normal")
+        # ==========================
         # Monitor Tags
         all_port = self._port_handler.ax25_ports
         for port_id in all_port.keys():
@@ -2061,11 +2079,14 @@ class PoPT_GUI_Main:
             if self._tasker_quit():
                 return
         else:
-            self._tasker_prio()
-            update_needed = (self._tasker_025_sec() or
-                             self._tasker_1_sec())
+            self._tasker_prio()                         # Port-Handler Tasker, ..., ...
+            task_0_25 = self._tasker_025_sec()          # 0.25 & 0.5 Sec(flip flop)
+            task_1_00 = self._tasker_1_sec()            # 1.00 Sec
+            update_needed = task_0_25 or task_1_00
+            # Nur wenn vorherige Tasks nicht ausgeführt wurden
             if not update_needed:
-                update_needed = self._tasker_5_sec()
+                update_needed = self._tasker_5_sec()    # 5.00 Sec
+            # Nur wenn vorherige Tasks ausgeführt wurden
             if update_needed:
                 self.main_win.update_idletasks()
         t_delta      = time.time() - timer_overall
@@ -2194,7 +2215,6 @@ class PoPT_GUI_Main:
         tasker_ret = False
 
         if hasattr(self._port_handler, 'tasker_gui_th'):
-            # tasker_ret = any((self._port_handler.tasker_gui_th(), tasker_ret))
             timer = time.time()
             self._port_handler.tasker_gui_th()
             t_delta = time.time() - timer
@@ -2202,20 +2222,22 @@ class PoPT_GUI_Main:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
 
         if hasattr(self.userDB_tree_win, 'tasker'):
-            tasker_ret = self.userDB_tree_win.tasker()    or tasker_ret
+            task = self.userDB_tree_win.tasker()
+            tasker_ret = task or tasker_ret
 
         if hasattr(self.userdb_win, 'tasker'):
-            tasker_ret = self.userdb_win.tasker()         or tasker_ret
+            task = self.userdb_win.tasker()
+            tasker_ret = task or tasker_ret
 
         # Locator Calc Win
         if hasattr(self.locator_calc_window, 'tasker'):
-            tasker_ret = self.locator_calc_window.tasker() or tasker_ret
+            task = self.locator_calc_window.tasker()
+            tasker_ret = task or tasker_ret
 
-        tasker_ret = (tasker_ret               or
-                      self._monitor_task()     or
-                      self._ais_monitor_task() or
-                      self._mh_win_task()
-                      )
+        task_01 = self._monitor_task()
+        task_02 = self._ais_monitor_task()
+        task_03 = self._mh_win_task()
+        tasker_ret = tasker_ret or task_01 or task_02 or task_03
         return tasker_ret
 
     def _tasker_025_sec(self):
@@ -2225,14 +2247,19 @@ class PoPT_GUI_Main:
             #####################
             # self._aprs_task()
             # self._monitor_task()
-            ret = (self._dualPort_monitor_task() or
-                   self._update_qso_win()        or
-                   self._SideFrame_tasker()      or
-                   self._update_status_bar()
+            task_01 = self._dualPort_monitor_task()
+            task_02 = self._update_qso_win()
+            task_03 = self._SideFrame_tasker()
+            task_04 = self._update_status_bar()
+            ret = (task_01 or
+                   task_02 or
+                   task_03 or
+                   task_04
                    )
 
             if self._flip025:
-                ret = self._AlarmIcon_tasker05() or ret
+                task_05_01 = self._AlarmIcon_tasker05()
+                ret = task_05_01 or ret
             #####################
             self._flip025 = not self._flip025
             return ret
@@ -2419,14 +2446,17 @@ class PoPT_GUI_Main:
         return False
 
     def _update_qso_spooler(self, conn):
+        ch_id   = conn.ch_index
         gui_buf = list(conn.rx_tx_buf_guiData)
         conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
         for qso_data in gui_buf:
+            # Sys Msg (Link Setup, Connected to, ...)
             if qso_data[0] == 'SYS':
-                ch_id = conn.ch_index
                 self.sysMsg_to_qso_task(qso_data[1], ch_id)
-                #self._update_qso_tx(conn, qso_data[1])
-
+            # PRP Msg (CLI-ESC Status)
+            elif qso_data[0] in [TAG_QSO_PRP_STATUS_TX, TAG_QSO_PRP_STATUS_RX]:
+                self._PRPstatus_to_qso_task(qso_data[1], ch_id, qso_data[0])
+            # QSO Data
             elif qso_data[0] == 'RX':
                 self._update_qso_rx(conn, qso_data[1])
             else:
@@ -2567,19 +2597,48 @@ class PoPT_GUI_Main:
             self._ts_box_var.set(False)
             #self._ts_box_box.configure(bg=bg)
 
-    def sysMsg_to_qso(self, data, ch_index):
+    def sysMsg_to_qso(self, data: str, ch_index):
         self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
 
-    def sysMsg_to_qso_task(self, data, ch_index):
-        if not data:
-            return
-        if 1 > ch_index > SERVICE_CH_START - 1:
+    def sysMsg_to_qso_task(self, data: str, ch_index):
+        if not data or (1 > ch_index > SERVICE_CH_START - 1):
             return
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)
         ch_vars = self.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'
+        ch_vars.output_win += data
+        if self.channel_index == ch_index:
+            tr = False
+            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
+                tr = True
+            self._qso_txt.configure(state="normal")
+
+            ind = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.insert('end', data)
+            ind2 = self._qso_txt.index(tk.INSERT)
+            self._qso_txt.tag_add(tag_name, ind, ind2)
+            self._qso_txt.configure(state="disabled",
+                                    exportselection=True
+                                    )
+            if tr or self.get_ch_var().autoscroll:
+                self.see_end_qso_win()
+
+        else:
+            ch_vars.new_tags.append(
+                (tag_name, len(data))
+            )
+            ch_vars.new_data_tr = True
+        ch_vars.rx_beep_tr = True
+        self.ch_status_update()
+
+    def _PRPstatus_to_qso_task(self, data: str, ch_index, tag_name: str):
+        if not data or ch_index < 1:
+            return
+        data                = tk_filter_bad_chars(data)
+        data               += '\n'
+        ch_vars             = self.get_ch_var(ch_index=ch_index)
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
@@ -2643,7 +2702,7 @@ class PoPT_GUI_Main:
     def _monitor_task(self):
         mon_buff = self._port_handler.get_monitor_data()
         if not mon_buff:
-            return
+            return False
         new_mon_buff        = []
         for axframe_conf in mon_buff:
             port_id = axframe_conf.get('port', -1)
@@ -2663,7 +2722,7 @@ class PoPT_GUI_Main:
         self._add_tasker_q('_monitor_q_task',
                            new_mon_buff,
                            False)
-        return
+        return True
 
     def _monitor_q_task(self, mon_batch: list):
 

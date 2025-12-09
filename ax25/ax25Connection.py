@@ -5,7 +5,7 @@
 import time
 from datetime import datetime
 
-from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI, CLI_TYP_PIPE
+from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI, CLI_TYP_PIPE, TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
@@ -171,6 +171,7 @@ class AX25Conn:
         self._tx_buf_prp_Q: list[bytes]      = []           # Buffer Prio Data (Remote Protocol)
         self._tx_buf_prp_prio_Q: list[bytes] = []           # Buffer Prio Data (Remote Protocol)
         self._tx_buf_prp_Rest                = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
+        self._prp_cli_esc_status             = None         # Status PRP-CLI-ESC Frame
         """ IO Buffer For GUI / CLI """
         self._tx_buf_lock      = False          # Threading TX-Buffer lock
         self.tx_buf_rawData    = bytearray()    # Buffer for TX RAW Data that is not packed yet into a Frame
@@ -405,8 +406,15 @@ class AX25Conn:
         self._tx_buf_prp_prio_lock = True
 
     # ========= TX
-    def send_data(self, data, gui_echo=True, file_trans=False):
-        """ Normale Daten von CLI oder GUI """
+    def send_data(self, data: bytes, gui_echo=True, file_trans=False, use_prp=True):
+        """
+        Normale Daten von CLI oder GUI(QSO)
+        :param data:        bytes = Daten
+        :param gui_echo:    bool = TX-Echo an GUI zurück
+        :param file_trans:  bool = Ist Filetransfer (Daten sind für Dateiübertragung)
+        :param use_prp:     bool = PRP nutzen, wenn es Sinn macht (Daten komprimiert werden können)
+        :return: bool
+        """
         if self._await_disco:
             return False
         if self.ft_obj is not None and not file_trans:
@@ -417,17 +425,27 @@ class AX25Conn:
             logger.error(f"Incorrect Datatype: data({type(data)}) should be bytes or bytearray")
             return False
         self._link_holder_reset()
-        # Send via PRP System
-        if self._prp_remote.prp_tx_esc_cli(data):
-            if gui_echo:
-                self._send_gui_QSObuf_tx(data)
-            return True
+        # Send via PRP CLI-ESC
+        if use_prp:
+            # Version Check & CLI-ESC enabled & is sendet compressed?
+            if self._prp_remote.prp_tx_esc_cli(data):
+                if gui_echo:
+                    no_eol = False if not data.endswith(b'\n') and not data.endswith(b'\r') else True
+                    # PRP Status Msg an QSO Fenster senden
+                    self._send_gui_QSO_PRPstatus(
+                        data=self._prp_remote.get_cli_esc_send_status(),
+                        tx=True,
+                        no_eol=no_eol)
+                    # TX Echo senden
+                    self._send_gui_QSO_tx(data)
+
+                return True
         # Thread Lock
         self._wait_tx_buf_lock('send_data')
         self.tx_buf_rawData += data
         self._tx_buf_lock = False
         if gui_echo:
-            self._send_gui_QSObuf_tx(data)
+            self._send_gui_QSO_tx(data)
         return True
 
     def send_remote_data(self, data, prio=False):
@@ -545,7 +563,7 @@ class AX25Conn:
         if not data:
             self.rx_buf_last_data = data
             return
-        self._send_gui_QSObuf_rx(data)
+        self._send_gui_QSO_rx(data)
         """ Station ( RE/DISC/Connect ) Sting Detection """
         self._set_dest_call_fm_data_inp(data)
         """ Save last Frame """
@@ -614,47 +632,51 @@ class AX25Conn:
 
     #############################
     # GUI I/O
-    def _send_gui_QSObuf_tx(self, data):
-        """ to QSO """
-        if self.ft_obj:
-            return
-        if self.pipe:
+    def _send_gui_QSO_tx(self, data: bytes):
+        """ to QSO (TX-Echo)"""
+        if self.ft_obj or self.pipe:
             return
         self.rx_tx_buf_guiData.append(
             ('TX', data)
         )
 
-    def _send_gui_QSObuf_rx(self, data):
-        """ to QSO """
-        if self.ft_obj:
-            return
-        if self.pipe:
+    def _send_gui_QSO_rx(self, data: bytes):
+        """ to QSO (RX Date to QSO)"""
+        if self.ft_obj or self.pipe:
             return
         self.rx_tx_buf_guiData.append(
             ('RX', data)
         )
 
-    def _send_gui_QSObuf_sysMsg(self, data):
-        """ to QSO """
+    def _send_gui_QSO_sysMsg(self, data: str):
+        """ Sys Msg to QSO with Timestamp """
         self.rx_tx_buf_guiData.append(
             ('SYS', data)
         )
 
-    def send_sys_Msg_to_gui(self, data):
-        """ to QSO """
+    def send_sys_Msg_to_gui(self, data: str):
+        """ to QSO Connect Status (Link Setup, Disconnected, ...)"""
         if not data:
             return
-        if type(data) != list:
-            data = [data]
-        for msg in data:
-            lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
-            LOG_BOOK.info(lb_msg)
-            LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {msg}")
-            #gui = self._port_handler.get_gui()
-            #if not hasattr(gui, 'sysMsg_to_qso'):
-            #    return
-            # gui.sysMsg_to_qso(data, self.ch_index)
-            self._send_gui_QSObuf_sysMsg(msg)
+
+        lb_msg = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: - {str(self.uid)} - Port: {int(self.port_id)}"
+        LOG_BOOK.info(lb_msg)
+        LOG_BOOK.info(f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {data}")
+
+        self._send_gui_QSO_sysMsg(data)
+
+    def _send_gui_QSO_PRPstatus(self, data: str, tx: bool, no_eol=False):
+        """ Sys Msg to QSO with Timestamp """
+        if tx:
+            tag = TAG_QSO_PRP_STATUS_TX
+        else:
+            tag = TAG_QSO_PRP_STATUS_RX
+
+        if no_eol:
+            data = '\n' + data
+        self.rx_tx_buf_guiData.append(
+            (tag, data)
+        )
 
     #############################
     # Crone
@@ -736,18 +758,38 @@ class AX25Conn:
     ##########################################################
     # PoPT Remote Protocol (PRP)
     def _prp_rx(self, data: bytes):
-        return self._prp_remote.prp_rx(data)
+        """ Empfangene Daten durch PRP Decoder schieben und Rest zurück """
+        # Sende Daten an PRP Decoder und erhalte Rest(nicht PRP Daten)
+        rest_data_for_cli  = self._prp_remote.prp_rx(data)
+
+        # Hole PRP CLI-ESC Status
+        prp_cli_esc_status = self._prp_remote.get_incomplete_cli_esc_status()
+
+        # PRP CLI-ESC Status Check für QSO Ausgabe
+        if prp_cli_esc_status and prp_cli_esc_status != self._prp_cli_esc_status:
+            # Sende PRP CLI-ESC Status an QSO-Fenster
+            self._send_gui_QSO_PRPstatus(prp_cli_esc_status, tx=False)
+
+        # Speichere letzten Status
+        self._prp_cli_esc_status = prp_cli_esc_status
+
+        return rest_data_for_cli
 
     # PRP - Remote Monitor - PoPT Remote Protocol (PRP)
     def remote_monitor_update_tx(self, ax25frame_conf: dict):
-        """ Called fm port_handler.update_monitor() """
+        """
+        Called fm port_handler.update_monitor()
+        Sendet ax25-Frames für Remote Monitor an PRP
+        """
         self._prp_remote.remote_monitor_update(ax25frame_conf)
 
     def _prp_cron(self):
+        """ Tasker(loop) für PRP """
         self._prp_remote.tasker()
         return True
 
     def set_remote_mon(self, rem_mon_conf: dict):
+        """ Lokaler Parameter/Config update """
         self._prp_remote.update_cfg(rem_mon_conf)
 
     ##########################################################
@@ -922,7 +964,7 @@ class AX25Conn:
             if self.ft_obj.done:
                 # print(f"FT Done - rest: {self.ft_obj.ft_rx_buf}")
                 # self.rx_buf_rawData += bytes(self.ft_obj.ft_rx_buf)
-                self._send_gui_QSObuf_rx(self.ft_obj.ft_rx_buf)
+                self._send_gui_QSO_rx(self.ft_obj.ft_rx_buf)
                 self.ft_obj = None
                 if self.ft_queue:
                     self.ft_obj = self.ft_queue[0]
