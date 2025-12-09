@@ -1,10 +1,15 @@
 """
 ══════════════════════════════════════════════════════════════════════════
           PoPT-REMOTE PROTOKOLL (PRP) – Spezifikation
+                    ____      ____      ____
+                  U|  _"\ uU |  _"\ u U|  _"\ u
+                  \| |_) |/ \| |_) |/ \| |_) |/
+                   |  __/    |  _ <    |  __/
+                   |_|       |_| \_\   |_|
+                   ||>>_     //   \\_  ||>>_
+                  (__)__)   (__)  (__)(__)__)
 ══════════════════════════════════════════════════════════════════════════
-Version 1.1  –  Dezember 2025
-══════════════════════════════════════════════════════════════════════════
-                 Remote Protocol v1.1
+                   PoPT Remote Protocol v1.1
 ══════════════════════════════════════════════════════════════════════════
 1. Allgemeine Paketstruktur (gilt für ALLE Pakete)
 ══════════════════════════════════════════════════════════════════════════
@@ -80,7 +85,7 @@ OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
  25    | Logout             | ACK Logout          | leer
  ...
  ...
- 62    | PRP-Batch Frames   | (kein ACK)          | Payload für CLI
+ 62    | CLI-Escape         | (kein ACK)          | Payload für CLI
  63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
 
 5.1 START-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
@@ -294,11 +299,12 @@ def unpack_time_hms_to_datetime(data: bytes):
 # Rückgabe: dict mit:
 #   'prp_frames'    → Anzahl enthaltener PRP-Frames (bei Batch)
 #   'opt_id'        → 0–63 (Port-ID oder Steuerbefehl)
+#   'opt_typ'       → Typ Steuerbefehle
 #   'tx'            → True = gesendet, False = empfangen
 #   'compressed'    → True wenn F2=1 (LZHUF)
 #   'payload_len'   → Länge des (escaped) Payloads
 #   'is_batch'      → True wenn OPT-ID == 63
-#   'raw_len'      → Gesamtlänge des PRP-Pakets
+#   'raw_len'       → Gesamtlänge des PRP-Pakets
 # --------------------------------------------------------------
 
 def decode_prp_metadata(raw_ax25_payload: bytes):
@@ -412,7 +418,7 @@ class PRPremote:
         self._batch_buffer       = []   # Buffer ax25frame_conf Buffer
         self._batch_timer        = time.time() + self._remote_states.get('batch_wait', 30)
         self._batch_wait         = lambda : self._remote_states.get('batch_wait', 30)
-        self._is_batch_mode      = lambda : True if not self._remote_states.get('batch_mode', 'auto') == 'off' else False
+        self._is_batch_mode      = lambda : True if self._remote_states.get('batch_mode', 'auto') == 'on'   else False
         self._is_batch_mode_auto = lambda : True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
         self._set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
 
@@ -490,11 +496,11 @@ class PRPremote:
                 return self._decode_remote_mon_frame(payload, opt_id, tx), b''
             except AX25DecodingERROR:
                 logger.warning("-------------------------------------------------------------------")
-                logger.warning(f'Remote Monitor: decoding UID: {self._connection.uid}')
-                logger.warning(f'Remote Monitor: prp frame org {data}')
-                logger.warning(f'Remote Monitor: prp frame hex {bytearray2hexstr(data)}')
-                logger.warning(f'Remote Monitor: ax25_frame org {payload}')
-                logger.warning(f'Remote Monitor: ax25_frame hex {bytearray2hexstr(payload)}')
+                logger.warning(f'PRP Remote Monitor: decoding UID: {self._connection.uid}')
+                logger.warning(f'PRP Remote Monitor: prp frame org {data}')
+                logger.warning(f'PRP Remote Monitor: prp frame hex {bytearray2hexstr(data)}')
+                logger.warning(f'PRP Remote Monitor: ax25_frame org {payload}')
+                logger.warning(f'PRP Remote Monitor: ax25_frame hex {bytearray2hexstr(payload)}')
                 logger.warning("-------------------------------------------------------------------")
                 return None, b''
         ################################################################
@@ -561,6 +567,10 @@ class PRPremote:
             else:
                 pass
             return None, b''
+        """ OPT ID existiert nicht """
+        logger.warning(f"PRP: Unknown OPT-ID({opt_id})")
+        logger.warning( "PRP:    Perhaps you are using an older version of PopT,")
+        logger.warning(f"PRP:    that does not support OPT({opt_id}) ?")
         return None, b''
 
     #####################################
@@ -786,6 +796,8 @@ class PRPremote:
     def _remote_monitor_batch_update(self):
         """ Batch Mode Task """
         if not self._batch_buffer:
+            # Timer resetten, wenn keine Pakete gesammelt wurde
+            self._batch_timer = time.time() + self._batch_wait()
             return
 
         # Buffer Limit
@@ -796,7 +808,7 @@ class PRPremote:
             return
 
         # Sammeln, solange AX25Conn noch was zum Senden hat
-        if self._connection.can_send_next_prp_batch() and not is_buffer_limit:
+        if not self._connection.can_send_next_prp_batch() and not is_buffer_limit:
             return
 
         # Reset Task Timer

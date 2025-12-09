@@ -1560,8 +1560,9 @@ class AX25Conn:
     def can_send_next_prp_batch(self):
         """ Prüfen ob prp-tx-buffer noch voll ist """
         return (
-                bool(self._tx_buf_prp_Q) or
-                bool(len(self._tx_buf_prp_Rest) > (self.parm_PacLen * self.parm_MaxFrame))
+                not bool(self._tx_buf_prp_Q)      and
+                not bool(self._tx_buf_prp_prio_Q) and
+                bool(len(self._tx_buf_prp_Rest) < (self.parm_PacLen * self.parm_MaxFrame))
                 )
 
     def is_incoming_conn(self):
