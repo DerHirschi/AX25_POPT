@@ -741,7 +741,7 @@ class PRP_Tab(ttk.Frame):
         if hasattr(prp, 'get_rem_state_by_key'):
             return prp.get_rem_state_by_key(state_key)
         logger.error("Attribute Error: _get_prp_remote_stat_by_key")
-        raise AttributeError
+        return None
 
 
     def _get_prp_remote_stats(self):
