@@ -1,0 +1,220 @@
+══════════════════════════════════════════════════════════════════════════
+          PoPT-REMOTE PROTOKOLL (PRP) – Spezifikation
+                    ____      ____      ____
+                  U|  _"\ uU |  _"\ u U|  _"\ u
+                  \| |_) |/ \| |_) |/ \| |_) |/
+                   |  __/    |  _ <    |  __/
+                   |_|       |_| \_\   |_|
+                   ||>>_     //   \\_  ||>>_
+                  (__)__)   (__)  (__)(__)__)
+══════════════════════════════════════════════════════════════════════════
+                   PoPT Remote Protocol v1.2
+                (Stand: 10. Dezember 2025)
+══════════════════════════════════════════════════════════════════════════
+1. Allgemeine Paketstruktur (gilt für ALLE Pakete)
+══════════════════════════════════════════════════════════════════════════
+
++--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
+|  FLAG  |  FLAG  | OPTBYTE|  LEN (2 Byte little) |    PAYLOAD       | CRC16  | CRC16  |
+|  0x8D  |  0x81  |        |  LSB         MSB     |  variable Länge  | low    | high   |
++--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
+   0         1        2        3         4             5 ...  5+L-1      L+5    L+6
+
+  • FLAG-Sequenz      = immer 0x8D 0x81              - 2 Bytes
+  • OPTBYTE           = siehe Abschnitt 2            - 1 Byte
+  • LEN               = Länge des PAYLOADs(Escaped)  - 2 Bytes
+  • PAYLOAD           = escaped, ggf. vorher LZHUF-komprimiert
+  • CRC               = CRC16                        - 2 Bytes
+
+CRC16-CCITT: Polynomial 0x1021, Init 0xFFFF, Final-XOR 0x0000 (KISS-Standard)
+
+══════════════════════════════════════════════════════════════════════════
+2. OPTBYTE – Aufbau (1 Byte)
+══════════════════════════════════════════════════════════════════════════
+
+Bit    7   6   5   4   3   2   1   0
+     +---+---+---+---+---+---+---+---+
+     |F2 |F1 |      OPT-ID (0-63)    |
+     +---+---+---+---+---+---+---+---+
+
+  F2 = 1 → Payload ist LZHUF-komprimiert
+  F1 = 1 → Frame war TX (gesendet), 0 → RX (empfangen)
+  OPT-ID 0…19  → Port-ID für normale Monitor-Frames
+  OPT-ID 20…63 → Steuerbefehle
+
+══════════════════════════════════════════════════════════════════════════
+3. Escaping
+══════════════════════════════════════════════════════════════════════════
+
+0x8D (FEND)  → ersetze durch 0x8F 0x92
+0x8F (FESC)  → ersetze durch 0x8F 0x9B
+
+Empfangsseite:
+  0x8F 0x9B  → ersetze durch 0x8F
+  0x8F 0x92  → ersetze durch 0x8D
+
+═════════════════════════════════════════════════════════════════════════════
+4. Monitor-Frame (OPT-ID = 0 … 19)
+══════════════════════════════════════════════════════════════════════════
+
+Payload VOR Kompression und Escaping:
+
++--------------------------------+-------------------------------+
+|       3 Byte BCD Zeit          |   rohes AX.25-Frame (wie vom  |
+|          HH:MM:SS              |   Radio empfangen/gesendet)   |
++--------------------------------+-------------------------------+
+
+Beispiel (16:47:08):
+16 47 08 A0 84 ... (komplettes AX.25-Paket)
+
+→ optional LZHUF-komprimiert (nur wenn kürzer)
+→ dann escaped
+→ dann in das Grundpaket (Abschnitt 1) verpackt
+
+══════════════════════════════════════════════════════════════════════════
+5. Steuerbefehle (OPT-ID ≥ 20)
+══════════════════════════════════════════════════════════════════════════
+
+OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
+-------+--------------------+---------------------+------------------------
+ 20    | Remote-Mon START   | ACK START           | "port:incl:excl" (UTF-8) (siehe 5.1) / leer
+ 21    | Remote-Mon STOP    | ACK STOP            | leer
+ 22    | Disconnect         | (kein ACK)          | leer
+ 23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
+ 24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
+ 25    | Logout             | ACK Logout          | leer
+ 26    | State Update       | ACK State Update    | Binäres State-Update (siehe 5.2)
+ ...
+ 62    | CLI-Escape         | (kein ACK)          | Payload für CLI
+ 63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
+
+══════════════════════════════════════════════════════════════════════════
+5.1 Remote-Mon START/UPDATE-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
+══════════════════════════════════════════════════════════════════════════
+
+"<PortID>:<Include-Calls>:<Exclude-Calls>"
+
+Beispiele:
+  "2:DB0LJ,DL1ABC:DJ5ABC"     → Port 2, nur diese Calls, Rest ausblenden
+  "0::"                       → Port 0, alles anzeigen (keine Filter)
+  "5:DB0ABC:"                 → Port 5, nur DB0ABC erlaubt, Rest ausblenden
+
+══════════════════════════════════════════════════════════════════════════
+5.2 State Update – OPT-ID 26 (binäres Format – extrem bandbreitensparend)
+══════════════════════════════════════════════════════════════════════════
+
+Wird verwendet, um einzelne oder mehrere Parameter aus _own_states effizient
+und selektiv remote zu aktualisieren.
+
+→ TX (F1=1): Sender möchte Remote-States ändern
+→ RX (F1=0): ACK mit b'OK' (erfolgreich) oder b'FAIL' (fehlgeschlagen/invalid)
+
+Payload-Aufbau (vor Kompression/Escaping):
+
+┌────────┬────────┬──────────────┐
+│ Key-ID │ Length │   Value      │  ... (wiederholt)
+│ (1B)   │ (1B)   │ (0–255 Byte) │
+└────────┴────────┴──────────────┘
+
+Key-ID Zuordnung (dynamisch, basierend auf Reihenfolge in _own_states):
+
+    ID  Key-Name         Typ            Kodierung
+    ───────────────────────────────────────────────────────────────
+     0  cli_rem_mon      bool           0x00 = False, 0x01 = True
+     1  gui_rem_mon      bool           0x00 / 0x01
+     2  rem_mon_port     uint8          0–255 (Ports 0–19 ausreichend)
+     3  rem_mon_incl     Call-Liste     Null-getrennte UTF-8 Calls + abschließendes \x00\x00
+     4  rem_mon_excl     Call-Liste     dto.
+     5  batch_mode       enum           0=auto, 1=on, 2=off
+     6  batch_wait       uint16 little  Sekunden (z.B. 30 → 0x1E00)
+     7  cli_esc          bool           0x00 / 0x01
+     8  login_ok         bool           (wird serverseitig ignoriert/blockiert!)
+
+    → Weitere Keys können später hinzugefügt werden – ID = Position im Dict
+    → Reihenfolge ist seit Python 3.7 garantiert (insertion order)
+
+Wert-Kodierung im Detail:
+
+  • Bool-Werte:               1 Byte (0x00 oder 0x01)
+  • rem_mon_port:             1 Byte
+  • batch_wait:               2 Byte little-endian
+  • batch_mode:               1 Byte (0=auto, 1=on, 2=off)
+  • Call-Listen (incl/excl):  UTF-8 Strings, durch \x00 getrennt,
+                              am Ende immer \x00\x00 als Terminator
+                              Leere Liste → nur \x00\x00 (Länge=2)
+
+Beispiel-Payload (hex):
+
+# Nur gui_rem_mon = True und rem_mon_port = 5 updaten
+01 01 01        → Key-ID 1, Länge 1, Wert 0x01  (gui_rem_mon = True)
+02 01 05        → Key-ID 2, Länge 1, Wert 0x05  (rem_mon_port = 5)
+
+→ Gesamt: 6 Byte (vor Kompression) → nach LZHUF oft nur 4–5 Byte!
+
+# rem_mon_incl = ["DB0LJ", "DL1ABC"]
+03 0E 44 42 30 4C 4A 00 44 4C 31 41 42 43 00 00
+   ↑     D  B  0  L  J \0  D  L  1  A  B  C \0 \0
+
+Empfänger-Regeln:
+  • Unbekannte Key-IDs werden ignoriert
+  • Versuch, login_ok remote zu setzen → wird verworfen + Log-Warning
+  • Bei Parsing-Fehler oder ungültigen Werten → ACK mit b'FAIL'
+
+══════════════════════════════════════════════════════════════════════════
+6. Kompressions-Logik
+══════════════════════════════════════════════════════════════════════════
+
+- LZHUF wird angewendet
+- Wenn komprimiertes Ergebnis kürzer → F2 = 1 und komprimiertes Payload senden
+- Sonst                              → F2 = 0 und Original-Payload senden
+- Empfänger dekomrimiert nur, wenn     F2 = 1
+
+══════════════════════════════════════════════════════════════════════════
+7. Komplettes Beispiel (Monitor-Frame, Port 13, TX, nicht komprimiert)
+══════════════════════════════════════════════════════════════════════════
+
+Payload nach Escaping: 26 Byte
+Gesendet wird (Hex):
+
+8D 81 6D 1A 00 16 47 08 A0 84 ... (26 Byte escaped Payload) ... A7 3F
+
+Aufschlüsselung:
+8D 81     → Flag
+6D        → OPTBYTE = 0b01101101 → Port 13, TX=1, F2=0
+1A 00     → LEN = 26 (little-endian, = 0x001A)
+16 47 08  → BCD-Zeit 16:47:08
+...       → escaped AX.25-Frame
+A7 3F     → CRC16 über Bytes 2 bis 30 (OPTBYTE bis letztes Payload-Byte)
+
+══════════════════════════════════════════════════════════════════════════
+8. Zusammenfassungstabelle
+══════════════════════════════════════════════════════════════════════════
+
+ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
+-----------+----------------------------+---------------------------------
+ 0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
+ --        | -------------------------- | --------------------------------
+ 20  TX    | Remote-CFG START           | "port:incl:excl" (siehe 5.1)
+ 20        | ACK START                  | leer
+ 21  TX    | Remote-Mon STOP            | leer
+ 21        | ACK STOP                   | leer
+ 22  TX    | Disconnect                 | leer
+ 22        | -------------------------- | --------------------------------
+ 23  TX    | Login Request              | leer
+ 23        | ACK Login Request          | 6-Byte Nonce
+ 24  TX    | Login Response             | SHA256(pw_hash+nonce)
+ 24        | ACK Login Response         | b'OK or b'FAIL'
+ 25  TX    | Logout                     | leer
+ 25        | ACK Logout                 | leer
+ 26  TX    | STATE UPDATE               | Binäres State-Update (siehe 5.2)
+ 26        | ACK STATE UPDATE           | b'OK or b'FAIL'
+ ...
+ ...
+ 62  TX    | CLI-Escape                 | Payload wird zum CLI durchgereicht
+ 62        | -------------------------- | --------------------------------
+ 63  TX    | PRP-BATCH                  | PRP-Frame Batch
+ 63        | -------------------------- | --------------------------------
+
+══════════════════════════════════════════════════════════════════════════
+Ende der Spezifikation
+══════════════════════════════════════════════════════════════════════════

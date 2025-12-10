@@ -12,7 +12,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, tk_filter_bad_chars
 
 
-class RemMonGUITab(ttk.Frame):
+class PRP_Tab(ttk.Frame):
     def __init__(self, root, tabclt: ttk.Notebook, mon_data: list, uid: str):
         super().__init__(tabclt)
         self._root_cl     = root
@@ -28,10 +28,12 @@ class RemMonGUITab(ttk.Frame):
         self._text_size    = POPT_CFG.get_guiCFG_text_size()
         ###############################################
         # GUI Vars
+        # == Tree Mon Filter
         self._mon_tree_port_filter_var    = tk.StringVar(self, value='')
         self._mon_tree_fm_call_filter_var = tk.StringVar(self, value='')
         self._mon_tree_to_call_filter_var = tk.StringVar(self, value='')
 
+        # == Text Mon Opt
         # self._mon_dec_dist_var      = tk.BooleanVar(self, value=True)
         self._mon_dec_aprs_var      = tk.BooleanVar(self, value=True)
         self._mon_dec_nr_var        = tk.BooleanVar(self, value=True)
@@ -39,9 +41,15 @@ class RemMonGUITab(ttk.Frame):
         self._setting_mon_encoding  = tk.StringVar( self, value='Auto')
         self._mon_scroll_var        = tk.BooleanVar(self, value=True)
 
+        # == Remote Mon Filter
         self._incl_filter_var       = tk.StringVar(self, value='')
         self._excl_filter_var       = tk.StringVar(self, value='')
         self._port_filter_var       = tk.StringVar(self, value='0')
+
+        # == PRP Options
+        self._prp_batch_mode_var    = tk.StringVar(self,  value='auto')
+        self._prp_cli_esc_var       = tk.BooleanVar(self, value=True)
+
         ###############################################
         # Vertikal PW
         paned_window1 = ttk.PanedWindow(self, orient='horizontal')
@@ -79,51 +87,19 @@ class RemMonGUITab(ttk.Frame):
         paned_window_mon.add(upper_frame, weight=2)
         paned_window_mon.add(lower_frame, weight=1)
         ###############################################
-        # Monitor     upper_frame
-        self._mon_txt = tk.Text(upper_frame,
-                                background=self._mon_color_bg_rx,
-                                foreground=self._mon_color_fg_rx,
-                                font=(FONT, self._text_size),
-                                height=30,
-                                width=5,
-                                bd=0,
-                                borderwidth=0,
-                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                highlightthickness=0,
-                                )
-        mon_scrollbar = ttk.Scrollbar(
-            upper_frame,
-            orient='vertical',
-            command=self._mon_txt.yview
-        )
-        self._mon_txt.pack(      side='left', fill='both', expand=True)
-        mon_scrollbar.pack(side='left', fill='y', expand=False)
-        self._mon_txt.config(yscrollcommand=mon_scrollbar.set)
-        # Tags
-
-        self._mon_txt.tag_config('TX',
-                                 foreground=self._mon_color_fg_tx,
-                                 background=self._mon_color_bg_tx,
-                                 selectbackground=self._mon_color_fg_tx,
-                                 selectforeground=self._mon_color_bg_tx,
-                                 )
-        self._mon_txt.tag_config('RX',
-                                 foreground=self._mon_color_fg_rx,
-                                 background=self._mon_color_bg_rx,
-                                 selectbackground=self._mon_color_fg_rx,
-                                 selectforeground=self._mon_color_bg_rx,
-                                 )
+        # Text Monitor  -   upper_frame
+        self._init_txt_mon_frame(upper_frame)
         ###############################################
-        # Monitor Tab lower_frame
+        # Monitor Tab   -   lower_frame
         self._init_mon_tree(lower_frame)
         ###############################################
         # CTRL Stuff (MH-List, ...)   right_frame
         ###############################################
         # CTRL Stuff -   rframe_upper
-        self._init_ctl_frame(rframe_upper)
+        self._init_rem_mon_ctl_frame(rframe_upper)
         ###############################################
         # Mon Darstellung -  rframe_lower
-        self._init_mon_ctl_frame(rframe_lower)
+        self._init_txt_mon_ctl_frame(rframe_lower)
         ###############################################
         # Init Data
         for pack in mon_data:
@@ -140,23 +116,28 @@ class RemMonGUITab(ttk.Frame):
             pass
         #############################
         # Is Connected ?
-        remote_mon = self._get_prp()
-        if hasattr(remote_mon, 'get_remote_states'):
-            remote_states: dict = remote_mon.get_remote_states()
-            if remote_states.get('gui_rem_mon', False):
-                self._change_btn_states('rsp_start')
-            else:
-                self._change_btn_states('rsp_stop')
+        if self._get_prp_remote_stat_by_key('gui_rem_mon'):
+            self._change_btn_states('rsp_start')
+        else:
+            self._change_btn_states('rsp_stop')
 
-    def _init_ctl_frame(self, frame: ttk.Frame):
+    #######################################
+    # CTL Frames - rechte Seite
+    def _init_rem_mon_ctl_frame(self, frame: ttk.Frame):
+        #####################
+        # Remote Mon Frame (root)
         rem_mon_ctf_f = ttk.LabelFrame(frame, text="Remote Monitor")
         rem_mon_ctf_f.pack(padx=10, pady=10, anchor='w')
-        ####
+
+        #####################
+        # Filter/BTN Frame
         filter_f   = ttk.LabelFrame(rem_mon_ctf_f, text='Filter')
         button_f   = ttk.Frame(rem_mon_ctf_f)
         filter_f.pack(padx=5, pady=5)
         button_f.pack(padx=5, pady=5)
-        ###
+
+        #####################
+        # Filter Frame
         port_f     = ttk.Frame(filter_f)
         incl_f     = ttk.Frame(filter_f)
         excl_f     = ttk.Frame(filter_f)
@@ -164,8 +145,8 @@ class RemMonGUITab(ttk.Frame):
         incl_f.pack(padx=5, pady=5, anchor='w')
         excl_f.pack(padx=5, pady=5, anchor='w')
 
-
-
+        #========
+        # Port F
         ttk.Label(port_f, text='Port:').pack(side='left')
         port_val = [str(x) for x in range(20)]
         port_sel = ttk.Combobox(port_f,
@@ -174,24 +155,49 @@ class RemMonGUITab(ttk.Frame):
                                 textvariable=self._port_filter_var
                                 )
         port_sel.pack(side='left', padx=5)
-        #
+
+        #========
+        # Incl F
         ttk.Label(incl_f, text='Include:').pack(side='left')
         incl_entry = ttk.Entry(incl_f,
                                width=30,
                                textvariable=self._incl_filter_var)
         incl_entry.pack(side='left')
 
+        # ========
+        # Excl F
         ttk.Label(excl_f, text='Exclude:').pack(side='left')
         excl_entry = ttk.Entry(excl_f,
                                width=30,
                                textvariable=self._excl_filter_var)
         excl_entry.pack(side='left')
 
-        # Button
+        #####################
+        # Button Frame
+        opt_f1 = ttk.Frame(button_f)
         btn_f1 = ttk.Frame(button_f)
         btn_f2 = ttk.Frame(button_f)
+        opt_f1.pack(pady=5)
         btn_f1.pack(pady=5)
         btn_f2.pack(pady=5)
+        # ========
+        # opt_f1
+        batch_mode_f = ttk.Frame(opt_f1)
+        cli_esc_f    = ttk.Frame(opt_f1)
+        batch_mode_f.pack(side='top', padx=10, anchor='w', fill='x')
+        cli_esc_f.pack(   side='top', padx=10, anchor='w', fill='x')
+
+        # Batch Mode
+        ttk.Label(batch_mode_f, text='Batch Mode:').pack(side='left')
+        ttk.Combobox(batch_mode_f,
+                     textvariable=self._prp_batch_mode_var,
+                     values=['auto', 'on', 'off']
+                     ).pack(side='left', padx=5)
+        # CLI ESC
+        ttk.Checkbutton(cli_esc_f,
+                        text='CLI-ESC(send compressed):',
+                        variable=self._prp_cli_esc_var).pack(side='left')
+        # ========
         # f1
         self._start_btn = ttk.Button(
             btn_f1,
@@ -202,8 +208,8 @@ class RemMonGUITab(ttk.Frame):
         self._update_btn = ttk.Button(
             btn_f1,
             text="Update",
-            command=lambda: self._cmd_start_rem_mon(),
-            state='disabled'
+            command=lambda: self._cmd_update_rem_states(),
+            #state='disabled'
         )
         self._login_btn = ttk.Button(
             btn_f1,
@@ -215,6 +221,7 @@ class RemMonGUITab(ttk.Frame):
         self._update_btn.pack(side='left', padx=15)
         self._login_btn.pack( side='left', padx=15)
 
+        # ========
         # f2
         self._stop_btn = ttk.Button(
             btn_f2,
@@ -238,7 +245,7 @@ class RemMonGUITab(ttk.Frame):
         self._disco_btn.pack( side='left', padx=15)
         self._logout_btn.pack(side='left', padx=15)
 
-    def _init_mon_ctl_frame(self, frame: ttk.Frame):
+    def _init_txt_mon_ctl_frame(self, frame: ttk.Frame):
         ############################
         # Monitor opt mon_ctf_f
         mon_ctf_f     = ttk.LabelFrame(frame, text="Monitor")
@@ -257,8 +264,8 @@ class RemMonGUITab(ttk.Frame):
                      textvariable=self._setting_mon_encoding,
                      values=dec_val).pack(side='left')
 
-
-
+    #######################################
+    # Mon Tree
     def _init_mon_tree(self, frame: ttk.Frame):
         columns = (
             'time',
@@ -367,13 +374,50 @@ class RemMonGUITab(ttk.Frame):
                    ).pack(side='right', anchor='e', padx=10)
 
     def _monitor_tree_on_filter_chg(self):
+        # TODO
         pass
 
     def _monitor_tree_on_filter_reset(self):
+        # TODO
         pass
 
     #######################################
     # Text Mon
+    def _init_txt_mon_frame(self, frame: ttk.Frame):
+        self._mon_txt = tk.Text(frame,
+                                background=self._mon_color_bg_rx,
+                                foreground=self._mon_color_fg_rx,
+                                font=(FONT, self._text_size),
+                                height=30,
+                                width=5,
+                                bd=0,
+                                borderwidth=0,
+                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                highlightthickness=0,
+                                )
+        mon_scrollbar = ttk.Scrollbar(
+            frame,
+            orient='vertical',
+            command=self._mon_txt.yview
+        )
+        self._mon_txt.pack(side='left', fill='both', expand=True)
+        mon_scrollbar.pack(side='left', fill='y', expand=False)
+        self._mon_txt.config(yscrollcommand=mon_scrollbar.set)
+        # Tags
+
+        self._mon_txt.tag_config('TX',
+                                 foreground=self._mon_color_fg_tx,
+                                 background=self._mon_color_bg_tx,
+                                 selectbackground=self._mon_color_fg_tx,
+                                 selectforeground=self._mon_color_bg_tx,
+                                 )
+        self._mon_txt.tag_config('RX',
+                                 foreground=self._mon_color_fg_rx,
+                                 background=self._mon_color_bg_rx,
+                                 selectbackground=self._mon_color_fg_rx,
+                                 selectforeground=self._mon_color_bg_rx,
+                                 )
+
     def _clear_monitor_data(self):
         self._mon_txt.configure(state='normal')
         self._mon_txt.delete('1.0', tk.END)
@@ -401,9 +445,9 @@ class RemMonGUITab(ttk.Frame):
             while '' in excl_filter:
                 excl_filter.remove('')
             # Hole Aktuelle PRP Remote CFG
-            prp_remote_cfg = getNew_remote_mon_cfg()
+            prp_remote_states = getNew_remote_mon_cfg()
             # Update Remote CFG
-            prp_remote_cfg.update(dict(
+            prp_remote_states.update(dict(
                 cli_rem_mon=False,
                 gui_rem_mon=True,
                 rem_mon_port=port_filter,
@@ -411,7 +455,7 @@ class RemMonGUITab(ttk.Frame):
                 rem_mon_excl=excl_filter,  # Call Filter
             ))
             if hasattr(prp, 'send_rem_mon_update'):
-                prp.send_rem_mon_update(prp_remote_cfg)
+                prp.send_rem_mon_update(prp_remote_states)
                 self._change_btn_states()
 
     def _cmd_stop_rem_mon(self):
@@ -419,6 +463,69 @@ class RemMonGUITab(ttk.Frame):
         if hasattr(remote_mon, 'cmd_stop_gui_remote_mon'):
             remote_mon.cmd_stop_gui_remote_mon()
             self._change_btn_states()
+
+    def _cmd_update_rem_states(self):
+        prp = self._get_prp()
+        if hasattr(prp, 'send_remote_state_update'):
+            incl_filter = self._incl_filter_var.get()
+            excl_filter = self._excl_filter_var.get()
+
+            incl_filter = incl_filter.split(' ')
+            incl_filter = [str(x).upper() for x in incl_filter]
+            while '' in incl_filter:
+                incl_filter.remove('')
+
+            excl_filter = excl_filter.split(' ')
+            excl_filter = [str(x).upper() for x in excl_filter]
+            while '' in excl_filter:
+                excl_filter.remove('')
+
+            ###########################
+            # == Config bauen
+            states_to_send = {}
+            # == Port-Filter hinzufügen, wenn kein Fehler und geändert
+            try:
+                port_filter = int(self._port_filter_var.get())
+                if port_filter != self._get_prp_remote_stat_by_key('rem_mon_port'):
+                    states_to_send.update(dict(
+                        rem_mon_port=port_filter
+                    ))
+            except ValueError:
+                pass
+            # == Incl-Filter hinzufügen, wenn geändert
+            if incl_filter != self._get_prp_remote_stat_by_key('rem_mon_incl'):
+                states_to_send.update(dict(
+                    rem_mon_incl=incl_filter
+                ))
+            # == Excl-Filter hinzufügen, wenn geändert
+            if excl_filter != self._get_prp_remote_stat_by_key('rem_mon_excl'):
+                states_to_send.update(dict(
+                    rem_mon_excl=excl_filter
+                ))
+            # == Batch Mode hinzufügen, wenn geändert
+            batch_mode_var = self._prp_batch_mode_var.get()
+            if batch_mode_var in ['auto', 'on' 'off']:
+                if batch_mode_var != self._get_prp_remote_stat_by_key('batch_mode'):
+                    states_to_send.update(dict(
+                        batch_mode=batch_mode_var
+                    ))
+            # == CLI-ESC hinzufügen, wenn kein Fehler und geändert
+            esc_cli_var    = self._prp_cli_esc_var.get()
+            if esc_cli_var != self._get_prp_remote_stat_by_key('cli_esc'):
+                states_to_send.update(dict(
+                    cli_esc = esc_cli_var
+                ))
+
+            prp.send_remote_state_update(states_to_send)
+            self._change_btn_states()
+
+        # == Eigenen State Updaten / update_own_states
+        if hasattr(prp, 'update_own_states'):
+            state_update = dict(
+                # Sync CLI-ESC (komprimierung)
+                cli_esc=self._prp_cli_esc_var.get()
+            )
+            prp.update_own_states(state_update)
 
     def _cmd_disco(self):
         remote_mon = self._get_prp()
@@ -613,7 +720,7 @@ class RemMonGUITab(ttk.Frame):
         # Set Button States
         self._start_btn.configure( state=start_btn_state)
         self._stop_btn.configure(  state=stop_btn_state)
-        self._update_btn.configure(state=update_btn_state)
+        #self._update_btn.configure(state=update_btn_state)
         self._disco_btn.configure( state=disco_btn_state)
 
     ########################################
@@ -628,20 +735,29 @@ class RemMonGUITab(ttk.Frame):
             return conn.get_prp()
         return None
 
-    def _get_prp_remote_cfg(self):
+    # == Remote State I/O
+    def _get_prp_remote_stat_by_key(self, state_key: str):
         prp = self._get_prp()
-        if hasattr(prp, 'get_tx_remote_cfg'):
-            return prp.get_tx_remote_cfg()
+        if hasattr(prp, 'get_rem_state_by_key'):
+            return prp.get_rem_state_by_key(state_key)
+        logger.error("Attribute Error: _get_prp_remote_stat_by_key")
+        raise AttributeError
+
+
+    def _get_prp_remote_stats(self):
+        prp = self._get_prp()
+        if hasattr(prp, 'get_rem_states'):
+            return prp.get_rem_states()
         logger.error("Attribute Error: _get_prp_remote_cfg")
         raise AttributeError
 
-class RemoteMonitorGUI(tk.Toplevel):
+class PRP_remoteGUI(tk.Toplevel):
     def __init__(self, root_cl):
         super().__init__(master=root_cl.main_win)
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._root      = root_cl
         self.style      = self._root.style
-        self.title('Remote Monitor')
+        self.title('PRP-Remote')
         self.geometry(f"1200x600+{self._root.main_win.winfo_x()}+{self._root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
         self.resizable(True, True)
@@ -669,24 +785,22 @@ class RemoteMonitorGUI(tk.Toplevel):
 
         for uid, mon_data in self._rem_mon_data.items():
             label_txt = uid
-            tab = RemMonGUITab(self, self._tabctl, mon_data, uid)
+            tab = PRP_Tab(self, self._tabctl, mon_data, uid)
             self._tabctl.add(tab, text=label_txt)
             self._tab_list[uid] = tab
 
         ################################
-        self._root.remote_mon_win = self
-
+        self._root.prp_remote_win = self
 
     ####################################################
-    def rem_mon_init(self, remote_uid: str):
+    def prp_connection_init(self, remote_uid: str):
         if remote_uid in self._rem_mon_data:
             return
         self._rem_mon_data[remote_uid] = deque([] * 10000, maxlen=10000)
         label_txt = remote_uid
-        tab = RemMonGUITab(self, self._tabctl, self._rem_mon_data[remote_uid], remote_uid)
+        tab = PRP_Tab(self, self._tabctl, self._rem_mon_data[remote_uid], remote_uid)
         self._tabctl.add(tab, text=label_txt)
         self._tab_list[remote_uid] = tab
-
 
     def rem_mon_update(self, rem_mon_ax25conf: dict, remote_uid: str):
         if remote_uid not in self._rem_mon_data:
@@ -695,7 +809,7 @@ class RemoteMonitorGUI(tk.Toplevel):
 
         if remote_uid not in self._tab_list:
             label_txt = remote_uid
-            tab = RemMonGUITab(self, self._tabctl, self._rem_mon_data[remote_uid], remote_uid)
+            tab = PRP_Tab(self, self._tabctl, self._rem_mon_data[remote_uid], remote_uid)
             self._tabctl.add(tab, text=label_txt)
             self._tab_list[remote_uid] = tab
         else:
@@ -705,7 +819,7 @@ class RemoteMonitorGUI(tk.Toplevel):
             #    logger.error("Remote Mon > rem_mon_update")
             #    logger.error(ex)
 
-    def rem_mon_response(self, response: str, remote_uid: str):
+    def gui_prp_response_handler(self, response: str, remote_uid: str):
         try:
             self._tab_list[remote_uid].rx_response(response)
         except Exception as ex:
@@ -716,9 +830,6 @@ class RemoteMonitorGUI(tk.Toplevel):
     def get_rx_tx_icons(self):
         return self._root.get_rx_tx_icons()
 
-    def get_root(self):
-        return self._root
-
     def get_conn_by_uid(self, uid: str):
         ph = self._root.get_PH_mainGUI()
         if hasattr(ph, 'get_connections_by_uid'):
@@ -728,7 +839,7 @@ class RemoteMonitorGUI(tk.Toplevel):
     #
     def _destroy_win(self):
         self.destroy()
-        self._root.remote_mon_win = None
+        self._root.prp_remote_win = None
 
     def close(self):
         self._destroy_win()

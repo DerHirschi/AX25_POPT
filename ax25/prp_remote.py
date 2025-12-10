@@ -1,158 +1,5 @@
 """
-══════════════════════════════════════════════════════════════════════════
-          PoPT-REMOTE PROTOKOLL (PRP) – Spezifikation
-                    ____      ____      ____
-                  U|  _"\ uU |  _"\ u U|  _"\ u
-                  \| |_) |/ \| |_) |/ \| |_) |/
-                   |  __/    |  _ <    |  __/
-                   |_|       |_| \_\   |_|
-                   ||>>_     //   \\_  ||>>_
-                  (__)__)   (__)  (__)(__)__)
-══════════════════════════════════════════════════════════════════════════
-                   PoPT Remote Protocol v1.1
-══════════════════════════════════════════════════════════════════════════
-1. Allgemeine Paketstruktur (gilt für ALLE Pakete)
-══════════════════════════════════════════════════════════════════════════
-
-+--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
-|  FLAG  |  FLAG  | OPTBYTE|  LEN (2 Byte little) |    PAYLOAD       | CRC16  | CRC16  |
-|  0x8D  |  0x81  |        |  LSB         MSB     |  variable Länge  | low    | high   |
-+--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
-   0         1        2        3         4             5 ...  5+L-1      L+5    L+6
-
-  • FLAG-Sequenz      = immer 0x8D 0x81              - 2 Bytes
-  • OPTBYTE           = siehe Abschnitt 2            - 1 Byte
-  • LEN               = Länge des PAYLOADs(Escaped)  - 2 Bytes
-  • PAYLOAD           = escaped, ggf. vorher LZHUF-komprimiert
-  • CRC               = CRC16                        - 2 Bytes
-
-CRC16-CCITT: Polynomial 0x1021, Init 0xFFFF, Final-XOR 0x0000 (KISS-Standard)
-
-══════════════════════════════════════════════════════════════════════════
-2. OPTBYTE – Aufbau (1 Byte)
-══════════════════════════════════════════════════════════════════════════
-
-Bit    7   6   5   4   3   2   1   0
-     +---+---+---+---+---+---+---+---+
-     |F2 |F1 |      OPT-ID (0-63)    |
-     +---+---+---+---+---+---+---+---+
-
-  F2 = 1 → Payload ist LZHUF-komprimiert
-  F1 = 1 → Frame war TX (gesendet), 0 → RX (empfangen)
-  OPT-ID 0…19  → Port-ID für normale Monitor-Frames
-  OPT-ID 20…63 → Steuerbefehle
-
-══════════════════════════════════════════════════════════════════════════
-3. Escaping
-══════════════════════════════════════════════════════════════════════════
-
-0x8D (FEND)  → ersetze durch 0x8F 0x92
-0x8F (FESC)  → ersetze durch 0x8F 0x9B
-
-Empfangsseite:
-  0x8F 0x9B  → ersetze durch 0x8F
-  0x8F 0x92  → ersetze durch 0x8D
-
-═════════════════════════════════════════════════════════════════════════════
-4. Monitor-Frame (OPT-ID = 0 … 19)
-══════════════════════════════════════════════════════════════════════════
-
-Payload VOR Kompression und Escaping:
-
-+--------------------------------+-------------------------------+
-|       3 Byte BCD Zeit          |   rohes AX.25-Frame (wie vom  |
-|          HH:MM:SS              |   Radio empfangen/gesendet)   |
-+--------------------------------+-------------------------------+
-
-Beispiel (16:47:08):
-16 47 08 A0 84 ... (komplettes AX.25-Paket)
-
-→ optional LZHUF-komprimiert (nur wenn kürzer)
-→ dann escaped
-→ dann in das Grundpaket (Abschnitt 1) verpackt
-
-══════════════════════════════════════════════════════════════════════════
-5. Steuerbefehle (OPT-ID ≥ 20)
-══════════════════════════════════════════════════════════════════════════
-
-OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
--------+--------------------+---------------------+------------------------
- 20    | Remote-Mon START   | ACK START           | "port:incl:excl" (UTF-8) (siehe 5.1) / leer
- 21    | Remote-Mon STOP    | ACK STOP            | leer
- 22    | Disconnect         | (kein ACK)          | leer
- 23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
- 24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
- 25    | Logout             | ACK Logout          | leer
- ...
- ...
- 62    | CLI-Escape         | (kein ACK)          | Payload für CLI
- 63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
-
-5.1 Remote-Mon START/UPDATE-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
-
-"<PortID>:<Include-Calls>:<Exclude-Calls>"
-
-Beispiele:
-  "2:DB0LJ,DL1ABC:DJ5ABC"     → Port 2, nur diese Calls, Rest ausblenden
-  "0::"                       → Port 0, alles anzeigen (keine Filter)
-  "5:DB0ABC:"                 → Port 5, nur DB0ABC erlaubt, Rest ausblenden
-
-══════════════════════════════════════════════════════════════════════════
-6. Kompressions-Logik
-══════════════════════════════════════════════════════════════════════════
-
-- LZHUF wird angewendet
-- Wenn komprimiertes Ergebnis kürzer → F2 = 1 und komprimiertes Payload senden
-- Sonst                              → F2 = 0 und Original-Payload senden
-- Empfänger dekomrimiert nur, wenn     F2 = 1
-
-══════════════════════════════════════════════════════════════════════════
-7. Komplettes Beispiel (Monitor-Frame, Port 13, TX, nicht komprimiert)
-══════════════════════════════════════════════════════════════════════════
-
-Payload nach Escaping: 26 Byte
-Gesendet wird (Hex):
-
-8D 81 6D 1A 00 16 47 08 A0 84 ... (26 Byte escaped Payload) ... A7 3F
-
-Aufschlüsselung:
-8D 81     → Flag
-6D        → OPTBYTE = 0b01101101 → Port 13, TX=1, F2=0
-1A 00     → LEN = 26 (little-endian, = 0x001A)
-16 47 08  → BCD-Zeit 16:47:08
-...       → escaped AX.25-Frame
-A7 3F     → CRC16 über Bytes 2 bis 30 (OPTBYTE bis letztes Payload-Byte)
-
-══════════════════════════════════════════════════════════════════════════
-8. Zusammenfassungstabelle
-══════════════════════════════════════════════════════════════════════════
-
-ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
------------+----------------------------+---------------------------------
- 0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
- --        | -------------------------- | --------------------------------
- 20  TX    | Remote-CFG START           | "port:incl:excl" (nur bei CMD)
- 20        | ACK START                  | leer
- 21  TX    | Remote-Mon STOP            | leer
- 21        | ACK STOP                   | leer
- 22  TX    | Disconnect                 | leer
- 22        | -------------------------- | --------------------------------
- 23  TX    | Login Request              | leer
- 23        | ACK Login Request          | 6-Byte Nonce
- 24  TX    | Login Response             | SHA256(pw_hash+nonce)
- 24        | ACK Login Response         | b'OK or b'FAIL'
- 25  TX    | Logout                     | leer
- 25        | ACK Logout                 | leer
- ...
- ...
- 62  TX    | CLI-Escape                 | Payload wird zum CLI durchgereicht
- 62        | -------------------------- | --------------------------------
- 63  TX    | PRP-BATCH                  | PRP-Frame Batch
- 63        | -------------------------- | --------------------------------
-
-══════════════════════════════════════════════════════════════════════════
-Ende der Spezifikation
-══════════════════════════════════════════════════════════════════════════
+(P)oPT (R)emote (P)rotocol
 """
 import copy
 import datetime
@@ -191,6 +38,7 @@ PRP_OPT_DISCO           = 22 # Connection (soft)Disco
 PRP_OPT_LOGIN_REQ       = 23 # Login Request
 PRP_OPT_LOGIN_RESP      = 24 # Login Response
 PRP_OPT_LOGOUT          = 25 # Logout
+PRP_OPT_STATE_UPDATE    = 26 # State Update > PRP Einstellungen/Zustände ändern
 PRP_OPT_ESC_CLI         = 62 # Payload wird an CLI durchgereicht
 PRP_OPT_PRP_BATCH       = 63 # PRP-Frame Batch processing
 ####################################################################################
@@ -202,6 +50,7 @@ PRP_CTL_TAB = {
                 23: 'Login REQ',
                 24: 'Login RESP',
                 25: 'Logout',
+                26: 'State Update',
                 62: 'CLI-ESC',
                 63: 'BATCH',
                }
@@ -385,61 +234,70 @@ class PRPremote:
     def __init__(self, port_handler , connection):
         self._port_handler = port_handler
         self._connection   = connection
+        self._get_uid      = lambda : self._connection.uid
 
         #################################
         # Decoding Resterampe
         self._rest_buffer       = bytearray()
 
         #################################
-        # Status
+        # Meta Daten für QSO-Status Msg
         self._next_pack_meta: None | tuple  = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
         self._last_pack_meta: None | tuple  = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
-        # self.get_rest_len       = lambda : self._next_pack_len[1] - len(self._rest_buffer) # für GUI
 
         #################################
         # Own States / States der eigenen Station
         self._own_states = dict(
-            # Monitor
+            # == Monitor
             cli_rem_mon     =  False,   # TODO Remote Monitor CLI Stream
             gui_rem_mon     =  False,   # Remote Monitor Stream
             rem_mon_port    = 0,        # Port Filter
             rem_mon_incl    = [],       # Incl Filter
             rem_mon_excl    = [],       # Excl Filter
-            # Batch Mode / vorrest nur für Mon Stream
+            # == Batch Mode / vorrest nur für Mon Stream
             batch_mode      = 'auto',   # 'auto', 'on', 'off'
             batch_wait      = 30,       # Sekunden Pakete sammeln
-            # Remote CTL/States
+            # == Remote CTL/States
             cli_esc         = False,    # CLI-ESC Mode (sendet CLI Stream komprimiert)
+            # !! PRIVATE !!!
             login_ok        = False,    # Auth OK
         )
-
+        # == State I/O
         self._get_own_state    = lambda k     : self._own_states[k]
         self._set_own_state    = lambda k, val: self._own_states.update({k: val})
         self._update_own_state = lambda cfg   : self._own_states.update(cfg)
 
+        # == !! PRIVATE STATES !!
+        self._private_state    = ['login_ok']
+        # == State I/O
+        self._is_private_state = lambda state_key: state_key in self._private_state
+
         #################################
         # Remote States / Bestätigt States der Gegenstation
         self._remote_states       = copy.deepcopy(self._own_states)     # Kopie von _own_states
+        # == State I/O
         self._get_remote_state    = lambda k     : self._remote_states[k]
         self._set_remote_state    = lambda k, val: self._remote_states.update({k: val})
         self._update_remote_state = lambda cfg   : self._own_states.update(cfg)
-        # == Für GUI
-        self.get_remote_states    = lambda       : dict(self._remote_states)
+        # == Für GUI / State I/O
+        self._get_remote_states   = lambda       : dict(self._remote_states)
 
         #################################
         # Remote States ACK
         self._pending_remote_states        = {}    # OPT ID, Remote-State CFG
+        # == State I/O
         self._update_pending_remote_states = lambda opt_id, state_cfg: self._pending_remote_states.update({opt_id: state_cfg})
+        self._get_pending_remote_state     = lambda opt_id           : self._pending_remote_states.get(opt_id, None)
         self._set_pending_remote_state     = lambda opt_id, state_key, val: self._pending_remote_states.update({opt_id: {state_key: val}})
 
         #################################
         # Login
         self._login_nonce    = None
         self._password_hash  = None  # sha256(password)
-        # == Self
+        # == Self / State I/O
         self._is_login_ok    = lambda      : self._own_states.get('login_ok', False)
         self._set_login_ok   = lambda is_ok: self._own_states.update({'login_ok': is_ok})
-        # == Remote
+        # == Remote / State I/O
         self._is_login_resp  = lambda      : self._remote_states.get('login_ok', False)
         self._set_login_resp = lambda is_ok: self._remote_states.update({'login_ok': is_ok})
 
@@ -448,22 +306,22 @@ class PRPremote:
         # == CTL
         self._batch_buffer       = []   # Buffer ax25frame_conf Buffer
         self._batch_timer        = time.time() + self._own_states.get('batch_wait', 30)
-        # == Self
+        # == Self / State I/O
         self._batch_wait         = lambda : self._own_states.get('batch_wait', 30)
         self._is_batch_mode      = lambda : True if self._own_states.get('batch_mode', 'auto') == 'on'   else False
         self._is_batch_mode_auto = lambda : True if self._own_states.get('batch_mode', 'auto') == 'auto' else False
         self._set_batch_mode     = lambda mode: self._own_states.update({'batch_mode': mode})
-        # == Remote
+        # == Remote / State I/O
         # self._remote_is_batch_mode      = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'on' else False
         # self._remote_is_batch_mode_auto = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
         self._remote_set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
 
         #################################
         # CLI ESC / Komprimiert senden
-        # == Self
+        # == Self / State I/O
         self._is_cli_esc_mode         = lambda: self._own_states.get('cli_esc', False)
         self._set_cli_esc_mode        = lambda is_on: self._own_states.update({'cli_esc': is_on})
-        # == Remote
+        # == Remote / State I/O
         self._remote_is_cli_esc_mode  = lambda: self._remote_states.get('cli_esc', False)
         self._remote_set_cli_esc_mode = lambda is_on: self._remote_states.update({'cli_esc': is_on})
 
@@ -521,7 +379,7 @@ class PRPremote:
         # Checking Checksum
         crc16    = crc16_ccitt(data[2:-2])
         if crc16 != checksum:
-            logger.error(f"PRP: Checksum Error - UID: {self._connection.uid}")
+            logger.error(f"PRP: Checksum Error - UID: {self._get_uid()}")
             logger.error(f"PRP: Packet CRC: {checksum} - Calc CRC: {crc16}")
             #logger.error(f"PRP: Packet CRC: {checksum.to_bytes(2, 'little')} - Calc CRC: {crc16.to_bytes(2, 'little')}")
             logger.error( "PRP: PRP-Frame:")
@@ -545,7 +403,7 @@ class PRPremote:
                 return self._decode_remote_mon_frame(payload, opt_id, tx), b''
             except AX25DecodingERROR:
                 logger.warning("-------------------------------------------------------------------")
-                logger.warning(f'PRP Remote Monitor: decoding UID: {self._connection.uid}')
+                logger.warning(f'PRP Remote Monitor: decoding UID: {self._get_uid()}')
                 logger.warning(f'PRP Remote Monitor: prp frame org {data}')
                 logger.warning(f'PRP Remote Monitor: prp frame hex {bytearray2hexstr(data)}')
                 logger.warning(f'PRP Remote Monitor: ax25_frame org {payload}')
@@ -555,7 +413,7 @@ class PRPremote:
         ################################################################
         # 20 - 63 = CMD'S
         # TX = Send CMD(True) / Response CMD(False) /
-        """ Remote CFG Update 20 """
+        """ Remote Monitor Update 20 """
         if opt_id == PRP_OPT_RM_START:
             if tx:
                 self._rx_rem_mon_update(payload)
@@ -601,6 +459,14 @@ class PRPremote:
                 self._rx_cmd_logout_response()
             return None, b''
 
+        """ State Update 26 """
+        if opt_id == PRP_OPT_STATE_UPDATE:
+            if tx:
+                self._rx_remote_state_update(payload)
+            else:
+                self._rx_resp_remote_state_update(payload)
+            return None, b''
+
         """ CLI Escape 62 """
         if opt_id == PRP_OPT_ESC_CLI:
             if tx:
@@ -623,7 +489,7 @@ class PRPremote:
         return None, b''
 
     #####################################
-    # I/O - TX/RX
+    # PRP I/O - TX/RX
     def _prp_tx(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, compress=True, send_uncompressed=True):
         data2send = self._encode_prp_frame(
             opt_id=opt_id,
@@ -707,12 +573,12 @@ class PRPremote:
         except EncodingWarning as ex:
             raise ex
         if decoded_ax25pack:
-            self._remote_states['gui_rem_mon'] = True
+            # TODO Failsafe Response handler self._set_remote_state('gui_rem_mon', True)
             # GUI Handling - Remote Monitor Frame
             if not hasattr(self._port_handler, 'handle_remote_monitor_rx'):
                 logger.error("Attribute Error Port-Handler: handle_remote_monitor_rx ")
                 return cli_payload
-            self._port_handler.handle_remote_monitor_rx(decoded_ax25pack, self._connection.uid)
+            self._port_handler.handle_remote_monitor_rx(decoded_ax25pack, self._get_uid())
         return cli_payload
 
     # ====== PRP Batch Mode I/O
@@ -803,17 +669,27 @@ class PRPremote:
         return send_as_prp
 
     #####################################
-    # CTL / ACK / ...
+    # Remote State ACK I/O
     def _ack_pending_remote_states(self, opt_id: int):
         if opt_id not in self._pending_remote_states:
+            logger.error(
+                f"RPR: ACK-BufferError: OPT-ID({opt_id}) nicht gefunden in self._pending_remote_states.")
+            logger.error("RPR:   self._pending_remote_states:")
+            for k, val in self._pending_remote_states.items():
+                logger.error(f"RPR:   {k}: {val}")
             return
         # Update Remote States
-        self._remote_states.update(self._pending_remote_states[opt_id])
+        self._update_remote_state(self._pending_remote_states[opt_id])
         # Lösche aus Pending Buffer
         del self._pending_remote_states[opt_id]
 
+    def _del_pending_remote_states(self, opt_id: int):
+        if opt_id not in self._pending_remote_states:
+            return
+        del self._pending_remote_states[opt_id]
+
     #####################################
-    # Remote Monitor
+    # Remote Monitor Stream
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler > connection.update_monitor() """
         if (not self._get_own_state('cli_rem_mon') and
@@ -827,7 +703,7 @@ class PRPremote:
         from_call   = ax25frame_conf.get('from_call_str', '')
         to_call     = ax25frame_conf.get('to_call_str', '')
         frame_uid   = ax25frame_conf.get('uid', '')
-        my_uid      = str(self._connection.uid)
+        my_uid      = str(self._get_uid())
         my_uid_rev  = reverse_uid(my_uid)
         incl_filter = self._get_own_state('rem_mon_incl')
         excl_filter = self._get_own_state('rem_mon_excl')
@@ -952,6 +828,208 @@ class PRPremote:
     #####################################
     # CTL CMDs
     # =============================
+    # Response Handler
+    def _local_response_handler(self, opt_id: int):
+        """ Lokaler Response Handler """
+        #################################
+        # Opt bezogener RESP
+        """
+        if opt_id == PRP_OPT_STATE_UPDATE:
+        elif opt_id == PRP_OPT_RM_STOP:
+        """
+
+        #################################
+        # Globaler RESP für Remote Monitor
+        if opt_id in [PRP_OPT_STATE_UPDATE, PRP_OPT_RM_STOP]:
+            # Hole gesendete Daten aus pending_remote_states
+            pending_updates = self._get_pending_remote_state(opt_id)
+
+            # Prüfe ob Daten in _pending_remote_states vorhanden sind
+            if pending_updates is None:
+                logger.error(
+                    f"RPR: ACK-BufferError: OPT-ID({opt_id}) nicht gefunden in self._pending_remote_states.")
+                logger.error("RPR:   self._pending_remote_states:")
+                for k, val in self._pending_remote_states.items():
+                    logger.error(f"RPR:   {k}: {val}")
+                return
+
+            # ============================
+            # RESP Remote Mon Start / Stop
+            if pending_updates.get('gui_rem_mon') != self._get_remote_state('gui_rem_mon'):
+                if pending_updates.get('gui_rem_mon'):
+                    self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._get_uid())
+                else:
+                    self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_STOP, self._get_uid())
+
+    # =============================
+    # States Update via Remote / By Grok AI
+    def send_remote_state_update(self, state_updates: dict):
+        # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
+        if not self._check_version():
+            return False
+
+        # Pending für ACK
+        self._update_pending_remote_states(PRP_OPT_STATE_UPDATE, state_updates)
+
+        bin_payload = self._encode_state_updates(state_updates)
+        if not bin_payload:
+            return False
+
+        return self._prp_tx(
+            opt_id=PRP_OPT_STATE_UPDATE,
+            tx_flag=True,
+            data=bin_payload,
+            prio=True,
+            compress=True
+        )
+
+    def _rx_remote_state_update(self, payload: bytes):
+        i = 0
+        updates = {}
+
+        while i + 2 < len(payload):
+            key_id = payload[i]
+            val_len = payload[i + 1]
+            i += 2
+            if i + val_len > len(payload):
+                break
+
+            key = self._get_state_key_by_id(key_id)
+            if not key:
+                i += val_len
+                continue
+
+            # Sensible Keys blockieren
+            if key == 'login_ok':
+                logger.warning("PRP: Remote versucht login_ok zu ändern – ignoriert!")
+                i += val_len
+                continue
+
+            value_data = payload[i:i + val_len]
+            # Dekodierung mit Key-Name
+            # == bool
+            if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
+                value = bool(value_data[0])
+            # == int 1 Byte / 256
+            elif key == 'rem_mon_port':
+                value = value_data[0]
+            # == int 2 Bytes - little
+            elif key == 'batch_wait':
+                value = int.from_bytes(value_data, 'little')
+            # == dict batch mode
+            elif key == 'batch_mode':
+                modes = {0: 'auto', 1: 'on', 2: 'off'}
+                value = modes.get(value_data[0], 'auto')
+            # == list
+            elif key in ['rem_mon_incl', 'rem_mon_excl']:
+                if len(value_data) < 2 or value_data[-2:] != b'\x00\x00':
+                    value = []  # Korrupte Daten
+                else:
+                    parts = value_data[:-2].split(b'\x00')
+                    value = [p.decode('UTF-8', 'ignore') for p in parts if p]
+            else:
+                i += val_len
+                continue
+
+            updates[key] = value
+            i += val_len
+
+        if updates:
+            self._update_own_state(updates)
+            logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
+            # Send Responde
+            self._tx_resp_remote_state_update(success=True)
+        else:
+            self._tx_resp_remote_state_update(success=False)
+
+    # == Encoding
+    def _encode_state_updates(self, state_updates: dict):
+        payload      = bytearray()
+        ordered_keys = list(self._own_states.keys())  # Fixe Reihenfolge
+
+        for key, value in state_updates.items():
+            if key not in ordered_keys:
+                continue  # Unbekannter oder nicht erlaubter Key
+
+            # Sensible Keys explizit verbieten (z.B. login_ok darf nicht remote gesetzt werden!)
+            if self._is_private_state(key):
+                logger.warning(f"PRP: Versuch, sensiblen State '{key}' remote zu ändern – blockiert!")
+                continue
+
+            key_id = ordered_keys.index(key)
+            value_bytes = self._encode_state_value(key, value)  # Key-Name statt ID übergeben
+            if value_bytes is None:
+                continue
+
+            payload.append(key_id)                    # 1 Byte ID
+            payload.append(len(value_bytes))          # 1 Byte Länge
+            payload.extend(value_bytes)
+
+        return bytes(payload)
+
+    @staticmethod
+    def _encode_state_value(key: str, value):
+        # == bool
+        if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
+            return bytes([0x01 if value else 0x00])
+
+        # == int 1 Byte / 256
+        elif key == 'rem_mon_port':
+            return bytes([value & 0xFF])
+
+        # == int 2 Bytes - little
+        elif key == 'batch_wait':
+            return value.to_bytes(2, 'little')
+
+        # == dict batch mode
+        elif key == 'batch_mode':
+            modes = {'auto': 0, 'on': 1, 'off': 2}
+            return bytes([modes.get(value, 0)])
+
+        # == list
+        elif key in ['rem_mon_incl', 'rem_mon_excl']:
+            if not value:
+                return b'\x00\x00'  # Leere Liste
+            data = '\x00'.join(value).encode('UTF-8', 'ignore')
+            return data + b'\x00\x00'
+
+        return None  # Unbekannter Key
+
+    # == Response
+    def _tx_resp_remote_state_update(self, success: bool):
+        """ TX Respond State Update (ACK) """
+        data = b'OK' if success else b'FAIL'
+        self._prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
+
+    def _rx_resp_remote_state_update(self, payload: bytes):
+        """ RX Respond State Update (ACK) """
+        if payload == b'OK':
+            # Response Handler / GUI Updates usw.
+            self._local_response_handler(PRP_OPT_STATE_UPDATE)
+
+            # ACK CFG und update Remote-States
+            self._ack_pending_remote_states(PRP_OPT_STATE_UPDATE)
+            logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
+
+            # Optional: GUI-Response senden, z.B. via port_handler
+            self._port_handler.handle_remote_monitor_response('rsp_state_update_ok', self._get_uid())
+
+        else:
+            logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._get_uid()}")
+            # Optional: Pending löschen oder retry
+            self._del_pending_remote_states(PRP_OPT_STATE_UPDATE)
+            # GUI Response Handler
+            self._port_handler.handle_remote_monitor_response('rsp_state_update_fail', self._get_uid())
+
+    # == Helper
+    def _get_state_key_by_id(self, key_id: int):
+        """ Gibt ID von self._own_states.keys() zurück."""
+        keys = list(self._own_states.keys())
+        if 0 <= key_id < len(keys):
+            return keys[key_id]
+        return None
+
+    # =============================
     # ====== Remote Mon Start CMD
     def send_rem_mon_update(self, cfg: dict):
         """ Updated und sendet Remote CFG """
@@ -967,9 +1045,6 @@ class PRPremote:
         data = f"{port_id}:{incl_filter}:{excl_filter}".encode('UTF-8', 'ignore')
         # PRP Paket erstellen & senden
         self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=True, data=data, prio=True)
-
-        # FIXME DeleteMe Testing
-        # self._set_cli_esc_mode(True)
 
     def _rx_rem_mon_update(self, payload: bytes):
         """ Empfange Remote Monito Cfg """
@@ -1001,8 +1076,6 @@ class PRPremote:
         ))
         # Sende ACK
         self._tx_resp_rem_mon_update()
-        # FIXME DeleteMe Testing
-        # self._set_cli_esc_mode(True)
 
     def _tx_resp_rem_mon_update(self):
         """ TX Respond Remote Monitor CFG update """
@@ -1013,7 +1086,7 @@ class PRPremote:
         # ACK CFG
         self._ack_pending_remote_states(PRP_OPT_RM_START)
         # Send Response to GUI via Port Handler
-        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._connection.uid)
+        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._get_uid())
 
     # =============================
     # ====== Remote Mon Stop CMD
@@ -1041,10 +1114,10 @@ class PRPremote:
 
     def _rx_resp_cmd_stop_gui_remote_mon(self):
         """ RX Respond Stop CMD """
+        # Response Handler / GUI Updates usw.
+        self._local_response_handler(PRP_OPT_RM_STOP)
         # ACK CFG
         self._ack_pending_remote_states(PRP_OPT_RM_STOP)
-        # Send Response to GUI via Port Handler
-        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_STOP, self._connection.uid)
 
     # =============================
     # ====== Disconnect CMD
@@ -1120,11 +1193,11 @@ class PRPremote:
         answer = payload.decode("ascii", "ignore")
         if answer == "OK":
             self._set_login_resp(True)
-            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGIN, self._connection.uid)
+            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGIN, self._get_uid())
             print("LOGIN erfolgreich!")
         else:
             self._set_login_resp(False)
-            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
+            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._get_uid())
             print("LOGIN fehlgeschlagen!")
 
     # =============================
@@ -1145,7 +1218,7 @@ class PRPremote:
         """ Client empfängt Logout bestätigung """
         print("LOGOUT erfolgreich!")
         self._set_login_ok(False)
-        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
+        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._get_uid())
 
     #####################################
     # Helper
@@ -1161,7 +1234,127 @@ class PRPremote:
         return True
 
     #####################################
-    # CLI-ESC Status Meldungen für gui.QSO
+    # Lokale State I/O
+    # === self._own_states I/O
+    def get_own_states(self):
+        return dict(self._own_states)
+
+    def set_own_state(self, state_key: str, value):
+        # Opt: by Grok-AI
+        if state_key not in self._own_states:
+            logger.error(f"PRP State-Tab KeyError: Unbekannter Key '{state_key}'")
+            return False
+
+        current_value = self._get_own_state(state_key)
+        current_type  = type(current_value)
+
+        # Spezielle Typprüfung für Listen
+        if current_type is list:
+            if not isinstance(value, (list, tuple)):
+                logger.error(
+                    f"PRP State-Tab ValueError: Key '{state_key}' erwartet list oder tuple, bekam {type(value)}")
+                return False
+        # Spezielle Prüfung für batch_mode
+        elif state_key == 'batch_mode':
+            if value not in ('auto', 'on', 'off'):
+                logger.error(f"PRP State-Tab ValueError: batch_mode muss 'auto', 'on' oder 'off' sein, nicht '{value}'")
+                return False
+        # Normale Typprüfung
+        elif not isinstance(value, current_type):
+            logger.error(f"PRP State-Tab ValueError: Key '{state_key}' erwartet {current_type}, bekam {type(value)}")
+            logger.error(f"  Wert: {value}")
+            return False
+
+        # Private States loggen (aber erlauben, da lokal)
+        if self._is_private_state(state_key):
+            logger.warning(f"Lokaler Zugriff auf privaten State '{state_key}' = {value}")
+
+        self._set_own_state(state_key, value)
+        logger.debug(f"PRP State updated: {state_key} = {value}")
+        return True
+
+    def update_own_states(self, state_cfg: dict):
+        """
+        by Grok-AI
+        Updated mehrere _own_states auf einmal aus einem Dict.
+        Validiert jeden Eintrag (Key, Typ, Wert) vor dem Setzen.
+        Bei einem einzigen Fehler wird KEINE Änderung vorgenommen.
+
+        Beispiel:
+            self.update_own_states({
+                'gui_rem_mon': True,
+                'rem_mon_port': 5,
+                'batch_mode': 'off',
+                'rem_mon_incl': ['DB0LJ', 'DL1ABC']
+            })
+
+        Rückgabe: True = alles erfolgreich gesetzt, False = mind. ein Fehler
+        """
+        if not isinstance(state_cfg, dict):
+            logger.error("PRP update_own_states: Eingabe muss ein Dictionary sein!")
+            return False
+
+        if not state_cfg:
+            logger.debug("PRP update_own_states: Leeres Update-Dict – nichts zu tun.")
+            return True
+
+        # Schritt 1: Alle Updates vorab validieren (ohne zu schreiben)
+        validated_updates = {}
+        for key, value in state_cfg.items():
+            if key not in self._own_states:
+                logger.error(f"PRP update_own_states: Unbekannter State-Key '{key}'")
+                return False
+
+            current_value = self._get_own_state(key)
+            current_type = type(current_value)
+
+            # --- Typprüfung ---
+            if current_type is list:
+                if not isinstance(value, (list, tuple)):
+                    logger.error(f"PRP update_own_states: Key '{key}' erwartet list/tuple, bekam {type(value)}")
+                    return False
+            elif key == 'batch_mode':
+                if value not in ('auto', 'on', 'off'):
+                    logger.error(
+                        f"PRP update_own_states: batch_mode ungültiger Wert '{value}' (erlaubt: auto, on, off)")
+                    return False
+            elif not isinstance(value, current_type):
+                logger.error(f"PRP update_own_states: Key '{key}' erwartet {current_type}, bekam {type(value)}")
+                return False
+
+            # --- Wertplausibilität (optional erweitern) ---
+            if key == 'rem_mon_port':
+                if not (0 <= value <= 19):  # Ports typischerweise 0–19
+                    logger.error(f"PRP update_own_states: rem_mon_port außerhalb gültigem Bereich (0-19): {value}")
+                    return False
+            elif key == 'batch_wait':
+                if not (1 <= value <= 3600):  # 1 Sekunde bis 1 Stunde sinnvoll
+                    logger.warning(f"PRP update_own_states: batch_wait ungewöhnlicher Wert: {value}s")
+
+            # --- Private States nur loggen (nicht blockieren, da lokal) ---
+            if self._is_private_state(key):
+                logger.warning(f"Lokaler Update privater State '{key}' = {value}")
+
+            validated_updates[key] = value
+
+        # Schritt 2: Alle validierten Updates auf einmal anwenden
+        for key, value in validated_updates.items():
+            self._set_own_state(key, value)
+            logger.debug(f"PRP State updated: {key} = {value}")
+
+        logger.info(f"PRP update_own_states: Erfolgreich {len(validated_updates)} States aktualisiert.")
+        return True
+
+    # === self._remote_states I/O
+    def get_rem_states(self):
+        return self._get_remote_states
+
+    def get_rem_state_by_key(self, state_key: str):
+        if not state_key in self._remote_states:
+            return None
+        return self._get_remote_state(state_key)
+
+    # === CLI-ESC Status Meldungen für gui.QSO
     def get_cli_esc_send_status(self):
         """
         Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.

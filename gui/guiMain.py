@@ -22,7 +22,7 @@ from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
-from gui.guiRemoteMon import RemoteMonitorGUI
+from gui.prp.guiPRP_remote import PRP_remoteGUI
 from gui.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
 #from gui.plots.gui_ConnPath_plot import ConnPathsPlot
@@ -381,7 +381,7 @@ class PoPT_GUI_Main:
         self.dualPortMon_win        = None
         self.block_list_win         = None
         self.routingTab_win         = None
-        self.remote_mon_win         = None
+        self.prp_remote_win         = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -557,7 +557,7 @@ class PoPT_GUI_Main:
             self.dualPortMon_win,
             self.block_list_win,
             self.routingTab_win,
-            self.remote_mon_win,
+            self.prp_remote_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -2981,8 +2981,8 @@ class PoPT_GUI_Main:
             return
         self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
         # Update Remote Mon GUI if open
-        if hasattr(self.remote_mon_win, 'rem_mon_init'):
-            self.remote_mon_win.rem_mon_init(uid)
+        if hasattr(self.prp_remote_win, 'rem_mon_init'):
+            self.prp_remote_win.prp_connection_init(uid)
 
     # === TX Cmds
     """
@@ -3008,8 +3008,8 @@ class PoPT_GUI_Main:
 
     def _remote_monitor_response_update_task(self, resp: str, remote_uid: str):
         # Update Remote Mon GUI if open
-        if hasattr(self.remote_mon_win, 'rem_mon_response'):
-            self.remote_mon_win.rem_mon_response(resp, remote_uid)
+        if hasattr(self.prp_remote_win, 'rem_mon_response'):
+            self.prp_remote_win.gui_prp_response_handler(resp, remote_uid)
 
     def remote_monitor_update_gui(self, ax25pack: dict, remote_uid: str):
         self._add_tasker_q("_remote_monitor_update_task", (ax25pack, remote_uid), prio=False)
@@ -3021,8 +3021,8 @@ class PoPT_GUI_Main:
             self._remote_mon_pack_buff[remote_uid] = deque([] * 10000, maxlen=10000)
         self._remote_mon_pack_buff[remote_uid].append(rem_mon_ax25conf)
         # Update Remote Mon GUI if open
-        if hasattr(self.remote_mon_win, 'rem_mon_update'):
-            self.remote_mon_win.rem_mon_update(rem_mon_ax25conf, remote_uid)
+        if hasattr(self.prp_remote_win, 'rem_mon_update'):
+            self.prp_remote_win.rem_mon_update(rem_mon_ax25conf, remote_uid)
 
     # === Getta
     def get_remote_monitor_pack_buffer(self):
@@ -3088,7 +3088,7 @@ class PoPT_GUI_Main:
             'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
-            'remote_monitor': (self.remote_mon_win, RemoteMonitorGUI),
+            'remote_monitor': (self.prp_remote_win, PRP_remoteGUI),
 
             # TODO .......
 
