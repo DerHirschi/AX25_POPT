@@ -88,7 +88,7 @@ OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
  62    | CLI-Escape         | (kein ACK)          | Payload für CLI
  63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
 
-5.1 START-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
+5.1 Remote-Mon START/UPDATE-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
 
 "<PortID>:<Include-Calls>:<Exclude-Calls>"
 
@@ -131,7 +131,7 @@ ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
 -----------+----------------------------+---------------------------------
  0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
  --        | -------------------------- | --------------------------------
- 20  TX    | Remote-Mon START           | "port:incl:excl" (nur bei CMD)
+ 20  TX    | Remote-CFG START           | "port:incl:excl" (nur bei CMD)
  20        | ACK START                  | leer
  21  TX    | Remote-Mon STOP            | leer
  21        | ACK STOP                   | leer
@@ -154,13 +154,13 @@ ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
 Ende der Spezifikation
 ══════════════════════════════════════════════════════════════════════════
 """
+import copy
 import datetime
 import hashlib
 import os
 import time
 
 from ax25.ax25Error import AX25DecodingERROR
-from cfg.default_config import getNew_remote_mon_cfg
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
 from fnc.crc_fnc import crc16_ccitt
@@ -397,39 +397,75 @@ class PRPremote:
         # self.get_rest_len       = lambda : self._next_pack_len[1] - len(self._rest_buffer) # für GUI
 
         #################################
-        # Remote Monitor
-        self._remote_mon_conf = getNew_remote_mon_cfg()
-
-        #################################
-        # States
-        self._remote_states = dict(
-            gui_rem_mon     =  False,
-            login_ok        =  False,   # Auth OK
+        # Own States / States der eigenen Station
+        self._own_states = dict(
+            # Monitor
+            cli_rem_mon     =  False,   # TODO Remote Monitor CLI Stream
+            gui_rem_mon     =  False,   # Remote Monitor Stream
+            rem_mon_port    = 0,        # Port Filter
+            rem_mon_incl    = [],       # Incl Filter
+            rem_mon_excl    = [],       # Excl Filter
+            # Batch Mode / vorrest nur für Mon Stream
             batch_mode      = 'auto',   # 'auto', 'on', 'off'
             batch_wait      = 30,       # Sekunden Pakete sammeln
-            cli_esc         = False     #
+            # Remote CTL/States
+            cli_esc         = False,    # CLI-ESC Mode (sendet CLI Stream komprimiert)
+            login_ok        = False,    # Auth OK
         )
+
+        self._get_own_state    = lambda k     : self._own_states[k]
+        self._set_own_state    = lambda k, val: self._own_states.update({k: val})
+        self._update_own_state = lambda cfg   : self._own_states.update(cfg)
+
+        #################################
+        # Remote States / Bestätigt States der Gegenstation
+        self._remote_states       = copy.deepcopy(self._own_states)     # Kopie von _own_states
+        self._get_remote_state    = lambda k     : self._remote_states[k]
+        self._set_remote_state    = lambda k, val: self._remote_states.update({k: val})
+        self._update_remote_state = lambda cfg   : self._own_states.update(cfg)
+        # == Für GUI
+        self.get_remote_states    = lambda       : dict(self._remote_states)
+
+        #################################
+        # Remote States ACK
+        self._pending_remote_states        = {}    # OPT ID, Remote-State CFG
+        self._update_pending_remote_states = lambda opt_id, state_cfg: self._pending_remote_states.update({opt_id: state_cfg})
+        self._set_pending_remote_state     = lambda opt_id, state_key, val: self._pending_remote_states.update({opt_id: {state_key: val}})
 
         #################################
         # Login
-        self._login_nonce   = None
-        self._password_hash = None  # sha256(password)
-        self._is_login_ok   = lambda      : self._remote_states.get('login_ok', False)
-        self._set_login_ok  = lambda is_ok: self._remote_states.update({'login_ok': is_ok})
+        self._login_nonce    = None
+        self._password_hash  = None  # sha256(password)
+        # == Self
+        self._is_login_ok    = lambda      : self._own_states.get('login_ok', False)
+        self._set_login_ok   = lambda is_ok: self._own_states.update({'login_ok': is_ok})
+        # == Remote
+        self._is_login_resp  = lambda      : self._remote_states.get('login_ok', False)
+        self._set_login_resp = lambda is_ok: self._remote_states.update({'login_ok': is_ok})
 
         #################################
         # Batch Mode
+        # == CTL
         self._batch_buffer       = []   # Buffer ax25frame_conf Buffer
-        self._batch_timer        = time.time() + self._remote_states.get('batch_wait', 30)
-        self._batch_wait         = lambda : self._remote_states.get('batch_wait', 30)
-        self._is_batch_mode      = lambda : True if self._remote_states.get('batch_mode', 'auto') == 'on'   else False
-        self._is_batch_mode_auto = lambda : True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
-        self._set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
+        self._batch_timer        = time.time() + self._own_states.get('batch_wait', 30)
+        # == Self
+        self._batch_wait         = lambda : self._own_states.get('batch_wait', 30)
+        self._is_batch_mode      = lambda : True if self._own_states.get('batch_mode', 'auto') == 'on'   else False
+        self._is_batch_mode_auto = lambda : True if self._own_states.get('batch_mode', 'auto') == 'auto' else False
+        self._set_batch_mode     = lambda mode: self._own_states.update({'batch_mode': mode})
+        # == Remote
+        # self._remote_is_batch_mode      = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'on' else False
+        # self._remote_is_batch_mode_auto = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
+        self._remote_set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
 
         #################################
-        # CLI ESC
-        self._is_cli_esc_mode   = lambda: self._remote_states.get('cli_esc', False)
-        self._set_cli_esc_mode  = lambda is_on: self._remote_states.update({'cli_esc': is_on})
+        # CLI ESC / Komprimiert senden
+        # == Self
+        self._is_cli_esc_mode         = lambda: self._own_states.get('cli_esc', False)
+        self._set_cli_esc_mode        = lambda is_on: self._own_states.update({'cli_esc': is_on})
+        # == Remote
+        self._remote_is_cli_esc_mode  = lambda: self._remote_states.get('cli_esc', False)
+        self._remote_set_cli_esc_mode = lambda is_on: self._remote_states.update({'cli_esc': is_on})
 
     #####################################
     # Tasker (ax25Conn)
@@ -519,12 +555,12 @@ class PRPremote:
         ################################################################
         # 20 - 63 = CMD'S
         # TX = Send CMD(True) / Response CMD(False) /
-        """ Remote Monitor Start 20 """
+        """ Remote CFG Update 20 """
         if opt_id == PRP_OPT_RM_START:
             if tx:
-                self._rx_cmd_gui_remote_mon(payload)
+                self._rx_rem_mon_update(payload)
             else:
-                self._rx_resp_cmd_start_gui_remote_mon()
+                self._rx_resp_rem_mon_update()
             return None, b''
 
         """ Remote Monitor Stop 21 """
@@ -767,15 +803,25 @@ class PRPremote:
         return send_as_prp
 
     #####################################
+    # CTL / ACK / ...
+    def _ack_pending_remote_states(self, opt_id: int):
+        if opt_id not in self._pending_remote_states:
+            return
+        # Update Remote States
+        self._remote_states.update(self._pending_remote_states[opt_id])
+        # Lösche aus Pending Buffer
+        del self._pending_remote_states[opt_id]
+
+    #####################################
     # Remote Monitor
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler > connection.update_monitor() """
-        if (not self._remote_mon_conf.get('cli_mon', False) and
-            not self._remote_mon_conf.get('gui_mon', False)):
+        if (not self._get_own_state('cli_rem_mon') and
+            not self._get_own_state('gui_rem_mon')):
             return
 
         port_id = ax25frame_conf.get('port', -1)
-        if port_id != self._remote_mon_conf.get('mon_port', -2):
+        if port_id != self._get_own_state('rem_mon_port'):
             return
 
         from_call   = ax25frame_conf.get('from_call_str', '')
@@ -783,8 +829,8 @@ class PRPremote:
         frame_uid   = ax25frame_conf.get('uid', '')
         my_uid      = str(self._connection.uid)
         my_uid_rev  = reverse_uid(my_uid)
-        incl_filter = self._remote_mon_conf.get('incl_call', [])
-        excl_filter = self._remote_mon_conf.get('excl_call', [])
+        incl_filter = self._get_own_state('rem_mon_incl')
+        excl_filter = self._get_own_state('rem_mon_excl')
 
         # Own Connection Filter
         if frame_uid == my_uid or frame_uid == my_uid_rev:
@@ -810,8 +856,8 @@ class PRPremote:
                 not to_call   in incl_filter
             ): return
 
-        # CLI Monitor Output
-        if self._remote_mon_conf.get('cli_mon', False):
+        # CLI Monitor Stream Output
+        if self._get_own_state('cli_rem_mon'):
             # TODO
             self._connection.cli.cli_update_monitor(ax25frame_conf)
 
@@ -826,7 +872,7 @@ class PRPremote:
             return
 
         # PoPT Remote Monitor GUI
-        if self._remote_mon_conf.get('gui_mon', False):
+        if self._get_own_state('gui_rem_mon'):
             self._encode_remote_mon_frame(ax25frame_conf)
 
     def _remote_monitor_batch_update(self):
@@ -907,24 +953,26 @@ class PRPremote:
     # CTL CMDs
     # =============================
     # ====== Remote Mon Start CMD
-    def cmd_start_gui_remote_mon(self, cfg: dict):
-        """ TX Start CMD """
+    def send_rem_mon_update(self, cfg: dict):
+        """ Updated und sendet Remote CFG """
         if not self._check_version():
             return
-
-        port_id = cfg.get('mon_port', 0)
-        incl_filter = ','.join(cfg.get('incl_call', []))
-        excl_filter = ','.join(cfg.get('excl_call', []))
+        # CFG in ACK Buffer
+        self._update_pending_remote_states(PRP_OPT_RM_START, cfg)
+        # Parameter
+        port_id     = cfg.get('rem_mon_port', 0)
+        incl_filter = ','.join(cfg.get('rem_mon_incl', []))
+        excl_filter = ','.join(cfg.get('rem_mon_excl', []))
 
         data = f"{port_id}:{incl_filter}:{excl_filter}".encode('UTF-8', 'ignore')
-
+        # PRP Paket erstellen & senden
         self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=True, data=data, prio=True)
 
         # FIXME DeleteMe Testing
-        self._set_cli_esc_mode(True)
+        # self._set_cli_esc_mode(True)
 
-    def _rx_cmd_gui_remote_mon(self, payload: bytes):
-        """ RX Start CMD """
+    def _rx_rem_mon_update(self, payload: bytes):
+        """ Empfange Remote Monito Cfg """
         data  = payload.decode('UTF-8', 'ignore')
         param = data.split(':')
         if len(param) != 3:
@@ -944,26 +992,27 @@ class PRPremote:
         while '' in excl_filter:
             excl_filter.remove('')
 
-        cfg = dict(
-            cli_mon=False,
-            gui_mon=True,
-            mon_port=port_id,
-            incl_call=incl_filter,  # Call Filter
-            excl_call=excl_filter,  # Call Filter
-        )
-        print(f"set_remote_mon: {cfg}")
-        self._tx_resp_cmd_start_gui_remote_mon()
-        self._remote_mon_conf.update(cfg)
+        # Update lokale States
+        self._update_own_state(dict(
+            gui_rem_mon=True,
+            rem_mon_port=port_id,
+            rem_mon_incl=incl_filter,  # Call Filter
+            rem_mon_excl=excl_filter,  # Call Filter
+        ))
+        # Sende ACK
+        self._tx_resp_rem_mon_update()
         # FIXME DeleteMe Testing
-        self._set_cli_esc_mode(True)
+        # self._set_cli_esc_mode(True)
 
-    def _tx_resp_cmd_start_gui_remote_mon(self):
-        """ TX Respond Stop CMD """
+    def _tx_resp_rem_mon_update(self):
+        """ TX Respond Remote Monitor CFG update """
         self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=False, data=b'', prio=True)
 
-    def _rx_resp_cmd_start_gui_remote_mon(self):
-        """ RX Respond Stop CMD """
-        self._remote_states['gui_rem_mon'] = True
+    def _rx_resp_rem_mon_update(self):
+        """ RX Respond Remote Monitor CFG update """
+        # ACK CFG
+        self._ack_pending_remote_states(PRP_OPT_RM_START)
+        # Send Response to GUI via Port Handler
         self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._connection.uid)
 
     # =============================
@@ -972,15 +1021,15 @@ class PRPremote:
         """ TX Start CMD """
         if not self._check_version():
             return
+        # CFG in ACK Buffer
+        self._set_pending_remote_state(PRP_OPT_RM_STOP, 'gui_rem_mon', False)
+        # PRP Senden
         self._prp_tx(opt_id=PRP_OPT_RM_STOP, tx_flag=True, data=b'', prio=True)
 
     def _rx_cmd_stop_gui_remote_mon(self):
         """ RX Stop CMD """
-        cfg = dict(
-            gui_mon=False,
-        )
-        print(f"set_remote_mon: {cfg}")
-        self._remote_mon_conf.update(cfg)
+        # Zustand updaten
+        self._set_own_state('gui_rem_mon', False)
         # Clear remote-protocol buffer
         self._connection.clear_tx_buff_prp()
         # Send Response
@@ -992,7 +1041,9 @@ class PRPremote:
 
     def _rx_resp_cmd_stop_gui_remote_mon(self):
         """ RX Respond Stop CMD """
-        self._remote_states['gui_rem_mon'] = False
+        # ACK CFG
+        self._ack_pending_remote_states(PRP_OPT_RM_STOP)
+        # Send Response to GUI via Port Handler
         self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_STOP, self._connection.uid)
 
     # =============================
@@ -1040,7 +1091,7 @@ class PRPremote:
     def _rx_cmd_login_response(self, payload):
         """Server prüft kryptografische Antwort"""
         # TODO password_hash fm userdb
-        password = DBUG_PW
+        password      = DBUG_PW
         password_hash = hashlib.sha256(password.encode()).digest()
 
         if not self._login_nonce or not password_hash:
@@ -1068,11 +1119,11 @@ class PRPremote:
     def _rx_cmd_login_ack(self, payload):
         answer = payload.decode("ascii", "ignore")
         if answer == "OK":
-            self._set_login_ok(True)
+            self._set_login_resp(True)
             self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGIN, self._connection.uid)
             print("LOGIN erfolgreich!")
         else:
-            self._set_login_ok(False)
+            self._set_login_resp(False)
             self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
             print("LOGIN fehlgeschlagen!")
 
@@ -1095,12 +1146,6 @@ class PRPremote:
         print("LOGOUT erfolgreich!")
         self._set_login_ok(False)
         self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._connection.uid)
-
-    #####################################
-    # CTL Local
-    def update_cfg(self, cfg: dict):
-        print(f"set_remote_mon: {cfg}")
-        self._remote_mon_conf.update(cfg)
 
     #####################################
     # Helper
@@ -1153,8 +1198,3 @@ class PRPremote:
         # Download Bar
         bar     = f"[{'#' * pr_ten}{'.' * pr_rest}]"
         return f"PRP ▼ {bar}({percent}%) - {max(0, received_bytes - 7)} Bytes / {self._next_pack_meta[1]} Bytes"
-
-    #####################################
-    # Getta
-    def get_remote_states(self):
-        return self._remote_states

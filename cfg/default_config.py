@@ -210,11 +210,12 @@ def getNew_BBS_User_cfg():
 # Remote Monitor
 def getNew_remote_mon_cfg():
     return dict(
-            cli_mon   = False,
-            gui_mon   = False,
-            mon_port  = 0,
-            incl_call = [], # Call Filter
-            excl_call = [], # Call Filter
+        # Remote Monitor
+        cli_rem_mon=False,
+        gui_rem_mon=True,
+        rem_mon_port=0,
+        rem_mon_incl=[],  # Call Filter
+        rem_mon_excl=[],  # Call Filter
         )
 
 #######################################

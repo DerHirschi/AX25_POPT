@@ -6,6 +6,7 @@ from tkinter import ttk
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
 from ax25.prp_remote import PRP_RM_RESP_START, PRP_RM_RESP_STOP, PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
+from cfg.default_config import getNew_remote_mon_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, tk_filter_bad_chars
@@ -139,7 +140,7 @@ class RemMonGUITab(ttk.Frame):
             pass
         #############################
         # Is Connected ?
-        remote_mon = self._get_remote_mon()
+        remote_mon = self._get_prp()
         if hasattr(remote_mon, 'get_remote_states'):
             remote_states: dict = remote_mon.get_remote_states()
             if remote_states.get('gui_rem_mon', False):
@@ -381,8 +382,8 @@ class RemMonGUITab(ttk.Frame):
     #######################################
     # CTL Remote Mon
     def _cmd_start_rem_mon(self):
-        remote_mon = self._get_remote_mon()
-        if hasattr(remote_mon, 'cmd_start_gui_remote_mon'):
+        prp = self._get_prp()
+        if hasattr(prp, 'send_rem_mon_update'):
             incl_filter = self._incl_filter_var.get()
             excl_filter = self._excl_filter_var.get()
             try:
@@ -399,35 +400,40 @@ class RemMonGUITab(ttk.Frame):
             excl_filter = [str(x).upper() for x in excl_filter]
             while '' in excl_filter:
                 excl_filter.remove('')
-            remote_mon.cmd_start_gui_remote_mon(dict(
-                cli_mon=False,
-                gui_mon=True,
-                mon_port=port_filter,
-                incl_call=incl_filter,  # Call Filter
-                excl_call=excl_filter,  # Call Filter
+            # Hole Aktuelle PRP Remote CFG
+            prp_remote_cfg = getNew_remote_mon_cfg()
+            # Update Remote CFG
+            prp_remote_cfg.update(dict(
+                cli_rem_mon=False,
+                gui_rem_mon=True,
+                rem_mon_port=port_filter,
+                rem_mon_incl=incl_filter,  # Call Filter
+                rem_mon_excl=excl_filter,  # Call Filter
             ))
-            self._change_btn_states()
+            if hasattr(prp, 'send_rem_mon_update'):
+                prp.send_rem_mon_update(prp_remote_cfg)
+                self._change_btn_states()
 
     def _cmd_stop_rem_mon(self):
-        remote_mon = self._get_remote_mon()
+        remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_stop_gui_remote_mon'):
             remote_mon.cmd_stop_gui_remote_mon()
             self._change_btn_states()
 
     def _cmd_disco(self):
-        remote_mon = self._get_remote_mon()
+        remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_disco'):
             remote_mon.cmd_disco()
             self._change_btn_states()
 
     def _cmd_login(self):
-        remote_mon = self._get_remote_mon()
+        remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_login_request'):
             remote_mon.cmd_login_request('test1234') # TODO
             self._change_btn_states('cmd_login')
 
     def _cmd_logout(self):
-        remote_mon = self._get_remote_mon()
+        remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_logout'):
             remote_mon.cmd_logout()
             self._change_btn_states('cmd_login')
@@ -505,14 +511,12 @@ class RemMonGUITab(ttk.Frame):
         # ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
         # pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
 
-        if not all((
-                any((all((port_filter, port_filter == str(port))), not port_filter)),
-                any((all((fm_call_filter, from_call in fm_call_filter)), not fm_call_filter)),
-                any((all((to_call_filter, to_call in to_call_filter)), not to_call_filter)),
-                # all((ctl_pack_filter, ctl_pack_filter != ctl)),
-                # all((pid_pack_filter, pid_pack_filter != pid)),
-        )):
-            return
+        if (
+                (port_filter and port_filter != str(port)) or
+                (fm_call_filter and from_call not in fm_call_filter) or
+                (to_call_filter and to_call not in to_call_filter)
+
+        ): return
         #raw_from_call = str(from_call)
         #raw_to_call = str(to_call)
 
@@ -618,11 +622,18 @@ class RemMonGUITab(ttk.Frame):
 
     ########################################
     # Helper
-    def _get_remote_mon(self):
+    def _get_prp(self):
         conn = self._root_cl.get_conn_by_uid(self._uid)
-        if hasattr(conn, 'get_remote_mon'):
-            return conn.get_remote_mon()
+        if hasattr(conn, 'get_prp'):
+            return conn.get_prp()
         return None
+
+    def _get_prp_remote_cfg(self):
+        prp = self._get_prp()
+        if hasattr(prp, 'get_tx_remote_cfg'):
+            return prp.get_tx_remote_cfg()
+        logger.error("Attribute Error: _get_prp_remote_cfg")
+        raise AttributeError
 
 class RemoteMonitorGUI(tk.Toplevel):
     def __init__(self, root_cl):

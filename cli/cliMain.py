@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from cfg.default_config import getNew_remote_mon_cfg
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS

@@ -788,10 +788,6 @@ class AX25Conn:
         self._prp_remote.tasker()
         return True
 
-    def set_remote_mon(self, rem_mon_conf: dict):
-        """ Lokaler Parameter/Config update """
-        self._prp_remote.update_cfg(rem_mon_conf)
-
     ##########################################################
     # BBS_FWD Stuff
     def bbsFwd_init(self):
@@ -1596,7 +1592,7 @@ class AX25Conn:
     def get_param_T2(self):
         return float(self._parm_T2)
 
-    def get_remote_mon(self):
+    def get_prp(self):
         return self._prp_remote
 
     def can_send_next_prp_batch(self):

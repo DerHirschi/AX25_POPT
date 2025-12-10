@@ -2830,10 +2830,10 @@ class PoPT_GUI_Main:
             #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
             #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
 
-            if not (
-                    ((port_filter and port_filter == str(port))       or not port_filter)    and
-                    ((fm_call_filter and from_call in fm_call_filter) or not fm_call_filter) and
-                    ((to_call_filter and to_call in to_call_filter)   or not to_call_filter)
+            if (
+                    (port_filter    and port_filter != str(port))         or
+                    (fm_call_filter and from_call not in fm_call_filter)  or
+                    (to_call_filter and to_call   not in to_call_filter)
 
             ): return
             raw_from_call = str(from_call)
