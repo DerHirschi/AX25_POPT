@@ -247,8 +247,9 @@ class PRPremote:
 
         #################################
         # Meta Daten für QSO-Status Msg
-        self._next_pack_meta: None | tuple  = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
-        self._last_pack_meta: None | tuple  = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
+        self._comp_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
+        self._next_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
+        self._last_pack_meta: None | tuple   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
 
         #################################
         # Own States / States der eigenen Station
@@ -398,9 +399,12 @@ class PRPremote:
         ################################################################
         # Decoding OPT Byte
         opt_id, tx, is_compressed = unpack_6bit_int_and_bool(opt_byte)
+        prp_payload_len           = len(payload)
         if is_compressed:
             lzhuf   = LZHUF_Comp()
             payload = lzhuf.decode(payload)
+        # Frame Status
+        self._comp_pack_meta = opt_id, prp_payload_len, len(payload)
         ################################################################
         # 0 - 19 = Port ID
         if opt_id in range(20):
@@ -559,18 +563,19 @@ class PRPremote:
 
                 if frame_end > data_len:
                     # Frame Status
-                    opt_id, _, _        = unpack_6bit_int_and_bool(data[i + 2:i + 3])
+                    opt_id, _, _         = unpack_6bit_int_and_bool(data[i + 2:i + 3])
                     self._next_pack_meta = opt_id, length
-
                     # Frame unvollständig -> puffern
                     self._rest_buffer   = data[i:]
+                    self.get_incomplete_cli_esc_status()
                     break
 
                 # Komplettes Frame extrahiert!
                 rem_mon_pack = data[i:frame_end]
+
                 try:
+                    # ==
                     rest_data += self._prp_rx_process(rem_mon_pack)
-                    self._next_pack_meta = None
                 except EncodingWarning:
                     logger.debug("PRP: Data Chunk:")
                     logger.debug(f"PRP:   DATA  : {data}")
@@ -578,7 +583,9 @@ class PRPremote:
                     logger.debug(f"PRP:   REST  : {rest_data}")
                     logger.debug(f"PRP:   REST H: {bytearray2hexstr(rest_data)}")
 
-                i = frame_end  # Springe zum nächsten Byte nach dem Frame
+                self._next_pack_meta = None
+                # Springe zum nächsten Byte nach dem Frame
+                i = frame_end
                 continue
 
             # Kein Frame-Start: Dieses Byte gehört zum Rest-Stream
@@ -670,9 +677,10 @@ class PRPremote:
         return cli_data
 
     # ====== CLI Escape I/O
-    @staticmethod
-    def _prp_rx_esc_cli(payload: bytes):
+    def _prp_rx_esc_cli(self, payload: bytes):
         """ Empfange CLI Escape """
+        # Frame Status . Kompletter CLI-ESC Frame
+        self.get_incomplete_cli_esc_status()
         return payload
 
     def prp_tx_esc_cli(self, payload: bytes):
@@ -910,6 +918,11 @@ class PRPremote:
                 continue
             if self._get_remote_state(k) != v:
                 update_to_send[k] = v
+        # Keine Updates?
+        if not update_to_send:
+            return False
+
+        # Logger
         logger.debug(f"PRP: Sende State Update: {self._get_uid()}")
         for k, v in update_to_send.items():
             logger.debug(f"PRP: {k}:{v}")
@@ -1363,6 +1376,7 @@ class PRPremote:
     # === CLI-ESC Status Meldungen für gui.QSO
     def get_cli_esc_send_status(self):
         """
+        TX.
         Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
         """
         if self._last_pack_meta is None:
@@ -1371,29 +1385,61 @@ class PRPremote:
         len_payload, len_compressed = self._last_pack_meta
         compression_ratio = round((len_payload / len_compressed) * 100)
 
-        return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed} Bytes / {len_payload} Bytes"
+        return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed}/{len_payload} Bytes"
 
     def get_incomplete_cli_esc_status(self):
         """
+        RX.
         Gibt den Status eines unvollständigen CLI-ESC-Frames zurück, falls vorhanden.
         """
-        if self._next_pack_meta is None or len(self._rest_buffer) < 5:
-            return None  # Kein unvollständiges Frame oder Header unvollständig
+        if self._next_pack_meta is None and self._comp_pack_meta is None:
+            return  # Kein unvollständiges Frame oder Header unvollständig
 
-        # Nur für CLI-ESC (OPT 62, TX-Flag)
-        if self._next_pack_meta[0] != PRP_OPT_ESC_CLI:
-            return None
+        # == Paket ist noch im Empfang (Restbuffer)
+        if self._next_pack_meta is not None:
+            opt_id, payload_len = self._next_pack_meta
+            # == Nur für CLI-ESC (OPT 62, TX-Flag)
+            if opt_id != PRP_OPT_ESC_CLI:
+                return
 
-        # Berechne Fortschritt
-        total_bytes    = 7 + self._next_pack_meta[1]  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
-        received_bytes = len(self._rest_buffer)
-        if received_bytes >= total_bytes:
-            return None  # Vollständig (sollte nicht passieren, aber sicher)
+            # == Berechne Fortschritt
+            total_bytes = 7 + payload_len  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
+            received_bytes = len(self._rest_buffer)
 
-        # Baue String zusammen
-        percent = int((received_bytes / total_bytes) * 100)
-        pr_ten  = round(percent / 10)
-        pr_rest = 10 - pr_ten
-        # Download Bar
-        bar     = f"[{'#' * pr_ten}{'.' * pr_rest}]"
-        return f"PRP ▼ {bar}({percent}%) - {max(0, received_bytes - 7)} Bytes / {self._next_pack_meta[1]} Bytes"
+            # === Noch nicht vollständig → Fortschritt anzeigen ===
+            if received_bytes < total_bytes:
+                percent = int((received_bytes / total_bytes) * 100)
+                pr_ten = round(percent / 10)
+                pr_rest = 10 - pr_ten
+                ## Download Bar
+                bar = f"{'#' * pr_ten}{'.' * pr_rest}"
+                status_msg = f"PRP ▼ [{bar}]({str(percent).ljust(3)}%) - {received_bytes - 7}/{payload_len} Bytes"
+                self._send_cli_esc_status_to_QSO(status_msg, tx=False)
+                return
+
+        # === Genau 100 % → Erfolgsmeldung (einmalig anzeigen) ===
+        if self._comp_pack_meta is not None:
+            opt_id, prp_payload_len, payload_len = self._comp_pack_meta
+            if opt_id != PRP_OPT_ESC_CLI:
+                return
+            # Optional: Kompressionsrate berechnen (wenn möglich)
+            try:
+                comp_ratio = f"{round(payload_len / prp_payload_len * 100)}"
+            except Exception as ex:
+                null = ex
+                comp_ratio = "?"
+            bar = '#' * 10
+            status_msg = f"PRP ▼ [{bar}](100%) - Compressed({comp_ratio}%) - {prp_payload_len}/{payload_len} Bytes"
+            self._send_cli_esc_status_to_QSO(status_msg, tx=False)
+
+            self._comp_pack_meta = None
+            return
+
+
+        # === Mehr als total_bytes → sollte nie passieren, aber sicherheitshalber ===
+        return
+
+    def _send_cli_esc_status_to_QSO(self, status_msg: str, tx: bool):
+        if not hasattr(self._connection, 'send_gui_QSO_PRPstatus'):
+            return
+        self._connection.send_gui_QSO_PRPstatus(status_msg, tx=tx)

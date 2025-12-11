@@ -171,7 +171,6 @@ class AX25Conn:
         self._tx_buf_prp_Q: list[bytes]      = []           # Buffer Prio Data (Remote Protocol)
         self._tx_buf_prp_prio_Q: list[bytes] = []           # Buffer Prio Data (Remote Protocol)
         self._tx_buf_prp_Rest                = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
-        self._prp_cli_esc_status             = None         # Status PRP-CLI-ESC Frame
         """ IO Buffer For GUI / CLI """
         self._tx_buf_lock      = False          # Threading TX-Buffer lock
         self.tx_buf_rawData    = bytearray()    # Buffer for TX RAW Data that is not packed yet into a Frame
@@ -432,7 +431,7 @@ class AX25Conn:
                 if gui_echo:
                     no_eol = False if not data.endswith(b'\n') and not data.endswith(b'\r') else True
                     # PRP Status Msg an QSO Fenster senden
-                    self._send_gui_QSO_PRPstatus(
+                    self.send_gui_QSO_PRPstatus(
                         data=self._prp_remote.get_cli_esc_send_status(),
                         tx=True,
                         no_eol=no_eol)
@@ -665,8 +664,8 @@ class AX25Conn:
 
         self._send_gui_QSO_sysMsg(data)
 
-    def _send_gui_QSO_PRPstatus(self, data: str, tx: bool, no_eol=False):
-        """ Sys Msg to QSO with Timestamp """
+    def send_gui_QSO_PRPstatus(self, data: str, tx: bool, no_eol=False):
+        """ PRP Status Msg to QSO  """
         if tx:
             tag = TAG_QSO_PRP_STATUS_TX
         else:
@@ -763,15 +762,15 @@ class AX25Conn:
         rest_data_for_cli  = self._prp_remote.prp_rx(data)
 
         # Hole PRP CLI-ESC Status
-        prp_cli_esc_status = self._prp_remote.get_incomplete_cli_esc_status()
+        #prp_cli_esc_status = self._prp_remote.get_incomplete_cli_esc_status()
 
         # PRP CLI-ESC Status Check für QSO Ausgabe
-        if prp_cli_esc_status and prp_cli_esc_status != self._prp_cli_esc_status:
-            # Sende PRP CLI-ESC Status an QSO-Fenster
-            self._send_gui_QSO_PRPstatus(prp_cli_esc_status, tx=False)
-
+        #if prp_cli_esc_status and prp_cli_esc_status != self._prp_cli_esc_status:
+        #    # Sende PRP CLI-ESC Status an QSO-Fenster
+        #    #self._send_gui_QSO_PRPstatus(prp_cli_esc_status, tx=False)
+        #    pass
         # Speichere letzten Status
-        self._prp_cli_esc_status = prp_cli_esc_status
+        #self._prp_cli_esc_status = prp_cli_esc_status
 
         return rest_data_for_cli
 

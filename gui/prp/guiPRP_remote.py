@@ -470,17 +470,28 @@ class PRP_Tab(ttk.Frame):
             if batch_mode_var not in ['auto', 'on', 'off']:
                 batch_mode_var = 'auto'
             # == CLI-ESC hinzufügen, wenn kein Fehler und geändert
-            esc_cli_var    = self._prp_cli_esc_var.get()
-
-            state_cfg.update(dict(
+            esc_cli_var        = self._prp_cli_esc_var.get()
+            # == State CFG bauen
+            state_cfg_to_send  = self._get_prp_remote_stats()
+            if state_cfg_to_send is None:
+                # Keine Verbindung mehr zur Remote Station ?
+                logger.warning("PRP GUI: Keine Verbindung mehr zur Remote Station ?")
+                return
+            # == update state_cfg_to_send mit GUI VARS
+            state_cfg_to_send.update(dict(
                 rem_mon_port=port_filter,
                 rem_mon_incl=incl_filter,
                 rem_mon_excl=excl_filter,
                 batch_mode  =batch_mode_var,
                 cli_esc     =esc_cli_var,
             ))
-            # Send it!
-            prp.send_remote_state_update(state_cfg)
+            # == update state_cfg_to_send mit state_cfg(parameter)
+            state_cfg_to_send.update(state_cfg)
+            # Versuche zu senden (Prüft, ob update nötig)
+            if not prp.send_remote_state_update(state_cfg_to_send):
+                # Nichts zum Updaten / Nichts gesendet
+                return
+            # Buttons deaktivieren bis Response
             self._change_btn_states('cmd_send')
 
             # == Eigenen State Updaten / update_own_states
@@ -490,6 +501,7 @@ class PRP_Tab(ttk.Frame):
                     cli_esc=self._prp_cli_esc_var.get()
                 )
                 prp.update_own_states(state_update)
+            return
 
     def _cmd_disco(self):
         remote_mon = self._get_prp()
