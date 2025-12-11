@@ -436,10 +436,10 @@ class PRP_Tab(ttk.Frame):
         self._cmd_update_rem_states(state_cfg)
 
     def _cmd_stop_rem_mon(self):
-        prp = self._get_prp()
-        if hasattr(prp, 'cmd_stop_gui_remote_mon'):
-            prp.cmd_stop_gui_remote_mon()
-            self._change_btn_states('cmd_send')
+        state_cfg = dict(
+            gui_rem_mon=False
+        )
+        self._cmd_update_rem_states(state_cfg)
 
     def _cmd_update_rem_states(self, state_cfg=None):
         if state_cfg is None:
@@ -688,7 +688,6 @@ class PRP_Tab(ttk.Frame):
             login_btn_state  = 'normal'
 
         """ Remote Monitor aktiviert ? """
-        print(f"btnState: {self._get_prp_remote_stats()}")
         if self._get_prp_remote_stat_by_key('gui_rem_mon'):
             stop_btn_state      = 'normal'
         else:
@@ -706,7 +705,6 @@ class PRP_Tab(ttk.Frame):
     def rx_response(self, response: str):
         self._change_btn_states(response)
         #self._rx_response_handler()
-        print(f"GUI RESP: {response}")
 
     ########################################
     # Helper

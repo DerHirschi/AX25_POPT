@@ -32,8 +32,8 @@ PRP_FESC_TFEND = b''.join([PRP_FESC, PRP_TFEND])    # "FEND is sent as FESC, TFE
 PRP_FESC_TFESC = b''.join([PRP_FESC, PRP_TFESC])    # "FESC is sent as FESC, TFESC"  /  0x8F is sent as 0x8F 0x9B
 ####################################################################################
 # OPT-ID ≥ 20
-PRP_OPT_RM_START        = 20 # Leer
-PRP_OPT_RM_STOP         = 21 # Remote Monitor Stop
+PRP_OPT_20              = 20 # Leer
+PRP_OPT_21              = 21 # Remote Monitor Stop
 PRP_OPT_DISCO           = 22 # Connection (soft)Disco
 PRP_OPT_LOGIN_REQ       = 23 # Login Request
 PRP_OPT_LOGIN_RESP      = 24 # Login Response
@@ -440,19 +440,19 @@ class PRPremote:
         # =============================================
 
         """ Remote Monitor Update 20 """
-        if opt_id == PRP_OPT_RM_START:
+        if opt_id == PRP_OPT_20:
             if tx:
-                self._rx_rem_mon_update(payload)
+                self._rx_cmd_20(payload)
             else:
-                self._rx_resp_rem_mon_update()
+                self._rx_resp_cmd_20()
             return None, b''
 
         """ Remote Monitor Stop 21 """
-        if opt_id == PRP_OPT_RM_STOP:
+        if opt_id == PRP_OPT_21:
             if tx:
-                self._rx_cmd_stop_gui_remote_mon()
+                self._rx_cmd_21()
             else:
-                self._rx_resp_cmd_stop_gui_remote_mon()
+                self._rx_resp_cmd_21()
             return None, b''
 
         """ Disconnect 22 """
@@ -706,11 +706,8 @@ class PRPremote:
             return
         # Hole cfg aus ACK-Buffer
         ack_cfg = self._pending_remote_states[opt_id]
-        print(f"ACK Update rm_states ack_cfg: {ack_cfg}")
-        print(f"ACK Update rm_states PS 1: {self._remote_states}")
         # Update Remote States
         self._update_remote_state(ack_cfg)
-        print(f"ACK Update rm_states PS 2: {self._remote_states}")
         # Lösche aus Pending Buffer
         del self._pending_remote_states[opt_id]
 
@@ -869,7 +866,7 @@ class PRPremote:
     # =============================
     # Response Handler
     def _local_response_handler(self, opt_id: int, resp_ok=True):
-        """ Lokaler Response Handler """
+        """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
         #################################
         # Opt bezogener RESP
         # == Login
@@ -887,6 +884,17 @@ class PRPremote:
         #################################
         # Globaler RESP für Remote Monitor
         self._port_handler.handle_prp_response('', self._get_uid())
+
+    # == Response nach, erhalten eines Updates
+    def _response_state_update(self, state_update: dict):
+        """ Checke State-updates auf Änderungen und führe Action aus """
+        # == Remote Monitor
+        if self._has_own_state_changed(state_update,  'gui_rem_mon'):
+            # == Remote Monitor STOP
+            if not state_update['gui_rem_mon']:
+                # Clear remote-protocol buffer
+                self._connection.clear_tx_buff_prp()
+                return
 
     # =============================
     # States Update via Remote / By Grok AI
@@ -973,9 +981,12 @@ class PRPremote:
             i += val_len
 
         if updates:
+            # Checke updates auf bestimmte Änderungen und führe Action aus
+            self._response_state_update(state_update=updates)
+            # Eigene States updaten
             self._update_own_state(updates)
             logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
-            # Send Responde
+            # Send Response
             self._tx_resp_remote_state_update(success=True)
         else:
             self._tx_resp_remote_state_update(success=False)
@@ -1059,55 +1070,53 @@ class PRPremote:
 
     # =============================
     # ====== OPT-ID 20 leer
-    def send_rem_mon_update(self, cfg: dict):
-        """ Wird nicht mehr verwendet  """
+    def send_cmd_20(self, cfg: dict):
+        """ TX CMD 20  """
         if not self._check_version():
             return
         # CFG in ACK Buffer
-        self._add_pending_remote_states_cfg(PRP_OPT_RM_START, cfg)
+        self._add_pending_remote_states_cfg(PRP_OPT_20, cfg)
         data = b''
         # PRP Paket erstellen & senden
-        self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=True, data=data, prio=True)
+        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=data, prio=True)
 
-    def _rx_rem_mon_update(self, payload: bytes):
-        """ Empfange Remote Monito Cfg """
+    def _rx_cmd_20(self, payload: bytes):
+        """ RX CMD 20 """
         # Sende ACK
-        self._tx_resp_rem_mon_update()
+        self._tx_resp_cmd_20()
 
-    def _tx_resp_rem_mon_update(self):
-        """ TX Respond Remote Monitor CFG update """
-        self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=False, data=PRP_ACK, prio=True)
+    def _tx_resp_cmd_20(self):
+        """ TX Respond CMD 20 """
+        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_ACK, prio=True)
 
-    def _rx_resp_rem_mon_update(self):
-        """ RX Respond Remote Monitor CFG update """
+    def _rx_resp_cmd_20(self):
+        """ RX Respond CMD 20 """
         pass
 
     # =============================
-    # ====== Remote Mon Stop CMD
-    def cmd_stop_gui_remote_mon(self):
-        """ TX Start CMD """
+    # ====== OPT-ID 21 leer
+    def send_cmd_21(self):
+        """ TX CMD 21 """
         if not self._check_version():
             return
         # CFG in ACK Buffer
-        self._set_pending_remote_state(PRP_OPT_RM_STOP, 'gui_rem_mon', False)
+        self._set_pending_remote_state(PRP_OPT_21, 'gui_rem_mon', False)
         # PRP Senden
-        self._prp_tx(opt_id=PRP_OPT_RM_STOP, tx_flag=True, data=b'', prio=True)
+        self._prp_tx(opt_id=PRP_OPT_21, tx_flag=True, data=b'', prio=True)
 
-    def _rx_cmd_stop_gui_remote_mon(self):
-        """ RX Stop CMD """
+    def _rx_cmd_21(self):
+        """ RX CMD 21 """
         # Zustand updaten
-        self._set_own_state('gui_rem_mon', False)
-        # Clear remote-protocol buffer
-        self._connection.clear_tx_buff_prp()
+        # self._set_own_state('gui_rem_mon', False)
         # Send Response
-        self._tx_resp_cmd_stop_gui_remote_mon()
+        self._tx_resp_cmd_21()
 
-    def _tx_resp_cmd_stop_gui_remote_mon(self):
-        """ TX Respond Stop CMD """
-        self._prp_tx(opt_id=PRP_OPT_RM_STOP, tx_flag=False, data=PRP_ACK, prio=True)
+    def _tx_resp_cmd_21(self):
+        """ TX Respond CMD 21 """
+        self._prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=PRP_ACK, prio=True)
 
-    def _rx_resp_cmd_stop_gui_remote_mon(self):
-        """ RX Respond Stop CMD """
+    def _rx_resp_cmd_21(self):
+        """ RX Respond CMD 21 """
         pass
 
     # =============================
@@ -1219,6 +1228,14 @@ class PRPremote:
         if version_tuple(stat_id.version) < version_tuple(PRP_VER_RESTR):
             logger.warning(f"PRP: This function is just available with {PRP_SW_RESTR} Version:")
             logger.warning(f"PRP: Version >= {PRP_VER_RESTR}")
+            return False
+        return True
+
+    def _has_own_state_changed(self, state_update_cfg: dict, state_key: str):
+        # Checkt eingehende state updates nach Änderungen
+        if state_key not in state_update_cfg:
+            return False
+        if state_update_cfg[state_key] == self._get_own_state(state_key):
             return False
         return True
 

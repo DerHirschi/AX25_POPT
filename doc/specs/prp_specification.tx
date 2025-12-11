@@ -78,7 +78,7 @@ Beispiel (16:47:08):
 OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
 -------+--------------------+---------------------+------------------------
  20    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
- 21    | Remote-Mon STOP    | ACK STOP            | leer
+ 21    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
  22    | Disconnect         | (kein ACK)          | leer
  23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
  24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
@@ -185,8 +185,8 @@ ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
  --        | -------------------------- | --------------------------------
  20  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
  20        | --- Nicht verwendet ------ | --- Nicht verwendet ------
- 21  TX    | Remote-Mon STOP            | leer
- 21        | ACK STOP                   | leer
+ 21  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
+ 21        | --- Nicht verwendet ------ | --- Nicht verwendet ------
  22  TX    | Disconnect                 | leer
  22        | -------------------------- | --------------------------------
  23  TX    | Login Request              | leer
