@@ -32,7 +32,7 @@ PRP_FESC_TFEND = b''.join([PRP_FESC, PRP_TFEND])    # "FEND is sent as FESC, TFE
 PRP_FESC_TFESC = b''.join([PRP_FESC, PRP_TFESC])    # "FESC is sent as FESC, TFESC"  /  0x8F is sent as 0x8F 0x9B
 ####################################################################################
 # OPT-ID ≥ 20
-PRP_OPT_RM_START        = 20 # Remote Monitor Start/Update
+PRP_OPT_RM_START        = 20 # Leer
 PRP_OPT_RM_STOP         = 21 # Remote Monitor Stop
 PRP_OPT_DISCO           = 22 # Connection (soft)Disco
 PRP_OPT_LOGIN_REQ       = 23 # Login Request
@@ -41,6 +41,11 @@ PRP_OPT_LOGOUT          = 25 # Logout
 PRP_OPT_STATE_UPDATE    = 26 # State Update > PRP Einstellungen/Zustände ändern
 PRP_OPT_ESC_CLI         = 62 # Payload wird an CLI durchgereicht
 PRP_OPT_PRP_BATCH       = 63 # PRP-Frame Batch processing
+####################################################################################
+# ACK / Reposnse
+PRP_DONT_ACK = (PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ)
+PRP_ACK      = b'O'
+PRP_NACK     = b'F'
 ####################################################################################
 # OPT Tab für Monitor
 PRP_CTL_TAB = {
@@ -56,8 +61,8 @@ PRP_CTL_TAB = {
                }
 ####################################################################################
 # Response (GUI Handling)
-PRP_RM_RESP_START   = 'rsp_start'   # Remote Monitor Start/Update
-PRP_RM_RESP_STOP    = 'rsp_stop'    # Remote Monitor Stop
+# PRP_RM_RESP_START   = 'rsp_start'   # Remote Monitor Start/Update
+# PRP_RM_RESP_STOP    = 'rsp_stop'    # Remote Monitor Stop
 PRP_RM_RESP_LOGIN   = 'rsp_login'   # Remote Login OK
 PRP_RM_RESP_LOGOUT  = 'rsp_logout'  # Remote Login FAILED | Logout
 ####################################################################################
@@ -278,7 +283,7 @@ class PRPremote:
         # == State I/O
         self._get_remote_state    = lambda k     : self._remote_states[k]
         self._set_remote_state    = lambda k, val: self._remote_states.update({k: val})
-        self._update_remote_state = lambda cfg   : self._own_states.update(cfg)
+        self._update_remote_state = lambda cfg   : self._remote_states.update(cfg)
         # == Für GUI / State I/O
         self._get_remote_states   = lambda       : dict(self._remote_states)
 
@@ -410,9 +415,30 @@ class PRPremote:
                 logger.warning(f'PRP Remote Monitor: ax25_frame hex {bytearray2hexstr(payload)}')
                 logger.warning("-------------------------------------------------------------------")
                 return None, b''
+
         ################################################################
-        # 20 - 63 = CMD'S
         # TX = Send CMD(True) / Response CMD(False) /
+        # 20 - 63 = CMD'S
+
+        # =============================================
+        # tx=False → Zentrale Response/ACK-Behandlung
+        # Nur für PRP States !!
+        # =============================================
+        if not tx and opt_id not in PRP_DONT_ACK:
+            ack = True if payload == PRP_ACK else False
+            if ack:
+                # ACK CFG und update Remote-States
+                self._ack_pending_remote_states(opt_id)
+            else:
+                # Optional: Pending löschen oder retry
+                self._del_pending_remote_states(opt_id)
+            # Response Handler / GUI Updates usw.
+            self._local_response_handler(opt_id, resp_ok=ack)
+
+        # =============================================
+        #  tx=True → das sind Commands vom Remote
+        # =============================================
+
         """ Remote Monitor Update 20 """
         if opt_id == PRP_OPT_RM_START:
             if tx:
@@ -678,10 +704,23 @@ class PRPremote:
             for k, val in self._pending_remote_states.items():
                 logger.error(f"RPR:   {k}: {val}")
             return
+        # Hole cfg aus ACK-Buffer
+        ack_cfg = self._pending_remote_states[opt_id]
+        print(f"ACK Update rm_states ack_cfg: {ack_cfg}")
+        print(f"ACK Update rm_states PS 1: {self._remote_states}")
         # Update Remote States
-        self._update_remote_state(self._pending_remote_states[opt_id])
+        self._update_remote_state(ack_cfg)
+        print(f"ACK Update rm_states PS 2: {self._remote_states}")
         # Lösche aus Pending Buffer
         del self._pending_remote_states[opt_id]
+
+    def _add_pending_remote_states_cfg(self, opt_id: int, rem_state_cfg: dict):
+        if opt_id in self._pending_remote_states:
+            logger.warning(f"PRP: OPT-ID({opt_id}) ist bereit im AXK-Buffer")
+            logger.warning(f"PRP:   CFG im Buffer: {self._pending_remote_states[opt_id]}")
+            logger.warning(f"PRP:   Neue CfFG    : {rem_state_cfg}")
+        # Erstmal überschreiben
+        self._update_pending_remote_states(opt_id, rem_state_cfg)
 
     def _del_pending_remote_states(self, opt_id: int):
         if opt_id not in self._pending_remote_states:
@@ -829,37 +868,25 @@ class PRPremote:
     # CTL CMDs
     # =============================
     # Response Handler
-    def _local_response_handler(self, opt_id: int):
+    def _local_response_handler(self, opt_id: int, resp_ok=True):
         """ Lokaler Response Handler """
         #################################
         # Opt bezogener RESP
-        """
-        if opt_id == PRP_OPT_STATE_UPDATE:
-        elif opt_id == PRP_OPT_RM_STOP:
-        """
-
+        # == Login
+        if opt_id == PRP_OPT_LOGIN_RESP:
+            print(self._get_remote_state('login_ok'))
+            if resp_ok:
+                self._port_handler.handle_prp_response(PRP_RM_RESP_LOGIN, self._get_uid())
+                return
+            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, self._get_uid())
+            return
+        # == Logout
+        elif opt_id == PRP_OPT_LOGOUT:
+            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, self._get_uid())
+            return
         #################################
         # Globaler RESP für Remote Monitor
-        if opt_id in [PRP_OPT_STATE_UPDATE, PRP_OPT_RM_STOP]:
-            # Hole gesendete Daten aus pending_remote_states
-            pending_updates = self._get_pending_remote_state(opt_id)
-
-            # Prüfe ob Daten in _pending_remote_states vorhanden sind
-            if pending_updates is None:
-                logger.error(
-                    f"RPR: ACK-BufferError: OPT-ID({opt_id}) nicht gefunden in self._pending_remote_states.")
-                logger.error("RPR:   self._pending_remote_states:")
-                for k, val in self._pending_remote_states.items():
-                    logger.error(f"RPR:   {k}: {val}")
-                return
-
-            # ============================
-            # RESP Remote Mon Start / Stop
-            if pending_updates.get('gui_rem_mon') != self._get_remote_state('gui_rem_mon'):
-                if pending_updates.get('gui_rem_mon'):
-                    self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._get_uid())
-                else:
-                    self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_STOP, self._get_uid())
+        self._port_handler.handle_prp_response('', self._get_uid())
 
     # =============================
     # States Update via Remote / By Grok AI
@@ -868,10 +895,21 @@ class PRPremote:
         if not self._check_version():
             return False
 
-        # Pending für ACK
-        self._update_pending_remote_states(PRP_OPT_STATE_UPDATE, state_updates)
+        # update abgleichen mit _remote_states was sich geändert hat
+        update_to_send = {}
+        for k, v in state_updates.items():
+            if k not in self._remote_states:
+                continue
+            if self._get_remote_state(k) != v:
+                update_to_send[k] = v
+        logger.debug(f"PRP: Sende State Update: {self._get_uid()}")
+        for k, v in update_to_send.items():
+            logger.debug(f"PRP: {k}:{v}")
 
-        bin_payload = self._encode_state_updates(state_updates)
+        # Pending für ACK
+        self._add_pending_remote_states_cfg(PRP_OPT_STATE_UPDATE, update_to_send)
+
+        bin_payload = self._encode_state_updates(update_to_send)
         if not bin_payload:
             return False
 
@@ -998,28 +1036,18 @@ class PRPremote:
     # == Response
     def _tx_resp_remote_state_update(self, success: bool):
         """ TX Respond State Update (ACK) """
-        data = b'OK' if success else b'FAIL'
+        data = PRP_ACK if success else PRP_NACK
         self._prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
 
     def _rx_resp_remote_state_update(self, payload: bytes):
         """ RX Respond State Update (ACK) """
-        if payload == b'OK':
-            # Response Handler / GUI Updates usw.
-            self._local_response_handler(PRP_OPT_STATE_UPDATE)
-
-            # ACK CFG und update Remote-States
-            self._ack_pending_remote_states(PRP_OPT_STATE_UPDATE)
+        if payload == PRP_ACK:
             logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
-
-            # Optional: GUI-Response senden, z.B. via port_handler
-            self._port_handler.handle_remote_monitor_response('rsp_state_update_ok', self._get_uid())
-
+            logger.debug(f"PRP: Bestätige State Update: {self._get_uid()}")
+            for k, v in self._remote_states.items():
+                logger.debug(f"PRP: {k}:{v}")
         else:
             logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._get_uid()}")
-            # Optional: Pending löschen oder retry
-            self._del_pending_remote_states(PRP_OPT_STATE_UPDATE)
-            # GUI Response Handler
-            self._port_handler.handle_remote_monitor_response('rsp_state_update_fail', self._get_uid())
 
     # == Helper
     def _get_state_key_by_id(self, key_id: int):
@@ -1030,63 +1058,29 @@ class PRPremote:
         return None
 
     # =============================
-    # ====== Remote Mon Start CMD
+    # ====== OPT-ID 20 leer
     def send_rem_mon_update(self, cfg: dict):
-        """ Updated und sendet Remote CFG """
+        """ Wird nicht mehr verwendet  """
         if not self._check_version():
             return
         # CFG in ACK Buffer
-        self._update_pending_remote_states(PRP_OPT_RM_START, cfg)
-        # Parameter
-        port_id     = cfg.get('rem_mon_port', 0)
-        incl_filter = ','.join(cfg.get('rem_mon_incl', []))
-        excl_filter = ','.join(cfg.get('rem_mon_excl', []))
-
-        data = f"{port_id}:{incl_filter}:{excl_filter}".encode('UTF-8', 'ignore')
+        self._add_pending_remote_states_cfg(PRP_OPT_RM_START, cfg)
+        data = b''
         # PRP Paket erstellen & senden
         self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=True, data=data, prio=True)
 
     def _rx_rem_mon_update(self, payload: bytes):
         """ Empfange Remote Monito Cfg """
-        data  = payload.decode('UTF-8', 'ignore')
-        param = data.split(':')
-        if len(param) != 3:
-            logger.error("Parameter Error (_start_gui_remote_mon): ")
-            logger.error(f"Parameter: {param}")
-            return
-        try:
-            port_id = int(param[0])
-        except ValueError:
-            logger.error("Value Error port_id (_start_gui_remote_mon): ")
-            logger.error(f"Parameter: {param}")
-            return
-        incl_filter = param[1].split(',')
-        excl_filter = param[2].split(',')
-        while '' in incl_filter:
-            incl_filter.remove('')
-        while '' in excl_filter:
-            excl_filter.remove('')
-
-        # Update lokale States
-        self._update_own_state(dict(
-            gui_rem_mon=True,
-            rem_mon_port=port_id,
-            rem_mon_incl=incl_filter,  # Call Filter
-            rem_mon_excl=excl_filter,  # Call Filter
-        ))
         # Sende ACK
         self._tx_resp_rem_mon_update()
 
     def _tx_resp_rem_mon_update(self):
         """ TX Respond Remote Monitor CFG update """
-        self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=False, data=b'', prio=True)
+        self._prp_tx(opt_id=PRP_OPT_RM_START, tx_flag=False, data=PRP_ACK, prio=True)
 
     def _rx_resp_rem_mon_update(self):
         """ RX Respond Remote Monitor CFG update """
-        # ACK CFG
-        self._ack_pending_remote_states(PRP_OPT_RM_START)
-        # Send Response to GUI via Port Handler
-        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_START, self._get_uid())
+        pass
 
     # =============================
     # ====== Remote Mon Stop CMD
@@ -1110,14 +1104,11 @@ class PRPremote:
 
     def _tx_resp_cmd_stop_gui_remote_mon(self):
         """ TX Respond Stop CMD """
-        self._prp_tx(opt_id=PRP_OPT_RM_STOP, tx_flag=False, data=b'', prio=True)
+        self._prp_tx(opt_id=PRP_OPT_RM_STOP, tx_flag=False, data=PRP_ACK, prio=True)
 
     def _rx_resp_cmd_stop_gui_remote_mon(self):
         """ RX Respond Stop CMD """
-        # Response Handler / GUI Updates usw.
-        self._local_response_handler(PRP_OPT_RM_STOP)
-        # ACK CFG
-        self._ack_pending_remote_states(PRP_OPT_RM_STOP)
+        pass
 
     # =============================
     # ====== Disconnect CMD
@@ -1139,6 +1130,7 @@ class PRPremote:
             return
         # TODO Password fm DB or GUI
         self._password_hash = hashlib.sha256(DBUG_PW.encode()).digest()
+        self._add_pending_remote_states_cfg(PRP_OPT_LOGIN_RESP, {'login_ok': True})
         self._prp_tx(PRP_OPT_LOGIN_REQ, tx_flag=True, data=b'', prio=True)
 
     def _rx_cmd_login_request(self):
@@ -1169,6 +1161,7 @@ class PRPremote:
 
         if not self._login_nonce or not password_hash:
             self._send_login_ack(False)
+            print('Login error !')
             return
 
         expected = hashlib.sha256(password_hash + self._login_nonce).digest()
@@ -1186,19 +1179,15 @@ class PRPremote:
         self._password_hash = None
 
     def _send_login_ack(self, ok: bool):
-        data = b"OK" if ok else b"FAIL"
+        data = PRP_ACK if ok else PRP_NACK
         self._prp_tx(PRP_OPT_LOGIN_RESP, tx_flag=False, data=data, prio=True)
 
-    def _rx_cmd_login_ack(self, payload):
-        answer = payload.decode("ascii", "ignore")
-        if answer == "OK":
-            self._set_login_resp(True)
-            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGIN, self._get_uid())
-            print("LOGIN erfolgreich!")
+    def _rx_cmd_login_ack(self, payload: bytes):
+        if payload == PRP_ACK:
+            logger.info("LOGIN erfolgreich!")
         else:
-            self._set_login_resp(False)
-            self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._get_uid())
-            print("LOGIN fehlgeschlagen!")
+            self._set_login_resp(False)  # oder direkt False setzen
+            logger.warning("LOGIN fehlgeschlagen!")
 
     # =============================
     # ====== Logout Stuff
@@ -1206,6 +1195,7 @@ class PRPremote:
         """ Client sendet Logout """
         if not self._check_version():
             return
+        self._add_pending_remote_states_cfg(PRP_OPT_LOGOUT, {'login_ok': False})
         self._prp_tx(PRP_OPT_LOGOUT, tx_flag=True, data=b'', prio=True)
 
     def _rx_cmd_logout(self):
@@ -1218,7 +1208,6 @@ class PRPremote:
         """ Client empfängt Logout bestätigung """
         print("LOGOUT erfolgreich!")
         self._set_login_ok(False)
-        self._port_handler.handle_remote_monitor_response(PRP_RM_RESP_LOGOUT, self._get_uid())
 
     #####################################
     # Helper
@@ -1347,7 +1336,7 @@ class PRPremote:
 
     # === self._remote_states I/O
     def get_rem_states(self):
-        return self._get_remote_states
+        return self._get_remote_states()
 
     def get_rem_state_by_key(self, state_key: str):
         if not state_key in self._remote_states:

@@ -2202,9 +2202,9 @@ class PoPT_GUI_Main:
                 elif task == '_remote_monitor_update_task':
                     rem_mon_data, remote_uid = arg
                     self._remote_monitor_update_task(rem_mon_data ,remote_uid)
-                elif task == '_remote_monitor_response_update_task':
+                elif task == '_prp_response_update_task':
                     rem_mon_data, remote_uid = arg
-                    self._remote_monitor_response_update_task(rem_mon_data ,remote_uid)
+                    self._prp_response_update_task(rem_mon_data, remote_uid)
                 elif task == '_init_popt_remote_task':
                     self._init_popt_remote_task(arg)
 
@@ -3003,12 +3003,12 @@ class PoPT_GUI_Main:
         remote_mon.cmd_stop_gui_remote_mon()
     """
     # === RX
-    def remote_monitor_response_update(self, resp: str, remote_uid: str):
-        self._add_tasker_q("_remote_monitor_response_update_task", (resp, remote_uid), prio=False)
+    def prp_response_update(self, resp: str, remote_uid: str):
+        self._add_tasker_q("_prp_response_update_task", (resp, remote_uid), prio=False)
 
-    def _remote_monitor_response_update_task(self, resp: str, remote_uid: str):
+    def _prp_response_update_task(self, resp: str, remote_uid: str):
         # Update Remote Mon GUI if open
-        if hasattr(self.prp_remote_win, 'rem_mon_response'):
+        if hasattr(self.prp_remote_win, 'gui_prp_response_handler'):
             self.prp_remote_win.gui_prp_response_handler(resp, remote_uid)
 
     def remote_monitor_update_gui(self, ax25pack: dict, remote_uid: str):

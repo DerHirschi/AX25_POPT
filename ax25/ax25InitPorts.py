@@ -967,12 +967,13 @@ class AX25PortHandler(object):
             return
         self._gui.remote_monitor_update_gui(ax25pack, remote_uid)
 
-    def handle_remote_monitor_response(self, resp: str, remote_uid: str):
+    def handle_prp_response(self, resp: str, remote_uid: str):
         """ Called fm RemoteMonitor """
-        if not hasattr(self._gui, 'remote_monitor_response_update'):
+        if not hasattr(self._gui, 'prp_response_update'):
             logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
             return
-        self._gui.remote_monitor_response_update(resp, remote_uid)
+        self._gui.prp_response_update(resp, remote_uid)
+
     ######################
     # RX-ECHO Handling
     def rx_echo_input(self, ax_frame, receiving_port_id):

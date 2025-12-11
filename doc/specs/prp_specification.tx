@@ -77,30 +77,19 @@ Beispiel (16:47:08):
 
 OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
 -------+--------------------+---------------------+------------------------
- 20    | Remote-Mon START   | ACK START           | "port:incl:excl" (UTF-8) (siehe 5.1) / leer
+ 20    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
  21    | Remote-Mon STOP    | ACK STOP            | leer
  22    | Disconnect         | (kein ACK)          | leer
  23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
  24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
  25    | Logout             | ACK Logout          | leer
- 26    | State Update       | ACK State Update    | Binäres State-Update (siehe 5.2)
+ 26    | State Update       | ACK State Update    | Binäres State-Update (siehe 5.1)
  ...
  62    | CLI-Escape         | (kein ACK)          | Payload für CLI
  63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
 
 ══════════════════════════════════════════════════════════════════════════
-5.1 Remote-Mon START/UPDATE-Befehl (OPT-ID 20, F1 = 1) – Payload (UTF-8)
-══════════════════════════════════════════════════════════════════════════
-
-"<PortID>:<Include-Calls>:<Exclude-Calls>"
-
-Beispiele:
-  "2:DB0LJ,DL1ABC:DJ5ABC"     → Port 2, nur diese Calls, Rest ausblenden
-  "0::"                       → Port 0, alles anzeigen (keine Filter)
-  "5:DB0ABC:"                 → Port 5, nur DB0ABC erlaubt, Rest ausblenden
-
-══════════════════════════════════════════════════════════════════════════
-5.2 State Update – OPT-ID 26 (binäres Format – extrem bandbreitensparend)
+5.1 State Update – OPT-ID 26 (binäres Format – extrem bandbreitensparend)
 ══════════════════════════════════════════════════════════════════════════
 
 Wird verwendet, um einzelne oder mehrere Parameter aus _own_states effizient
@@ -194,8 +183,8 @@ ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
 -----------+----------------------------+---------------------------------
  0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
  --        | -------------------------- | --------------------------------
- 20  TX    | Remote-CFG START           | "port:incl:excl" (siehe 5.1)
- 20        | ACK START                  | leer
+ 20  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
+ 20        | --- Nicht verwendet ------ | --- Nicht verwendet ------
  21  TX    | Remote-Mon STOP            | leer
  21        | ACK STOP                   | leer
  22  TX    | Disconnect                 | leer

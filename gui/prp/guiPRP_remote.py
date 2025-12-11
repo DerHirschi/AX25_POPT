@@ -5,7 +5,7 @@ from tkinter import ttk
 
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
-from ax25.prp_remote import PRP_RM_RESP_START, PRP_RM_RESP_STOP, PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
+from ax25.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
 from cfg.default_config import getNew_remote_mon_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -116,10 +116,14 @@ class PRP_Tab(ttk.Frame):
             pass
         #############################
         # Is Connected ?
-        if self._get_prp_remote_stat_by_key('gui_rem_mon'):
-            self._change_btn_states('rsp_start')
-        else:
+        prp = self._get_prp()
+        if prp is None:
             self._change_btn_states('rsp_stop')
+        else:
+            if self._get_prp_remote_stat_by_key('gui_rem_mon'):
+                self._change_btn_states('rsp_start')
+            else:
+                self._change_btn_states('rsp_stop')
 
     #######################################
     # CTL Frames - rechte Seite
@@ -195,7 +199,7 @@ class PRP_Tab(ttk.Frame):
                      ).pack(side='left', padx=5)
         # CLI ESC
         ttk.Checkbutton(cli_esc_f,
-                        text='CLI-ESC(send compressed):',
+                        text='CLI-ESC (send compressed):',
                         variable=self._prp_cli_esc_var).pack(side='left')
         # ========
         # f1
@@ -209,13 +213,13 @@ class PRP_Tab(ttk.Frame):
             btn_f1,
             text="Update",
             command=lambda: self._cmd_update_rem_states(),
-            #state='disabled'
+            state='disabled'
         )
         self._login_btn = ttk.Button(
             btn_f1,
             text="Login",
             command=lambda: self._cmd_login(),
-            #state='disabled'
+            state='disabled'
         )
         self._start_btn.pack( side='left', padx=15)
         self._update_btn.pack(side='left', padx=15)
@@ -426,45 +430,20 @@ class PRP_Tab(ttk.Frame):
     #######################################
     # CTL Remote Mon
     def _cmd_start_rem_mon(self):
-        prp = self._get_prp()
-        if hasattr(prp, 'send_rem_mon_update'):
-            incl_filter = self._incl_filter_var.get()
-            excl_filter = self._excl_filter_var.get()
-            try:
-                port_filter = int(self._port_filter_var.get())
-            except ValueError:
-                return
-
-            incl_filter = incl_filter.split(' ')
-            incl_filter = [str(x).upper() for x in incl_filter]
-            while '' in incl_filter:
-                incl_filter.remove('')
-
-            excl_filter = excl_filter.split(' ')
-            excl_filter = [str(x).upper() for x in excl_filter]
-            while '' in excl_filter:
-                excl_filter.remove('')
-            # Hole Aktuelle PRP Remote CFG
-            prp_remote_states = getNew_remote_mon_cfg()
-            # Update Remote CFG
-            prp_remote_states.update(dict(
-                cli_rem_mon=False,
-                gui_rem_mon=True,
-                rem_mon_port=port_filter,
-                rem_mon_incl=incl_filter,  # Call Filter
-                rem_mon_excl=excl_filter,  # Call Filter
-            ))
-            if hasattr(prp, 'send_rem_mon_update'):
-                prp.send_rem_mon_update(prp_remote_states)
-                self._change_btn_states()
+        state_cfg = dict(
+            gui_rem_mon=True
+        )
+        self._cmd_update_rem_states(state_cfg)
 
     def _cmd_stop_rem_mon(self):
-        remote_mon = self._get_prp()
-        if hasattr(remote_mon, 'cmd_stop_gui_remote_mon'):
-            remote_mon.cmd_stop_gui_remote_mon()
-            self._change_btn_states()
+        prp = self._get_prp()
+        if hasattr(prp, 'cmd_stop_gui_remote_mon'):
+            prp.cmd_stop_gui_remote_mon()
+            self._change_btn_states('cmd_send')
 
-    def _cmd_update_rem_states(self):
+    def _cmd_update_rem_states(self, state_cfg=None):
+        if state_cfg is None:
+            state_cfg = {}
         prp = self._get_prp()
         if hasattr(prp, 'send_remote_state_update'):
             incl_filter = self._incl_filter_var.get()
@@ -481,57 +460,42 @@ class PRP_Tab(ttk.Frame):
                 excl_filter.remove('')
 
             ###########################
-            # == Config bauen
-            states_to_send = {}
             # == Port-Filter hinzufügen, wenn kein Fehler und geändert
             try:
                 port_filter = int(self._port_filter_var.get())
-                if port_filter != self._get_prp_remote_stat_by_key('rem_mon_port'):
-                    states_to_send.update(dict(
-                        rem_mon_port=port_filter
-                    ))
             except ValueError:
-                pass
-            # == Incl-Filter hinzufügen, wenn geändert
-            if incl_filter != self._get_prp_remote_stat_by_key('rem_mon_incl'):
-                states_to_send.update(dict(
-                    rem_mon_incl=incl_filter
-                ))
-            # == Excl-Filter hinzufügen, wenn geändert
-            if excl_filter != self._get_prp_remote_stat_by_key('rem_mon_excl'):
-                states_to_send.update(dict(
-                    rem_mon_excl=excl_filter
-                ))
+                port_filter = 0
             # == Batch Mode hinzufügen, wenn geändert
             batch_mode_var = self._prp_batch_mode_var.get()
-            if batch_mode_var in ['auto', 'on' 'off']:
-                if batch_mode_var != self._get_prp_remote_stat_by_key('batch_mode'):
-                    states_to_send.update(dict(
-                        batch_mode=batch_mode_var
-                    ))
+            if batch_mode_var not in ['auto', 'on', 'off']:
+                batch_mode_var = 'auto'
             # == CLI-ESC hinzufügen, wenn kein Fehler und geändert
             esc_cli_var    = self._prp_cli_esc_var.get()
-            if esc_cli_var != self._get_prp_remote_stat_by_key('cli_esc'):
-                states_to_send.update(dict(
-                    cli_esc = esc_cli_var
-                ))
 
-            prp.send_remote_state_update(states_to_send)
-            self._change_btn_states()
+            state_cfg.update(dict(
+                rem_mon_port=port_filter,
+                rem_mon_incl=incl_filter,
+                rem_mon_excl=excl_filter,
+                batch_mode  =batch_mode_var,
+                cli_esc     =esc_cli_var,
+            ))
+            # Send it!
+            prp.send_remote_state_update(state_cfg)
+            self._change_btn_states('cmd_send')
 
-        # == Eigenen State Updaten / update_own_states
-        if hasattr(prp, 'update_own_states'):
-            state_update = dict(
-                # Sync CLI-ESC (komprimierung)
-                cli_esc=self._prp_cli_esc_var.get()
-            )
-            prp.update_own_states(state_update)
+            # == Eigenen State Updaten / update_own_states
+            if hasattr(prp, 'update_own_states'):
+                state_update = dict(
+                    # Sync CLI-ESC (komprimierung)
+                    cli_esc=self._prp_cli_esc_var.get()
+                )
+                prp.update_own_states(state_update)
 
     def _cmd_disco(self):
         remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_disco'):
             remote_mon.cmd_disco()
-            self._change_btn_states()
+            self._change_btn_states('cmd_send')
 
     def _cmd_login(self):
         remote_mon = self._get_prp()
@@ -681,51 +645,68 @@ class PRP_Tab(ttk.Frame):
                 pass
     ########################################
     # BTN States
-    def _change_btn_states(self, opt='cmd_send'):
-        start_btn_state  = 'disabled'
-        stop_btn_state   = 'disabled'
-        update_btn_state = 'disabled'
-        disco_btn_state  = 'disabled'
-        if opt == 'cmd_send':
+    def _change_btn_states(self, opt=''):
+        prp = self._get_prp()
+        if opt == 'cmd_send' or prp is None:
             """ Disables all Btn's till response """
-            pass
-        elif opt == 'cmd_login':
+            """ or if not conneted """
+            self._start_btn.configure( state='disabled')
+            self._stop_btn.configure(  state='disabled')
+            self._update_btn.configure(state='disabled')
+            self._disco_btn.configure( state='disabled')
             self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='disabled')
             return
+        # Login send
+        if opt == 'cmd_login':
+            self._login_btn.configure( state='disabled')
+            self._logout_btn.configure(state='disabled')
+            return
+        # Login Response
         elif opt == PRP_RM_RESP_LOGIN:
             self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='normal')
             return
+        # Logout Response
         elif opt == PRP_RM_RESP_LOGOUT:
             self._login_btn.configure( state='normal')
             self._logout_btn.configure(state='disabled')
             return
-        elif opt == 'connected':
-            """ Connected """
-            start_btn_state = 'normal'
-            disco_btn_state = 'normal'
-        elif opt == PRP_RM_RESP_START:
-            """ Respond Start """
-            stop_btn_state      = 'normal'
-            update_btn_state    = 'normal'
-            disco_btn_state     = 'normal'
-        elif opt == PRP_RM_RESP_STOP:
-            """ Respond Stop """
-            start_btn_state     = 'normal'
-            disco_btn_state     = 'normal'
+        ##################
+        # Is connected ?
+        """ Connected """
+        start_btn_state     = 'disabled'
+        stop_btn_state      = 'disabled'
+        update_btn_state    = 'normal'
+        disco_btn_state     = 'normal'
+        login_btn_state     = 'disabled'
+        logout_btn_state    = 'disabled'
+        """ Eingeloggt ? """
+        if self._get_prp_remote_stat_by_key('login_ok'):
+            logout_btn_state = 'normal'
         else:
-            logger.warning(f"Unknow Response: {opt}")
-            return
+            login_btn_state  = 'normal'
+
+        """ Remote Monitor aktiviert ? """
+        print(f"btnState: {self._get_prp_remote_stats()}")
+        if self._get_prp_remote_stat_by_key('gui_rem_mon'):
+            stop_btn_state      = 'normal'
+        else:
+            start_btn_state     = 'normal'
+
         # Set Button States
         self._start_btn.configure( state=start_btn_state)
         self._stop_btn.configure(  state=stop_btn_state)
-        #self._update_btn.configure(state=update_btn_state)
+        self._update_btn.configure(state=update_btn_state)
         self._disco_btn.configure( state=disco_btn_state)
+        self._login_btn.configure( state=login_btn_state)
+        self._logout_btn.configure(state=logout_btn_state)
 
     ########################################
     def rx_response(self, response: str):
         self._change_btn_states(response)
+        #self._rx_response_handler()
+        print(f"GUI RESP: {response}")
 
     ########################################
     # Helper
@@ -749,7 +730,7 @@ class PRP_Tab(ttk.Frame):
         if hasattr(prp, 'get_rem_states'):
             return prp.get_rem_states()
         logger.error("Attribute Error: _get_prp_remote_cfg")
-        raise AttributeError
+        return None
 
 class PRP_remoteGUI(tk.Toplevel):
     def __init__(self, root_cl):

@@ -1617,7 +1617,7 @@ class AX25Conn:
         return bytearray(self.tx_buf_rawData)
 
     def is_tx_buff_empty(self):
-        return not self.tx_buf_unACK or not self._is_tx_buffer()
+        return not self.tx_buf_unACK and not self._is_tx_buffer()
 
 
 ###########################################################################
