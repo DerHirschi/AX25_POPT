@@ -961,14 +961,14 @@ class AX25PortHandler(object):
                 conn.remote_monitor_update_tx(ax25frame_conf)
 
     def handle_remote_monitor_rx(self, ax25pack: dict, remote_uid: str):
-        """ Called fm RemoteMonitor._remote_mon_rx_process """
+        """ Called fm prp._remote_mon_rx_process """
         if not hasattr(self._gui, 'remote_monitor_update_gui'):
             logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
             return
         self._gui.remote_monitor_update_gui(ax25pack, remote_uid)
 
     def handle_prp_response(self, resp: str, remote_uid: str):
-        """ Called fm RemoteMonitor """
+        """ Called fm prp """
         if not hasattr(self._gui, 'prp_response_update'):
             logger.error(f"Attribute Error handle_remote_monitor_rx: self._gui.")
             return

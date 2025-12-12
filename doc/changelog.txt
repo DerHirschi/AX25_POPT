@@ -5,6 +5,10 @@ Fixes:
 - Eingehende Verbindungen werden geblockt bzw. der Port block wird nicht
   freigegeben, wenn Port neu initialisiert wird.
   (Schon wieder, da die reinit Prozedur verändert wurde in der Vorversion)
+- Alle nicht darstellbaren Zeichen für GUI gesperrt.
+  (wenn von der GUI versucht wird, Binäre Daten darzustellen die nicht
+   darstellbar sind, gibts es Chaos.
+   Tag Farben & Zeilenumbrüche gehen verloren)
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)

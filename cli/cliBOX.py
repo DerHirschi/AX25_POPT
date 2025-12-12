@@ -7,6 +7,7 @@ from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND, CLI_TYP_BO
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
 from cli.cliMain import DefaultCLI
+from cli.cliStationIdent import get_station_id_obj
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.str_fnc import zeilenumbruch, find_eol
 
@@ -146,16 +147,22 @@ class BoxCLI(DefaultCLI):
                 self._to_call in pms_cfg.get('fwd_bbs_cfg', {}).keys()
         )):
             logger.debug(self._logTag + "No CLI-CMD Mode. No C-Text")
-            # self._software_identifier()
+
+            # == Hole Feature Flag's'
             features_flag = bbs.features_flag
             if all((pms_cfg.get('bin_mode', True),
                     pms_cfg.get('fwd_bbs_cfg', {}).get(self._to_call, {}).get('bin_mode', False))):
                 features_flag = ["B"] + features_flag
             else:
                 features_flag = features_flag
-            bbs_id_flag = generate_sid(features=features_flag)
-            ret = bbs_id_flag + '\r'
 
+            # == Baue Station Identy STR
+            bbs_id_flag = generate_sid(features=features_flag)
+            # Speichere eigenen Station Identy
+            self._own_stat_identifier = get_station_id_obj(bbs_id_flag)
+
+            # == Senden
+            ret = bbs_id_flag + '\r'
             self._send_output(ret + self._get_ts_prompt(), env_vars=True)
             return ''
 
@@ -1177,5 +1184,9 @@ class BoxCLI(DefaultCLI):
         return f"\r({datetime.now().strftime('%H:%M:%S')}) {self._my_call_str}>\r"
 
     ########################################################################
+    # Overrides
+    def _get_stat_identy_str(self):
+        return None
+
     def _baycom_auto_login(self):
         return False

@@ -2972,16 +2972,18 @@ class PoPT_GUI_Main:
     ###############################################################
     # Remote Monitor
     # === Init
-    def init_popt_remote(self, connection):
+    def init_popt_remote(self, uid: str):
         """ Init fm Connection """
-        self._add_tasker_q("_init_popt_remote_task", str(connection.uid), prio=False)
+        self._add_tasker_q("_init_popt_remote_task", uid, prio=False)
 
     def _init_popt_remote_task(self, uid: str):
         if uid in self._remote_mon_pack_buff:
+            print(f"UID in: {uid}")
+            print(f"remote_mon_pack_buff: {self._remote_mon_pack_buff.keys()}")
             return
         self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
         # Update Remote Mon GUI if open
-        if hasattr(self.prp_remote_win, 'rem_mon_init'):
+        if hasattr(self.prp_remote_win, 'prp_connection_init'):
             self.prp_remote_win.prp_connection_init(uid)
 
     # === TX Cmds
@@ -3017,10 +3019,13 @@ class PoPT_GUI_Main:
     def _remote_monitor_update_task(self, rem_mon_ax25conf: dict, remote_uid: str):
         if not rem_mon_ax25conf:
             return
+
+        # == Remote Monitor Buffer
         if remote_uid not in self._remote_mon_pack_buff:
             self._remote_mon_pack_buff[remote_uid] = deque([] * 10000, maxlen=10000)
         self._remote_mon_pack_buff[remote_uid].append(rem_mon_ax25conf)
-        # Update Remote Mon GUI if open
+
+        # == Update Remote Mon GUI if open
         if hasattr(self.prp_remote_win, 'rem_mon_update'):
             self.prp_remote_win.rem_mon_update(rem_mon_ax25conf, remote_uid)
 

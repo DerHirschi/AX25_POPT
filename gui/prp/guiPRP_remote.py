@@ -6,7 +6,6 @@ from tkinter import ttk
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
 from ax25.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
-from cfg.default_config import getNew_remote_mon_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, tk_filter_bad_chars
@@ -41,6 +40,7 @@ class PRP_Tab(ttk.Frame):
         self._setting_mon_encoding  = tk.StringVar( self, value='Auto')
         self._mon_scroll_var        = tk.BooleanVar(self, value=True)
 
+        # ==== Remote States
         # == Remote Mon Filter
         self._incl_filter_var       = tk.StringVar(self, value='')
         self._excl_filter_var       = tk.StringVar(self, value='')
@@ -64,16 +64,17 @@ class PRP_Tab(ttk.Frame):
         paned_window1.add(right_frame, weight=1)
         ###############################################
         # Horizontal PW right
-        paned_window_r = ttk.PanedWindow(right_frame, orient='vertical')
-        paned_window_r.pack(fill='both', expand=True)
+        #paned_window_r = ttk.PanedWindow(right_frame, orient='vertical')
+        #paned_window_r.pack(fill='both', expand=True)
 
-        rframe_upper = ttk.Frame(paned_window_r)
-        rframe_lower = ttk.Frame(paned_window_r)
+        rframe_upper = ttk.Frame(right_frame)
+        #rframe_upper = ttk.Frame(paned_window_r)
+        #rframe_lower = ttk.Frame(paned_window_r)
 
         rframe_upper.pack(fill='both', expand=False)
-        rframe_lower.pack(fill='both', expand=False)
-        paned_window_r.add(rframe_upper, weight=1)
-        paned_window_r.add(rframe_lower, weight=1)
+        #rframe_lower.pack(fill='both', expand=False)
+        #paned_window_r.add(rframe_upper, weight=1)
+        #paned_window_r.add(rframe_lower, weight=1)
         ###############################################
         # Horizontal PW left
         paned_window_mon = ttk.PanedWindow(left_frame, orient='vertical')
@@ -98,8 +99,8 @@ class PRP_Tab(ttk.Frame):
         # CTRL Stuff -   rframe_upper
         self._init_rem_mon_ctl_frame(rframe_upper)
         ###############################################
-        # Mon Darstellung -  rframe_lower
-        self._init_txt_mon_ctl_frame(rframe_lower)
+        # Mon Darstellung / optionen  -  rframe_lower
+        # self._init_txt_mon_ctl_frame(rframe_lower)
         ###############################################
         # Init Data
         for pack in mon_data:
@@ -120,10 +121,15 @@ class PRP_Tab(ttk.Frame):
         if prp is None:
             self._change_btn_states('rsp_stop')
         else:
+            # ==== Zustand Buttons
+            # == Ist Remote Monitor aktiviert ?
             if self._get_prp_remote_stat_by_key('gui_rem_mon'):
                 self._change_btn_states('rsp_start')
             else:
                 self._change_btn_states('rsp_stop')
+
+            # ==== Remote States > GUI-VARS
+            self._update_gui_vars_fm_rem_state()
 
     #######################################
     # CTL Frames - rechte Seite
@@ -388,27 +394,44 @@ class PRP_Tab(ttk.Frame):
     #######################################
     # Text Mon
     def _init_txt_mon_frame(self, frame: ttk.Frame):
-        self._mon_txt = tk.Text(frame,
+        # == PW
+        pw_win = ttk.PanedWindow(frame, orient='horizontal')
+        pw_win.pack(fill='both', expand=True)
+
+        # == PW-Frame
+        mon_frame = ttk.Frame(pw_win)
+        opt_frame = ttk.Frame(pw_win)
+        mon_frame.pack(fill='both', expand=True)
+        opt_frame.pack(             expand=False)
+        pw_win.add(mon_frame, weight=0)
+        pw_win.add(opt_frame, weight=1)
+
+        # == Monitor Optionen
+        self._init_txt_mon_ctl_frame(opt_frame)
+
+        # == Text Monitor
+        self._mon_txt = tk.Text(mon_frame,
                                 background=self._mon_color_bg_rx,
                                 foreground=self._mon_color_fg_rx,
                                 font=(FONT, self._text_size),
                                 height=30,
-                                width=5,
+                                width=100,
                                 bd=0,
                                 borderwidth=0,
                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                 highlightthickness=0,
                                 )
         mon_scrollbar = ttk.Scrollbar(
-            frame,
+            mon_frame,
             orient='vertical',
             command=self._mon_txt.yview
         )
         self._mon_txt.pack(side='left', fill='both', expand=True)
+        # == Scrollbar
         mon_scrollbar.pack(side='left', fill='y', expand=False)
         self._mon_txt.config(yscrollcommand=mon_scrollbar.set)
-        # Tags
 
+        # == Tags
         self._mon_txt.tag_config('TX',
                                  foreground=self._mon_color_fg_tx,
                                  background=self._mon_color_bg_tx,
@@ -521,11 +544,8 @@ class PRP_Tab(ttk.Frame):
             remote_mon.cmd_logout()
             self._change_btn_states('cmd_login')
     #######################################
-    # Update Date
-    def update_rem_mon(self, rem_mon_pack: dict):
-        self._update_mon_txt(rem_mon_pack)
-        self._update_mon_tab(rem_mon_pack)
-
+    # Update Remote Monitor
+    # == Text Monitor
     def _update_mon_txt(self, rem_mon_pack: dict):
         end_idx = self._mon_txt.index('end-1c')  # Cache Index
         # Get Data fm packet
@@ -558,6 +578,7 @@ class PRP_Tab(ttk.Frame):
             self._mon_txt.see("end")
         self._mon_txt.configure(state="disabled", exportselection=True)
 
+    # == Tab Monitor
     def _update_mon_tab(self, ax25pack_conf: dict, is_init=False):
         is_scrolled_to_top = self._mon_tree.yview()[0] == 0.0
         #user_db = self._port_handler.get_userDB()
@@ -656,7 +677,17 @@ class PRP_Tab(ttk.Frame):
                 # logger.warning(e)
                 pass
     ########################################
-    # BTN States
+    # PRP I/O
+    def update_rem_mon(self, rem_mon_pack: dict):
+        self._update_mon_txt(rem_mon_pack)
+        self._update_mon_tab(rem_mon_pack)
+
+    def rx_response(self, response: str):
+        self._change_btn_states(response)
+        self._update_gui_vars_fm_rem_state()
+
+    ########################################
+    # == GUI Updates
     def _change_btn_states(self, opt=''):
         prp = self._get_prp()
         if opt == 'cmd_send' or prp is None:
@@ -714,18 +745,14 @@ class PRP_Tab(ttk.Frame):
         self._logout_btn.configure(state=logout_btn_state)
 
     ########################################
-    def rx_response(self, response: str):
-        self._change_btn_states(response)
-        #self._rx_response_handler()
-
-    ########################################
-    # Helper
+    # == Helper
     def _get_prp(self):
         conn = self._root_cl.get_conn_by_uid(self._uid)
         if hasattr(conn, 'get_prp'):
             return conn.get_prp()
         return None
 
+    ########################################
     # == Remote State I/O
     def _get_prp_remote_stat_by_key(self, state_key: str):
         prp = self._get_prp()
@@ -734,13 +761,35 @@ class PRP_Tab(ttk.Frame):
         logger.error("Attribute Error: _get_prp_remote_stat_by_key")
         return None
 
-
     def _get_prp_remote_stats(self):
         prp = self._get_prp()
         if hasattr(prp, 'get_rem_states'):
             return prp.get_rem_states()
         logger.error("Attribute Error: _get_prp_remote_cfg")
         return None
+
+    # == GUI-Var / Remote States I/O
+    def _update_gui_vars_fm_rem_state(self):
+        # == Remote States von PRP holen
+        remote_states: dict | None = self._get_prp_remote_stats()
+        if remote_states is None:
+            return
+        # == Remote Mon Filter
+        port_var = str(remote_states.get('rem_mon_port', 0))
+        incl_var = ' '.join(remote_states.get('rem_mon_incl', []))
+        excl_var = ' '.join(remote_states.get('rem_mon_excl', []))
+        # == PRP Options
+        prp_cli_esc_var  = remote_states.get('cli_esc', False)
+        prp_batch_m_var  = remote_states.get('batch_mode', 'auto')
+        #prp_batch_w_var = remote_states.get('batch_wait', 30)
+
+        # == GUI Vars setzen
+        self._port_filter_var.set(port_var)
+        self._incl_filter_var.set(incl_var)
+        self._excl_filter_var.set(excl_var)
+
+        self._prp_cli_esc_var.set(prp_cli_esc_var)
+        self._prp_batch_mode_var.set(prp_batch_m_var)
 
 class PRP_remoteGUI(tk.Toplevel):
     def __init__(self, root_cl):

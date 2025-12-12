@@ -53,11 +53,15 @@ class DefaultCLI(object):
             if self._user_db_ent.CText:
                 self._c_text          = str(self._user_db_ent.CText)
 
+        # ==== Station Identy
+        # == Gegenstation
         self.stat_identifier        = get_station_id_obj(self._stat_identifier_str)
         self._stat_identifier_found = False
-        #print(f"CLI STST ID : {self.stat_identifier}")
-        #print(f"CLI STST str : {self._stat_identifier_str}")
+        # == Eigener Identy
+        self._own_stat_identifier   = get_station_id_obj(self._get_stat_identy_str())
+        self.get_own_stat_identy    = lambda : self._own_stat_identifier
 
+        # ====================
         self._c_text            = self._c_text.replace('\n', '\r')
 
         self.time_start         = datetime.now()
@@ -340,8 +344,10 @@ class DefaultCLI(object):
         return True
 
     # Software ID
-    def _send_sw_id(self):
+    def _get_stat_identy_str(self):
+        """ Normalen Station Identy STR bauen (SYSOP/NODE) """
         if not self.sw_id:
+            # Kein CLI TYP
             return ""
         unknown = '?'
         didadit = ''  # True = 'D'
@@ -365,26 +371,25 @@ class DefaultCLI(object):
                 self._user_db_ent.TYP = str(self.stat_identifier.typ)
 
     def _software_identifier(self):
-        #print("SW-ID")
         if self._stat_identifier_found:
             return True
+
         res = self._find_sw_identifier()
         if res and self.stat_identifier:
             self._stat_identifier_found = True
-            #print(f"SW-ID flag: {self.stat_identifier.software}")
-            #print(f"SW-ID flag: {self.stat_identifier.version}")
-            #print(f"SW-ID txt_encoding: {self.stat_identifier.txt_encoding}")
+
             if self.stat_identifier.knows_me is not None:
                 if not self.stat_identifier.knows_me:
                     self._send_name_cmd_back()
+
             if self.stat_identifier.txt_encoding is not None:
                 self._encoding = self.stat_identifier.txt_encoding, 'ignore'
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
-            #print("SW ID True")
+
             self._init_popt_remote()
             return True
-        #print("SW ID False")
+
         return False
 
     def _find_sw_identifier(self):
@@ -434,15 +439,13 @@ class DefaultCLI(object):
     ###################################
     # Init PoPT Remote (Monitor)
     def _init_popt_remote(self):
-        stat_id = self.stat_identifier
-        if not 'PoPT' in stat_id.software:
+        """ Wenn Station Identy empfangen wurde """
+        prp = self._get_prp()
+        if not hasattr(prp, 'init_prp_handshake'):
+            logger.error("CLI: Attribute Error. Can't get PRP")
             return
-        if version_tuple(stat_id.version) < version_tuple('2.123.1'):
-            return
-        gui = self._get_gui()
-        if not hasattr(gui, 'init_popt_remote'):
-            return
-        gui.init_popt_remote(self._connection)
+        # == Sendet Stat-Identy an PRP zwecks Handshake
+        prp.init_prp_handshake(self.stat_identifier)
 
     # GUI
     def _gui_channel_status_change(self):
@@ -2007,17 +2010,25 @@ class DefaultCLI(object):
         pass
 
     ########################################################
+    # == Helper
     def cli_conn_cleanup(self):
         pass
 
+    ########################################################
+    # == Getta
     def _get_gui(self):
         return self._port_handler.get_gui()
+
+    def _get_prp(self):
+        if hasattr(self._connection, 'get_prp'):
+            return self._connection.get_prp()
+        return None
 
     ########################################################
     # States
     def _s0(self):  # C-Text
         self._state_index = 1
-        ret = self._send_sw_id()
+        ret = self._get_stat_identy_str()
         ret += self._c_text
         #ret += self._aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:

@@ -77,7 +77,7 @@ Beispiel (16:47:08):
 
 OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
 -------+--------------------+---------------------+------------------------
- 20    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
+ 20    | Handshake          | ACK Handshake       | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
  21    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
  22    | Disconnect         | (kein ACK)          | leer
  23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
@@ -183,8 +183,8 @@ ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
 -----------+----------------------------+---------------------------------
  0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
  --        | -------------------------- | --------------------------------
- 20  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
- 20        | --- Nicht verwendet ------ | --- Nicht verwendet ------
+ 20  TX    | Handshake                  | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
+ 20        | ACK Handshake              | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
  21  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
  21        | --- Nicht verwendet ------ | --- Nicht verwendet ------
  22  TX    | Disconnect                 | leer
