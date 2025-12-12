@@ -50,7 +50,7 @@ PRP_NACK     = b'F'
 ####################################################################################
 # OPT Tab für Monitor
 PRP_CTL_TAB = {
-                20: 'RM Start/Update',
+                20: 'Handshake',
                 21: 'RM Stop',
                 22: 'Disconnect',
                 23: 'Login REQ',
