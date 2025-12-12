@@ -1,6 +1,6 @@
 from ax25.ax25NetRom import NetRom_decode_UI_mon, NetRom_decode_I_mon
 from ax25.ax25dec_enc import bytearray2hexstr
-from ax25.prp_remote import decode_prp_metadata
+from prp.prp_dec_fnc import decode_prp_metadata
 from cfg.logger_config import logger
 # from ax25.ax25NetRom import NetRom_decode_I
 from ax25aprs.aprs_dec import format_aprs_f_monitor

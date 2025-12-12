@@ -18,7 +18,7 @@ from cfg.logger_config import logger, LOG_BOOK
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from ax25.prp_remote import PRPremote
+from prp.prp_remote import PRPremote
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND

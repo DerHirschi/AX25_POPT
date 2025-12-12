@@ -5,7 +5,7 @@ from tkinter import ttk
 
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
-from ax25.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
+from prp.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, tk_filter_bad_chars
