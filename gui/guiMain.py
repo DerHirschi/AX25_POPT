@@ -2978,8 +2978,6 @@ class PoPT_GUI_Main:
 
     def _init_popt_remote_task(self, uid: str):
         if uid in self._remote_mon_pack_buff:
-            print(f"UID in: {uid}")
-            print(f"remote_mon_pack_buff: {self._remote_mon_pack_buff.keys()}")
             return
         self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
         # Update Remote Mon GUI if open

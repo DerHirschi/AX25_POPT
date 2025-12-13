@@ -18,10 +18,46 @@ from fnc.str_fnc import version_tuple
 from prp.prp_const import PRP_FESC, PRP_FESC_TFESC, PRP_FEND, PRP_FESC_TFEND, PRP_FLAG, PRP_DONT_ACK, PRP_NACK, \
     PRP_OPT_20, PRP_OPT_21, PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
     PRP_OPT_ESC_CLI, PRP_OPT_PRP_BATCH, PRP_BATCH_MIN_PACK, PRP_BATCH_MAX_PAY, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN, \
-    PRP_ACK, PRP_VER_RESTR, PRP_SW_RESTR, PRP_VER_RESTR_HANDSHAKE
+    PRP_ACK, PRP_VER_RESTR, PRP_SW_RESTR, PRP_VER_RESTR_HANDSHAKE, PRP_ABORT_FRAME
 from prp.prp_dec_fnc import pack_6bit_int_and_bool, unpack_6bit_int_and_bool, pack_time_hms, unpack_time_hms_to_datetime
 
 DBUG_PW = 'test1234'
+
+class ListBuffer:
+    def __init__(self, thread_lock_timer=0.01):
+        self._buffer: list      = []
+        self._threadLock        = False
+        self._threadLockTimer   = float(thread_lock_timer)
+
+    def _get_thread_lock(self):
+        while self._threadLock:
+            time.sleep(self._threadLockTimer)
+        self._threadLock = True
+
+    def buffer_read(self):
+        self._get_thread_lock()
+        ret = self._buffer.pop(0)
+        self._threadLock = False
+        return ret
+
+    def buffer_write(self, data):
+        self._get_thread_lock()
+        self._buffer.append(data)
+        self._threadLock = False
+
+    def buffer_clear(self):
+        self._get_thread_lock()
+        self._buffer = []
+        self._threadLock = False
+
+    # == Read Only / property
+    @property
+    def is_empty(self):
+        return bool(not self._buffer)
+
+    @property
+    def length(self):
+        return len(self._buffer)
 
 
 class PRPremote:
@@ -100,15 +136,17 @@ class PRPremote:
 
         #################################
         # == Handshake
-        self._is_handshake       = lambda    : False if self._get_own_state('stat_identy') is None else True
-        self._set_remote_identy  = lambda val: self._set_own_state('stat_identy', val)
+        self._is_handshake       = lambda    : False if self._get_remote_state('stat_identy') is None else True
+        self._get_remote_identy  = lambda    : self._get_remote_state('stat_identy')
+        self._set_remote_identy  = lambda val: self._set_remote_state('stat_identy', val)
+        self._set_own_identy     = lambda val: self._set_own_state('stat_identy', val)
         # Eigenen Stat Identy setzen
-        self._set_own_state('stat_identy', self._get_own_stat_identy())
+        self._set_own_identy(self._get_own_stat_identy())
 
         #################################
         # Batch Mode
         # == CTL
-        self._batch_buffer       = []   # Buffer ax25frame_conf Buffer
+        self._batch_buffer       = ListBuffer() # Buffer ax25frame_conf Buffer
         self._batch_timer        = time.time() + self._own_states.get('batch_wait', 30)
         # == Self / State I/O
         self._batch_wait         = lambda : self._own_states.get('batch_wait', 30)
@@ -270,12 +308,17 @@ class PRPremote:
                 self._rx_resp_cmd_20(payload)
             return None, b''
 
-        """ leer - 21 """
+        """ PRP-Frame Abort - 21 """
         if opt_id == PRP_OPT_21:
             if tx:
                 self._rx_cmd_21()
             else:
-                self._rx_resp_cmd_21()
+                print(f"prp frame decoder: _rx_resp")
+                #self._rx_resp_cmd_21()
+                return None, b''
+                # Optional: Status für Abort senden
+                #if self._next_pack_meta[0] == PRP_OPT_ESC_CLI:  # Wenn vorheriges war CLI-ESC
+                #    self._send_cli_esc_abort_recv_status()
             return None, b''
 
         """ Disconnect 22 """
@@ -351,13 +394,20 @@ class PRPremote:
             # Lösche Meta Daten für Status Meldungen
             self._last_pack_meta = None
             return False
+
+        # Abort Frames immer als Erstes senden
+        abort = False
+        if opt_id == PRP_OPT_21 and not tx_flag:
+            print("TX ABORT Frame !!!!!")
+            abort = True
+        print(f"TX OPT-ID: {opt_id} - tx:{tx_flag}")
         # An AX25Conn senden
-        self._connection.send_remote_data(data2send, prio=prio)
+        self._connection.send_remote_data((opt_id, data2send), prio=prio, is_abort_frame=abort)
         return True
 
     def prp_rx(self, data: bytes):
         # Opt by Grok-AI
-        # Kombiniere mit Buffer, falls vorhanden
+        # == Kombiniere mit Buffer, falls vorhanden
         if self._rest_buffer:
             data = self._rest_buffer + data
             self._rest_buffer = bytearray()
@@ -367,33 +417,59 @@ class PRPremote:
         i = 0
 
         while i < data_len:
-            # Suche nächsten Frame-Start (8D 81)
+
+            # == Suche nächsten Frame-Start (8D 81)
             if data[i:i + 2] == PRP_FLAG:
+
+                # == Potenzieller Frame-Start gefunden
                 self._next_pack_meta = None
-                # Potenzieller Frame-Start gefunden
                 if i + 5 > data_len:
-                    # Header unvollständig -> puffern
+                    # == Header unvollständig -> puffern
                     self._rest_buffer   = data[i:]
                     break
 
-                length = int.from_bytes(data[i + 3:i + 5], 'little')
-                #        Header(5)+ len+ CRC(2)
-                frame_end = i + 5 + length + 2
+                # == Entpacke Header Daten
+                opt_id, _, _ = unpack_6bit_int_and_bool(data[i + 2:i + 3])
+                length       = int.from_bytes(data[i + 3:i + 5], 'little')
+                frame_end    = i + 5 + length + 2  # Header(5)+ len+ CRC(2)
 
+                # == Speicher Frame Status (CLI-ESC Meta)
+                self._next_pack_meta = opt_id, length
+
+                # ===============================================
+                # == Potenziellen ABORT Frame im Datensatz suchen
+                # PRP-Flag(2) + FLAG(2) + OPT(1) + LEN(2) + CRC(2)
+                if frame_end > data_len: # Min 12 Bytes
+                    try:
+                        abort_index =  data[i + 2:].index(PRP_ABORT_FRAME)   # Kann nur nach normaler Flag kommen
+                    except ValueError:
+                        pass
+                    else:
+                        logger.info(f"PRP: Abort-Sequence im Payload gefunden. Verwerfe bereits empfangenes Paket")
+
+                        self._send_cli_esc_abort_recv_status()  # Rufe immer, filter intern
+
+                        self._comp_pack_meta = None
+                        self._next_pack_meta = None
+                        self._rest_buffer = bytearray()
+
+                        # == Entferne ABORT aus data gegen Loop
+                        full_abort_index = i + 2 + abort_index + len(PRP_ABORT_FRAME)
+                        i                = full_abort_index
+                        continue
+
+                # == Immer noch kein komplettes PRP-Frame ?
                 if frame_end > data_len:
-                    # Frame Status
-                    opt_id, _, _         = unpack_6bit_int_and_bool(data[i + 2:i + 3])
-                    self._next_pack_meta = opt_id, length
                     # Frame unvollständig -> puffern
                     self._rest_buffer   = data[i:]
-                    self.get_incomplete_cli_esc_status()
+                    self._send_cli_esc_recv_status()
                     break
 
-                # Komplettes Frame extrahiert!
+                # == Komplettes Frame extrahiert!
                 rem_mon_pack = data[i:frame_end]
 
                 try:
-                    # ==
+                    # == Process PRP-Frame
                     rest_data += self._prp_rx_process(rem_mon_pack)
                 except EncodingWarning:
                     logger.debug("PRP: Data Chunk:")
@@ -403,11 +479,11 @@ class PRPremote:
                     logger.debug(f"PRP:   REST H: {bytearray2hexstr(rest_data)}")
 
                 self._next_pack_meta = None
-                # Springe zum nächsten Byte nach dem Frame
+                # == Springe zum nächsten Byte nach dem Frame
                 i = frame_end
                 continue
 
-            # Kein Frame-Start: Dieses Byte gehört zum Rest-Stream
+            # =================== KEIN FRAME ===================
             rest_data.append(data[i])
             i += 1
 
@@ -455,7 +531,7 @@ class PRPremote:
                 logger.debug(f"Sende Batch len      : {len(batch_data)} Bytes")
                 logger.debug(f"Sende Batch-Paket len: {len(data2send)} Bytes")
                 logger.debug(f"Comp Ratio           : {len(batch_data) / len(data2send)}")
-                self._connection.send_remote_data(data2send, prio=False)
+                self._connection.send_remote_data((PRP_OPT_PRP_BATCH, data2send), prio=False)
                 batch_data = bytearray()
         # Und den Rest
         if batch_data:
@@ -465,7 +541,7 @@ class PRPremote:
             logger.debug(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
             logger.debug(f"Sende Batch-Paket Rest len: {len(data2send)} Bytes")
             logger.debug(f"Comp Ratio Rest           : {len(batch_data) / len(data2send)}")
-            self._connection.send_remote_data(data2send, prio=False)
+            self._connection.send_remote_data((PRP_OPT_PRP_BATCH, data2send), prio=False)
 
     def _prp_rx_batch(self, payload: bytes):
         """ Empfange PRP-Paket Batch """
@@ -499,7 +575,7 @@ class PRPremote:
     def _prp_rx_esc_cli(self, payload: bytes):
         """ Empfange CLI Escape """
         # Frame Status . Kompletter CLI-ESC Frame
-        self.get_incomplete_cli_esc_status()
+        self._send_cli_esc_recv_status()
         return payload
 
     def prp_tx_esc_cli(self, payload: bytes):
@@ -603,11 +679,11 @@ class PRPremote:
         # Batch Mode
         if (self._is_batch_mode() or
            # Wenn schon etwas im batch-tx-buffer ist ansonsten Sequenz fehler
-           self._batch_buffer     or
+           not self._batch_buffer.is_empty or
            # Auto Batch Mode
            (self._is_batch_mode_auto() and not self._connection.can_send_next_prp_batch())
         ):
-            self._batch_buffer.append(ax25frame_conf)
+            self._batch_buffer.buffer_write(ax25frame_conf)
             return
 
         # PoPT Remote Monitor GUI
@@ -616,13 +692,13 @@ class PRPremote:
 
     def _remote_monitor_batch_update(self):
         """ Batch Mode Task """
-        if not self._batch_buffer:
+        if self._batch_buffer.is_empty:
             # Timer resetten, wenn keine Pakete gesammelt wurde
             self._batch_timer = time.time() + self._batch_wait()
             return
 
         # Buffer Limit
-        is_buffer_limit = True if len(self._batch_buffer) > 30 else False
+        is_buffer_limit = True if self._batch_buffer.length > 30 else False
 
         # Nicht Task Timer und nicht Buffer-Limit
         if self._batch_timer > time.time() and not is_buffer_limit:
@@ -636,12 +712,12 @@ class PRPremote:
         self._batch_timer = time.time() + self._batch_wait()
 
         # Send as Batch or Single ?
-        batch_len     = len(self._batch_buffer)
+        batch_len     = self._batch_buffer.length
         send_as_batch = False if batch_len <= PRP_BATCH_MIN_PACK else True
 
         batch_data: list[bytes] = []
-        while self._batch_buffer:
-            ax25frame = self._batch_buffer.pop(0)
+        while not self._batch_buffer.is_empty:
+            ax25frame = self._batch_buffer.buffer_read()
             # Batch zu klein. Sende Frames einzeln
             if not send_as_batch:
                 # Auto Compressed
@@ -688,6 +764,22 @@ class PRPremote:
         ax25frame_conf['port']    = port_id
         return ax25frame_conf
 
+    # == Remote Monitor ABORT
+    def _remote_monitor_abort(self):
+        """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
+        logger.debug(f"PRP: Remote Monitor Abort gesendet...")
+        if hasattr(self._connection, 'prp_del_rem_mon_buff'):
+            logger.debug(f"PRP: Lösche TX-Buffer und sende Abort RESP Frame: {self._uid}")
+            # == Lösche Batch Buffer
+            self._batch_buffer.buffer_clear()
+            # == Lösche AX25Conn sende Buffer PRP-BATCH Frames
+            self._connection.prp_del_rem_mon_buff(PRP_OPT_PRP_BATCH)  ########
+            # == Sende Abort Frame
+            self._tx_resp_cmd_21()
+            return
+            # == Sollte nicht passieren
+        logger.error(f"PRP: AttributeError _prp_abort_all: {self._uid}")
+
     #####################################
     # Response Handler
     def _local_response_handler(self, opt_id: int, resp_ok=True):
@@ -719,8 +811,8 @@ class PRPremote:
         if self._has_own_state_changed(state_update,  'gui_rem_mon'):
             # == Remote Monitor STOP
             if not state_update['gui_rem_mon']:
-                # Clear remote-protocol buffer
-                self._connection.clear_tx_buff_prp()
+                # == Lösche TX-Buffer & sende ABORT-Resp
+                self._remote_monitor_abort()
                 return
         # == CLI-ESC Sync
         if self._has_own_state_changed(state_update,  'cli_esc'):
@@ -734,7 +826,7 @@ class PRPremote:
     # OPT-ID 26 - States Update via Remote / By Grok AI
     def send_remote_state_update(self, state_updates: dict):
         # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
-        if not self._check_version():
+        if not self._is_handshake():
             return False
 
         # update abgleichen mit _remote_states was sich geändert hat
@@ -914,8 +1006,12 @@ class PRPremote:
     def send_cmd_20(self):
         """ TX CMD 20 - Handshake senden """
         # == Eigenen Station Identy Obj holen
-        own_stat_identy     = self._get_own_state('stat_identy')
+        own_stat_identy = self._get_own_stat_identy()
         if hasattr(own_stat_identy, 'id_str'):
+            print(f"Send Handshake :{self._uid}")
+            # == Eigene Identy updaten
+            self._set_own_identy(own_stat_identy)
+
             # == Eigenen Station Identy Str holen
             own_stat_identy_str = str(own_stat_identy.id_str)
 
@@ -971,7 +1067,7 @@ class PRPremote:
         if not success:
             return
         # == Eigenen Station Identy Obj holen
-        own_stat_identy = self._get_own_state('stat_identy')
+        own_stat_identy = self._get_own_stat_identy()
         if hasattr(own_stat_identy, 'id_str'):
             # == Eigenen Station Identy Str holen
             own_stat_identy_str = str(own_stat_identy.id_str)
@@ -1014,48 +1110,66 @@ class PRPremote:
         self._set_remote_identy(stat_identy)
 
     # =============================
-    # ====== OPT-ID 21 leer
+    # ====== OPT-ID 21 - ABORT
     def send_cmd_21(self):
-        """ TX CMD 21 """
-        if not self._check_version():
+        """ TX CMD 21 - CLI-ESC ABORT """
+        if not self._is_handshake():
             return
-        # CFG in ACK Buffer
-        self._set_pending_remote_state(PRP_OPT_21, 'gui_rem_mon', False)
-        # PRP Senden
+
+
+        # == PRP ABORT-FRAME Senden
         self._prp_tx(opt_id=PRP_OPT_21, tx_flag=True, data=b'', prio=True)
 
     def _rx_cmd_21(self):
-        """ RX CMD 21 """
-        # Zustand updaten
-        # self._set_own_state('gui_rem_mon', False)
-        # Send Response
-        self._tx_resp_cmd_21()
+        """ RX CMD 21 - ABORT - CLI-ESC Abort """
+        logger.info(
+            f"PRP: Abort-REQ(CLI-ESC) empfangen (OPT-ID 21). Breche das Senden ab und lösche TX-Buffer. UID: {self._uid}")
+        # == Status MSG to GUI ????????
+        self._send_cli_esc_abort_sender_status()
+        # == ESC-CLI Frame aus ax25Conn PRP-Rest-buffer löschen
+        if hasattr(self._connection, 'prp_del_frame_buff_cli_esc'):
+            logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._uid}")
+            # == Lösche AX25Conn sende Buffer (nut tx-buffer, nicht prp-q buffer)
+            self._connection.prp_del_frame_buff_cli_esc(PRP_OPT_ESC_CLI) # FIXME. Delete CLI-ESC Frames in prp-Q as well
+            # == Send Response
+            self._tx_resp_cmd_21()
+            return
+        logger.error(f"PRP: AttributeError _prp_abort_current_frame: {self._uid}")
 
     def _tx_resp_cmd_21(self):
-        """ TX Respond CMD 21 """
-        self._prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=PRP_ACK, prio=True)
+        """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
+        # == Sende Abort Frame
+        self._prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=b'', prio=True)
+
 
     def _rx_resp_cmd_21(self):
         """ RX Respond CMD 21 """
-        pass
+        logger.info(
+            f"PRP: Abort-Frame empfangen (OPT-ID 21). Breche Empfang ab und lösche Rest-Buffer. UID: {self._uid}")
 
     # =============================
     # ====== Disconnect CMD
     def cmd_disco(self):
         """ TX Start Disco CMD """
-        if not self._check_version():
+        if not self._is_handshake():
             return
         self._prp_tx(opt_id=PRP_OPT_DISCO, tx_flag=True, data=b'', prio=True)
 
     def _rx_cmd_disco(self):
         """ RX Start Disco CMD """
+        # == Remote Monitor abschalten
+        self._set_own_state('gui_rem_mon', False)
+        self._set_own_state('cli_rem_mon', False)
+        # == TX-Buffer löschen
+        self._connection.prp_del_rem_mon_buff(None)
+        # == Connection Disco
         self._connection.conn_disco()
 
     # =============================
     # ====== Login Stuff
     def cmd_login_request(self, password: str):
         """Client fordert Login-Challenge an"""
-        if not self._check_version():
+        if not self._is_handshake():
             return
         # TODO Password fm DB or GUI
         self._password_hash = hashlib.sha256(DBUG_PW.encode()).digest()
@@ -1122,7 +1236,7 @@ class PRPremote:
     # ====== Logout Stuff
     def cmd_logout(self):
         """ Client sendet Logout """
-        if not self._check_version():
+        if not self._is_handshake():
             return
         self._add_pending_remote_states_cfg(PRP_OPT_LOGOUT, {'login_ok': False})
         self._prp_tx(PRP_OPT_LOGOUT, tx_flag=True, data=b'', prio=True)
@@ -1296,8 +1410,13 @@ class PRPremote:
         gui.init_popt_remote(self._uid)
 
     # ==== QSO Stream I/O
+    def _send_cli_esc_status_to_QSO(self, status_msg: str, tx: bool):
+        if not hasattr(self._connection, 'send_gui_QSO_PRPstatus'):
+            return
+        self._connection.send_gui_QSO_PRPstatus(status_msg, tx=tx)
+
     # === CLI-ESC Status Meldungen für gui.QSO
-    def get_cli_esc_send_status(self):
+    def get_cli_esc_sender_status(self):
         """
         TX.
         Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
@@ -1310,7 +1429,7 @@ class PRPremote:
 
         return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed}/{len_payload} Bytes"
 
-    def get_incomplete_cli_esc_status(self):
+    def _send_cli_esc_recv_status(self):
         """
         RX.
         Gibt den Status eines unvollständigen CLI-ESC-Frames zurück, falls vorhanden.
@@ -1361,10 +1480,34 @@ class PRPremote:
         # === Mehr als total_bytes → sollte nie passieren, aber sicherheitshalber ===
         return
 
-    def _send_cli_esc_status_to_QSO(self, status_msg: str, tx: bool):
-        if not hasattr(self._connection, 'send_gui_QSO_PRPstatus'):
+    # == CLI-ESC ABORT Meldungen für gui.QSO
+    def _send_cli_esc_abort_sender_status(self):
+        """
+        TX.
+        Sendet ABORT Mitteilung an gui.qso
+        """
+        status_msg = f"\nPRP ■ !ABORT!"
+        self._send_cli_esc_status_to_QSO(status_msg, tx=True)
+
+
+    def _send_cli_esc_abort_recv_status(self):
+        """
+        RX.
+        Sendet ABORT Mitteilung an gui.qso
+        """
+        if self._next_pack_meta is None:
             return
-        self._connection.send_gui_QSO_PRPstatus(status_msg, tx=tx)
+
+        opt_id, payload_len = self._next_pack_meta
+        # == Nur für CLI-ESC (OPT 62, TX-Flag)
+        if opt_id != PRP_OPT_ESC_CLI:
+            logger.info(f"PRP: Abgebrochener Frame OPT-ID: {opt_id} - UID: {self._uid}")
+            return
+
+        # === Fortschritt anzeigen ===
+        status_msg = f"PRP ■ [{'-' * 10}](0  %) ABORT/{payload_len} Bytes"
+        self._send_cli_esc_status_to_QSO(status_msg, tx=False)
+        return
 
     #####################################
     # CLI I/O
@@ -1374,19 +1517,23 @@ class PRPremote:
         return self._connection.cli
 
     # == Handshake
-    def init_prp_handshake(self, stat_identy):
+    def init_prp_handshake(self, remote_identy):
         """ Bekommt Station Identy Objekt von CLI """
         # == Keine PoPT Station TODO Liste von Erlaubten Stationen
-        if not 'PoPT' in stat_identy.software:
+        if not 'PoPT' in remote_identy.software:
             logger.debug("PRP: No PRP Station. No Handshake needed.")
             return
         # == Kann Gegenstation Handshake?
-        if version_tuple(stat_identy.version) < version_tuple(PRP_VER_RESTR_HANDSHAKE):
+        if version_tuple(remote_identy.version) < version_tuple(PRP_VER_RESTR_HANDSHAKE):
             logger.warning("PRP: Version der Gegenstation ist inkompatibel. Handshake möglich !")
-            logger.warning(f"PRP: Ver Gegenstation: {stat_identy.version}")
+            logger.warning(f"PRP: Ver Gegenstation: {remote_identy.version}")
             return
+
+        print(f"Init Handshake :{self._uid}")
         # == Remote Station Identy speichern (wenn Vorhanden)
-        self._set_remote_identy(stat_identy)
+        self._set_remote_identy(remote_identy)
+        # == Eigenen Station Identy speichern (wenn Vorhanden)
+        #self._set_own_identy(own_identy)
         # == Sende Handshake nur bei PoPT Sysop Stationen
         self.send_cmd_20()
         # == Sende Response an GUI
@@ -1399,5 +1546,17 @@ class PRPremote:
             logger.error(f"PRP: Attribute Error: _get_own_stat_identy")
             return None
         return cli.get_own_stat_identy()
+
+    # == CLI Abort
+    def cli_abort(self):
+        if not self._is_handshake():
+            return False
+
+        # == Prüfe ob CLI-ESC Pakte im TX-Buffer sind
+        if not self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI):
+            return False
+        # == Sende ABORT-RESP Frame
+        self._rx_cmd_21()
+        return True
 
 

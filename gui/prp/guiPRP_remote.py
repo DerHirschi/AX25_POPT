@@ -251,9 +251,19 @@ class PRP_Tab(ttk.Frame):
             command=lambda: self._cmd_logout(),
             state='disabled'
         )
+        # FIXME Nur zum Testen
+        #self._abort_btn = ttk.Button(
+        #    btn_f2,
+        #    text="Abort",
+        #    command=lambda: self._cmd_cli_esc_abort(),
+        #    #state='disabled'
+        #)
+
         self._stop_btn.pack(  side='left', padx=15)
         self._disco_btn.pack( side='left', padx=15)
         self._logout_btn.pack(side='left', padx=15)
+        # FIXME Nur zum Testen
+        #self._abort_btn.pack(side='left', padx=15)
 
     def _init_txt_mon_ctl_frame(self, frame: ttk.Frame):
         ############################
@@ -463,6 +473,12 @@ class PRP_Tab(ttk.Frame):
             gui_rem_mon=False
         )
         self._cmd_update_rem_states(state_cfg)
+
+
+    #def _cmd_cli_esc_abort(self):
+    #    prp = self._get_prp()
+    #    if hasattr(prp, 'send_cmd_21'):
+    #        prp.send_cmd_21()
 
     def _cmd_update_rem_states(self, state_cfg=None):
         if state_cfg is None:

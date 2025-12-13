@@ -15,7 +15,7 @@ from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec,
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
-
+from prp.prp_const import PRP_OPT_ESC_CLI
 
 
 class DefaultCLI(object):
@@ -58,8 +58,8 @@ class DefaultCLI(object):
         self.stat_identifier        = get_station_id_obj(self._stat_identifier_str)
         self._stat_identifier_found = False
         # == Eigener Identy
-        self._own_stat_identifier   = get_station_id_obj(self._get_stat_identy_str())
-        self.get_own_stat_identy    = lambda : self._own_stat_identifier
+        # self._own_stat_identifier   = get_station_id_obj(self._get_own_identy_str())
+        self.get_own_stat_identy    = lambda : get_station_id_obj(self._get_own_identy_str())
 
         # ====================
         self._c_text            = self._c_text.replace('\n', '\r')
@@ -241,8 +241,13 @@ class DefaultCLI(object):
             out_lines += self._getTabStr_CLI('op_prompt_1').encode(self._encoding[0], self._encoding[1])
         self._connection.send_data(out_lines)
         self.change_cli_state(7)
+
     # TX-Abort-Stuff
     def _abort_send_out(self):
+        prp = self._get_prp()
+        if hasattr(prp, 'cli_abort'):
+            prp.cli_abort()
+
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
         self._connection.send_data( (f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
@@ -252,12 +257,13 @@ class DefaultCLI(object):
         eol = find_eol(self._raw_input)
         if (self._raw_input.upper() == b'A' + eol and
             (self._connection.get_tx_buff_len()
-            or self._tx_buffer)
+            or self._tx_buffer or self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI))
         ):
             self._abort_send_out()
             self._last_line = b''
             return True
         return False
+
     #
     def change_cli_state(self, state: int):
         # print(f"CLI change state: {state} - {self._state_index}")
@@ -344,7 +350,7 @@ class DefaultCLI(object):
         return True
 
     # Software ID
-    def _get_stat_identy_str(self):
+    def _get_own_identy_str(self):
         """ Normalen Station Identy STR bauen (SYSOP/NODE) """
         if not self.sw_id:
             # Kein CLI TYP
@@ -361,7 +367,7 @@ class DefaultCLI(object):
                 except KeyError:
                     logger.error(f"KeyERROR STATION_ID_ENCODING_REV (constant.py): {self._user_db_ent.Encoding}")
         flag = txt_enc + didadit + unknown
-        return '{' + f"{self.sw_id}-{VER}-{flag}" + '}\r'
+        return '{' + f"{self.sw_id}-{VER}-{flag}" + '}'
 
     def _set_user_db_software_id(self):
         if self._user_db_ent:
@@ -444,7 +450,7 @@ class DefaultCLI(object):
         if not hasattr(prp, 'init_prp_handshake'):
             logger.error("CLI: Attribute Error. Can't get PRP")
             return
-        # == Sendet Stat-Identy an PRP zwecks Handshake
+
         prp.init_prp_handshake(self.stat_identifier)
 
     # GUI
@@ -2028,7 +2034,7 @@ class DefaultCLI(object):
     # States
     def _s0(self):  # C-Text
         self._state_index = 1
-        ret = self._get_stat_identy_str()
+        ret = self._get_own_identy_str() + '\r'
         ret += self._c_text
         #ret += self._aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:

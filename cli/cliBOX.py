@@ -1185,7 +1185,7 @@ class BoxCLI(DefaultCLI):
 
     ########################################################################
     # Overrides
-    def _get_stat_identy_str(self):
+    def _get_own_identy_str(self):
         return None
 
     def _baycom_auto_login(self):

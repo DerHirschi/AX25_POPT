@@ -114,7 +114,7 @@ class MCastCLI(DefaultCLI):
 
     def _s0(self):  # C-Text
         self._state_index = 1
-        out =  self._get_stat_identy_str()
+        out =  self._get_own_identy_str() + '\r'
         out += self._c_text
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.

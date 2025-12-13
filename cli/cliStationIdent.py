@@ -3,6 +3,7 @@ from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STAT
 from cfg.logger_config import logger
 
 def get_station_id_obj(inp_line: str | None):
+
     if not inp_line:
         return None
     # TODO MCast
