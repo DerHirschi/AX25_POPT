@@ -788,16 +788,13 @@ class PRPremote:
     # Response Handler
     def _local_response_handler(self, opt_id: int, resp_ok=True):
         """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
-        # Reverse UID
-        #uid = reverse_uid(self._uid)
         uid = self._uid
 
         # ==== Opt bezogener RESP
-
         # == Handshake
-        if opt_id == PRP_OPT_20:
-            if resp_ok:
-                self._gui_resp_handshake()  # Jetzt erst nach ACK
+        #if opt_id == PRP_OPT_20:
+        #    # if resp_ok:
+        #    self._gui_resp_handshake()  # Jetzt erst nach ACK
 
         # == Login
         if opt_id == PRP_OPT_LOGIN_RESP:
@@ -1053,7 +1050,7 @@ class PRPremote:
             self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
             return
 
-        identy_str = str(own_stat_identy.id_str)
+        identy_str   = str(own_stat_identy.id_str)
         identy_bytes = identy_str.encode('ASCII', 'ignore')
         # Kurzes Format
         if short_format:
@@ -1143,6 +1140,7 @@ class PRPremote:
                 return False
 
             self._set_remote_identy(stat_identy)
+            self._gui_resp_handshake()
             logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
             logger.info(f"PRP:   Gegenstation: {stat_identy.software} Ver. {stat_identy.version}")
             return True
@@ -1168,10 +1166,10 @@ class PRPremote:
         if states_part:
             updates = self._decode_state_payload(states_part)
             if updates:
-                self._add_pending_remote_states_cfg(PRP_OPT_20, updates)
-                # self._update_remote_state(updates)
+                self._update_remote_state(updates)
                 logger.info(f"PRP: Initiale Remote-States aus Handshake-Response übernommen: {updates}")
 
+        self._gui_resp_handshake()
         logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
         logger.info(f"PRP:   Gegenstation: {stat_identy.software} Ver. {stat_identy.version}")
         return True
@@ -1184,7 +1182,7 @@ class PRPremote:
         Serialisiert alle own_states AUSSER private States.
         Verwendet exakt dasselbe Format wie _encode_state_updates().
         """
-        payload = bytearray()
+        payload      = bytearray()
         ordered_keys = list(self._own_states.keys())
 
         for key in ordered_keys:
