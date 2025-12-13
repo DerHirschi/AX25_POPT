@@ -1,7 +1,7 @@
 ####################################################################################
 PRP_SW_RESTR             = 'PoPT'       # Software restriction
 PRP_VER_RESTR            = '2.123.20'   # Version restriction - Allgemein
-PRP_VER_RESTR_HANDSHAKE  = '2.123.21'   # Version restriction - Handshake
+PRP_VER_RESTR_HANDSHAKE  = '2.123.24'   # Version restriction - Handshake
 ####################################################################################
 PRP_FLAG  = b'\x8D\x81'      # PRP Flag
 ####################################################################################
@@ -26,7 +26,7 @@ PRP_OPT_ESC_CLI         = 62 # Payload wird an CLI durchgereicht
 PRP_OPT_PRP_BATCH       = 63 # PRP-Frame Batch processing
 ####################################################################################
 # ACK / Response
-PRP_DONT_ACK = (PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_20, PRP_OPT_21)
+PRP_DONT_ACK = (PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_21)
 PRP_ACK      = b'O'
 PRP_NACK     = b'F'
 ####################################################################################

@@ -78,6 +78,10 @@ class PRPremote:
         self._rest_buffer  = bytearray()
 
         #################################
+        # Helper PRP
+        self._is_ack    = lambda payload: True if payload == PRP_ACK else False
+
+        #################################
         # Meta Daten für QSO-Status Msg
         self._comp_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
         self._next_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
@@ -789,6 +793,12 @@ class PRPremote:
         uid = self._uid
 
         # ==== Opt bezogener RESP
+
+        # == Handshake
+        if opt_id == PRP_OPT_20:
+            if resp_ok:
+                self._gui_resp_handshake()  # Jetzt erst nach ACK
+
         # == Login
         if opt_id == PRP_OPT_LOGIN_RESP:
             if resp_ok:
@@ -796,6 +806,7 @@ class PRPremote:
                 return
             self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
             return
+
         # == Logout
         elif opt_id == PRP_OPT_LOGOUT:
             self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
@@ -985,7 +996,7 @@ class PRPremote:
 
     def _rx_resp_remote_state_update(self, payload: bytes):
         """ RX Respond State Update (ACK) """
-        if payload == PRP_ACK:
+        if self._is_ack(payload):
             logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
             logger.debug(f"PRP: Bestätige State Update: {self._uid}")
             for k, v in self._remote_states.items():
@@ -1002,112 +1013,247 @@ class PRPremote:
         return None
 
     # =============================
-    # ====== OPT-ID 20 - Handshake
-    def send_cmd_20(self):
-        """ TX CMD 20 - Handshake senden """
-        # == Eigenen Station Identy Obj holen
+    # ====== OPT-ID 20 - Handshake (ERWEITERT UM STATES)
+    def send_cmd_20(self, short_format=False):
+        """ TX CMD 20 - Handshake senden + öffentliche own_states """
         own_stat_identy = self._get_own_stat_identy()
-        if hasattr(own_stat_identy, 'id_str'):
-            print(f"Send Handshake :{self._uid}")
-            # == Eigene Identy updaten
-            self._set_own_identy(own_stat_identy)
-
-            # == Eigenen Station Identy Str holen
-            own_stat_identy_str = str(own_stat_identy.id_str)
-
-            # == Encode ASCII
-            data = own_stat_identy_str.encode('ASCII', 'ignore')
-
-            # == PRP Paket senden
-            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=data, prio=True)
+        if not hasattr(own_stat_identy, 'id_str'):
+            logger.error(f"PRP: Error Send Handshake. Kein eigener Station Identy !")
             return
 
-        # Darf nicht passieren
-        logger.error(f"PRP: Error Send Handshake. Kein eigener Station Identy !")
-        return
+        logger.info(f"PRP: Sende Handshake mit States: {self._uid}")
+
+        self._set_own_identy(own_stat_identy)
+
+        identy_str   = str(own_stat_identy.id_str)
+        identy_bytes = identy_str.encode('ASCII', 'ignore')
+
+        # Kurzes Format.. Nur Identy Str
+        if short_format:
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=identy_bytes, prio=True)
+            return
+
+        # Öffentliche States anhängen
+        states_bytes = self._encode_public_states()
+
+        # Kombinieren: identy || 0x00 || states
+        data = identy_bytes + b'\x00' + states_bytes
+
+        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=data, prio=True)
+
+    def _tx_resp_cmd_20(self, success: bool, short_format=False):
+        """ TX Respond CMD 20 - Handshake Response + öffentliche own_states """
+        if not success:
+            self._set_remote_identy(None)
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
+            return
+
+        own_stat_identy = self._get_own_stat_identy()
+        if not hasattr(own_stat_identy, 'id_str'):
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
+            return
+
+        identy_str = str(own_stat_identy.id_str)
+        identy_bytes = identy_str.encode('ASCII', 'ignore')
+        # Kurzes Format
+        if short_format:
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=identy_bytes, prio=True)
+            return
+
+        # Langes Format - Mit State update
+        states_bytes = self._encode_public_states()
+
+        data = identy_bytes + b'\x00' + states_bytes
+
+        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=data, prio=True)
 
     def _rx_cmd_20(self, payload: bytes):
-        """ RX CMD 20 - Handshake"""
-        try:
-            stat_identy_str = payload.decode('ASCII')
-        except UnicodeDecodeError:
-            logger.error(f"PRP: Error RX Handshake. UnicodeDecodeError payload !")
-            logger.error(f"PRP:   UID    : {self._uid}")
-            logger.error(f"PRP:   Payload: {payload}")
-            # == Sende NACK
-            self._tx_resp_cmd_20(False)
-            return
+        """ RX CMD 20 - Handshake + States """
+        # == Altes Format / kurzes Format
+        if b'\x00' not in payload:
+            logger.info(f"PRP: Handshake-Aufforderung ohne States empfangen(kurzes Format).– UID: {self._uid}")
+            try:
+                stat_identy_str = payload.decode('ASCII')
+            except UnicodeDecodeError:
+                logger.error(f"PRP: Handshake UnicodeDecodeError (Identy) – UID: {self._uid}")
+                self._tx_resp_cmd_20(False)
+                return
+            stat_identy = get_station_id_obj(stat_identy_str)
+            if stat_identy is None:
+                logger.warning(f"PRP: Ungültiger Handshake (Identy) – UID: {self._uid}")
+                self._tx_resp_cmd_20(False)
+                return
 
-        # == Versuche Stat Identy Obj aus stat_identy_str zu parsen
-        stat_identy = get_station_id_obj(stat_identy_str)
-
-        # == Setze Remote Stat Identy in Remote Stats. Ob Nonne oder nicht
-        self._set_remote_identy(stat_identy)
-
-        # == ACK - Prüfe ob stat_identy in Remote States Nonne ist(ACK) oder nicht(NACK)
-        if self._is_handshake():
-            logger.info(f"PRP: Handshake Aufforderung empfangen.")
-            logger.info(f"PRP:   UID    : {self._uid}")
-            logger.info(f"PRP:   Version: {stat_identy.software} Ver. {stat_identy.version}")
-            logger.info(f"PRP:   TYP    : {stat_identy.typ}")
-            # == GUI Response
+            logger.info(f"PRP: Handshake akzeptiert – Version: {stat_identy.software} {stat_identy.version}")
+            self._set_remote_identy(stat_identy)
             self._gui_resp_handshake()
-
-            # == Sende ACK
-            self._tx_resp_cmd_20(True)
+            self._tx_resp_cmd_20(True, short_format=True)
             return
 
-        logger.warning(f"PRP: Fehlerhaften Handshake empfangen ! {self._uid}")
-        # == Sende ACK
-        self._tx_resp_cmd_20(False)
+        logger.info(f"PRP: Handshake-Aufforderung mit States – UID: {self._uid}")
+        # == Neu mit States
+        identy_part, states_part = payload.split(b'\x00', 1)
 
-    def _tx_resp_cmd_20(self, success: bool):
-        """ TX Respond CMD 20 - Handshake"""
-        # == NACK. Sende einfach PRP_NACK
-        if not success:
-            return
-        # == Eigenen Station Identy Obj holen
-        own_stat_identy = self._get_own_stat_identy()
-        if hasattr(own_stat_identy, 'id_str'):
-            # == Eigenen Station Identy Str holen
-            own_stat_identy_str = str(own_stat_identy.id_str)
-
-            # == Encode ASCII
-            data = own_stat_identy_str.encode('ASCII', 'ignore')
-
-            # == Sende eigenen Station Identy STR (auch wenn bereits über CLI empfange)
-            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=data, prio=True)
-            return
-
-        # Sollte nicht passieren
-        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
-
-    def _rx_resp_cmd_20(self, payload: bytes):
-        """ RX Respond CMD 20 - Handshake"""
         try:
-            stat_identy_str = payload.decode('ASCII')
+            stat_identy_str = identy_part.decode('ASCII')
         except UnicodeDecodeError:
-            logger.error(f"PRP: Error RX Handshake Response. UnicodeDecodeError payload !")
-            logger.error(f"PRP:   UID    : {self._uid}")
-            logger.error(f"PRP:   Payload: {payload}")
-            # == Sende NACK
+            logger.error(f"PRP: Handshake UnicodeDecodeError (Identy) – UID: {self._uid}")
             self._tx_resp_cmd_20(False)
             return
 
-        # == Versuche Stat Identy Obj aus stat_identy_str zu parsen
         stat_identy = get_station_id_obj(stat_identy_str)
         if stat_identy is None:
-            logger.error(f"PRP: Error RX Handshake Response. Stat-Identy-str DecodingError !")
-            logger.error(f"PRP:   UID    : {self._uid}")
-            logger.error(f"PRP:   Payload: {payload}")
-        else:
-            logger.info(f"PRP: Handshake Response. Handshake erfolgreich !")
-            logger.info(f"PRP:   UID    : {self._uid}")
-            logger.info(f"PRP:   Version: {stat_identy.software} Ver. {stat_identy.version}")
-            logger.info(f"PRP:   TYP    : {stat_identy.typ}")
+            logger.warning(f"PRP: Ungültiger Handshake (Identy) – UID: {self._uid}")
+            self._tx_resp_cmd_20(False)
+            return
 
-        # == Setze Remote Stat Identy in Remote Stats. Ob Nonne oder nicht
         self._set_remote_identy(stat_identy)
+
+        # States verarbeiten (falls vorhanden)
+        if states_part:
+            updates = self._decode_state_payload(states_part)
+            if updates:
+                self._update_remote_state(updates)
+                logger.info(f"PRP: Initiale Remote-States aus Handshake übernommen: {updates}")
+
+        logger.info(f"PRP: Handshake akzeptiert – Version: {stat_identy.software} {stat_identy.version}")
+        self._gui_resp_handshake()
+        self._tx_resp_cmd_20(True)
+
+    def _rx_resp_cmd_20(self, payload: bytes):
+        """ RX Respond CMD 20 - Handshake Response + States """
+        if payload == PRP_NACK:
+            logger.warning(f"PRP: Handshake abgelehnt von Gegenstation – UID: {self._uid}")
+            self._set_remote_identy(None)
+            return False
+
+        if b'\x00' not in payload:
+            logger.info(f"PRP: Handshake-Response ohne States (kurzes Format) – UID: {self._uid}")
+            try:
+                stat_identy_str = payload.decode('ASCII')
+            except UnicodeDecodeError:
+                logger.error(f"PRP: Handshake-Response UnicodeDecodeError – UID: {self._uid}")
+                self._set_remote_identy(None)
+                return False
+
+            stat_identy = get_station_id_obj(stat_identy_str)
+            if stat_identy is None:
+                logger.error(f"PRP: Ungültiger Handshake-Response (Identy) – UID: {self._uid}")
+                self._set_remote_identy(None)
+                return False
+
+            self._set_remote_identy(stat_identy)
+            logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
+            logger.info(f"PRP:   Gegenstation: {stat_identy.software} Ver. {stat_identy.version}")
+            return True
+
+        # == Langes Format - mit States
+        identy_part, states_part = payload.split(b'\x00', 1)
+
+        try:
+            stat_identy_str = identy_part.decode('ASCII')
+        except UnicodeDecodeError:
+            logger.error(f"PRP: Handshake-Response UnicodeDecodeError – UID: {self._uid}")
+            self._set_remote_identy(None)
+            return False
+
+        stat_identy = get_station_id_obj(stat_identy_str)
+        if stat_identy is None:
+            logger.error(f"PRP: Ungültiger Handshake-Response (Identy) – UID: {self._uid}")
+            self._set_remote_identy(None)
+            return False
+
+        self._set_remote_identy(stat_identy)
+        # States verarbeiten
+        if states_part:
+            updates = self._decode_state_payload(states_part)
+            if updates:
+                self._add_pending_remote_states_cfg(PRP_OPT_20, updates)
+                # self._update_remote_state(updates)
+                logger.info(f"PRP: Initiale Remote-States aus Handshake-Response übernommen: {updates}")
+
+        logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
+        logger.info(f"PRP:   Gegenstation: {stat_identy.software} Ver. {stat_identy.version}")
+        return True
+
+    # =============================
+    # Neue Hilfsfunktionen für State-Transfer im Handshake
+
+    def _encode_public_states(self):
+        """
+        Serialisiert alle own_states AUSSER private States.
+        Verwendet exakt dasselbe Format wie _encode_state_updates().
+        """
+        payload = bytearray()
+        ordered_keys = list(self._own_states.keys())
+
+        for key in ordered_keys:
+            if self._is_private_state(key):
+                continue  # login_ok und stat_identy NICHT senden!
+
+            value = self._get_own_state(key)
+            value_bytes = self._encode_state_value(key, value)
+            if value_bytes is None:
+                continue
+
+            key_id = ordered_keys.index(key)
+            payload.append(key_id)
+            payload.append(len(value_bytes))
+            payload.extend(value_bytes)
+
+        return bytes(payload)
+
+    def _decode_state_payload(self, payload: bytes):
+        """
+        Dekodiert ein State-Payload (wie bei OPT 26 oder Handshake).
+        Gibt Dict mit Updates zurück (nur öffentliche Keys).
+        """
+        i = 0
+        updates = {}
+
+        while i + 2 < len(payload):
+            key_id = payload[i]
+            val_len = payload[i + 1]
+            i += 2
+            if i + val_len > len(payload):
+                break
+
+            key = self._get_state_key_by_id(key_id)
+            if not key:
+                i += val_len
+                continue
+
+            # Private States hier ebenfalls ignorieren (Sicherheit)
+            if self._is_private_state(key):
+                logger.warning(f"PRP: Handshake enthält privaten State '{key}' – ignoriert!")
+                i += val_len
+                continue
+
+            value_data = payload[i:i + val_len]
+
+            if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc']:
+                value = bool(value_data[0])
+            elif key == 'rem_mon_port':
+                value = value_data[0]
+            elif key == 'batch_wait':
+                value = int.from_bytes(value_data, 'little')
+            elif key == 'batch_mode':
+                modes = {0: 'auto', 1: 'on', 2: 'off'}
+                value = modes.get(value_data[0], 'auto')
+            elif key in ['rem_mon_incl', 'rem_mon_excl']:
+                if len(value_data) < 2 or value_data[-2:] != b'\x00\x00':
+                    value = []
+                else:
+                    parts = value_data[:-2].split(b'\x00')
+                    value = [p.decode('UTF-8', 'ignore') for p in parts if p]
+            else:
+                i += val_len
+                continue
+
+            updates[key] = value
+            i += val_len
+
+        return updates
 
     # =============================
     # ====== OPT-ID 21 - ABORT
@@ -1226,7 +1372,7 @@ class PRPremote:
         self._prp_tx(PRP_OPT_LOGIN_RESP, tx_flag=False, data=data, prio=True)
 
     def _rx_cmd_login_ack(self, payload: bytes):
-        if payload == PRP_ACK:
+        if self._is_ack(payload):
             logger.info(f"PRP: Login accepted !! UID: {self._uid}")
         else:
             self._set_remote_auth(False)  # oder direkt False setzen
@@ -1529,13 +1675,12 @@ class PRPremote:
             logger.warning(f"PRP: Ver Gegenstation: {remote_identy.version}")
             return
 
-        print(f"Init Handshake :{self._uid}")
         # == Remote Station Identy speichern (wenn Vorhanden)
         self._set_remote_identy(remote_identy)
         # == Eigenen Station Identy speichern (wenn Vorhanden)
         #self._set_own_identy(own_identy)
         # == Sende Handshake nur bei PoPT Sysop Stationen
-        self.send_cmd_20()
+        self.send_cmd_20(short_format=False)
         # == Sende Response an GUI
         self._gui_resp_handshake()
 
