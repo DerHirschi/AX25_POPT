@@ -8,8 +8,8 @@
                    ||>>_     //   \\_  ||>>_
                   (__)__)   (__)  (__)(__)__)
 ══════════════════════════════════════════════════════════════════════════
-                   PoPT Remote Protocol v1.2
-                (Stand: 10. Dezember 2025)
+                   PoPT Remote Protocol v1.3
+                (Stand: 13. Dezember 2025)
 ══════════════════════════════════════════════════════════════════════════
 1. Allgemeine Paketstruktur (gilt für ALLE Pakete)
 ══════════════════════════════════════════════════════════════════════════
@@ -22,7 +22,7 @@
 
   • FLAG-Sequenz      = immer 0x8D 0x81              - 2 Bytes
   • OPTBYTE           = siehe Abschnitt 2            - 1 Byte
-  • LEN               = Länge des PAYLOADs(Escaped)  - 2 Bytes
+  • LEN               = Länge des PAYLOADs (escaped) - 2 Bytes
   • PAYLOAD           = escaped, ggf. vorher LZHUF-komprimiert
   • CRC               = CRC16                        - 2 Bytes
 
@@ -53,7 +53,7 @@ Empfangsseite:
   0x8F 0x9B  → ersetze durch 0x8F
   0x8F 0x92  → ersetze durch 0x8D
 
-═════════════════════════════════════════════════════════════════════════════
+══════════════════════════════════════════════════════════════════════════
 4. Monitor-Frame (OPT-ID = 0 … 19)
 ══════════════════════════════════════════════════════════════════════════
 
@@ -64,29 +64,26 @@ Payload VOR Kompression und Escaping:
 |          HH:MM:SS              |   Radio empfangen/gesendet)   |
 +--------------------------------+-------------------------------+
 
-Beispiel (16:47:08):
-16 47 08 A0 84 ... (komplettes AX.25-Paket)
-
 → optional LZHUF-komprimiert (nur wenn kürzer)
 → dann escaped
-→ dann in das Grundpaket (Abschnitt 1) verpackt
+→ dann in das Grundpaket verpackt
 
 ══════════════════════════════════════════════════════════════════════════
 5. Steuerbefehle (OPT-ID ≥ 20)
 ══════════════════════════════════════════════════════════════════════════
 
-OPT-ID | Richtung TX (CMD)  | Richtung RX (ACK)   | Payload
--------+--------------------+---------------------+------------------------
- 20    | Handshake          | ACK Handshake       | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
- 21    | - Nicht verwendet- | - Nicht verwendet-  | - Nicht verwendet-
- 22    | Disconnect         | (kein ACK)          | leer
- 23    | Login Request      | Login Challenge     | leer / 16-Byte Nonce
- 24    | Login Response     | Login ACK           | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
- 25    | Logout             | ACK Logout          | leer
- 26    | State Update       | ACK State Update    | Binäres State-Update (siehe 5.1)
- ...
- 62    | CLI-Escape         | (kein ACK)          | Payload für CLI
- 63    | PRP-Batch Frames   | (kein ACK)          | RPR-Frames als Batch
+OPT-ID | Richtung TX (CMD)         | Richtung RX (RESP/ACK)      | Payload
+-------+---------------------------+----------------------------+------------------------
+ 20    | Handshake Request         | Handshake Response         | StationID-Str (ASCII)
+ 21    | Abort Request             | Abort Response             | leer
+ 22    | Disconnect                | (kein ACK)                 | leer
+ 23    | Login Request             | Login Challenge            | leer / 16-Byte Nonce
+ 24    | Login Response            | Login ACK                  | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
+ 25    | Logout                    | ACK Logout                 | leer
+ 26    | State Update              | ACK State Update           | Binäres State-Update (siehe 5.1) / b'OK' oder b'FAIL'
+ ...   | ...                       | ...                        | ...
+ 62    | CLI-Escape                | (kein ACK)                 | Payload für CLI
+ 63    | PRP-Batch Frames          | (kein ACK)                 | PRP-Frames als Batch
 
 ══════════════════════════════════════════════════════════════════════════
 5.1 State Update – OPT-ID 26 (binäres Format – extrem bandbreitensparend)
@@ -179,30 +176,26 @@ A7 3F     → CRC16 über Bytes 2 bis 30 (OPTBYTE bis letztes Payload-Byte)
 8. Zusammenfassungstabelle
 ══════════════════════════════════════════════════════════════════════════
 
-ID-Bereich | Bedeutung                  | Payload vor Escaping/Kompression
------------+----------------------------+---------------------------------
- 0 – 19    | Monitor-Frame Port X       | 3 Byte BCD-Zeit + rohes AX.25-Frame
- --        | -------------------------- | --------------------------------
- 20  TX    | Handshake                  | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
- 20        | ACK Handshake              | StationID-Str ({PoPT-2.123.21-0}, or BBS ID [...])
- 21  TX    | --- Nicht verwendet ------ | --- Nicht verwendet ------
- 21        | --- Nicht verwendet ------ | --- Nicht verwendet ------
- 22  TX    | Disconnect                 | leer
- 22        | -------------------------- | --------------------------------
- 23  TX    | Login Request              | leer
- 23        | ACK Login Request          | 6-Byte Nonce
- 24  TX    | Login Response             | SHA256(pw_hash+nonce)
- 24        | ACK Login Response         | b'OK or b'FAIL'
- 25  TX    | Logout                     | leer
- 25        | ACK Logout                 | leer
- 26  TX    | STATE UPDATE               | Binäres State-Update (siehe 5.2)
- 26        | ACK STATE UPDATE           | b'OK or b'FAIL'
- ...
- ...
- 62  TX    | CLI-Escape                 | Payload wird zum CLI durchgereicht
- 62        | -------------------------- | --------------------------------
- 63  TX    | PRP-BATCH                  | PRP-Frame Batch
- 63        | -------------------------- | --------------------------------
+ID-Bereich | Bedeutung                         | Payload vor Escaping/Kompression
+-----------+-----------------------------------+---------------------------------
+ 0 – 19    | Monitor-Frame Port X              | 3 Byte BCD-Zeit + rohes AX.25-Frame
+-----------+-----------------------------------+---------------------------------
+ 20 TX     | Handshake Request                 | StationID-Str (z.B. {PoPT-2.123.21-0})
+ 20 RX     | Handshake Response                | StationID-Str
+ 21 TX     | Abort Request                     | leer
+ 21 RX     | Abort Response                    | leer
+ 22 TX     | Disconnect                        | leer
+ 23 TX     | Login Request                     | leer
+ 23 RX     | Login Challenge                   | 16-Byte Nonce
+ 24 TX     | Login Response                    | SHA256(pw_hash+nonce)
+ 24 RX     | Login ACK                         | b'OK' oder b'FAIL'
+ 25 TX     | Logout                            | leer
+ 25 RX     | ACK Logout                        | leer
+ 26 TX     | State Update                      | Binäres State-Update
+ 26 RX     | ACK State Update                  | b'OK' oder b'FAIL'
+ ...       | ...                               | ...
+ 62 TX     | CLI-Escape                        | CLI-Payload
+ 63 TX     | PRP-Batch                         | Batch von PRP-Frames
 
 ══════════════════════════════════════════════════════════════════════════
 Ende der Spezifikation
