@@ -729,6 +729,8 @@ class AX25PortHandler(object):
                 self._gui.conn_btn_update()
                 if conn.noty_bell:
                     self.reset_noty_bell_PH()
+                # === PRP GUI Update  handler
+                self.handle_prp_response('', str(conn.uid))
             # Conn History
             self.update_conn_history(conn, disco=True)
 

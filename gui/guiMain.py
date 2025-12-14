@@ -2251,10 +2251,12 @@ class PoPT_GUI_Main:
             task_02 = self._update_qso_win()
             task_03 = self._SideFrame_tasker()
             task_04 = self._update_status_bar()
+            task_05 = self._prp_gui_tasker()
             ret = (task_01 or
                    task_02 or
                    task_03 or
-                   task_04
+                   task_04 or
+                   task_05
                    )
 
             if self._flip025:
@@ -2984,6 +2986,12 @@ class PoPT_GUI_Main:
         if hasattr(self.prp_remote_win, 'prp_connection_init'):
             self.prp_remote_win.prp_connection_init(uid)
 
+    # == Loop Tasker
+    def _prp_gui_tasker(self):
+        if hasattr(self.prp_remote_win, 'tasker'):
+            return self.prp_remote_win.tasker()
+        return False
+
     # === TX Cmds
     """
     def send_rem_mon_start(self, cfg: dict, uid: str):
@@ -3030,6 +3038,7 @@ class PoPT_GUI_Main:
     # === Getta
     def get_remote_monitor_pack_buffer(self):
         return dict(self._remote_mon_pack_buff)
+
     ###############################################################
     # Dual Port
     def _dualPort_monitor_task(self):

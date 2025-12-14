@@ -1624,6 +1624,10 @@ class PRPremote:
         # === Mehr als total_bytes → sollte nie passieren, aber sicherheitshalber ===
         return
 
+    @property
+    def is_handshake(self):
+        return self._is_handshake()
+
     # == CLI-ESC ABORT Meldungen für gui.QSO
     def _send_cli_esc_abort_sender_status(self):
         """
