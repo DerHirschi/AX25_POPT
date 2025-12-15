@@ -83,9 +83,9 @@ class PRPremote:
 
         #################################
         # Meta Daten für QSO-Status Msg
-        self._comp_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
-        self._next_pack_meta: None | tuple   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
-        self._last_pack_meta: None | tuple   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
+        self._comp_pack_meta   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
+        self._next_pack_meta   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
+        self._last_pack_meta   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
 
         #################################
         # Own States / States der eigenen Station
@@ -514,7 +514,7 @@ class PRPremote:
         return cli_payload
 
     # ====== PRP Batch Mode I/O
-    def _prp_batch_tx(self, prp_frames: list[bytes]):
+    def _prp_batch_tx(self, prp_frames):
         """ Fasst mehrere PRP-Frames zu einem komprimierten Frame zusammen """
         if not prp_frames:
             return

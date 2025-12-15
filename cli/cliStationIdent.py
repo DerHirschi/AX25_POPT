@@ -2,7 +2,7 @@ from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STAT
     BBS_REVERS_FWD_CMD, STATION_ID_MCAST
 from cfg.logger_config import logger
 
-def get_station_id_obj(inp_line: str | None):
+def get_station_id_obj(inp_line):
 
     if not inp_line:
         return None

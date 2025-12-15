@@ -111,7 +111,7 @@ class StatusIcon:
     def alarm_reset_behavior(self):
         return self._current_state_cfg().get('alarm_reset_behavior', 'restore')
 
-    def switch_icon_state(self, new_state: bool | None = None):
+    def switch_icon_state(self, new_state = None):
         if new_state is None:
             self._icon_state = not self._icon_state
         else:
@@ -141,7 +141,7 @@ class StatusIcon:
 
 
 class StatusFrame:
-    def __init__(self, root_frame: ttk.Frame | tk.Frame, status_frame_cfg: dict, label: str | None = None):
+    def __init__(self, root_frame: ttk.Frame or tk.Frame, status_frame_cfg: dict, label: str or None = None):
         self._root_frame = root_frame
         self._frame_cfg  = status_frame_cfg
 

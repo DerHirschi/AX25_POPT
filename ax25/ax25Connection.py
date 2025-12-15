@@ -170,10 +170,10 @@ class AX25Conn:
         self._tx_buf_prp_lock                = False        # Thread locking
         self._tx_buf_prp_prio_lock           = False        # Thread locking
         self._tx_buf_prp_rest_lock           = False        # Thread locking
-        self._tx_buf_prp_Q: list[tuple[int, bytes]]      = []           # Buffer Prio Data (Remote Protocol)
-        self._tx_buf_prp_prio_Q: list[tuple[int, bytes]] = []           # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_Q: list                         = []           # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_prio_Q: list                    = []           # Buffer Prio Data (Remote Protocol)
         self._tx_buf_prp_Rest                            = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
-        self._prp_tx_rest_opt_id: int | None             = None # Im PRP-Rest-Frame Buffer befindliche OPT-ID
+        self._prp_tx_rest_opt_id                         = None # Im PRP-Rest-Frame Buffer befindliche OPT-ID
         """ IO Buffer For GUI / CLI """
         self._tx_buf_lock      = False           # Threading TX-Buffer lock
         self.tx_buf_rawData    = bytearray()     # Buffer for TX RAW Data that is not packed yet into a Frame
@@ -457,7 +457,7 @@ class AX25Conn:
             self._send_gui_QSO_tx(data)
         return True
 
-    def send_remote_data(self, data: tuple[int, bytes], prio=False, is_abort_frame=False):
+    def send_remote_data(self, data: tuple, prio=False, is_abort_frame=False):
         """ PRP-Frames vom PRP Encoder """
         if self._await_disco:
             return False
@@ -604,7 +604,7 @@ class AX25Conn:
 
     #############################
     # I/O Buffer Helper
-    def _clear_tx_buff_prp(self, opt_id: int | None):
+    def _clear_tx_buff_prp(self, opt_id):
         """ PRP Remote Mon """
         self._wait_tx_buf_prp_lock('_clear_tx_buff_prp')
         if opt_id is None:
@@ -613,7 +613,7 @@ class AX25Conn:
             self._tx_buf_prp_Q = [(id_, data) for id_, data in self._tx_buf_prp_Q if id_ != opt_id]
         self._tx_buf_prp_lock = False
 
-    def _clear_tx_buff_prp_rest(self, opt_id: int | None):
+    def _clear_tx_buff_prp_rest(self, opt_id):
         """ PRP ESC CLI """
         if self._prp_tx_rest_opt_id == opt_id or opt_id is None:
             self._wait_tx_buf_prp_rest_lock('_clear_tx_buff_prp_rest')
@@ -813,7 +813,7 @@ class AX25Conn:
         self._prp_remote.remote_monitor_update(ax25frame_conf)
 
     # == Remote Mon
-    def prp_del_rem_mon_buff(self, opt_id: int | None):
+    def prp_del_rem_mon_buff(self, opt_id):
         """ PRP Remote Mon & Disco """
         if opt_id is None:
             # == Disco
@@ -829,7 +829,7 @@ class AX25Conn:
 
 
     # == PRP CLI-ESC
-    def prp_del_frame_buff_cli_esc(self, opt_id: int | None):
+    def prp_del_frame_buff_cli_esc(self, opt_id):
         self._clear_tx_buff_prp(opt_id)
         self._clear_tx_buff_prp_rest(opt_id)
 
