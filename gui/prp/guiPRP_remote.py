@@ -49,6 +49,7 @@ class PRP_Tab(ttk.Frame):
 
         # == PRP Options
         self._prp_batch_mode_var    = tk.StringVar(self,  value='auto')
+        self._prp_batch_timer_var   = tk.StringVar(self,  value='40')
         self._prp_cli_esc_var       = tk.BooleanVar(self, value=True)
 
         ###############################################
@@ -197,16 +198,26 @@ class PRP_Tab(ttk.Frame):
         btn_f2.pack(pady=5)
         # ========
         # opt_f1
-        batch_mode_f = ttk.Frame(opt_f1)
-        cli_esc_f    = ttk.Frame(opt_f1)
-        batch_mode_f.pack(side='top', padx=10, anchor='w', fill='x')
-        cli_esc_f.pack(   side='top', padx=10, anchor='w', fill='x')
+        batch_mode_f  = ttk.Frame(opt_f1)
+        batch_timer_f = ttk.Frame(opt_f1)
+        cli_esc_f     = ttk.Frame(opt_f1)
+        batch_mode_f.pack( side='top', padx=10, pady=3, anchor='w', fill='x')
+        batch_timer_f.pack(side='top', padx=10, pady=3, anchor='w', fill='x')
+        cli_esc_f.pack(    side='top', padx=10, pady=3, anchor='w', fill='x')
 
         # Batch Mode
         ttk.Label(batch_mode_f, text='Batch Mode:').pack(side='left')
         ttk.Combobox(batch_mode_f,
                      textvariable=self._prp_batch_mode_var,
                      values=['auto', 'on', 'off']
+                     ).pack(side='left', padx=5)
+        # Batch Timer
+        ttk.Label(batch_timer_f, text='Batch Timer:').pack(side='left')
+        ttk.Spinbox(batch_timer_f,
+                     textvariable=self._prp_batch_timer_var,
+                     from_= 30,
+                     to=120,
+                     increment=10
                      ).pack(side='left', padx=5)
         # CLI ESC
         ttk.Checkbutton(cli_esc_f,
@@ -618,6 +629,12 @@ class PRP_Tab(ttk.Frame):
             batch_mode_var = self._prp_batch_mode_var.get()
             if batch_mode_var not in ['auto', 'on', 'off']:
                 batch_mode_var = 'auto'
+
+            # == Batch timer
+            try:
+                batch_timer_var = int(self._prp_batch_timer_var.get())
+            except ValueError:
+                batch_timer_var = 40
             # == CLI-ESC hinzufügen, wenn kein Fehler und geändert
             esc_cli_var        = self._prp_cli_esc_var.get()
             # == State CFG bauen
@@ -632,6 +649,7 @@ class PRP_Tab(ttk.Frame):
                 rem_mon_incl=incl_filter,
                 rem_mon_excl=excl_filter,
                 batch_mode  =batch_mode_var,
+                batch_wait  =batch_timer_var,
                 cli_esc     =esc_cli_var,
             ))
             # == update state_cfg_to_send mit state_cfg(parameter)
@@ -980,9 +998,9 @@ class PRP_Tab(ttk.Frame):
                 incl_var = ' '.join(remote_states.get('rem_mon_incl', []))
                 excl_var = ' '.join(remote_states.get('rem_mon_excl', []))
                 # == PRP Options
-                prp_cli_esc_var = remote_states.get('cli_esc', False)
-                prp_batch_m_var = remote_states.get('batch_mode', 'auto')
-                # prp_batch_w_var = remote_states.get('batch_wait', 30)
+                prp_cli_esc_var     = remote_states.get('cli_esc', False)
+                prp_batch_m_var     = remote_states.get('batch_mode', 'auto')
+                prp_batch_timer_var = remote_states.get('batch_wait', 40)
 
                 # == GUI Vars setzen
                 self._port_filter_var.set(port_var)
@@ -991,6 +1009,7 @@ class PRP_Tab(ttk.Frame):
 
                 self._prp_cli_esc_var.set(prp_cli_esc_var)
                 self._prp_batch_mode_var.set(prp_batch_m_var)
+                self._prp_batch_timer_var.set(prp_batch_timer_var)
 
                 return
 

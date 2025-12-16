@@ -104,7 +104,7 @@ class PRPremote:
 
             # == Batch Mode / vorrest nur für Mon Stream
             batch_mode      = 'auto',   # 'auto', 'on', 'off'
-            batch_wait      = 30,       # Sekunden Pakete sammeln
+            batch_wait      = 40,       # Sekunden Pakete sammeln
 
             # == Remote CTL/States
             cli_esc         = False,    # CLI-ESC Mode (sendet CLI Stream komprimiert)
