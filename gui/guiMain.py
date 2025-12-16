@@ -2979,9 +2979,8 @@ class PoPT_GUI_Main:
         self._add_tasker_q("_init_popt_remote_task", uid, prio=False)
 
     def _init_popt_remote_task(self, uid: str):
-        if uid in self._remote_mon_pack_buff:
-            return
-        self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
+        if uid not in self._remote_mon_pack_buff:
+            self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
         # Update Remote Mon GUI if open
         if hasattr(self.prp_remote_win, 'prp_connection_init'):
             self.prp_remote_win.prp_connection_init(uid)

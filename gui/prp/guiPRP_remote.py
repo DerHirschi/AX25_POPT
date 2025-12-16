@@ -5,7 +5,7 @@ from tkinter import ttk
 
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
-from gui.classes.guiCL_status_icons import StatusFrame
+from gui.classes.guiCL_status_icons import StatusFrame, STATE_ICON_DEF_COLOR_DISABLED
 from prp.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -303,20 +303,35 @@ class PRP_Tab(ttk.Frame):
                 'handshake': {
                     'icon_size': 12,
                     'state_cfg': {
-                        'default_state': {'symbol': '⮔', 'color': '#18e002',
+                        'default_state': {'symbol': '⮔',
+                                          'color': '#18e002',
+                                          'color_disabled': STATE_ICON_DEF_COLOR_DISABLED,
+
                                           'blink_rate': 'alarm_0',
                                           'init_state': True,
                                           'invert_blink': False,
 
                                           'alarm_reset_behavior': 'restore'
                                           },
-                        'init':          {'symbol': '⮔', 'color': '#03cefc',
+                        'init':          {'symbol': '⮔',
+                                          'color': '#f0d402',
+                                          'color_disabled': STATE_ICON_DEF_COLOR_DISABLED,
+
                                           'blink_rate': 'alarm_05',
                                           'init_state': True,
                                           'invert_blink': False,
 
                                           'alarm_reset_behavior': 'restore'
                                           },
+                        'handshake_error': {'symbol': '⮔',
+                                 'color': '#fa2020',
+                                 'color_disabled': '#f0d402',
+                                 'blink_rate': 'alarm_025',
+                                 'init_state': True,
+                                 'invert_blink': False,
+
+                                 'alarm_reset_behavior': 'restore'
+                                 },
                         'disco': {'symbol': '⮔', 'color': '#fa2020',
                                  'blink_rate': 'alarm_025',
                                  'init_state': True,
@@ -339,7 +354,7 @@ class PRP_Tab(ttk.Frame):
                     }
                 },
                 'monitor': {
-                    'icon_size': 15,
+                    'icon_size': 17,
                     'state_cfg': {
                         'default_state': {'symbol': '⎚', 'color': '#18e002',
                                           'blink_rate': 'alarm_05',
@@ -798,6 +813,7 @@ class PRP_Tab(ttk.Frame):
         self._update_mon_tab(rem_mon_pack)
 
     def rx_response(self, response: str):
+        print('GUI RX RESP')
         self._change_btn_states(response)
         self._update_gui_vars_fm_rem_state()
 
@@ -807,7 +823,7 @@ class PRP_Tab(ttk.Frame):
         prp = self._get_prp()
         if opt == 'cmd_send' or prp is None:
             """ Disables all Btn's till response """
-            """ or if not conneted """
+            """ or if not connected """
             self._start_btn.configure( state='disabled')
             self._stop_btn.configure(  state='disabled')
             self._update_btn.configure(state='disabled')
@@ -815,7 +831,10 @@ class PRP_Tab(ttk.Frame):
             self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='disabled')
             # == Status Frame Pending
-            self._status_frame.set_icon_alarm_state('pending', True)
+            if prp is not None:
+                self._status_frame.set_icon_alarm_state('pending', True)
+            else:
+                self._status_frame.set_icon_alarm_state('pending', False)
             return
 
 
@@ -900,44 +919,45 @@ class PRP_Tab(ttk.Frame):
     # == GUI-Var / Remote States I/O
     def _update_gui_vars_fm_rem_state(self):
         # == Remote States von PRP holen
-        remote_states: dict | None = self._get_prp_remote_stats()
-        if remote_states is None:
-            # Disco
-            self._change_btn_states('rsp_stop')
-            self._status_frame.set_icon_alarm_state('pending', False)
-            self._status_frame.set_icon_alarm_state('handshake', False)
-            self._status_frame.set_icon_state_cfg('handshake', 'disco')
-            self._status_frame.set_icon_state('handshake', True)
-            self._status_frame.set_icon_state('monitor', False)
-            self._status_frame.set_icon_state('cli-esc', False)
-            self._status_frame.set_icon_state('login', False)
-            return
-        # == Remote Mon Filter
-        port_var = str(remote_states.get('rem_mon_port', 0))
-        incl_var = ' '.join(remote_states.get('rem_mon_incl', []))
-        excl_var = ' '.join(remote_states.get('rem_mon_excl', []))
-        # == PRP Options
-        prp_cli_esc_var  = remote_states.get('cli_esc', False)
-        prp_batch_m_var  = remote_states.get('batch_mode', 'auto')
-        #prp_batch_w_var = remote_states.get('batch_wait', 30)
-
-        # == GUI Vars setzen
-        self._port_filter_var.set(port_var)
-        self._incl_filter_var.set(incl_var)
-        self._excl_filter_var.set(excl_var)
-
-        self._prp_cli_esc_var.set(prp_cli_esc_var)
-        self._prp_batch_mode_var.set(prp_batch_m_var)
+        remote_states: dict or None = self._get_prp_remote_stats()
+        prp = self._get_prp()
 
         self._status_frame.set_icon_alarm_state('pending', False)
         # == Status Frame
-        prp = self._get_prp()
-        if hasattr(prp, 'is_handshake'):
+        if hasattr(prp, 'is_handshake') and hasattr(prp, 'is_handshake_pending'):
+            handshake_stat    = prp.is_handshake
+            handshake_pending = prp.is_handshake_pending
 
-            handshake_stat = prp.is_handshake
+            # Handshake Error
+            if handshake_pending is None:
+                self._status_frame.set_icon_state_cfg('handshake', 'handshake_error')
+                self._status_frame.set_icon_alarm_state('handshake', True)
+                # === CLI-ESC Icon ===
+                self._status_frame.set_icon_state('cli-esc', False)
+
+                # === Monitor Icon ===
+                self._status_frame.set_icon_state('monitor', False)
+
+                # === Login Icon (sicherheitshalber) ===
+                self._status_frame.set_icon_state('login', False)
+                return
+
+            if not handshake_stat or handshake_pending: # Pending Handshake
+                self._status_frame.set_icon_state_cfg('handshake', 'init')
+                self._status_frame.set_icon_alarm_state('handshake', True)
+                # === CLI-ESC Icon ===
+                self._status_frame.set_icon_state('cli-esc', False)
+
+                # === Monitor Icon ===
+                self._status_frame.set_icon_state('monitor', False)
+
+                # === Login Icon (sicherheitshalber) ===
+                self._status_frame.set_icon_state('login', False)
+                return
+
             if handshake_stat:  # Handshake OK
-                self._status_frame.set_icon_alarm_state('handshake', False)
                 self._status_frame.set_icon_state_cfg('handshake', 'default_state')
+                self._status_frame.set_icon_alarm_state('handshake', False)
 
                 # === CLI-ESC Icon ===
                 cli_esc_active = remote_states.get('cli_esc', False)
@@ -954,17 +974,36 @@ class PRP_Tab(ttk.Frame):
                 self._status_frame.set_icon_state('login', login_ok)
                 # self._status_frame.set_icon_alarm_state('login', login_ok)
 
-            else:
-                self._status_frame.set_icon_state_cfg('handshake', 'init')
-                self._status_frame.set_icon_alarm_state('handshake', True)
-                # === CLI-ESC Icon ===
-                self._status_frame.set_icon_state('cli-esc', False)
+                ############### VARS Update
+                # == Remote Mon Filter
+                port_var = str(remote_states.get('rem_mon_port', 0))
+                incl_var = ' '.join(remote_states.get('rem_mon_incl', []))
+                excl_var = ' '.join(remote_states.get('rem_mon_excl', []))
+                # == PRP Options
+                prp_cli_esc_var = remote_states.get('cli_esc', False)
+                prp_batch_m_var = remote_states.get('batch_mode', 'auto')
+                # prp_batch_w_var = remote_states.get('batch_wait', 30)
 
-                # === Monitor Icon ===
-                self._status_frame.set_icon_state('monitor', False)
+                # == GUI Vars setzen
+                self._port_filter_var.set(port_var)
+                self._incl_filter_var.set(incl_var)
+                self._excl_filter_var.set(excl_var)
 
-                # === Login Icon (sicherheitshalber) ===
-                self._status_frame.set_icon_state('login', False)
+                self._prp_cli_esc_var.set(prp_cli_esc_var)
+                self._prp_batch_mode_var.set(prp_batch_m_var)
+
+                return
+
+        # Disco
+        self._change_btn_states('rsp_stop')
+        self._status_frame.set_icon_alarm_state('pending', False)
+        self._status_frame.set_icon_alarm_state('handshake', False)
+        self._status_frame.set_icon_state_cfg('handshake', 'disco')
+        self._status_frame.set_icon_state('handshake', True)
+        self._status_frame.set_icon_state('monitor', False)
+        self._status_frame.set_icon_state('cli-esc', False)
+        self._status_frame.set_icon_state('login', False)
+        return
 
 
     ########################################
@@ -1024,6 +1063,7 @@ class PRP_remoteGUI(tk.Toplevel):
     ####################################################
     def prp_connection_init(self, remote_uid: str):
         if remote_uid in self._rem_mon_data:
+            self.gui_prp_response_handler('', remote_uid)
             return
         self._rem_mon_data[remote_uid] = deque([] * 10000, maxlen=10000)
         label_txt = remote_uid

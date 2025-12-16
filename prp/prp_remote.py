@@ -70,8 +70,10 @@ class PRPremote:
         self._connection   = connection
         if self._connection.is_incoming_conn():
             self._uid          = str(reverse_uid(connection.uid))
+            self._remote_uid   = str(connection.uid)
         else:
             self._uid          = str(connection.uid)
+            self._remote_uid   = str(reverse_uid(connection.uid))
 
         #################################
         # Decoding Resterampe
@@ -140,12 +142,14 @@ class PRPremote:
 
         #################################
         # == Handshake
-        self._is_handshake       = lambda    : False if self._get_remote_state('stat_identy') is None else True
         self._get_remote_identy  = lambda    : self._get_remote_state('stat_identy')
         self._set_remote_identy  = lambda val: self._set_remote_state('stat_identy', val)
         self._set_own_identy     = lambda val: self._set_own_state('stat_identy', val)
         # Eigenen Stat Identy setzen
         self._set_own_identy(self._get_own_stat_identy())
+        # ==
+        self._pending_handshake = None
+        self._is_handshake      = lambda: False if self._get_remote_identy() is None or self._pending_handshake is None or self._pending_handshake else True
 
         #################################
         # Batch Mode
@@ -158,8 +162,6 @@ class PRPremote:
         self._is_batch_mode_auto = lambda : True if self._own_states.get('batch_mode', 'auto') == 'auto' else False
         self._set_batch_mode     = lambda mode: self._own_states.update({'batch_mode': mode})
         # == Remote / State I/O
-        # self._remote_is_batch_mode      = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'on' else False
-        # self._remote_is_batch_mode_auto = lambda: True if self._remote_states.get('batch_mode', 'auto') == 'auto' else False
         self._remote_set_batch_mode     = lambda mode: self._remote_states.update({'batch_mode': mode})
 
         #################################
@@ -829,186 +831,7 @@ class PRPremote:
 
     #####################################
     # CTL CMD's - OPT 20 - 63
-    #
-    # =============================
-    # OPT-ID 26 - States Update via Remote / By Grok AI
-    def send_remote_state_update(self, state_updates: dict):
-        # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
-        if not self._is_handshake():
-            return False
-
-        # update abgleichen mit _remote_states was sich geändert hat
-        update_to_send = {}
-        for k, v in state_updates.items():
-            if k not in self._remote_states:
-                continue
-            if self._get_remote_state(k) != v:
-                update_to_send[k] = v
-        # Keine Updates?
-        if not update_to_send:
-            return False
-
-        # Logger
-        logger.debug(f"PRP: Sende State Update: {self._uid}")
-        for k, v in update_to_send.items():
-            logger.debug(f"PRP: {k}:{v}")
-
-        # Pending für ACK
-        self._add_pending_remote_states_cfg(PRP_OPT_STATE_UPDATE, update_to_send)
-
-        bin_payload = self._encode_state_updates(update_to_send)
-        if not bin_payload:
-            return False
-
-        return self._prp_tx(
-            opt_id=PRP_OPT_STATE_UPDATE,
-            tx_flag=True,
-            data=bin_payload,
-            prio=True,
-            compress=True
-        )
-
-    def _rx_remote_state_update(self, payload: bytes):
-        i = 0
-        updates = {}
-
-        while i + 2 < len(payload):
-            key_id = payload[i]
-            val_len = payload[i + 1]
-            i += 2
-            if i + val_len > len(payload):
-                break
-
-            key = self._get_state_key_by_id(key_id)
-            if not key:
-                i += val_len
-                continue
-
-            # Sensible Keys blockieren
-            if key == 'login_ok':
-                logger.warning("PRP: Remote versucht login_ok zu ändern – ignoriert!")
-                i += val_len
-                continue
-
-            value_data = payload[i:i + val_len]
-            # Dekodierung mit Key-Name
-            # == bool
-            if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
-                value = bool(value_data[0])
-            # == int 1 Byte / 256
-            elif key == 'rem_mon_port':
-                value = value_data[0]
-            # == int 2 Bytes - little
-            elif key == 'batch_wait':
-                value = int.from_bytes(value_data, 'little')
-            # == dict batch mode
-            elif key == 'batch_mode':
-                modes = {0: 'auto', 1: 'on', 2: 'off'}
-                value = modes.get(value_data[0], 'auto')
-            # == list
-            elif key in ['rem_mon_incl', 'rem_mon_excl']:
-                if len(value_data) < 2 or value_data[-2:] != b'\x00\x00':
-                    value = []  # Korrupte Daten
-                else:
-                    parts = value_data[:-2].split(b'\x00')
-                    value = [p.decode('UTF-8', 'ignore') for p in parts if p]
-            else:
-                i += val_len
-                continue
-
-            updates[key] = value
-            i += val_len
-
-        if updates:
-            # Checke updates auf bestimmte Änderungen und führe Action aus
-            self._response_state_update(state_update=updates)
-            # Eigene States updaten
-            self._update_own_state(updates)
-            logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
-            # Update GUI
-            self._local_response_handler(PRP_OPT_STATE_UPDATE)
-            # Send Response
-            self._tx_resp_remote_state_update(success=True)
-        else:
-            self._tx_resp_remote_state_update(success=False)
-
-    # == Encoding
-    def _encode_state_updates(self, state_updates: dict):
-        payload      = bytearray()
-        ordered_keys = list(self._own_states.keys())  # Fixe Reihenfolge
-
-        for key, value in state_updates.items():
-            if key not in ordered_keys:
-                continue  # Unbekannter oder nicht erlaubter Key
-
-            # Sensible Keys explizit verbieten (z.B. login_ok darf nicht remote gesetzt werden!)
-            if self._is_private_state(key):
-                logger.warning(f"PRP: Versuch, sensiblen State '{key}' remote zu ändern – blockiert!")
-                continue
-
-            key_id = ordered_keys.index(key)
-            value_bytes = self._encode_state_value(key, value)  # Key-Name statt ID übergeben
-            if value_bytes is None:
-                continue
-
-            payload.append(key_id)                    # 1 Byte ID
-            payload.append(len(value_bytes))          # 1 Byte Länge
-            payload.extend(value_bytes)
-
-        return bytes(payload)
-
-    @staticmethod
-    def _encode_state_value(key: str, value):
-        # == bool
-        if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
-            return bytes([0x01 if value else 0x00])
-
-        # == int 1 Byte / 256
-        elif key == 'rem_mon_port':
-            return bytes([value & 0xFF])
-
-        # == int 2 Bytes - little
-        elif key == 'batch_wait':
-            return value.to_bytes(2, 'little')
-
-        # == dict batch mode
-        elif key == 'batch_mode':
-            modes = {'auto': 0, 'on': 1, 'off': 2}
-            return bytes([modes.get(value, 0)])
-
-        # == list
-        elif key in ['rem_mon_incl', 'rem_mon_excl']:
-            if not value:
-                return b'\x00\x00'  # Leere Liste
-            data = '\x00'.join(value).encode('UTF-8', 'ignore')
-            return data + b'\x00\x00'
-
-        return None  # Unbekannter Key
-
-    # == Response
-    def _tx_resp_remote_state_update(self, success: bool):
-        """ TX Respond State Update (ACK) """
-        data = PRP_ACK if success else PRP_NACK
-        self._prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
-
-    def _rx_resp_remote_state_update(self, payload: bytes):
-        """ RX Respond State Update (ACK) """
-        if self._is_ack(payload):
-            logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
-            logger.debug(f"PRP: Bestätige State Update: {self._uid}")
-            for k, v in self._remote_states.items():
-                logger.debug(f"PRP: {k}:{v}")
-        else:
-            logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._uid}")
-
-    # == Helper
-    def _get_state_key_by_id(self, key_id: int):
-        """ Gibt ID von self._own_states.keys() zurück."""
-        keys = list(self._own_states.keys())
-        if 0 <= key_id < len(keys):
-            return keys[key_id]
-        return None
-
+    # ...................................
     # =============================
     # ====== OPT-ID 20 - Handshake (ERWEITERT UM STATES)
     def send_cmd_20(self, short_format=False):
@@ -1025,6 +848,11 @@ class PRPremote:
         identy_str   = str(own_stat_identy.id_str)
         identy_bytes = identy_str.encode('ASCII', 'ignore')
 
+        # Setze self._pending_handshake
+        self._pending_handshake = True
+        # GUI update
+        self._gui_resp_handshake()
+
         # Kurzes Format.. Nur Identy Str
         if short_format:
             self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=identy_bytes, prio=True)
@@ -1037,32 +865,6 @@ class PRPremote:
         data = identy_bytes + b'\x00' + states_bytes
 
         self._prp_tx(opt_id=PRP_OPT_20, tx_flag=True, data=data, prio=True)
-
-    def _tx_resp_cmd_20(self, success: bool, short_format=False):
-        """ TX Respond CMD 20 - Handshake Response + öffentliche own_states """
-        if not success:
-            self._set_remote_identy(None)
-            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
-            return
-
-        own_stat_identy = self._get_own_stat_identy()
-        if not hasattr(own_stat_identy, 'id_str'):
-            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
-            return
-
-        identy_str   = str(own_stat_identy.id_str)
-        identy_bytes = identy_str.encode('ASCII', 'ignore')
-        # Kurzes Format
-        if short_format:
-            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=identy_bytes, prio=True)
-            return
-
-        # Langes Format - Mit State update
-        states_bytes = self._encode_public_states()
-
-        data = identy_bytes + b'\x00' + states_bytes
-
-        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=data, prio=True)
 
     def _rx_cmd_20(self, payload: bytes):
         """ RX CMD 20 - Handshake + States """
@@ -1080,6 +882,7 @@ class PRPremote:
                 logger.warning(f"PRP: Ungültiger Handshake (Identy) – UID: {self._uid}")
                 self._tx_resp_cmd_20(False)
                 return
+
 
             logger.info(f"PRP: Handshake akzeptiert – Version: {stat_identy.software} {stat_identy.version}")
             self._set_remote_identy(stat_identy)
@@ -1113,15 +916,57 @@ class PRPremote:
                 self._update_remote_state(updates)
                 logger.info(f"PRP: Initiale Remote-States aus Handshake übernommen: {updates}")
 
+
         logger.info(f"PRP: Handshake akzeptiert – Version: {stat_identy.software} {stat_identy.version}")
         self._gui_resp_handshake()
         self._tx_resp_cmd_20(True)
 
+    def _tx_resp_cmd_20(self, success: bool, short_format=False):
+        """ TX Respond CMD 20 - Handshake Response + öffentliche own_states """
+        if not success:
+            self._set_remote_identy(None)
+            self._pending_handshake = None
+            # GUI update
+            self._gui_resp_handshake()
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
+            return
+
+        own_stat_identy = self._get_own_stat_identy()
+        if not hasattr(own_stat_identy, 'id_str'):
+            self._set_remote_identy(None)
+            self._pending_handshake = None
+            # GUI update
+            self._gui_resp_handshake()
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
+            return
+
+        # Hier ist der Handshake komplett, da stat-identy vor c-text gesendet wurde
+        self._pending_handshake = False
+        # GUI update
+        self._gui_resp_handshake()
+
+        identy_str   = str(own_stat_identy.id_str)
+        identy_bytes = identy_str.encode('ASCII', 'ignore')
+        # Kurzes Format
+        if short_format:
+            self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=identy_bytes, prio=True)
+            return
+
+        # Langes Format - Mit State update
+        states_bytes = self._encode_public_states()
+
+        data = identy_bytes + b'\x00' + states_bytes
+
+        self._prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=data, prio=True)
+
     def _rx_resp_cmd_20(self, payload: bytes):
         """ RX Respond CMD 20 - Handshake Response + States """
         if payload == PRP_NACK:
+            self._pending_handshake = None
             logger.warning(f"PRP: Handshake abgelehnt von Gegenstation – UID: {self._uid}")
             self._set_remote_identy(None)
+            # GUI update
+            self._gui_resp_handshake()
             return False
 
         if b'\x00' not in payload:
@@ -1129,16 +974,23 @@ class PRPremote:
             try:
                 stat_identy_str = payload.decode('ASCII')
             except UnicodeDecodeError:
+                self._pending_handshake = None
                 logger.error(f"PRP: Handshake-Response UnicodeDecodeError – UID: {self._uid}")
                 self._set_remote_identy(None)
+                # GUI update
+                self._gui_resp_handshake()
                 return False
 
             stat_identy = get_station_id_obj(stat_identy_str)
             if stat_identy is None:
+                self._pending_handshake = None
                 logger.error(f"PRP: Ungültiger Handshake-Response (Identy) – UID: {self._uid}")
                 self._set_remote_identy(None)
+                # GUI update
+                self._gui_resp_handshake()
                 return False
 
+            self._pending_handshake = False
             self._set_remote_identy(stat_identy)
             self._gui_resp_handshake()
             logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
@@ -1151,12 +1003,14 @@ class PRPremote:
         try:
             stat_identy_str = identy_part.decode('ASCII')
         except UnicodeDecodeError:
+            self._pending_handshake = None
             logger.error(f"PRP: Handshake-Response UnicodeDecodeError – UID: {self._uid}")
             self._set_remote_identy(None)
             return False
 
         stat_identy = get_station_id_obj(stat_identy_str)
         if stat_identy is None:
+            self._pending_handshake = None
             logger.error(f"PRP: Ungültiger Handshake-Response (Identy) – UID: {self._uid}")
             self._set_remote_identy(None)
             return False
@@ -1169,14 +1023,13 @@ class PRPremote:
                 self._update_remote_state(updates)
                 logger.info(f"PRP: Initiale Remote-States aus Handshake-Response übernommen: {updates}")
 
+        self._pending_handshake = False
         self._gui_resp_handshake()
         logger.info(f"PRP: Handshake erfolgreich – UID: {self._uid}")
         logger.info(f"PRP:   Gegenstation: {stat_identy.software} Ver. {stat_identy.version}")
         return True
 
-    # =============================
-    # Neue Hilfsfunktionen für State-Transfer im Handshake
-
+    # == Hilfsfunktionen für State-Transfer im Handshake
     def _encode_public_states(self):
         """
         Serialisiert alle own_states AUSSER private States.
@@ -1292,7 +1145,7 @@ class PRPremote:
             f"PRP: Abort-Frame empfangen (OPT-ID 21). Breche Empfang ab und lösche Rest-Buffer. UID: {self._uid}")
 
     # =============================
-    # ====== Disconnect CMD
+    # ====== OPT-ID 22 - Disconnect CMD
     def cmd_disco(self):
         """ TX Start Disco CMD """
         if not self._is_handshake():
@@ -1310,7 +1163,7 @@ class PRPremote:
         self._connection.conn_disco()
 
     # =============================
-    # ====== Login Stuff
+    # ====== OPT-ID 23/24 -Login Stuff
     def cmd_login_request(self, password: str):
         """Client fordert Login-Challenge an"""
         if not self._is_handshake():
@@ -1377,7 +1230,7 @@ class PRPremote:
             logger.warning(f"PRP: Login denied !! UID: {self._uid}")
 
     # =============================
-    # ====== Logout Stuff
+    # ====== OPT-ID 25 - Logout Stuff
     def cmd_logout(self):
         """ Client sendet Logout """
         if not self._is_handshake():
@@ -1395,6 +1248,187 @@ class PRPremote:
         """ Client empfängt Logout bestätigung """
         print("LOGOUT erfolgreich!")
         self._set_auth(False)
+
+    # =============================
+    # == OPT-ID 26 - States Update via Remote / By Grok AI
+    def send_remote_state_update(self, state_updates: dict):
+        # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
+        if not self._is_handshake():
+            return False
+
+        # update abgleichen mit _remote_states was sich geändert hat
+        update_to_send = {}
+        for k, v in state_updates.items():
+            if k not in self._remote_states:
+                continue
+            if self._get_remote_state(k) != v:
+                update_to_send[k] = v
+        # Keine Updates?
+        if not update_to_send:
+            return False
+
+        # Logger
+        logger.debug(f"PRP: Sende State Update: {self._uid}")
+        for k, v in update_to_send.items():
+            logger.debug(f"PRP: {k}:{v}")
+
+        # Pending für ACK
+        self._add_pending_remote_states_cfg(PRP_OPT_STATE_UPDATE, update_to_send)
+
+        bin_payload = self._encode_state_updates(update_to_send)
+        if not bin_payload:
+            return False
+
+        return self._prp_tx(
+            opt_id=PRP_OPT_STATE_UPDATE,
+            tx_flag=True,
+            data=bin_payload,
+            prio=True,
+            compress=True
+        )
+
+    def _rx_remote_state_update(self, payload: bytes):
+        i = 0
+        updates = {}
+
+        while i + 2 < len(payload):
+            key_id = payload[i]
+            val_len = payload[i + 1]
+            i += 2
+            if i + val_len > len(payload):
+                break
+
+            key = self._get_state_key_by_id(key_id)
+            if not key:
+                i += val_len
+                continue
+
+            # Sensible Keys blockieren
+            if key == 'login_ok':
+                logger.warning("PRP: Remote versucht login_ok zu ändern – ignoriert!")
+                i += val_len
+                continue
+
+            value_data = payload[i:i + val_len]
+            # Dekodierung mit Key-Name
+            # == bool
+            if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
+                value = bool(value_data[0])
+            # == int 1 Byte / 256
+            elif key == 'rem_mon_port':
+                value = value_data[0]
+            # == int 2 Bytes - little
+            elif key == 'batch_wait':
+                value = int.from_bytes(value_data, 'little')
+            # == dict batch mode
+            elif key == 'batch_mode':
+                modes = {0: 'auto', 1: 'on', 2: 'off'}
+                value = modes.get(value_data[0], 'auto')
+            # == list
+            elif key in ['rem_mon_incl', 'rem_mon_excl']:
+                if len(value_data) < 2 or value_data[-2:] != b'\x00\x00':
+                    value = []  # Korrupte Daten
+                else:
+                    parts = value_data[:-2].split(b'\x00')
+                    value = [p.decode('UTF-8', 'ignore') for p in parts if p]
+            else:
+                i += val_len
+                continue
+
+            updates[key] = value
+            i += val_len
+
+        if updates:
+            # Checke updates auf bestimmte Änderungen und führe Action aus
+            self._response_state_update(state_update=updates)
+            # Eigene States updaten
+            self._update_own_state(updates)
+            logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
+
+            # Send Response
+            self._tx_resp_remote_state_update(success=True)
+        else:
+            self._tx_resp_remote_state_update(success=False)
+
+        # Update GUI
+        self._local_response_handler(PRP_OPT_STATE_UPDATE)
+
+    # == Encoding
+    def _encode_state_updates(self, state_updates: dict):
+        payload = bytearray()
+        ordered_keys = list(self._own_states.keys())  # Fixe Reihenfolge
+
+        for key, value in state_updates.items():
+            if key not in ordered_keys:
+                continue  # Unbekannter oder nicht erlaubter Key
+
+            # Sensible Keys explizit verbieten (z.B. login_ok darf nicht remote gesetzt werden!)
+            if self._is_private_state(key):
+                logger.warning(f"PRP: Versuch, sensiblen State '{key}' remote zu ändern – blockiert!")
+                continue
+
+            key_id = ordered_keys.index(key)
+            value_bytes = self._encode_state_value(key, value)  # Key-Name statt ID übergeben
+            if value_bytes is None:
+                continue
+
+            payload.append(key_id)  # 1 Byte ID
+            payload.append(len(value_bytes))  # 1 Byte Länge
+            payload.extend(value_bytes)
+
+        return bytes(payload)
+
+    @staticmethod
+    def _encode_state_value(key: str, value):
+        # == bool
+        if key in ['cli_rem_mon', 'gui_rem_mon', 'cli_esc', 'login_ok']:
+            return bytes([0x01 if value else 0x00])
+
+        # == int 1 Byte / 256
+        elif key == 'rem_mon_port':
+            return bytes([value & 0xFF])
+
+        # == int 2 Bytes - little
+        elif key == 'batch_wait':
+            return value.to_bytes(2, 'little')
+
+        # == dict batch mode
+        elif key == 'batch_mode':
+            modes = {'auto': 0, 'on': 1, 'off': 2}
+            return bytes([modes.get(value, 0)])
+
+        # == list
+        elif key in ['rem_mon_incl', 'rem_mon_excl']:
+            if not value:
+                return b'\x00\x00'  # Leere Liste
+            data = '\x00'.join(value).encode('UTF-8', 'ignore')
+            return data + b'\x00\x00'
+
+        return None  # Unbekannter Key
+
+    # == Response
+    def _tx_resp_remote_state_update(self, success: bool):
+        """ TX Respond State Update (ACK) """
+        data = PRP_ACK if success else PRP_NACK
+        self._prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
+
+    def _rx_resp_remote_state_update(self, payload: bytes):
+        """ RX Respond State Update (ACK) """
+        if self._is_ack(payload):
+            logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
+            logger.debug(f"PRP: Bestätige State Update: {self._uid}")
+            for k, v in self._remote_states.items():
+                logger.debug(f"PRP: {k}:{v}")
+        else:
+            logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._uid}")
+
+    # == Helper
+    def _get_state_key_by_id(self, key_id: int):
+        """ Gibt ID von self._own_states.keys() zurück."""
+        keys = list(self._own_states.keys())
+        if 0 <= key_id < len(keys):
+            return keys[key_id]
+        return None
 
     #####################################
     # Helper
@@ -1551,7 +1585,9 @@ class PRPremote:
         gui = self._get_gui()
         if not hasattr(gui, 'init_popt_remote'):
             return
+        #
         gui.init_popt_remote(self._uid)
+        #gui.init_popt_remote(self._remote_uid)
 
     # ==== QSO Stream I/O
     def _send_cli_esc_status_to_QSO(self, status_msg: str, tx: bool):
@@ -1592,6 +1628,9 @@ class PRPremote:
             total_bytes = 7 + payload_len  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
             received_bytes = len(self._rest_buffer)
 
+            if not received_bytes:
+                return
+
             # === Noch nicht vollständig → Fortschritt anzeigen ===
             if received_bytes < total_bytes:
                 percent = int((received_bytes / total_bytes) * 100)
@@ -1602,6 +1641,7 @@ class PRPremote:
                 status_msg = f"PRP ▼ [{bar}]({str(percent).ljust(3)}%) - {received_bytes - 7}/{payload_len} Bytes"
                 self._send_cli_esc_status_to_QSO(status_msg, tx=False)
                 return
+
 
         # === Genau 100 % → Erfolgsmeldung (einmalig anzeigen) ===
         if self._comp_pack_meta is not None:
@@ -1615,7 +1655,7 @@ class PRPremote:
                 null = ex
                 comp_ratio = "?"
             bar = '#' * 10
-            status_msg = f"PRP ▼ [{bar}](100%) - Compressed({comp_ratio}%) - {prp_payload_len}/{payload_len} Bytes"
+            status_msg = f"PRP ▼ [{bar}](100%) - Compressed({comp_ratio}%) - Data:{prp_payload_len}/{payload_len} Bytes"
             self._send_cli_esc_status_to_QSO(status_msg, tx=False)
 
             self._comp_pack_meta = None
@@ -1627,6 +1667,10 @@ class PRPremote:
     @property
     def is_handshake(self):
         return self._is_handshake()
+
+    @property
+    def is_handshake_pending(self):
+        return self._pending_handshake
 
     # == CLI-ESC ABORT Meldungen für gui.QSO
     def _send_cli_esc_abort_sender_status(self):
