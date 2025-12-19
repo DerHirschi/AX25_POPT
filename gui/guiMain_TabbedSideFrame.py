@@ -727,7 +727,7 @@ class SideTabbedFrame:
                 # conn.port_cfg['parm_T2_auto'] = True
                 conn.set_T2auto(True)
                 conn.calc_irtt()
-                self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
+                self._t2_var.set(str(conn.get_port_cfg.get('parm_T2', 500)))
                 self._t2.configure(state='disabled')
             else:
                 # conn.port_cfg['parm_T2_auto'] = False
@@ -840,7 +840,7 @@ class SideTabbedFrame:
             avg = "AVG: {:.1f}".format(station.RTT_Timer.rtt_average)
             last = "Last: {:.1f}".format(station.RTT_Timer.rtt_last)
             duration = f"{self._getTabStr('time_connected')}: {get_time_delta(station.time_start)}"
-            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(station.get_tx_buff_len())
+            tx_buff = 'TX-Buffer: ' + get_kb_str_fm_bytes(station.get_tx_buff_len)
             tx_count = 'TX: ' + get_kb_str_fm_bytes(station.tx_byte_count)
             rx_count = 'RX: ' + get_kb_str_fm_bytes(station.rx_byte_count)
             if station.is_link:
@@ -1086,9 +1086,9 @@ class SideTabbedFrame:
             self._rnr_var.set(conn.is_RNR)
             self._root_class.link_holder_var.set(conn.link_holder_on)
             self._cliRemote_var.set(conn.cli_remote)    # TODO CLI permissions
-            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(conn.get_tx_buff_len()))
-            self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
-            self._t2_auto_var.set(conn.get_port_cfg().get('parm_T2_auto', True))
+            self._tx_buff_var.set('TX-Buffer: ' + get_kb_str_fm_bytes(conn.get_tx_buff_len))
+            self._t2_var.set(str(conn.get_port_cfg.get('parm_T2', 500)))
+            self._t2_auto_var.set(conn.get_port_cfg.get('parm_T2_auto', True))
             if self._t2_auto_var.get():
                 self._t2.configure(state='disabled')
             else:
@@ -1130,7 +1130,7 @@ class SideTabbedFrame:
         if conn is not None:
             conn.parm_PacLen = min(max(self._pac_len_var.get(), 1), 256)
             conn.calc_irtt()
-            self._t2_var.set(str(conn.get_port_cfg().get('parm_T2', 500)))
+            self._t2_var.set(str(conn.get_port_cfg.get('parm_T2', 500)))
 
     def _chk_t2speech(self):
         self._root_class.get_ch_var().t2speech = bool(self._t2speech_var.get())

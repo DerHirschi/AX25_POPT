@@ -9,6 +9,7 @@ import time
 
 from ax25.ax25Error import AX25DecodingERROR
 from cfg.logger_config import logger
+from classes.CLbuffers import ListBuffer, ByteArrayBuffer
 from cli.cliStationIdent import get_station_id_obj
 from fnc.ax25_fnc import reverse_uid
 from fnc.crc_fnc import crc16_ccitt
@@ -23,42 +24,104 @@ from prp.prp_dec_fnc import pack_6bit_int_and_bool, unpack_6bit_int_and_bool, pa
 
 DBUG_PW = 'test1234'
 
-class ListBuffer:
-    def __init__(self, thread_lock_timer=0.01):
-        self._buffer: list      = []
-        self._threadLock        = False
-        self._threadLockTimer   = float(thread_lock_timer)
+class PrpTxBuffer:
+    def __init__(self):
+        self._tx_buf_prp_Q: ListBuffer        = ListBuffer()  # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_prio_Q: ListBuffer   = ListBuffer()  # Buffer Prio Data (Remote Protocol)
+        self._tx_buf_prp_Rest:ByteArrayBuffer = ByteArrayBuffer()  # Buffer Prio-Frame Rest Data (Remote Protocol)
+        self._prp_tx_rest_opt_id              = None  # Im PRP-Rest-Frame Buffer befindliche OPT-ID
 
-    def _get_thread_lock(self):
-        while self._threadLock:
-            time.sleep(self._threadLockTimer)
-        self._threadLock = True
+    def write_to_buffer(self, data: tuple, prio=False, is_abort_frame=False):
+        """ PRP-Frames vom PRP Encoder """
+        if not data:
+            return False
+        if not isinstance(data[1], (bytes, bytearray, int)):
+            logger.error(f"Incorrect Datatype: data({type(data[1])}) should be bytes or bytearray")
+            return False
+        # Thread Lock
+        if prio or is_abort_frame:  # Abort Frames immer PRIO
+            # Abort Frames immer an Anfang der Q
+            if is_abort_frame:
+                self._tx_buf_prp_prio_Q.buffer_insert(data)
+            else:
+                self._tx_buf_prp_prio_Q.buffer_write(data)
+        else:
+            self._tx_buf_prp_Q.buffer_write(data)
+        return True
 
-    def buffer_read(self):
-        self._get_thread_lock()
-        ret = self._buffer.pop(0)
-        self._threadLock = False
-        return ret
+    def get_payload_fm_tx_buffer(self, payload_len: int):
+        data, data_len = bytearray(), 0
+        # ====================================
+        # PRP Rest  (Remote Protocol)
+        if self._tx_buf_prp_Rest.length:
+            data += self._tx_buf_prp_Rest.buffer_read(payload_len)
+            data_len = len(data)
 
-    def buffer_write(self, data):
-        self._get_thread_lock()
-        self._buffer.append(data)
-        self._threadLock = False
+        # ====================================
+        # PRP Prio (Remote Protocol)                    #
+        while self._tx_buf_prp_prio_Q.length and data_len < payload_len:
+            opt_id, prp_pack = self._tx_buf_prp_prio_Q.buffer_read  # Get next PRP Packet fm prio Q
+            pac_len     = payload_len - data_len
+            data       += prp_pack[:pac_len]
+            data_len    = len(data)
+            self._tx_buf_prp_Rest.buffer_set(prp_pack[pac_len:])
+            self._prp_tx_rest_opt_id = opt_id  # OPT-ID speichern für PRP-ABORT
 
-    def buffer_clear(self):
-        self._get_thread_lock()
-        self._buffer = []
-        self._threadLock = False
+        # ====================================
+        # PRP Non Prio (Remote Protocol)
+        while self._tx_buf_prp_Q.length and data_len < payload_len:
+            opt_id, prp_pack = self._tx_buf_prp_Q.buffer_read  # Get next PRP Packet fm Q
+            pac_len     = payload_len - data_len
+            data       += prp_pack[:pac_len]  #
+            data_len    = len(data)  #
+            self._tx_buf_prp_Rest.buffer_set(prp_pack[pac_len:])
+            self._prp_tx_rest_opt_id = opt_id              # OPT-ID speichern für PRP-ABORT
 
-    # == Read Only / property
+        return data
+
+    def del_tx_buff(self, opt_id):
+        """ PRP Remote Mon & Disco """
+        if opt_id is None:
+            # == Disco
+            self._tx_buf_prp_Q.buffer_clear()
+        elif opt_id == PRP_OPT_PRP_BATCH:
+            # == Remote Monitor
+            tx_q     = self._tx_buf_prp_Q.buffer_get_and_lock
+            new_tx_Q = [(id_, data) for id_, data in tx_q if id_ < 20 or id_ == PRP_OPT_PRP_BATCH]
+            self._tx_buf_prp_Q.buffer_set_and_unlock(new_tx_Q)
+        else:
+            # == CLI-ESC
+            tx_q     = self._tx_buf_prp_Q.buffer_get_and_lock
+            new_tx_Q = [(id_, data) for id_, data in tx_q if id_ != opt_id]
+            self._tx_buf_prp_Q.buffer_set_and_unlock(new_tx_Q)
+        self._clear_tx_buff_prp_rest(opt_id)
+
+    def _clear_tx_buff_prp_rest(self, opt_id: int):
+        if self._prp_tx_rest_opt_id == opt_id or opt_id is None:
+            self._tx_buf_prp_Rest.buffer_clear()
+
     @property
-    def is_empty(self):
-        return bool(not self._buffer)
+    def is_tx_buffer(self):
+        return bool(self._tx_buf_prp_Q.length or
+                    self._tx_buf_prp_prio_Q.length or
+                    self._tx_buf_prp_Rest.length)
 
-    @property
-    def length(self):
-        return len(self._buffer)
+    def can_send_next_prp_batch(self, payload_len: int):
+        """ Prüfen ob prp-tx-buffer noch voll ist """
+        return (
+                not bool(self._tx_buf_prp_Q.length)      and
+                not bool(self._tx_buf_prp_prio_Q.length) and
+                bool(self._tx_buf_prp_Rest.length < payload_len)
+                )
 
+    def is_prp_opt_id_in_tx_buff(self, opt_id: int):
+        in_rest_buff = True if self._prp_tx_rest_opt_id == opt_id else False
+        tx_q = self._tx_buf_prp_Q.buffer_get
+        for x in tx_q:
+            if x[0] == opt_id:
+                return bool(in_rest_buff or True)
+
+        return bool(in_rest_buff or False)
 
 class PRPremote:
     def __init__(self, port_handler, connection):
@@ -68,12 +131,18 @@ class PRPremote:
 
         # == Connection
         self._connection   = connection
-        if self._connection.is_incoming_conn():
+        if self._connection.is_incoming_conn:
             self._uid          = str(reverse_uid(connection.uid))
             self._remote_uid   = str(connection.uid)
         else:
             self._uid          = str(connection.uid)
             self._remote_uid   = str(reverse_uid(connection.uid))
+
+        #################################
+        # TX Buffer
+        self._tx_buffer                = PrpTxBuffer()
+        self.is_tx_buffer              = lambda : self._tx_buffer.is_tx_buffer
+        self.is_prp_opt_id_in_tx_buff  = lambda opt_id: self._tx_buffer.is_prp_opt_id_in_tx_buff(opt_id)
 
         #################################
         # Decoding Resterampe
@@ -408,8 +477,13 @@ class PRPremote:
             abort = True
         print(f"TX OPT-ID: {opt_id} - tx:{tx_flag}")
         # An AX25Conn senden
-        self._connection.send_remote_data((opt_id, data2send), prio=prio, is_abort_frame=abort)
+        # self._connection.send_remote_data((opt_id, data2send), prio=prio, is_abort_frame=abort)
+        self._tx_buffer.write_to_buffer((opt_id, data2send), prio=prio, is_abort_frame=abort)
         return True
+
+    @property
+    def prp_tx_buffer(self):
+        return self._tx_buffer
 
     def prp_rx(self, data: bytes):
         # Opt by Grok-AI
@@ -537,7 +611,7 @@ class PRPremote:
                 logger.debug(f"Sende Batch len      : {len(batch_data)} Bytes")
                 logger.debug(f"Sende Batch-Paket len: {len(data2send)} Bytes")
                 logger.debug(f"Comp Ratio           : {len(batch_data) / len(data2send)}")
-                self._connection.send_remote_data((PRP_OPT_PRP_BATCH, data2send), prio=False)
+                self._tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
                 batch_data = bytearray()
         # Und den Rest
         if batch_data:
@@ -547,7 +621,7 @@ class PRPremote:
             logger.debug(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
             logger.debug(f"Sende Batch-Paket Rest len: {len(data2send)} Bytes")
             logger.debug(f"Comp Ratio Rest           : {len(batch_data) / len(data2send)}")
-            self._connection.send_remote_data((PRP_OPT_PRP_BATCH, data2send), prio=False)
+            self._tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
 
     def _prp_rx_batch(self, payload: bytes):
         """ Empfange PRP-Paket Batch """
@@ -682,12 +756,14 @@ class PRPremote:
             # TODO
             self._connection.cli.cli_update_monitor(ax25frame_conf)
 
+        payload_len = self._connection.get_PacLen * self._connection.get_MaxPac
+
         # Batch Mode
         if (self._is_batch_mode() or
            # Wenn schon etwas im batch-tx-buffer ist ansonsten Sequenz fehler
            not self._batch_buffer.is_empty or
            # Auto Batch Mode
-           (self._is_batch_mode_auto() and not self._connection.can_send_next_prp_batch())
+           (self._is_batch_mode_auto() and not self._tx_buffer.can_send_next_prp_batch(payload_len))
         ):
             self._batch_buffer.buffer_write(ax25frame_conf)
             return
@@ -711,7 +787,8 @@ class PRPremote:
             return
 
         # Sammeln, solange AX25Conn noch was zum Senden hat
-        if not self._connection.can_send_next_prp_batch() and not is_buffer_limit:
+        payload_len = self._connection.get_PacLen * self._connection.get_MaxPac
+        if not self._tx_buffer.can_send_next_prp_batch(payload_len) and not is_buffer_limit:
             return
 
         # Reset Task Timer
@@ -722,8 +799,8 @@ class PRPremote:
         send_as_batch = False if batch_len <= PRP_BATCH_MIN_PACK else True
 
         batch_data: list[bytes] = []
-        while not self._batch_buffer.is_empty:
-            ax25frame = self._batch_buffer.buffer_read()
+        while self._batch_buffer.length:
+            ax25frame = self._batch_buffer.buffer_read
             # Batch zu klein. Sende Frames einzeln
             if not send_as_batch:
                 # Auto Compressed
@@ -774,17 +851,14 @@ class PRPremote:
     def _remote_monitor_abort(self):
         """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
         logger.debug(f"PRP: Remote Monitor Abort gesendet...")
-        if hasattr(self._connection, 'prp_del_rem_mon_buff'):
-            logger.debug(f"PRP: Lösche TX-Buffer und sende Abort RESP Frame: {self._uid}")
-            # == Lösche Batch Buffer
-            self._batch_buffer.buffer_clear()
-            # == Lösche AX25Conn sende Buffer PRP-BATCH Frames
-            self._connection.prp_del_rem_mon_buff(PRP_OPT_PRP_BATCH)  ########
-            # == Sende Abort Frame
-            self._tx_resp_cmd_21()
-            return
-            # == Sollte nicht passieren
-        logger.error(f"PRP: AttributeError _prp_abort_all: {self._uid}")
+        logger.debug(f"PRP: Lösche TX-Buffer und sende Abort RESP Frame: {self._uid}")
+        # == Lösche Batch Buffer
+        self._batch_buffer.buffer_clear()
+        # == Lösche AX25Conn sende Buffer PRP-BATCH Frames
+        self._tx_buffer.del_tx_buff(PRP_OPT_PRP_BATCH)  ########
+        # == Sende Abort Frame
+        self._tx_resp_cmd_21()
+        return
 
     #####################################
     # Response Handler
@@ -1124,14 +1198,12 @@ class PRPremote:
         # == Status MSG to GUI ????????
         self._send_cli_esc_abort_sender_status()
         # == ESC-CLI Frame aus ax25Conn PRP-Rest-buffer löschen
-        if hasattr(self._connection, 'prp_del_frame_buff_cli_esc'):
-            logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._uid}")
-            # == Lösche AX25Conn sende Buffer (nut tx-buffer, nicht prp-q buffer)
-            self._connection.prp_del_frame_buff_cli_esc(PRP_OPT_ESC_CLI) # FIXME. Delete CLI-ESC Frames in prp-Q as well
-            # == Send Response
-            self._tx_resp_cmd_21()
-            return
-        logger.error(f"PRP: AttributeError _prp_abort_current_frame: {self._uid}")
+        logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._uid}")
+        # == Lösche AX25Conn sende Buffer (nut tx-buffer, nicht prp-q buffer)
+        self._tx_buffer.del_tx_buff(PRP_OPT_ESC_CLI) # FIXME. Delete CLI-ESC Frames in prp-Q as well
+        # == Send Response
+        self._tx_resp_cmd_21()
+        return
 
     def _tx_resp_cmd_21(self):
         """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
@@ -1158,7 +1230,7 @@ class PRPremote:
         self._set_own_state('gui_rem_mon', False)
         self._set_own_state('cli_rem_mon', False)
         # == TX-Buffer löschen
-        self._connection.prp_del_rem_mon_buff(None)
+        self._tx_buffer.del_tx_buff(None)
         # == Connection Disco
         self._connection.conn_disco()
 
@@ -1744,7 +1816,7 @@ class PRPremote:
             return False
 
         # == Prüfe ob CLI-ESC Pakte im TX-Buffer sind
-        if not self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI):
+        if not self._tx_buffer.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI):
             return False
         # == Sende ABORT-RESP Frame
         self._rx_cmd_21()

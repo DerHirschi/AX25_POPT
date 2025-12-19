@@ -3740,19 +3740,19 @@ class PoPT_GUI_Main:
         fg, bg = self._get_colorMap()
         if station is not None:
             from_call = str(station.my_call_str)
-            status = station.zustand_tab[station.get_state()][1]
+            status = station.zustand_tab[station.get_state][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
-            unAck = f" nACK: {station.get_unACK_buff_len()} "
+            unAck = f" nACK: {station.get_unACK_buff_len} "
             vs_vr = f"VS/VR: {station.vr}/{station.vs}"
             n2_text = f"N2: {n2}"
             t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
             rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
             t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
-            if station.get_port_cfg().get('parm_T2_auto', True):
-                t2_text = f"T2: {int(station.get_param_T2() * 1000)}A"
+            if station.get_port_cfg.get('parm_T2_auto', True):
+                t2_text = f"T2: {int(station.get_param_T2 * 1000)}A"
             else:
-                t2_text = f"T2: {int(station.get_param_T2() * 1000)}"
+                t2_text = f"T2: {int(station.get_param_T2 * 1000)}"
             status_text, status_bg = self._status_text_tab.get(status, ('', bg))
             if status_text:
                 status_text = f" {status_text} "
@@ -3768,7 +3768,7 @@ class PoPT_GUI_Main:
 
             if self._status_unack_var.get() != unAck:
                 self._status_unack_var.set(unAck)
-                if station.get_unACK_buff_len():
+                if station.get_unACK_buff_len:
                     if self._status_unack.cget('bg') != 'yellow':
                         self._status_unack.configure(bg='yellow')
                 else:

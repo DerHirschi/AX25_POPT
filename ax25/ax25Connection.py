@@ -167,20 +167,18 @@ class AX25Conn:
         self.tx_buf_unACK = {}     # Buffer for UNACK I-Frames
         self.rx_buf_last_data = bytearray()     # Buffers for last Frame
         """ TX Buffer for PRP """
-        self._tx_buf_prp_lock                = False        # Thread locking
-        self._tx_buf_prp_prio_lock           = False        # Thread locking
-        self._tx_buf_prp_rest_lock           = False        # Thread locking
-        self._tx_buf_prp_Q: list                         = []           # Buffer Prio Data (Remote Protocol)
-        self._tx_buf_prp_prio_Q: list                    = []           # Buffer Prio Data (Remote Protocol)
-        self._tx_buf_prp_Rest                            = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
-        self._prp_tx_rest_opt_id                         = None # Im PRP-Rest-Frame Buffer befindliche OPT-ID
+        #self._tx_buf_prp_lock                = False        # Thread locking
+        #self._tx_buf_prp_prio_lock           = False        # Thread locking
+        #self._tx_buf_prp_rest_lock           = False        # Thread locking
+        #self._tx_buf_prp_Q: list                         = []           # Buffer Prio Data (Remote Protocol)
+        #self._tx_buf_prp_prio_Q: list                    = []           # Buffer Prio Data (Remote Protocol)
+        #self._tx_buf_prp_Rest                            = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
+        #self._prp_tx_rest_opt_id                         = None # Im PRP-Rest-Frame Buffer befindliche OPT-ID
         """ IO Buffer For GUI / CLI """
         self._tx_buf_lock      = False           # Threading TX-Buffer lock
         self.tx_buf_rawData    = bytearray()     # Buffer for TX RAW Data that is not packed yet into a Frame
 
-        self._is_tx_buffer     = lambda : (self._tx_buf_prp_Rest   or
-                                           self._tx_buf_prp_prio_Q or
-                                           self._tx_buf_prp_Q      or
+        self._is_tx_buffer     = lambda : (self._prp_remote.is_tx_buffer() or
                                            self.tx_buf_rawData)
         # RX
         self.rx_buf_rawData    = bytearray()  # Buffer RX QSO for AutoConnTask
@@ -395,6 +393,7 @@ class AX25Conn:
             time.sleep(0.02)
         self._tx_buf_lock = True
 
+    """
     def _wait_tx_buf_prp_lock(self, fnc_f_log='--'):
         while self._tx_buf_prp_lock:
             logger.debug(f"fnc: {fnc_f_log} self._tx_buf_prp_lock")
@@ -406,12 +405,8 @@ class AX25Conn:
             logger.debug(f"fnc: {fnc_f_log} self._tx_buf_prp_rest_lock")
             time.sleep(0.02)
         self._tx_buf_prp_rest_lock = True
+    """
 
-    def _wait_tx_buf_prp_prio_lock(self, fnc_f_log='--'):
-        while self._tx_buf_prp_prio_lock:
-            logger.debug(f"fnc: {fnc_f_log} self._tx_buf_prp_prio_lock")
-            time.sleep(0.02)
-        self._tx_buf_prp_prio_lock = True
 
     # ========= TX
     def send_data(self, data: bytes, gui_echo=True, file_trans=False, use_prp=True):
@@ -457,8 +452,9 @@ class AX25Conn:
             self._send_gui_QSO_tx(data)
         return True
 
+    """
     def send_remote_data(self, data: tuple, prio=False, is_abort_frame=False):
-        """ PRP-Frames vom PRP Encoder """
+        # PRP-Frames vom PRP Encoder 
         if self._await_disco:
             return False
         if self.ft_obj is not None:
@@ -485,53 +481,17 @@ class AX25Conn:
             self._tx_buf_prp_Q.append(data)
             self._tx_buf_prp_lock     = False
         return True
+    """
 
     def _get_payload_fm_tx_buffer(self):
         """ TX-Buffer / PRP-Buffer / PRP-Prio-Buffer """
         ######################################
-        # PAYLOAD !!                         #
-        data, data_len = bytearray(), 0      #
-        #############################################
-        # PRP Rest  (Remote Protocol)               #
-        self._wait_tx_buf_prp_rest_lock('_send_I')  # Thread lock
-        if self._tx_buf_prp_Rest:                   #
-            data += self._tx_buf_prp_Rest[:self.parm_PacLen]
-            data_len                   = len(data)
-            self._tx_buf_prp_Rest      = self._tx_buf_prp_Rest[data_len:]
-        self._tx_buf_prp_rest_lock = False          # Thread lock
-
-        #################################################
-        # PRP Prio (Remote Protocol)                    #
-        self._wait_tx_buf_prp_prio_lock('_send_I')  # Thread lock
-        while self._tx_buf_prp_prio_Q and data_len < self.parm_PacLen:
-            opt_id, prp_pack      = self._tx_buf_prp_prio_Q.pop(0)   # Get next PRP Packet fm prio Q
-            pac_len               = int(self.parm_PacLen) - data_len
-            data                 += prp_pack[:pac_len]  #
-            data_len              = len(data)           #
-            self._tx_buf_prp_Rest = prp_pack[pac_len:]  #
-            self._prp_tx_rest_opt_id = opt_id           # OPT-ID speichern für PRP-ABORT
-        self._tx_buf_prp_prio_lock = False              # Thread lock
-
-        #################################################
-        # PRP (Remote Protocol)                         #
-        self._wait_tx_buf_prp_lock('_send_I')           # Thread lock
-        while self._tx_buf_prp_Q and data_len < self.parm_PacLen:
-            opt_id, prp_pack      = self._tx_buf_prp_Q.pop(0)  # Get next PRP Packet fm Q
-            pac_len               = int(self.parm_PacLen) - data_len
-            data                 += prp_pack[:pac_len]  #
-            data_len              = len(data)           #
-            self._tx_buf_prp_Rest = prp_pack[pac_len:]  #
-            self._prp_tx_rest_opt_id = int(opt_id)      # OPT-ID speichern für PRP-ABORT
-        self._tx_buf_prp_lock = False                   # Thread lock
-
+        # PRP TX Buffer !!                   #
+        data     = self._prp_remote.prp_tx_buffer.get_payload_fm_tx_buffer(int(self.parm_PacLen))
+        data_len = len(data)
         #################################################
         # Normal TX Buffer                              #
         if data_len < self.parm_PacLen:                 #
-            # == self._tx_buf_prp_Rest sollte leer sein aber zur sicherheit prüfen
-            if self._tx_buf_prp_Rest:
-                logger.error("AX25Conn: _get_payload_fm_tx_buffer nicht leer !!!")
-            else:
-                self._prp_tx_rest_opt_id = None         #
             self._wait_tx_buf_lock('_send_I')               # Thread lock
             if self.tx_buf_rawData:
                 pac_len = int(self.parm_PacLen) - data_len  #
@@ -604,8 +564,9 @@ class AX25Conn:
 
     #############################
     # I/O Buffer Helper
+    """
     def _clear_tx_buff_prp(self, opt_id):
-        """ PRP Remote Mon """
+        # PRP Remote Mon 
         self._wait_tx_buf_prp_lock('_clear_tx_buff_prp')
         if opt_id is None:
             self._tx_buf_prp_Q: list[tuple[int, bytes]] = []
@@ -614,11 +575,12 @@ class AX25Conn:
         self._tx_buf_prp_lock = False
 
     def _clear_tx_buff_prp_rest(self, opt_id):
-        """ PRP ESC CLI """
+        # PRP ESC CLI 
         if self._prp_tx_rest_opt_id == opt_id or opt_id is None:
             self._wait_tx_buf_prp_rest_lock('_clear_tx_buff_prp_rest')
             self._tx_buf_prp_Rest = bytearray()
             self._tx_buf_prp_rest_lock = False
+    """
 
     def clear_tx_buff(self):
         self._wait_tx_buf_lock('clear_tx_buff')
@@ -813,8 +775,9 @@ class AX25Conn:
         self._prp_remote.remote_monitor_update(ax25frame_conf)
 
     # == Remote Mon
+    """
     def prp_del_rem_mon_buff(self, opt_id):
-        """ PRP Remote Mon & Disco """
+        # PRP Remote Mon & Disco
         if opt_id is None:
             # == Disco
             self._wait_tx_buf_prp_lock('_clear_tx_buff_prp')
@@ -826,12 +789,14 @@ class AX25Conn:
             self._tx_buf_prp_Q = [(id_, data) for id_, data in self._tx_buf_prp_Q if id_ < 20 or id_ == PRP_OPT_PRP_BATCH]
             self._tx_buf_prp_lock = False
         self._clear_tx_buff_prp_rest(opt_id)
-
+    """
 
     # == PRP CLI-ESC
+    """
     def prp_del_frame_buff_cli_esc(self, opt_id):
         self._clear_tx_buff_prp(opt_id)
         self._clear_tx_buff_prp_rest(opt_id)
+    """
 
     # == Tasker (loop)
     def _prp_cron(self):
@@ -1194,7 +1159,7 @@ class AX25Conn:
                 self.send_DISC_ctlBuf()
                 self.zustand_exec.S1_end_connection()
             else:
-                if not self.is_tx_buff_empty():
+                if not self.is_tx_buff_empty:
                     self._await_disco = True
                     # logger.debug("DISCO and buff not NULL !!")
                     """
@@ -1206,7 +1171,7 @@ class AX25Conn:
                     self.zustand_exec.change_state(4)
 
     def _wait_for_disco(self):
-        if self.is_tx_buff_empty():
+        if self.is_tx_buff_empty:
             self._await_disco = False
             self.zustand_exec.change_state(4)
 
@@ -1628,52 +1593,69 @@ class AX25Conn:
     def _is_service_connection(self):
         return self.cli.service_cli
 
+    @property
     def get_state(self):
         return int(self.zustand_exec.stat_index)
 
+    @property
     def get_port_handler_CONN(self):
         return self._port_handler
 
+    @property
     def get_stat_cfg(self):
         return dict(self._stat_cfg)
 
+    @property
     def get_port_cfg(self):
         return dict(self._port_cfg)
 
+    @property
     def get_param_T2(self):
         return float(self._parm_T2)
 
+    @property
+    def get_PacLen(self):
+        return self.parm_PacLen
+
+    @property
+    def get_MaxPac(self):
+        return self.parm_MaxFrame
+
+    @property
     def get_prp(self):
         return self._prp_remote
 
+    """
     def can_send_next_prp_batch(self):
-        """ Prüfen ob prp-tx-buffer noch voll ist """
+        # Prüfen ob prp-tx-buffer noch voll ist 
         return (
                 not bool(self._tx_buf_prp_Q)      and
                 not bool(self._tx_buf_prp_prio_Q) and
                 bool(len(self._tx_buf_prp_Rest) < (self.parm_PacLen * self.parm_MaxFrame))
                 )
+    """
+
     def is_prp_opt_id_in_tx_buff(self, opt_id: int):
-        in_rest_buff = True if self._prp_tx_rest_opt_id == opt_id else False
-        for x in self._tx_buf_prp_Q:
-            if x[0] == opt_id:
-                return bool(in_rest_buff or True)
+        return self._prp_remote.is_prp_opt_id_in_tx_buff(opt_id)
 
-        return bool(in_rest_buff or False)
-
+    @property
     def is_incoming_conn(self):
         return bool(self._incoming_conn)
 
     # ========= I/O Buffers
+    @property
     def get_tx_buff_len(self):
         return len(self.tx_buf_rawData)
 
+    @property
     def get_unACK_buff_len(self):
         return len(self.tx_buf_unACK)
 
+    @property
     def get_tx_buff(self):
         return bytearray(self.tx_buf_rawData)
 
+    @property
     def is_tx_buff_empty(self):
         return not self.tx_buf_unACK and not self._is_tx_buffer()
 
@@ -2211,7 +2193,7 @@ class S6sendREJ(DefaultStat):
         if self._prozess_I_frame():
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif self._ax25conn.is_tx_buff_empty():
+            elif self._ax25conn.is_tx_buff_empty:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
             self.change_state(5)
 
@@ -2273,7 +2255,7 @@ class S7WaitForFinal(DefaultStat):
             # self.change_state(5)
             if self.pf:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=False)
-            elif self._ax25conn.is_tx_buff_empty():
+            elif self._ax25conn.is_tx_buff_empty:
                 self._ax25conn.send_RR(pf_bit=self.pf, cmd_bit=True)
 
     def _rx_REJ(self):

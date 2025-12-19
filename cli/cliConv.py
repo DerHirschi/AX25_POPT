@@ -127,7 +127,7 @@ class ConverseCLI(DefaultCLI):
 
     def _cron_s_quit(self):
         """Beendet die Verbindung, wenn keine Daten mehr zu senden sind"""
-        if self._connection.is_tx_buff_empty():
+        if self._connection.is_tx_buff_empty:
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
         return ''

@@ -56,7 +56,7 @@ class BaycomLogin(object):
 
     def step(self, inp: str):
         # TODO FBB can handle random fill just after real response
-        # TODO Maybe own classes for each SW
+        # TODO Maybe own gui_classes for each SW
         if self.attempt_count == self.attempts:
             print(f'{self.attempt_count}>{self.attempts}')
             return ''

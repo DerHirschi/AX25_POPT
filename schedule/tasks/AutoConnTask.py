@@ -115,7 +115,7 @@ class AutoConnTask:
         if not self._connection:
             self.e = True
             return False
-        state_index = self._connection.get_state()
+        state_index = self._connection.get_state
         if not state_index:
             self.e = True
             return False
@@ -136,7 +136,7 @@ class AutoConnTask:
         # 0
         if not self._connection:
             return
-        if not self._connection.is_tx_buff_empty():
+        if not self._connection.is_tx_buff_empty:
             return
         self._connection.conn_disco()
 
@@ -159,7 +159,7 @@ class AutoConnTask:
             wait        = step.get('wait', 0)
 
             if self._is_connected():
-                state_index = self._connection.get_state()
+                state_index = self._connection.get_state
                 if state_index != 5:
                     return
                 if not self._conn_script_w_state:
@@ -220,7 +220,7 @@ class AutoConnTask:
             return
         if self._connection.bbs_connection:
             return
-        if self._connection.get_tx_buff_len():
+        if self._connection.get_tx_buff_len:
             return
         if self._connection:
             self._end_connection()

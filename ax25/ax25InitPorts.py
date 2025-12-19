@@ -648,7 +648,7 @@ class AX25PortHandler(object):
         call_str    = str(connection.to_call_str)
         ch_id       = int(connection.ch_index)
         path        = list(connection.via_calls)
-        if connection.is_incoming_connection():
+        if connection.is_incoming_connection:
             msg = f'*** Connected fm {call_str}'
             lb_msg_1 = f'CH {ch_id} - {str(connection.my_call_str)}: *** Connected fm {call_str}'
         else:
@@ -757,7 +757,7 @@ class AX25PortHandler(object):
         # Bestimme Bildtyp
         image_typ = CLI_TYP_DIGI if CLI_TYP_DIGI in conn_typ else conn_typ
         image_typ += '-DISCO' if disco else '-CONN'
-        image_typ += '-INTER' if inter_connect else '-IN' if conn.is_incoming_conn() else '-OUT'
+        image_typ += '-INTER' if inter_connect else '-IN' if conn.is_incoming_conn else '-OUT'
 
         # Hole Benutzerdaten aus der Datenbank
         user_db_ent = self._userDB.get_entry(ent_call, add_new=False)
@@ -765,7 +765,7 @@ class AX25PortHandler(object):
         distance = user_db_ent.Distance if user_db_ent else -1
 
         # Initialisiere Verbindungsmetriken
-        conn_incoming = conn.is_incoming_conn()
+        conn_incoming = conn.is_incoming_conn
         duration = 0
         rx_bytes, tx_bytes, rx_pack, tx_pack = 0, 0, 0, 0
 
@@ -1472,15 +1472,15 @@ class AX25PortHandler(object):
         """
         print('ALL Conn ----------------------')
         for ch_id, conn in all_conn.items():
-            print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state()}")
+            print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.get_state}")
         print('ALL LinkConn ------------------')
         for link_uid, (conn, link) in all_linkConn.items():
-            print(f"LINK-UID: {link_uid} - UID: {conn.uid} - STATE: {conn.get_state()} - LINK: {link}")
+            print(f"LINK-UID: {link_uid} - UID: {conn.uid} - STATE: {conn.get_state} - LINK: {link}")
             print(f"LINK: conn:           {conn}                            link_conn: {conn.LINK_Connection}")
             print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
         print('ALL DIGIConn ------------------')
         for digi_uid, conn in all_digiConn.items():
-            print(f"digi-UID: {digi_uid} - STATE: {conn.get_state()} - rx-conn: {conn.get_rx_conn()} - tx-conn: {conn.get_tx_conn()}")
+            print(f"digi-UID: {digi_uid} - STATE: {conn.get_state} - rx-conn: {conn.get_rx_conn()} - tx-conn: {conn.get_tx_conn()}")
 
         #######################################################################
         """

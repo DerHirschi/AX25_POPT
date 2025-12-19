@@ -163,8 +163,8 @@ class AX25DigiConnection:
             self._state = 3
 
             logger.debug(f"LinkConn Accept: {self._port_handler.link_connections.items()}")
-            logger.debug(f"RX-State: {self._rx_conn.get_state()}")
-            logger.debug(f"TX-State: {self._tx_conn.get_state()}")
+            logger.debug(f"RX-State: {self._rx_conn.get_state}")
+            logger.debug(f"TX-State: {self._tx_conn.get_state}")
             return True
         logger.debug("LinkConn : ADD Crone: Fail ")
         self._state_0_error()
@@ -251,10 +251,10 @@ class AX25DigiConnection:
         if all((not self._rx_conn, not self._tx_conn)):
             return True
         if self._rx_conn:
-            if self._rx_conn.get_state():
+            if self._rx_conn.get_state:
                 return False
         if self._tx_conn:
-            if self._tx_conn.get_state():
+            if self._tx_conn.get_state:
                 return False
         return True
 
@@ -262,23 +262,23 @@ class AX25DigiConnection:
         if any((not self._rx_conn, not self._tx_conn)):
             return False
         if self._rx_conn:
-            if self._rx_conn.get_state() < 5:
+            if self._rx_conn.get_state < 5:
                 return False
         if self._tx_conn:
-            if self._tx_conn.get_state() < 5:
+            if self._tx_conn.get_state < 5:
                 return False
         return True
 
     def _disco_tx_conn(self):
         if self._tx_conn:
-            if self._tx_conn.get_state():
-                if self._tx_conn.is_tx_buff_empty():
+            if self._tx_conn.get_state:
+                if self._tx_conn.is_tx_buff_empty:
                     self._tx_conn.conn_disco()
 
     def _disco_rx_conn(self):
         if self._rx_conn:
-            if self._rx_conn.get_state():
-                if self._rx_conn.is_tx_buff_empty():
+            if self._rx_conn.get_state:
+                if self._rx_conn.is_tx_buff_empty:
                     self._rx_conn.conn_disco()
 
     def _UI_digi(self, ax25_frame):
@@ -423,7 +423,7 @@ class AX25DigiConnection:
                 return True
         if not self._conf_max_buff:
             return False
-        if self._rx_conn.get_tx_buff_len() > self._conf_max_buff:
+        if self._rx_conn.get_tx_buff_len > self._conf_max_buff:
             return True
         return False
 
@@ -439,7 +439,7 @@ class AX25DigiConnection:
                 return True
         if not self._conf_max_buff:
             return False
-        if self._tx_conn.get_tx_buff_len() > self._conf_max_buff:
+        if self._tx_conn.get_tx_buff_len > self._conf_max_buff:
             #print(f"RNR buff: {self._tx_conn.get_tx_buff_len()}")
             return True
         return False
@@ -460,7 +460,7 @@ class AX25DigiConnection:
         if not self._tx_conn:
             logger.debug('DIGI._check_txConn_state : no txConn')
             self._state_0_error()
-        txConn_state = self._tx_conn.get_state()
+        txConn_state = self._tx_conn.get_state
         if txConn_state != 2:
             if txConn_state < 5:
                 logger.debug('DIGI._check_txConn_state : txConn STATE ERROR')

@@ -29,12 +29,12 @@ class DefaultCLI(object):
     def __init__(self, connection):
         self._logTag = f"CLI-{self.cli_name}: "
         logger.debug(self._logTag + "Init")
-        stat_cfg: dict              = connection.get_stat_cfg()
+        stat_cfg: dict              = connection.get_stat_cfg
         self._stat_cfg_index_call   = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
         self._c_text                = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection            = connection
-        self._port_handler          = self._connection.get_port_handler_CONN()
+        self._port_handler          = self._connection.get_port_handler_CONN
         self._own_port              = self._connection.own_port
         # self.channel_index = self._connection.ch_index
         # self._gui                   = self._port_handler.get_gui()
@@ -256,7 +256,7 @@ class DefaultCLI(object):
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
         if (self._raw_input.upper() == b'A' + eol and
-            (self._connection.get_tx_buff_len()
+            (self._connection.get_tx_buff_len
             or self._tx_buffer or self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI))
         ):
             self._abort_send_out()
@@ -433,7 +433,7 @@ class DefaultCLI(object):
         return False
     # Auto Name sharing #NAM#
     def _send_name_cmd_back(self):
-        stat_cfg: dict = self._connection.get_stat_cfg()
+        stat_cfg: dict = self._connection.get_stat_cfg
         name = stat_cfg.get('stat_parm_Name', '')
         if name:
             if self.stat_identifier is not None:
@@ -1946,7 +1946,7 @@ class DefaultCLI(object):
 
     ##############################################
     def _str_cmd_req_name(self):
-        stat_cfg: dict = self._connection.get_stat_cfg()
+        stat_cfg: dict = self._connection.get_stat_cfg
         name = stat_cfg.get('stat_parm_Name', '')
         qth = POPT_CFG.get_guiCFG_qth()
         # qth = self._connection.stat_cfg.stat_parm_QTH
@@ -2027,7 +2027,7 @@ class DefaultCLI(object):
 
     def _get_prp(self):
         if hasattr(self._connection, 'get_prp'):
-            return self._connection.get_prp()
+            return self._connection.get_prp
         return None
 
     ########################################################
@@ -2219,7 +2219,7 @@ class DefaultCLI(object):
 
     def _cron_s_quit(self):
         # self._connection: AX25Conn
-        if self._connection.is_tx_buff_empty():
+        if self._connection.is_tx_buff_empty:
             if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
                 self._connection.zustand_exec.change_state(4)
 
