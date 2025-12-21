@@ -21,6 +21,7 @@ from prp.prp_const import PRP_FESC, PRP_FESC_TFESC, PRP_FEND, PRP_FESC_TFEND, PR
     PRP_OPT_ESC_CLI, PRP_OPT_PRP_BATCH, PRP_BATCH_MIN_PACK, PRP_BATCH_MAX_PAY, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN, \
     PRP_ACK, PRP_VER_RESTR, PRP_SW_RESTR, PRP_VER_RESTR_HANDSHAKE, PRP_ABORT_FRAME
 from prp.prp_dec_fnc import pack_6bit_int_and_bool, unpack_6bit_int_and_bool, pack_time_hms, unpack_time_hms_to_datetime
+from prp.prp_protocol_handler import PRPProtocolHandler
 from prp.prp_rx_processor import PRP_RX_Processor
 from prp.prp_tx_buffer import PrpTxBuffer
 
@@ -51,20 +52,11 @@ class PRPremote:
         #################################
         # RX Processor
         self._rx_processor = PRP_RX_Processor(self)
-
-        #################################
-        # Decoding Resterampe
-        #self._rest_buffer  = bytearray()
+        self._protocol     = PRPProtocolHandler(self)
 
         #################################
         # Helper PRP
         self._is_ack    = lambda payload: True if payload == PRP_ACK else False
-
-        #################################
-        # Meta Daten für QSO-Status Msg
-        #self._comp_pack_meta   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
-        # self._next_pack_meta   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
-        #self._last_pack_meta   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
 
         #################################
         # Own States / States der eigenen Station
@@ -167,6 +159,21 @@ class PRPremote:
         self._is_remote_auth = lambda        : self._remote_states.get('login_ok', False)
         self._set_remote_auth= lambda is_auth: self._remote_states.update({'login_ok': is_auth})
 
+    @property
+    def uid(self):
+        return self._uid
+
+    @property
+    def port_handler(self):
+        return self._port_handler
+
+    @property
+    def rx_processor(self):
+        return self._rx_processor
+
+    #@property
+    #def protocol(self):
+    #    return self._protocol
 
     #####################################
     # Tasker (ax25Conn)
@@ -175,218 +182,17 @@ class PRPremote:
         self._remote_monitor_batch_update()
         return True
 
-    #####################################
-    # PRP ENC/DEC
-    def _encode_prp_frame(self, opt_id: int, tx: bool, data: bytes, compress=True, send_uncompressed=True):
-        send_compressed = False
-        data_len        = len(data)
-        comp_data_len   = len(data)
-        if data:
-            if compress:
-                # LZHUF it
-                lzhuf = LZHUF_Comp()
-                compressed_data = lzhuf.encode(data)
-                len_compressed = len(compressed_data)
-                if len_compressed < data_len:
-                    comp_data_len   = len_compressed
-                    send_compressed = True
-                    data = compressed_data
-            # Wenn nicht zu komprimieren geht und nicht send_uncompressed, nicht senden!
-            # Für CLI-ESC Mode
-            if not send_compressed and not send_uncompressed:
-                return None
-            # Escaping
-            data = data.replace(PRP_FESC, PRP_FESC_TFESC)
-            data = data.replace(PRP_FEND, PRP_FESC_TFEND)
-
-        # Meta Date für Status Msg
-        self._rx_processor.set_last_pack_meta((data_len, comp_data_len))
-        # Building Packet
-        data_to_send  = bytearray()
-        data_to_send += pack_6bit_int_and_bool(value=int(opt_id), flag1=tx, flag2=send_compressed)
-        data_to_send += len(data).to_bytes(2, 'little')
-        data_to_send += data
-        # CRC
-        crc           = crc16_ccitt(data_to_send)   # 2 Bytes - little
-        # Adding Flag and CRC / Flag + Packet + CRC
-        data_to_send  = PRP_FLAG + data_to_send + crc
-
-        return data_to_send
-
-    def _decode_prp_frame(self, data: bytes):
-        opt_byte = data[2:3]
-        # length = data[3:5] # little
-        payload  = data[5:-2]
-        checksum = data[-2:]
-        ################################################################
-        # Checking Checksum
-        crc16    = crc16_ccitt(data[2:-2])
-        if crc16 != checksum:
-            logger.error(f"PRP: Checksum Error - UID: {self._uid}")
-            logger.error(f"PRP: Packet CRC: {checksum} - Calc CRC: {crc16}")
-            #logger.error(f"PRP: Packet CRC: {checksum.to_bytes(2, 'little')} - Calc CRC: {crc16.to_bytes(2, 'little')}")
-            logger.error( "PRP: PRP-Frame:")
-            logger.error(f"PRP:   ORG: {data}")
-            logger.error(f"PRP:   HEX: {bytearray2hexstr(data)}")
-            raise EncodingWarning
-        ################################################################
-        # Unescaping
-        payload = payload.replace(PRP_FESC_TFEND, PRP_FEND)
-        payload = payload.replace(PRP_FESC_TFESC, PRP_FESC)
-        ################################################################
-        # Decoding OPT Byte
-        opt_id, tx, is_compressed = unpack_6bit_int_and_bool(opt_byte)
-        prp_payload_len           = len(payload)
-        if is_compressed:
-            lzhuf   = LZHUF_Comp()
-            payload = lzhuf.decode(payload)
-        # Frame Status
-        self._rx_processor.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
-        ################################################################
-        # 0 - 19 = Port ID
-        if opt_id in range(20):
-            try:
-                return self._decode_remote_mon_frame(payload, opt_id, tx), b''
-            except AX25DecodingERROR:
-                logger.warning("-------------------------------------------------------------------")
-                logger.warning(f'PRP Remote Monitor: decoding UID: {self._uid}')
-                logger.warning(f'PRP Remote Monitor: prp frame org {data}')
-                logger.warning(f'PRP Remote Monitor: prp frame hex {bytearray2hexstr(data)}')
-                logger.warning(f'PRP Remote Monitor: ax25_frame org {payload}')
-                logger.warning(f'PRP Remote Monitor: ax25_frame hex {bytearray2hexstr(payload)}')
-                logger.warning("-------------------------------------------------------------------")
-                return None, b''
-
-        ################################################################
-        # TX = Send CMD(True) / Response CMD(False) /
-        # 20 - 63 = CMD'S
-
-        # =============================================
-        # tx=False → Zentrale Response/ACK-Behandlung
-        # Nur für PRP States !!
-        # =============================================
-        if not tx:
-            ack = True
-            if opt_id not in PRP_DONT_ACK:
-                if payload == PRP_NACK:
-                    ack = False
-                if ack:
-                    # ACK CFG und update Remote-States
-                    self._ack_pending_remote_states(opt_id)
-                else:
-                    # Optional: Pending löschen oder retry
-                    self._del_pending_remote_states(opt_id)
-            # Response Handler / GUI Updates usw.
-            self._local_response_handler(opt_id, resp_ok=ack)
-
-        # =============================================
-        #  tx=True → das sind Commands vom Remote
-        # =============================================
-
-        """ Handshake 20 """
-        if opt_id == PRP_OPT_20:
-            if tx:
-                self._rx_cmd_20(payload)
-            else:
-                self._rx_resp_cmd_20(payload)
-            return None, b''
-
-        """ PRP-Frame Abort - 21 """
-        if opt_id == PRP_OPT_21:
-            if tx:
-                self._rx_cmd_21()
-            else:
-                print(f"prp frame decoder: _rx_resp")
-                #self._rx_resp_cmd_21()
-                return None, b''
-                # Optional: Status für Abort senden
-                #if self._next_pack_meta[0] == PRP_OPT_ESC_CLI:  # Wenn vorheriges war CLI-ESC
-                #    self._send_cli_esc_abort_recv_status()
-            return None, b''
-
-        """ Disconnect 22 """
-        if opt_id == PRP_OPT_DISCO:
-            if tx:
-                self._rx_cmd_disco()
-            return None, b''
-
-        """ Login Request 23 """
-        if opt_id == PRP_OPT_LOGIN_REQ:
-            if tx:
-                self._rx_cmd_login_request()
-            else:
-                self._rx_cmd_login_challenge(payload)
-            return None, b''
-
-        """ Login Response 24 """
-        if opt_id == PRP_OPT_LOGIN_RESP:
-            if tx:
-                self._rx_cmd_login_response(payload)
-            else:
-                self._rx_cmd_login_ack(payload)
-            return None, b''
-
-        """ Logout 25 """
-        if opt_id == PRP_OPT_LOGOUT:
-            if tx:
-                self._rx_cmd_logout()
-            else:
-                self._rx_cmd_logout_response()
-            return None, b''
-
-        """ State Update 26 """
-        if opt_id == PRP_OPT_STATE_UPDATE:
-            if tx:
-                self._rx_remote_state_update(payload)
-            else:
-                self._rx_resp_remote_state_update(payload)
-            return None, b''
-
-        """ CLI Escape 62 """
-        if opt_id == PRP_OPT_ESC_CLI:
-            if tx:
-                return None, self._prp_rx_esc_cli(payload)
-            else:
-                pass
-            return None, b''
-
-        """ Batch Mode 63 """
-        if opt_id == PRP_OPT_PRP_BATCH:
-            if tx:
-                return None, self._prp_rx_batch(payload)
-            else:
-                pass
-            return None, b''
-        """ OPT ID existiert nicht """
-        logger.warning(f"PRP: Unknown OPT-ID({opt_id})")
-        logger.warning( "PRP:    Perhaps you are using an older version of PopT,")
-        logger.warning(f"PRP:    that does not support OPT({opt_id}) ?")
-        return None, b''
-
-    #####################################
+    ###############################
     # PRP I/O - TX/RX
-    def _prp_tx(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, compress=True, send_uncompressed=True):
-        data2send = self._encode_prp_frame(
-            opt_id=opt_id,
-            tx=tx_flag,
-            data=data,
-            compress=compress,
-            send_uncompressed=send_uncompressed
-        )
-        if not data2send:
-            # Lösche Meta Daten für Status Meldungen
+    def _prp_tx(self, opt_id: int, tx_flag: bool, data: bytes,
+                prio=False, compress=True, send_uncompressed=True):
+        frame = self._protocol.encode_frame(opt_id, tx_flag, data, compress, send_uncompressed)
+        if not frame:
             self._rx_processor.clear_last_pack_meta()
             return False
 
-        # Abort Frames immer als Erstes senden
-        abort = False
-        if opt_id == PRP_OPT_21 and not tx_flag:
-            print("TX ABORT Frame !!!!!")
-            abort = True
-        print(f"TX OPT-ID: {opt_id} - tx:{tx_flag}")
-        # An AX25Conn senden
-        # self._connection.send_remote_data((opt_id, data2send), prio=prio, is_abort_frame=abort)
-        self._tx_buffer.write_to_buffer((opt_id, data2send), prio=prio, is_abort_frame=abort)
+        abort = (opt_id == PRP_OPT_21 and not tx_flag)
+        self._tx_buffer.write_to_buffer((opt_id, frame), prio=prio, is_abort_frame=abort)
         return True
 
     @property
@@ -401,19 +207,18 @@ class PRPremote:
         return self._rx_processor.process(data)
 
     # ====== Processing PRP-Frame
-    def _prp_rx_process(self, rem_mon_frame: bytes):
+    def _prp_rx_process(self, frame: bytes):
+        """
+        Wird vom RX_Processor aufgerufen, sobald ein vollständiges Frame extrahiert wurde.
+        """
         try:
-            decoded_ax25pack, cli_payload = self._decode_prp_frame(rem_mon_frame)
-        except EncodingWarning as ex:
-            raise ex
-        if decoded_ax25pack:
-            # TODO Failsafe Response handler self._set_remote_state('gui_rem_mon', True)
-            # GUI Handling - Remote Monitor Frame
-            if not hasattr(self._port_handler, 'handle_remote_monitor_rx'):
-                logger.error("Attribute Error Port-Handler: handle_remote_monitor_rx ")
-                return cli_payload
-            self._port_handler.handle_remote_monitor_rx(decoded_ax25pack, self._uid)
-        return cli_payload
+            return self._protocol.decode_and_dispatch(frame)
+        except EncodingWarning:
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in protocol handler: {e}")
+            raise
+
 
     # ====== PRP Batch Mode I/O
     def _prp_batch_tx(self, prp_frames):
@@ -430,7 +235,7 @@ class PRPremote:
             batch_data_len = len(batch_data)
             if (batch_data_len >= PRP_BATCH_MAX_PAY and
                 len(prp_frames) - n > PRP_BATCH_MIN_PACK) :
-                data2send = self._encode_prp_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
+                data2send = self._protocol.encode_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
                 if not data2send:
                     batch_data = bytearray()
                     continue
@@ -441,7 +246,7 @@ class PRPremote:
                 batch_data = bytearray()
         # Und den Rest
         if batch_data:
-            data2send = self._encode_prp_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
+            data2send = self._protocol.encode_frame(opt_id=PRP_OPT_PRP_BATCH, tx=True, data=batch_data, compress=True)
             if not data2send:
                 return
             logger.debug(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
@@ -642,7 +447,7 @@ class PRPremote:
             ax25_data   = bytearray()
             ax25_data  += dec_rx_time
             ax25_data  += ax25_rawFrame
-            batch_data.append(self._encode_prp_frame(opt_id=int(port_id), tx=tx, data=ax25_data, compress=False))
+            batch_data.append(self._protocol.encode_frame(opt_id=int(port_id), tx=tx, data=ax25_data, compress=False))
 
         if batch_data:
             self._prp_batch_tx(batch_data)

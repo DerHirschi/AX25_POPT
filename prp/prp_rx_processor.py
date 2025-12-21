@@ -25,7 +25,7 @@ class PRP_RX_Processor:
         self._comp_pack_meta = None              # Nach erfolgreichem Decode (opt_id, prp_len, payload_len)
         self._last_pack_meta = None              # TX (org-payload-len, prp-pack-len) Für Status Meldungen
 
-    def process(self, data: bytes) -> bytes:
+    def process(self, data: bytes):
         """
         Hauptmethode – wird von PRPremote.prp_rx() aufgerufen.
         :param data: Rohdaten vom AX25-Layer
