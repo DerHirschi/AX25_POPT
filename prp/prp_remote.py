@@ -1,16 +1,12 @@
 """
 (P)oPT (R)emote (P)rotocol
 """
-import hashlib
-import os
 
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
 from prp.prp_auth_handler import PRPAuthHandler
-from prp.prp_const import PRP_NACK, \
-    PRP_OPT_21, PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
-    PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN, \
-    PRP_ACK
+from prp.prp_const import PRP_OPT_21, PRP_OPT_DISCO, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
+    PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN
 from prp.prp_handshake_handler import PRPHandshakeHandler
 from prp.prp_protocol_handler import PRPProtocolHandler
 from prp.prp_remote_monitor import PRPRemoteMonitor

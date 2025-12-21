@@ -22,9 +22,9 @@ class PRPRemoteMonitor:
         :param prp_root: Referenz auf PRPremote-Instanz
         """
         self._prp_root          = prp_root
-        self._state_manager     = self._prp_root.state_manager
-        self._prp_tx_buffer     = self._prp_root.tx_buffer
-        self._prp_protocol      = self._prp_root.protocol
+        self._state_manager     = prp_root.state_manager
+        self._prp_tx_buffer     = prp_root.tx_buffer
+        self._prp_protocol      = prp_root.protocol
 
         # == UID
         self._uid               = self._prp_root.uid
