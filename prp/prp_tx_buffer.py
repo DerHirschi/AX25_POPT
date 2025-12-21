@@ -77,7 +77,7 @@ class PrpTxBuffer:
         elif opt_id == PRP_OPT_PRP_BATCH:
             # == Remote Monitor
             tx_q     = self._tx_buf_prp_Q.buffer_get_and_lock
-            new_tx_Q = [(id_, data) for id_, data in tx_q if id_ > 19 or id_ != PRP_OPT_PRP_BATCH]
+            new_tx_Q = [(id_, data) for id_, data in tx_q if id_ > 19 and id_ != PRP_OPT_PRP_BATCH]
             self._tx_buf_prp_Q.buffer_set_and_unlock(new_tx_Q)
         else:
             # == CLI-ESC
