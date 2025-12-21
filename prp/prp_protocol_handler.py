@@ -22,10 +22,11 @@ class PRPProtocolHandler:
         :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf prp_rx_process, Status-Meldungen etc.)
         """
         self._prp_root       = prp_root
-        self._rx_process     = self._prp_root.rx_processor
-        self._state_manager  = self._prp_root.state_manager
-        self._prp_tx_buffer  = self._prp_root.tx_buffer
-        self._prp_handshake  = self._prp_root.handshake
+        self._rx_process     = prp_root.rx_processor
+        self._state_manager  = prp_root.state_manager
+        self._prp_tx_buffer  = prp_root.tx_buffer
+        self._prp_handshake  = prp_root.handshake
+        self._prp_auth       = prp_root.prp_auth
 
     # ===================================================================
     # Encoding
@@ -137,7 +138,7 @@ class PRPProtocolHandler:
                     # Optional: Pending löschen oder retry
                     self._state_manager.del_pending(opt_id)
             # Response Handler / GUI Updates usw.
-            self._prp_root._local_response_handler(opt_id, resp_ok=ack)
+            self._prp_root.local_response_handler(opt_id, resp_ok=ack)
 
         # Command Dispatch
         handler_map = {
@@ -190,52 +191,38 @@ class PRPProtocolHandler:
     def _handle_abort(self, tx, payload):
         """ PRP-Frame Abort - 21 """
         if tx:
-            self._prp_root._rx_cmd_21()
+            self.send_abort_request()
         else:
             print(f"prp frame decoder: _rx_resp")
-            # self._rx_resp_cmd_21()
-            return b''
-            # Optional: Status für Abort senden
-            # if self._next_pack_meta[0] == PRP_OPT_ESC_CLI:  # Wenn vorheriges war CLI-ESC
-            #    self._send_cli_esc_abort_recv_status()
         return b''
 
     def _handle_disco(self, tx, payload):
         """ Disconnect 22 """
         if tx:
-            self._prp_root._rx_cmd_disco()
+            self._prp_root.rx_cmd_disco()
         return b''
 
     def _handle_login_req(self, tx, payload):
         """ Login Request 23 """
-        if tx:
-            self._prp_root._rx_cmd_login_request()
-        else:
-            self._prp_root._rx_cmd_login_challenge(payload)
+        self._prp_auth.handle_login_req(tx, payload)
         return b''
 
     def _handle_login_resp(self, tx, payload):
         """ Login Response 24 """
-        if tx:
-            self._prp_root._rx_cmd_login_response(payload)
-        else:
-            self._prp_root._rx_cmd_login_ack(payload)
+        self._prp_auth.handle_login_resp(tx, payload)
         return b''
 
     def _handle_logout(self, tx, payload):
         """ Logout 25 """
-        if tx:
-            self._prp_root._rx_cmd_logout()
-        else:
-            self._prp_root._rx_cmd_logout_response()
+        self._prp_auth.handle_logout(tx, payload)
         return b''
 
     def _handle_state_update(self, tx, payload):
         """ State Update 26 """
         if tx:
-            self._prp_root.rx_remote_state_update(payload)
+            self._state_manager.rx_remote_state_update(payload)
         else:
-            self._prp_root.rx_resp_remote_state_update(payload)
+            self._state_manager.rx_resp_remote_state_update(payload)
         return b''
 
     def _handle_cli_esc(self, tx, payload):
@@ -321,10 +308,32 @@ class PRPProtocolHandler:
             self._prp_tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
 
     # ===================================================================
+    # ====== Abort I/O
+    # ===================================================================
+    def send_abort_request(self):
+        """ RX CMD 21 - ABORT - CLI-ESC Abort """
+        logger.info(
+            f"PRP: Abort-REQ(CLI-ESC) empfangen (OPT-ID 21). Breche das Senden ab und lösche TX-Buffer. UID: {self._prp_root.uid}")
+        # == Status MSG to GUI ????????
+        self._prp_root.send_cli_esc_abort_sender_status()
+        # == ESC-CLI Frame aus ax25Conn PRP-Rest-buffer löschen
+        logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._prp_root.uid}")
+        # == Lösche AX25Conn sende Buffer (nut tx-buffer, nicht prp-q buffer)
+        self._prp_tx_buffer.del_tx_buff(PRP_OPT_ESC_CLI)
+        # == Send Response
+        self.send_abort_frame()
+        return
+
+    def send_abort_frame(self):
+        """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
+        # == Sende Abort Frame
+        self._prp_root.prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=b'', prio=True)
+
+    # ===================================================================
     # Public TX Helpers (werden von PRPremote aufgerufen)
     # ===================================================================
     def send_command(self, opt_id: int, data: bytes = b'', prio: bool = False,
-                     compress: bool = True, send_uncompressed: bool = True) -> bool:
+                     compress: bool = True, send_uncompressed: bool = True):
         """
         Bequeme Methode zum Senden von Control-Commands.
         """

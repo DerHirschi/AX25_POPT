@@ -26,9 +26,11 @@ PRP_OPT_ESC_CLI         = 62 # Payload wird an CLI durchgereicht
 PRP_OPT_PRP_BATCH       = 63 # PRP-Frame Batch processing
 ####################################################################################
 # ACK / Response
-PRP_DONT_ACK = (PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_20, PRP_OPT_21)
+PRP_DONT_ACK = (PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_LOGIN_RESP, PRP_OPT_20, PRP_OPT_21)
 PRP_ACK      = b'O'
 PRP_NACK     = b'F'
+PRP_IS_ACK   = lambda payload: True if payload == PRP_ACK else False
+
 ####################################################################################
 # PRP-ABORT Frame.
 PRP_ABORT_FRAME = b'\x8d\x81\x15\x00\x00\x0fd' # Verwirft teilweise empfangenen PRP-Frame, wenn PRP-ABORT im Datenstrom gefunden

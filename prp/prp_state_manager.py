@@ -2,6 +2,7 @@
 import copy
 
 from cfg.logger_config import logger
+from prp.prp_const import PRP_OPT_STATE_UPDATE, PRP_ACK, PRP_NACK, PRP_IS_ACK
 
 
 class PRPStateManager:
@@ -284,3 +285,49 @@ class PRPStateManager:
 
     def has_changed(self, updates: dict, key: str):
         return key in updates and updates[key] != self.get_own(key)
+
+    # ===================================================================
+    # API für PRP Protokoll handler
+    # ===================================================================
+
+    def rx_remote_state_update(self, payload: bytes):
+        updates = self.decode_payload(payload)
+        if updates:
+            self._response_state_update(updates)
+            self.update_own(updates)  # oder besser: self._state_manager.update_own(updates)
+            logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
+            self._tx_resp_remote_state_update(success=True)
+        else:
+            self._tx_resp_remote_state_update(success=False)
+        self._prp_root.local_response_handler(PRP_OPT_STATE_UPDATE)
+
+    # == Response
+    def _tx_resp_remote_state_update(self, success: bool):
+        """ TX Respond State Update (ACK) """
+        data = PRP_ACK if success else PRP_NACK
+        self._prp_root.prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
+
+    def rx_resp_remote_state_update(self, payload: bytes):
+        """ RX Respond State Update (ACK) """
+        if PRP_IS_ACK(payload):
+            logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
+            logger.debug(f"PRP: Bestätige State Update: {self._prp_root.uid}")
+            for k, v in self.remote.items():
+                logger.debug(f"PRP: {k}:{v}")
+        else:
+            logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._prp_root.uid}")
+
+    # == Response nach, erhalten eines Updates
+    def _response_state_update(self, state_update: dict):
+        """ Checke State-updates auf Änderungen und führe Action aus """
+        # == Remote Monitor
+        if self.has_changed(state_update, 'gui_rem_mon'):
+            # == Remote Monitor STOP
+            if not state_update['gui_rem_mon']:
+                # == Lösche TX-Buffer & sende ABORT-Resp
+                self._prp_root.remote_monitor.abort()
+                return
+        # == CLI-ESC Sync
+        if self.has_changed(state_update, 'cli_esc'):
+            # == Sync CLI-ESC Own State with remote State
+            self.set_remote('cli_esc', state_update['cli_esc'])

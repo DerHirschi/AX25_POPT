@@ -198,5 +198,5 @@ class PRPRemoteMonitor:
         logger.debug(f"PRP: Remote Monitor Abort für UID {self._prp_root.uid}")
         self._batch_buffer.buffer_clear()
         self._prp_tx_buffer.del_tx_buff(PRP_OPT_PRP_BATCH)
-        self._prp_root._tx_resp_cmd_21()  # Abort-Response senden
+        self._prp_protocol.send_abort_frame()  # Abort-Frame senden
 
