@@ -128,10 +128,10 @@ class PRPProtocolHandler:
                     ack = False
                 if ack:
                     # ACK CFG und update Remote-States
-                    self._prp_root._ack_pending_remote_states(opt_id)
+                    self._prp_root.state_manager.ack_pending_remote_states(opt_id)
                 else:
                     # Optional: Pending löschen oder retry
-                    self._prp_root._del_pending_remote_states(opt_id)
+                    self._prp_root.state_manager.del_pending(opt_id)
             # Response Handler / GUI Updates usw.
             self._prp_root._local_response_handler(opt_id, resp_ok=ack)
 
@@ -248,6 +248,7 @@ class PRPProtocolHandler:
         else:
             pass
         return b''
+
 
     # ===================================================================
     # ====== PRP Batch Mode I/O

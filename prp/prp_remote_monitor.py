@@ -27,31 +27,31 @@ class PRPRemoteMonitor:
 
         # Batch-Buffer und Timer
         self._batch_buffer = ListBuffer()  # Speichert ax25frame_conf Dict
-        self._batch_timer  = time.time() + self._prp_root._get_own_state('batch_wait')
+        self._batch_timer  = time.time() + self._prp_root.get_own_state('batch_wait')
 
     def _get_batch_wait(self):
-        return self._prp_root._get_own_state('batch_wait')
+        return self._prp_root.get_own_state('batch_wait')
 
     def _is_gui_rem_mon(self):
-        return self._prp_root._get_own_state('gui_rem_mon')
+        return self._prp_root.get_own_state('gui_rem_mon')
 
     def _is_cli_rem_mon(self):
-        return self._prp_root._get_own_state('cli_rem_mon')
+        return self._prp_root.get_own_state('cli_rem_mon')
 
     def _get_rem_mon_port(self):
-        return self._prp_root._get_own_state('rem_mon_port')
+        return self._prp_root.get_own_state('rem_mon_port')
 
     def _get_incl_filter(self):
-        return self._prp_root._get_own_state('rem_mon_incl')
+        return self._prp_root.get_own_state('rem_mon_incl')
 
     def _get_excl_filter(self):
-        return self._prp_root._get_own_state('rem_mon_excl')
+        return self._prp_root.get_own_state('rem_mon_excl')
 
     def _is_batch_mode(self):
-        return self._prp_root._get_own_state('batch_mode') == 'on'
+        return self._prp_root.get_own_state('batch_mode') == 'on'
 
     def _is_batch_mode_auto(self):
-        return self._prp_root._get_own_state('batch_mode') == 'auto'
+        return self._prp_root.get_own_state('batch_mode') == 'auto'
 
     def _can_send_next_batch(self, payload_len: int):
         return self._prp_root.tx_buffer.can_send_next_prp_batch(payload_len)

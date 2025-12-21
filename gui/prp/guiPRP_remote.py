@@ -930,7 +930,7 @@ class PRP_Tab(ttk.Frame):
     def _get_prp_remote_stats(self):
         prp = self._get_prp()
         if hasattr(prp, 'get_rem_states'):
-            return prp.get_rem_states()
+            return prp.get_rem_states
         logger.error("Attribute Error: _get_prp_remote_cfg")
         return None
 
