@@ -21,6 +21,7 @@ from prp.prp_const import PRP_FESC, PRP_FESC_TFESC, PRP_FEND, PRP_FESC_TFEND, PR
     PRP_OPT_ESC_CLI, PRP_OPT_PRP_BATCH, PRP_BATCH_MIN_PACK, PRP_BATCH_MAX_PAY, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN, \
     PRP_ACK, PRP_VER_RESTR, PRP_SW_RESTR, PRP_VER_RESTR_HANDSHAKE, PRP_ABORT_FRAME
 from prp.prp_dec_fnc import pack_6bit_int_and_bool, unpack_6bit_int_and_bool, pack_time_hms, unpack_time_hms_to_datetime
+from prp.prp_rx_processor import PRP_RX_Processor
 from prp.prp_tx_buffer import PrpTxBuffer
 
 DBUG_PW = 'test1234'
@@ -48,8 +49,12 @@ class PRPremote:
         self.is_prp_opt_id_in_tx_buff  = lambda opt_id: self._tx_buffer.is_prp_opt_id_in_tx_buff(opt_id)
 
         #################################
+        # RX Processor
+        self._rx_processor = PRP_RX_Processor(self)
+
+        #################################
         # Decoding Resterampe
-        self._rest_buffer  = bytearray()
+        #self._rest_buffer  = bytearray()
 
         #################################
         # Helper PRP
@@ -57,9 +62,9 @@ class PRPremote:
 
         #################################
         # Meta Daten für QSO-Status Msg
-        self._comp_pack_meta   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
-        self._next_pack_meta   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
-        self._last_pack_meta   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
+        #self._comp_pack_meta   = None  # RX (opt-id, prp-payload-len, payload-len) Zum Berechnen des der Größe des Restpaketes
+        # self._next_pack_meta   = None  # RX (opt-id, prp-payload-len) Zum Berechnen des der Größe des Restpaketes
+        #self._last_pack_meta   = None  # TX (org-payload-len, prp-pack-len) Für Status Meldungen
 
         #################################
         # Own States / States der eigenen Station
@@ -195,7 +200,7 @@ class PRPremote:
             data = data.replace(PRP_FEND, PRP_FESC_TFEND)
 
         # Meta Date für Status Msg
-        self._last_pack_meta = data_len, comp_data_len
+        self._rx_processor.set_last_pack_meta((data_len, comp_data_len))
         # Building Packet
         data_to_send  = bytearray()
         data_to_send += pack_6bit_int_and_bool(value=int(opt_id), flag1=tx, flag2=send_compressed)
@@ -236,7 +241,7 @@ class PRPremote:
             lzhuf   = LZHUF_Comp()
             payload = lzhuf.decode(payload)
         # Frame Status
-        self._comp_pack_meta = opt_id, prp_payload_len, len(payload)
+        self._rx_processor.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
         ################################################################
         # 0 - 19 = Port ID
         if opt_id in range(20):
@@ -370,7 +375,7 @@ class PRPremote:
         )
         if not data2send:
             # Lösche Meta Daten für Status Meldungen
-            self._last_pack_meta = None
+            self._rx_processor.clear_last_pack_meta()
             return False
 
         # Abort Frames immer als Erstes senden
@@ -389,99 +394,11 @@ class PRPremote:
         return self._tx_buffer
 
     def prp_rx(self, data: bytes):
-        # Opt by Grok-AI
-        # == Kombiniere mit Buffer, falls vorhanden
-        if self._rest_buffer:
-            data = self._rest_buffer + data
-            self._rest_buffer = bytearray()
-
-        rest_data  = bytearray()  # Sammelt den Non-Remote-Monitor-Stream
-        data_len   = len(data)
-        i = 0
-
-        while i < data_len:
-
-            # == Suche nächsten Frame-Start (8D 81)
-            if data[i:i + 2] == PRP_FLAG:
-
-                # == Potenzieller Frame-Start gefunden
-                self._next_pack_meta = None
-                if i + 5 > data_len:
-                    # == Header unvollständig -> puffern
-                    self._rest_buffer   = data[i:]
-                    break
-
-                # == Entpacke Header Daten
-                opt_id, _, _ = unpack_6bit_int_and_bool(data[i + 2:i + 3])
-                length       = int.from_bytes(data[i + 3:i + 5], 'little')
-                frame_end    = i + 5 + length + 2  # Header(5)+ len+ CRC(2)
-
-                # == Speicher Frame Status (CLI-ESC Meta)
-                self._next_pack_meta = opt_id, length
-
-                # ===============================================
-                # == Potenziellen ABORT Frame im Datensatz suchen
-                # PRP-Flag(2) + FLAG(2) + OPT(1) + LEN(2) + CRC(2)
-                if frame_end > data_len: # Min 12 Bytes
-                    try:
-                        abort_index =  data[i + 2:].index(PRP_ABORT_FRAME)   # Kann nur nach normaler Flag kommen
-                    except ValueError:
-                        pass
-                    else:
-                        logger.info(f"PRP: Abort-Sequence im Payload gefunden. Verwerfe bereits empfangenes Paket")
-
-                        self._send_cli_esc_abort_recv_status()  # Rufe immer, filter intern
-
-                        self._comp_pack_meta = None
-                        self._next_pack_meta = None
-                        self._rest_buffer    = bytearray()
-
-                        # == Entferne ABORT aus data gegen Loop
-                        full_abort_index = i + 2 + abort_index + len(PRP_ABORT_FRAME)
-                        i                = full_abort_index
-                        continue
-
-                # == Immer noch kein komplettes PRP-Frame ?
-                if frame_end > data_len:
-                    # Frame unvollständig -> puffern
-                    self._rest_buffer   = data[i:]
-                    self._send_cli_esc_recv_status()
-                    break
-
-                # == Komplettes Frame extrahiert!
-                rem_mon_pack = data[i:frame_end]
-
-                try:
-                    # == Process PRP-Frame
-                    rest_data += self._prp_rx_process(rem_mon_pack)
-                except EncodingWarning:
-                    logger.debug("PRP: Data Chunk:")
-                    logger.debug(f"PRP:   DATA  : {data}")
-                    logger.debug(f"PRP:   DATA H: {bytearray2hexstr(data)}")
-                    logger.debug(f"PRP:   REST  : {rest_data}")
-                    logger.debug(f"PRP:   REST H: {bytearray2hexstr(rest_data)}")
-
-                self._next_pack_meta = None
-                # == Springe zum nächsten Byte nach dem Frame
-                i = frame_end
-                continue
-
-            # =================== KEIN FRAME ===================
-            rest_data.append(data[i])
-            i += 1
-
-        # Wenn Rest nach letztem Frame übrig zu rest_data hinzufügen (aber hier schon in Schleife gehandhabt)
-        if rest_data[-1:] == PRP_FEND:   # == 8D ?
-            self._rest_buffer = rest_data[-1:]
-            logger.debug(
-                f"PRP_RX-!!!: Potenzieller Flag-Start (letztes Byte) gepuffert: {bytearray2hexstr(rest_data[-1:])}")
-            logger.debug(
-                f"PRP_RX-!!!: Return CLI-Data (Länge: {len(rest_data[:-1])}) HEX: {bytearray2hexstr(rest_data[:-1])}")
-            return bytes(rest_data[:-1])
-        if rest_data:
-            logger.debug(
-                f"PRP_RX: Return CLI-Data (Länge: {len(rest_data)}) HEX: {bytearray2hexstr(rest_data)}")
-        return bytes(rest_data)
+        """
+        Eingehende Daten vom AX25-Layer.
+        Leitet einfach an den RX-Processor weiter.
+        """
+        return self._rx_processor.process(data)
 
     # ====== Processing PRP-Frame
     def _prp_rx_process(self, rem_mon_frame: bytes):
@@ -582,7 +499,7 @@ class PRPremote:
                                    )
         # Wenn gesendet nicht gesendet, lösche Metadaten für Status MSG
         if not send_as_prp:
-            self._last_pack_meta = None
+            self._rx_processor.clear_last_pack_meta()
         # Zurück zur AX25Conn.send_data()
         return send_as_prp
 
@@ -1582,10 +1499,10 @@ class PRPremote:
         TX.
         Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
         """
-        if self._last_pack_meta is None:
+        if self._rx_processor.last_pack_meta is None:
             return None
 
-        len_payload, len_compressed = self._last_pack_meta
+        len_payload, len_compressed = self._rx_processor.last_pack_meta
         compression_ratio = round((len_payload / len_compressed) * 100)
 
         return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed}/{len_payload} Bytes"
@@ -1595,19 +1512,19 @@ class PRPremote:
         RX.
         Gibt den Status eines unvollständigen CLI-ESC-Frames zurück, falls vorhanden.
         """
-        if self._next_pack_meta is None and self._comp_pack_meta is None:
+        if self._rx_processor.next_pack_meta is None and self._rx_processor.comp_pack_meta is None:
             return  # Kein unvollständiges Frame oder Header unvollständig
 
         # == Paket ist noch im Empfang (Restbuffer)
-        if self._next_pack_meta is not None:
-            opt_id, payload_len = self._next_pack_meta
+        if self._rx_processor.next_pack_meta is not None:
+            opt_id, payload_len = self._rx_processor.next_pack_meta
             # == Nur für CLI-ESC (OPT 62, TX-Flag)
             if opt_id != PRP_OPT_ESC_CLI:
                 return
 
             # == Berechne Fortschritt
             total_bytes = 7 + payload_len  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
-            received_bytes = len(self._rest_buffer)
+            received_bytes = self._rx_processor.rest_buffer_len
 
             if not received_bytes:
                 return
@@ -1625,8 +1542,8 @@ class PRPremote:
 
 
         # === Genau 100 % → Erfolgsmeldung (einmalig anzeigen) ===
-        if self._comp_pack_meta is not None:
-            opt_id, prp_payload_len, payload_len = self._comp_pack_meta
+        if self._rx_processor.comp_pack_meta is not None:
+            opt_id, prp_payload_len, payload_len = self._rx_processor.comp_pack_meta
             if opt_id != PRP_OPT_ESC_CLI:
                 return
             # Optional: Kompressionsrate berechnen (wenn möglich)
@@ -1639,7 +1556,7 @@ class PRPremote:
             status_msg = f"PRP ▼ [{bar}](100%) - Compressed({comp_ratio}%) - Data:{prp_payload_len}/{payload_len} Bytes"
             self._send_cli_esc_status_to_QSO(status_msg, tx=False)
 
-            self._comp_pack_meta = None
+            self._rx_processor.clear_comp_pack_meta()
             return
 
         # === Mehr als total_bytes → sollte nie passieren, aber sicherheitshalber ===
@@ -1668,10 +1585,10 @@ class PRPremote:
         RX.
         Sendet ABORT Mitteilung an gui.qso
         """
-        if self._next_pack_meta is None:
+        if self._rx_processor.next_pack_meta is None:
             return
 
-        opt_id, payload_len = self._next_pack_meta
+        opt_id, payload_len = self._rx_processor.next_pack_meta
         # == Nur für CLI-ESC (OPT 62, TX-Flag)
         if opt_id != PRP_OPT_ESC_CLI:
             logger.info(f"PRP: Abgebrochener Frame OPT-ID: {opt_id} - UID: {self._uid}")
