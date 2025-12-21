@@ -88,6 +88,7 @@ class ByteArrayBuffer:
 
     def buffer_set(self, data):
         if not isinstance(data, (bytes, bytearray)):
+            print(f"Error : {data}  - {type(data)}")
             return False
         self._get_thread_lock()
         self._buffer = data
