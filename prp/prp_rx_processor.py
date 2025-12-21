@@ -120,9 +120,7 @@ class PRP_RX_Processor:
             logger.debug(
                 f"PRP_RX-!!!: Return CLI-Data (Länge: {len(rest_data[:-1])}) HEX: {bytearray2hexstr(rest_data[:-1])}")
             return bytes(rest_data[:-1])
-        if rest_data:
-            logger.debug(
-                f"PRP_RX: Return CLI-Data (Länge: {len(rest_data)}) HEX: {bytearray2hexstr(rest_data)}")
+
         return bytes(rest_data)
 
     # Optional: Zugriff auf Meta-Daten für Status-Anzeige (falls nötig)

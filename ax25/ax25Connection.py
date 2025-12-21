@@ -487,7 +487,7 @@ class AX25Conn:
         """ TX-Buffer / PRP-Buffer / PRP-Prio-Buffer """
         ######################################
         # PRP TX Buffer !!                   #
-        data     = self._prp_remote.prp_tx_buffer.get_payload_fm_tx_buffer(int(self.parm_PacLen))
+        data     = self._prp_remote.tx_buffer.get_payload_fm_tx_buffer(int(self.parm_PacLen))
         data_len = len(data)
         #################################################
         # Normal TX Buffer                              #
