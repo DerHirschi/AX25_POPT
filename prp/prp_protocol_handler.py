@@ -19,9 +19,13 @@ class PRPProtocolHandler:
 
     def __init__(self, prp_root):
         """
-        :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf _prp_rx_process, Status-Meldungen etc.)
+        :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf prp_rx_process, Status-Meldungen etc.)
         """
         self._prp_root       = prp_root
+        self._rx_process     = self._prp_root.rx_processor
+        self._state_manager  = self._prp_root.state_manager
+        self._prp_tx_buffer  = self._prp_root.tx_buffer
+        self._prp_handshake  = self._prp_root.handshake
 
     # ===================================================================
     # Encoding
@@ -49,7 +53,7 @@ class PRPProtocolHandler:
             data = data.replace(PRP_FEND, PRP_FESC_TFEND)
 
         # Meta Date für Status Msg
-        self._prp_root.rx_processor.set_last_pack_meta((data_len, comp_data_len))
+        self._rx_process.set_last_pack_meta((data_len, comp_data_len))
         # Building Packet
         data_to_send  = bytearray()
         data_to_send += pack_6bit_int_and_bool(value=int(opt_id), flag1=tx, flag2=send_compressed)
@@ -68,7 +72,7 @@ class PRPProtocolHandler:
     def decode_and_dispatch(self, data: bytes):
         """
         Dekodiert ein vollständiges PRP-Frame und dispatched es.
-        Wird von _prp_rx_process() aufgerufen.
+        Wird von prp_rx_process() aufgerufen.
         Gibt CLI-Payload zurück (falls vorhanden).
         """
         opt_byte = data[2:3]
@@ -98,7 +102,7 @@ class PRPProtocolHandler:
             lzhuf = LZHUF_Comp()
             payload = lzhuf.decode(payload)
         # Frame Status
-        self._prp_root.rx_processor.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
+        self._rx_process.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
         ################################################################
         # 0 - 19 = Port ID
         if opt_id < 20:
@@ -128,10 +132,10 @@ class PRPProtocolHandler:
                     ack = False
                 if ack:
                     # ACK CFG und update Remote-States
-                    self._prp_root.state_manager.ack_pending_remote_states(opt_id)
+                    self._state_manager.ack_pending_remote_states(opt_id)
                 else:
                     # Optional: Pending löschen oder retry
-                    self._prp_root.state_manager.del_pending(opt_id)
+                    self._state_manager.del_pending(opt_id)
             # Response Handler / GUI Updates usw.
             self._prp_root._local_response_handler(opt_id, resp_ok=ack)
 
@@ -177,9 +181,10 @@ class PRPProtocolHandler:
     def _handle_handshake(self, tx, payload):
         """ Handshake 20 """
         if tx:
-            self._prp_root._rx_cmd_20(payload)
+            self._prp_handshake.handle_cmd(payload)
         else:
-            self._prp_root._rx_resp_cmd_20(payload)
+            success = self._prp_handshake.handle_resp(payload)
+            # Optional: weitere Aktionen bei Erfolg
         return b''
 
     def _handle_abort(self, tx, payload):
@@ -228,9 +233,9 @@ class PRPProtocolHandler:
     def _handle_state_update(self, tx, payload):
         """ State Update 26 """
         if tx:
-            self._prp_root._rx_remote_state_update(payload)
+            self._prp_root.rx_remote_state_update(payload)
         else:
-            self._prp_root._rx_resp_remote_state_update(payload)
+            self._prp_root.rx_resp_remote_state_update(payload)
         return b''
 
     def _handle_cli_esc(self, tx, payload):
@@ -303,7 +308,7 @@ class PRPProtocolHandler:
                 logger.debug(f"Sende Batch len      : {len(batch_data)} Bytes")
                 logger.debug(f"Sende Batch-Paket len: {len(data2send)} Bytes")
                 logger.debug(f"Comp Ratio           : {len(batch_data) / len(data2send)}")
-                self._prp_root.tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
+                self._prp_tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
                 batch_data = bytearray()
         # Und den Rest
         if batch_data:
@@ -313,7 +318,7 @@ class PRPProtocolHandler:
             logger.debug(f"Sende Batch Rest len      : {len(batch_data)} Bytes")
             logger.debug(f"Sende Batch-Paket Rest len: {len(data2send)} Bytes")
             logger.debug(f"Comp Ratio Rest           : {len(batch_data) / len(data2send)}")
-            self._prp_root.tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
+            self._prp_tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
 
     # ===================================================================
     # Public TX Helpers (werden von PRPremote aufgerufen)

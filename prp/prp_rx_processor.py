@@ -14,9 +14,11 @@ class PRP_RX_Processor:
 
     def __init__(self, prp_root):
         """
-        :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf _prp_rx_process, Status-Meldungen etc.)
+        :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf prp_rx_process, Status-Meldungen etc.)
         """
         self._prp_root       = prp_root
+
+        #################################
         self._rest_buffer    = bytearray()       # Puffer für unvollständige Daten
 
         #################################
@@ -95,7 +97,7 @@ class PRP_RX_Processor:
 
                 try:
                     # == Process PRP-Frame
-                    rest_data += self._prp_root._prp_rx_process(rem_mon_pack)
+                    rest_data += self._prp_root.prp_rx_process(rem_mon_pack)
                 except EncodingWarning:
                     logger.debug("PRP: Data Chunk:")
                     logger.debug(f"PRP:   DATA  : {data}")

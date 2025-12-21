@@ -21,40 +21,45 @@ class PRPRemoteMonitor:
         """
         :param prp_root: Referenz auf PRPremote-Instanz
         """
-        self._prp_root = prp_root
-        self._uid         = self._prp_root.uid
-        self._reverse_uid = reverse_uid(self._uid)
+        self._prp_root          = prp_root
+        self._state_manager     = self._prp_root.state_manager
+        self._prp_tx_buffer     = self._prp_root.tx_buffer
+        self._prp_protocol      = self._prp_root.protocol
 
-        # Batch-Buffer und Timer
+        # == UID
+        self._uid               = self._prp_root.uid
+        self._reverse_uid       = reverse_uid(self._uid)
+
+        # == Batch-Buffer und Timer
         self._batch_buffer = ListBuffer()  # Speichert ax25frame_conf Dict
-        self._batch_timer  = time.time() + self._prp_root.get_own_state('batch_wait')
+        self._batch_timer  = time.time() + self._state_manager.get_own('batch_wait')
 
     def _get_batch_wait(self):
-        return self._prp_root.get_own_state('batch_wait')
+        return self._state_manager.get_own('batch_wait')
 
     def _is_gui_rem_mon(self):
-        return self._prp_root.get_own_state('gui_rem_mon')
+        return self._state_manager.get_own('gui_rem_mon')
 
     def _is_cli_rem_mon(self):
-        return self._prp_root.get_own_state('cli_rem_mon')
+        return self._state_manager.get_own('cli_rem_mon')
 
     def _get_rem_mon_port(self):
-        return self._prp_root.get_own_state('rem_mon_port')
+        return self._state_manager.get_own('rem_mon_port')
 
     def _get_incl_filter(self):
-        return self._prp_root.get_own_state('rem_mon_incl')
+        return self._state_manager.get_own('rem_mon_incl')
 
     def _get_excl_filter(self):
-        return self._prp_root.get_own_state('rem_mon_excl')
+        return self._state_manager.get_own('rem_mon_excl')
 
     def _is_batch_mode(self):
-        return self._prp_root.get_own_state('batch_mode') == 'on'
+        return self._state_manager.get_own('batch_mode') == 'on'
 
     def _is_batch_mode_auto(self):
-        return self._prp_root.get_own_state('batch_mode') == 'auto'
+        return self._state_manager.get_own('batch_mode') == 'auto'
 
     def _can_send_next_batch(self, payload_len: int):
-        return self._prp_root.tx_buffer.can_send_next_prp_batch(payload_len)
+        return self._prp_tx_buffer.can_send_next_prp_batch(payload_len)
 
 
     # ===================================================================
@@ -135,7 +140,7 @@ class PRPRemoteMonitor:
             rx_time = conf.get('rx_time', datetime.datetime.now())
 
             data = pack_time_hms(rx_time) + ax25_raw
-            encoded = self._prp_root.protocol.encode_frame(
+            encoded = self._prp_protocol.encode_frame(
                 opt_id=int(port_id),
                 tx=tx,
                 data=data,
@@ -176,7 +181,7 @@ class PRPRemoteMonitor:
         # Als echter Batch senden
         batch_frames = self._build_batch_frames()
         if batch_frames:
-            self._prp_root.protocol.prp_batch_tx(batch_frames)
+            self._prp_protocol.prp_batch_tx(batch_frames)
 
         # Buffer leeren (falls nicht bereits durch _build_batch_frames geschehen)
         self._batch_buffer.buffer_clear()
@@ -192,6 +197,6 @@ class PRPRemoteMonitor:
         """Wird aufgerufen, wenn Remote-Monitor ausgeschaltet wird"""
         logger.debug(f"PRP: Remote Monitor Abort für UID {self._prp_root.uid}")
         self._batch_buffer.buffer_clear()
-        self._prp_root.tx_buffer.del_tx_buff(PRP_OPT_PRP_BATCH)
+        self._prp_tx_buffer.del_tx_buff(PRP_OPT_PRP_BATCH)
         self._prp_root._tx_resp_cmd_21()  # Abort-Response senden
 

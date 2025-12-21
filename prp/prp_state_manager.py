@@ -132,9 +132,12 @@ class PRPStateManager:
         return True
 
     @property
-    def own_states(self):
-        return dict(self._own_states)
+    def own(self):
+        return self._own_states
 
+    @property
+    def remote(self):
+        return self._remote_states
     # ===================================================================
     # Remote States
     # ===================================================================
@@ -147,10 +150,6 @@ class PRPStateManager:
 
     def update_remote(self, cfg: dict):
         self._remote_states.update(cfg)
-
-    @property
-    def remote_states(self):
-        return dict(self._remote_states)
 
     # ===================================================================
     # Pending ACKs
@@ -212,7 +211,7 @@ class PRPStateManager:
 
         return bytes(payload)
 
-    def decode_payload(self, payload: bytes) -> dict:
+    def decode_payload(self, payload: bytes):
         """Dekodiert State-Payload (Handshake oder OPT 26)"""
         i = 0
         updates = {}
