@@ -12,8 +12,9 @@ class PRPControlHandler:
 
     def __init__(self, prp_root):
         self._prp_root  = prp_root
-        self._tx_buffer = prp_root.tx_buffer
-        self._protocol  = prp_root.protocol
+        self._tx_buffer = prp_root.prp_tx_buffer
+        self._protocol  = prp_root.prp_protocol
+        self._cli_esc   = prp_root.prp_cli_esc
 
     # ===================================================================
     # Öffentliche API
@@ -75,7 +76,7 @@ class PRPControlHandler:
         logger.info(f"PRP Control: Abort-Request empfangen – breche Senden ab – UID: {self._prp_root.uid}")
 
         # Status an GUI
-        self._prp_root.send_cli_esc_abort_sender_status()
+        self._cli_esc.send_abort_sender_status()
 
         logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._prp_root.uid}")
         # TX-Buffer für CLI-ESC leeren
@@ -95,8 +96,8 @@ class PRPControlHandler:
         logger.info(f"PRP Control: Disconnect empfangen – trenne Verbindung – UID: {self._prp_root.uid}")
 
         # Remote Monitor deaktivieren
-        self._prp_root.state_manager.set_own('gui_rem_mon', False)
-        self._prp_root.state_manager.set_own('cli_rem_mon', False)
+        self._prp_root.prp_state_manager.set_own('gui_rem_mon', False)
+        self._prp_root.prp_state_manager.set_own('cli_rem_mon', False)
 
         # TX-Buffer leeren
         self._tx_buffer.del_tx_buff(None)

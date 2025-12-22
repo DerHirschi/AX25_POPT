@@ -73,7 +73,7 @@ class PRP_RX_Processor:
                     else:
                         logger.info(f"PRP: Abort-Sequence im Payload gefunden. Verwerfe bereits empfangenes Paket")
 
-                        self._prp_root.send_cli_esc_abort_recv_status()  # Rufe immer, filter intern
+                        self._prp_root.prp_cli_esc.send_abort_recv_status()  # Rufe immer, filter intern
 
                         self._comp_pack_meta = None
                         self._next_pack_meta = None
@@ -88,7 +88,7 @@ class PRP_RX_Processor:
                 if frame_end > data_len:
                     # Frame unvollständig -> puffern
                     self._rest_buffer = data[i:]
-                    self._prp_root.send_cli_esc_recv_status()
+                    self._prp_root.prp_cli_esc.send_recv_status()
                     break
 
                 # == Komplettes Frame extrahiert!

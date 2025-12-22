@@ -5,6 +5,7 @@
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
 from prp.prp_auth_handler import PRPAuthHandler
+from prp.prp_cli_stream_handler import PRPCLIStreamHandler
 from prp.prp_const import PRP_OPT_21, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
     PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN
 from prp.prp_control_handler import PRPControlHandler
@@ -44,13 +45,17 @@ class PRPremote:
         self._prp_auth       = PRPAuthHandler(self)
         # == TX Buffer
         self._tx_buffer      = PrpTxBuffer()
-        # == RX Processor & Protocol
+        # == RX Processor
         self._rx_processor   = PRP_RX_Processor(self)
+        # == CLI-ESC
+        self._cli_esc        = PRPCLIStreamHandler(self)
+        # == Protocol
         self._protocol       = PRPProtocolHandler(self)
         # == Control
         self._prp_control    = PRPControlHandler(self)
         # == Remote Monitor
         self._remote_monitor = PRPRemoteMonitor(self)
+
 
         #################################
         # Helper TX-Buffer
@@ -87,29 +92,33 @@ class PRPremote:
             return None
         return self._connection.cli
 
+    @property
+    def gui(self):
+        return self._get_gui()
+
     # ==== PRP Classes
     @property
-    def tx_buffer(self):
+    def prp_tx_buffer(self):
         return self._tx_buffer
 
     @property
-    def rx_processor(self):
+    def prp_rx_processor(self):
         return self._rx_processor
 
     @property
-    def protocol(self):
+    def prp_protocol(self):
         return self._protocol
 
     @property
-    def remote_monitor(self):
+    def prp_remote_monitor(self):
         return self._remote_monitor
 
     @property
-    def state_manager(self):
+    def prp_state_manager(self):
         return self._state_manager
 
     @property
-    def handshake(self):
+    def prp_handshake(self):
         return self._handshake
 
     @property
@@ -120,12 +129,44 @@ class PRPremote:
     def prp_control(self):
         return self._prp_control
 
+    @property
+    def prp_cli_esc(self):
+        return self._cli_esc
+
     #####################################
     # Tasker (ax25Conn)
     def tasker(self):
         """ Called fm ax25Conn """
         self._remote_monitor.task()
         return True
+
+    #####################################
+    # Response Handler
+    def handle_response(self, opt_id: int, resp_ok=True):
+        """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
+        uid = self._uid
+
+        # ==== Opt bezogener RESP
+        # == Handshake
+        #if opt_id == PRP_OPT_20:
+        #    # if resp_ok:
+        #    self._gui_resp_handshake()  # Jetzt erst nach ACK
+
+        # == Login
+        if opt_id == PRP_OPT_LOGIN_RESP:
+            if resp_ok:
+                self._port_handler.handle_prp_response(PRP_RM_RESP_LOGIN, uid)
+                return
+            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
+            return
+
+        # == Logout
+        elif opt_id == PRP_OPT_LOGOUT:
+            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
+            return
+        #################################
+        # Globaler RESP für Remote Monitor
+        self._port_handler.handle_prp_response('', uid)
 
     ###############################
     # PRP I/O - TX/RX
@@ -165,28 +206,15 @@ class PRPremote:
     # ===================================================================
     def prp_tx_esc_cli(self, payload: bytes):
         """ Sende CLI Escape - AX25Conn.send_data() """
-        # ESC-CLI Mode ist deaktiviert
-        if not self._is_cli_esc_mode():
-            return False
+        return self._cli_esc.send_cli_data(payload)
 
-        # Wird nur gesendet, wenn es sich lohnt (Komprimierung)
-        send_as_prp = self.prp_tx(
-            opt_id=PRP_OPT_ESC_CLI,
-            tx_flag=True,
-            data=payload,
-            prio=True,
-            compress=True,
-            send_uncompressed=False
-        )
-        # Wenn gesendet nicht gesendet, lösche Metadaten für Status MSG
-        if not send_as_prp:
-            self._rx_processor.clear_last_pack_meta()
-        # Zurück zur AX25Conn.send_data()
-        return send_as_prp
-
-    def prp_rx_esc_cli(self, payload: bytes):
-        self.send_cli_esc_recv_status()
-        return payload
+    # === CLI-ESC Status Meldungen für gui.QSO
+    def get_cli_esc_sender_status(self):
+        """
+        TX.
+        Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
+        """
+        return self._cli_esc.get_sender_status()
 
     #####################################
     # Remote Monitor Stream - OPT 0 - 19
@@ -196,34 +224,6 @@ class PRPremote:
             not self._state_manager.get_own('gui_rem_mon')):
             return
         self._remote_monitor.update(ax25frame_conf)
-
-    #####################################
-    # Response Handler
-    def local_response_handler(self, opt_id: int, resp_ok=True):
-        """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
-        uid = self._uid
-
-        # ==== Opt bezogener RESP
-        # == Handshake
-        #if opt_id == PRP_OPT_20:
-        #    # if resp_ok:
-        #    self._gui_resp_handshake()  # Jetzt erst nach ACK
-
-        # == Login
-        if opt_id == PRP_OPT_LOGIN_RESP:
-            if resp_ok:
-                self._port_handler.handle_prp_response(PRP_RM_RESP_LOGIN, uid)
-                return
-            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
-            return
-
-        # == Logout
-        elif opt_id == PRP_OPT_LOGOUT:
-            self._port_handler.handle_prp_response(PRP_RM_RESP_LOGOUT, uid)
-            return
-        #################################
-        # Globaler RESP für Remote Monitor
-        self._port_handler.handle_prp_response('', uid)
 
     #####################################
     # CTL CMD's - OPT 20 - 63
@@ -240,15 +240,6 @@ class PRPremote:
     @property
     def is_handshake_pending(self):
         return self._handshake.is_pending
-
-    def _gui_resp_handshake(self):
-        # == GUI Response
-        gui = self._get_gui()
-        if not hasattr(gui, 'init_popt_remote'):
-            return
-        #
-        gui.init_popt_remote(self._uid)
-        #gui.init_popt_remote(self._remote_uid)
 
     # =============================
     # ====== OPT-ID 21 - Abort
@@ -365,111 +356,3 @@ class PRPremote:
         if not state_key in self._state_manager.remote:
             return None
         return self._state_manager.get_remote(state_key)
-
-    #####################################
-    # CLI I/O
-    # ==== QSO Stream I/O
-    def _send_cli_esc_status_to_QSO(self, status_msg: str, tx: bool):
-        if not hasattr(self._connection, 'send_gui_QSO_PRPstatus'):
-            return
-        self._connection.send_gui_QSO_PRPstatus(status_msg, tx=tx)
-
-    # === CLI-ESC Status Meldungen für gui.QSO
-    def get_cli_esc_sender_status(self):
-        """
-        TX.
-        Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
-        """
-        if self._rx_processor.last_pack_meta is None:
-            return None
-
-        len_payload, len_compressed = self._rx_processor.last_pack_meta
-        compression_ratio = round((len_payload / len_compressed) * 100)
-
-        return f"PRP ▲ Compressed({compression_ratio}%) - {len_compressed}/{len_payload} Bytes"
-
-    def send_cli_esc_recv_status(self):
-        """
-        RX.
-        Gibt den Status eines unvollständigen CLI-ESC-Frames zurück, falls vorhanden.
-        """
-        if self._rx_processor.next_pack_meta is None and self._rx_processor.comp_pack_meta is None:
-            return  # Kein unvollständiges Frame oder Header unvollständig
-
-        # == Paket ist noch im Empfang (Restbuffer)
-        if self._rx_processor.next_pack_meta is not None:
-            opt_id, payload_len = self._rx_processor.next_pack_meta
-            # == Nur für CLI-ESC (OPT 62, TX-Flag)
-            if opt_id != PRP_OPT_ESC_CLI:
-                return
-
-            # == Berechne Fortschritt
-            total_bytes = 7 + payload_len  # Flag(2) + OPT(1) + LEN(2) + Payload + CRC(2)
-            received_bytes = self._rx_processor.rest_buffer_len
-
-            if not received_bytes:
-                return
-
-            # === Noch nicht vollständig → Fortschritt anzeigen ===
-            if received_bytes < total_bytes:
-                percent = int((received_bytes / total_bytes) * 100)
-                pr_ten = round(percent / 10)
-                pr_rest = 10 - pr_ten
-                ## Download Bar
-                bar = f"{'#' * pr_ten}{'.' * pr_rest}"
-                status_msg = f"PRP ▼ [{bar}]({str(percent).ljust(3)}%) - {received_bytes - 7}/{payload_len} Bytes"
-                self._send_cli_esc_status_to_QSO(status_msg, tx=False)
-                return
-
-
-        # === Genau 100 % → Erfolgsmeldung (einmalig anzeigen) ===
-        if self._rx_processor.comp_pack_meta is not None:
-            opt_id, prp_payload_len, payload_len = self._rx_processor.comp_pack_meta
-            if opt_id != PRP_OPT_ESC_CLI:
-                return
-            # Optional: Kompressionsrate berechnen (wenn möglich)
-            try:
-                comp_ratio = f"{round(payload_len / prp_payload_len * 100)}"
-            except Exception as ex:
-                null = ex
-                comp_ratio = "?"
-            bar = '#' * 10
-            status_msg = f"PRP ▼ [{bar}](100%) - Compressed({comp_ratio}%) - Data:{prp_payload_len}/{payload_len} Bytes"
-            self._send_cli_esc_status_to_QSO(status_msg, tx=False)
-
-            self._rx_processor.clear_comp_pack_meta()
-            return
-
-        # === Mehr als total_bytes → sollte nie passieren, aber sicherheitshalber ===
-        return
-
-    # == CLI-ESC ABORT Meldungen für gui.QSO
-    def send_cli_esc_abort_sender_status(self):
-        """
-        TX.
-        Sendet ABORT Mitteilung an gui.qso
-        """
-        status_msg = f"\nPRP ■ !ABORT!"
-        self._send_cli_esc_status_to_QSO(status_msg, tx=True)
-
-    def send_cli_esc_abort_recv_status(self):
-        """
-        RX.
-        Sendet ABORT Mitteilung an gui.qso
-        """
-        if self._rx_processor.next_pack_meta is None:
-            return
-
-        opt_id, payload_len = self._rx_processor.next_pack_meta
-        # == Nur für CLI-ESC (OPT 62, TX-Flag)
-        if opt_id != PRP_OPT_ESC_CLI:
-            logger.info(f"PRP: Abgebrochener Frame OPT-ID: {opt_id} - UID: {self._uid}")
-            return
-
-        # === Fortschritt anzeigen ===
-        status_msg = f"PRP ■ [{'-' * 10}](0  %) ABORT/{payload_len} Bytes"
-        self._send_cli_esc_status_to_QSO(status_msg, tx=False)
-        return
-
-
-

@@ -23,7 +23,7 @@ class PRPAuthHandler:
 
     def __init__(self, prp_root):
         self._prp_root      = prp_root
-        self._state_manager = prp_root.state_manager
+        self._state_manager = prp_root.prp_state_manager
 
         # Temporäre Auth-Daten
         self._login_nonce   = None         # Server-seitig: gesendeter Nonce

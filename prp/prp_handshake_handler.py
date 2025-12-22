@@ -13,7 +13,7 @@ class PRPHandshakeHandler:
 
     def __init__(self, prp_root):
         self._prp_root      = prp_root
-        self._state_manager = self._prp_root.state_manager
+        self._state_manager = self._prp_root.prp_state_manager
 
         self._set_own_identy    = lambda val: self._state_manager.set_own('stat_identy', val)
 
@@ -50,7 +50,7 @@ class PRPHandshakeHandler:
 
         self._set_own_identy(own_identy)
         self._pending = True
-        self._prp_root._gui_resp_handshake()
+        self._notify_gui()
 
         identy_bytes = str(own_identy.id_str).encode('ASCII', 'ignore')
 
@@ -78,14 +78,14 @@ class PRPHandshakeHandler:
             self._pending = False
             logger.warning(f"PRP: Handshake abgelehnt von {self._prp_root.uid}")
             self._set_remote_identy(None)
-            self._prp_root._gui_resp_handshake()
+            self._notify_gui()
             return False
 
         if b'\x00' not in payload:
             success = self._handle_short_format(payload)
             if success:
                 self._pending = False
-                self._prp_root._gui_resp_handshake()
+                self._notify_gui()
             return success
 
         return self._handle_long_format(payload, is_response=True)
@@ -169,9 +169,14 @@ class PRPHandshakeHandler:
 
         if is_response:
             self._pending = False
-        self._prp_root._gui_resp_handshake()
+        self._notify_gui()
 
         return True
+
+    def _notify_gui(self):
+        gui = self._prp_root.gui
+        if hasattr(gui, 'init_popt_remote'):
+            gui.init_popt_remote(self._prp_root.uid)
 
     # ===================================================================
     # Helper
@@ -198,4 +203,4 @@ class PRPHandshakeHandler:
 
         self._set_remote_identy(remote_identy)
         self.initiate(short_format=False)
-        self._prp_root._gui_resp_handshake()
+        self._notify_gui()

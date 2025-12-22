@@ -22,11 +22,12 @@ class PRPProtocolHandler:
         :param prp_root: Referenz auf PRPremote-Instanz (für Zugriff auf prp_rx_process, Status-Meldungen etc.)
         """
         self._prp_root       = prp_root
-        self._rx_process     = prp_root.rx_processor
-        self._state_manager  = prp_root.state_manager
-        self._prp_tx_buffer  = prp_root.tx_buffer
-        self._prp_handshake  = prp_root.handshake
+        self._rx_process     = prp_root.prp_rx_processor
+        self._state_manager  = prp_root.prp_state_manager
+        self._prp_tx_buffer  = prp_root.prp_tx_buffer
+        self._prp_handshake  = prp_root.prp_handshake
         self._prp_auth       = prp_root.prp_auth
+        self._cli_esc        = prp_root.prp_cli_esc
 
     # ===================================================================
     # Encoding
@@ -138,7 +139,7 @@ class PRPProtocolHandler:
                     # Optional: Pending löschen oder retry
                     self._state_manager.del_pending(opt_id)
             # Response Handler / GUI Updates usw.
-            self._prp_root.local_response_handler(opt_id, resp_ok=ack)
+            self._prp_root.handle_response(opt_id, resp_ok=ack)
 
         # Command Dispatch
         handler_map = {
@@ -224,9 +225,8 @@ class PRPProtocolHandler:
     def _handle_cli_esc(self, tx, payload):
         """ CLI Escape 62 """
         if tx:
-            return self._prp_root.prp_rx_esc_cli(payload)
-        else:
-            pass
+            return self._cli_esc.handle_received_cli_data(payload)
+
         return b''
 
     def _handle_batch(self, tx, payload):

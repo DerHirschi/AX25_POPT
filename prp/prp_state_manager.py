@@ -299,7 +299,7 @@ class PRPStateManager:
             self._tx_resp_remote_state_update(success=True)
         else:
             self._tx_resp_remote_state_update(success=False)
-        self._prp_root.local_response_handler(PRP_OPT_STATE_UPDATE)
+        self._prp_root.handle_response(PRP_OPT_STATE_UPDATE)
 
     # == Response
     def _tx_resp_remote_state_update(self, success: bool):
@@ -325,7 +325,7 @@ class PRPStateManager:
             # == Remote Monitor STOP
             if not state_update['gui_rem_mon']:
                 # == Lösche TX-Buffer & sende ABORT-Resp
-                self._prp_root.remote_monitor.abort()
+                self._prp_root.prp_remote_monitor.abort()
                 return
         # == CLI-ESC Sync
         if self.has_changed(state_update, 'cli_esc'):
