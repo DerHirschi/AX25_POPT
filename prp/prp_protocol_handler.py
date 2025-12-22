@@ -190,16 +190,12 @@ class PRPProtocolHandler:
 
     def _handle_abort(self, tx, payload):
         """ PRP-Frame Abort - 21 """
-        if tx:
-            self.send_abort_request()
-        else:
-            print(f"prp frame decoder: _rx_resp")
+        self._prp_root.prp_control.handle_abort(tx, payload)
         return b''
 
     def _handle_disco(self, tx, payload):
         """ Disconnect 22 """
-        if tx:
-            self._prp_root.rx_cmd_disco()
+        self._prp_root.prp_control.handle_disconnect(tx, payload)
         return b''
 
     def _handle_login_req(self, tx, payload):
@@ -310,8 +306,9 @@ class PRPProtocolHandler:
     # ===================================================================
     # ====== Abort I/O
     # ===================================================================
+    """
     def send_abort_request(self):
-        """ RX CMD 21 - ABORT - CLI-ESC Abort """
+        # RX CMD 21 - ABORT - CLI-ESC Abort 
         logger.info(
             f"PRP: Abort-REQ(CLI-ESC) empfangen (OPT-ID 21). Breche das Senden ab und lösche TX-Buffer. UID: {self._prp_root.uid}")
         # == Status MSG to GUI ????????
@@ -325,10 +322,10 @@ class PRPProtocolHandler:
         return
 
     def send_abort_frame(self):
-        """ TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht """
+        # TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht 
         # == Sende Abort Frame
         self._prp_root.prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=b'', prio=True)
-
+    """
     # ===================================================================
     # Public TX Helpers (werden von PRPremote aufgerufen)
     # ===================================================================

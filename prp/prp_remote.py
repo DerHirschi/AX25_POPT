@@ -5,8 +5,9 @@
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
 from prp.prp_auth_handler import PRPAuthHandler
-from prp.prp_const import PRP_OPT_21, PRP_OPT_DISCO, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
+from prp.prp_const import PRP_OPT_21, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
     PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN
+from prp.prp_control_handler import PRPControlHandler
 from prp.prp_handshake_handler import PRPHandshakeHandler
 from prp.prp_protocol_handler import PRPProtocolHandler
 from prp.prp_remote_monitor import PRPRemoteMonitor
@@ -46,6 +47,8 @@ class PRPremote:
         # == RX Processor & Protocol
         self._rx_processor   = PRP_RX_Processor(self)
         self._protocol       = PRPProtocolHandler(self)
+        # == Control
+        self._prp_control    = PRPControlHandler(self)
         # == Remote Monitor
         self._remote_monitor = PRPRemoteMonitor(self)
 
@@ -112,6 +115,10 @@ class PRPremote:
     @property
     def prp_auth(self):
         return self._prp_auth
+
+    @property
+    def prp_control(self):
+        return self._prp_control
 
     #####################################
     # Tasker (ax25Conn)
@@ -254,7 +261,7 @@ class PRPremote:
         if not self._tx_buffer.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI):
             return False
         # == Sende ABORT-RESP Frame
-        self._protocol.send_abort_request()
+        self._prp_control.send_cli_esc_abort_request()
         return True
 
     # =============================
@@ -263,17 +270,9 @@ class PRPremote:
         """ TX Start Disco CMD """
         if not self.is_handshake:
             return
-        self.prp_tx(opt_id=PRP_OPT_DISCO, tx_flag=True, data=b'', prio=True)
+        self._prp_control.send_disconnect()
+        # self.prp_tx(opt_id=PRP_OPT_DISCO, tx_flag=True, data=b'', prio=True)
 
-    def rx_cmd_disco(self):
-        """ RX Start Disco CMD """
-        # == Remote Monitor abschalten
-        self._state_manager.set_own('gui_rem_mon', False)
-        self._state_manager.set_own('cli_rem_mon', False)
-        # == TX-Buffer löschen
-        self._tx_buffer.del_tx_buff(None)
-        # == Connection Disco
-        self._connection.conn_disco()
 
     # =============================
     # ====== OPT-ID 23/24 -Login Stuff

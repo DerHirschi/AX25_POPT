@@ -4,7 +4,7 @@ import time
 from cfg.logger_config import logger
 from classes.CLbuffers import ListBuffer
 from fnc.ax25_fnc import reverse_uid
-from prp.prp_const import PRP_BATCH_MIN_PACK, PRP_OPT_PRP_BATCH
+from prp.prp_const import PRP_BATCH_MIN_PACK
 from prp.prp_dec_fnc import pack_time_hms
 
 
@@ -25,6 +25,7 @@ class PRPRemoteMonitor:
         self._state_manager     = prp_root.state_manager
         self._prp_tx_buffer     = prp_root.tx_buffer
         self._prp_protocol      = prp_root.protocol
+        self._prp_control       = prp_root.prp_control
 
         # == UID
         self._uid               = self._prp_root.uid
@@ -197,6 +198,6 @@ class PRPRemoteMonitor:
         """Wird aufgerufen, wenn Remote-Monitor ausgeschaltet wird"""
         logger.debug(f"PRP: Remote Monitor Abort für UID {self._prp_root.uid}")
         self._batch_buffer.buffer_clear()
-        self._prp_tx_buffer.del_tx_buff(PRP_OPT_PRP_BATCH)
-        self._prp_protocol.send_abort_frame()  # Abort-Frame senden
+
+        self._prp_control.handle_remote_mon_abort()  # Abort-Frame senden
 

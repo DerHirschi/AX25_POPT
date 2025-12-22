@@ -1,4 +1,4 @@
-# prp/rx_processor.py / With help of Grok AI
+# prp/prp_rx_processor.py / With help of Grok AI
 from ax25.ax25dec_enc import bytearray2hexstr
 from cfg.logger_config import logger
 from prp.prp_const import PRP_FLAG, PRP_ABORT_FRAME, PRP_FEND
@@ -65,10 +65,9 @@ class PRP_RX_Processor:
 
                 # ===============================================
                 # == Potenziellen ABORT Frame im Datensatz suchen
-                # PRP-Flag(2) + FLAG(2) + OPT(1) + LEN(2) + CRC(2)
-                if frame_end > data_len:  # Min 12 Bytes
+                if i + 7 <= data_len:  # Min len ABORT Frame
                     try:
-                        abort_index = data[i + 2:].index(PRP_ABORT_FRAME)  # Kann nur nach normaler Flag kommen
+                        abort_index = data[i:].index(PRP_ABORT_FRAME)  # Kann nur nach normaler Flag kommen
                     except ValueError:
                         pass
                     else:
@@ -81,7 +80,7 @@ class PRP_RX_Processor:
                         self._rest_buffer    = bytearray()
 
                         # == Entferne ABORT aus data gegen Loop
-                        full_abort_index = i + 2 + abort_index + len(PRP_ABORT_FRAME)
+                        full_abort_index = i + abort_index + len(PRP_ABORT_FRAME)
                         i = full_abort_index
                         continue
 
@@ -153,3 +152,56 @@ class PRP_RX_Processor:
 
     def clear_comp_pack_meta(self):
         self._comp_pack_meta = None
+"""
+# test_prp_rx_processor.py
+#from prp.prp_rx_processor import PRP_RX_Processor
+from prp.prp_remote_monitor import PRPRemoteMonitor
+from prp.prp_tx_buffer import PrpTxBuffer
+from prp.prp_state_manager import PRPStateManager
+from prp.prp_protocol_handler import PRPProtocolHandler
+from prp.prp_handshake_handler import PRPHandshakeHandler
+from prp.prp_auth_handler import PRPAuthHandler
+from prp.prp_control_handler import PRPControlHandler
+
+# Mock-Klasse für PRPremote (nur das Nötigste)
+class MockPRPremote:
+    def __init__(self):
+        self.cli = None
+        self.uid = 'TEST'
+        self.tx_buffer = PrpTxBuffer()
+        self.state_manager = PRPStateManager(self)
+        self.handshake = PRPHandshakeHandler(self)
+        self.prp_auth = PRPAuthHandler(self)
+        self.rx_processor = PRP_RX_Processor(self)
+        self.protocol = PRPProtocolHandler(self)
+        self.prp_control = PRPControlHandler(self)
+        self.remote_monitor = PRPRemoteMonitor(self)
+
+    def send_cli_esc_abort_recv_status(self):
+        print("!!! ABORT ERKANNT UND VERWORFEN !!!")
+
+    def prp_rx_process(self, frame):
+        print(f"Frame dekodiert: {len(frame)} Bytes")
+        return b''
+
+    def local_response_handler(self, opt_id, resp_ok):
+        print(f"Response Handler: OPT {opt_id}, OK: {resp_ok}")
+
+if __name__ == '__main__':
+    mock = MockPRPremote()
+    processor = mock.rx_processor
+
+    # Dein Log-Datenstrom als bytes
+    data = bytes.fromhex(
+        "8d81ffb50013010000190de6e7b198fcee844843d8641c75784c29f08c0337e25fb462d8c6d58f920c47845bab03fed347cf16d7a3deeff57b7da992d37bacc58036945dce7d350d053cecf8027b33314a0801f1ff7ea561f39dfca3fd3f0e49fffd646d996adbef8c9667dce3183ecfb47ff3074217cd14817ee5185544787411ad6982a2bd9e79d905033c38bb0dcd68618d811500000f648d811a01004fd7790d0d2023204162676562726f6368656e20210d0d4d4431544553202830333a31313a3336293e"
+    )
+
+    print(f"Datenlänge: {len(data)} Bytes")
+    print("Starte Verarbeitung...\n")
+
+    result = processor.process(data)
+
+    print("\nVerarbeitung abgeschlossen.")
+    print(f"Zurückgegebene Non-PRP-Daten: {result!r}")
+
+"""
