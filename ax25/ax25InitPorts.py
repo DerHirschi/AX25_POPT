@@ -21,8 +21,8 @@ from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25 import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_DIGI, \
-    CLI_TYP_PIPE
+from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, \
+    CLI_TYP_TASK_FWD
 from sql_db.sql_Error import SQLConnectionError
 
 

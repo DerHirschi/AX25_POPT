@@ -5,7 +5,7 @@
 import time
 from datetime import datetime
 
-from cfg.constant import CLI_TYP_TASK_FWD, CLI_TYP_NO_CLI, CLI_TYP_PIPE, TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX
+from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
@@ -18,7 +18,6 @@ from cfg.logger_config import logger, LOG_BOOK
 # from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from prp.prp_const import PRP_OPT_PRP_BATCH
 from prp.prp_remote import PRPremote
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
@@ -719,6 +718,19 @@ class AX25Conn:
         cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', CLI_TYP_NO_CLI))
         self.cli_type = str(cli_key)
         self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
+
+        cmds = []
+        for k, cli in CLI_OPT.items():
+            test_cli = cli(self)
+            test_cli.init()
+            cli_cmds = test_cli.get_cmds()
+            for el in cli_cmds:
+                if el not in cmds:
+                    cmds.append(el)
+            #print(f"{k} : {cli_cmds}")
+
+        print(f"All CMDs : {sorted(cmds)}")
+
 
     def _reinit_cli(self):
         if self.cli_type == CLI_TYP_TASK_FWD:
@@ -1622,7 +1634,7 @@ class AX25Conn:
         return self.parm_MaxFrame
 
     @property
-    def get_prp(self):
+    def prp(self):
         return self._prp_remote
 
     """

@@ -3,7 +3,8 @@ import threading
 from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.os_fnc import get_root_dir
+from fnc.os_fnc import get_root_dir, is_linux, is_macos
+
 # gTTS
 try:
     from gtts import gTTS
@@ -14,8 +15,8 @@ except ImportError:
     GTTS_AVAILABLE = False
     gTTS = None
 # playsound
-from playsound3 import playsound
-"""
+#from playsound3 import playsound
+
 try:
     from playsound3 import playsound
 except ImportError as e:
@@ -24,7 +25,7 @@ except ImportError as e:
         from playsound import playsound
     else:
         raise e
-"""
+
 
 class POPT_Sound:
     def __init__(self):

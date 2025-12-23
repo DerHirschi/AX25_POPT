@@ -1,10 +1,11 @@
+from cfg.constant import CLI_TYP_MCAST
 from cfg.logger_config import logger
 from cli.cliMain import DefaultCLI
 from fnc.socket_fnc import get_ip_by_hostname
 
 
 class MCastCLI(DefaultCLI):
-    cli_name = 'MCAST'  # DON'T CHANGE !
+    cli_name = CLI_TYP_MCAST  # DON'T CHANGE !
     service_cli = True
     prefix = b''
     sw_id = 'PoPTMCast'
@@ -26,55 +27,7 @@ class MCastCLI(DefaultCLI):
             'SETAXIP':  (5, self._cmd_mcast_set_member_axip, self._getTabStr_CLI('cmd_help_mcast_set_axip'), False),
             ##############################################################
         })
-        self._commands_cfg = ['QUIT',
-                              'BYE',
-                              ## MCAST
-                              'CH',
-                              'CHLIST',
-                              'CHINFO',
-                              'SETAXIP',
-                              ## NODE
-                              # 'ECHO',
-                              # 'CONNECT',
-                              # 'C!',
-                              # 'PORT',
-                              # 'MH',
-                              # 'LMH',
-                              # 'AXIP',
-                              # 'DXLIST',
-                              # 'LCSTATUS',
-                              ## APRS
-                              # 'ATR',
-                              # 'WX',
-                              ## User Info
-                              'BELL',
-                              'INFO',
-                              'LINFO',
-                              'NEWS',
-                              # UserDB
-                              'USER',
-                              'NAME',
-                              'QTH',
-                              'LOC',
-                              'ZIP',
-                              'PRMAIL',
-                              'EMAIL',
-                              'WEB',
-                              # BOX
-                              # 'LB',
-                              # 'LN',
-                              # 'LM',
-                              # 'R',
-                              # 'KM',
-                              # CLI OPT
-                              'OP',
-                              'LANG',
-                              'UMLAUT',
-                              #
-                              'VERSION',
-                              'POPT',
-                              'HELP',
-                              '?']
+
         self._state_exec = {
             0: self._s0,  # C-Text
             1: self._s1,  # Cmd Handler

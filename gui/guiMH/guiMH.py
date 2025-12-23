@@ -6,8 +6,8 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, Menu, messagebox
 from ax25.ax25Statistics import MyHeard
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, \
-    CLI_TYP_DIGI, CLI_TYP_PIPE
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, \
+    CLI_TYP_TASK_FWD
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, format_number

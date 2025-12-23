@@ -1,5 +1,5 @@
 from ax25.ax25LocalConverse import LocalConverse
-from cfg.constant import CLI_TYP_CONVERSE, CLI_TYP_SYSOP
+from cfg.constant import CLI_TYP_SYSOP, CLI_TYP_CONVERSE
 from cli.cliMain import DefaultCLI
 from fnc.str_fnc import get_time_delta
 
@@ -25,7 +25,7 @@ class ConverseCLI(DefaultCLI):
 
     def init(self):
         """Initialisiert die verfügbaren Kommandos"""
-        self._commands_cfg = ['L', 'H', 'Q', 'U']
+
         self._command_set = {
             'L': (0, self._cmd_list_channels,   'List available channels',  False),
             'U': (0, self._cmd_list_users,      'List User in channel',     False),

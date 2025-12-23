@@ -24,9 +24,6 @@ class PRPCLIStreamHandler:
         Sendet CLI-Daten im ESC-Modus (komprimiert).
         Wird von AX25Conn.send_data() aufgerufen, wenn CLI-ESC aktiv.
         """
-        if not self._prp_root.prp_state_manager.own.get('cli_esc', False):
-            return False
-
         success = self._prp_root.prp_tx(
             opt_id=PRP_OPT_ESC_CLI,
             tx_flag=True,

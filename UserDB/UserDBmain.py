@@ -62,16 +62,21 @@ class Client(object):
     max_pac         = 0
     CText           = ''
     routes          = []
-    software_str    = ''
-    sys_pw          = ''
-    sys_pw_autologin = False
-    sys_pw_parm     = [5, 80, 'SYS']
+
     # CLI
     cli_sidestop    = 20
     Language        = -1
     bbs_newUser     = True
     # BOX
     # box_user_cfg = {}
+    # == Private !!!
+    software_str                        = ''
+    sys_pw                              = ''                # PW für Remote Station
+    sys_pw_autologin                    = False
+    sys_pw_parm                         = [5, 80, 'SYS']
+    rights: dict or str or None         = None              # Rechte Level / Custom Rechte
+    auth_password: str or None          = None              # PW für Auth auf PoPT
+    blocked                             = False             # Allow remote Access
 
 class UserDB:
     def __init__(self):
@@ -276,9 +281,9 @@ class UserDB:
 
     def update_var_fm_dbentry(self, fm_key: str, to_key: str):
         if fm_key not in self.db.keys():
-            return False
+            return
         if to_key not in self.db.keys():
-            return False
+            return
         # new_obj = Client(to_key)
         # print(self.db[to_key])
         for att in list(dir(self.db[to_key])):

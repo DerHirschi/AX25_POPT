@@ -25,21 +25,32 @@ class PRPAuthHandler:
         self._prp_root      = prp_root
         self._state_manager = prp_root.prp_state_manager
 
+        # Call speichern zum Abgleich
+        self._call          = str(prp_root.to_call_str)
+
         # Temporäre Auth-Daten
         self._login_nonce   = None         # Server-seitig: gesendeter Nonce
         self._password_hash = None         # Client-seitig: hash(password)
 
-        # TODO: In Zukunft Passwort aus DB/Config laden
-        self._server_password = 'test1234'  # DBUG_PW
+    @property
+    def _server_password(self):
+        return self._prp_root.prp_rights.get_auth_password(self._call)
+
+    def is_authenticated(self, call_str: str):
+        if call_str != self._call:
+            logger.warning(f"PRP Auth: Call stimmt mit Auth-Call überein: {self._prp_root.uid}")
+            logger.warning(f"PRP Auth: Auth-Call: {self._call} <> Request-Call: {call_str}")
+            return False
+        return self._state_manager.get_own('login_ok')
 
     # ===================================================================
     # Öffentliche API
     # ===================================================================
     def request_login(self, password: str = None):
         """Client: Fordert Login an"""
+        pwd = password or self._server_password
 
         # Password-Handling (später aus GUI/DB)
-        pwd = password or self._server_password
         self._password_hash = hashlib.sha256(pwd.encode()).digest()
 
         # Pending für erfolgreichen Login
@@ -114,7 +125,6 @@ class PRPAuthHandler:
         """Server: Prüft Client-Response"""
         if not self._login_nonce:
             logger.error("PRP Auth: Keine Nonce vorhanden für Verifikation")
-            self._send_login_ack(False)
             return
 
         expected = hashlib.sha256(hashlib.sha256(self._server_password.encode()).digest() + self._login_nonce).digest()
@@ -129,7 +139,8 @@ class PRPAuthHandler:
             self._send_login_ack(False)
 
         # Aufräumen
-        self._login_nonce = None
+        self._login_nonce   = None
+        self._password_hash = None
 
     def _send_login_ack(self, success: bool):
         """Server: Sendet ACK/NACK"""

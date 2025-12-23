@@ -13,59 +13,7 @@ class NodeCLI(DefaultCLI):
     # Extra CMDs for this CLI
 
     def init(self):
-        self._commands_cfg  = ['QUIT',
-                               'BYE',
-                               # NODE
-                               'ECHO',
-                               'CONNECT',
-                               'C!',
-                               'CH',
-                               'CONV',
-                               'PORT',
-                               'PSTAT',
-                               'BWSTAT',
-                               'RTT',
-                               #'PREMON',
-                               'MH',
-                               'LMH',
-                               'AXIP',
-                               'DXLIST',
-                               'LCSTATUS',
-                               'CSTAT',
-                               'CHIST',
-                               # APRS
-                               'ATR',
-                               'WX',
-                               # User Info
-                               'BELL',
-                               'INFO',
-                               'LINFO',
-                               'NEWS',
-                               # UserDB
-                               'USER',
-                               'NAME',
-                               'QTH',
-                               'LOC',
-                               'ZIP',
-                               'PRMAIL',
-                               'EMAIL',
-                               'WEB',
-                               # BOX
-                               #'LB',
-                               #'LN',
-                               #'LM',
-                               #'R',
-                               #'KM',
-                               # CLI OPT
-                               'OP',
-                               'LANG',
-                               'UMLAUT',
-                               #
-                               'VERSION',
-                               'POPT',
-                               'HELP',
-                               '?']
-
+        pass
 
     def _s2(self):
         return self._cmd_q()

@@ -2,7 +2,8 @@ import copy
 
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg, getNew_globalRights, \
+    getNew_RightLevelTab
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE, CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -68,6 +69,10 @@ class Main_CFG:
             ##########################
             # -- GPIO CFG
             'gpio_cfg': getNew_gpio_cfg,
+            ##########################
+            # -- PRP/CLI Rechte Global
+            'glb_rights': getNew_globalRights,
+            'right_level_tab': {},    # Rechte Level
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
@@ -707,6 +712,15 @@ class Main_CFG:
             self._config['bbs_fwd_statistics'][bbs_call] = copy.deepcopy(stat_dict)
         except Exception as ex:
             logger.error(ex)
+    ############################################
+    # Conn History
+    def set_conn_hist(self, conn_hist: list):
+        conn_hist = list(conn_hist)
+        #conn_hist.reverse()
+        self._config['conn_history'] = list(conn_hist)
+
+    def get_conn_hist(self):
+        return list(self._config.get('conn_history', []))
 
     ###########################################
     # Block List
@@ -719,14 +733,20 @@ class Main_CFG:
     def set_block_list(self, block_tab: dict):
         self._config['block_list'] = block_tab
 
-    ############################################
-    # Conn History
-    def set_conn_hist(self, conn_hist: list):
-        conn_hist = list(conn_hist)
-        #conn_hist.reverse()
-        self._config['conn_history'] = list(conn_hist)
+    ###########################################
+    # Rechte System
+    @property
+    def prp_global_rights(self):
+        """ Globale PRP & CLI Rechte """
+        return self._config.get('glb_rights', getNew_globalRights())
 
-    def get_conn_hist(self):
-        return list(self._config.get('conn_history', []))
+    @property
+    def right_level_tab(self):
+        """ Globale PRP & CLI Rechte """
+        #ret = self._config.get('right_level_tab', getNew_RightLevelTab())
+        #if not ret:
+        ret = getNew_RightLevelTab()
+        self._config['right_level_tab'] = ret   # FIXME DELETE-ME Testing
+        return ret
 
 POPT_CFG = Main_CFG()

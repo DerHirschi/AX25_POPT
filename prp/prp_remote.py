@@ -1,7 +1,7 @@
 """
 (P)oPT (R)emote (P)rotocol
 """
-
+from UserDB.rights_manager import PRPRightsManager
 from cfg.logger_config import logger
 from fnc.ax25_fnc import reverse_uid
 from prp.prp_auth_handler import PRPAuthHandler
@@ -15,8 +15,6 @@ from prp.prp_remote_monitor import PRPRemoteMonitor
 from prp.prp_rx_processor import PRP_RX_Processor
 from prp.prp_state_manager import PRPStateManager
 from prp.prp_tx_buffer import PrpTxBuffer
-
-DBUG_PW = 'test1234'
 
 
 class PRPremote:
@@ -34,9 +32,14 @@ class PRPremote:
             self._uid          = str(connection.uid)
             self._remote_uid   = str(reverse_uid(connection.uid))
 
+        self._to_call_str   = str(connection.to_call_str)
 
         # ===================================================================
-        # ======== Classes
+        # == Rechte
+        self._rights = PRPRightsManager(prp_root=self)
+
+        # ===================================================================
+        # ======== PRP-Classes
         # == State Manager
         self._state_manager  = PRPStateManager(self)
         # == Handshake
@@ -57,22 +60,14 @@ class PRPremote:
         self._remote_monitor = PRPRemoteMonitor(self)
 
 
-        #################################
+        # ===================================================================
         # Helper TX-Buffer
         self.is_tx_buffer             = lambda: self._tx_buffer.is_tx_buffer
         self.is_prp_opt_id_in_tx_buff = lambda opt_id: self._tx_buffer.is_prp_opt_id_in_tx_buff(opt_id)
 
-        #################################
-        # CLI ESC / Komprimiert senden
-        # == Self / State I/O
-        self._is_cli_esc_mode         = lambda: self._state_manager.own.get('cli_esc', False)
-
-        #################################
-        # Rechte System
-        # std rechte aus popt_cfg
-        # User rechte aus db
-
-        #################################
+    @property
+    def to_call_str(self):
+        return self._to_call_str
 
     @property
     def uid(self):
@@ -95,6 +90,11 @@ class PRPremote:
     @property
     def gui(self):
         return self._get_gui()
+
+    # ==== Rechte
+    @property
+    def prp_rights(self):
+        return self._rights
 
     # ==== PRP Classes
     @property
@@ -133,15 +133,15 @@ class PRPremote:
     def prp_cli_esc(self):
         return self._cli_esc
 
-    #####################################
-    # Tasker (ax25Conn)
+    # ===================================================================
+    # == Tasker (ax25Conn)
     def tasker(self):
         """ Called fm ax25Conn """
         self._remote_monitor.task()
         return True
 
-    #####################################
-    # Response Handler
+    # ===================================================================
+    # == Response Handler
     def handle_response(self, opt_id: int, resp_ok=True):
         """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
         uid = self._uid
@@ -168,8 +168,8 @@ class PRPremote:
         # Globaler RESP für Remote Monitor
         self._port_handler.handle_prp_response('', uid)
 
-    ###############################
-    # PRP I/O - TX/RX
+    # ===================================================================
+    # == PRP I/O - TX/RX
     def prp_tx(self, opt_id: int, tx_flag: bool, data: bytes,
                prio=False, compress=True, send_uncompressed=True):
         frame = self._protocol.encode_frame(opt_id, tx_flag, data, compress, send_uncompressed)
@@ -203,9 +203,14 @@ class PRPremote:
 
     # ===================================================================
     # ====== PRP CLI-ESC I/O
-    # ===================================================================
     def prp_tx_esc_cli(self, payload: bytes):
         """ Sende CLI Escape - AX25Conn.send_data() """
+        if not self._state_manager.own.get('cli_esc', False):
+            return False
+
+        if not self._rights.is_function_allowed(self._connection.to_call_str, 'cli_esc'):
+            return False
+
         return self._cli_esc.send_cli_data(payload)
 
     # === CLI-ESC Status Meldungen für gui.QSO
@@ -216,18 +221,20 @@ class PRPremote:
         """
         return self._cli_esc.get_sender_status()
 
-    #####################################
+    # ===================================================================
     # Remote Monitor Stream - OPT 0 - 19
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler > connection.update_monitor() """
         if (not self._state_manager.get_own('cli_rem_mon') and
             not self._state_manager.get_own('gui_rem_mon')):
             return
+
+
+
         self._remote_monitor.update(ax25frame_conf)
 
-    #####################################
-    # CTL CMD's - OPT 20 - 63
-    # ...................................
+    # ===================================================================
+    # ==== CTL CMD's - OPT 20 - 63
     # == OPT-ID 20 - Handshake
     def init_prp_handshake(self, remote_identy):
         """ Bekommt Station Identy Objekt von CLI """
@@ -241,7 +248,7 @@ class PRPremote:
     def is_handshake_pending(self):
         return self._handshake.is_pending
 
-    # =============================
+    # ===================================================================
     # ====== OPT-ID 21 - Abort
     # == CLI Abort
     def cli_abort(self):
@@ -255,7 +262,7 @@ class PRPremote:
         self._prp_control.send_cli_esc_abort_request()
         return True
 
-    # =============================
+    # ===================================================================
     # ====== OPT-ID 22 - Disconnect CMD
     def cmd_disco(self):
         """ TX Start Disco CMD """
@@ -264,17 +271,20 @@ class PRPremote:
         self._prp_control.send_disconnect()
         # self.prp_tx(opt_id=PRP_OPT_DISCO, tx_flag=True, data=b'', prio=True)
 
-
-    # =============================
+    # ===================================================================
     # ====== OPT-ID 23/24 -Login Stuff
-    def cmd_login_request(self, password: str):
+    def cmd_login_request(self, password=''):
         """Client fordert Login-Challenge an"""
         if not self.is_handshake:
             logger.warning("PRP Auth: Login-Request ohne Handshake")
             return
-        self._prp_auth.request_login(DBUG_PW)
+        if not password:
+            password = self._rights.get_sys_password(self._to_call_str)
+        if not password:
+            return
+        self._prp_auth.request_login(password)
 
-    # =============================
+    # ===================================================================
     # ====== OPT-ID 25 - Logout Stuff
     def cmd_logout(self):
         """ Client sendet Logout """
@@ -282,7 +292,7 @@ class PRPremote:
             return
         self._prp_auth.initiate_logout()
 
-    # =============================
+    # ===================================================================
     # ==== OPT-ID 26 - States Update via Remote / By Grok AI
     def send_remote_state_update(self, state_updates: dict):
         # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
@@ -318,6 +328,7 @@ class PRPremote:
             compress=True
         )
 
+    # ===================================================================
     # ==== Public State I/O API
     # == Own States
     @property

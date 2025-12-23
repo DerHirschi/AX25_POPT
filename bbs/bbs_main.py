@@ -31,7 +31,7 @@ from bbs.bbs_fnc import generate_sid, spilt_regio, build_msg_header, get_pathlis
 from bbs.bbs_fwd_connection import BBSConnection
 from bbs.bbs_mail_import import get_mail_import
 from cfg.cfg_fnc import init_bbs_dir
-from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD, CLI_TYP_BOX, CLI_TYP_SYSOP
+from cfg.constant import SQL_TIME_FORMAT, TASK_TYP_FWD, CLI_TYP_SYSOP, CLI_TYP_BOX
 from cfg.default_config import getNew_BBS_Port_cfg, getNew_fwdStatistic_cfg
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, BBS_LOG

@@ -7,11 +7,12 @@ from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
     CLI_TYP_SYSOP, CLI_TYP_NO_CLI
+from cli.cli_const import CLI_DEF_CMD_BASIC
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str, version_tuple
+    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -147,8 +148,8 @@ class DefaultCLI(object):
             'CONV':     (3, self._cmd_conv,                 'Converse', False),
             '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
         }
-        self._commands_cfg  = list(self._command_set.keys())
-        self._commands      = {}
+
+        self.get_cmds = lambda : list(self._command_set.keys())
 
         self._str_cmd_exec = {
             b'#REQUESTNAME:': self._str_cmd_req_name,
@@ -171,20 +172,9 @@ class DefaultCLI(object):
 
         self.init()
 
-        for cmd_key in self._commands_cfg:
-            if cmd_key not in self._command_set:
-                logger.error(self._logTag + f"__init__: cmd_key {cmd_key} not in _command_set")
-                continue
-            self._commands[cmd_key] = self._command_set.get(cmd_key,
-                                                            (0,
-                                                            lambda : logger.error(self._logTag + f'cmd_kexError: {cmd_key}'),
-                                                            'CLI-Error',
-                                                             False)
-                                                            )
-
         if not self.can_sidestop:
-            if 'OP' in self._commands:
-                del self._commands['OP']
+            if 'OP' in self._command_set:
+                del self._command_set['OP']
         self._baycom_auto_login()
         """
         if type(self.prefix) is str:  # Fix for old CFG Files
@@ -194,6 +184,28 @@ class DefaultCLI(object):
 
     def init(self):
         pass
+
+    ########################################################
+    @property
+    def _gui(self):
+        return self._port_handler.get_gui()
+
+    @property
+    def _prp(self):
+        if hasattr(self._connection, 'prp'):
+            return self._connection.prp
+        return None
+
+    ##################################
+    # Rechte / CMD Update
+    def _get_allowed_cmds(self):
+        if hasattr(self._prp, 'prp_rights'):
+            allowed = self._prp.prp_rights.get_allowed_cli_commands(self._connection.to_call_str, self.cli_name)
+            return [cmd for cmd in self._command_set if cmd in allowed]
+
+        logger.error("CLI: PRP-Rechte Manager nicht gefunden. AttributeError")
+        return [cmd for cmd in self._command_set if cmd in CLI_DEF_CMD_BASIC]
+
     ##################################
     # Helper
     # TX-Stuff
@@ -244,7 +256,7 @@ class DefaultCLI(object):
 
     # TX-Abort-Stuff
     def _abort_send_out(self):
-        prp = self._get_prp()
+        prp = self._prp
         if hasattr(prp, 'cli_abort'):
             prp.cli_abort()
 
@@ -318,6 +330,7 @@ class DefaultCLI(object):
         if out:
             return zeilenumbruch_lines(out)
         return ''
+
     # Auto Baycom Login
     def start_baycom_login(self):
         if self._sys_login is None:
@@ -446,7 +459,7 @@ class DefaultCLI(object):
     # Init PoPT Remote (Monitor)
     def _init_popt_remote(self):
         """ Wenn Station Identy empfangen wurde """
-        prp = self._get_prp()
+        prp = self._prp
         if not hasattr(prp, 'init_prp_handshake'):
             logger.error("CLI: Attribute Error. Can't get PRP")
             return
@@ -455,7 +468,7 @@ class DefaultCLI(object):
 
     # GUI
     def _gui_channel_status_change(self):
-        gui = self._port_handler.get_gui()
+        gui = self._gui
         if hasattr(gui, 'on_channel_status_change'):
             gui.on_channel_status_change()
 
@@ -479,33 +492,43 @@ class DefaultCLI(object):
             self._env_var_cmd = False
             inp_cmd = str(self._cmd.decode(self._encoding[0], 'ignore'))
             inp_cmd = inp_cmd.replace(' ', '')
-            cmds = list(self._commands.keys())
+            cmds    = self._get_allowed_cmds()
             treffer = []
             for cmd in cmds:
-                if self._commands[cmd][0]:
-                    if inp_cmd == cmd[:self._commands[cmd][0]]:
-                        self._cmd = b''
-                        ret = tuple(self._commands[cmd])[1]()
-                        self._new_last_line = b''
-                        if ret:
-                            self._env_var_cmd = self._commands[cmd][3]
-                            return ret
-                        return ''
+                if self._command_set[cmd][0]:
+                    if inp_cmd == cmd[:self._command_set[cmd][0]]:
+                        treffer = [cmd]
+                        break
                 if inp_cmd == cmd[:len(inp_cmd)]:
                     treffer.append(cmd)
+
+            self._cmd = b''
+
+            # == Keine Treffer
             if not treffer:
                 return f"\r # {self._getTabStr_CLI('cmd_not_known')}\r"
+
+            # == Mehrere Treffer
             if len(treffer) > 1:
                 return (f"\r # {self._getTabStr_CLI('cmd_not_known')}"
                         f"\r # {(' '.join(treffer))} ?\r")
-            self._cmd = b''
-            if not callable(self._commands[treffer[0]][1]):
+
+            cmd = treffer[0]
+
+            # == Ist ausführbar?
+            if not callable(self._command_set[cmd][1]):
                 return ''
-            ret = tuple(self._commands[treffer[0]])[1]()
-            # self.last_line = b''
+
+            # == Ausführen!
+            ret = tuple(self._command_set[cmd])[1]()
+
+            # == Cleanup
             self._new_last_line = b''
+
+            # == Return
             if ret:
-                self._env_var_cmd = self._commands[treffer[0]][3]
+                # == Env Vars
+                self._env_var_cmd = self._command_set[cmd][3]
                 return ret
             return ''
 
@@ -1829,18 +1852,18 @@ class DefaultCLI(object):
     def _cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"
         ret = "\r"
-        for k in list(self._commands.keys()):
-            if self._commands[k][2]:
+        for k in list(self._get_allowed_cmds()):
+            if self._command_set[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
                                                 k,
-                                                self._commands[k][2])
+                                                self._command_set[k][2])
         ret += '\r\r'
         return ret
 
     def _cmd_shelp(self):
         ret = '\r # '
         c = 0
-        cmds = list(self._commands.keys())
+        cmds = list(self._get_allowed_cmds())
         cmds.sort()
         for k in cmds:
             ret += (k + ' ')
@@ -2019,16 +2042,6 @@ class DefaultCLI(object):
     # == Helper
     def cli_conn_cleanup(self):
         pass
-
-    ########################################################
-    # == Getta
-    def _get_gui(self):
-        return self._port_handler.get_gui()
-
-    def _get_prp(self):
-        if hasattr(self._connection, 'get_prp'):
-            return self._connection.get_prp
-        return None
 
     ########################################################
     # States

@@ -206,17 +206,6 @@ def getNew_BBS_User_cfg():
         homeBBS         = '',
     )
 """
-#######################################
-# Remote Monitor
-def getNew_remote_mon_cfg():
-    return dict(
-        # Remote Monitor
-        cli_rem_mon=False,
-        gui_rem_mon=True,
-        rem_mon_port=0,
-        rem_mon_incl=[],  # Call Filter
-        rem_mon_excl=[],  # Call Filter
-        )
 
 #######################################
 # MH / Port-Stat
@@ -517,3 +506,36 @@ def getNew_gpio_pin_cfg(pin: int):
                 blink=1,            # Sec / 0 = Off
                 hold_timer=0,       # 0 = until Alarm reset
     )
+
+#####################################################
+# Rechte Management
+
+def getNew_globalRights():
+    return dict(
+        default_level                   = 'basic',  # Default für neue User
+        remote_access_allowed           = True,     #
+        login_required_for_extended     = True,     # Erweiterte Rechte nur mit Login?
+        block_list                      = [],       # Globale Blockliste
+
+    )
+
+def getNew_RightLevelTab():
+    from cli.cli_const import CLI_DEF_CMD_BASIC, CLI_DEF_CMD_ALL
+    return {
+            'guest': {
+                'no_login': CLI_DEF_CMD_BASIC,  # Minimale Basis
+                'with_login': []  # Nichts zusätzlich
+            },
+            'basic': {
+                'no_login': ['cli_esc'] + CLI_DEF_CMD_ALL,
+                'with_login': ['gui_rem_mon']
+            },
+            'extended': {
+                'no_login': ['gui_rem_mon', 'cli_rem_mon', 'cli_esc'] + CLI_DEF_CMD_ALL,
+                'with_login': ['all']
+            },
+            'admin': {
+                'no_login': ['all'],  # Alles erlaubt (auch ohne Login – vorsichtig!)
+                'with_login': ['all']
+            }
+        }

@@ -43,6 +43,9 @@ class PRPStateManager:
             login_ok        = False,    # Auth OK / !! PRIVATE !!!
         )
 
+        # == Benötigt Rechte
+        self._check_rights = ('gui_rem_mon', 'cli_rem_mon', 'cli_esc')
+
         # =======================================================
         # Init Remote States / Bestätigt States der Gegenstation
         self._remote_states     = copy.deepcopy(self._own_states)
@@ -126,6 +129,9 @@ class PRPStateManager:
             validated[key] = value
 
         for key, value in validated.items():
+            if key in self._check_rights:
+                if not self._prp_root.prp_rights.is_function_allowed(self._prp_root.to_call_str, key):
+                    continue
             self._own_states[key] = value
             logger.debug(f"PRP State updated: {key} = {value}")
 
@@ -292,30 +298,95 @@ class PRPStateManager:
 
     def rx_remote_state_update(self, payload: bytes):
         updates = self.decode_payload(payload)
-        if updates:
-            self._response_state_update(updates)
-            self.update_own(updates)  # oder besser: self._state_manager.update_own(updates)
-            logger.info(f"PRP: Dynamisches State-Update empfangen: {updates}")
-            self._tx_resp_remote_state_update(success=True)
-        else:
-            self._tx_resp_remote_state_update(success=False)
+        if not updates:
+            self._tx_resp_remote_state_update(applied_updates=None)
+            self._prp_root.handle_response(PRP_OPT_STATE_UPDATE)
+            return
+
+        # Prüfe Rechte + Validierung → sammle erlaubte
+        applied_updates = {}
+        for key, value in updates.items():
+            if key in self._check_rights:
+                if not self._prp_root.prp_rights.is_function_allowed(self._prp_root.to_call_str, key):
+                    logger.info(f"PRP State: {key} abgelehnt (Rechte fehlen)")
+                    continue
+            # Weitere Validierung...
+            if self.set_own(key, value):  # Oder direkt in update_own
+                applied_updates[key] = value
+
+        # Response mit tatsächlich übernommenen States
+        self._tx_resp_remote_state_update(applied_updates=applied_updates)
+
+        # Aktionen ausführen (z. B. Monitor abort bei gui_rem_mon=False)
+        self._response_state_update(applied_updates)
+
         self._prp_root.handle_response(PRP_OPT_STATE_UPDATE)
 
     # == Response
-    def _tx_resp_remote_state_update(self, success: bool):
-        """ TX Respond State Update (ACK) """
-        data = PRP_ACK if success else PRP_NACK
-        self._prp_root.prp_tx(opt_id=PRP_OPT_STATE_UPDATE, tx_flag=False, data=data, prio=True)
+    def _tx_resp_remote_state_update(self, applied_updates: dict = None):
+        """Sendet Response mit den tatsächlich übernommenen States"""
+        if applied_updates is None:
+            # Fallback: Alles abgelehnt → NACK + leer
+            data = PRP_NACK
+        else:
+            # Encode nur die übernommenen Keys (oder alle relevanten)
+            data = self.encode_updates(applied_updates)
+            if not data:
+                data = PRP_ACK  # Leeres ACK wenn nichts geändert
+
+        self._prp_root.prp_tx(
+            opt_id=PRP_OPT_STATE_UPDATE,
+            tx_flag=False,
+            data=data,
+            prio=True
+        )
 
     def rx_resp_remote_state_update(self, payload: bytes):
-        """ RX Respond State Update (ACK) """
-        if PRP_IS_ACK(payload):
-            logger.info("PRP: Remote State-Update erfolgreich bestätigt.")
-            logger.debug(f"PRP: Bestätige State Update: {self._prp_root.uid}")
-            for k, v in self.remote.items():
-                logger.debug(f"PRP: {k}:{v}")
+        """Empfängt Response auf eigenes State-Update"""
+        pending = self.pending_states.get(PRP_OPT_STATE_UPDATE, {})
+
+        if len(payload) == 1:
+            if payload == PRP_NACK:
+                logger.warning(f"PRP: State-Update komplett abgelehnt - UID: {self._prp_root.uid}")
+                # Pending behalten für Retry? Oder löschen?
+                # self.del_pending(PRP_OPT_STATE_UPDATE)  # Optional: löschen
+                return
+
+            if payload == PRP_ACK:
+                logger.info("PRP: State-Update akzeptiert (keine Änderung nötig)")
+                # Alles übernommen → remote = pending
+                self.update_remote(pending)
+                self.del_pending(PRP_OPT_STATE_UPDATE)
+                return
+
+        # Vollständige Response: Parse die bestätigten States
+        confirmed_states = self.decode_payload(payload)
+        logger.info(f"PRP: State-Update bestätigt: {confirmed_states}")
+
+        # Immer remote_states mit bestätigten Werten aktualisieren
+        self.update_remote(confirmed_states)
+
+        if not pending:
+            logger.debug("PRP: Kein pending Update vorhanden")
+            return
+
+        # Vergleich: Welche gesendeten States wurden übernommen?
+        all_confirmed = True
+        for key, sent_val in pending.items():
+            recv_val = confirmed_states.get(key)
+            if recv_val != sent_val:
+                logger.warning(f"PRP: {key} nicht übernommen (gesendet: {sent_val}, bestätigt: {recv_val})")
+                all_confirmed = False
+            else:
+                logger.debug(f"PRP: {key} erfolgreich übernommen")
+
+        # Nur pending löschen, wenn alles bestätigt wurde
+        if all_confirmed:
+            logger.info("PRP: Alle gesendeten States bestätigt → pending gelöscht")
+            self.del_pending(PRP_OPT_STATE_UPDATE)
         else:
-            logger.warning(f"PRP: Remote State-Update fehlgeschlagen! - UID: {self._prp_root.uid}")
+            logger.info("PRP: Teilweise Übernahme → pending bleibt für Retry")
+            # Optional: Retry-Logik später
 
     # == Response nach, erhalten eines Updates
     def _response_state_update(self, state_update: dict):

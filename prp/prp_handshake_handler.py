@@ -67,6 +67,12 @@ class PRPHandshakeHandler:
 
     def handle_cmd(self, payload: bytes):
         """Empfängt Handshake-CMD (tx=True)"""
+        # Globale Remote-Zugriff-Prüfung – vor allem anderen!
+        if not self._prp_root.prp_rights.is_remote_access_allowed(self._prp_root.to_call_str):
+            logger.info(f"PRP Handshake: Remote access globally disabled for {self._prp_root.to_call_str} – rejecting handshake")
+            self._send_response(success=False)  # Sendet NACK
+            return False
+
         if b'\x00' not in payload:
             return self._handle_short_format(payload)
 

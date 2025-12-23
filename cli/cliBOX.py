@@ -66,58 +66,6 @@ class BoxCLI(DefaultCLI):
             'MR'     : (2, self._cmd_box_mr, self._getTabStr_CLI('cmd_mr'), False),
             'FWDINFO': (4, self._cmd_box_fwdinfo, self._getTabStr_CLI('cmd_fwdinfo'), False),
         })
-        self._commands_cfg = ['QUIT',
-                              'BYE',
-                              'CH',
-                              'CONV',
-                              'LCSTATUS',
-                              'CSTAT',
-                              'CHIST',
-                              'PSTAT',
-                              'BWSTAT',
-                              'RTT',
-                              ## APRS
-                              # 'ATR',
-                              'WX',
-                              ## User Info
-                              'BELL',
-                              'FWDINFO',
-                              'INFO',
-                              'LINFO',
-                              'NEWS',
-                              # UserDB
-                              'USER',
-                              'NAME',
-                              'QTH',
-                              'LOC',
-                              'ZIP',
-                              'PRMAIL',
-                              'EMAIL',
-                              'WEB',
-                              # BOX
-                              'LB',
-                              'LN',
-                              'LM',
-                              'LL',
-                              'L<',
-                              'L>',
-                              'L@',
-                              'R',
-                              'SP',
-                              'SB',
-                              'SR',
-                              'KM',
-                              'K',
-                              'MR',
-                              # CLI OPT
-                              'OP',
-                              'LANG',
-                              'UMLAUT',
-                              #
-                              'VERSION',
-                              'POPT',
-                              'HELP',
-                              '?']
 
         self._state_exec.update({
             8: self._s8,  # Send Msg

@@ -682,7 +682,7 @@ class PRP_Tab(ttk.Frame):
     def _cmd_login(self):
         remote_mon = self._get_prp()
         if hasattr(remote_mon, 'cmd_login_request'):
-            remote_mon.cmd_login_request('test1234') # TODO
+            remote_mon.cmd_login_request()
             self._change_btn_states('cmd_login')
 
     def _cmd_logout(self):
@@ -914,8 +914,8 @@ class PRP_Tab(ttk.Frame):
     # == Helper
     def _get_prp(self):
         conn = self._root_cl.get_conn_by_uid(self._uid)
-        if hasattr(conn, 'get_prp'):
-            return conn.get_prp
+        if hasattr(conn, 'prp'):
+            return conn.prp
         return None
 
     ########################################
