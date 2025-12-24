@@ -31,7 +31,7 @@ class PRPRightsManager:
         self._predefined_levels = POPT_CFG.right_level_tab
 
         # Globale Defaults aus POPT_CFG (erweitere dein POPT_CFG-Dict damit)
-        self._global_rights     = POPT_CFG.prp_global_rights
+        self._global_rights     = POPT_CFG.global_rights
 
     # ===================================================================
     # Öffentliche API

@@ -7,6 +7,8 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from UserDB.UserDBmain import USER_DB
 from cli.cli_const import CLI_DEF_CMD_ALL
+from fnc.str_fnc import get_strTab
+from prp.prp_const import PRP_FNC_TAB
 
 
 class GUI_PRP_Rights(ttk.Frame):
@@ -25,18 +27,9 @@ class GUI_PRP_Rights(ttk.Frame):
         self._user_db = USER_DB
         self.style_name = user_db_gui.style_name
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
-        # Wichtige PRP-Funktionen (erweiterbar!)
-
-        self._functions_tab = {
-            'remote_monitor': 'Remote Monitor (Stream)',
-            'cli_esc': 'Komprimierter CLI-Stream',
-            # 'connect': 'CONNECT / C! Befehle',
-            # 'ch': 'Channel-Wechsel (CH)',
-            # 'rtt': 'RTT-Test',
-            # 'user_info_edit': 'Eigene Infos ändern (NAME, QTH, etc.)',
-            # 'file_transfer': 'Dateiübertragung',
-        }
+        self._functions_tab = PRP_FNC_TAB
         self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
 
         # Vordefinierte Levels aus Config
@@ -55,11 +48,11 @@ class GUI_PRP_Rights(ttk.Frame):
         self._pw_var = tk.StringVar()
         self._show_pw_var = tk.BooleanVar()
 
-        main_frame = ttk.LabelFrame(self, text="Remote Rechte")
+        main_frame = ttk.LabelFrame(self, text=self._getTabStr('remote_rights'))
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # === Rechte-Level ===
-        level_frame = ttk.LabelFrame(main_frame, text="Rechte-Level")
+        level_frame = ttk.LabelFrame(main_frame, text=self._getTabStr('right_level'))
         level_frame.pack(fill="x", pady=5, padx=5)
 
         ttk.Label(level_frame, text="Level:").grid(row=0, column=0, sticky="w", padx=10, pady=8)
@@ -68,11 +61,11 @@ class GUI_PRP_Rights(ttk.Frame):
         self.level_combo.grid(row=0, column=1, padx=10, pady=8)
         self.level_combo.bind("<<ComboboxSelected>>", self._apply_level)
 
-        ttk.Checkbutton(level_frame, text="Remote-Zugriff komplett verbieten (blocked)",
+        ttk.Checkbutton(level_frame, text=self._getTabStr('block_remote_access'),
                         variable=self._blocked_var).grid(row=0, column=2, sticky="w", padx=30, pady=8)
 
         # === Individuelle Rechte === (mit horizontaler Scrollbar)
-        rights_frame = ttk.LabelFrame(main_frame, text="Individuelle Rechte")
+        rights_frame = ttk.LabelFrame(main_frame, text=self._getTabStr('individual_rights'))
         rights_frame.pack(fill="both", expand=True, pady=5, padx=5)
 
         cmd_tab = ttk.Notebook(rights_frame)
@@ -81,8 +74,8 @@ class GUI_PRP_Rights(ttk.Frame):
         wo_login_f = ttk.Frame(cmd_tab)
         w_login_f  = ttk.Frame(cmd_tab)
 
-        cmd_tab.add(wo_login_f, text='No Login')
-        cmd_tab.add(w_login_f, text='Login')
+        cmd_tab.add(wo_login_f, text=self._getTabStr('without_login'))
+        cmd_tab.add(w_login_f, text=self._getTabStr('with_login'))
         #wo_login_f.pack(fill='both', expand=True)
         #w_login_f.pack(fill='both', expand=True)
 
@@ -232,14 +225,14 @@ class GUI_PRP_Rights(ttk.Frame):
         scrollable_frame_w.bind("<Button-5>", _on_linux_scroll_down)
 
         # === Zugangspasswort ===
-        pw_frame = ttk.LabelFrame(main_frame, text="Zugangspasswort (für PRP-Login)")
+        pw_frame = ttk.LabelFrame(main_frame, text=self._getTabStr('password_for_prp_login'))
         pw_frame.pack(fill="x", pady=5, padx=5)
 
         ttk.Label(pw_frame, text="Passwort:").grid(row=0, column=0, sticky="w", padx=10, pady=8)
         self.pw_entry = ttk.Entry(pw_frame, textvariable=self._pw_var, show="*", width=30)
         self.pw_entry.grid(row=0, column=1, padx=10, pady=8)
 
-        ttk.Checkbutton(pw_frame, text="Anzeigen", variable=self._show_pw_var,
+        ttk.Checkbutton(pw_frame, text=self._getTabStr('show'), variable=self._show_pw_var,
                         command=self._toggle_pw).grid(row=0, column=2, padx=10)
 
     def _get_function_name(self, func_key):
@@ -305,7 +298,7 @@ class GUI_PRP_Rights(ttk.Frame):
             self._level_var.set("Custom")
         else:
             # Predefined Level
-            level = str(prp_rights) if prp_rights else POPT_CFG.prp_global_rights.get('default_level', 'basic')
+            level = str(prp_rights) if prp_rights else POPT_CFG.global_rights.get('default_level', 'basic')
             self._level_var.set(level)
             self._apply_level()
 

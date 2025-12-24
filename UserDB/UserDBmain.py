@@ -1,5 +1,5 @@
 """
-TODO: Cleanup/Again/Crap
+TODO: Cleanup/Again/Crap/Bullshit/Kurva
 """
 import sys
 # import datetime
@@ -92,9 +92,15 @@ class UserDB:
             'CText',
             'routes',
             'software_str',
+            # !!!!!!!!!!!!!!!!!!!!!!!
             'sys_pw',
             'sys_pw_parm',
             'sys_pw_autologin',
+            'rights',
+            'auth_password',
+            'blocked',
+            # !!!!!!!!!!!!!!!!!!!!!!!
+
             'boxopt_sidestop',
             'cli_sidestop',
             'Language',
@@ -235,6 +241,7 @@ class UserDB:
         else:
             if not ent.TYP:
                 ent.TYP = typ
+
     def get_typ(self, call_str: str):
         ent = self.get_entry(call_str, False)
         if not ent:
@@ -457,6 +464,15 @@ class UserDB:
 
     def get_PRmail(self, call: str):
         return self.db.get(call, Client).PRmail
+
+    ##########################################
+    # Rechte
+    def rename_right_level(self, old_level_name: str, new_level_name: str):
+        for call, db_entry in self.db.items():
+            db_entry: Client
+            if isinstance(db_entry.rights, str):
+                if db_entry.rights == old_level_name:
+                    db_entry.rights = new_level_name
 
     ##########################################
     def get_database(self):

@@ -718,7 +718,7 @@ class AX25Conn:
         cli_key = self._stat_cfg.get('stat_parm_cli', getNew_station_cfg().get('stat_parm_cli', CLI_TYP_NO_CLI))
         self.cli_type = str(cli_key)
         self.cli = CLI_OPT.get(cli_key, NoneCLI)(self)
-
+        """
         cmds = []
         for k, cli in CLI_OPT.items():
             test_cli = cli(self)
@@ -727,9 +727,10 @@ class AX25Conn:
             for el in cli_cmds:
                 if el not in cmds:
                     cmds.append(el)
-            #print(f"{k} : {cli_cmds}")
+            logger.debug(f"{k} : {cli_cmds}")
 
-        print(f"All CMDs : {sorted(cmds)}")
+        logger.debug(f"All CLI CMDs : {sorted(cmds)}")
+        """
 
 
     def _reinit_cli(self):

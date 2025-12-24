@@ -734,19 +734,28 @@ class Main_CFG:
         self._config['block_list'] = block_tab
 
     ###########################################
-    # Rechte System
+    # ==== Rechte System
+    # == Globale Einstellungen
     @property
-    def prp_global_rights(self):
+    def global_rights(self):
         """ Globale PRP & CLI Rechte """
         return self._config.get('glb_rights', getNew_globalRights())
 
+    def set_global_rights(self, new_cfg: dict):
+        self._config['glb_rights'] = dict(new_cfg)
+
+    # == Rechte Level Tabelle
     @property
     def right_level_tab(self):
         """ Globale PRP & CLI Rechte """
-        #ret = self._config.get('right_level_tab', getNew_RightLevelTab())
-        #if not ret:
-        ret = getNew_RightLevelTab()
-        self._config['right_level_tab'] = ret   # FIXME DELETE-ME Testing
+        ret = self._config.get('right_level_tab', getNew_RightLevelTab())
+        if not ret:
+            ret = getNew_RightLevelTab()
+            self._config['right_level_tab'] = ret
         return ret
+
+    def set_right_level_tab(self, new_tab: dict):
+        self._config['right_level_tab'] = dict(new_tab)
+
 
 POPT_CFG = Main_CFG()

@@ -22,6 +22,7 @@ from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiRightLevelEditor import RightLevelEditor
 from gui.prp.guiPRP_remote import PRP_remoteGUI
 from gui.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
@@ -383,6 +384,7 @@ class PoPT_GUI_Main:
         self.block_list_win         = None
         self.routingTab_win         = None
         self.prp_remote_win         = None
+        self.right_level_win        = None
         ####################################
         ####################################
         # Window Text Buffers & Channel Vars
@@ -559,6 +561,7 @@ class PoPT_GUI_Main:
             self.block_list_win,
             self.routingTab_win,
             self.prp_remote_win,
+            self.right_level_win,
         ]:
             if hasattr(wn, 'destroy_win'):
                 wn.destroy_win()
@@ -854,6 +857,9 @@ class PoPT_GUI_Main:
                               command=lambda: self.open_window('dualPort_monitor'),
                               underline=0)
         MenuTools.add_separator()
+        MenuTools.add_command(label=self._getTabStr('Rechte-Level-Editor'),
+                              command=lambda: self.open_window('right_level_editor'),
+                              underline=0)
         MenuTools.add_command(label='Block List',
                               command=lambda: self.open_BlockList_win(),
                               underline=0)
@@ -3101,6 +3107,7 @@ class PoPT_GUI_Main:
             'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
             'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
             'remote_monitor': (self.prp_remote_win, PRP_remoteGUI),
+            'right_level_editor': (self.right_level_win, RightLevelEditor),
 
             # TODO .......
 

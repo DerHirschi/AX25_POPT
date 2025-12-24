@@ -1,3 +1,4 @@
+# == Protokoll
 ####################################################################################
 PRP_SW_RESTR             = 'PoPT'       # Software restriction
 PRP_VER_RESTR            = '2.123.20'   # Version restriction - Allgemein
@@ -56,4 +57,11 @@ PRP_RM_RESP_LOGOUT  = 'rsp_logout'  # Remote Login FAILED | Logout
 PRP_BATCH_MAX_PAY  = 1024   # Max Raw-Data(PRP-Frames size) Threshold for Batch
 PRP_BATCH_MIN_PACK = 4      # Min PRP-Frames to send as Batch
 
-
+# == PRP Remote FNC
+####################################################################################
+# Wichtige PRP-Funktionen (erweiterbar!)
+PRP_FNC_TAB = {
+    'gui_rem_mon': 'Remote Monitor (Stream)',
+    # 'cli_rem_mon': 'Remote Monitor (CLI-Stream)',
+    'cli_esc': 'Komprimierter CLI-Stream',
+}
