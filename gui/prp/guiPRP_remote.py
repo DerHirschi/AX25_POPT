@@ -267,19 +267,12 @@ class PRP_Tab(ttk.Frame):
             command=lambda: self._cmd_logout(),
             state='disabled'
         )
-        # FIXME Nur zum Testen
-        #self._abort_btn = ttk.Button(
-        #    btn_f2,
-        #    text="Abort",
-        #    command=lambda: self._cmd_cli_esc_abort(),
-        #    #state='disabled'
-        #)
+
 
         self._stop_btn.pack(  side='left', padx=15)
         self._disco_btn.pack( side='left', padx=15)
         self._logout_btn.pack(side='left', padx=15)
-        # FIXME Nur zum Testen
-        #self._abort_btn.pack(side='left', padx=15)
+
 
     def _init_txt_mon_ctl_frame(self, frame: ttk.Frame):
         ############################
@@ -344,7 +337,7 @@ class PRP_Tab(ttk.Frame):
                                  'alarm_reset_behavior': 'restore'
                                  },
                         'disco': {'symbol': '⮔', 'color': '#fa2020',
-                                 'blink_rate': 'alarm_025',
+                                 'blink_rate': 'alarm_05',
                                  'init_state': True,
                                   'invert_blink': False,
 
@@ -394,7 +387,14 @@ class PRP_Tab(ttk.Frame):
                                           'alarm_reset_behavior': 'restore',
                                           'invert_blink': False,
 
-                                          'init_state': False}
+                                          'init_state': False},
+
+                        'error': {'symbol': '⚿', 'color': '#fa2020',
+                                          'blink_rate': 'alarm_025',
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': True,
+
+                                          'init_state': True}
                     }
                 },
             }
@@ -831,7 +831,6 @@ class PRP_Tab(ttk.Frame):
         self._update_mon_tab(rem_mon_pack)
 
     def rx_response(self, response: str):
-        print('GUI RX RESP')
         self._change_btn_states(response)
         self._update_gui_vars_fm_rem_state()
 
@@ -860,16 +859,30 @@ class PRP_Tab(ttk.Frame):
         if opt == 'cmd_login':
             self._login_btn.configure( state='disabled')
             self._logout_btn.configure(state='disabled')
+            self._status_frame.set_icon_state_cfg('login', 'default_state')
             self._status_frame.set_icon_alarm_state('login', True)
             self._status_frame.set_icon_alarm_state('pending', True)
             return
         # Login Response
         elif opt == PRP_RM_RESP_LOGIN:
-            self._login_btn.configure( state='disabled')
-            self._logout_btn.configure(state='normal')
-            self._status_frame.set_icon_alarm_state('login', False)
-            self._status_frame.set_icon_state('login', True)
+            login_btn_state  = 'disabled'
+            logout_btn_state = 'disabled'
+            if self._get_prp_remote_stat_by_key('login_ok'):
+                logout_btn_state = 'normal'
+                self._status_frame.set_icon_alarm_state('login', False)
+                self._status_frame.set_icon_state('login', True)
+
+            else:
+                self._status_frame.set_icon_state_cfg('login', 'error')
+                self._status_frame.set_icon_alarm_state('login', True)
+                # self._status_frame.set_icon_state('login', False)
+                login_btn_state = 'normal'
+
             self._status_frame.set_icon_alarm_state('pending', False)
+            self._login_btn.configure( state=login_btn_state)
+            self._logout_btn.configure(state=logout_btn_state)
+
+
             return
         # Logout Response
         elif opt == PRP_RM_RESP_LOGOUT:
