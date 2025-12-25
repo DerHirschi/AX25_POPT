@@ -29,8 +29,8 @@ class GUI_PRP_Rights(ttk.Frame):
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
-        self._functions_tab = PRP_FNC_TAB
-        self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
+        self._functions_tab = dict(PRP_FNC_TAB)  # Kopie machen!
+        self._functions = sorted(list(set(CLI_DEF_CMD_ALL + list(PRP_FNC_TAB.keys()))))
 
         # Vordefinierte Levels aus Config
         self._levels = list(POPT_CFG.right_level_tab.keys())
@@ -238,7 +238,8 @@ class GUI_PRP_Rights(ttk.Frame):
     def _get_function_name(self, func_key):
 
         for cmd in CLI_DEF_CMD_ALL:
-            self._functions_tab[cmd] = f"{cmd}"
+            if cmd not in self._functions_tab:
+                self._functions_tab[cmd] = f"{cmd}"
         return self._functions_tab.get(func_key, func_key.replace('_', ' ').title())
 
     def _toggle_pw(self):
@@ -333,7 +334,6 @@ class GUI_PRP_Rights(ttk.Frame):
                 'no_login':   list(set(allowed_no_login)),
                 'with_login': list(set(allowed_with_login))
             }
-
             setattr(self._current_entry, 'rights', custom_rights)
         else:
             setattr(self._current_entry, 'rights', level)

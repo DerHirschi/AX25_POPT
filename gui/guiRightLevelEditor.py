@@ -46,8 +46,10 @@ class RightLevelEditor(tk.Toplevel):
         fg, self._bg = COLOR_MAP.get(self.style_name, ('#000000', '#d9d9d9'))
 
         # Funktionen
-        self._functions_tab = PRP_FNC_TAB
-        self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
+        #self._functions_tab = PRP_FNC_TAB
+        #self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
+        self._functions_tab = dict(PRP_FNC_TAB)  # Kopie machen!
+        self._functions     = sorted(list(list(CLI_DEF_CMD_ALL) + list(PRP_FNC_TAB.keys())))
 
         # Level und Vars
         self._levels = dict(POPT_CFG.right_level_tab)

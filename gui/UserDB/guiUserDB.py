@@ -1031,6 +1031,7 @@ class UserDB(tk.Toplevel):
     def destroy_win(self):
         if hasattr(self.NewUser_ent_win, 'destroy_win'):
             self.NewUser_ent_win.destroy_win()
+        self._rights_tab.destroy()
         self._close_me()
 
     def destroy(self):
