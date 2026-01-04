@@ -103,4 +103,5 @@ class PRPControlHandler:
         self._tx_buffer.del_tx_buff(None)
 
         # Verbindung trennen
-        self._prp_root.connection.conn_disco()
+        if hasattr(self._prp_root.connection, 'conn_disco'):
+            self._prp_root.connection.conn_disco()

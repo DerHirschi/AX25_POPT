@@ -1,0 +1,935 @@
+# prp/prp_transport_layer.py
+"""
+PRP Transport Layer – Zuverlässiger Transport über PRP
+- Handhabt ACK/NACK mit selektivem Bitmuster
+- Seq-Tracking, Reordering, Retrys
+- Selektiv pro OPT-ID aktivierbar
+- Dynamisch anpassbar (z. B. per Verbindungstyp)
+"""
+import time
+from datetime import datetime
+from cfg.logger_config import logger
+from prp.prp_const import PRP_OPT_PRP_ADMIN, PRP_OPT_L3_DATA, PRP_OPT_L3_ACK, PRP_OPT_L3_SYN, PRP_OPT_L3_FIN, \
+    PRP_OPT_L3_RST, PRP_OPT_L3_ERROR, PRP_OPT_ESC_CLI
+from prp.prp_transport_states import PRPState, get_transition
+
+
+class PRPTransportLayer:
+    def __init__(self, prp_root):
+        self._prp_root    = prp_root
+        # === Sequenz-Zähler: pro UID + Prio
+        # prio → current_seq
+        self._seq_counter = {True: 0, False: 0}
+
+        # === State-Tracking: pro UID + Prio
+        # prio → state_dict
+        self._state =  {
+            True:  self._default_state(),  # Prio-Kanal
+            False: self._default_state()   # Nicht-Prio-Kanal
+        }
+
+        # Welche OPT-IDs nutzen L3
+        self._transport_opt_ids = {
+            PRP_OPT_L3_DATA:    True,
+            PRP_OPT_L3_ACK:     True,
+            PRP_OPT_L3_SYN:     True,
+            PRP_OPT_L3_FIN:     True,
+            PRP_OPT_L3_RST:     True,
+            PRP_OPT_L3_ERROR:   True,
+            PRP_OPT_PRP_ADMIN:  True,
+            PRP_OPT_ESC_CLI:    True,
+        }
+
+        # Dynamische Anpassung pro Verbindungstyp
+        self._conn_type = 'ax25_l2'  # Default – später setzen, z. B. 'pr_mail', 'aprs'
+        self._config_per_type = {
+            'ax25_l2': {
+                'use_transport': True,
+                'retry_limit': 20,
+                'retry_timer': 2,  # Sekunden
+                'timeout': 1800,  # Verbindung-Timeout Sekunden
+                'pac_size': 180,
+                'window_size': 250,
+                'keepalive_interval': 600,  # Sekunden
+                'ack_mode': 'on_end',  # 'always', 'on_end', 'on_request'
+            },
+            'ax25_l3': {
+                'use_transport': False,
+
+            },
+            'pr_mail': {
+                'use_transport': True,
+                'retry_limit': 0,  # Kein Retry – PR-Mail hat eigene Logik
+                'retry_timer': 0,  # Sekunden
+                'timeout': 604800,  # 1 Woche
+                'pac_size': 8000,
+                'window_size': 8,
+                'keepalive_interval': 86400,  # 1 Tag
+                'ack_mode': 'on_end',  # Nur bei letztem Fragment
+            },
+            'aprs': {
+                'use_transport': True,  # APRS unreliable
+                'retry_limit': 3,
+                'retry_timer': 600,  # Sekunden
+                'timeout': 3600,
+                'pac_size': 100,
+                'window_size': 32,
+                'keepalive_interval': 800,
+                'ack_mode': 'on_end',
+            }
+        }
+
+        # Pro UID + Prio ein eigener State
+        self._l3_state = {
+            True:  PRPState.INIT,
+            False: PRPState.INIT
+        }
+
+    @staticmethod
+    def _default_state():
+        return {
+            'l3_state': 'INIT',  # INIT, SYN_SENT, ESTABLISHED, FIN_WAIT, CLOSING, CLOSED
+            'expected_seq': 0,                  # Nächste erwartete SEQ
+            'tx_buffer': [],                    # FIFO: [(opt_id, data, pac_size, callback)]
+            'recv_buffer': [],                  # list für sort() (SEQ, Data)
+            'fragment_buffer': bytearray(),     # Defragmentierte Daten bei vollständiger SEQ
+            'waiting_for_end': False,           # Daten sind in mehreren L3-Paketen gesplittet, warte auf das letzte Paket
+            'paused': False,                    # RNR
+            'pending': {},  # seq → pending     # TX: Pending
+            'last_ack': 0,                      # Letzter ACK (Vollständige Sequenz)
+            'nack_active': False,
+            'last_seen': datetime.now(),
+            'bitmask_len': 8,                   # Max 32 (256 Pakete / 8-Bit)
+            'last_keepalive': datetime.now(),
+        }
+
+    def set_conn_type(self, conn_type):
+        self._conn_type = conn_type
+        logger.info(f"PRP Transport: Verbindungstyp auf {conn_type} geändert")
+
+    def is_transport_enabled(self, opt_id):
+        if opt_id not in self._transport_opt_ids:
+            return False
+        config = self._config_per_type.get(self._conn_type, {'use_transport': False})
+        return config['use_transport'] and self._transport_opt_ids[opt_id]
+
+    def enable_for_opt_id(self, opt_id, enable=True):
+        self._transport_opt_ids[opt_id] = enable
+        logger.info(f"PRP Transport: OPT-ID {opt_id} {'aktiviert' if enable else 'deaktiviert'}")
+
+    def _get_config_param(self, param_key: str):
+        return self._config_per_type[self._conn_type].get(param_key)
+
+    # ===================================================================
+    # Tasker
+    # ===================================================================
+    def tasker(self):
+        """Wird alle ~10ms aufgerufen"""
+        for prio in [True, False]:
+            self._transition(prio, "NO_EVENT")
+            self._flush_tx_buffer(prio)
+
+            for seq, p in list(self._state[prio]['pending'].items()):
+                if time.time() - p['last_send'] > self._get_config_param('retry_timer'):
+                    self._transition(prio, "TIMER_RETRY")
+
+    # ===================================================================
+    # Senden (Client)
+    # ===================================================================
+    def send_reliable(self, opt_id, data, prio, pac_size=None, callback=None):
+        if not self.is_transport_enabled(opt_id):
+            # Fallback: Direkt senden (ohne Transport)
+            ret = self._prp_root.prp_tx(opt_id, tx_flag=True, data=data, prio=prio)
+            if not ret:
+                logger.error(f"PRP Transport [{self._prp_root.uid}]: Konnte Daten nicht senden(Fallback)")
+            return None
+
+        l3_state = self._l3_state[prio]
+        state    = self._state[prio]
+
+        if l3_state == PRPState.INIT:
+            logger.debug("PRP L3: Lazy handshake – sende SYN")
+            self._send_SYN(response=False, cmd=True)
+            self._transition(prio, "SYN_SENT")
+
+        if state.get('paused'):
+            logger.debug("PRP L3: Senden pausiert (RNR)")
+            self._buffer_tx(prio, opt_id, data, pac_size, callback)
+            return None
+
+        if l3_state not in (PRPState.INIT, PRPState.ESTABLISHED):
+            logger.warning(f"PRP L3: Senden in State {l3_state.value} nicht erlaubt")
+            self._buffer_tx(prio, opt_id, data, pac_size, callback)
+            return None
+
+        if state.get('nack_active'):
+            logger.debug("PRP L3: NACK aktiv – neue DATA zurückgestellt")
+            self._buffer_tx(prio, opt_id, data, pac_size, callback)
+            return None
+
+        window = self._get_config_param('window_size')
+        if len(state['pending']) >= window:
+            logger.debug("PRP L3: Window voll – warte")
+            self._buffer_tx(prio, opt_id, data, pac_size, callback)
+            return None
+
+        state = self._state[prio]
+        if pac_size is None:
+            pac_size = self._get_config_param('pac_size')
+
+        payload_chunks: list = self._build_packets_fm_payload(prio=prio, pac_size=pac_size, data=data)
+
+        #print(f"payload: {data}")
+        #print(f"payload len: {len(data)}")
+        #print(f"payload_chunks: {payload_chunks}")
+        #print(f"payload_chunks len: {len(payload_chunks)}")
+        seq_list = []
+        for seq, prp_l3_data_pack in payload_chunks:
+            success        = self._prp_root.prp_tx_l3(l3_opt_id=PRP_OPT_L3_DATA, l3_frame=prp_l3_data_pack, prio=prio)
+
+            if success:
+                state['pending'][seq] = {
+                    'l3_pack'       : prp_l3_data_pack,
+                    'l3_opt_id'     : PRP_OPT_L3_DATA,
+                    'ts'            : datetime.now(),
+                    'retries'       : 0,
+                    'callback'      : callback or self._default_callback,
+                    'last_send'     : time.time()
+                }
+                seq_list.append(seq)
+        logger.debug(f"PRP-Send [{self._prp_root.uid}]: Pending states: {state['pending'].keys()}")
+        return seq_list
+
+    def _flush_tx_buffer(self, prio: bool):
+        state = self._state[prio]
+
+        if not state['tx_buffer']:
+            return
+
+        # Solange wir senden dürfen
+        while state['tx_buffer']:
+            opt_id, data, pac_size, callback = state['tx_buffer'][0]
+            seqs = self.send_reliable(
+                opt_id=opt_id,
+                data=data,
+                prio=prio,
+                pac_size=pac_size,
+                callback=callback
+            )
+            if seqs is None:
+                break  # immer noch blockiert
+            state['tx_buffer'].pop(0)
+
+    def _buffer_tx(self, prio, opt_id, data, pac_size, callback):
+        self._state[prio]['tx_buffer'].append(
+            (opt_id, data, pac_size, callback)
+        )
+        logger.debug(f"PRP L3: TX buffered ({len(data)} Bytes)")
+
+    # ===================================================================
+    # Empfangen & Verarbeiten (Server/Client)
+    # ===================================================================
+    def handle_transport_frame(self, unpacked_prp_opt: tuple[int, bool, bool], payload: bytes):
+        """
+        ══════════════════════════════════════════════════════════════════════════
+        3. L3-Daten-Paket (OPT-ID 30)
+        ══════════════════════════════════════════════════════════════════════════
+        +--------+--------+--------+-------------+----------+---------------+----- ~ ---------+--------+--------+
+        | FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | SEQ (1B) | ORIG-OPT (1B) | PAYLOAD (orig)  | CRC16  | CRC16  |
+        | 0x8D   | 0x81   |   30   | LSB  MSB    |          |               | (var, ohne Len) | low    | high   |
+        +--------+--------+--------+-------------+----------+---------------+----- ~ ---------+--------+--------+
+
+        ══════════════════════════════════════════════════════════════════════════
+        4. L3-ACK-Paket (OPT-ID 31)
+        ══════════════════════════════════════════════════════════════════════════
+        +--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+        | FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | NEXT_SEQ (1B) | BITMASK (var, 0–32B) | CRC16  | CRC16  |
+        | 0x8D   | 0x81   |   31   | LSB  MSB    |               |                      | low    | high   |
+        +--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+            0        1        2        3      4         5         6 ...(5 + bitmask_len)    L+5     L+6
+        """
+
+        if len(payload) < 1:
+            raise EncodingWarning("L3-Payload zu kurz")
+        # Unpacked PRP-Opt
+        opt_id, is_prio, more_follow = unpacked_prp_opt
+
+        if opt_id == PRP_OPT_L3_SYN:
+            """ 30 - SYN """
+            #self._transition(is_prio, "SYN")
+            self._process_SYN(payload, unpacked_prp_opt)
+
+        elif opt_id == PRP_OPT_L3_ACK:
+            """ 31 - ACK/NACK """
+            # ACK oder NACK? Wir schauen später in _process_ACK rein
+            self._process_ACK(payload, unpacked_prp_opt)
+
+        elif opt_id == PRP_OPT_L3_FIN:
+            """ 32 - FIN """
+            self._transition(is_prio, "FIN")
+            self._process_FIN(payload, unpacked_prp_opt)
+
+        elif opt_id == PRP_OPT_L3_RST:
+            """ 33 - RST """
+            self._transition(is_prio, "RST")
+            self._process_RST(payload, unpacked_prp_opt)
+
+        elif opt_id == PRP_OPT_L3_ERROR:
+            """ 34 - ERROR """
+            self._transition(is_prio, "ERROR")
+            self._process_ERROR(payload, unpacked_prp_opt)
+
+        elif opt_id == PRP_OPT_L3_DATA:
+            """ 39 - DATA (PRP-DATA/Packets) """
+            self._transition(is_prio, "DATA")
+            return self._process_DATA(payload, unpacked_prp_opt)
+
+        else:
+            logger.error(f"PRP L3: Unbekannte OPT-ID {opt_id}")
+
+        # == Und wieder zurück zum PRP-Protocol-Processor
+        #self._prp_root.prp_protocol.l3_decode_and_dispatch(opt_id=opt_id,
+        #                                                   tx=origin_is_tx,
+        #                                                   payload=data)
+        return b''
+
+    # ===================================================
+    # ==== Data handling
+    # ===================================================
+    # == DATA
+    def _handle_first_data(self, prio: bool):
+        """
+        Wird beim ersten empfangenen DATA-Paket in INIT oder SYN_SENT aufgerufen.
+        Initialisiert den L3-Zustand und triggert ggf. ACK.
+        """
+
+        logger.info(
+            f"PRP L3 [{self._prp_root.uid}] "
+            f"{'Prio' if prio else 'NoPrio'}: Erstes DATA empfangen – wechsle zu ESTABLISHED"
+        )
+        state = self._state[prio]
+        # Reset von Altlasten (wichtig bei Reconnects)
+        state['recv_buffer'].clear()
+        state['fragment_buffer'] = bytearray()
+        state['waiting_for_end'] = False
+        state['nack_active'] = False
+        state['paused'] = False
+        state['last_seen'] = datetime.now()
+
+        # ACK-Politik: optional sofort bestätigen
+        ack_mode = self._get_config_param('ack_mode')
+        if ack_mode == 'always':
+            self._send_ack(prio)
+
+    def _process_DATA(self, payload, unpacked_prp_opt):
+        opt_id, prio, more_follow = unpacked_prp_opt
+
+        # Sicherstellen, dass der State-Übergang passiert ist
+        # (wird bereits in handle_transport_frame gemacht, aber für Klarheit)
+        #self._transition(prio, "DATA")  # optional, da schon oben
+
+
+        state  = self._state[prio]
+        config = self._config_per_type[self._conn_type]
+
+        if len(payload) < 1:
+            logger.warning(f"PRP L3 [{self._prp_root.uid}]: Ungültiges Daten-Paket (zu kurz) – sende NACK")
+            self._send_nack(prio)
+            return b''
+
+        seq           = int(payload[0])
+        fragment_data = payload[1:]
+        window_size   = config.get('window_size', 128)
+        ret           = b''
+        logger.debug(f"PRP L3 [{self._prp_root.uid}] Prio={prio}: Empfangen SEQ={seq}, expected={state['expected_seq']}, more_follow={more_follow}")
+
+
+        # Sequenz-Prüfung
+        if seq == state['expected_seq']:
+            logger.debug(f"PRP L3 [{self._prp_root.uid}]: SEQ korrekt – verarbeite Fragment")
+            #self._handle_received_fragment(uid, prio, fragment_data, more_follow)
+            #state['expected_seq'] = (state['expected_seq'] + 1) % 256
+            state['recv_buffer'].append((seq, fragment_data, more_follow))
+            #state['recv_buffer'].sort(key=lambda x: x[0])
+            state['recv_buffer'].sort(
+                key=lambda x: (x[0] - state['expected_seq']) % 256
+            )
+            ret = self._process_buffer(prio)
+
+            # ACK je nach ack_mode
+            if config['ack_mode'] == 'always':
+                self._send_ack(prio)
+            elif config['ack_mode'] == 'on_end' and not more_follow:
+                self._send_ack(prio)
+            # on_request: Nur bei Anforderung (z. B. Keep-Alive)
+
+        elif (seq - state['expected_seq']) % 256 < window_size:
+            # Innerhalb Fenster → Out-of-order
+            logger.debug(f"PRP L3 [{self._prp_root.uid}]: Out-of-order SEQ {seq} – puffere")
+            state['recv_buffer'].append((seq, fragment_data, more_follow))
+            #state['recv_buffer'].sort(key=lambda x: x[0])
+            state['recv_buffer'].sort(
+                key=lambda x: (x[0] - state['expected_seq']) % 256
+            )
+            ret = self._process_buffer(prio)
+
+            # NACK je nach ack_mode
+            if config['ack_mode'] == 'always':
+                self._send_nack(prio)
+            elif config['ack_mode'] == 'on_end' and not more_follow:
+                self._send_nack(prio)
+
+        else:
+            # Außerhalb Fenster → schwerer Fehler
+            # TODO: Bereits empfangende Pakete können wiederholt empfangen werden(Kein RST)
+            logger.warning(f"PRP L3 [{self._prp_root.uid}]: SEQ {seq} weit außerhalb (expected={state['expected_seq']}) – ignoriere Paket")
+            #self._send_RST(uid, response=True, cmd=True)  # Prio-RST
+            # Optional: State resetten
+            #state['l3_state'] = 'INIT'
+            #state['expected_seq'] = 0
+            #state['recv_buffer'].clear()
+            #state['fragment_buffer'] = bytearray()
+
+        return ret
+
+    def _process_buffer(self, prio):
+        state = self._state[prio]
+        #logger.debug(f"_process_buffer recv_buffer: {state['recv_buffer']}")
+        ret         = bytearray()
+
+        while state['recv_buffer']:
+            try:
+                next_seq, fragment_data, more_follow = state['recv_buffer'][0]
+            except IndexError:
+
+                break
+            if next_seq == state['expected_seq']:
+                state['recv_buffer'].pop(0)
+                ret += self._handle_received_fragment(prio, fragment_data, more_follow)
+                state['expected_seq'] = (state['expected_seq'] + 1) % 256
+                #self._send_ack(uid, prio)
+                start_found = True
+            else:
+                break
+        return ret
+
+
+    def _handle_received_fragment(self, prio, fragment_data, more_follow):
+        state = self._state[prio]
+        logger.debug(f"_handle_received_fragment: uid:{self._prp_root.uid}, prio:{prio}, fragment_data:{fragment_data}, more_follow:{more_follow}")
+        # Fragment anhängen
+        state['fragment_buffer'] += fragment_data
+
+        if more_follow:
+            # Mehr folgt → warten
+            state['waiting_for_end'] = True
+            logger.debug(
+                f"PRP L3 [{self._prp_root.uid}]: Fragment empfangen (mehr folgt), Buffer: {len(state['fragment_buffer'])} Bytes")
+        else:
+            # Letztes Fragment
+            full_payload = bytes(state['fragment_buffer'])
+
+            # Buffer zurücksetzen
+            state['fragment_buffer'] = bytearray()
+            state['waiting_for_end'] = False
+
+            logger.info(f"PRP L3 [{self._prp_root.uid}]: Komplettes Paket rekonstruiert – {len(full_payload)} Bytes")
+
+            # Weiterleiten an normale PRP-Verarbeitung
+            try:
+                return self._prp_root.prp_protocol.l3_decode_and_dispatch(full_payload)
+            except Exception as e:
+                logger.error(f"PRP L3 [{self._prp_root.uid}]: Fehler beim Dispatch rekonstruierten Pakets: {e}")
+
+        return b''
+
+    # ===================================================
+    # ==== CTRL
+    # ===================================================
+    # == ACK
+    def _process_ACK(self, payload, unpacked_prp_opt: tuple):
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
+        opt_id, prio, more_follow = unpacked_prp_opt
+        state: dict = self._state[prio]
+
+        parsed = self._parse_ack_nack(payload)
+        if parsed[0] is None:
+            return None
+
+        next_expected, bitmask_len, bitmask = parsed
+
+        # == 1. ACK-Teil: alles < next_expected ist bestätigt
+        for s in list(state['pending']):
+            # s ist bestätigt, wenn s vor next_expected liegt
+            if self._is_acked(s, next_expected):
+                pending = state['pending'].pop(s)
+                logger.debug(
+                    f"PRP L3 [{self._prp_root.uid}]: ACK bestätigt SEQ={s}"
+                )
+                if pending['callback']:
+                    pending['callback'](success=True)
+
+        # == 2. Reines ACK?
+        if bitmask_len == 0:
+            # ACK: Alles OK bis next_expected
+            logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – ACK: Alles OK bis next_expected")
+
+            # state['expected_seq'] = next_expected
+            self._transition(prio, "ACK")
+            state['nack_active'] = False
+            state['last_ack'] = next_expected
+            #state['expected_seq'] = next_expected
+            return None
+
+        # == 3. NACK: Bitmask parsen
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – NACK: Bitmask parsen")
+        self._log_bitmask_table(prio, next_expected, bitmask, "Process NACK", tx=False)
+
+        missing = False
+        for i in range(bitmask_len * 8):
+            if not (bitmask[i // 8] & (1 << (i % 8))):
+                missing_seq = (next_expected + i) % 256
+                if missing_seq in state['pending']:
+                    logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – ReTry-SEQ: {missing_seq}")
+                    self._retry_packet(missing_seq, prio)
+                    missing = True
+
+        self._transition(prio, "NACK")
+        state['nack_active'] = missing
+        logger.debug(f"Pending keys für uid {self._prp_root.uid}: {list(state['pending'].keys())}")
+        # state['last_ack'] = next_expected
+        return None
+
+    @staticmethod
+    def _is_acked(seq, next_expected):
+        # seq < next_expected (mod 256)
+        return (seq - next_expected) % 256 > 128
+
+    # == SYN
+    def _process_SYN(self, payload, unpacked_prp_opt):
+        opt_id, prio, more = unpacked_prp_opt
+        logger.info(f"PRP L3 [{self._prp_root.uid}]: SYN empfangen")
+
+        if self._l3_state[prio] == PRPState.INIT:
+            self._send_SYN(response=True, cmd=False)  # SYN-ACK
+            self._transition(prio, "SYN_ACK")
+
+        elif self._l3_state[prio] == PRPState.SYN_SENT:
+            self._transition(prio, "SYN_ACK")
+
+        self._flush_tx_buffer(prio)
+        return None
+
+    # == FIN
+    def _process_FIN(self, payload, unpacked_prp_opt: tuple):
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: FIN RECV – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
+
+    # == RST
+    def _process_RST(self, payload, unpacked_prp_opt: tuple):
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: RST RECV – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
+
+    # == ERROR
+    def _process_ERROR(self, payload, unpacked_prp_opt: tuple):
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: ERROR RECV – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
+        return None
+
+    # ===================================================================
+    # ACK/NACK Senden (Server)
+    # ===================================================================
+    def _send_ack(self, prio, response=True):
+        state         = self._state[prio]
+        next_expected = state['expected_seq']
+        payload = bytearray([0]) # Nur EIN Byte: bitmask_len = 0
+
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: Sende ACK – next_expected={next_expected}")
+
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=PRP_OPT_L3_ACK,
+                                                 seq=next_expected,
+                                                 flag1=prio,
+                                                 flag2=response,
+                                                 data=bytes(payload))
+
+        self._prp_root.prp_tx_l3(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
+
+    def _send_nack(self, prio, response=True):
+        state = self._state[prio]
+
+        if not state['recv_buffer']:
+            self._send_ack(prio)
+            return None
+
+        window = self._get_config_param('window_size')
+        next_expected = state['expected_seq']
+        last_recv_seq = state['recv_buffer'][-1][0]
+        recv_seqs = {t[0] for t in state['recv_buffer']}
+
+        if not recv_seqs:
+            self._send_ack(prio)
+            return None
+
+        if next_expected == last_recv_seq:
+            logger.error(f"PRP L3 [{self._prp_root.uid}]: Sende NACK – next_expected == last_recv_seq")
+            raise ValueError(f'f"PRP L3 [{self._prp_root.uid}]: Sende NACK – next_expected == last_recv_seq"')
+
+        distances = [
+            (seq - next_expected) % 256
+            for seq in recv_seqs
+            if (seq - next_expected) % 256 < window
+        ]
+
+        if not distances:
+            self._send_ack(prio)
+            return None
+
+        max_gap = max(distances) + 1
+
+        if max_gap <= 0:
+            logger.debug("PRP L3: Kein Gap → sende ACK")
+            self._send_ack(prio)
+            return None
+
+        bitmask_len = (max_gap + 7) // 8
+        bitmask = bytearray(bitmask_len)
+
+        for i in range(max_gap):
+            check_seq = (next_expected + i) % 256
+            #received = any(t[0] == check_seq for t in state['recv_buffer'])
+            #if received:
+            #    bitmask[i // 8] |= (1 << (i % 8))
+            received_seqs = {t[0] for t in state['recv_buffer']}
+            if check_seq in received_seqs:
+                bitmask[i // 8] |= (1 << (i % 8))
+
+        payload = bytearray([bitmask_len]) + bitmask
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: Sende NACK – next={next_expected}, len={bitmask_len}")
+
+
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=PRP_OPT_L3_ACK,
+                                                 seq=next_expected,
+                                                 flag1=prio,
+                                                 flag2=response,
+                                                 data=bytes(payload))
+        self._log_bitmask_table(prio, next_expected, bitmask, "Sende NACK")
+        self._prp_root.prp_tx_l3(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
+        return None
+
+    # ===================================================================
+    # CTRL-Frames Senden (Server)
+    # ===================================================================
+    def _send_SYN(self, response=False, cmd=True):
+        """
+        l3_opt_id = PRP_OPT_L3_SYN
+        Seq       = My Prio SEQ,
+        Payload   = My No-Prio SEQ, Client Prio SEQ, Client No-Prio SEQ,
+        (alle Ctrl-Frames als Prio)
+        """
+        l3_opt_id    = PRP_OPT_L3_SYN
+        my_prio_seq     = self.get_current_seq(True)
+        my_no_prio_seq  = self.get_current_seq(False)
+        cl_prio_seq     = self._get_expected_client_seq(True)
+        cl_no_prio_seq  = self._get_expected_client_seq(False)
+        payload      = bytearray()
+        payload      += int(my_no_prio_seq).to_bytes()
+        payload      += int(cl_prio_seq).to_bytes()
+        payload      += int(cl_no_prio_seq).to_bytes()
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
+                                                 seq=my_prio_seq,
+                                                 flag1=response,
+                                                 flag2=cmd,
+                                                 data=bytes(payload))
+        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        return None
+
+    def _retry_syn(self, prio):
+        logger.info(f"PRP L3 [{self._prp_root.uid}]: Retry SYN (State SYN_SENT)")
+        self._send_SYN(response=False, cmd=True)
+
+    def _send_FIN(self, response=False, cmd=True):
+        """
+        l3_opt_id = PRP_OPT_L3_FIN
+        Seq       = My Prio SEQ,
+        Payload   = My No-Prio SEQ,
+        (alle Ctrl-Frames als Prio)
+        """
+        l3_opt_id = PRP_OPT_L3_FIN
+        prio_seq     = self.get_current_seq(True)
+        no_prio_seq  = self.get_current_seq(False)
+        payload      = int(no_prio_seq).to_bytes()
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
+                                                 seq=prio_seq,
+                                                 flag1=response,
+                                                 flag2=cmd,
+                                                 data=bytes(payload))
+        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        return None
+
+    def _send_RST(self, response=False, cmd=True):
+        """
+        l3_opt_id = PRP_OPT_L3_RST
+        Seq       = My Prio SEQ,
+        Payload   = My No-Prio SEQ, Client Prio SEQ, Client No-Prio SEQ,
+        (alle Ctrl-Frames als Prio)
+        """
+        l3_opt_id = PRP_OPT_L3_RST
+        my_prio_seq    = self.get_current_seq(True)
+        my_no_prio_seq = self.get_current_seq(False)
+        cl_prio_seq    = self._get_expected_client_seq(True)
+        cl_no_prio_seq = self._get_expected_client_seq(False)
+        payload  = bytearray()
+        payload += int(my_no_prio_seq).to_bytes()
+        payload += int(cl_prio_seq).to_bytes()
+        payload += int(cl_no_prio_seq).to_bytes()
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
+                                                 seq=my_prio_seq,
+                                                 flag1=response,
+                                                 flag2=cmd,
+                                                 data=bytes(payload))
+        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        return None
+
+    def _send_ERROR(self, response=False, cmd=True):
+        """
+        l3_opt_id = PRP_OPT_L3_ERROR
+        Seq       = My Prio SEQ,
+        Payload   = My No-Prio SEQ, Client Prio SEQ, Client No-Prio SEQ,
+        (alle Ctrl-Frames als Prio)
+        """
+        l3_opt_id = PRP_OPT_L3_ERROR
+        my_prio_seq    = self.get_current_seq(True)
+        my_no_prio_seq = self.get_current_seq(False)
+        cl_prio_seq    = self._get_expected_client_seq(True)
+        cl_no_prio_seq = self._get_expected_client_seq(False)
+        payload  = bytearray()
+        payload += int(my_no_prio_seq).to_bytes()
+        payload += int(cl_prio_seq).to_bytes()
+        payload += int(cl_no_prio_seq).to_bytes()
+        prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
+                                                 seq=my_prio_seq,
+                                                 flag1=response,
+                                                 flag2=cmd,
+                                                 data=bytes(payload))
+        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        return None
+
+    # ===================================================================
+    # Retry (Client)
+    # ===================================================================
+    def _retry_packet(self, seq, prio):
+        state   = self._state[prio]
+        pending = state['pending'].get(seq)
+        if time.time() - pending['last_send'] < self._get_config_param('retry_timer'):
+            return None
+
+        if pending and pending['retries'] < self._config_per_type[self._conn_type]['retry_limit']:
+            pending['retries'] += 1
+            pending['last_send'] = time.time()
+            self._prp_root.prp_tx_l3(l3_opt_id=pending['l3_opt_id'], l3_frame=pending['l3_pack'], prio=prio)
+            logger.info(f"PRP Transport [{self._prp_root.uid}]: Retry Seq {seq} (Versuch {pending['retries']})")
+        elif pending:
+            logger.error(f"PRP Transport [{self._prp_root.uid}]: Retry-Limit erreicht für Seq {seq}")
+            if pending['callback']:
+                pending['callback'](success=False)
+            del state['pending'][seq]
+
+        return None
+
+    def _retry_pending(self, prio):
+        for seq in list(self._state[prio]['pending']):
+            self._retry_packet(seq, prio)
+        return None
+
+    # ===================================================================
+    # Callback
+    # ===================================================================
+    @staticmethod
+    def _default_callback(success):
+        logger.debug(f"PRP L3 Default Callback: success={success}")
+
+    # ===================================================================
+    # Hilfsfunktionen Testing
+    # ===================================================================
+    def set_current_seq(self, prio, seq: int):
+        self._seq_counter[prio] = seq
+
+    def _log_bitmask_table(self, prio: bool, next_expected: int, bitmask: bytes, comment: str = "", tx=True):
+        """
+        Loggt die Bitmask als verständliche Tabelle.
+        bitmask: die reine Bitmask (ohne Längenbyte)
+        next_expected: SEQ-Nummer, ab der die Bitmask gilt
+        comment: optionaler Kommentar (z.B. 'Sende NACK' oder 'Process ACK')
+        """
+        state = self._state[prio]
+        if tx:
+            recv_seqs = {seq for seq, _, _ in state['recv_buffer']}
+        else:
+            recv_seqs = state['pending']
+
+        comment_str = f" ({comment})" if comment else ""
+
+        if len(bitmask) == 0:
+            # Reines ACK: alles bis next_expected-1 empfangen
+            logger.debug(
+                f"PRP L3 [{self._prp_root.uid}]{comment_str}: Reines ACK – alles bis SEQ {next_expected - 1} empfangen")
+            return
+
+        logger.debug(
+            f"PRP L3 [{self._prp_root.uid}]{comment_str}: Bitmask-Auswertung (next_expected={next_expected}, Länge={len(bitmask)} Bytes)")
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]: BitMask-RAW: {bitmask} -  BitMask-HEX: {bitmask.hex()}")
+        table_lines = []
+
+        # Header: SEQ-Nummern
+        header = "SEQ |"
+        bits_line = "Bit |"
+        status_line = "Stat|"
+
+        total_bits = len(bitmask) * 8
+        for i in range(total_bits):
+            seq = (next_expected + i) % 256
+            header += f" {seq:>3}"
+            bit_val = (bitmask[i // 8] >> (i % 8)) & 1
+            bits_line += f"  {bit_val} "
+            received = seq in recv_seqs
+            status_line += "  ✓ " if received else "  ✗ "
+
+            if (i + 1) % 8 == 0:  # Nach jedem Byte Trennlinie
+                header += " |"
+                bits_line += " |"
+                status_line += " |"
+
+        table_lines.append(header)
+        table_lines.append(bits_line)
+        table_lines.append(status_line)
+
+        logger.debug("\n" + "\n".join(table_lines))
+
+        # Zusammenfassung
+        received = []
+        missing = []
+        for i in range(total_bits):
+            seq = (next_expected + i) % 256
+            if (bitmask[i // 8] >> (i % 8)) & 1:
+                received.append(seq)
+            else:
+                missing.append(seq)
+
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]{comment_str}: Empfangen: {received}")
+        logger.debug(f"PRP L3 [{self._prp_root.uid}]{comment_str}: Fehlend: {missing}")
+    # ===================================================================
+    # Hilfsfunktionen
+    # ===================================================================
+    def _get_expected_client_seq(self, prio):
+        state = self._state[prio]
+        return state['expected_seq']
+
+    def get_current_seq(self, prio):
+        return int(self._seq_counter[prio])
+
+    def _get_current_seq_and_increment(self, prio):
+        current_seq = self.get_current_seq(prio)
+        self._seq_counter[prio] = (self._seq_counter[prio] + 1) % 256
+        return current_seq
+
+    @staticmethod
+    def _seq_distance(a, b):
+        """Distanz von b → a im 0..255 Raum"""
+        return (a - b) % 256
+
+    @staticmethod
+    def _seq_sort_key(seq, expected):
+        return (seq - expected) % 256
+
+    def _build_packets_fm_payload(self, data: bytes, pac_size: int, prio: bool):
+        """ Zerlegt Payload in Chunks und baut PRP-L3-Data Frame """
+        flag1       = prio
+        packet_list = []
+        pac_size    = pac_size - 8 # - l3 Header - Data + prp-l3 Header + crc
+        while len(data) > pac_size:
+            data_chunk = data[:pac_size]
+            data       = data[pac_size:]
+            # flag2 = more_follow
+            seq          = self._get_current_seq_and_increment(prio)
+            l3_data_pack = self._build_l3_pack_w_seq(seq, data_chunk, l3_opt_id=PRP_OPT_L3_DATA, flag1=flag1, flag2=True)
+            packet_list.append((seq, l3_data_pack))
+
+        # flag2 = more_follow
+        if data:
+            seq          = self._get_current_seq_and_increment(prio)
+            l3_data_pack = self._build_l3_pack_w_seq(seq, data, l3_opt_id=PRP_OPT_L3_DATA, flag1=flag1, flag2=False)
+            packet_list.append((seq, l3_data_pack))
+        return packet_list
+
+    def _build_l3_pack_w_seq(self, seq, data, l3_opt_id: int, flag1: bool, flag2: bool):
+
+        return self._prp_root.prp_protocol.encode_l3_frame(l3_opt_id=l3_opt_id,
+                                                           seq=seq,
+                                                           flag1=flag1,
+                                                           flag2=flag2,
+                                                           data=data)
+
+    @staticmethod
+    def _parse_ack_nack(payload):
+        if len(payload) < 2:
+            logger.warning("PRP L3: ACK-Payload zu kurz – ignoriere")
+            return None, None, None
+
+        next_expected = payload[0]
+        bitmask_len   = payload[1]
+
+        if bitmask_len == 0:
+            return next_expected, 0, b''
+
+        if len(payload) < 2 + bitmask_len:
+            logger.warning("PRP L3: ACK Bitmask unvollständig – ignoriere")
+            return None, None, None
+
+        bitmask = payload[2:2 + bitmask_len]
+        return next_expected, bitmask_len, bitmask
+
+    # ===================================================================
+    # L3 State Hilfsfunktionen (Zustandsmaschine)
+    # ===================================================================
+    def _get_l3_state(self, prio: bool):
+        return self._l3_state[prio]
+
+    def _set_l3_state(self, prio: bool, new_state: PRPState):
+        old = self._l3_state[prio]
+        if old != new_state:
+            logger.info(f"PRP L3 [{self._prp_root.uid}] {'Prio' if prio else 'NoPrio'}: State {old.value} → {new_state.value}")
+        self._l3_state[prio] = new_state
+
+    def _execute_actions(self, prio: bool, actions: list[str]):
+        for action in actions:
+            fn = getattr(self, action, None)
+            if fn:
+                fn(prio)
+            else:
+                logger.warning(f"PRP L3 [{self._prp_root.uid}]: Unbekannte Action '{action}' im State-Table")
+
+    def _transition(self, prio: bool, event: str):
+        """
+        Zentrale Zustandsübergangsfunktion
+        Wird von handle_transport_frame, tasker() und später Timer aufgerufen
+        """
+        current = self._l3_state[prio]
+        new_state, actions = get_transition(current, event)
+
+        self._set_l3_state(prio, new_state)
+        return self._execute_actions(prio, actions)
+
+    # Beispiel-Action für RNR (Receive Not Ready)
+    def _pause_transmission(self, prio: bool):
+        """Wird aufgerufen bei RNR – pausiert das Senden auf diesem Kanal"""
+        state = self._state[prio]
+        state.setdefault('paused', False)
+        state['paused'] = True
+        logger.info(f"PRP L3 [{self._prp_root.uid}] {'Prio' if prio else 'NoPrio'}: Übertragung pausiert (RNR empfangen)")
+        return None
+
+    # Optional: Gegenstück RR (Receive Ready) – später
+    # def _resume_transmission(self, uid: str, prio: bool):
+    #     state = self._state[uid][prio]
+    #     state['paused'] = False
+    #     logger.info(f"PRP L3 [{uid}]: Übertragung fortgesetzt (RR empfangen)")
+
+    def get_all_pending(self):
+        return self._state[True]['pending'].keys(), self._state[False]['pending'].keys()

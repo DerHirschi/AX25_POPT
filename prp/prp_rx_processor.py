@@ -59,9 +59,13 @@ class PRP_RX_Processor:
                 opt_id, _, _ = unpack_6bit_int_and_bool(data[i + 2:i + 3])
                 length = int.from_bytes(data[i + 3:i + 5], 'little')
                 frame_end = i + 5 + length + 2  # Header(5)+ len+ CRC(2)
-
-                # == Speicher Frame Status (CLI-ESC Meta)
-                self._next_pack_meta = opt_id, length
+                # == Layer 3 Frame
+                if opt_id not in range(30, 40):  # 30 - 39
+                    #frame_end += 1    # + 1 Byte Seq
+                    #else:
+                    # == Layer 4 CLI-ESC
+                    # == Speicher Frame Status (CLI-ESC Meta)
+                    self._next_pack_meta = opt_id, length
 
                 # ===============================================
                 # == Potenziellen ABORT Frame im Datensatz suchen
@@ -97,12 +101,13 @@ class PRP_RX_Processor:
                 try:
                     # == Process PRP-Frame
                     rest_data += self._prp_root.prp_rx_process(rem_mon_pack)
-                except EncodingWarning:
+                except EncodingWarning as ex:
                     logger.debug("PRP: Data Chunk:")
                     logger.debug(f"PRP:   DATA  : {data}")
                     logger.debug(f"PRP:   DATA H: {bytearray2hexstr(data)}")
                     logger.debug(f"PRP:   REST  : {rest_data}")
                     logger.debug(f"PRP:   REST H: {bytearray2hexstr(rest_data)}")
+                    raise ex
 
                 self._next_pack_meta = None
                 # == Springe zum nächsten Byte nach dem Frame

@@ -71,6 +71,10 @@ class PRPRemoteMonitor:
         Wird von PortHandler → Connection.update_monitor() aufgerufen.
         Prüft Filter und entscheidet, ob Frame remote gesendet werden soll.
         """
+        if self._prp_root.connection is None:
+            # TODO Für eigene L3 Verbindung verfügbar machen
+            return
+
         port_id = ax25frame_conf.get('port', -1)
         if port_id != self._get_rem_mon_port():
             return
@@ -162,7 +166,10 @@ class PRPRemoteMonitor:
         if self._batch_timer > time.time() and not buffer_limit:
             return
 
-        payload_len = self._prp_root.connection.get_PacLen * self._prp_root.connection.get_MaxPac
+        if self._prp_root.connection is None:
+            payload_len = 750 # TODO payload_len für PRP-L3
+        else:
+            payload_len = self._prp_root.connection.get_PacLen * self._prp_root.connection.get_MaxPac
         if not self._can_send_next_batch(payload_len) and not buffer_limit:
             return
 

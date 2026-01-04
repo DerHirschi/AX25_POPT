@@ -168,3 +168,6 @@ def decode_prp_metadata(raw_ax25_payload: bytes):
             continue
 
     return prp_frames, rest_data
+
+if __name__ == '__main__':
+    print(unpack_6bit_int_and_bool(b'C'))

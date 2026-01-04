@@ -8,8 +8,8 @@
                    ||>>_     //   \\_  ||>>_
                   (__)__)   (__)  (__)(__)__)
 ══════════════════════════════════════════════════════════════════════════
-                   PoPT Remote Protocol v1.3
-                (Stand: 13. Dezember 2025)
+                   PoPT Remote Protocol v1.4
+                (Stand: 31. Dezember 2025)
 ══════════════════════════════════════════════════════════════════════════
 1. Allgemeine Paketstruktur (gilt für ALLE Pakete)
 ══════════════════════════════════════════════════════════════════════════
@@ -196,6 +196,105 @@ ID-Bereich | Bedeutung                         | Payload vor Escaping/Kompressio
  ...       | ...                               | ...
  62 TX     | CLI-Escape                        | CLI-Payload
  63 TX     | PRP-Batch                         | Batch von PRP-Frames
+
+══════════════════════════════════════════════════════════════════════════
+9. Layer 3: Zuverlässiger Transport (OPT-ID 30–39)
+══════════════════════════════════════════════════════════════════════════
+
+Aktiviert für ausgewählte OPT-IDs (z. B. PRP_ADMIN, CLI_ESCAPE, zukünftige Anwendungen)
+
+9.1 L3-Daten-Paket (OPT-ID 39)
+──────────────────────────────────────────────────────────────────────────
+
++--------+--------+--------+-------------+----------+---------------+----- ~ ---------+--------+--------+
+| FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | SEQ (1B) | ORIG-OPT (1B) | PAYLOAD (orig)  | CRC16  | CRC16  |
+| 0x8D   | 0x81   |   30   | LSB  MSB    |          |               | (var, ohne Len) | low    | high   |
++--------+--------+--------+-------------+----------+---------------+----- ~ ---------+--------+--------+
+
+OPTBYTE:
+  Bit 7 = P (Priorität): 1 = Prio-Kanal, 0 = Normal-Kanal
+  Bit 6 = F2 (More Follow): 1 = weitere Fragmente folgen, 0 = letztes Fragment
+  Bits 5–0 = 30 (0x1E)
+
+SEQ:       Sequenznummer (0–255, wrap-around)
+ORIG-OPT:  Ursprüngliche OPT-ID des zu transportierenden Pakets
+PAYLOAD:   Original-Payload (ggf. komprimiert)
+
+9.2 L3-ACK/NACK-Paket (OPT-ID 31)
+──────────────────────────────────────────────────────────────────────────
+
++--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+| FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | NEXT_SEQ (1B) | BITMASK (var)    | CRC16  | CRC16  |
+| 0x8D   | 0x81   |   31   | LSB  MSB    |               |  0–254 Bytes     | low    | high   |
++--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+
+OPTBYTE:
+  Bit 7 = P (Priorität): 1 = Prio-ACK/NACK, 0 = Normal-ACK/NACK
+  Bit 6 = immer 0 (Response-Frame)
+  Bits 5–0 = 31 (0x1F)
+
+LEN:       Gesamtlänge des L3-Payloads (NEXT_SEQ + Bitmask)
+NEXT_SEQ:  Nächste erwartete Sequenznummer (uint8)
+BITMASK:   Variable Länge = LEN - 1 Byte
+           Wenn Länge = 0 → reines ACK (alles bis NEXT_SEQ-1 empfangen)
+           Wenn Länge > 0 → NACK mit selektiver Bitmask
+
+Bitmask-Semantik:
+  Bit i (von LSB aus) = 1 → SEQ (NEXT_SEQ + i) % 256 empfangen
+  Bit i = 0 → SEQ fehlt
+  Maximale Bitmask-Länge: 254 Bytes → bis zu 2032 Sequenzen bestätigbar
+  Praktische Konfiguration: max. 32 Bytes (256 Sequenzen)
+
+9.3 L3-Steuerpakete (OPT-ID 30, 32-34)
+──────────────────────────────────────────────────────────────────────────
+
+Alle Steuerframes werden immer über den **Prio-Kanal** gesendet (Bit 7 = 1).
+Bit 6 (More Follow) wird für erweiterte Semantik genutzt → 4 mögliche Zustände:
+
+  P=1, More=0 → Normaler Steuerbefehl
+  P=1, More=1 → Steuerbefehl mit Zusatzbedeutung (z. B. Request, RNR)
+
+OPT-ID | Name         | More=0 (Standard)                 | More=1 (Request/Extended)               | Payload
+-------+--------------+-----------------------------------+-----------------------------------------+---------
+ 30    | SYN          | SYN (Verbindungsaufbau)           | SYN-Request (z. B. Resync SEQ)          | 4 Byte SEQ (my_prio, my_noprio, cl_prio, cl_noprio)
+ 31    | ACK          |                                   |                                         |
+ 32    | FIN          | FIN (graceful close)              |                                         | 1 Byte my_noprio_seq
+ 33    | RST          | RST (abort)                       |                                         | 4 Byte SEQ wie SYN
+ 34    | ERROR        | Protokollfehler melden            | (reserviert)                            | Fehlercode + optional Text
+ 39    | DATA         |                                   |                                         |
+ 40    | ESC          |                                   |                                         |
+
+
+══════════════════════════════════════════════════════════════════════════
+10. L3-Verfahren – Zusammenfassung
+══════════════════════════════════════════════════════════════════════════
+
+- Zwei unabhängige Kanäle: Prio und NoPrio (separate SEQ-Zähler und States)
+- Fragmentierung: More-Bit in Datenpaketen
+- Selektives ACK/NACK mit dynamischer Bitmask (0–254 Bytes)
+- Out-of-order Buffering und Rekonstruktion
+- Window-Size konfigurierbar (Standard 128)
+- Pakete weit außerhalb Fenster → ignoriert (kein RST)
+- Wrap-around (SEQ 0–255) voll unterstützt
+- Steuerpakete nutzen Prio-Kanal + More-Bit für 4 Zustände (inkl. RNR/RR)
+
+══════════════════════════════════════════════════════════════════════════
+11. Aktueller Stand und Roadmap
+══════════════════════════════════════════════════════════════════════════
+
+Implementiert (31.12.2025):
+- Vollständiges L3-Daten + ACK/NACK mit variabler Bitmask
+- Out-of-order + Reordering + große Bitmasks (bis 16+ Bytes getestet)
+- Ignorieren von Paketen außerhalb Fenster
+- Zustandsmaschine mit zentraler Tabelle
+- RNR als Event vorbereitet
+
+Offen:
+- Vollständiger Retry-Mechanismus (automatisches Resend bei NACK)
+- SYN/Handshake für sauberen Verbindungsaufbau
+- FIN-Graceful-Close
+- RR als Gegenstück zu RNR
+- Keepalive über L3
 
 ══════════════════════════════════════════════════════════════════════════
 Ende der Spezifikation

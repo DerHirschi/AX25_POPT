@@ -128,3 +128,4 @@ class PRPCLIStreamHandler:
     def _send_status(self, msg: str, tx: bool):
         if hasattr(self._prp_root.connection, 'send_gui_QSO_PRPstatus'):
             self._prp_root.connection.send_gui_QSO_PRPstatus(msg, tx=tx)
+

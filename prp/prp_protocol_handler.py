@@ -1,11 +1,12 @@
-from ax25.ax25Error import AX25DecodingERROR
+#from ax25.ax25Error import AX25DecodingERROR
 from ax25.ax25dec_enc import bytearray2hexstr, AX25Frame
 from cfg.logger_config import logger
 from fnc.crc_fnc import crc16_ccitt
 from fnc.lzhuf import LZHUF_Comp
 from prp.prp_const import PRP_FESC, PRP_FEND, PRP_FESC_TFESC, PRP_FESC_TFEND, PRP_FLAG, PRP_OPT_20, PRP_OPT_21, \
     PRP_OPT_DISCO, PRP_OPT_LOGIN_REQ, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, PRP_OPT_ESC_CLI, \
-    PRP_OPT_PRP_BATCH, PRP_DONT_ACK, PRP_NACK, PRP_BATCH_MAX_PAY, PRP_BATCH_MIN_PACK
+    PRP_OPT_PRP_BATCH, PRP_DONT_ACK, PRP_NACK, PRP_BATCH_MAX_PAY, PRP_BATCH_MIN_PACK, \
+    PRP_OPT_PRP_ADMIN
 from prp.prp_dec_fnc import pack_6bit_int_and_bool, unpack_6bit_int_and_bool, unpack_time_hms_to_datetime
 
 
@@ -28,11 +29,27 @@ class PRPProtocolHandler:
         self._prp_handshake  = prp_root.prp_handshake
         self._prp_auth       = prp_root.prp_auth
         self._cli_esc        = prp_root.prp_cli_esc
+        self._prp_admin      = prp_root.prp_admin
+        self._transport      = prp_root.prp_transport
+
+        # Command Dispatch
+        self._handler_map = {
+            PRP_OPT_20:             self._handle_handshake,
+            PRP_OPT_21:             self._handle_abort,
+            PRP_OPT_DISCO:          self._handle_disco,
+            PRP_OPT_LOGIN_REQ:      self._handle_login_req,
+            PRP_OPT_LOGIN_RESP:     self._handle_login_resp,
+            PRP_OPT_LOGOUT:         self._handle_logout,
+            PRP_OPT_STATE_UPDATE:   self._handle_state_update,
+            PRP_OPT_PRP_ADMIN:      self._handle_prp_admin,
+            PRP_OPT_ESC_CLI:        self._handle_cli_esc,
+            PRP_OPT_PRP_BATCH:      self._handle_batch,
+        }
 
     # ===================================================================
     # Encoding
     # ===================================================================
-    def encode_frame(self, opt_id: int, tx: bool, data: bytes, compress=True, send_uncompressed=True):
+    def encode_frame(self, opt_id: int, tx: bool, data: bytes, compress=True, send_uncompressed=True, layer3=False):
         send_compressed = False
         data_len        = len(data)
         comp_data_len   = len(data)
@@ -59,15 +76,41 @@ class PRPProtocolHandler:
         # Building Packet
         data_to_send  = bytearray()
         data_to_send += pack_6bit_int_and_bool(value=int(opt_id), flag1=tx, flag2=send_compressed)
+        # Wird über L3 gesendet, keine Len und CRC nötig
+        if layer3:
+            data_to_send += data
+            return data_to_send
+
+        # Layer 3
         data_to_send += len(data).to_bytes(2, 'little')
         data_to_send += data
         # CRC
         crc           = crc16_ccitt(data_to_send)   # 2 Bytes - little
         # Adding Flag and CRC / Flag + Packet + CRC
         data_to_send  = PRP_FLAG + data_to_send + crc
-
         return data_to_send
 
+    @staticmethod
+    def encode_l3_frame(l3_opt_id: int, seq: int, flag1: bool, flag2: bool, data: bytes):
+        if data:
+            # Escaping
+            data = data.replace(PRP_FESC, PRP_FESC_TFESC)
+            data = data.replace(PRP_FEND, PRP_FESC_TFEND)
+
+        # Meta Date für Status Msg
+        #self._rx_process.set_last_pack_meta((data_len, comp_data_len))
+        # Building Packet
+        data_to_send = bytearray()
+        data_to_send += pack_6bit_int_and_bool(value=int(l3_opt_id), flag1=flag1, flag2=flag2)
+        data_to_send += (len(data) + 1).to_bytes(2, 'little')
+        data_to_send += int(seq).to_bytes()
+        data_to_send += data
+        # CRC
+        crc = crc16_ccitt(data_to_send)  # 2 Bytes - little
+        # Adding Flag and CRC / Flag + Packet + CRC
+        data_to_send = PRP_FLAG + data_to_send + crc
+
+        return data_to_send
     # ===================================================================
     # Decoding + Dispatch
     # ===================================================================
@@ -79,7 +122,7 @@ class PRPProtocolHandler:
         """
         opt_byte = data[2:3]
         # length = data[3:5] # little
-        payload = data[5:-2]
+        payload  = data[5:-2]
         checksum = data[-2:]
         ################################################################
         # Checking Checksum
@@ -98,12 +141,31 @@ class PRPProtocolHandler:
         payload = payload.replace(PRP_FESC_TFESC, PRP_FESC)
         ################################################################
         # Decoding OPT Byte
-        opt_id, tx, is_compressed = unpack_6bit_int_and_bool(opt_byte)
+        unpacked_prp_opt          = unpack_6bit_int_and_bool(opt_byte)
+        opt_id, tx, is_compressed = unpacked_prp_opt
+
+        # =============================================
+        # L3 - PRP-Transporter
+        if opt_id in range(30, 40): # range(30, 40) - 30'iger Bereich L3
+            """
+            OPTBYTE:
+              Bit 7 = F2 (Compressed-Flag):
+                      1 = Prio-Paket
+                      0 = Nicht-Prio-Paket
+              Bit 6 = F1 (TX-Flag):
+                      1 = Mehr Fragments folgen
+                      0 = Letztes Fragment
+            """
+            return self._transport.handle_transport_frame(unpacked_prp_opt, payload)
+
+        # =============================================
+        # Weiter mit L4
         prp_payload_len = len(payload)
         if is_compressed:
-            lzhuf = LZHUF_Comp()
+            lzhuf   = LZHUF_Comp()
             payload = lzhuf.decode(payload)
-        # Frame Status
+
+        # Frame Status (CLI-ESC)
         self._rx_process.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
         ################################################################
         # 0 - 19 = Port ID
@@ -141,26 +203,82 @@ class PRPProtocolHandler:
             # Response Handler / GUI Updates usw.
             self._prp_root.handle_response(opt_id, resp_ok=ack)
 
-        # Command Dispatch
-        handler_map = {
-            PRP_OPT_20:             self._handle_handshake,
-            PRP_OPT_21:             self._handle_abort,
-            PRP_OPT_DISCO:          self._handle_disco,
-            PRP_OPT_LOGIN_REQ:      self._handle_login_req,
-            PRP_OPT_LOGIN_RESP:     self._handle_login_resp,
-            PRP_OPT_LOGOUT:         self._handle_logout,
-            PRP_OPT_STATE_UPDATE:   self._handle_state_update,
-            PRP_OPT_ESC_CLI:        self._handle_cli_esc,
-            PRP_OPT_PRP_BATCH:      self._handle_batch,
-        }
-
-        handler = handler_map.get(opt_id)
+        # Handler für OPT-ID's
+        handler = self._handler_map.get(opt_id)
         if handler:
             return handler(tx, payload)
 
         logger.warning(f"PRP: Unknown OPT-ID({opt_id}) from {self._prp_root.uid}")
         logger.warning("PRP: Possibly older PoPT version?")
         return b''
+
+    def l3_decode_and_dispatch(self, payload: bytes):
+        """
+        Dekodiert ein vollständiges PRP-Frame und dispatched es.
+        Wird von prp_rx_process() aufgerufen.
+        Gibt CLI-Payload zurück (falls vorhanden).
+        """
+        opt_byte = payload[0:1]
+        payload  = payload[1:]
+
+        ################################################################
+        # Unescaping
+        payload = payload.replace(PRP_FESC_TFEND, PRP_FEND)
+        payload = payload.replace(PRP_FESC_TFESC, PRP_FESC)
+        ################################################################
+        # Decoding OPT Byte
+        unpacked_prp_opt = unpack_6bit_int_and_bool(opt_byte)
+        opt_id, tx, is_compressed = unpacked_prp_opt
+
+        ################################################################
+        #  Wurde vorher schon dekomprimiert / dekodiert.
+        prp_payload_len = len(payload)
+        # Frame Status
+        self._rx_process.set_comp_pack_meta((opt_id, prp_payload_len, len(payload)))
+        ################################################################
+        # 0 - 19 = Port ID
+        if opt_id < 20:
+            try:
+                mon_conf = self._decode_remote_mon_frame(payload, opt_id, tx)
+                self._prp_root.port_handler.handle_remote_monitor_rx(mon_conf, self._prp_root.uid)
+                return b''
+            except Exception as e:
+
+                logger.warning(f"PRP Remote Monitor: Decoding error UID: {self._prp_root.uid}")
+                logger.warning(e)
+                logger.warning(f"PRP Frame HEX: {bytearray2hexstr(payload)}")
+                return b''
+
+        ################################################################
+        # TX = Send CMD(True) / Response CMD(False) /
+        # 20 - 63 = CMD'S
+
+        # =============================================
+        # tx=False → Zentrale Response/ACK-Behandlung
+        # Nur für PRP States !!
+        # =============================================
+        if not tx:
+            ack = True
+            if opt_id not in PRP_DONT_ACK:
+                if payload == PRP_NACK:
+                    ack = False
+                if ack:
+                    # ACK CFG und update Remote-States
+                    self._state_manager.ack_pending_remote_states(opt_id)
+                else:
+                    # Optional: Pending löschen oder retry
+                    self._state_manager.del_pending(opt_id)
+            # Response Handler / GUI Updates usw.
+            self._prp_root.handle_response(opt_id, resp_ok=ack)
+
+        handler = self._handler_map.get(opt_id)
+        if handler:
+            return handler(tx, payload)
+
+        logger.warning(f"PRP: Unknown OPT-ID({opt_id}) from {self._prp_root.uid}")
+        logger.warning("PRP: Possibly older PoPT version?")
+        return b''
+
 
     @staticmethod
     def _decode_remote_mon_frame(ax25_data, port_id, tx):
@@ -169,8 +287,10 @@ class PRPProtocolHandler:
         ax25frame = AX25Frame()
         try:
             ax25frame.decode_ax25frame(payload)
-        except AX25DecodingERROR:
-            raise AX25DecodingERROR
+        #except AX25DecodingERROR:
+            #raise AX25DecodingERROR
+        except Exception as ex:
+            raise ex
         ax25frame_conf = ax25frame.get_frame_conf()
         ax25frame_conf['tx']      = tx
         ax25frame_conf['rx_time'] = rx_time
@@ -222,11 +342,15 @@ class PRPProtocolHandler:
             self._state_manager.rx_resp_remote_state_update(payload)
         return b''
 
+    def _handle_prp_admin(self, tx, payload):
+        """ PRP-Admin 27 """
+        self._prp_admin.handle_admin_frame(payload=payload, is_tx=tx)
+        return b''
+
     def _handle_cli_esc(self, tx, payload):
         """ CLI Escape 62 """
         if tx:
             return self._cli_esc.handle_received_cli_data(payload)
-
         return b''
 
     def _handle_batch(self, tx, payload):
@@ -304,30 +428,7 @@ class PRPProtocolHandler:
             self._prp_tx_buffer.write_to_buffer((PRP_OPT_PRP_BATCH, data2send), prio=False)
 
     # ===================================================================
-    # ====== Abort I/O
-    # ===================================================================
-    """
-    def send_abort_request(self):
-        # RX CMD 21 - ABORT - CLI-ESC Abort 
-        logger.info(
-            f"PRP: Abort-REQ(CLI-ESC) empfangen (OPT-ID 21). Breche das Senden ab und lösche TX-Buffer. UID: {self._prp_root.uid}")
-        # == Status MSG to GUI ????????
-        self._prp_root.send_cli_esc_abort_sender_status()
-        # == ESC-CLI Frame aus ax25Conn PRP-Rest-buffer löschen
-        logger.debug(f"PRP: Lösche TX-Buffer (aktuellen Frame)und sende Abort RESP Frame: {self._prp_root.uid}")
-        # == Lösche AX25Conn sende Buffer (nut tx-buffer, nicht prp-q buffer)
-        self._prp_tx_buffer.del_tx_buff(PRP_OPT_ESC_CLI)
-        # == Send Response
-        self.send_abort_frame()
-        return
-
-    def send_abort_frame(self):
-        # TX Respond CMD 21 - ABORT RESP - Wird in unvollständig empfangenen PRP-Frame gesucht 
-        # == Sende Abort Frame
-        self._prp_root.prp_tx(opt_id=PRP_OPT_21, tx_flag=False, data=b'', prio=True)
-    """
-    # ===================================================================
-    # Public TX Helpers (werden von PRPremote aufgerufen)
+    # Public TX Helpers (werden von PRPremote aufgerufen) (Wird nicht verwendet)
     # ===================================================================
     def send_command(self, opt_id: int, data: bytes = b'', prio: bool = False,
                      compress: bool = True, send_uncompressed: bool = True):

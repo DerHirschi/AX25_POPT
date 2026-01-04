@@ -9,16 +9,14 @@ from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_P
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
-# from ax25.ax25Error import AX25ConnectionERROR
 from ax25.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cfg.logger_config import logger, LOG_BOOK
-# from cfg.constant import NO_REMOTE_STATION_TYPE
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
-from prp.prp_remote import PRPremote
+from prp import init_prpAX25L3
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND
@@ -190,7 +188,9 @@ class AX25Conn:
         self.digi_call          = ''
         self.is_digi            = False
         """ PoPT Remote Protocol (PRP) """
-        self._prp_remote = PRPremote(self._port_handler, self)
+        # self._prp_remote = PRPremote(self._port_handler, self)
+        self._prp_remote = init_prpAX25L3(self._port_handler, self)
+        #self._prp_remote = None  # FIXME - Testing !!!!!!!!!!!!!!!!!!!!!!!!!!
         """ Port Variablen"""
         # TODO Private / Clean Up / OPT
         self.vs  = 0   # Sendefolgenummer     / N(S) = V(R)  TX
@@ -814,8 +814,10 @@ class AX25Conn:
     # == Tasker (loop)
     def _prp_cron(self):
         """ Tasker(loop) für PRP """
-        self._prp_remote.tasker()
-        return True
+        if hasattr(self._prp_remote, 'tasker'):
+            self._prp_remote.tasker()
+            return True
+        return False
 
     ##########################################################
     # BBS_FWD Stuff

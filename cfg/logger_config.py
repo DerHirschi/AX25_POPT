@@ -1,3 +1,8 @@
+"""
+TODO: Cleanup/OPT
+
+"""
+
 import os
 import logging
 from datetime import datetime
@@ -93,3 +98,19 @@ if CONSOLE_LOG:
     BBS_LOG.addHandler(streamHandler)
 
 # log_book.disabled = True
+###########################################
+# PRP-Admin Log #
+PRP_ADMIN_LOG         = logging.getLogger('PRP-Admin')
+# formatter       = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s: %(message)s")
+fileHandler_prp_admin = logging.FileHandler(f'{CFG_logging_path}admin{dt_str}.log', mode='a')
+fileHandler_prp_admin.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
+# BBS_LOG.setLevel(logging.INFO)
+if BBS_DEBUG_LOG:
+    PRP_ADMIN_LOG.setLevel(logging.DEBUG)
+else:
+    PRP_ADMIN_LOG.setLevel(logging.INFO)
+PRP_ADMIN_LOG.addHandler(fileHandler_prp_admin)
+if CONSOLE_LOG:
+    streamHandler = logging.StreamHandler()
+    streamHandler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(name)s: %(message)s"))
+    PRP_ADMIN_LOG.addHandler(streamHandler)

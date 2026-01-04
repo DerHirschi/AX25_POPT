@@ -3,36 +3,39 @@
 """
 from UserDB.rights_manager import PRPRightsManager
 from cfg.logger_config import logger
-from fnc.ax25_fnc import reverse_uid
-from prp.prp_auth_handler import PRPAuthHandler
-from prp.prp_cli_stream_handler import PRPCLIStreamHandler
-from prp.prp_const import PRP_OPT_21, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
+from .prp_admin.prpAdmin_handler import PRPAdminHandler
+from .prp_auth_handler import PRPAuthHandler
+from .prp_cli_stream_handler import PRPCLIStreamHandler
+from .prp_const import PRP_OPT_21, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_STATE_UPDATE, \
     PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN
-from prp.prp_control_handler import PRPControlHandler
-from prp.prp_handshake_handler import PRPHandshakeHandler
-from prp.prp_protocol_handler import PRPProtocolHandler
-from prp.prp_remote_monitor import PRPRemoteMonitor
-from prp.prp_rx_processor import PRP_RX_Processor
-from prp.prp_state_manager import PRPStateManager
-from prp.prp_tx_buffer import PrpTxBuffer
+from .prp_control_handler import PRPControlHandler
+from .prp_handshake_handler import PRPHandshakeHandler
+from .prp_protocol_handler import PRPProtocolHandler
+from .prp_remote_monitor import PRPRemoteMonitor
+from .prp_rx_processor import PRP_RX_Processor
+from .prp_state_manager import PRPStateManager
+from .prp_transport_layer import PRPTransportLayer
+from .prp_tx_buffer import PrpTxBuffer
 
 
 class PRPremote:
-    def __init__(self, port_handler, connection):
+    def __init__(self, port_handler, prp_config:dict, connection=None):
         # == Port Handler
         self._port_handler = port_handler
         self._get_gui      = lambda : self._port_handler.get_gui()
 
         # == Connection
         self._connection   = connection
-        if self._connection.is_incoming_conn:
-            self._uid          = str(reverse_uid(connection.uid))
-            self._remote_uid   = str(connection.uid)
-        else:
-            self._uid          = str(connection.uid)
-            self._remote_uid   = str(reverse_uid(connection.uid))
 
-        self._to_call_str   = str(connection.to_call_str)
+        # == PRP-Config
+        try:
+            self._uid         = prp_config['uid']
+            self._remote_uid  = prp_config['remote_uid']
+            self._to_call_str = prp_config['to_call_str']
+            conn_typ          = prp_config['conn_typ']
+        except KeyError:
+            logger.error(f"PRP: Init Error (KeyError PRP-Config): {prp_config}")
+            raise KeyError
 
         # ===================================================================
         # == Rechte
@@ -50,8 +53,12 @@ class PRPremote:
         self._tx_buffer      = PrpTxBuffer()
         # == RX Processor
         self._rx_processor   = PRP_RX_Processor(self)
+        # == Transport Layer
+        self._transport      = PRPTransportLayer(self)
         # == CLI-ESC
         self._cli_esc        = PRPCLIStreamHandler(self)
+        # == PRP-Admin
+        self._prp_admin      = PRPAdminHandler(self)
         # == Protocol
         self._protocol       = PRPProtocolHandler(self)
         # == Control
@@ -59,11 +66,15 @@ class PRPremote:
         # == Remote Monitor
         self._remote_monitor = PRPRemoteMonitor(self)
 
-
         # ===================================================================
         # Helper TX-Buffer
         self.is_tx_buffer             = lambda: self._tx_buffer.is_tx_buffer
         self.is_prp_opt_id_in_tx_buff = lambda opt_id: self._tx_buffer.is_prp_opt_id_in_tx_buff(opt_id)
+
+        # ===================================================================
+        # Set Transport Typ
+        self._transport.set_conn_type(conn_typ)
+
 
     @property
     def to_call_str(self):
@@ -94,6 +105,7 @@ class PRPremote:
     # ==== Rechte
     @property
     def prp_rights(self):
+        """ Rechte-Manager mit PRP-Zugriff(PRP-Auth) """
         return self._rights
 
     # ==== PRP Classes
@@ -108,6 +120,10 @@ class PRPremote:
     @property
     def prp_protocol(self):
         return self._protocol
+
+    @property
+    def prp_transport(self):
+        return self._transport
 
     @property
     def prp_remote_monitor(self):
@@ -133,15 +149,22 @@ class PRPremote:
     def prp_cli_esc(self):
         return self._cli_esc
 
+    @property
+    def prp_admin(self):
+        return self._prp_admin
+
     # ===================================================================
     # == Tasker (ax25Conn)
+    # ===================================================================
     def tasker(self):
         """ Called fm ax25Conn """
         self._remote_monitor.task()
+        self._transport.tasker()
         return True
 
     # ===================================================================
     # == Response Handler
+    # ===================================================================
     def handle_response(self, opt_id: int, resp_ok=True):
         """ Lokaler Response Handler / Bei erhalten eines RESP Paketes, nach ACK """
         uid = self._uid
@@ -170,6 +193,44 @@ class PRPremote:
 
     # ===================================================================
     # == PRP I/O - TX/RX
+    # ===================================================================
+    # == L3
+    def prp_tx_reliable(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, pac_size=None):
+        """ PRP Frame encode ohne len und weiter an prp._transport """
+        frame = self._protocol.encode_frame(opt_id,
+                                            tx_flag,
+                                            data,
+                                            False,
+                                            True,
+                                            True)
+        if not frame:
+            logger.error(f"PRP prp_tx_reliable: No Frame Decoded")
+            self._rx_processor.clear_last_pack_meta()
+            return None
+        """
+        # TODO: L3 Abort Frame Handling / Rücksetzen des Seq Zählers
+        abort = (opt_id == PRP_OPT_21 and not tx_flag)
+        if abort:
+            self._tx_buffer.write_to_buffer((opt_id, frame), prio=prio, is_abort_frame=abort)
+            return None
+        """
+
+        return self._transport.send_reliable(opt_id=opt_id,
+                                             data=frame,
+                                             prio=prio,
+                                             callback=None,
+                                             pac_size=pac_size)
+
+    # == L3 TX
+    def prp_tx_l3(self, l3_opt_id: int, l3_frame: bytes, prio=True):
+        if not l3_frame:
+            logger.error("PRP: prp_tx_l3 encode_l3_frame: no frame")
+            return False
+
+        self._tx_buffer.write_to_buffer((l3_opt_id, l3_frame), prio=prio)
+        return True
+
+    # == L4
     def prp_tx(self, opt_id: int, tx_flag: bool, data: bytes,
                prio=False, compress=True, send_uncompressed=True):
         frame = self._protocol.encode_frame(opt_id, tx_flag, data, compress, send_uncompressed)
@@ -202,27 +263,8 @@ class PRPremote:
             raise
 
     # ===================================================================
-    # ====== PRP CLI-ESC I/O
-    def prp_tx_esc_cli(self, payload: bytes):
-        """ Sende CLI Escape - AX25Conn.send_data() """
-        if not self._state_manager.own.get('cli_esc', False):
-            return False
-
-        if not self._rights.is_function_allowed(self._connection.to_call_str, 'cli_esc'):
-            return False
-
-        return self._cli_esc.send_cli_data(payload)
-
-    # === CLI-ESC Status Meldungen für gui.QSO
-    def get_cli_esc_sender_status(self):
-        """
-        TX.
-        Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
-        """
-        return self._cli_esc.get_sender_status()
-
+    # ====== Remote Monitor Stream - OPT 0 - 19
     # ===================================================================
-    # Remote Monitor Stream - OPT 0 - 19
     def remote_monitor_update(self, ax25frame_conf: dict):
         """ Called fm port_handler > connection.update_monitor() """
         if (not self._state_manager.get_own('cli_rem_mon') and
@@ -234,7 +276,8 @@ class PRPremote:
         self._remote_monitor.update(ax25frame_conf)
 
     # ===================================================================
-    # ==== CTL CMD's - OPT 20 - 63
+    # ====== CTL CMD's - OPT 20 - 63
+    # ===================================================================
     # == OPT-ID 20 - Handshake
     def init_prp_handshake(self, remote_identy):
         """ Bekommt Station Identy Objekt von CLI """
@@ -249,8 +292,8 @@ class PRPremote:
         return self._handshake.is_pending
 
     # ===================================================================
-    # ====== OPT-ID 21 - Abort
-    # == CLI Abort
+    # == OPT-ID 21 - Abort
+    # CLI Abort
     def cli_abort(self):
         if not self.is_handshake:
             return False
@@ -263,7 +306,7 @@ class PRPremote:
         return True
 
     # ===================================================================
-    # ====== OPT-ID 22 - Disconnect CMD
+    # == OPT-ID 22 - Disconnect CMD
     def cmd_disco(self):
         """ TX Start Disco CMD """
         if not self.is_handshake:
@@ -272,7 +315,7 @@ class PRPremote:
         # self.prp_tx(opt_id=PRP_OPT_DISCO, tx_flag=True, data=b'', prio=True)
 
     # ===================================================================
-    # ====== OPT-ID 23/24 -Login Stuff
+    # == OPT-ID 23/24 -Login Stuff
     def cmd_login_request(self, password=''):
         """Client fordert Login-Challenge an"""
         if not self.is_handshake:
@@ -285,7 +328,7 @@ class PRPremote:
         self._prp_auth.request_login(password)
 
     # ===================================================================
-    # ====== OPT-ID 25 - Logout Stuff
+    # == OPT-ID 25 - Logout Stuff
     def cmd_logout(self):
         """ Client sendet Logout """
         if not self.is_handshake:
@@ -293,7 +336,7 @@ class PRPremote:
         self._prp_auth.initiate_logout()
 
     # ===================================================================
-    # ==== OPT-ID 26 - States Update via Remote / By Grok AI
+    # == OPT-ID 26 - States Update via Remote / By Grok AI
     def send_remote_state_update(self, state_updates: dict):
         # send_remote_state_update({'batch_mode': 'off', 'cli_esc': True})
         if not self.is_handshake:
@@ -329,7 +372,31 @@ class PRPremote:
         )
 
     # ===================================================================
+    # == OPT-ID 27 - PRP-Admin
+
+    # ===================================================================
+    # == OPT-ID 62 - PRP CLI-ESC I/O -
+    def prp_tx_esc_cli(self, payload: bytes):
+        """ Sende CLI Escape - AX25Conn.send_data() """
+        if not self._state_manager.own.get('cli_esc', False):
+            return False
+
+        if not self._rights.is_function_allowed(self._to_call_str, 'cli_esc'):
+            return False
+
+        return self._cli_esc.send_cli_data(payload)
+
+    # CLI-ESC Status Meldungen für gui.QSO
+    def get_cli_esc_sender_status(self):
+        """
+        TX.
+        Gibt den Status eines gesendeten CLI-ESC-Frames zurück, falls vorhanden.
+        """
+        return self._cli_esc.get_sender_status()
+
+    # ===================================================================
     # ==== Public State I/O API
+    # ===================================================================
     # == Own States
     @property
     def get_own_states(self):

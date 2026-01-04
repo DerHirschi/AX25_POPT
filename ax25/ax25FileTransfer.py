@@ -969,7 +969,6 @@ class YappMODE(DefaultMODE):
                 # self.yapp.send_init_pack()
                 return True
         # self.state = 9
-        print("Yapp Init Error (mode_init)")
         logger.error("Yapp Init Error (mode_init)")
         self.e = True
         return False
@@ -984,10 +983,9 @@ class YappMODE(DefaultMODE):
                 self.yapp.e = self.e
                 self.start_ft()
                 # self.yapp.send_init_pack()
-                print("Yapp Init RX (mode_init)")
+                logger.debug("Yapp Init RX (mode_init)")
                 return True
             # self.state = 9
-        print("Yapp Init Error (mode_init)")
         logger.error("Yapp Init Error (mode_init)")
         self.e = True
         return False
@@ -996,10 +994,9 @@ class YappMODE(DefaultMODE):
         # print("Yapp (mode_yapp)")
         if self.yapp.Done:
             self.state = 9
-            print("Yapp (mode_yapp) Done !")
+            logger.debug("Yapp (mode_yapp) Done !")
             return
         if self.yapp.e:
-            print("Yapp Error (mode_yapp)")
             logger.error("Yapp Error (mode_yapp)")
             self.state = 9
             return

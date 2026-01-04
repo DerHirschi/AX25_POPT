@@ -349,7 +349,7 @@ class PRPStateManager:
             if payload == PRP_NACK:
                 logger.warning(f"PRP: State-Update komplett abgelehnt - UID: {self._prp_root.uid}")
                 # Pending behalten für Retry? Oder löschen?
-                # self.del_pending(PRP_OPT_STATE_UPDATE)  # Optional: löschen
+                self.del_pending(PRP_OPT_STATE_UPDATE)  # Optional: löschen
                 return
 
             if payload == PRP_ACK:
@@ -383,10 +383,11 @@ class PRPStateManager:
         # Nur pending löschen, wenn alles bestätigt wurde
         if all_confirmed:
             logger.info("PRP: Alle gesendeten States bestätigt → pending gelöscht")
-            self.del_pending(PRP_OPT_STATE_UPDATE)
         else:
             logger.info("PRP: Teilweise Übernahme → pending bleibt für Retry")
-            # Optional: Retry-Logik später
+            # TODO Optional: Retry-Logik später
+
+        self.del_pending(PRP_OPT_STATE_UPDATE)
 
     # == Response nach, erhalten eines Updates
     def _response_state_update(self, state_update: dict):
