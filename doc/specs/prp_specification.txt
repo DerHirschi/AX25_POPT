@@ -201,5 +201,80 @@ Offen:
 - Keepalive über L3
 
 ══════════════════════════════════════════════════════════════════════════
+10. L3-TX-Steuerung
+══════════════════════════════════════════════════════════════════════════
+    ┌──────────────────────────────┐
+    │             IDLE             │
+    │  - kein aktiver Batch        │
+    │  - TX-Buffer evtl. leer      │
+    └───────────────┬──────────────┘
+                    │
+                    │ L4 liefert Payload
+                    │ oder L3 hat Daten
+                    ▼
+    ┌──────────────────────────────┐
+    │        PREPARE_BATCH         │
+    │  - Fragmentierung            │
+    │  - more-follow setzen        │
+    │  - interne Batch-Grenzen     │
+    │  - ACK-Strategie bestimmen   │
+    └───────────────┬──────────────┘
+                    │
+                    │ Frame bereit
+                    ▼
+    ┌─────────────────────────────────────┐
+    │          TX_ALLOWED ?               │◄───────────────┐
+    │  - Half Duplex frei?                │                │
+    │  - T2 abgelaufen?                   │                │
+    │  - RNR aktiv?                       │                │
+    │  - Channel quiet?                   │                │
+    └───────┬────────────────┬────────────┘                │
+            │ nein           │ ja                          │
+            │                ▼                             │
+            │      ┌──────────────────────────────┐        │
+            │      │        SEND_FRAME            │        │
+            │      │  - Frame → phys. TX-Buffer   │        │
+            │      │  - TX über Transporter       │        │
+            │      └──────────────┬───────────────┘        │
+            │                     │ Frame gesendet         │
+            │                     ▼                        │
+            │      ┌──────────────────────────────┐       CTRL
+            │      │   MORE_FOLLOW == TRUE ?      │
+            │      └───────────┬───────────┬──────┘
+            │                  │ ja        │ nein
+            │                  │           ▼
+            │                  │   ┌───────────────────────┐
+            │                  │   │  BATCH_END_REACHED    │
+            │                  │   │  - ACK evtl. anfordern│
+            │                  │   └──────────┬────────────┘
+            │                  │              │
+            │                  │              ▼
+            │                  │   ┌──────────────────────┐
+            │                  │   │    WAIT_FOR_ACK      │◄──────────┐
+            │                  │   │  - T1 läuft          │           │
+            │                  │   │  - ggf. ACK_REQ TX   │           │
+            │                  │   └────┬────────────┬────┘           │
+            │                  │        │ ACK        │ NACK           │
+            │                  │        ▼            ▼                │
+            │                  │   ┌───────────┐ ┌─────────────────┐  │
+            │                  │   │ COMPLETE  │ │  RETRY_SELECT   │  │
+            │                  │   │ - Batch OK│ │ - fehlende      │  │
+            │                  │   └─────┬─────┘ │   Frames        │  │
+            │                  │         │       └─────┬───────────┘  │
+            │                  │         │             │              │
+            │                  │         └─────────────┴──────────────┘
+            │                  │                    Retry als
+            │                  │                    Mini-Batch
+            │                  │
+            │                  └──────────────────────────────────────┐
+            │                                                         │
+            └─────────────────────────────────────────────────────────┘
+
+- ACK-Semantik ist modusabhängig
+Batch-Modus:        ACK = Batch-Abschluss
+Aggressiv-Modus:    ACK = Flow-Control (alle X Frames)
+Passiv-Modus:       ACK sporadisch / Timeout-basiert
+Empfänger darf immer ACK senden, auch unsolicited
+══════════════════════════════════════════════════════════════════════════
 Ende der Spezifikation
 ══════════════════════════════════════════════════════════════════════════

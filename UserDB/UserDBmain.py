@@ -186,7 +186,7 @@ class UserDB:
                 db_entry.last_conn = str_to_datetime(db_entry.last_conn)
         logger.info("User-DB: Init complete")
 
-    def get_entry(self, call_str: str, add_new=True):
+    def get_entry(self, call_str: str, add_new=True, with_ssid=False):
         if not hasattr(call_str, 'upper'):
             call_str = str(call_str)
 
@@ -196,6 +196,8 @@ class UserDB:
 
         if call_str in self.db.keys():
             return self.db[call_str]
+        elif with_ssid and add_new:
+            return self._new_entry(call_str)
 
         call_tup = call_tuple_fm_call_str(call_str)
         if call_tup[0] in self.db.keys():
@@ -203,7 +205,8 @@ class UserDB:
 
         if add_new:
             # return self._new_entry(call_str)
-            return self._new_entry(call_tup[0]) # Ignore SSID
+            #return self._new_entry(call_tup[0]) # Ignore SSID
+            return self._new_entry(call_str)
 
         return None
 

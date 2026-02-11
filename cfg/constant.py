@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.46'
+VER = '2.123.47'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -125,6 +125,14 @@ STATION_ID_BBS = [
     'THEBOX',   # TNN BOX ?
     'ProfiPacket',
     'PoPTBOX',
+    'STOP',
+    'DP',
+    'XR',
+    'RLI',
+    'CBBS',
+    'MSYS',
+    'MBL',
+    '4RE',
 ]
 
 STATION_ID_MCAST = [    # TODO Just Dummy yet

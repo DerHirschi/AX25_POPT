@@ -58,7 +58,7 @@ class GUINewUserEntry(tk.Toplevel):
             self._call_ent.focus()
             return
         user_db = self._root_win.get_userDB()
-        db_ent = user_db.get_entry(inp, add_new=True)
+        db_ent  = user_db.get_entry(inp, add_new=True, with_ssid=True)
         if db_ent is None:
             self._call_ent.focus()
             return

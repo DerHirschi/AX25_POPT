@@ -9,6 +9,7 @@ Fixes:
   (wenn von der GUI versucht wird, Binäre Daten darzustellen die nicht
    darstellbar sind, gibts es Chaos.
    Tag Farben & Zeilenumbrüche gehen verloren)
+- Es können keine User-DB Einträge mit SSID hinzugefügt werden
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)

@@ -53,7 +53,10 @@ def time_to_decimal(dt):
 
 
 def conv_time_for_sorting(dateti: datetime.now()):
-    return dateti.strftime('%y%m%d%H%M%S')
+    try:
+        return dateti.strftime('%y%m%d%H%M%S')
+    except AttributeError:
+        return "---"
 
 
 def conv_time_for_key(dateti: datetime.now()):
