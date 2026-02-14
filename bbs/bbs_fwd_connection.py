@@ -622,7 +622,7 @@ class BBSConnection:
                 # Error
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 #pn_check += FWD_RESP_REJ
-                continue
+                el = el.decode('ASCII', 'ignore')
             if el[:2] in ['FB', 'FA']:
                 msg = parse_forward_header(el)
                 if not msg:
