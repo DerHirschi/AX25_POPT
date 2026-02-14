@@ -10,16 +10,17 @@ from .prp_const import PRP_OPT_21, PRP_OPT_LOGIN_RESP, PRP_OPT_LOGOUT, PRP_OPT_S
     PRP_OPT_ESC_CLI, PRP_RM_RESP_LOGOUT, PRP_RM_RESP_LOGIN
 from .prp_control_handler import PRPControlHandler
 from .prp_handshake_handler import PRPHandshakeHandler
+from .prp_l3.prp_tx_scheduler import PRPTxScheduler
 from .prp_protocol_handler import PRPProtocolHandler
 from .prp_remote_monitor import PRPRemoteMonitor
 from .prp_rx_processor import PRP_RX_Processor
 from .prp_state_manager import PRPStateManager
-from .prp_transport_layer import PRPTransportLayer
+from .prp_l3.prp_transport_layer import PRPTransportLayer
 from .prp_tx_buffer import PrpTxBuffer
 
 
 class PRPremote:
-    def __init__(self, port_handler, prp_config:dict, connection=None):
+    def __init__(self, port_handler, prp_config:dict, connection=None, transport_adapter=None):
         # == Port Handler
         self._port_handler = port_handler
         self._get_gui      = lambda : self._port_handler.get_gui()
@@ -53,8 +54,14 @@ class PRPremote:
         self._tx_buffer      = PrpTxBuffer()
         # == RX Processor
         self._rx_processor   = PRP_RX_Processor(self)
+        # == L2 Transport-Adapter
+        #adapter        = PRPTransportAdapter()
+        #mock_transport = MockAx25Transport(name=prp_config['uid'])
+        #adapter.register_transport(mock_transport)
         # == Transport Layer
-        self._transport      = PRPTransportLayer(self)
+        self._transport      = PRPTransportLayer(self, adapter=transport_adapter)
+        # == TX-Scheduler
+        self._tx_scheduler   = PRPTxScheduler(self)
         # == CLI-ESC
         self._cli_esc        = PRPCLIStreamHandler(self)
         # == PRP-Admin
@@ -74,6 +81,8 @@ class PRPremote:
         # ===================================================================
         # Set Transport Typ
         self._transport.set_conn_type(conn_typ)
+        # = Helper
+        self._use_transporter = lambda : self._transport.use_transporter
 
 
     @property
@@ -125,6 +134,14 @@ class PRPremote:
     def prp_transport(self):
         return self._transport
 
+    #@property
+    #def prp_transport_adapter(self):
+    #    return self._transport_adapter
+
+    @property
+    def prp_tx_scheduler(self):
+        return self._tx_scheduler
+
     @property
     def prp_remote_monitor(self):
         return self._remote_monitor
@@ -159,7 +176,11 @@ class PRPremote:
     def tasker(self):
         """ Called fm ax25Conn """
         self._remote_monitor.task()
-        self._transport.tasker()
+        # == PRP L3
+        if self._use_transporter():
+            self._transport.tasker()
+            self._tx_scheduler.tasker()
+            #self._transport_adapter.tasker()
         return True
 
     # ===================================================================
@@ -195,6 +216,9 @@ class PRPremote:
     # == PRP I/O - TX/RX
     # ===================================================================
     # == L3
+    def prp_tx_l3_handshake(self):
+        self._transport.send_l3_handshake()
+
     def prp_tx_reliable(self, opt_id: int, tx_flag: bool, data: bytes, prio=False, pac_size=None):
         """ PRP Frame encode ohne len und weiter an prp._transport """
         frame = self._protocol.encode_frame(opt_id,
@@ -227,8 +251,14 @@ class PRPremote:
             logger.error("PRP: prp_tx_l3 encode_l3_frame: no frame")
             return False
 
-        self._tx_buffer.write_to_buffer((l3_opt_id, l3_frame), prio=prio)
-        return True
+        return self._tx_buffer.write_to_buffer((l3_opt_id, l3_frame), prio=prio)
+
+    def prp_tx_l3_ctrl(self, l3_opt_id: int, l3_frame: bytes, prio=True):
+        if not l3_frame:
+            logger.error("PRP: prp_tx_l3 encode_l3_frame: no frame")
+            return False
+
+        return self._tx_buffer.insert_to_buffer((l3_opt_id, l3_frame), prio=prio)
 
     # == L4
     def prp_tx(self, opt_id: int, tx_flag: bool, data: bytes,

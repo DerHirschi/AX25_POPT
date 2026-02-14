@@ -1,9 +1,9 @@
 import time
-
+from threading import RLock
 
 class ListBuffer:
     """ Thread locked List """
-    def __init__(self, thread_lock_timer=0.01):
+    def __init__(self, thread_lock_timer=0.001):
         self._buffer: list      = []
         self._threadLock        = False
         self._threadLockTimer   = float(thread_lock_timer)
@@ -33,7 +33,12 @@ class ListBuffer:
 
     def buffer_clear(self):
         self._get_thread_lock()
-        self._buffer = []
+        self._buffer.clear()
+        self._threadLock = False
+
+    def buffer_pop(self, i=0):
+        self._get_thread_lock()
+        self._buffer.pop(i)
         self._threadLock = False
 
     @property
@@ -61,7 +66,7 @@ class ListBuffer:
 # ======================================================
 class ByteArrayBuffer:
     """ Thread locked bytearray """
-    def __init__(self, thread_lock_timer=0.01):
+    def __init__(self, thread_lock_timer=0.001):
         self._buffer: bytearray = bytearray()
         self._threadLock        = False
         self._threadLockTimer   = float(thread_lock_timer)
@@ -102,9 +107,65 @@ class ByteArrayBuffer:
 
     # == Read Only / property
     @property
+    def buffer_get(self):
+        return bytes(self._buffer)
+
+    @property
     def is_empty(self):
         return bool(not self._buffer)
 
     @property
     def length(self):
         return len(self._buffer)
+
+# ======================================================
+class LockedDict:
+    """ Thread locked Dict """
+    # By Grok AI
+    def __init__(self):
+        self._dict = {}
+        self._lock = RLock()
+
+    def __getitem__(self, key):
+        with self._lock:
+            return self._dict[key]
+
+    def __setitem__(self, key, value):
+        with self._lock:
+            self._dict[key] = value
+
+    def __delitem__(self, key):
+        with self._lock:
+            del self._dict[key]
+
+    def __len__(self):
+        with self._lock:
+            return len(self._dict)
+
+    def __iter__(self):
+        with self._lock:
+            return iter(self._dict.copy())  # Kopie für sichere Iteration
+
+    def add(self, key, value):
+        with self._lock:
+            self._dict[key] = value
+
+    def get(self, key, default=None):
+        with self._lock:
+            return self._dict.get(key, default)
+
+    def pop(self, key, default=None):
+        with self._lock:
+            return self._dict.pop(key, default)
+
+    def keys(self):
+        with self._lock:
+            return list(self._dict.keys())
+
+    def values(self):
+        with self._lock:
+            return list(self._dict.values())
+
+    def items(self):
+        with self._lock:
+            return list(self._dict.items())

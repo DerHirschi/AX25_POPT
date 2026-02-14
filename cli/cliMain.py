@@ -262,8 +262,8 @@ class DefaultCLI(object):
 
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
-        self._connection.send_data( (f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
-                                           + self._get_ts_prompt()).encode(self._encoding[0], 'ignore'))
+        self._connection.send_data((f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
+                                    + self._get_ts_prompt()).encode(self._encoding[0], 'ignore'))
 
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)

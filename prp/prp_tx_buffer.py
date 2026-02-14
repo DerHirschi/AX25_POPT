@@ -2,6 +2,8 @@ from cfg.logger_config import logger
 from classes.CLbuffers import ListBuffer, ByteArrayBuffer
 from prp.prp_const import PRP_OPT_PRP_BATCH
 
+MAX_FRAMES = 50
+#MAX_BYTES  = 1024 * 20
 
 class PrpTxBuffer:
     def __init__(self):
@@ -17,6 +19,9 @@ class PrpTxBuffer:
         if not isinstance(data[1], (bytes, bytearray, int)):
             logger.error(f"Incorrect Datatype: data({type(data[1])}) should be bytes or bytearray")
             return False
+        #if self._total_frames >= MAX_FRAMES:
+        #    logger.warning("PRP TX buffer overflow (frames)")
+        #    return False
         # Thread Lock
         if prio or is_abort_frame:  # Abort Frames immer PRIO
             # Abort Frames immer an Anfang der Q
@@ -28,7 +33,50 @@ class PrpTxBuffer:
             self._tx_buf_prp_Q.buffer_write(data)
         return True
 
+    def insert_to_buffer(self, data: tuple, prio=False, is_abort_frame=False):
+        """ PRP-Frames vom PRP Encoder """
+        if not data:
+            return False
+        if not isinstance(data[1], (bytes, bytearray, int)):
+            logger.error(f"Incorrect Datatype: data({type(data[1])}) should be bytes or bytearray")
+            return False
+        #if self._total_frames >= MAX_FRAMES:
+        #    logger.warning("PRP TX buffer overflow (frames)")
+        #    return False
+        # Thread Lock
+        if prio or is_abort_frame:  # Abort Frames immer PRIO
+            # Abort Frames immer an Anfang der Q
+            if is_abort_frame:
+                self._tx_buf_prp_prio_Q.buffer_insert(data)
+            else:
+                self._tx_buf_prp_prio_Q.buffer_write(data)
+        else:
+            self._tx_buf_prp_Q.buffer_insert(data)
+        return True
+
+    def get_TEST_payload_fm_tx_buffer(self):
+        """
+
+        :return: list
+        """
+        test_payload = []
+        n = 0
+        while self._tx_buf_prp_prio_Q.length and n < MAX_FRAMES:
+            test_payload.append(self._tx_buf_prp_prio_Q.buffer_read)
+            n += 1
+
+        while self._tx_buf_prp_Q.length and n < MAX_FRAMES:
+            test_payload.append(self._tx_buf_prp_Q.buffer_read)
+            n += 1
+
+        return test_payload
+
     def get_payload_fm_tx_buffer(self, payload_len: int):
+        """
+
+        :param payload_len:
+        :return: bytearray
+        """
         data, data_len = bytearray(), 0
         # ====================================
         # PRP Rest  (Remote Protocol)
@@ -112,3 +160,8 @@ class PrpTxBuffer:
                 return bool(in_rest_buff or True)
 
         return bool(in_rest_buff or False)
+
+    @property
+    def l3_pack_to_send(self):
+        total_packets = self._tx_buf_prp_Q.length + self._tx_buf_prp_prio_Q.length
+        return max(0, MAX_FRAMES - total_packets)

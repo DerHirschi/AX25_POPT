@@ -73,6 +73,7 @@ STATE_TABLE = {
         "SYN_SENT":     (PRPState.SYN_SENT, []),  # Interner Event nach senden
         "SYN_ACK":      (PRPState.ESTABLISHED, []),  # Empfange SYN als ACK
         "RST":          (PRPState.CLOSED, ["_reset_state"]),
+        "TIMER_RETRY":  (PRPState.INIT, []),
         "NO_EVENT":     (PRPState.INIT, []),
     },
 
@@ -80,28 +81,31 @@ STATE_TABLE = {
     # SYN_SENT
     # -------------------------------------------------
     PRPState.SYN_SENT: {
-        "SYN":      (PRPState.ESTABLISHED, []),
-        "SYN_ACK":  (PRPState.ESTABLISHED, []),  # Empfange SYN als ACK
-        "DATA":     (PRPState.ESTABLISHED, ["_handle_first_data"]),
+        "SYN":         (PRPState.ESTABLISHED, []),
+        "SYN_ACK":     (PRPState.ESTABLISHED, []),  # Empfange SYN als ACK
+        "DATA":        (PRPState.ESTABLISHED, ["_handle_first_data"]),
         "TIMER_RETRY": (PRPState.SYN_SENT, ["_retry_syn"]),  # Neu: Retry SYN
-        "NO_EVENT": (PRPState.SYN_SENT, []),
+        "NO_EVENT":    (PRPState.SYN_SENT, []),
     },
 
     # -------------------------------------------------
     # SYN_RCVD
     # -------------------------------------------------
     PRPState.SYN_RCVD: {
-        "SYN":      (PRPState.ESTABLISHED, []),
-        "SYN_ACK":  (PRPState.ESTABLISHED, []),  # Empfange SYN als ACK
-        "DATA":     (PRPState.ESTABLISHED, ["_handle_first_data"]),
-        "NO_EVENT": (PRPState.ESTABLISHED, []),
+        "SYN":          (PRPState.ESTABLISHED, []),
+        "SYN_ACK":      (PRPState.ESTABLISHED, []),  # Empfange SYN als ACK
+        "DATA":         (PRPState.ESTABLISHED, ["_handle_first_data"]),
+        "TIMER_RETRY":  (PRPState.ESTABLISHED, []),
+        "NO_EVENT":     (PRPState.ESTABLISHED, []),
     },
 
     # -------------------------------------------------
     # ESTABLISHED
     # -------------------------------------------------
     PRPState.ESTABLISHED: {
-        "START_ACK_WAIT":   (PRPState.ACK_WAIT,    ['_reset_ack_delay']),
+        "SYN_ACK":          (PRPState.ESTABLISHED, []),
+
+        "START_ACK_WAIT":   (PRPState.ACK_WAIT,    []),
         "ACK":              (PRPState.ESTABLISHED, []),
         "NACK":             (PRPState.ESTABLISHED, []),
         "DATA":             (PRPState.ESTABLISHED, []),
@@ -118,14 +122,14 @@ STATE_TABLE = {
     # ACK_WAIT
     # -------------------------------------------------
     PRPState.ACK_WAIT: {
-        "STOP_ACK_WAIT":    (PRPState.ESTABLISHED,  ['_reset_ack_delay']),
+        "STOP_ACK_WAIT":    (PRPState.ESTABLISHED,  []),
         "START_ACK_WAIT":   (PRPState.ACK_WAIT,     []),
 
         "ACK":              (PRPState.ACK_WAIT,     []),
         "NACK":             (PRPState.ACK_WAIT,     []),
         "DATA":             (PRPState.ACK_WAIT,     []),
 
-        "TIMER_RETRY":      (PRPState.ACK_WAIT,     ['_send_delayed_ack_nack']),
+        "TIMER_RETRY":      (PRPState.ACK_WAIT,     []),
 
         "ENTER_RECOVERY":   (PRPState.RECOVERY,     []),
 
@@ -142,7 +146,7 @@ STATE_TABLE = {
 
         "ACK":              (PRPState.RECOVERY,     []),
         "NACK":             (PRPState.RECOVERY,     []),
-        #"START_ACK_WAIT":   (PRPState.ACK_WAIT,     []),
+        "START_ACK_WAIT":   (PRPState.ACK_WAIT,     []),
 
         "TIMER_RETRY":      (PRPState.RECOVERY,     ["_retry_pending"]),
 

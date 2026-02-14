@@ -7,6 +7,7 @@ import time
 import os
 
 from cfg.logger_config import logger
+from prp.prp_l3.prp_transport_adapter import MockAx25Transport, PRPTransportAdapter
 from prp.prp_remote import PRPremote
 from prp.prp_const import PRP_OPT_ESC_CLI
 
@@ -46,14 +47,20 @@ class PseudoPortHandler:
     def handle_remote_monitor_rx(self, var1, var2): pass
 
 def init_prpTester(uid: str):
-    ph = PseudoPortHandler()
     config = {
         'uid': uid,
         'remote_uid': uid,
         'to_call_str': uid,
         'conn_typ': 'ax25_l2'
     }
-    return PRPremote(ph, config)
+    ph              = PseudoPortHandler()
+    adapter         = PRPTransportAdapter()
+    mock_transport  = MockAx25Transport(name=config['uid'])
+
+    adapter.register_transport(mock_transport)
+
+
+    return PRPremote(ph, config, transport_adapter=adapter)
 
 # Simuliere Empfang
 def simulate_rx(instance, raw_data):
@@ -79,8 +86,8 @@ class Simulator:
                  pac_size: int,
                  prio: bool,
                  ):
-        self._server: PRPremote = init_prpTester('SERVER')
-        self._client: PRPremote = init_prpTester('CLIENT')
+        self.prp_server: PRPremote = init_prpTester('SERVER')
+        self.prp_client: PRPremote = init_prpTester('CLIENT')
 
         # ==========================================
         self._tx_cache_free_limit = 2000
@@ -92,13 +99,17 @@ class Simulator:
             'send_data': bytearray(),
             'recv_data': bytearray(),
 
-            'lost_bytes': 0,
+            'lost_bytes':  0,
+            'lost_packet': 0,
+            'total_bytes': 0,
+            'total_packet': 0,
         }
-        self._results = {
+        self.prp_test_results = {
             'SERVER': get_res_vars(),
             'CLIENT': get_res_vars(),
         }
-
+        self.start_time        = None  # Speichert den Startzeitpunkt
+        self.original_data_len = data_len
         # ==========================================
 
         self._cfg = self._cfg = {
@@ -129,8 +140,15 @@ class Simulator:
         # ==========================================
         # CTRL
         self.app_running  = True
-        self._tasker_tick = False
-        self._tasker_th   = threading.Thread(target=self.tasker)
+        self._cl_tasker_tick = False
+        self._se_tasker_tick = False
+        #self._tasker_th   = threading.Thread(target=self.tasker)
+        self._client_th = threading.Thread(target=self._client_tasks)
+        self._server_th = threading.Thread(target=self._server_tasks)
+        #self._client_prp_th = threading.Thread(target=self._client_prp_tasks)
+        #self._server_prp_th = threading.Thread(target=self._server_prp_tasks)
+
+        self._time_scale  = 1000
 
         self.stepper    = False
         self._step_tick = False
@@ -163,8 +181,8 @@ class Simulator:
                 prz = int(new_prz)
         logger.info(f"== Testdaten Erzeugt {round(len(data[0])/1024/1024, 2)} MB / Soll: {round(data_len/1024/1024, 2)} MB")
 
-        self._results['SERVER']['send_data'] = bytearray(data[0])
-        self._results['CLIENT']['send_data'] = bytearray(data[1])
+        self.prp_test_results['SERVER']['send_data'] = bytearray(data[0])
+        self.prp_test_results['CLIENT']['send_data'] = bytearray(data[1])
 
         beep_sound()
         logger.info(f"======== Erzeuge Test Daten Chunks ========")
@@ -187,7 +205,7 @@ class Simulator:
         logger.info(f"== Länge Datensatz : {data_len} Bytes / {round(data_len / 1024)} kB / {round(data_len / 1024 / 1024)} MB")
         logger.info(f"== Anzahl Chunks   : {len(self._tx_data_Chunks_server)} Chunks")
         logger.info(f"=================================")
-
+        self.start_time = time.time()
         # ==========================
         # random_cfg zwischenspeichern und True setzen für Handshake
         ran_cfg = list(self._ran_cfg)
@@ -195,11 +213,18 @@ class Simulator:
         # ==========================
         beep_sound(freq=2025, beep_len=20)
         self.app_running = True
-        logger.info("==== Test APP - Starte Tasker Thread ====")
-        self._tasker_th.start()
+        logger.info("==== Test APP - Starte Client Thread ====")
+        self._client_th.start()
+        logger.info("==== Test APP - Starte Client PRP-Thread ====")
+        #self._client_prp_th.start()
+        logger.info("==== Test APP - Starte Server Thread ====")
+        self._server_th.start()
+        logger.info("==== Test APP - Starte Server PRP-Thread ====")
+        #self._server_prp_th.start()
+        beep_sound(freq=1200, beep_len=50)
 
         logger.info("==== Sende Handshake an Server ====")
-        self._client.prp_tx_l3_handshake()
+        self.prp_client.prp_tx_l3_handshake()
 
         time.sleep(1)
         logger.info("==== Test APP - Starte Test Ablauf ====")
@@ -220,17 +245,17 @@ class Simulator:
         beep_sound()
         beep_sound()
         beep_sound()
-        if hasattr(self._tasker_th, 'is_alive'):
-            while self._tasker_th.is_alive():
-                logger.info("==== Test APP ENDE - Warte auf Tasker Thread ====")
-                beep_sound()
-                self._tasker_th.join(1)
+        #if hasattr(self._tasker_th, 'is_alive'):
+        #    if self._tasker_th.is_alive():
+        #        logger.info("==== Test APP ENDE - Warte auf Tasker Thread ====")
+        #        beep_sound()
+        #        return
 
         logger.info(f"==== ----------------------------------------------------------------- ====")
         logger.info("==== Test Auswertung ====")
         if all((
-                self._results['SERVER']['send_data'] == self._results['SERVER']['recv_data'],
-                self._results['CLIENT']['send_data'] == self._results['CLIENT']['recv_data'],
+                self.prp_test_results['SERVER']['send_data'] == self.prp_test_results['SERVER']['recv_data'],
+                self.prp_test_results['CLIENT']['send_data'] == self.prp_test_results['CLIENT']['recv_data'],
         )):
             logger.error(f"==== ----------------------------------------------------------------- ====")
             logger.info(f"==== Test OK.. Insgesamt {self._cfg.get('data_len', 0)} Bytes übertragen ====")
@@ -239,11 +264,11 @@ class Simulator:
         else:
             logger.error(f"==== ----------------------------------------------------------------- ====")
             logger.error(f"==== Test NICHT OK !!! {self._cfg.get('data_len', 0)} Bytes übertragen ====")
-            logger.error(f"==== SERVER TX-REST len={len(self._results['SERVER']['send_data'])}")
-            logger.error(f"==== SERVER RX-REST len={len(self._results['SERVER']['recv_data'])}")
+            logger.error(f"==== SERVER TX-REST len={len(self.prp_test_results['SERVER']['send_data'])}")
+            logger.error(f"==== SERVER RX-REST len={len(self.prp_test_results['SERVER']['recv_data'])}")
             logger.error(f"==== ----------------------------------------------------------------- ====")
-            logger.error(f"==== CLIENT TX-REST len={len(self._results['CLIENT']['send_data'])}")
-            logger.error(f"==== CLIENT RX-REST len={len(self._results['CLIENT']['recv_data'])}")
+            logger.error(f"==== CLIENT TX-REST len={len(self.prp_test_results['CLIENT']['send_data'])}")
+            logger.error(f"==== CLIENT RX-REST len={len(self.prp_test_results['CLIENT']['recv_data'])}")
             logger.error(f"==== ----------------------------------------------------------------- ====")
 
             beep_sound(loop=2, beep_len=100, freq=1500)
@@ -258,22 +283,26 @@ class Simulator:
         logger.info(f"== Cfg Prio        : {self._cfg.get('prio', True)}")
         logger.info(f"== Erzeugte Test Daten ==========")
         #logger.info(f"== Chunk Daten     : {chunk_data}")
-        logger.info(f"== Länge Datensatz : {self._cfg.get('data_len', 0)} Bytes / {round(self._cfg.get('data_len', 0) / 1024)} kB")
+        logger.info(f"== Länge Datensatz : {self._cfg.get('data_len', 0)} Bytes / {round(self._cfg.get('data_len', 0) / 1024, 2)} kB / {round(self._cfg.get('data_len', 0) / 1024 / 1024, 2)} MB")
         logger.info(f"== Anzahl Chunks   : {len(self._tx_data_Chunks_server)} Chunks")
-        #logger.info(f"== Chunk Längen    : ")
-        #for i, chunk_len in self._data_Chunks_tab.items():
-        #    logger.info(f"=> {i} : {chunk_len}")
-        logger.info(f"=================================")
+        logger.info(f"==== ----------------------------------------------------------------- ====")
+        logger.info(f"==== Client Results -------------------------------------------------------- ====")
+        prz_lost = self.prp_test_results['CLIENT']['lost_bytes'] / self.prp_test_results['CLIENT']['total_bytes'] * 100
+        logger.info(f"== Data TX Total : {self.prp_test_results['CLIENT']['total_bytes']} Bytes / {round(self.prp_test_results['CLIENT']['total_bytes'] / 1024, 2)} kB / {round(self.prp_test_results['CLIENT']['total_bytes'] / 1024 / 1024, 2)} MB")
+        logger.info(f"== Data TX Lost  : {self.prp_test_results['CLIENT']['lost_bytes']} Bytes / {round(self.prp_test_results['CLIENT']['lost_bytes'] / 1024, 2)} kB / {round(self.prp_test_results['CLIENT']['lost_bytes'] / 1024 / 1024, 2)} MB")
+        logger.info(f"== Pac TX Total  : {self.prp_test_results['CLIENT']['total_packet']} Pac")
+        logger.info(f"== Pac TX Lost   : {self.prp_test_results['CLIENT']['lost_packet']} Pac")
+        logger.info(f"== Lost-Rate     : {round(prz_lost, 1)} %")
+        logger.info(f"==== ----------------------------------------------------------------- ====")
+        logger.info(f"==== Server Results -------------------------------------------------------- ====")
+        prz_lost = self.prp_test_results['SERVER']['lost_bytes'] / self.prp_test_results['SERVER']['total_bytes'] * 100
+        logger.info(f"== Data TX Total : {self.prp_test_results['SERVER']['total_bytes']} Bytes / {round(self.prp_test_results['SERVER']['total_bytes'] / 1024, 2)} kB / {round(self.prp_test_results['SERVER']['total_bytes'] / 1024 / 1024, 2)} MB")
+        logger.info(f"== Data TX Lost  : {self.prp_test_results['SERVER']['lost_bytes']} Bytes / {round(self.prp_test_results['SERVER']['lost_bytes'] / 1024, 2)} kB / {round(self.prp_test_results['SERVER']['lost_bytes'] / 1024 / 1024, 2)} MB")
+        logger.info(f"== Pac TX Total  : {self.prp_test_results['SERVER']['total_packet']} Pac")
+        logger.info(f"== Pac TX Lost   : {self.prp_test_results['SERVER']['lost_packet']} Pac")
+        logger.info(f"== Lost-Rate     : {round(prz_lost, 1)} %")
+        logger.info(f"==== ----------------------------------------------------------------- ====")
         #breakpoint()
-
-        """
-        if self._client_recv_data:
-            beep_sound(loop=10, beep_len=50, freq=1900)
-            logger.error(f"==== Client hat CLI Rest Daten dekodiert !!!!:")
-            logger.error(f"= Client Daten  : {self._client_recv_data}")
-        """
-
-        logger.info(f"=================================")
 
     # =========================================
     def step_inj(self):
@@ -283,59 +312,153 @@ class Simulator:
         self._step_tick = not self._step_tick
 
     # =========================================
-    # Tasker
-    def tasker(self):
-        while self.app_running:
-            time.sleep(0.001)
-            try:
-                self._wait_step()       # STEP
-                self._client.tasker()
+    def set_random_chance(self, val: int):
+        self._cfg['random_pac_lost'] = min(val, 90)
+        chance = self._cfg['random_pac_lost']
+        if not val:
+            self._ran_cfg = [True]
+            return
+        chance = round(chance / 10)
+        rest = 10 - chance
+        cfg_list = ([False] * chance) + ([True] * rest)
+        self._ran_cfg = []
+        while cfg_list:
+            var = random.choice(cfg_list)
+            self._ran_cfg.append(var)
+            cfg_list.remove(var)
 
-                self._wait_step()       # STEP
-                self._server.tasker()
-
-                self._wait_step()       # STEP
-                self._flush_tx_buffers()
-
-                if self._results['SERVER']['recv_data'] or self._results['CLIENT']['recv_data']:
-                    self._check_diff()
-                self._tasker_tick = bool(not self._tasker_tick)
-            except Exception as ex:
-                self.app_running = False
-                logger.error(f"== Tasker Error: {ex}")
-                raise ex
+    def set_time_scale(self, val: int):
+        self._time_scale = int(val)
 
     # =========================================
+    # Tasker
+    def _client_tasks(self):
+        while self.app_running:
+            sleep_t = 4 / self._time_scale
+            time.sleep(sleep_t)
+            try:
+
+                self._wait_step()       # STEP
+                self._exchange_data(self.prp_client, self.prp_server)
+
+                time.sleep(sleep_t)
+
+                self._wait_step()  # STEP
+                self.prp_client.tasker()
+
+                if self.prp_test_results['CLIENT']['recv_data']:
+                    self._check_diff()
+            except Exception as ex:
+                self.app_running = False
+                logger.error(f"== Client Exchange-Tasker Error: {ex}")
+                raise ex
+            #self._cl_tasker_tick = bool(not self._cl_tasker_tick)
+
+    def _client_prp_tasks(self):
+        while self.app_running:
+            sleep_t = 4 / self._time_scale
+            time.sleep(sleep_t)
+            try:
+                self._wait_step()  # STEP
+                self.prp_client.tasker()
+
+            except Exception as ex:
+                self.app_running = False
+                logger.error(f"== Client PRP-Tasker Error: {ex}")
+                raise ex
+            self._cl_tasker_tick = bool(not self._cl_tasker_tick)
+
+    def _server_tasks(self):
+        while self.app_running:
+            sleep_t = 4 / self._time_scale
+            time.sleep(sleep_t)
+            try:
+
+                self._wait_step()       # STEP
+                self._exchange_data(self.prp_server, self.prp_client)
+
+                time.sleep(sleep_t)
+
+                self._wait_step()  # STEP
+                self.prp_server.tasker()
+
+                if self.prp_test_results['SERVER']['recv_data']:
+                    self._check_diff()
+
+            except Exception as ex:
+                self.app_running = False
+                logger.error(f"== Server Exchange-Tasker Error: {ex}")
+                raise ex
+            self._se_tasker_tick = bool(not self._se_tasker_tick)
+
+    def _server_prp_tasks(self):
+        while self.app_running:
+            sleep_t = 4 / self._time_scale
+            time.sleep(sleep_t)
+            try:
+                self._wait_step()  # STEP
+                self.prp_server.tasker()
+
+            except Exception as ex:
+                self.app_running = False
+                logger.error(f"== Server PRP-Tasker Error: {ex}")
+                raise ex
+            self._se_tasker_tick = bool(not self._se_tasker_tick)
+
+    def tasker(self):
+        pass
+    # =========================================
     # SERVER <exchange> CLIENT
+    """
     def _flush_tx_buffers(self):
-        time.sleep(0.01)
-        while (self._exchange_data(self._client, self._server) or
-               self._exchange_data(self._server, self._client)):
-            time.sleep(0.01)
+        sleep_t = 4 / self._time_scale
+        time.sleep(sleep_t)
+        while ((self._exchange_data(self.prp_client, self.prp_server) or
+               self._exchange_data(self.prp_server, self.prp_client)) and self.app_running):
+            time.sleep(sleep_t)
+    """
 
     def _exchange_data(self, sender: PRPremote, receiver: PRPremote):
         uid_sender   = sender.uid
         uid_receiver = receiver.uid
 
-        tx_buff = sender.prp_tx_buffer.get_payload_fm_tx_buffer(1000000)  # Alle Frames
+        tx_buff: list = sender.prp_tx_buffer.get_TEST_payload_fm_tx_buffer()  # Alle Frames
         tx_buff_len = len(tx_buff)
-        if tx_buff_len:
-            beep_sound(beep_len=1, freq=1200)
+        if not tx_buff_len:
+            return False
+        beep_sound(beep_len=1, freq=1200)
+        total_pac_c  = 0
+        pac_los_c    = 0
+        total_data_c = 0
+        data_los_c   = 0
 
-        # Entscheidung: Wird das Paket zugestellt?
-        if self._get_random_choice():
-            if tx_buff_len:
-                logger.info(f"==================== Flushing TX Buffer ====================")
-                logger.info(f"== RX →→→ [{uid_sender}] → [{uid_receiver}]: {tx_buff_len} Bytes (zugestellt)")
-                self._results[uid_receiver]['recv_data'] += simulate_rx(receiver, tx_buff)
-            return tx_buff_len
+        for opt_id, prp_pack in tx_buff:
+            pack_len = len(prp_pack)
+            self.prp_test_results[uid_receiver]['total_bytes']  += pack_len
+            self.prp_test_results[uid_receiver]['total_packet'] += 1
+            total_data_c += pack_len
+            total_pac_c  += 1
+            # Entscheidung: Wird das Paket zugestellt?
+            if self._get_random_choice():
+                self.prp_test_results[uid_receiver]['recv_data'] += simulate_rx(receiver, prp_pack)
+                continue
 
-        if tx_buff_len:
-            logger.info(f"==================== Flushing TX Buffer ====================")
-            logger.info(f"== RX XXX [{uid_sender}] → [{uid_receiver}]: {tx_buff_len} Bytes (PAKETVERLUST simuliert)")
             beep_sound(beep_len=1, freq=2400)
-            self._results[uid_receiver]['lost_bytes'] += tx_buff_len
-        return 0
+            self.prp_test_results[uid_receiver]['lost_bytes']  += pack_len
+            self.prp_test_results[uid_receiver]['lost_packet'] += 1
+            data_los_c += pack_len
+            pac_los_c  += 1
+
+        zugestellt_b = total_data_c - data_los_c
+        zugestellt_p = total_pac_c  - pac_los_c
+
+        logger.info(f"==================== Flushing TX Buffer ====================")
+        #logger.info(f"== RX --- [{uid_sender}] → [{uid_receiver}]: {total_data_c} Bytes / {total_pac_c} Packets")
+        logger.info(f"== RX →→→ [{uid_sender}] → [{uid_receiver}]: {zugestellt_b} Bytes / {zugestellt_p} Packets (zugestellt)")
+        logger.info(f"== RX XXX [{uid_sender}] → [{uid_receiver}]: {data_los_c} Bytes / {pac_los_c} Packets (PAKETVERLUST simuliert)")
+        logger.info(f"============================================================")
+
+        return True
 
     # =========================================
     # Loop CTRL
@@ -343,14 +466,14 @@ class Simulator:
         if not self.stepper:
             return
         wait_tick = not bool(self._step_tick)
-        while wait_tick != self._step_tick:
+        while wait_tick != self._step_tick and self.app_running:
             time.sleep(0.3)
 
     def _wait_injection_step(self):
         if not self.inj_stepper:
             return
         wait_tick = not bool(self._inj_step_tick)
-        while wait_tick != self._inj_step_tick:
+        while wait_tick != self._inj_step_tick and self.app_running:
             time.sleep(0.3)
 
     # =========================================
@@ -397,25 +520,25 @@ class Simulator:
         logger.info(f"== Server > [{bar}] {new_prz} %")
         """
         #while self._server_recv_data:
-        i = len(self._results['SERVER']['recv_data'])
-        if self._results['SERVER']['recv_data'] != self._results['CLIENT']['send_data'][:i]:
+        i = len(self.prp_test_results['SERVER']['recv_data'])
+        if self.prp_test_results['SERVER']['recv_data'] != self.prp_test_results['CLIENT']['send_data'][:i]:
             logger.error("=== [SERVER] Diff Found: I ")
             beep_alarm()
             raise ValueError
 
-        self._results['SERVER']['recv_data'].clear()
-        self._results['CLIENT']['send_data'] = self._results['CLIENT']['send_data'][i:]
+        self.prp_test_results['SERVER']['recv_data'].clear()
+        self.prp_test_results['CLIENT']['send_data'] = self.prp_test_results['CLIENT']['send_data'][i:]
 
 
-        i = len(self._results['CLIENT']['recv_data'])
+        i = len(self.prp_test_results['CLIENT']['recv_data'])
 
-        if self._results['CLIENT']['recv_data'] != self._results['SERVER']['send_data'][:i]:
+        if self.prp_test_results['CLIENT']['recv_data'] != self.prp_test_results['SERVER']['send_data'][:i]:
             logger.error(f"=== [CLIENT] Diff Found: I ")
             beep_alarm()
             raise ValueError
 
-        self._results['CLIENT']['recv_data'].clear()
-        self._results['SERVER']['send_data'] = self._results['SERVER']['send_data'][i:]
+        self.prp_test_results['CLIENT']['recv_data'].clear()
+        self.prp_test_results['SERVER']['send_data'] = self.prp_test_results['SERVER']['send_data'][i:]
 
     # =============== MAIN =====================
     def run_main(self):
@@ -430,11 +553,12 @@ class Simulator:
             # ===============================================
             # Client > Server
             # ===============================================
+            time.sleep(40 / self._time_scale)
             self._wait_step()
             self._wait_injection_step()
 
             # == TX Buffer frei?
-            if self._is_tx_cache_free(self._client) and data_set_client:
+            if self._is_tx_cache_free(self.prp_client) and data_set_client:
                 idx_c += 1
                 data_to_send = data_set_client.pop(0)
                 logger.debug(f"== [Client] Sende Chunk {idx_c}/{len(self._tx_data_Chunks_server)}")
@@ -442,14 +566,14 @@ class Simulator:
                 beep_sound(beep_len=3)
 
                 # == Inject Data
-                self._inject_data_chunk(data_to_send, self._client)
+                self._inject_data_chunk(data_to_send, self.prp_client)
 
 
             # == Warte Tasker Tick
-            time.sleep(0.001)
-            tasker_tick = bool(self._tasker_tick)
-            while tasker_tick == self._tasker_tick:
-                time.sleep(0.001)
+            #time.sleep(4 / self._time_scale)
+            #tasker_tick = bool(self._cl_tasker_tick)
+            #while tasker_tick == self._cl_tasker_tick and self.app_running:
+            #    time.sleep(0.001)
 
             # ===============================================
             # Client > Server
@@ -457,7 +581,7 @@ class Simulator:
             self._wait_injection_step()
 
             # == TX Buffer frei?
-            if self._is_tx_cache_free(self._server) and data_set_server:
+            if self._is_tx_cache_free(self.prp_server) and data_set_server:
                 idx_s += 1
                 data_to_send = data_set_server.pop(0)
                 logger.debug(f"== Sende Chunk {idx_s}/{len(self._tx_data_Chunks_server)}")
@@ -465,18 +589,13 @@ class Simulator:
                 beep_sound(beep_len=3)
 
                 # == Inject Data
-                self._inject_data_chunk(data_to_send, self._server)
+                self._inject_data_chunk(data_to_send, self.prp_server)
 
             # == Warte Tasker Tick
-            time.sleep(0.001)
-            tasker_tick = bool(self._tasker_tick)
-            while tasker_tick == self._tasker_tick:
-                time.sleep(0.001)
-
-            # ===============================================
-            # I/O Diff Check
-            # ===============================================
-            # self._check_diff()
+            #time.sleep(4 / self._time_scale)
+            #tasker_tick = bool(self._se_tasker_tick)
+            #while tasker_tick == self._se_tasker_tick and self.app_running:
+            #    time.sleep(0.001)
 
         logger.info("==== Test ENDE ===================")
         beep_sound(beep_len=500, freq=1900)
@@ -484,13 +603,14 @@ class Simulator:
         logger.info("==== Übertrage Reste")
         time.sleep(2)
         # self._flush_tx_buffers()
-        if any(self._client.prp_transport.get_all_pending()) or any(self._server.prp_transport.get_all_pending()):
+        if any(self.prp_client.prp_transport.get_all_pending()) or any(self.prp_server.prp_transport.get_all_pending()):
             logger.info("== Verarbeite pending ..")
-            logger.info(f"Pending Client: {self._client.prp_transport.get_all_pending()}")
-            logger.info(f"Pending Server: {self._server.prp_transport.get_all_pending()}")
-            i   = 0
-            w_n = 0
-            while any(self._client.prp_transport.get_all_pending()) or any(self._server.prp_transport.get_all_pending()):
+            logger.info(f"Pending Client: {self.prp_client.prp_transport.get_all_pending()}")
+            logger.info(f"Pending Server: {self.prp_server.prp_transport.get_all_pending()}")
+            #i   = 0
+            #w_n = 0
+            """
+            while any(self.prp_client.prp_transport.get_all_pending()) or any(self.prp_server.prp_transport.get_all_pending()):
                 beep_sound(beep_len=1,loop=2)
                 time.sleep(1)
                 if i < 10:
@@ -499,12 +619,13 @@ class Simulator:
                 i    = 0
                 w_n += 1
                 logger.info(f"== Verarbeite pending ..{'.' * w_n}")
-                logger.info(f"Pending Client: {self._client.prp_transport.get_all_pending()}")
-                logger.info(f"Pending Server: {self._server.prp_transport.get_all_pending()}")
+                logger.info(f"Pending Client: {self.prp_client.prp_transport.get_all_pending()}")
+                logger.info(f"Pending Server: {self.prp_server.prp_transport.get_all_pending()}")
+            """
 
         logger.info("======== Test abgeschlossen ========")
-        logger.info(f"Pending Client: {self._client.prp_transport.get_all_pending()}")
-        logger.info(f"Pending Server: {self._server.prp_transport.get_all_pending()}")
+        logger.info(f"Pending Client: {self.prp_client.prp_transport.get_all_pending()}")
+        logger.info(f"Pending Server: {self.prp_server.prp_transport.get_all_pending()}")
 
         logger.info("======== Checking Diff .....")
         self._check_diff()
@@ -515,7 +636,7 @@ class Simulator:
             time.sleep(1)
 
         beep_sound(beep_len=500, freq=1900)
-        input("Warte .......................")
+        #input("Warte .......................")
         self.close_app()
 
     """
@@ -624,9 +745,9 @@ if __name__ == '__main__':
             data_size = random.randrange(3048576, 9242880)
             if data_size % 2:
                 data_size += 1
-
+            pac_los = min(n * 10, 90)
             sim = Simulator(data_len=data_size,
-                               random_pac_lost=80,      # 0, 25, 50, 75
+                               random_pac_lost=pac_los,      # 0, 25, 50, 75
                                random_data_lost=False,
                                pac_size=129,
                                prio=True)

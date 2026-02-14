@@ -12,12 +12,13 @@ from cfg.logger_config import logger
 from classes.CLbuffers import ListBuffer, ByteArrayBuffer, LockedDict
 from prp.prp_const import PRP_OPT_PRP_ADMIN, PRP_OPT_L3_DATA, PRP_OPT_L3_ACK, PRP_OPT_L3_SYN, PRP_OPT_L3_FIN, \
     PRP_OPT_L3_RST, PRP_OPT_L3_ERROR, PRP_OPT_ESC_CLI
-from prp.prp_transport_states import PRPState, get_transition
+from prp.prp_l3.prp_transport_states import PRPState, get_transition
 
 
 class PRPTransportLayer:
-    def __init__(self, prp_root):
+    def __init__(self, prp_root, adapter):
         self._prp_root    = prp_root
+        self._adapter     = adapter
         # === Sequenz-Zähler: pro UID + Prio
         # prio → current_seq
         self._seq_counter = {True: 0, False: 0}
@@ -47,13 +48,13 @@ class PRPTransportLayer:
             'ax25_l2': {
                 'use_transport': True,
                 'retry_limit': 1000,
-                'retry_timer': 0.7,  # Sekunden
+                'retry_timer': 0.8,  # Sekunden
                 'timeout': 1800,  # Verbindung-Timeout Sekunden
                 'pac_size': 180,
                 'window_size': 128,
                 'keepalive_interval': 600,  # Sekunden
                 'ack_mode': 'always',  # 'always', 'on_end', 'on_request'
-                'ack_delay': 0.1,
+                'ack_delay': 0.08,
             },
             'ax25_l3': {
                 'use_transport': False,
@@ -69,7 +70,7 @@ class PRPTransportLayer:
                 'window_size': 8,
                 'keepalive_interval': 86400,  # 1 Tag
                 'ack_mode': 'on_end',  # Nur bei letztem Fragment
-                'ack_delay': 0.5,
+                'ack_delay': 0.06,
 
             },
             'aprs': {
@@ -87,8 +88,10 @@ class PRPTransportLayer:
         }
 
         # Pro UID + Prio ein eigener State
-        self._l3_state      = PRPState.INIT
-
+        self._l3_state = {
+            True: PRPState.INIT,
+            False: PRPState.ESTABLISHED,
+        }
 
     @staticmethod
     def _default_state():
@@ -105,8 +108,6 @@ class PRPTransportLayer:
 
             'syn_retry_in_progress': False,
             'flush_lock': False,  # Lock während Flush/Retry
-            # 'last_ack': 0,  # Letzter ACK (Vollständige Sequenz)
-            'nack_active': False,
 
             'ack_pending':  False,  # ACK sammeln
             'nack_pending': False,  # NACK sammeln (Priorität)
@@ -114,11 +115,20 @@ class PRPTransportLayer:
             'last_request_ts': 0,   # (falls du später on_request erweiterst)
 
             'last_delivered_end_seq': None,
+            'awaiting_batch_ack': False,
         }
 
     def set_conn_type(self, conn_type):
         self._conn_type = conn_type
         logger.info(f"PRP Transport: Verbindungstyp auf {conn_type} geändert")
+
+    @property
+    def adapter(self):
+        return self._adapter
+
+    @property
+    def use_transporter(self):
+        return self._config_per_type[self._conn_type].get('use_transport')
 
     def is_transport_enabled(self, opt_id):
         if opt_id not in self._transport_opt_ids:
@@ -142,16 +152,31 @@ class PRPTransportLayer:
     # ===================================================================
     def tasker(self):
         """Wird alle ~10ms aufgerufen"""
+        self._adapter.tasker()
+
+        # Verbindung noch nicht aufgebaut
+        if self._get_l3_state(True) != PRPState.ESTABLISHED:
+            self._transition_conn("TIMER_RETRY")
+            return
+
         for prio in [True, False]:
             self._transition(prio, "NO_EVENT")
 
-            # Verbindung noch nicht aufgebaut
-            if self._l3_state != PRPState.ESTABLISHED:
+            if self._get_l3_state(prio) != PRPState.ACK_WAIT:
                 self._transition(prio, "TIMER_RETRY")
                 continue
 
             # Delayed ACK/NACK Handling
             state = self._state[prio]
+            if state['ack_pending'] or state['nack_pending']:
+                self._send_delayed_ack_nack(prio)
+
+            # ACK-REQUEST Retry
+            if state['awaiting_batch_ack']:
+                delay = self._get_config_param('ack_delay')
+                if time.time() - state['last_request_ts'] > delay:
+                    self._send_ack_request(prio)
+                    state['last_request_ts'] = time.time()
 
             # Retry
             retry_timer = self._get_config_param('retry_timer')
@@ -167,17 +192,14 @@ class PRPTransportLayer:
                 self._flush_tx_buffer(prio)
 
 
-            #if state['ack_pending'] or state['nack_pending']:
-            #    self._send_delayed_ack_nack(prio)
-
     # ===================================================================
     # Handshake
     # ===================================================================
     def send_l3_handshake(self):
-        if self._l3_state == PRPState.INIT:
+        if self._get_l3_state(prio=True) == PRPState.INIT:
             logger.debug("PRP L3: Send handshake – sende SYN")
             self._send_SYN(response=False, cmd=True)
-            self._transition(prio=True, event="SYN_SENT")
+            self._transition_conn(event="SYN_SENT")
 
     # ===================================================================
     # Senden (Client)
@@ -187,10 +209,10 @@ class PRPTransportLayer:
         if not self.is_transport_enabled(opt_id):
             return self._prp_root.prp_tx(opt_id, tx_flag=True, data=data, prio=prio)
 
-        if self._l3_state == PRPState.INIT:
+        if self._get_l3_state(True) == PRPState.INIT:
             logger.debug("PRP L3: Lazy handshake – sende SYN")
             self._send_SYN(response=False, cmd=True)
-            self._transition(prio, "SYN_SENT")
+            self._transition_conn("SYN_SENT")
 
         # Immer buffer – interne Logik handhabt Priorisierung
         self._buffer_tx(prio, data, pac_size, callback)
@@ -205,28 +227,27 @@ class PRPTransportLayer:
         #    self._buffer_tx(prio, opt_id, data, pac_size, callback)
         #    return None
 
-        if self._l3_state == PRPState.INIT:
+        if self._get_l3_state(True) == PRPState.INIT:
             logger.debug("PRP L3: Lazy handshake – sende SYN")
             self._send_SYN(response=False, cmd=True)
-            self._transition(prio, "SYN_SENT")
+            self._transition_conn(event="SYN_SENT")
 
         if state.get('paused'):
             logger.debug("PRP L3: Senden pausiert (RNR)")
             #self._buffer_tx(prio, opt_id, data, pac_size, callback)
             return None
 
-        if self._l3_state not in (PRPState.INIT, PRPState.ESTABLISHED):
-            logger.warning(f"PRP L3: Senden in State {self._l3_state.value} nicht erlaubt")
+        if self._get_l3_state(True) not in (PRPState.INIT, PRPState.ESTABLISHED):
+            logger.warning(f"PRP L3: Senden in State {self._get_l3_state(True).value} nicht erlaubt")
             #self._buffer_tx(prio, opt_id, data, pac_size, callback)
             return None
 
-        #if state.get('nack_active') or state.get('nack_pending'):
-        if self._l3_state == PRPState.RECOVERY:
+        if self._get_l3_state(prio=prio) == PRPState.RECOVERY:
             logger.debug("PRP L3: NACK aktiv – neue DATA zurückgestellt")
             #self._buffer_tx(prio, opt_id, data, pac_size, callback)
             return None
 
-        window = self._get_config_param('window_size')
+        window = min(self._get_config_param('window_size'), 128)
         if len(state['pending'].keys()) >= window:
             #logger.debug("PRP L3: Window voll – warte")
             #self._buffer_tx(prio, opt_id, data, pac_size, callback)
@@ -264,7 +285,7 @@ class PRPTransportLayer:
     def _flush_tx_buffer(self, prio: bool):
         state = self._state[prio]
 
-        if state.get('nack_active') or state.get('nack_pending'):
+        if state.get('nack_pending'):
             return  # Warte auf NACK-Auflösung
 
 
@@ -279,6 +300,14 @@ class PRPTransportLayer:
             # Dann tx_buffer leeren
             while not state['tx_buffer'].is_empty:
                 data, pac_size, callback = state['tx_buffer'].buffer_get[0]
+
+                # == Check PRP TX-Buffer
+                packets = int(len(data) / (pac_size - 8))
+                pack_free_in_buffer = self._prp_root.prp_tx_buffer.l3_pack_to_send
+                if pack_free_in_buffer < packets:
+                    logger.debug(f"PRP L3 [{self._prp_root.uid}]: Kein Platz für Datenpaket im PRP TX_Buffer - Free: {pack_free_in_buffer} / Need: {packets}")
+                    break
+
                 seqs = self._send_data(data=data, prio=prio, pac_size=pac_size, callback=callback)
                 if seqs is None:
                     break
@@ -297,7 +326,7 @@ class PRPTransportLayer:
         flag1       = prio
         packet_list = []
         pac_size    = pac_size - 8 # - l3 Header - Data + prp-l3 Header + crc
-        while len(data) > pac_size:
+        while len(data) > pac_size :
             data_chunk = data[:pac_size]
             data       = data[pac_size:]
             # flag2 = more_follow
@@ -352,17 +381,17 @@ class PRPTransportLayer:
 
         elif opt_id == PRP_OPT_L3_FIN:
             """ 32 - FIN """
-            self._transition(is_prio, "FIN")
+            self._transition_conn("FIN")
             self._process_FIN(payload, unpacked_prp_opt)
 
         elif opt_id == PRP_OPT_L3_RST:
             """ 33 - RST """
-            self._transition(is_prio, "RST")
+            self._transition_conn("RST")
             self._process_RST(payload, unpacked_prp_opt)
 
         elif opt_id == PRP_OPT_L3_ERROR:
             """ 34 - ERROR """
-            self._transition(is_prio, "ERROR")
+            self._transition_conn("ERROR")
             self._process_ERROR(payload, unpacked_prp_opt)
 
         elif opt_id == PRP_OPT_L3_DATA:
@@ -398,14 +427,14 @@ class PRPTransportLayer:
         state['recv_buffer'].buffer_clear()
         state['fragment_buffer'].buffer_clear()
         state['waiting_for_end'] = False
-        state['nack_active'] = False
         state['paused'] = False
         state['last_seen'] = datetime.now()
 
         # ACK-Politik: optional sofort bestätigen
-        ack_mode = self._get_config_param('ack_mode')
-        if ack_mode == 'always':
-            self._send_ack(prio)
+        state['ack_pending'] = True
+        self._reset_ack_delay(prio)
+        if self._get_l3_state(prio) != PRPState.ACK_WAIT:
+            self._transition(prio, "START_ACK_WAIT")
 
     def _process_DATA(self, payload, unpacked_prp_opt):
         opt_id, prio, more_follow = unpacked_prp_opt
@@ -425,7 +454,7 @@ class PRPTransportLayer:
 
         seq           = int(payload[0])
         fragment_data = payload[1:]
-        window_size   = config.get('window_size', 128)
+        window_size   = min(config.get('window_size', 128), 128)
         logger.debug(f"PRP L3 [{self._prp_root.uid}] Prio={prio}: Empfangen SEQ={seq}, expected={state['expected_seq']}, more_follow={more_follow}")
 
 
@@ -439,13 +468,16 @@ class PRPTransportLayer:
                     key=lambda x: (x[0] - state['expected_seq']) % 256
                 )
             state['recv_buffer'].buffer_set_and_unlock(recv_buffer)
-            state['ack_pending'] = True
-            # ACK je nach ack_mode
+            state['ack_pending']    = True
+            self._reset_ack_delay(prio)
 
-            if config['ack_mode'] == 'always':
-                self._transition(prio=prio, event="START_ACK_WAIT")
-            elif config['ack_mode'] == 'on_end' and not more_follow:
-                self._transition(prio=prio, event="START_ACK_WAIT")
+            # ! ACK_WAIT nur starten, wenn wir nicht schon drin sind
+            if self._get_l3_state(prio) != PRPState.ACK_WAIT:
+                # ACK je nach ack_mode
+                if config['ack_mode'] == 'always':
+                    self._transition(prio=prio, event="START_ACK_WAIT")
+                elif config['ack_mode'] == 'on_end' and not more_follow:
+                    self._transition(prio=prio, event="START_ACK_WAIT")
 
             # on_request: Nur bei Anforderung (z. B. Keep-Alive)
             return self._process_buffer(prio)
@@ -453,46 +485,59 @@ class PRPTransportLayer:
         forward_dist = (seq - state['expected_seq']) % 256
         backward_dist = (state['expected_seq'] - seq) % 256
 
-        #if (seq - state['expected_seq']) % 256 < window_size:
+        # ===============================
+        # 1. OUT-OF-ORDER (zukünftiges Fenster)
+        # ===============================
         if forward_dist < window_size:
-            # Innerhalb Fenster → Out-of-order
-            logger.debug(f"PRP L3 [{self._prp_root.uid}]: Out-of-order SEQ {seq} – puffere")
+            logger.debug(
+                f"PRP L3 [{self._prp_root.uid}]: "
+                f"Out-of-order SEQ {seq} (forward_dist={forward_dist}) – puffere"
+            )
+
             recv_buffer = state['recv_buffer'].buffer_get_and_lock
             if seq not in [s for s, _, _ in recv_buffer]:
                 recv_buffer.append((seq, fragment_data, more_follow))
-                #state['recv_buffer'].sort(key=lambda x: x[0])
                 recv_buffer.sort(
                     key=lambda x: (x[0] - state['expected_seq']) % 256
                 )
             state['recv_buffer'].buffer_set_and_unlock(recv_buffer)
-            #ret = self._process_buffer(prio)
 
-            # NACK je nach ack_mode
-
+            # ➜ NACK erforderlich
             state['nack_pending'] = True
-            if config['ack_mode'] == 'always':
-                self._transition(prio=prio, event="START_ACK_WAIT")
-            elif config['ack_mode'] == 'on_end' and not more_follow:
+            state['ack_pending'] = False
+            self._reset_ack_delay(prio)
+
+            if self._get_l3_state(prio) != PRPState.ACK_WAIT:
                 self._transition(prio=prio, event="START_ACK_WAIT")
 
-            #self._transition(prio=prio, event="START_ACK_WAIT")
-
+        # ===============================
+        # 2. DUPLICATE (nur nahes Backward)
+        # ===============================
         elif backward_dist < window_size:
-            # Duplicate/Resend → ignore, but trigger ACK
-            logger.debug(f"Duplicate SEQ {seq} – trigger ACK")
+            logger.debug(
+                f"PRP L3 [{self._prp_root.uid}]: "
+                f"Duplicate SEQ {seq} (backward_dist={backward_dist}) – ACK"
+            )
+
             state['ack_pending'] = True
-            if self._l3_state != PRPState.ACK_WAIT:
+            self._reset_ack_delay(prio)
+
+            # ❗ ACK_WAIT nur starten, wenn wir nicht schon drin sind
+            if self._get_l3_state(prio) != PRPState.ACK_WAIT:
                 self._transition(prio=prio, event="START_ACK_WAIT")
+
+        # ===============================
+        # 3. FINAL VERALTET → DROP
+        # ===============================
         else:
-            # Außerhalb Fenster → schwerer Fehler
-            # TODO: Bereits empfangende Pakete können wiederholt empfangen werden(Kein RST)
-            logger.warning(f"PRP L3 [{self._prp_root.uid}]: SEQ {seq} weit außerhalb (expected={state['expected_seq']}) – ignoriere Paket")
-            #self._send_RST(uid, response=True, cmd=True)  # Prio-RST
-            # Optional: State resetten
-            #state['expected_seq'] = 0
-            #state['recv_buffer'].clear()
-            #state['fragment_buffer'] = bytearray()
-            #breakpoint()
+            logger.warning(
+                f"PRP L3 [{self._prp_root.uid}]: "
+                f"SEQ {seq} endgültig veraltet "
+                f"(expected={state['expected_seq']}, backward_dist={backward_dist}) – DROP"
+            )
+            # KEIN ACK
+            # KEIN NACK
+            # KEIN ACK_WAIT
 
         return b''
 
@@ -565,7 +610,12 @@ class PRPTransportLayer:
     # == ACK
     def _process_ACK(self, payload, unpacked_prp_opt: tuple):
         logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
-        opt_id, prio, more_follow = unpacked_prp_opt
+        opt_id, prio, is_cmd = unpacked_prp_opt
+        if is_cmd:
+            # ACK-REQUEST
+            self._handle_ack_request(prio)
+            return None
+
         state: dict = self._state[prio]
 
         parsed = self._parse_ack_nack(payload)
@@ -573,25 +623,25 @@ class PRPTransportLayer:
             return None
 
         next_expected, bitmask_len, bitmask = parsed
+        # ACK clears batch wait
+        state['awaiting_batch_ack'] = False
 
         # == 1. ACK-Teil: alles < next_expected ist bestätigt
         for s in list(state['pending'].keys()):
-            if self._is_acked(s, next_expected): # Nur eindeutig alte SEQs löschen
+            if self._is_acked(s, next_expected):
+                logger.warning(
+                    f"PRP L3 [{self._prp_root.uid}]: "
+                    f"Dropping stale pending SEQ={s}"
+                )
                 pending = state['pending'].pop(s)
-                logger.debug(f"PRP L3 [{self._prp_root.uid}]: ACK bestätigt SEQ={s} (wrap-around safe)")
-                if pending['callback']:
-                    pending['callback'](success=True)
+                if pending.get('callback'):
+                    pending['callback'](success=False)
 
         # == 2. Reines ACK?
         if bitmask_len == 0:
             # ACK: Alles OK bis next_expected
             logger.debug(f"PRP L3 [{self._prp_root.uid}]: Process ACK – ACK: Alles OK bis next_expected")
-
-            # state['expected_seq'] = next_expected
             self._transition(prio, "ACK")
-            state['nack_active'] = False
-            #state['last_ack'] = next_expected
-            #state['expected_seq'] = next_expected
             return None
 
         # == 3. NACK: Bitmask parsen
@@ -608,7 +658,6 @@ class PRPTransportLayer:
                     missing = True
 
         #self._transition(prio, "NACK")
-        #state['nack_active'] = missing
         if missing:
             self._transition(prio,"ENTER_RECOVERY")
         else:
@@ -621,19 +670,32 @@ class PRPTransportLayer:
     @staticmethod
     def _is_acked(seq, next_expected):
         # seq < next_expected (mod 256)
-        return (seq - next_expected) % 256 > 128
+        return (seq - next_expected) % 256 >= 128
+
+    def _handle_ack_request(self, prio):
+        state = self._state[prio]
+
+        if state['recv_buffer'].is_empty:
+            self._send_ack(prio, response=True)
+        else:
+            self._send_nack(prio, response=True)
+        # ACK-WAIT hier NICHT betreten
 
     # == SYN
     def _process_SYN(self, payload, unpacked_prp_opt):
         opt_id, prio, more = unpacked_prp_opt
         logger.info(f"PRP L3 [{self._prp_root.uid}]: SYN empfangen")
 
-        if self._get_l3_state() == PRPState.INIT:
+        if self._get_l3_state(prio=True) == PRPState.INIT:
             self._send_SYN(response=True, cmd=False)  # SYN-ACK
-            self._transition(prio, "SYN_ACK")
+            self._transition_conn("SYN_ACK")
 
-        elif self._get_l3_state() == PRPState.SYN_SENT:
-            self._transition(prio, "SYN_ACK")
+        elif self._get_l3_state(prio=True) == PRPState.SYN_SENT:
+            self._transition_conn("SYN_ACK")
+
+        elif self._get_l3_state(prio=True) == PRPState.ESTABLISHED:
+            self._send_SYN(response=True, cmd=False)  # SYN-ACK
+            self._transition_conn("SYN_ACK")
 
         #self._flush_tx_buffer(prio)
         return None
@@ -644,7 +706,9 @@ class PRPTransportLayer:
 
     # == RST
     def _process_RST(self, payload, unpacked_prp_opt: tuple):
+        opt_id, prio, more = unpacked_prp_opt
         logger.debug(f"PRP L3 [{self._prp_root.uid}]: RST RECV – unpacked_prp_opt={unpacked_prp_opt} - payload={payload}")
+        self._transition_conn("RST")
 
     # == ERROR
     def _process_ERROR(self, payload, unpacked_prp_opt: tuple):
@@ -667,8 +731,27 @@ class PRPTransportLayer:
                                                  flag2=response,
                                                  data=bytes(payload))
 
-        self._prp_root.prp_tx_l3(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
-        self._transition(prio, 'STOP_ACK_WAIT')
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
+        #self._transition(prio, 'STOP_ACK_WAIT')
+
+    def _send_ack_request(self, prio):
+        logger.debug(
+            f"PRP L3 [{self._prp_root.uid}]: Sende ACK-REQUEST"
+        )
+
+        prp_l3_frame = self._build_l3_pack_w_seq(
+            l3_opt_id=PRP_OPT_L3_ACK,
+            seq=self.get_current_seq(prio),
+            flag1=prio,
+            flag2=True,  # CMD = Request
+            data=b'\x00'  # payload leer (bitmask_len = 0)
+        )
+
+        self._prp_root.prp_tx_l3_ctrl(
+            l3_opt_id=PRP_OPT_L3_ACK,
+            l3_frame=prp_l3_frame,
+            prio=True
+        )
 
     def _send_nack(self, prio, response=True):
         state = self._state[prio]
@@ -704,14 +787,13 @@ class PRPTransportLayer:
             data=bytes(payload)
         )
         self._log_bitmask_table(prio, start_seq, bitmask, "Sende NACK")
-        self._prp_root.prp_tx_l3(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
-        self._transition(prio, 'STOP_ACK_WAIT')
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=PRP_OPT_L3_ACK, l3_frame=prp_l3_frame, prio=True)
+        #self._transition(prio, 'STOP_ACK_WAIT')
 
 
     def _reset_ack_delay(self, prio: bool):
         state = self._state[prio]
-        now   = time.time()
-        state['ack_delay_timer'] = now
+        state['ack_delay_timer'] = time.time()
 
     def _send_delayed_ack_nack(self, prio: bool):
         state = self._state[prio]
@@ -734,7 +816,8 @@ class PRPTransportLayer:
         # Reset pending und Timestamp
         state['ack_pending']  = False
         state['nack_pending'] = False
-        # state['ack_delay_timer'] = now
+        self._reset_ack_delay(prio)
+
         self._transition(prio=prio, event="STOP_ACK_WAIT")
 
     # ===================================================================
@@ -761,7 +844,7 @@ class PRPTransportLayer:
                                                  flag1=response,
                                                  flag2=cmd,
                                                  data=bytes(payload))
-        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
         return None
 
     def _retry_syn(self, prio):
@@ -791,7 +874,7 @@ class PRPTransportLayer:
                                                  flag1=response,
                                                  flag2=cmd,
                                                  data=bytes(payload))
-        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
         return None
 
     def _send_RST(self, response=False, cmd=True):
@@ -815,7 +898,7 @@ class PRPTransportLayer:
                                                  flag1=response,
                                                  flag2=cmd,
                                                  data=bytes(payload))
-        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
         return None
 
     def _send_ERROR(self, response=False, cmd=True):
@@ -839,7 +922,7 @@ class PRPTransportLayer:
                                                  flag1=response,
                                                  flag2=cmd,
                                                  data=bytes(payload))
-        self._prp_root.prp_tx_l3(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
+        self._prp_root.prp_tx_l3_ctrl(l3_opt_id=l3_opt_id, l3_frame=prp_l3_frame, prio=True)
         return None
 
     # ===================================================================
@@ -862,7 +945,10 @@ class PRPTransportLayer:
             logger.error(f"PRP Transport [{self._prp_root.uid}]: Retry-Limit erreicht für Seq {seq}")
             if pending['callback']:
                 pending['callback'](success=False)
-            del state['pending'][seq]
+            logger.error("Connection unstable – aborting transport")
+            self._send_RST()
+            self._transition_conn("RST")
+            raise ConnectionError
 
         return None
 
@@ -993,14 +1079,14 @@ class PRPTransportLayer:
     # ===================================================================
     # L3 State Hilfsfunktionen (Zustandsmaschine)
     # ===================================================================
-    def _get_l3_state(self):
-        return self._l3_state
+    def _get_l3_state(self, prio):
+        return self._l3_state[prio]
 
-    def _set_l3_state(self, new_state: PRPState):
-        old = self._l3_state
+    def _set_l3_state(self, prio, new_state: PRPState):
+        old = self._l3_state[prio]
         if old != new_state:
-            logger.info(f"PRP L3 [{self._prp_root.uid}] [Prio]: State {old.value} → {new_state.value}")
-        self._l3_state = new_state
+            logger.info(f"PRP L3 [{self._prp_root.uid}] [{prio}]: State {old.value} → {new_state.value}")
+        self._l3_state[prio] = new_state
 
     def _execute_actions(self, prio: bool, actions: list[str]):
         for action in actions:
@@ -1010,15 +1096,18 @@ class PRPTransportLayer:
             else:
                 logger.warning(f"PRP L3 [{self._prp_root.uid}]: Unbekannte Action '{action}' im State-Table")
 
+    def _transition_conn(self, event):
+        self._transition(True, event)
+
     def _transition(self, prio: bool, event: str):
         """
         Zentrale Zustandsübergangsfunktion
         Wird von handle_transport_frame, tasker() und später Timer aufgerufen
         """
-        current = self._get_l3_state()
+        current = self._get_l3_state(prio=prio)
         new_state, actions = get_transition(current, event)
 
-        self._set_l3_state(new_state)
+        self._set_l3_state(prio, new_state)
         return self._execute_actions(prio, actions)
 
     # Beispiel-Action für RNR (Receive Not Ready)

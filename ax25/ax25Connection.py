@@ -732,7 +732,6 @@ class AX25Conn:
         logger.debug(f"All CLI CMDs : {sorted(cmds)}")
         """
 
-
     def _reinit_cli(self):
         if self.cli_type == CLI_TYP_TASK_FWD:
             #self.bbsFwd_init()
