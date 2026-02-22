@@ -10,6 +10,7 @@ Fixes:
    darstellbar sind, gibts es Chaos.
    Tag Farben & Zeilenumbrüche gehen verloren)
 - Es können keine User-DB Einträge mit SSID hinzugefügt werden
+- Script Error wenn neue APRS-Nachricht gesendet wird
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)

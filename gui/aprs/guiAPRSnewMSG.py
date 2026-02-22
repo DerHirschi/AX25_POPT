@@ -155,6 +155,8 @@ class NewMessageWindow(tk.Toplevel):
                     #self._aprs_root.set_new_chat(aprs_pack)
                     aprs_ais = self._aprs_root.get_aprs_ais()
                     if hasattr(aprs_ais, 'send_pn_msg'):
+                        if 'addresse' in aprs_pack:
+                            aprs_pack['address'] = aprs_pack['addresse']
                         aprs_ais.send_pn_msg(aprs_pack, msg, with_ack)
                 self.destroy_win()
 

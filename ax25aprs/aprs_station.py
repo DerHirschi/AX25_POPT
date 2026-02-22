@@ -673,6 +673,7 @@ class APRS_ais(object):
         msg = convert_umlaute_to_ascii(msg)
         msg = zeilenumbruch_lines(msg, max_zeichen=67)
         msg_list = msg.split('\n')
+
         for el in msg_list:
             if not el or el == '\n':
                 continue
