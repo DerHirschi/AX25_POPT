@@ -217,14 +217,16 @@ class PortSetTab:
         axip_multicast_x = 800
         axip_multicast_y = 535
         self._axip_multicast_var = tk.IntVar(self.tab)
-        self._axip_multicast_dd = tk.Checkbutton(self.tab,
+        self._axip_multicast_dd = ttk.Checkbutton(self.tab,
                                                  text='AXIP-Multicast',
                                                  variable=self._axip_multicast_var,
                                                  command=self._update_Mcast_settings,
-                                                 fg=fg,
-                                                 bg=bg,
-                                                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                                 highlightthickness=0,
+                                                 onvalue=1,
+                                                 offvalue=0,
+                                                 #fg=fg,
+                                                 #bg=bg,
+                                                 #relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                                                 #highlightthickness=0,
                                                  state='disabled')
         self._axip_multicast_dd.var = self._axip_multicast_var
         if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
@@ -234,24 +236,24 @@ class PortSetTab:
                 # if self._port_setting.parm_axip_Multicast:
                 if self._port_setting.get('parm_axip_Multicast', new_cfg.get('parm_axip_Multicast', False)):
                     self._axip_multicast_var.set(1)
-                    self._axip_multicast_dd.select()
+                    #self._axip_multicast_dd.select()
                 else:
                     self._axip_multicast_var.set(0)
-                    self._axip_multicast_dd.deselect()
+                    #self._axip_multicast_dd.deselect()
             else:
                 mcast_port_id = int(mcast_port.port_id)
                 if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
 
                     self._axip_multicast_dd.configure(state="normal")
                     self._axip_multicast_var.set(1)
-                    self._axip_multicast_dd.select()
+                    #self._axip_multicast_dd.select()
                 else:
                     self._axip_multicast_dd.configure(state="disabled")
                     self._axip_multicast_var.set(0)
-                    self._axip_multicast_dd.deselect()
+                    #self._axip_multicast_dd.deselect()
         else:
             self._axip_multicast_var.set(0)
-            self._axip_multicast_dd.deselect()
+            #self._axip_multicast_dd.deselect()
             self._axip_multicast_dd.configure(state="disabled")
         self._axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
         # KISS START / END
@@ -662,21 +664,21 @@ class PortSetTab:
                 # if self._port_setting.parm_axip_Multicast:
                 if self._port_setting.get('parm_axip_Multicast',False):
                     self._axip_multicast_var.set(1)
-                    self._axip_multicast_dd.select()
+                    #self._axip_multicast_dd.select()
                 else:
                     self._axip_multicast_var.set(0)
-                    self._axip_multicast_dd.deselect()
+                    #self._axip_multicast_dd.deselect()
             else:
                 mcast_port_id = int(mcast_port.port_id)
                 if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
 
                     self._axip_multicast_dd.configure(state="normal")
                     self._axip_multicast_var.set(1)
-                    self._axip_multicast_dd.select()
+                    #self._axip_multicast_dd.select()
                 else:
                     self._axip_multicast_dd.configure(state="disabled")
                     self._axip_multicast_var.set(0)
-                    self._axip_multicast_dd.deselect()
+                    #self._axip_multicast_dd.deselect()
 
 
             self._kiss_txd.configure(state="disabled")
