@@ -5,7 +5,9 @@
 import time
 from datetime import datetime
 
+from ax25.ax25RTT import RTT
 from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
+from classes.CLbuffers import ByteArrayBuffer
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
@@ -20,88 +22,6 @@ from prp import init_prpAX25L3
 from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND
-
-
-def count_modulo(inp: int):
-    return (inp + 1) % 8
-
-
-class RTT:
-    # TODO
-    def __init__(self, connection):
-        self._conn = connection
-        self._act_paclen = self._conn.parm_PacLen
-        self.rtt_dict: {int: float} = {}
-        self.rtt_best = 999.0
-        self.rtt_worst = 0.0
-        self.rtt_average = float(self._conn.IRTT / 1000) / 2
-        self.rtt_last = 0.0
-        self.rtt_single_timer = 0.0
-        for i in range(8):
-            self.rtt_dict[i] = {
-                'timer': 0.0,
-                'paclen': int(self._act_paclen),
-                'rtt': self.rtt_average
-            }
-        # self.rtt_single_list = [float(self.rtt_average)]*4
-        self.rtt_single_list = []
-
-    def get_rtt_avrg(self):
-        self._calc_rtt_vars()
-        if self.rtt_best == 999:
-            return self.rtt_average
-        else:
-            return (self.rtt_average + self.rtt_best) / 2
-
-    def set_rtt_timer(self, vs: int, paclen: int):
-        self.rtt_dict[vs]['timer'] = time.time()
-        self.rtt_dict[vs]['paclen'] = paclen
-        # print('set {}'.format(self.rtt_dict))
-
-    def set_rtt_single_timer(self):
-        self.rtt_single_timer = time.time()
-
-    def rtt_single_rx(self, stop=False):
-        if stop:
-            self.rtt_single_timer = 0.0
-        if self.rtt_single_timer:
-            # rtt = float(((time.time() - self.rtt_single_timer) / 2) / 16) * self.act_paclen
-            rtt = (time.time() - self.rtt_single_timer) * 1.3
-            self.rtt_single_list[0] = rtt
-            self.rtt_single_list = self.rtt_single_list[1:] + [self.rtt_single_list[0]]
-            self.rtt_single_timer = 0.0
-        # print("RTT-S: {}".format(self.rtt_single_list))
-
-    def rtt_rx(self, vs: int):
-        # print('RX {}' .format(self.rtt_dict))
-        timer = float(self.rtt_dict[vs]['timer'])
-        if timer:
-            self.rtt_dict[vs]['rtt'] = time.time() - timer
-        self.rtt_last = float(self.rtt_dict[vs]['rtt'])
-        self._calc_rtt_vars()
-        # print('RX rtt_last {}'.format(self.rtt_last))
-        # print('RX rtt_best {}'.format(self.rtt_best))
-        # print('RX rtt_worst {}'.format(self.rtt_worst))
-        # print('RX rtt_average {}'.format(self.rtt_average))
-        return self.rtt_last
-
-    def _calc_rtt_vars(self):
-        # print('_________calc_rtt____________')
-        self.rtt_best = min(self.rtt_last, self.rtt_best)
-        self.rtt_worst = max(self.rtt_last, self.rtt_worst)
-        tmp = list(self.rtt_single_list)
-        # print("tmp: {}".format(tmp))
-        for vs in self.rtt_dict.keys():
-            if self.rtt_dict[vs]['rtt']:
-                # tmp_len = self.rtt_dict[vs]['paclen'] + 16
-                # rtt = float((self.rtt_dict[vs]['rtt'] / 2) / tmp_len) * self.act_paclen
-                rtt = self.rtt_dict[vs]['rtt']
-                # print("rtt: {}".format(tmp))
-                tmp.append(rtt)
-        self.rtt_average = sum(tmp) / len(tmp)
-
-        # print("rtt_average: {}".format(self.rtt_average))
-        # print('------------------------')
 
 
 class AX25Conn:
@@ -164,25 +84,17 @@ class AX25Conn:
         self.tx_buf_unACK = {}     # Buffer for UNACK I-Frames
         self.rx_buf_last_data = bytearray()     # Buffers for last Frame
         """ TX Buffer for PRP """
-        #self._tx_buf_prp_lock                = False        # Thread locking
-        #self._tx_buf_prp_prio_lock           = False        # Thread locking
-        #self._tx_buf_prp_rest_lock           = False        # Thread locking
-        #self._tx_buf_prp_Q: list                         = []           # Buffer Prio Data (Remote Protocol)
-        #self._tx_buf_prp_prio_Q: list                    = []           # Buffer Prio Data (Remote Protocol)
-        #self._tx_buf_prp_Rest                            = bytearray()  # Buffer Prio-Frame Rest Data (Remote Protocol)
-        #self._prp_tx_rest_opt_id                         = None # Im PRP-Rest-Frame Buffer befindliche OPT-ID
         """ IO Buffer For GUI / CLI """
-        self._tx_buf_lock      = False           # Threading TX-Buffer lock
-        self.tx_buf_rawData    = bytearray()     # Buffer for TX RAW Data that is not packed yet into a Frame
+        self.tx_buf_rawData:ByteArrayBuffer = ByteArrayBuffer()     # Buffer for TX RAW Data that is not packed yet into a Frame
 
         self._is_tx_buffer     = lambda : (self._prp_remote.is_tx_buffer() or
-                                           self.tx_buf_rawData)
+                                           not self.tx_buf_rawData.is_empty)
         # RX
         self.rx_buf_rawData    = bytearray()  # Buffer RX QSO for AutoConnTask
         self.rx_tx_buf_guiData = []           # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
-        self.LINK_rx_buff       = bytearray()
+        self.LINK_rx_buff:ByteArrayBuffer = ByteArrayBuffer()
         self.is_link            = False
         self.is_link_remote     = False
         self.digi_call          = ''
@@ -190,7 +102,6 @@ class AX25Conn:
         """ PoPT Remote Protocol (PRP) """
         # self._prp_remote = PRPremote(self._port_handler, self)
         self._prp_remote = init_prpAX25L3(self._port_handler, self)
-        #self._prp_remote = None  # FIXME - Testing !!!!!!!!!!!!!!!!!!!!!!!!!!
         """ Port Variablen"""
         # TODO Private / Clean Up / OPT
         self.vs  = 0   # Sendefolgenummer     / N(S) = V(R)  TX
@@ -302,9 +213,6 @@ class AX25Conn:
             self.zustand_exec = S2Aufbau(self)
             # self.cli.change_cli_state(state=1)
 
-    def __del__(self):
-        pass
-
     ##################
     # INIT
     def set_station_cfg(self):
@@ -383,30 +291,6 @@ class AX25Conn:
         self._port_handler.update_conn_history(self, disco=False, inter_connect=True)
         #self.cli_type = str(self.cli.cli_name)
 
-    ###################################################################
-    # TX / RX Handling
-    # ========= Thread Locks
-    def _wait_tx_buf_lock(self, fnc_f_log='--'):
-        while self._tx_buf_lock:
-            logger.debug(f"fnc: {fnc_f_log} self._tx_buff_lock")
-            time.sleep(0.02)
-        self._tx_buf_lock = True
-
-    """
-    def _wait_tx_buf_prp_lock(self, fnc_f_log='--'):
-        while self._tx_buf_prp_lock:
-            logger.debug(f"fnc: {fnc_f_log} self._tx_buf_prp_lock")
-            time.sleep(0.02)
-        self._tx_buf_prp_lock = True
-
-    def _wait_tx_buf_prp_rest_lock(self, fnc_f_log='--'):
-        while self._tx_buf_prp_rest_lock:
-            logger.debug(f"fnc: {fnc_f_log} self._tx_buf_prp_rest_lock")
-            time.sleep(0.02)
-        self._tx_buf_prp_rest_lock = True
-    """
-
-
     # ========= TX
     def send_data(self, data: bytes, gui_echo=True, file_trans=False, use_prp=True):
         """
@@ -442,10 +326,8 @@ class AX25Conn:
                     self._send_gui_QSO_tx(data)
 
                 return True
-        # Thread Lock
-        self._wait_tx_buf_lock('send_data')
-        self.tx_buf_rawData += data
-        self._tx_buf_lock    = False
+
+        self.tx_buf_rawData.buffer_write(data)
         # TX Echo senden
         if gui_echo:
             self._send_gui_QSO_tx(data)
@@ -491,12 +373,9 @@ class AX25Conn:
         #################################################
         # Normal TX Buffer                              #
         if data_len < self.parm_PacLen:                 #
-            self._wait_tx_buf_lock('_send_I')               # Thread lock
-            if self.tx_buf_rawData:
+            if not self.tx_buf_rawData.is_empty:
                 pac_len = int(self.parm_PacLen) - data_len  #
-                data               += self.tx_buf_rawData[:pac_len]
-                self.tx_buf_rawData = self.tx_buf_rawData[pac_len:]
-            self._tx_buf_lock   = False                     # Thread lock
+                data   += self.tx_buf_rawData.buffer_read(pac_len)
 
         #################################################
         return data
@@ -517,7 +396,7 @@ class AX25Conn:
         self.set_T2()
         ns = self.zustand_exec.ns
         if ns == self.vr:
-            self.vr = count_modulo(self.vr)
+            self.vr = (self.vr + 1) % 8     # Modulo 8
             self._recv_data(bytes(self.zustand_exec.frame.payload))
             self.delUNACK()  # ACKs verarbeiten
             return True
@@ -532,7 +411,7 @@ class AX25Conn:
         self.rx_pack_count += 1
         """ Link/Node-DIGI """
         if self.is_link:
-            self.LINK_rx_buff += data
+            self.LINK_rx_buff.buffer_write(data)
             self.exec_cli(data)
             return
         """  Pipe-Tool """
@@ -582,9 +461,7 @@ class AX25Conn:
     """
 
     def clear_tx_buff(self):
-        self._wait_tx_buf_lock('clear_tx_buff')
-        self.tx_buf_rawData = bytearray()
-        self._tx_buf_lock   = False
+        self.tx_buf_rawData.buffer_clear()
         #self._tx_buf_prio_Rest = bytearray()
         #self._tx_buf_prio_Q: list[bytes] = []
 
@@ -1025,18 +902,14 @@ class AX25Conn:
         if self.link_holder_on:
             if self.link_holder_timer < time.time():
                 self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
-                self._wait_tx_buf_lock('_link_holder_cron')
-                self.tx_buf_rawData += self.link_holder_text.encode(self._encoding, 'ignore')
-                self._tx_buf_lock = False
+                self.tx_buf_rawData.buffer_write(self.link_holder_text.encode(self._encoding, 'ignore'))
+
     ###############################
     # LINKS Linked/DIGI Connections
-    # TODO: tx buffer thread lock
     def _link_crone(self):
         if self.is_link and self.LINK_Connection is not None:
-            self.LINK_Connection.tx_buf_rawData += bytes(self.LINK_rx_buff)
-            self.LINK_rx_buff = b''
-            self.tx_buf_rawData += bytes(self.LINK_Connection.LINK_rx_buff)
-            self.LINK_Connection.LINK_rx_buff = b''
+            self.LINK_Connection.tx_buf_rawData.buffer_write(self.LINK_rx_buff.buffer_read(None))
+            self.tx_buf_rawData.buffer_write(self.LINK_Connection.LINK_rx_buff.buffer_read(None))
             return True
         return False
 
@@ -1144,7 +1017,7 @@ class AX25Conn:
     def send_to_link(self, inp: b''):
         if not all((inp, self.is_link)):
             return
-        self.LINK_Connection.tx_buf_rawData += inp
+        self.LINK_Connection.tx_buf_rawData.buffer_write(inp)
 
     def del_link(self):
         """ Called in State.link_cleanup() """
@@ -1659,7 +1532,7 @@ class AX25Conn:
     # ========= I/O Buffers
     @property
     def get_tx_buff_len(self):
-        return len(self.tx_buf_rawData)
+        return self.tx_buf_rawData.length
 
     @property
     def get_unACK_buff_len(self):
@@ -1667,7 +1540,7 @@ class AX25Conn:
 
     @property
     def get_tx_buff(self):
-        return bytearray(self.tx_buf_rawData)
+        return self.tx_buf_rawData.buffer_get
 
     @property
     def is_tx_buff_empty(self):

@@ -23,3 +23,11 @@ def check_ip_add_format(ip_add: ''):
         if 0 > int(el) > 255:
             return False
     return True
+
+def get_my_hostname():
+    try:
+        return socket.gethostname()
+    except Exception as ex:
+        logger.error(f"get_my_hostname: {ex}")
+        return ''
+

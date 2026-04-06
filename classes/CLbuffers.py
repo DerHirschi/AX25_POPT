@@ -76,10 +76,11 @@ class ByteArrayBuffer:
             time.sleep(self._threadLockTimer)
         self._threadLock = True
 
-    def buffer_read(self, bytes_to_read: int):
+    def buffer_read(self, bytes_to_read: int or None):
+        """ bytes_to_read None = all """
         self._get_thread_lock()
         ret          = self._buffer[:bytes_to_read]
-        self._buffer = self._buffer[bytes_to_read:]
+        self._buffer = self._buffer[len(ret):]
         self._threadLock = False
         return ret
 
@@ -108,7 +109,7 @@ class ByteArrayBuffer:
     # == Read Only / property
     @property
     def buffer_get(self):
-        return bytes(self._buffer)
+        return bytearray(self._buffer)
 
     @property
     def is_empty(self):
