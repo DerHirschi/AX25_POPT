@@ -12,7 +12,7 @@ from cfg.constant import APRS_SW_ID, APRS_TRACER_COMMENT, APRS_INET_PORT_ID, APR
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
-from ax25.ax25Statistics import get_dx_tx_alarm_his_pack
+from ax25.ax25_util.ax25Statistics import get_dx_tx_alarm_his_pack
 
 
 class APRS_ais(object):

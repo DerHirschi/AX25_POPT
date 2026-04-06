@@ -1,5 +1,5 @@
 #from ax25.ax25Error import AX25DecodingERROR
-from ax25.ax25dec_enc import bytearray2hexstr, AX25Frame
+from ax25.ax25_l2.ax25dec_enc import bytearray2hexstr, AX25Frame
 from cfg.logger_config import logger
 from fnc.crc_fnc import crc16_ccitt
 from fnc.lzhuf import LZHUF_Comp

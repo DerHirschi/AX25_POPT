@@ -1,5 +1,5 @@
-from ax25.ax25NetRom import NetRom_decode_UI_mon, NetRom_decode_I_mon
-from ax25.ax25dec_enc import bytearray2hexstr
+from ax25.ax25_netrom.ax25NetRom import NetRom_decode_UI_mon, NetRom_decode_I_mon
+from ax25.ax25_l2.ax25dec_enc import bytearray2hexstr
 from prp.prp_dec_fnc import decode_prp_metadata
 from cfg.logger_config import logger
 # from ax25.ax25NetRom import NetRom_decode_I

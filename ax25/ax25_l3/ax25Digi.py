@@ -1,5 +1,5 @@
 import time
-from ax25.ax25Connection import AX25Conn
+from ax25.ax25_l3.ax25Connection import AX25Conn
 from cfg.logger_config import logger
 
 

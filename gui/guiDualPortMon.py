@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, TclError, Menu
 
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25.ax25monitor import monitor_frame_inp
+from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG

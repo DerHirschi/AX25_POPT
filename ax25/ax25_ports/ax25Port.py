@@ -4,16 +4,16 @@ import serial
 import time
 from ax25 import crc_x25
 
-from ax25.ax25UI_Pipe import AX25Pipe
+from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 from fnc.os_fnc import is_linux
 
 
 
-from ax25.ax25Digi import AX25DigiConnection
-from ax25.ax25Kiss import Kiss
-from ax25.ax25AGWPE import AGWPEHandler
-from ax25.ax25Connection import AX25Conn
-from ax25.ax25dec_enc import AX25Frame, bytearray2hexstr
+from ax25.ax25_l3.ax25Digi import AX25DigiConnection
+from ax25.ax25_l2.ax25Kiss import Kiss
+from ax25.ax25_l2.ax25AGWPE import AGWPEHandler
+from ax25.ax25_l3.ax25Connection import AX25Conn
+from ax25.ax25_l2.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi

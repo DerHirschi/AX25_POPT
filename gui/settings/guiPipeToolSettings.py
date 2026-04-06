@@ -5,7 +5,7 @@ from tkinter import filedialog as fd
 # Automatische Port-Erkennung
 import serial.tools.list_ports
 
-from ax25.ax25dec_enc import PIDByte
+from ax25.ax25_l2.ax25dec_enc import PIDByte
 from cfg.constant import COLOR_MAP
 from cfg.default_config import getNew_pipe_cfg
 from cfg.popt_config import POPT_CFG

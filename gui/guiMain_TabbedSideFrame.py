@@ -2,7 +2,7 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, TclError, messagebox
 
-from ax25.ax25dec_enc import PIDByte
+from ax25.ax25_l2.ax25dec_enc import PIDByte
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, ENCODINGS, COLOR_MAP, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, \
     CLI_TYP_TASK_FWD
 from cfg.logger_config import logger

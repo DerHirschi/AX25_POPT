@@ -9,7 +9,7 @@ from cfg.logger_config import logger
 from fnc.file_fnc import check_file
 from fnc.ax25_fnc import validate_ax25Call, build_ax25uid
 
-from ax25.ax25dec_enc import AX25Frame, via_calls_fm_str
+from ax25.ax25_l2.ax25dec_enc import AX25Frame, via_calls_fm_str
 from fnc.socket_fnc import get_ip_by_hostname, check_ip_add_format
 
 

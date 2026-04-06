@@ -85,7 +85,7 @@ b'\xff'     <- END KISS-MODE
 b'\x00'     <- END KISS-MODE
 
 """
-from ax25.ax25dec_enc import bytearray2hexstr
+from ax25.ax25_l2.ax25dec_enc import bytearray2hexstr
 from cfg.constant import TNC_KISS_CMD, TNC_KISS_CMD_END
 from cfg.logger_config import logger
 from ax25 import crc_x25

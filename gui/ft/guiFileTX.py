@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
-from ax25.ax25FileTransfer import FileTransport
+from ax25.ax25_ft.ax25FileTransfer import FileTransport
 from cfg.constant import FT_MODES
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG

@@ -5,22 +5,22 @@
 import time
 from datetime import datetime
 
-from ax25.ax25_L3_StateTab import AX25L3_STATE_TAB, S1Frei, S2Aufbau
-from ax25.ax25RTT import RTT
+from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB, S1Frei, S2Aufbau
+from ax25.ax25_l3.ax25RTT import RTT
 from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
 from classes.CLbuffers import ByteArrayBuffer
 from cli.cliConv import ConverseCLI
 from cli.cliMain import NoneCLI
 from cli import CLI_OPT
-from ax25.ax25UI_Pipe import AX25Pipe
+from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25dec_enc import AX25Frame
+from ax25.ax25_l2.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
 from prp import init_prpAX25L3
-from ax25.ax25FileTransfer import FileTransport, ft_rx_header_lookup
+from ax25.ax25_ft.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND
 

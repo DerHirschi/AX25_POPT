@@ -1,5 +1,5 @@
 # prp/prp_rx_processor.py / With help of Grok AI
-from ax25.ax25dec_enc import bytearray2hexstr
+from ax25.ax25_l2.ax25dec_enc import bytearray2hexstr
 from cfg.logger_config import logger
 from prp.prp_const import PRP_FLAG, PRP_ABORT_FRAME, PRP_FEND
 from prp.prp_dec_fnc import unpack_6bit_int_and_bool

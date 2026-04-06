@@ -7,7 +7,7 @@ import copy
 import datetime
 
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, logger
-from ax25.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR, NetRom_decode_I
+from ax25.ax25_netrom.ax25NetRom import NetRom_decode_UI, NetRomDecodingERROR, NetRom_decode_I
 from fnc.ax25_fnc import get_call_str, call_tuple_fm_call_str, reverse_uid
 
 

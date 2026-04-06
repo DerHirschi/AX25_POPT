@@ -3,7 +3,7 @@ from cfg.logger_config import logger
 import datetime
 
 from cfg.constant import FT_MODES, FT_RX_HEADERS, CFG_ft_downloads
-from ax25.Yapp import Yapp
+from ax25.ax25_ft.Yapp import Yapp
 from fnc.crc_fnc import get_crc
 from fnc.os_fnc import path_exists
 from fnc.str_fnc import calculate_time_remaining, calculate_percentage, get_file_timestamp

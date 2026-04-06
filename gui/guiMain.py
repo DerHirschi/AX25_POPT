@@ -6,8 +6,8 @@ from collections import deque
 from tkinter import ttk, messagebox
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
-from ax25.ax25_L3_StateTab import AX25L3_STATE_TAB
-from ax25.ax25monitor import monitor_frame_inp
+from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB
+from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict

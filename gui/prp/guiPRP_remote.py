@@ -3,7 +3,7 @@ import tkinter as tk
 from collections import deque
 from tkinter import ttk
 
-from ax25.ax25monitor import monitor_frame_inp
+from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT, PARAM_MAX_MON_LEN, PARAM_MAX_MON_TREE_ITEMS, ENCODINGS
 from gui.gui_classes.guiCL_status_icons import StatusFrame, STATE_ICON_DEF_COLOR_DISABLED
 from prp.prp_remote import PRP_RM_RESP_LOGIN, PRP_RM_RESP_LOGOUT

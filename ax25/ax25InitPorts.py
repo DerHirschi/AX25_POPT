@@ -4,7 +4,7 @@ import threading
 
 from ax25.ax25Error import AX25DeviceFAIL
 from ax25.ax25LocalConverse import LocalConverse
-from ax25.ax25Multicast import ax25Multicast
+from ax25.ax25_ports.ax25Multicast import ax25Multicast
 from cfg.default_config import getNew_ConnHistory_struc
 #from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
@@ -16,7 +16,7 @@ from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25Statistics import MH
+from ax25.ax25_util.ax25Statistics import MH
 from ax25aprs.aprs_station import APRS_ais
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
