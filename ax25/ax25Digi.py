@@ -163,8 +163,8 @@ class AX25DigiConnection:
             self._state = 3
 
             logger.debug(f"LinkConn Accept: {self._port_handler.link_connections.items()}")
-            logger.debug(f"RX-State: {self._rx_conn.get_state}")
-            logger.debug(f"TX-State: {self._tx_conn.get_state}")
+            logger.debug(f"RX-State: {self._rx_conn.l3_state_id}")
+            logger.debug(f"TX-State: {self._tx_conn.l3_state_id}")
             return True
         logger.debug("LinkConn : ADD Crone: Fail ")
         self._state_0_error()
@@ -233,7 +233,7 @@ class AX25DigiConnection:
                 # self._rx_conn.LINK_Connection = self._tx_conn
                 # self.add_rx_conn_cron()
                 self._tx_conn.accept_digi_connection()
-                self._rx_conn.zustand_exec.change_state(5)
+                self._rx_conn.change_l3_state(5)
                 self._state = 3
 
         elif ax25_frame.ctl_byte.flag in ['DISC', 'DM']:
@@ -251,10 +251,10 @@ class AX25DigiConnection:
         if all((not self._rx_conn, not self._tx_conn)):
             return True
         if self._rx_conn:
-            if self._rx_conn.get_state:
+            if self._rx_conn.l3_state_id:
                 return False
         if self._tx_conn:
-            if self._tx_conn.get_state:
+            if self._tx_conn.l3_state_id:
                 return False
         return True
 
@@ -262,22 +262,22 @@ class AX25DigiConnection:
         if any((not self._rx_conn, not self._tx_conn)):
             return False
         if self._rx_conn:
-            if self._rx_conn.get_state < 5:
+            if self._rx_conn.l3_state_id < 5:
                 return False
         if self._tx_conn:
-            if self._tx_conn.get_state < 5:
+            if self._tx_conn.l3_state_id < 5:
                 return False
         return True
 
     def _disco_tx_conn(self):
         if self._tx_conn:
-            if self._tx_conn.get_state:
+            if self._tx_conn.l3_state_id:
                 if self._tx_conn.is_tx_buff_empty:
                     self._tx_conn.conn_disco()
 
     def _disco_rx_conn(self):
         if self._rx_conn:
-            if self._rx_conn.get_state:
+            if self._rx_conn.l3_state_id:
                 if self._rx_conn.is_tx_buff_empty:
                     self._rx_conn.conn_disco()
 
@@ -460,7 +460,7 @@ class AX25DigiConnection:
         if not self._tx_conn:
             logger.debug('DIGI._check_txConn_state : no txConn')
             self._state_0_error()
-        txConn_state = self._tx_conn.get_state
+        txConn_state = self._tx_conn.l3_state_id
         if txConn_state != 2:
             if txConn_state < 5:
                 logger.debug('DIGI._check_txConn_state : txConn STATE ERROR')

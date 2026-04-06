@@ -6,6 +6,7 @@ from collections import deque
 from tkinter import ttk, messagebox
 import threading
 from ax25.ax25InitPorts import PORT_HANDLER
+from ax25.ax25_L3_StateTab import AX25L3_STATE_TAB
 from ax25.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -3748,7 +3749,7 @@ class PoPT_GUI_Main:
         fg, bg = self._get_colorMap()
         if station is not None:
             from_call = str(station.my_call_str)
-            status = station.zustand_tab[station.get_state][1]
+            status = AX25L3_STATE_TAB[station.l3_state_id][1]
             # uid = station.ax25_out_frame.addr_uid
             n2 = station.n2
             unAck = f" nACK: {station.get_unACK_buff_len} "

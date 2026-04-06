@@ -20,6 +20,7 @@ Optimierung/Änderungen:
   (Führ zu lange Wartezeiten bis reagiert wird)
 - Monitor Decoder Performance optimiert
 - Schleifen Performance optimiert
+- PoPT AX25-L3 Modul aufgeräumt + Thread Lock für Buffer
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "CHIST" - zeigt Verbindungsverlauf

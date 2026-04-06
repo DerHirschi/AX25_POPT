@@ -226,7 +226,7 @@ class AX25Port(object):
             return False
         """
         if uid in self._port_handler.link_connections.keys():
-            logger.debug(self._logTag + f"Link-Conn RX: {uid}")
+            # logger.debug(self._logTag + f"Link-Conn RX: {uid}")
             conn = self._port_handler.link_connections[uid][0]
             link_call = str(self._port_handler.link_connections[uid][1])
             """

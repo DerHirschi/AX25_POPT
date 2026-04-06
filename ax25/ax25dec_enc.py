@@ -1,5 +1,5 @@
 """
-    Layer 2 ??
+    PoPT - AX25 L2
     AX.25 Packet enc-/decoding
     TODO: Cleanup/optimising
 """

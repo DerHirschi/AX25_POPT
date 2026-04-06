@@ -76,11 +76,17 @@ class ByteArrayBuffer:
             time.sleep(self._threadLockTimer)
         self._threadLock = True
 
-    def buffer_read(self, bytes_to_read: int or None):
-        """ bytes_to_read None = all """
+    def buffer_read(self, bytes_to_read: int):
         self._get_thread_lock()
         ret          = self._buffer[:bytes_to_read]
         self._buffer = self._buffer[len(ret):]
+        self._threadLock = False
+        return ret
+
+    def buffer_flush(self):
+        self._get_thread_lock()
+        ret          = bytearray(self._buffer)
+        self._buffer = bytearray()
         self._threadLock = False
         return ret
 

@@ -35,8 +35,8 @@ class DefaultCLI(object):
 
         self._c_text                = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection            = connection
-        self._port_handler          = self._connection.get_port_handler_CONN
-        self._own_port              = self._connection.own_port
+        self._own_port              = connection.own_port
+        self._port_handler          = connection.own_port.port_get_PH()
         # self.channel_index = self._connection.ch_index
         # self._gui                   = self._port_handler.get_gui()
 
@@ -2233,8 +2233,8 @@ class DefaultCLI(object):
     def _cron_s_quit(self):
         # self._connection: AX25Conn
         if self._connection.is_tx_buff_empty:
-            if self._connection.zustand_exec.stat_index not in [0, 1, 4]:
-                self._connection.zustand_exec.change_state(4)
+            if self._connection.l3_state_id not in [0, 1, 4]:
+                self._connection.change_l3_state(4)
 
 class NoneCLI(DefaultCLI):
     """ ? To Disable CLI / Remote ? """
