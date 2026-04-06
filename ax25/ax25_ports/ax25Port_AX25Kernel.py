@@ -2,7 +2,8 @@ import socket
 
 from ax25.ax25Error import AX25DeviceFAIL, AX25DeviceERROR
 from ax25.ax25_l2.ax25Kiss import Kiss
-from ax25.ax25_ports.ax25Port import AX25Port, RxBuf
+from .ax25Port import AX25Port
+from .ax25Port_Classes import RxBuf
 from cfg.logger_config import logger
 
 

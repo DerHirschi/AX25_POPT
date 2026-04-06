@@ -1,6 +1,7 @@
 import datetime
 import time
 
+from ax25.ax25_ports.ax25Port_Classes import RxBuf
 from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 
 from ax25.ax25_l3.ax25Digi import AX25DigiConnection
@@ -10,12 +11,6 @@ from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL
-
-
-class RxBuf:
-    axip_add = '', 0
-    raw_data = b''
-    kiss_frame = b''
 
 
 class AX25Port(object):

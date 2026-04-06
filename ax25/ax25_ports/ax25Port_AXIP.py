@@ -4,7 +4,8 @@ from ax25 import crc_x25
 from ax25.ax25Error import AX25DeviceFAIL, MCastInitError, AX25DeviceERROR
 from ax25.ax25_l2.ax25Kiss import Kiss
 from ax25.ax25_l2.ax25dec_enc import bytearray2hexstr
-from ax25.ax25_ports.ax25Port import AX25Port, RxBuf
+from .ax25Port import AX25Port
+from .ax25Port_Classes import RxBuf
 from cfg.logger_config import logger
 from fnc.socket_fnc import get_ip_by_hostname
 
@@ -58,10 +59,6 @@ class AXIP(AX25Port):
                     except MCastInitError:
                         # self._mcast_server = None
                         logger.error(f"Port {self.port_id}: Set Multicast Server failed !!")
-
-    def __del__(self):
-        # self.device.shutdown(socket.SHUT_RDWR)
-        self.close_device()
 
     def close_device(self):
         # self._mcast_server = None
