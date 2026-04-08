@@ -262,15 +262,15 @@ def getNew_ConnHistory_struc(
     )
 #######################################
 # APRS
-def getNew_APRS_Station_cfg():
-    return {
-        'aprs_parm_loc': '',
-        'aprs_port_id': 0,
-        'aprs_parm_digi': False,
-        'aprs_parm_igate': False,
-        'aprs_parm_igate_tx': False,
-        'aprs_parm_igate_rx': False,
-    }
+def getNew_APRS_IGate_cfg():
+    return dict(
+        igate_active        = True,
+        igate_rf_to_is      = True,
+        igate_is_to_rf      = True,
+        igate_max_distance  = 80,       # km für IS→RF
+        igate_local_time    = 60,       # Minuten, wie lange eine Station "lokal" gilt
+        igate_ports         = [],       # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+    )
 
 
 def getNew_APRS_ais_cfg():

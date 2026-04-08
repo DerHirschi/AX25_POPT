@@ -584,8 +584,8 @@ class AX25PortHandler(object):
         if self._aprs_ais is None:
             return False
         logger.info("PH: closing APRS-AIS ...")
+        self._aprs_ais.save_conf_to_file()
         self._aprs_ais.ais_close()
-        # self.aprs_ais.save_conf_to_file()
         del self._aprs_ais
         self._aprs_ais = None
         return True

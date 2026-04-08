@@ -138,6 +138,8 @@ class APRS_ais(object):
         self._be_tracer_tx_rtt          = time.time()
         self._be_tracer_interval_timer  = time.time()
         self.be_auto_tracer_active      = ais_cfg.get('be_auto_tracer_active', False)
+        """ I-Gate Reinit """
+        self._i_gate.reinit()
         """ (Login to APRS-Server) """
 
         if self._ais_active:
@@ -300,7 +302,7 @@ class APRS_ais(object):
             except aprslib.ConnectionError:
                 pass
             self._ais.close()
-            self.save_conf_to_file()
+            #self.save_conf_to_file()
 
     def callback(self, packet):
         """ RX fm APRS-Server"""
@@ -309,8 +311,8 @@ class APRS_ais(object):
         packet['rx_time'] = datetime.now()
 
         # === NEU: I-Gate IS → RF ===
-        #if self._i_gate.should_gate_to_rf(packet):
-        #    self._send_as_UI(packet)  # oder eine eigene _send_igate_to_rf Methode
+        if self._i_gate.should_gate_to_rf(packet):
+            self._send_as_UI(packet)  # oder eine eigene _send_igate_to_rf Methode
 
         # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
         self._aprs_process_rx(aprs_pack=packet)
@@ -325,8 +327,8 @@ class APRS_ais(object):
             aprs_pack['address'] = aprs_pack['addresse']
 
         # === NEU: I-Gate RF → IS ===
-        #if self._i_gate.should_gate_to_is(aprs_pack, port_id):
-        #    self._i_gate.send_full_aprs_to_is(aprs_pack)
+        if self._i_gate.should_gate_to_is(aprs_pack, port_id):
+            self._i_gate.send_full_aprs_to_is(aprs_pack)
 
         aprs_pack['port_id'] = str(port_id)
         aprs_pack['rx_time'] = datetime.now()

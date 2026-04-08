@@ -3,7 +3,7 @@ import copy
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
     getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg, getNew_globalRights, \
-    getNew_RightLevelTab
+    getNew_RightLevelTab, getNew_APRS_IGate_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE, CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -32,7 +32,8 @@ class Main_CFG:
             ##########################
             # -- APRS
             'aprs_node_tab': {},
-            'aprs_ais': getNew_APRS_ais_cfg,
+            'aprs_ais':   getNew_APRS_ais_cfg,
+            'aprs_igate': getNew_APRS_IGate_cfg,
             ##########################
             # -- GUI
             # GUI Main
@@ -306,6 +307,15 @@ class Main_CFG:
 
     def get_APRS_beacon_cfg(self):
         return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
+
+    ####################
+    # APRS - I-Gate
+    def get_CFG_aprs_igate(self):
+        return copy.deepcopy(self._config['aprs_igate'])
+
+    def set_CFG_aprs_igate(self, data: dict):
+        self._config['aprs_igate'] = copy.deepcopy(data)
+
     ########################################################
     # GUI
     def set_guiCFG_style_name(self, style_name: str):

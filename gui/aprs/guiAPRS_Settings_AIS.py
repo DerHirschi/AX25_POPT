@@ -119,6 +119,7 @@ class APRSaisSettings(ttk.Frame):
                 lat, lon = locator_to_coordinates(loc)
                 self._ais_lat_var.set(str(lat))
                 self._ais_lon_var.set(str(lon))
+
         aprs_cfg                = self._root_win.get_aprs_cfg()
         aprs_cfg['ais_call']    = self._ais_call_var.get()
         aprs_cfg['ais_pass']    = self._ais_pass_var.get()

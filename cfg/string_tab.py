@@ -1766,12 +1766,13 @@ STR_TABLE = {
         'Minute(s)',
         'Minuut',
         'Minute(s)',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Minut',
+        'Minut',
+        'Minutos',
+        'Minuti',
+        'Минут',
+        'Хвилин',
+    ),
 
     'hours': (
         'Stunden',
@@ -2135,6 +2136,98 @@ STR_TABLE = {
         '',
         ''),
 
+    ##############################################
+    # APRS - I-GATE Settings
+    'igate_settings': (
+        'I-Gate Einstellungen',
+        'I-Gate Settings',
+        'I-Gate Instellingen',
+        'Paramètres I-Gate',
+        'Nastavení I-Gate',
+        'Ustawienia I-Gate',
+        'Configurações I-Gate',
+        'Impostazioni I-Gate',
+        'Настройки I-Gate',
+        'Налаштування I-Gate',
+    ),
+
+    'igate_active': (
+        'I-Gate aktivieren',
+        'Enable I-Gate',
+        'I-Gate inschakelen',
+        'Activer I-Gate',
+        'Povolit I-Gate',
+        'Włączyć I-Gate',
+        'Ativar I-Gate',
+        'Abilita I-Gate',
+        'Включить I-Gate',
+        'Увімкнути I-Gate',
+    ),
+
+    'igate_rf_to_is': (
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Upload)',
+        'RF → APRS-IS (Загрузка)',
+        'RF → APRS-IS (Завантаження)',
+    ),
+
+    'igate_is_to_rf': (
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Downlink)',
+        'APRS-IS → RF (Выгрузка на радио)',
+        'APRS-IS → RF (Вивантаження)',
+    ),
+
+    'igate_max_distance': (
+        'Maximale Entfernung für Downlink',
+        'Maximum distance for Downlink',
+        'Maximale afstand voor Downlink',
+        'Distance maximale pour Downlink',
+        'Maximální vzdálenost pro Downlink',
+        'Maksymalna odległość dla Downlink',
+        'Distância máxima para Downlink',
+        'Distanza massima per Downlink',
+        'Максимальное расстояние для Downlink',
+        'Максимальна відстань для Downlink',
+    ),
+
+    'igate_local_time': (
+        'Station gilt als lokal für',
+        'Station is considered local for',
+        'Station wordt als lokaal beschouwd voor',
+        'La station est considérée locale pendant',
+        'Stanice je považována za lokální po dobu',
+        'Stacja uznawana jest za lokalną przez',
+        'Estação é considerada local por',
+        'Stazione considerata locale per',
+        'Станция считается локальной в течение',
+        'Станція вважається локальною протягом',
+    ),
+
+    'igate_ports': (
+        'Aktiv auf folgenden Ports',
+        'Active on the following ports',
+        'Actief op de volgende poorten',
+        'Actif sur les ports suivants',
+        'Aktivní na následujících portech',
+        'Aktywny na następujących portach',
+        'Ativo nas seguintes portas',
+        'Attivo sulle seguenti porte',
+        'Активен на следующих портах',
+        'Активний на наступних портах',
+    ),
     ##############################################
     # guiBBS_newMSG.py
 

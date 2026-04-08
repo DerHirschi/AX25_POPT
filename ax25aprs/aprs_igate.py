@@ -1,6 +1,5 @@
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
-from cfg.constant import APRS_SW_ID
 from datetime import datetime
 
 
@@ -12,28 +11,28 @@ class APRSiGate:
 
         # ====================
         # CFG
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_igate()
 
         self._igate_active       = ais_cfg.get('igate_active',       True)  # Globaler Schalter
         self._igate_rf_to_is     = ais_cfg.get('igate_rf_to_is',     True)   # RF → IS (meist immer an)
         self._igate_is_to_rf     = ais_cfg.get('igate_is_to_rf',     True)  # IS → RF (vorsichtig!)
         self._igate_max_distance = ais_cfg.get('igate_max_distance', 80)     # km für IS→RF
         self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
-        self._igate_ports        = ais_cfg.get('igate_ports',        ['0'])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
         # ====================
         self._get_node_tab = lambda : self._aprs_ais.get_node_tab()
 
     def reinit(self):
         # ====================
         # CFG
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        ais_cfg = POPT_CFG.get_CFG_aprs_igate()
 
         self._igate_active       = ais_cfg.get('igate_active',       True)  # Globaler Schalter
         self._igate_rf_to_is     = ais_cfg.get('igate_rf_to_is',     True)   # RF → IS (meist immer an)
         self._igate_is_to_rf     = ais_cfg.get('igate_is_to_rf',     True)  # IS → RF (vorsichtig!)
         self._igate_max_distance = ais_cfg.get('igate_max_distance', 80)     # km für IS→RF
         self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
-        self._igate_ports        = ais_cfg.get('igate_ports',        ['0'])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
 
 
     ##########################

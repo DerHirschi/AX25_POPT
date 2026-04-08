@@ -6,6 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import lob_gen, get_strTab
 from gui.aprs.guiAPRS_Settings_AIS import APRSaisSettings
 from gui.aprs.guiAPRS_Settings_Beacon import APRSbeaconSettings
+from gui.aprs.guiAPRS_Settings_IGate import APRSigateSettings
 
 
 class APRSSettingsMain(tk.Toplevel):
@@ -38,11 +39,12 @@ class APRSSettingsMain(tk.Toplevel):
         self.icon_win   = None
         self.title("APRS-" + self._getTabStr('settings'))
         ###############################################################
-        self._ais_cfg: dict   = POPT_CFG.get_CFG_aprs_ais()
+        self._ais_cfg: dict     = POPT_CFG.get_CFG_aprs_ais()
         ###############################################################
         self._win_tab   = {
             'aprs_server'       : APRSaisSettings,
             'beacon_settings'   : APRSbeaconSettings,
+            'igate_settings'    : APRSigateSettings,
         }
         ###############################################################
         main_f = ttk.Frame(self)
@@ -91,23 +93,25 @@ class APRSSettingsMain(tk.Toplevel):
             logger.error(ex)
             return
 
+        reinit = False
         self._ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
                 continue
             if tab.save_config():
+                reinit = True
                 self._root_win.sysMsg_to_monitor(
                     self._getTabStr('setting_saved').format(self._getTabStr(strTab_name))
                 )
-        old_cfg = POPT_CFG.get_CFG_aprs_ais()
-        if old_cfg == self._ais_cfg:
-            return
-        try:
+        if  POPT_CFG.get_CFG_aprs_ais() != self._ais_cfg:
             POPT_CFG.set_CFG_aprs_ais(self._ais_cfg)
-            ais = self._root_win.get_AIS_mainGUI()
-            ais.reinit()
-        except Exception as ex:
-            logger.error(ex)
+
+        if reinit:
+            try:
+                ais = self._root_win.get_AIS_mainGUI()
+                ais.reinit()
+            except Exception as ex:
+                logger.error(ex)
 
     """
     def del_beacon_cfg(self, cfg_key: str):
