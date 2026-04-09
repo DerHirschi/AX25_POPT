@@ -6,7 +6,6 @@ from datetime import datetime
 class APRSiGate:
     def __init__(self, aprs_ais, port_handler):
         self._aprs_ais     = aprs_ais
-        self._ais          = aprs_ais.get_ais()
         self._port_handler = port_handler
 
         # ====================
@@ -19,6 +18,9 @@ class APRSiGate:
         self._igate_max_distance = ais_cfg.get('igate_max_distance', 80)     # km für IS→RF
         self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
         self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+
+        ais_cfg          = POPT_CFG.get_CFG_aprs_ais()
+        self._igate_call = ais_cfg.get('ais_call', '').upper()
         # ====================
         self._get_node_tab = lambda : self._aprs_ais.get_node_tab()
 
@@ -34,44 +36,44 @@ class APRSiGate:
         self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
         self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
 
+        ais_cfg          = POPT_CFG.get_CFG_aprs_ais()
+        self._igate_call = ais_cfg.get('ais_call', '').upper()
 
     ##########################
     # I-Gate Helper
     def should_gate_to_is(self, aprs_pack: dict, port_id: str):
-        """Entscheidet, ob ein RF-Paket ins APRS-IS (Internet) weitergeleitet werden soll."""
         if not (self._igate_active and self._igate_rf_to_is):
             return False
 
-        # Nur auf erlaubten Ports (falls eingeschränkt)
         if self._igate_ports and str(port_id) not in map(str, self._igate_ports):
             return False
 
         packet_format = aprs_pack.get('format', '')
-        via = aprs_pack.get('via', '') or ''
+        via  = aprs_pack.get('via', '') or ''
         path = aprs_pack.get('path', [])
 
-        # 1. Keine Pakete, die schon aus dem Internet kommen
-        if any(x in via.upper() for x in ['TCPIP', 'TCPXX']):
+        # Keine Pakete, die schon aus dem Internet kommen
+        if any(x in via.upper() for x in ['TCPIP', 'TCPXX', 'qAR', 'qAO', 'qAC']):
             return False
-        if any(x.upper() in [p.upper() for p in path] for x in ['TCPIP', 'TCPXX', 'NOGATE', 'RFONLY']):
+        if any(p.upper() in ['TCPIP', 'TCPXX', 'NOGATE', 'RFONLY'] for p in path):
             return False
 
-        # 2. Keine Generic Queries (?)
+        # Thirdparty mit TCPIP/TCPXX nicht weiterleiten
+        if aprs_pack.get('format') == 'thirdparty':
+            sub = aprs_pack.get('subpacket', {})
+            sub_path = sub.get('path', []) if isinstance(sub.get('path'), list) else []
+            if any(p.upper() in ['TCPIP', 'TCPXX'] for p in sub_path):
+                return False
+
+        # Keine Queries
         if packet_format == 'query' or aprs_pack.get('raw_message_text', '').startswith('?'):
             return False
 
-        # 3. Keine 3rd-Party-Pakete mit Internet-Spuren (optional: ganz ablehnen oder bereinigen)
-        if packet_format == 'thirdparty':
-            sub = aprs_pack.get('subpacket', {})
-            if any(x in str(sub.get('path', '')) for x in ['TCPIP', 'TCPXX']):
-                return False
-
-        # 4. Keine ungültigen Calls (optional, aber sinnvoll)
+        # Keine ungültigen From-Calls
         from_call = aprs_pack.get('from', '').upper()
         if from_call.startswith(('WIDE', 'RELAY', 'TRACE', 'NOCALL', 'N0CALL')):
             return False
 
-        # Alles andere → ja (Standard für RF→IS)
         return True
 
 
@@ -97,7 +99,7 @@ class APRSiGate:
 
         # 3. Bei Messages: Zielstation muss kürzlich lokal gehört worden sein
         if packet_format == 'message':
-            to_call = aprs_pack.get('addresse', '') or aprs_pack.get('to', '')
+            to_call = aprs_pack.get('address', '') or aprs_pack.get('addresse', '') or aprs_pack.get('to', '')
             if not to_call:
                 return False
 
@@ -135,32 +137,62 @@ class APRSiGate:
 
         return False
 
-
     def send_full_aprs_to_is(self, aprs_pack: dict):
-        """Sendet ein vollständiges APRS-Paket (aus RF) an APRS-IS."""
-        if self._ais is None or not self._igate_active:
+        """Sendet RF-Paket als korrekten flachen TNC2-String an APRS-IS"""
+        ais = self._aprs_ais.get_ais()
+        if ais is None or not self._igate_active or not self._igate_call:
+            if not self._igate_call:
+                logger.error("APRS I-Gate: Kein igate_call (ais_call) gesetzt!")
             return
 
         try:
-            # Baue den klassischen TNC2-String für APRS-IS
-            from_call = aprs_pack.get('from', '')
-            to_call   = aprs_pack.get('to', 'APRS')
-            path      = aprs_pack.get('path', [])
-            info      = aprs_pack.get('raw_message_text', '') or aprs_pack.get('info', '')
+            # From / To
+            from_call = aprs_pack.get('from', '').strip()
+            to_call = aprs_pack.get('to', 'APRS').strip()
 
-            # Path bereinigen und TCPIP* anhängen
-            clean_path = [p.replace('*', '') for p in path if p.upper() not in ['TCPIP', 'TCPXX']]
-            path_str = ','.join(clean_path) if clean_path else ''
+            # Info-Feld holen (mit Thirdparty-Fallback)
+            info = (aprs_pack.get('raw_message_text', '') or
+                    aprs_pack.get('info', '') or
+                    aprs_pack.get('comment', ''))
 
-            if path_str:
-                packet_str = f"{from_call}>{to_call},{path_str},TCPIP*:{info}"
+            if aprs_pack.get('format') == 'thirdparty':
+                sub = aprs_pack.get('subpacket', {})
+                if sub:
+                    info = (sub.get('raw_message_text', '') or
+                            sub.get('info', '') or
+                            sub.get('raw', ''))
+                    from_call = sub.get('from', from_call).strip()
+                    to_call = sub.get('to', to_call).strip()
+
+            if not info:
+                logger.warning(f"IGate: Leeres Info-Feld für {from_call}")
+                raw = aprs_pack.get('raw', '')
+                if raw and ':' in raw:
+                    info = raw.split(':', 1)[1]
+                else:
+                    info = ''
+
+            # Path sauber machen
+            original_path = aprs_pack.get('path', [])
+            clean_path = [p.strip() for p in original_path
+                          if p.replace('*', '').strip().upper() not in
+                          ('TCPIP', 'TCPXX', 'NOGATE', 'RFONLY', 'qAR', 'qAO', 'qAC')]
+
+            # === WICHTIG: Voller TNC2-String ===
+            if clean_path:
+                path_str = ','.join(clean_path)
+                packet_str = f"{from_call}>{to_call},{path_str}:{info}"
             else:
-                packet_str = f"{from_call}>{to_call},TCPIP*:{info}"
+                packet_str = f"{from_call}>{to_call}:{info}"
 
-            self._ais.ais_tx(packet_str)
-            logger.debug(f"IGate RF→IS: {from_call} → IS")
+            # Senden
+            self._aprs_ais.ais_tx(packet_str)
+
+            logger.info(f"IGate RF→IS: {from_call} via {clean_path or 'direct'} → IS")
+            logger.debug(f"Sent to IS: {packet_str}")
+            logger.debug(f"Sent to IS aprs-pack: {aprs_pack}")
 
         except Exception as e:
-            logger.error(f"_send_full_aprs_to_is Fehler: {e}")
+            logger.error(f"send_full_aprs_to_is Fehler: {e}", exc_info=True)
 
 
