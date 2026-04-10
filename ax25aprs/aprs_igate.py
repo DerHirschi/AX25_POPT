@@ -150,11 +150,15 @@ class APRSiGate:
             from_call = aprs_pack.get('from', '').strip()
             to_call = aprs_pack.get('to', 'APRS').strip()
 
-            # Info-Feld holen (mit Thirdparty-Fallback)
-            info = (aprs_pack.get('raw_message_text', '') or
-                    aprs_pack.get('info', '') or
-                    aprs_pack.get('comment', ''))
+            raw = aprs_pack.get('raw', '')
 
+            if ':' in raw:
+                info = raw.split(':', 1)[1]
+            else:
+                info = ''
+
+            """
+            # Info-Feld holen (mit Thirdparty-Fallback)
             if aprs_pack.get('format') == 'thirdparty':
                 sub = aprs_pack.get('subpacket', {})
                 if sub:
@@ -171,6 +175,7 @@ class APRSiGate:
                     info = raw.split(':', 1)[1]
                 else:
                     info = ''
+            """
 
             # Path sauber machen
             original_path = aprs_pack.get('path', [])
