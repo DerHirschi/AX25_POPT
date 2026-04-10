@@ -179,11 +179,13 @@ class APRSiGate:
                           ('TCPIP', 'TCPXX', 'NOGATE', 'RFONLY', 'qAR', 'qAO', 'qAC')]
 
             # === WICHTIG: Voller TNC2-String ===
+            # q_con = "qAR" if self._igate_is_to_rf else "qA????????"
+
             if clean_path:
                 path_str = ','.join(clean_path)
-                packet_str = f"{from_call}>{to_call},{path_str}:{info}"
+                packet_str = f"{from_call}>{to_call},{path_str},qAR,{self._igate_call}:{info}"
             else:
-                packet_str = f"{from_call}>{to_call}:{info}"
+                packet_str = f"{from_call}>{to_call},qAR,{self._igate_call}:{info}"
 
             # Senden
             self._aprs_ais.ais_tx(packet_str)
