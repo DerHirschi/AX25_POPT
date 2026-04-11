@@ -12,18 +12,21 @@ class APRSiGate:
 
         # ====================
         # CFG
-        ais_cfg = POPT_CFG.get_CFG_aprs_igate()
+        igate_cfg                = POPT_CFG.get_CFG_aprs_igate()
+        self._igate_active       = igate_cfg.get('igate_active',       True)  # Globaler Schalter
+        self._igate_rf_to_is     = igate_cfg.get('igate_rf_to_is',     True)   # RF → IS (meist immer an)
+        self._igate_is_to_rf     = igate_cfg.get('igate_is_to_rf',     True)  # IS → RF (vorsichtig!)
+        self._igate_max_distance = igate_cfg.get('igate_max_distance', 80)     # km für IS→RF
+        self._igate_local_time   = igate_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
+        self._igate_ports        = igate_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        self._igate_dup_time     = igate_cfg.get('igate_dup_time',     30)     # Block Duplicate Packet for x sec.
 
-        self._igate_active       = ais_cfg.get('igate_active',       True)  # Globaler Schalter
-        self._igate_rf_to_is     = ais_cfg.get('igate_rf_to_is',     True)   # RF → IS (meist immer an)
-        self._igate_is_to_rf     = ais_cfg.get('igate_is_to_rf',     True)  # IS → RF (vorsichtig!)
-        self._igate_max_distance = ais_cfg.get('igate_max_distance', 80)     # km für IS→RF
-        self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
-        self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
-        self._igate_dup_time     = ais_cfg.get('igate_dup_time',     30)     # Block Duplicate Packet for x sec.
-
-        ais_cfg          = POPT_CFG.get_CFG_aprs_ais()
-        self._igate_call = ais_cfg.get('ais_call', '').upper()
+        ais_cfg                  = POPT_CFG.get_CFG_aprs_ais()
+        self._igate_call         = ais_cfg.get('ais_call', '').upper()
+        # ====================
+        if not self._igate_call:
+            logger.info("APRS-IGate: No APRS Station (Call) configured yet. APRS-IGate disabled!")
+            self._igate_active = False
         # ====================
         self._dupe_cache = {}
         self._tx_counter = []
@@ -47,19 +50,20 @@ class APRSiGate:
 
     ##########################
     # I-Gate Helper
-    def should_gate_to_is(self, aprs_pack: dict, port_id: str):
+    def should_gate_to_is(self, aprs_pack: dict):
         if not (self._igate_active and self._igate_rf_to_is):
             return False, None
 
-        if self._igate_ports and str(port_id) not in map(str, self._igate_ports):
+        port_id = aprs_pack.get('port_id', '')
+        if str(port_id) not in map(str, self._igate_ports):
             return False, None
 
         packet_format = aprs_pack.get('format', '')
-        via = aprs_pack.get('via', '') or ''
+        via  = aprs_pack.get('via', '') or ''
         path = aprs_pack.get('path', [])
 
         # =========================
-        # 1. Internet Müll rausfiltern
+        # 1. Internet Müll raus filtern
         # =========================
         if any(x in via.upper() for x in ['TCPIP', 'TCPXX', 'qAR', 'qAO', 'qAC']):
             return False, None
@@ -116,6 +120,17 @@ class APRSiGate:
         from_call = aprs_pack.get('from', '').upper()
         if from_call.startswith(('WIDE', 'RELAY', 'TRACE', 'NOCALL', 'N0CALL')):
             return False, None
+
+        # =========================
+        # 8. Eigene Calls
+        # =========================
+        """
+        to_call = aprs_pack.get('addresse', '').upper()
+        if (to_call in POPT_CFG.get_stat_CFG_keys() or
+                from_call in POPT_CFG.get_stat_CFG_keys()):
+            logger.info("APRS I-Gate: To/From Call is own Station. No I-Gating...")
+            return False, None
+        """
 
         # =========================
         # OK → darf ins IS

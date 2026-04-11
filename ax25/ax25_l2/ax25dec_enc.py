@@ -526,24 +526,30 @@ class AX25Frame:
     def __init__(self, conf=None):
         if conf is None:
             conf = {}
-        self.addr_uid = conf.get('uid', '')                 # Unique ID/Address String
-        self.from_call = Call(conf.get('from_call_str'))
-        self.to_call = Call(conf.get('to_call_str', ''))
-        self.via_calls = []
+        self.addr_uid       = conf.get('uid', '')                 # Unique ID/Address String
+        self.from_call      = Call(conf.get('from_call_str'))
+        self.to_call        = Call(conf.get('to_call_str', ''))
+        self.via_calls      = []
         for via_call_str in conf.get('via_calls', []):
-            self.via_calls.append(Call(via_call_str))
-        self.digi_call = conf.get('digi_call', '')          # Own DIGI Call to set C-BIT
-        self.axip_add = conf.get('axip_add', ('', 0))       # For AXIP Handling
+            c_bit = False
+            if '*' in via_call_str:
+                via_call_str = via_call_str.replace('*', '')
+                c_bit = True
+            call_obj = Call(via_call_str)
+            call_obj.c_bit = bool(c_bit)
+            self.via_calls.append(call_obj)
+        self.digi_call      = conf.get('digi_call', '')          # Own DIGI Call to set C-BIT
+        self.axip_add       = conf.get('axip_add', ('', 0))       # For AXIP Handling
 
-        self.payload = bytearray()                                  # Payload
-        self.data_len = 0
+        self.payload        = bytearray()                                  # Payload
+        self.data_len       = 0
 
-        self.rx_time = datetime.datetime.now()
-        self.ctl_byte = CByte()
-        self.pid_byte = PIDByte()
-        self.is_digipeated = True                           # Is running through all Digi's ?
-        self.data_bytes = bytearray()                                # AX25-Frame decoded Raw-Data
-        self._netrom_cfg = {}
+        self.rx_time        = datetime.datetime.now()
+        self.ctl_byte       = CByte()
+        self.pid_byte       = PIDByte()
+        self.is_digipeated  = True                           # Is running through all Digi's ?
+        self.data_bytes     = bytearray()                                # AX25-Frame decoded Raw-Data
+        self._netrom_cfg    = {}
 
     def get_frame_conf(self):
 

@@ -13,6 +13,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs, locator_distance, coordinates_to_locator
 from fnc.str_fnc import convert_umlaute_to_ascii, zeilenumbruch_lines
 from ax25.ax25_util.ax25Statistics import get_dx_tx_alarm_his_pack
+from .aprs_digi import APRSDigiPeater
 from .aprs_igate import APRSiGate
 
 
@@ -74,6 +75,8 @@ class APRS_ais(object):
         self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
         """ I-Gate """
         self._i_gate                    = APRSiGate(self, port_handler)
+        """ DIGI """
+        self._digi                      = APRSDigiPeater()
         """ Loop Control """
         self.loop_is_running            = False
         self._non_prio_task_timer       = time.time()
@@ -91,7 +94,6 @@ class APRS_ais(object):
         self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
 
     def save_conf_to_file(self):
-        # print("Save APRS Conf")
         logger.info("Save APRS Conf")
         POPT_CFG.set_APRS_node_tab(self._node_tab)
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
@@ -143,7 +145,7 @@ class APRS_ais(object):
         """ (Login to APRS-Server) """
 
         if self._ais_active:
-            self.watchdog_task(run_now=True)
+            self._watchdog_task(run_now=True)
         else:
             self._ais.close()
 
@@ -194,7 +196,6 @@ class APRS_ais(object):
             return False
         # finally:
         #     self.ais.close()
-        # print("APRS-IS Login successful")
         logger.info("APRS-IS: APRS-Server Login successful")
         # self.loop_is_running = True
         return True
@@ -202,12 +203,11 @@ class APRS_ais(object):
     def _watchdog_reset(self):
         self._watchdog_last = time.time() + self._parm_watchdog
 
-    def watchdog_task(self, run_now=False):
+    def _watchdog_task(self, run_now=False):
         if not self._ais_active:
             return
         if time.time() < self._watchdog_last and not run_now:
             return
-        # print("APRS-IS: Watchdog: No APRS-Server activity detected !")
         logger.warning("APRS-IS: Watchdog: No APRS-Server activity detected! ")
         if self.loop_is_running:
             logger.warning("APRS-IS: Watchdog: Try to close old connection!")
@@ -233,11 +233,10 @@ class APRS_ais(object):
     """
 
     def _non_prio_tasks(self):
-        # print("non Prio")
         if time.time() > self._non_prio_task_timer:
             # self.ais_rx_task()
             # WatchDog
-            self.watchdog_task()
+            self._watchdog_task()
             # PN MSG Spooler
             if self._del_spooler_tr:
                 self._flush_spooler_buff()
@@ -326,13 +325,19 @@ class APRS_ais(object):
         if 'addresse' in aprs_pack:
             aprs_pack['address'] = aprs_pack['addresse']
 
-        # === NEU: I-Gate RF → IS ===
-        ok, pack = self._i_gate.should_gate_to_is(aprs_pack, port_id)
+        aprs_pack['port_id'] = str(port_id)
+        aprs_pack['rx_time'] = datetime.now()
+
+        # === I-Gate RF → IS ===
+        ok, pack = self._i_gate.should_gate_to_is(aprs_pack)
         if ok:
             self._i_gate.send_full_aprs_to_is(pack)
 
-        aprs_pack['port_id'] = str(port_id)
-        aprs_pack['rx_time'] = datetime.now()
+        # === DIGI ===
+        digi_pack = self._digi.handle_rx(aprs_pack)
+        if digi_pack:
+            self._send_as_UI(digi_pack, digi=True)
+
         self._aprs_process_rx(aprs_pack=aprs_pack)
 
     def _aprs_process_rx(self, aprs_pack):
@@ -368,7 +373,7 @@ class APRS_ais(object):
         else:
             self._send_as_UI(pack)
 
-    def _send_as_UI(self, pack):
+    def _send_as_UI(self, pack, digi=False):
         port_id = pack.get('port_id', '')
         if not port_id:
             return
@@ -385,7 +390,7 @@ class APRS_ais(object):
         add_str   = f"{APRS_SW_ID}"
 
         for elm in path:
-            elm = elm.replace('*', '')
+            #elm = elm.replace('*', '')
             if elm.upper() not in ['TCPIP', 'TCPXX']:
                 add_str += f" {elm}"
 
@@ -393,9 +398,10 @@ class APRS_ais(object):
             own_call=from_call,
             add_str=add_str,
             text=msg_text,
-            cmd_poll=(False, False)
+            cmd_poll=(False, False),
+            digi=digi
         )
-        logger.debug(f"IGate IS→RF: {from_call} auf Port {port_id}")
+        logger.debug(f"APRS →RF: {from_call} ({add_str}) auf Port {port_id}")
 
     def _send_as_AIS(self, pack):
         # print(f"send_as_AIS : {pack}")
@@ -403,6 +409,7 @@ class APRS_ais(object):
         pack_str = f"{pack['from']}>{pack['to']},TCPIP*:{msg}"
         #print(f" AIS OUT > {pack_str}")
         self.ais_tx(pack_str)
+        logger.debug(f"APRS →IS: {pack_str}")
 
     def get_ais(self):
         return self._ais
@@ -515,7 +522,6 @@ class APRS_ais(object):
             self._wx_update_tr = True
             return True
         return False
-        # print(aprs_pack)
 
     def _get_db(self):
         return self._port_handler.get_database()

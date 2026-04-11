@@ -973,16 +973,17 @@ class AX25Port(object):
                       text: bytes,
                       cmd_poll=(False, False),
                       pid=0xF0,
-                      axip_add=None
+                      axip_add=None,
+                      digi=False
                       ):
         if not own_call:
-            print(f"own_call {own_call}")
+            logger.error("send_UI_frame: No own_call!")
             return False
         if not add_str:
-            print(f"add_str {add_str}")
+            logger.error("send_UI_frame: No add_str!")
             return False
         if not text:
-            print(f"text {text}")
+            logger.error("send_UI_frame: No text/payload!")
             return False
         tmp = add_str.upper().split(' ')
         dest_call = tmp[0].replace(' ', '')
@@ -994,6 +995,8 @@ class AX25Port(object):
                 axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=via_calls[0])
             else:
                 axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
+
+        print(via_calls)
         frame = AX25Frame(
             dict(
                 from_call_str=str(own_call),
@@ -1012,7 +1015,7 @@ class AX25Port(object):
         frame.from_call.call_str = own_call
         frame.to_call.call_str = dest_call
         try:
-            frame.encode_ax25frame()
+            frame.encode_ax25frame(digi=digi)
         except AX25EncodingERROR:
             return False
         else:

@@ -2137,6 +2137,150 @@ STR_TABLE = {
         ''),
 
     ##############################################
+    # APRS - DIGI Settings
+    'aprs_digi_settings': (
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+        'Digipeater',
+    ),
+
+    'digi_active': (
+        'APRS Digipeater aktivieren',
+        'Enable APRS Digipeater',
+        'APRS Digipeater inschakelen',
+        'Activer Digipeater APRS',
+        'Povolit APRS Digipeater',
+        'Włączyć Digipeater APRS',
+        'Ativar Digipeater APRS',
+        'Abilita Digipeater APRS',
+        'Включить Digipeater APRS',
+        'Увімкнути Digipeater APRS',
+    ),
+
+    'digi_fillin': (
+        'Fill-In Digipeater (nur WIDE1-1)',
+        'Fill-In Digipeater (WIDE1-1 only)',
+        'Fill-In Digipeater (alleen WIDE1-1)',
+        'Digipeater Fill-In (seulement WIDE1-1)',
+        'Fill-In Digipeater (pouze WIDE1-1)',
+        'Fill-In Digipeater (tylko WIDE1-1)',
+        'Digipeater Fill-In (apenas WIDE1-1)',
+        'Digipeater Fill-In (solo WIDE1-1)',
+        'Fill-In Digipeater (только WIDE1-1)',
+        'Fill-In Digipeater (тільки WIDE1-1)',
+    ),
+
+    'digi_trace_active': (
+        'TRACE Unterstützung aktivieren',
+        'Enable TRACE support',
+        'TRACE-ondersteuning inschakelen',
+        'Activer support TRACE',
+        'Povolit podporu TRACE',
+        'Włączyć wsparcie TRACE',
+        'Ativar suporte TRACE',
+        'Abilita supporto TRACE',
+        'Включить поддержку TRACE',
+        'Увімкнути підтримку TRACE',
+    ),
+
+    'digi_trace_all': (
+        'TRACE auch für WIDE2-n und höher',
+        'TRACE also for WIDE2-n and higher',
+        'TRACE ook voor WIDE2-n en hoger',
+        'TRACE aussi pour WIDE2-n et plus',
+        'TRACE také pro WIDE2-n a vyšší',
+        'TRACE również dla WIDE2-n i wyższych',
+        'TRACE também para WIDE2-n e superior',
+        'TRACE anche per WIDE2-n e superiori',
+        'TRACE также для WIDE2-n и выше',
+        'TRACE також для WIDE2-n і вище',
+    ),
+
+    'digi_dup_time': (
+        'Duplikat-Filter Zeitfenster',
+        'Duplicate filter time window',
+        'Duplicaatfilter tijdvenster',
+        'Fenêtre de temps du filtre de doublons',
+        'Časové okno filtru duplicit',
+        'Okno czasowe filtra duplikatów',
+        'Janela de tempo do filtro de duplicados',
+        'Finestra temporale filtro duplicati',
+        'Временное окно фильтра дубликатов',
+        'Часове вікно фільтра дублікатів',
+    ),
+
+    'digi_ports': (
+        'Digipeater aktiv auf folgenden Ports',
+        'Digipeater active on the following ports',
+        'Digipeater actief op de volgende poorten',
+        'Digipeater actif sur les ports suivants',
+        'Digipeater aktivní na následujících portech',
+        'Digipeater aktywny na następujących portach',
+        'Digipeater ativo nas seguintes portas',
+        'Digipeater attivo sulle seguenti porte',
+        'Digipeater активен на следующих портах',
+        'Digipeater активний на наступних портах',
+    ),
+
+    'digi_hint': (
+        'Hinweis:\n'
+        '• Fill-In Digi digipeatet nur WIDE1-1 von Direktstationen.\n'
+        '• TRACE ist für experimentelle / Tracer-Pfade gedacht.\n'
+        '• Der Duplikat-Filter verhindert Loops und unnötige Wiederholungen.',
+
+        'Note:\n'
+        '• Fill-In Digi only digipeats WIDE1-1 from direct stations.\n'
+        '• TRACE is intended for experimental / tracer paths.\n'
+        '• The duplicate filter prevents loops and unnecessary repetitions.',
+
+        'Opmerking:\n'
+        '• Fill-In Digi digipeatet alleen WIDE1-1 van directe stations.\n'
+        '• TRACE is bedoeld voor experimentele / tracer-paden.\n'
+        '• De duplicaatfilter voorkomt loops en onnodige herhalingen.',
+
+        'Remarque :\n'
+        '• Le Fill-In Digi ne digipeate que les WIDE1-1 des stations directes.\n'
+        '• TRACE est destiné aux chemins expérimentaux / tracer.\n'
+        '• Le filtre de doublons empêche les boucles et les répétitions inutiles.',
+
+        'Poznámka:\n'
+        '• Fill-In Digi digipeatuje pouze WIDE1-1 od přímých stanic.\n'
+        '• TRACE je určen pro experimentální / tracer cesty.\n'
+        '• Filtr duplicit zabraňuje smyčkám a zbytečným opakováním.',
+
+        'Uwaga:\n'
+        '• Fill-In Digi digipeatuje tylko WIDE1-1 od stacji bezpośrednich.\n'
+        '• TRACE jest przeznaczony dla ścieżek eksperymentalnych / tracer.\n'
+        '• Filtr duplikatów zapobiega pętlom i niepotrzebnym powtórzeniom.',
+
+        'Nota:\n'
+        '• Fill-In Digi apenas digipeate WIDE1-1 de estações diretas.\n'
+        '• TRACE é destinado a caminhos experimentais / tracer.\n'
+        '• O filtro de duplicados evita loops e repetições desnecessárias.',
+
+        'Nota:\n'
+        '• Il Fill-In Digi digipeata solo WIDE1-1 dalle stazioni dirette.\n'
+        '• TRACE è destinato a percorsi sperimentali / tracer.\n'
+        '• Il filtro duplicati impedisce loop e ripetizioni inutili.',
+
+        'Примечание:\n'
+        '• Fill-In Digi digipeatит только WIDE1-1 от прямых станций.\n'
+        '• TRACE предназначен для экспериментальных / трассировочных путей.\n'
+        '• Фильтр дубликатов предотвращает петли и ненужные повторения.',
+
+        'Примітка:\n'
+        '• Fill-In Digi digipeatить лише WIDE1-1 від прямих станцій.\n'
+        '• TRACE призначений для експериментальних / трасувальних шляхів.\n'
+        '• Фільтр дублікатів запобігає петлям та непотрібним повторенням.',
+    ),
+    ##############################################
     # APRS - I-GATE Settings
     'igate_settings': (
         'I-Gate',

@@ -273,6 +273,16 @@ def getNew_APRS_IGate_cfg():
         igate_dup_time      = 30,       # Doppelte Pakete für X Sek. blocken
     )
 
+def getNew_APRS_DIGI_cfg():
+    return dict(
+        digi_active         = True,
+        digi_fillin         = True,
+        digi_trace_active   = True,
+        digi_trace_all      = True,
+        digi_dup_time       = 30,
+        digi_ports          = [],
+    )
+
 
 def getNew_APRS_ais_cfg():
     return {

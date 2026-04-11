@@ -6,6 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import lob_gen, get_strTab
 from gui.aprs.guiAPRS_Settings_AIS import APRSaisSettings
 from gui.aprs.guiAPRS_Settings_Beacon import APRSbeaconSettings
+from gui.aprs.guiAPRS_Settings_Digi import APRSdigiSettings
 from gui.aprs.guiAPRS_Settings_IGate import APRSigateSettings
 
 
@@ -13,7 +14,7 @@ class APRSSettingsMain(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width       = 800
-        win_height      = 590
+        win_height      = 690
         self._root_win  = root_win
         self.style      = root_win.style
         self.style_name = root_win.style_name
@@ -45,6 +46,7 @@ class APRSSettingsMain(tk.Toplevel):
             'aprs_server'       : APRSaisSettings,
             'beacon_settings'   : APRSbeaconSettings,
             'igate_settings'    : APRSigateSettings,
+            'aprs_digi_settings': APRSdigiSettings,
         }
         ###############################################################
         main_f = ttk.Frame(self)
