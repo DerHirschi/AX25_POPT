@@ -2139,16 +2139,16 @@ STR_TABLE = {
     ##############################################
     # APRS - I-GATE Settings
     'igate_settings': (
-        'I-Gate Einstellungen',
-        'I-Gate Settings',
-        'I-Gate Instellingen',
-        'Paramètres I-Gate',
-        'Nastavení I-Gate',
-        'Ustawienia I-Gate',
-        'Configurações I-Gate',
-        'Impostazioni I-Gate',
-        'Настройки I-Gate',
-        'Налаштування I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
+        'I-Gate',
     ),
 
     'igate_active': (
@@ -2227,6 +2227,19 @@ STR_TABLE = {
         'Attivo sulle seguenti porte',
         'Активен на следующих портах',
         'Активний на наступних портах',
+    ),
+
+    'igate_dup_time': (
+        'Duplikat-Filter Zeitfenster',
+        'Duplicate filter time window',
+        'Duplicaatfilter tijdvenster',
+        'Fenêtre de temps du filtre de doublons',
+        'Časové okno filtru duplicit',
+        'Okno czasowe filtra duplikatów',
+        'Janela de tempo do filtro de duplicados',
+        'Finestra temporale filtro duplicati',
+        'Временное окно фильтра дубликатов',
+        'Часове вікно фільтра дублікатів',
     ),
     ##############################################
     # guiBBS_newMSG.py

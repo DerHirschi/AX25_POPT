@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.61'
+VER = '2.123.62'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -203,6 +203,7 @@ APRS_TRACER_COMMENT         = "PoPT-Tracer"
 APRS_INET_PORT_ID           = 'I-NET'
 APRS_CQ_ADDRESSES           = ['ALL', 'QST', 'CQ']
 APRS_POS_BEACON_COMMENT_MAX = 40
+APRS_IGATE_RATE_LIMIT       = 30 # Max 30 Pakete/Min an IS
 
 # Locator Calc
 ASCII_0 = 48

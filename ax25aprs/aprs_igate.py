@@ -1,6 +1,8 @@
+from cfg.constant import APRS_IGATE_RATE_LIMIT
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from datetime import datetime
+import time
 
 
 class APRSiGate:
@@ -18,9 +20,13 @@ class APRSiGate:
         self._igate_max_distance = ais_cfg.get('igate_max_distance', 80)     # km für IS→RF
         self._igate_local_time   = ais_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
         self._igate_ports        = ais_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        self._igate_dup_time     = ais_cfg.get('igate_dup_time',     30)     # Block Duplicate Packet for x sec.
 
         ais_cfg          = POPT_CFG.get_CFG_aprs_ais()
         self._igate_call = ais_cfg.get('ais_call', '').upper()
+        # ====================
+        self._dupe_cache = {}
+        self._tx_counter = []
         # ====================
         self._get_node_tab = lambda : self._aprs_ais.get_node_tab()
 
@@ -43,39 +49,78 @@ class APRSiGate:
     # I-Gate Helper
     def should_gate_to_is(self, aprs_pack: dict, port_id: str):
         if not (self._igate_active and self._igate_rf_to_is):
-            return False
+            return False, None
 
         if self._igate_ports and str(port_id) not in map(str, self._igate_ports):
-            return False
+            return False, None
 
         packet_format = aprs_pack.get('format', '')
-        via  = aprs_pack.get('via', '') or ''
+        via = aprs_pack.get('via', '') or ''
         path = aprs_pack.get('path', [])
 
-        # Keine Pakete, die schon aus dem Internet kommen
+        # =========================
+        # 1. Internet Müll rausfiltern
+        # =========================
         if any(x in via.upper() for x in ['TCPIP', 'TCPXX', 'qAR', 'qAO', 'qAC']):
-            return False
+            return False, None
+
         if any(p.upper() in ['TCPIP', 'TCPXX', 'NOGATE', 'RFONLY'] for p in path):
-            return False
+            return False, None
 
-        # Thirdparty mit TCPIP/TCPXX nicht weiterleiten
-        if aprs_pack.get('format') == 'thirdparty':
-            sub = aprs_pack.get('subpacket', {})
-            sub_path = sub.get('path', []) if isinstance(sub.get('path'), list) else []
-            if any(p.upper() in ['TCPIP', 'TCPXX'] for p in sub_path):
-                return False
+        # =========================
+        # 2. Thirdparty unwrap
+        # =========================
+        if packet_format == 'thirdparty':
+            aprs_pack = self._unwrap_thirdparty(aprs_pack)
+            if not aprs_pack:
+                return False, None
 
-        # Keine Queries
+            # OPTIONAL STRICT MODE:
+            # Wenn du KEIN Re-Gating willst:
+            # return False, None
+
+            # sonst weiter verarbeiten → qAO später
+
+            # Update nach unwrap
+            path = aprs_pack.get('path', [])
+            # via = aprs_pack.get('via', '') or ''
+
+        # =========================
+        # 3. Nur "echte RF Pakete"
+        # =========================
+        if not any('*' in p for p in path):
+            return False, None
+
+        # =========================
+        # 4. Rate Limit
+        # =========================
+        if not self._allow_tx():
+            return False, None
+
+        # =========================
+        # 5. Duplikate
+        # =========================
+        raw = aprs_pack.get('raw', '')
+        if self._is_duplicate(raw):
+            return False, None
+
+        # =========================
+        # 6. Queries raus
+        # =========================
         if packet_format == 'query' or aprs_pack.get('raw_message_text', '').startswith('?'):
-            return False
+            return False, None
 
-        # Keine ungültigen From-Calls
+        # =========================
+        # 7. Ungültige Calls
+        # =========================
         from_call = aprs_pack.get('from', '').upper()
         if from_call.startswith(('WIDE', 'RELAY', 'TRACE', 'NOCALL', 'N0CALL')):
-            return False
+            return False, None
 
-        return True
-
+        # =========================
+        # OK → darf ins IS
+        # =========================
+        return True, aprs_pack
 
     def should_gate_to_rf(self, aprs_pack: dict):
         """Entscheidet, ob ein Paket vom APRS-IS auf RF gesendet werden soll.
@@ -85,6 +130,9 @@ class APRSiGate:
 
         packet_format = aprs_pack.get('format', '')
 
+        raw = aprs_pack.get('raw', '')
+        if self._is_duplicate(raw):
+            return False
         # 1. Nur Messages und Positions sind sinnvoll für IS→RF
         if packet_format not in ['message', 'position', 'object', 'item', 'wx']:
             return False
@@ -137,6 +185,48 @@ class APRSiGate:
 
         return False
 
+    def _is_duplicate(self, raw):
+        now = time.time()
+        if raw in self._dupe_cache:
+            if now - self._dupe_cache[raw] < self._igate_dup_time:
+                return True
+        self._dupe_cache[raw] = now
+        return False
+
+    def _allow_tx(self):
+        now = time.time()
+        self._tx_counter = [t for t in self._tx_counter if now - t < 60]
+
+        if len(self._tx_counter) > APRS_IGATE_RATE_LIMIT:
+            return False
+
+        self._tx_counter.append(now)
+        return True
+
+    @staticmethod
+    def _unwrap_thirdparty(aprs_pack: dict):
+        """Extrahiert ein Third-Party Paket und macht ein normales APRS-Pack daraus"""
+        if aprs_pack.get('format') != 'thirdparty':
+            return aprs_pack
+
+        sub = aprs_pack.get('subpacket', {})
+        if not sub:
+            return None
+
+        # Original RF Path behalten!
+        path     = aprs_pack.get('path', [])
+
+        new_pack = dict(sub)
+
+        # WICHTIG: Path vom äußeren Paket übernehmen
+        new_pack['path']            = path
+        new_pack['via']             = aprs_pack.get('via', '')
+        new_pack['port_id']         = aprs_pack.get('port_id')
+        new_pack['rx_time']         = aprs_pack.get('rx_time')
+        new_pack['was_thirdparty']  = True
+
+        return new_pack
+
     def send_full_aprs_to_is(self, aprs_pack: dict):
         """Sendet RF-Paket als korrekten flachen TNC2-String an APRS-IS"""
         ais = self._aprs_ais.get_ais()
@@ -146,9 +236,15 @@ class APRSiGate:
             return
 
         try:
+            # Thirdparty unwrap
+            if aprs_pack.get('format') == 'thirdparty':
+                aprs_pack = self._unwrap_thirdparty(aprs_pack)
+                if not aprs_pack:
+                    return
+
             # From / To
             from_call = aprs_pack.get('from', '').strip()
-            to_call = aprs_pack.get('to', 'APRS').strip()
+            to_call   = aprs_pack.get('to', 'APRS').strip()
 
             raw = aprs_pack.get('raw', '')
 
@@ -156,26 +252,6 @@ class APRSiGate:
                 info = raw.split(':', 1)[1]
             else:
                 info = ''
-
-            """
-            # Info-Feld holen (mit Thirdparty-Fallback)
-            if aprs_pack.get('format') == 'thirdparty':
-                sub = aprs_pack.get('subpacket', {})
-                if sub:
-                    info = (sub.get('raw_message_text', '') or
-                            sub.get('info', '') or
-                            sub.get('raw', ''))
-                    from_call = sub.get('from', from_call).strip()
-                    to_call = sub.get('to', to_call).strip()
-
-            if not info:
-                logger.warning(f"IGate: Leeres Info-Feld für {from_call}")
-                raw = aprs_pack.get('raw', '')
-                if raw and ':' in raw:
-                    info = raw.split(':', 1)[1]
-                else:
-                    info = ''
-            """
 
             # Path sauber machen
             original_path = aprs_pack.get('path', [])
@@ -185,12 +261,13 @@ class APRSiGate:
 
             # === WICHTIG: Voller TNC2-String ===
             # q_con = "qAR" if self._igate_is_to_rf else "qA????????"
-
+            is_thirdparty = aprs_pack.get('was_thirdparty', False)
+            q_flag = "qAO" if is_thirdparty else "qAR"
             if clean_path:
                 path_str = ','.join(clean_path)
-                packet_str = f"{from_call}>{to_call},{path_str},qAR,{self._igate_call}:{info}"
+                packet_str = f"{from_call}>{to_call},{path_str},{q_flag},{self._igate_call}:{info}"
             else:
-                packet_str = f"{from_call}>{to_call},qAR,{self._igate_call}:{info}"
+                packet_str = f"{from_call}>{to_call},{q_flag},{self._igate_call}:{info}"
 
             # Senden
             self._aprs_ais.ais_tx(packet_str)

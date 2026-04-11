@@ -270,6 +270,7 @@ def getNew_APRS_IGate_cfg():
         igate_max_distance  = 80,       # km für IS→RF
         igate_local_time    = 60,       # Minuten, wie lange eine Station "lokal" gilt
         igate_ports         = [],       # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        igate_dup_time      = 30,       # Doppelte Pakete für X Sek. blocken
     )
 
 

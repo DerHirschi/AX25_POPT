@@ -6,13 +6,13 @@ Fixes:
   freigegeben, wenn Port neu initialisiert wird.
   (Schon wieder, da die reinit Prozedur verändert wurde in der Vorversion)
 - Alle nicht darstellbaren Zeichen für GUI gesperrt.
-  (wenn von der GUI versucht wird, Binäre Daten darzustellen die nicht
+  (wenn von der GUI versucht wird, binäre Daten darzustellen die nicht
    darstellbar sind, gibts es Chaos.
    Tag Farben & Zeilenumbrüche gehen verloren)
 - Es können keine User-DB Einträge mit SSID hinzugefügt werden
 - Script Error, wenn neue APRS-Nachricht gesendet wird
 - AXIP-Multicast ist nicht auswählbar in Porteinstellungen
-- APRS-SMS sendet kein ACK um den empfang zu bestätigen.
+- APRS-SMS sendet kein ACK, um den empfang zu bestätigen.
 
 Optimierung/Änderungen:
 - Pipe-Tool Schleife performance optimiert (CPU-Last)

@@ -13,7 +13,7 @@ class APRSSettingsMain(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width       = 800
-        win_height      = 550
+        win_height      = 590
         self._root_win  = root_win
         self.style      = root_win.style
         self.style_name = root_win.style_name

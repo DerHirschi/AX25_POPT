@@ -327,8 +327,9 @@ class APRS_ais(object):
             aprs_pack['address'] = aprs_pack['addresse']
 
         # === NEU: I-Gate RF → IS ===
-        if self._i_gate.should_gate_to_is(aprs_pack, port_id):
-            self._i_gate.send_full_aprs_to_is(aprs_pack)
+        ok, pack = self._i_gate.should_gate_to_is(aprs_pack, port_id)
+        if ok:
+            self._i_gate.send_full_aprs_to_is(pack)
 
         aprs_pack['port_id'] = str(port_id)
         aprs_pack['rx_time'] = datetime.now()
