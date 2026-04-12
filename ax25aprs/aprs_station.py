@@ -1,17 +1,17 @@
 import time
-from collections import deque, OrderedDict
-from copy import deepcopy
+from collections import deque
 
 import aprslib
 from cfg.logger_config import logger
 from datetime import datetime
 
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame
-from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID, APRS_MAX_BUFFER, APRS_MAX_OBJ_TAB
+from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID, APRS_MAX_BUFFER
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_distance, coordinates_to_locator
 from .aprs_digi import APRSDigiPeater
 from .aprs_igate import APRSiGate
+from .aprs_node_tab import APRSnodeTab
 from .aprs_sms import APRSsms
 from .aprs_tracer import APRSTracer
 from .aprs_wx import APRSwx
@@ -31,19 +31,17 @@ class APRSmain(object):
             if own_loc:
                 self.ais_loc = own_loc
         """ APRS-Node List """
-        self._node_tab          = OrderedDict(POPT_CFG.get_APRS_node_tab())
-        self._object_tab        = OrderedDict()  # Reported Objects
+        self._aprs_node_tab     = APRSnodeTab(self, port_handler)
         """ WX """
         self._aprs_wx           = APRSwx(self, port_handler)
         """ APRS-Message Stuff """
         self._aprs_sms          = APRSsms(self, port_handler)
         """ Beacon Tracer """
-        self._aprs_tracer               = APRSTracer(self, port_handler)
-        """ Load CFGs and Init (Login to APRS-Server) """
+        self._aprs_tracer       = APRSTracer(self, port_handler)
         """ I-Gate """
-        self._i_gate                    = APRSiGate(self, port_handler)
+        self._i_gate            = APRSiGate(self, port_handler)
         """ DIGI """
-        self._digi                      = APRSDigiPeater()
+        self._digi              = APRSDigiPeater()
         """ Loop Control """
         self.loop_is_running            = False
         self._non_prio_task_timer       = time.time()
@@ -55,6 +53,7 @@ class APRSmain(object):
         self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
         self._ais_active = ais_cfg.get('ais_active', False)
         if self._ais_active:
+            """ Init (Login to APRS-Server) """
             self._login()
         logger.info("APRS-IS: Init complete")
 
@@ -63,7 +62,8 @@ class APRSmain(object):
 
     def save_conf_to_file(self):
         logger.info("Save APRS Conf")
-        POPT_CFG.set_APRS_node_tab(self._node_tab)
+        # Node Tab
+        self._aprs_node_tab.aprs_node_tab_save()
         # Tracer
         self._aprs_tracer.save_param()
         # APRS-SMS
@@ -287,16 +287,19 @@ class APRSmain(object):
         self._aprs_process_rx(aprs_pack=aprs_pack)
 
     def _aprs_process_rx(self, aprs_pack):
-        self.ais_rx_buff.append(aprs_pack)
-        ais_mon_gui = self._get_ais_mon_gui()
-        if hasattr(ais_mon_gui, 'pack_to_mon'):
-            ais_mon_gui.pack_to_mon(aprs_pack)
-
         if not aprs_pack:
             return False
         aprs_pack['locator']  = self._get_loc(aprs_pack)
         aprs_pack['distance'] = self._get_loc_dist(aprs_pack.get('locator', ''))
-        self._node_list_process_rx(aprs_pack)
+        self.ais_rx_buff.append(aprs_pack)
+
+        # GUI APRS Monitor
+        ais_mon_gui = self._get_ais_mon_gui()
+        if hasattr(ais_mon_gui, 'pack_to_mon'):
+            ais_mon_gui.pack_to_mon(aprs_pack)
+
+        # Node Tab
+        self._aprs_node_tab.node_tab_process_rx(aprs_pack)
         # APRS PN/BULLETIN MSG
         if self._aprs_sms.aprs_sms_rx(aprs_pack=aprs_pack):
             return True
@@ -353,98 +356,6 @@ class APRSmain(object):
         #print(f" AIS OUT > {pack_str}")
         self.ais_tx(pack_str)
         logger.debug(f"APRS →IS: {pack_str}")
-
-    ##########################
-    # Node List
-    def _node_list_process_rx(self, aprs_pack: dict):
-        #print(aprs_pack)
-        #print(aprs_pack.keys())
-        a_from      = aprs_pack.get('from', '')
-        #a_to        = aprs_pack.get('to', '')
-        path        = aprs_pack.get('path', '')
-        via         = aprs_pack.get('via', '')
-        m_capable   = aprs_pack.get('messagecapable', False)
-        is_object   = True if aprs_pack.get('format', '') == 'object' else False
-        port        = aprs_pack.get('port_id', '')
-        rx_time     = aprs_pack.get('rx_time', '')
-        locator     = aprs_pack.get('locator', '')
-        distance    = aprs_pack.get('distance', -1)
-        pos         = (aprs_pack.get('latitude', 0.0), aprs_pack.get('longitude', 0.0))
-        symbol      = (aprs_pack.get('symbol_table', ''), aprs_pack.get('symbol', ''))
-
-        # Determine the unique node ID: for objects, use 'name'; otherwise, use 'from'
-        """
-        if is_object:
-            node_id = aprs_pack.get('name', '')
-        else:
-            node_id = a_from
-        """
-        node_id = a_from
-        if not node_id:
-            return
-        old_ent = self._node_tab.get(node_id, {})
-        ent = {
-            'node_id': node_id,
-            'rx_time': rx_time,
-            'port_id': port,
-            'path':    path[:],  # Copy list to avoid reference issues
-            'via':     via,
-        }
-        if not is_object:
-            ent.update(
-                {
-                    'locator': locator if locator else old_ent.get('locator', ''),
-                    'distance': distance if distance != -1 else old_ent.get('distance', -1),
-                    'position': pos if pos != (0.0 ,0.0) else old_ent.get('position', (0.0 ,0.0)),
-                    'symbol': symbol if symbol != ('', '') else old_ent.get('symbol', ('', '')),
-                    'message_capable': m_capable,
-                }
-            )
-
-        if 'comment' in aprs_pack:
-            ent['comment'] = aprs_pack['comment']
-        if 'course' in aprs_pack:
-            ent['course'] = aprs_pack['course']
-        if 'speed' in aprs_pack:
-            ent['speed'] = aprs_pack['speed']
-        if 'altitude' in aprs_pack:
-            ent['altitude'] = aprs_pack['altitude']
-        if 'weather' in aprs_pack:
-            ent['weather'] = aprs_pack['weather']  # If it's a WX station
-        # Add more fields as needed, e.g., 'status', 'telemetry', etc.
-
-        if node_id in self._node_tab:
-            self._node_tab[node_id].update(ent)
-        else:
-            self._node_tab[node_id] = ent
-        aprs_object = {}
-        if is_object:
-            ent = deepcopy(ent)
-            object_id = aprs_pack.get('object_name', '')
-            ent['reporter'] = a_from
-            ent.update(
-                {
-                    'node_id': object_id,
-                    'locator': locator if locator else old_ent.get('locator', ''),
-                    'distance': distance if distance != -1 else old_ent.get('distance', -1),
-                    'position': pos if pos != (0.0, 0.0) else old_ent.get('position', (0.0, 0.0)),
-                    'symbol': symbol if symbol != ('', '') else old_ent.get('symbol', ('', '')),
-                    'reporter': a_from,
-                })
-            if object_id in self._object_tab:
-                self._object_tab[object_id].update(ent)
-            else:
-                self._object_tab[object_id] = ent
-            self._object_tab.move_to_end(object_id, last=False)
-            while len(self._object_tab) > APRS_MAX_OBJ_TAB:
-                del self._object_tab[list(self._object_tab.keys())[-1]]
-
-            aprs_object = deepcopy(self._object_tab[object_id])
-
-        self._node_tab.move_to_end(node_id, last=False)
-        ais_mon_gui = self._get_ais_mon_gui()
-        if hasattr(ais_mon_gui, 'update_node_tab'):
-            ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
 
     ##########################
     # WX
@@ -546,12 +457,12 @@ class APRSmain(object):
         self._aprs_tracer.be_tracer_active = state
 
     ############################################
-    # APRS Monitor / Tab
+    # Node Tab
     def get_node_tab(self):
-        return self._node_tab
+        return self._aprs_node_tab.get_node_tab()
 
     def get_symbol_fm_node_tab(self, node_id: str):
-        return self._node_tab.get(node_id, {}).get('symbol', ('', ''))
+        return self._aprs_node_tab.get_symbol_fm_node_tab(node_id)
 
     """
     def get_pos_fm_node_tab(self, node_id: str):
@@ -559,7 +470,7 @@ class APRSmain(object):
     """
 
     def get_obj_tab(self):
-        return self._object_tab
+        return self._aprs_node_tab.get_obj_tab()
 
     ############################################
     # Helper
