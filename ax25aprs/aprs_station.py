@@ -6,11 +6,13 @@ from cfg.logger_config import logger
 from datetime import datetime
 
 from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame
-from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID, APRS_MAX_BUFFER
+from cfg.constant import APRS_MAX_BUFFER
+from .aprs_constant import APRS_SW_ID, APRS_INET_PORT_ID
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_distance, coordinates_to_locator
 from .aprs_digi import APRSDigiPeater
 from .aprs_igate import APRSiGate
+from .aprs_is_override import APRS_IS
 from .aprs_node_tab import APRSnodeTab
 from .aprs_sms import APRSsms
 from .aprs_tracer import APRSTracer
@@ -118,7 +120,7 @@ class APRSmain(object):
             logger.error("APRS-IS: Connecting to APRS-Server failed! No Server Address !")
             self._ais_active = False
             return False
-        self._ais = aprslib.IS(callsign=ais_call,
+        self._ais = APRS_IS(callsign=ais_call,
                                passwd=ais_pass,
                                host=ais_host[0],
                                port=ais_host[1],
@@ -137,6 +139,8 @@ class APRSmain(object):
             logger.error("APRS-IS: Connecting to APRS-Server failed! IndexError !")
             self._ais = None
             return False
+
+        self._ais.set_filter('r/0/0/99999')
         # finally:
         #     self.ais.close()
         logger.info("APRS-IS: APRS-Server Login successful")
@@ -255,7 +259,6 @@ class APRSmain(object):
 
         # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
         self._aprs_process_rx(aprs_pack=packet)
-        # print(packet)
 
     @property
     def get_ais(self):
@@ -464,13 +467,11 @@ class APRSmain(object):
     def get_symbol_fm_node_tab(self, node_id: str):
         return self._aprs_node_tab.get_symbol_fm_node_tab(node_id)
 
-    """
-    def get_pos_fm_node_tab(self, node_id: str):
-        return self._node_tab.get(node_id, {}).get('position', (0, 0))
-    """
-
     def get_obj_tab(self):
         return self._aprs_node_tab.get_obj_tab()
+
+    def get_igates_tab(self):
+        return self._aprs_node_tab.get_igate_tab()
 
     ############################################
     # Helper

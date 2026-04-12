@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.68'
+VER = '2.123.69'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -196,14 +196,6 @@ BBS_REVERS_FWD_CMD = {
     'BayCom': b'F>\r',
 }
 DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
-
-# APRS Stuff
-APRS_SW_ID                  = f"APZPOP"  # TODO get SW ID
-APRS_TRACER_COMMENT         = "PoPT-Tracer"
-APRS_INET_PORT_ID           = 'I-NET'
-APRS_CQ_ADDRESSES           = ['ALL', 'QST', 'CQ']
-APRS_POS_BEACON_COMMENT_MAX = 40
-APRS_IGATE_RATE_LIMIT       = 30 # Max 30 Pakete/Min an IS
 
 # Locator Calc
 ASCII_0 = 48

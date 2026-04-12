@@ -10,7 +10,7 @@ from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab, zeilenumbruch, convert_umlaute_to_ascii
-from gui.aprs.guiAPRSnewMSG import NewMessageWindow
+from gui.aprs.guiAPRS_SMS.guiAPRSnewMSG import NewMessageWindow
 
 class APRS_msg_SYS_PN(tk.Toplevel):
     def __init__(self, root_win):

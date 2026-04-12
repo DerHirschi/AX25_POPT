@@ -1,4 +1,5 @@
-from cfg.constant import APRS_POS_BEACON_COMMENT_MAX, APRS_SW_ID, CLI_TYP_SYSOP
+from cfg.constant import CLI_TYP_SYSOP
+from ax25aprs.aprs_constant import APRS_SW_ID, APRS_POS_BEACON_COMMENT_MAX
 from cfg.popt_config import POPT_CFG
 from cli.StringVARS import replace_StringVARS
 from cfg.logger_config import logger

@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 
+from ax25aprs.aprs_dec import get_aprs_software
 from cfg.constant import APRS_MAX_OBJ_TAB
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -13,19 +14,30 @@ class APRSnodeTab:
         self._port_handler = port_handler
 
         self._node_tab   = OrderedDict(POPT_CFG.get_APRS_node_tab())
+        self._igates_tab = OrderedDict(POPT_CFG.get_APRS_igate_tab())  # I-Gates Status Frames
+        """
+        _igates_tab = {
+        'CALLSIGN': {
+            'last': {...},        # letzter Zustand
+            'history': [ {...}, ... ],  # Verlauf (chronologisch)
+            'software': 'DireWolf ...',
+            }
+        }
+        """
         self._object_tab = OrderedDict()  # Reported Objects
 
     # =======================
     def aprs_node_tab_save(self):
         logger.info("APRS-NodeTab: Save")
         POPT_CFG.set_APRS_node_tab(self._node_tab)
+        POPT_CFG.set_APRS_igate_tab(self._igates_tab)
 
     # =======================
     def node_tab_process_rx(self, aprs_pack: dict):
         #print(aprs_pack)
         #print(aprs_pack.keys())
         a_from      = aprs_pack.get('from', '')
-        #a_to        = aprs_pack.get('to', '')
+        a_to        = aprs_pack.get('to', '')
         path        = aprs_pack.get('path', '')
         via         = aprs_pack.get('via', '')
         m_capable   = aprs_pack.get('messagecapable', False)
@@ -36,7 +48,7 @@ class APRSnodeTab:
         distance    = aprs_pack.get('distance', -1)
         pos         = (aprs_pack.get('latitude', 0.0), aprs_pack.get('longitude', 0.0))
         symbol      = (aprs_pack.get('symbol_table', ''), aprs_pack.get('symbol', ''))
-
+        #print(a_to)
         # Determine the unique node ID: for objects, use 'name'; otherwise, use 'from'
         """
         if is_object:
@@ -44,6 +56,14 @@ class APRSnodeTab:
         else:
             node_id = a_from
         """
+        # Get Software fm Tab
+        software = get_aprs_software(a_to)
+        aprs_pack['software'] = software
+
+        # I-Gate Tab
+        if aprs_pack.get('format', '') == 'igate':
+            self._process_igate_status(aprs_pack)
+
         node_id = a_from
         if not node_id:
             return
@@ -54,6 +74,7 @@ class APRSnodeTab:
             'port_id': port,
             'path':    path[:],  # Copy list to avoid reference issues
             'via':     via,
+            'software':software,
         }
         if not is_object:
             ent.update(
@@ -111,6 +132,68 @@ class APRSnodeTab:
         if hasattr(ais_mon_gui, 'update_node_tab'):
             ais_mon_gui.update_node_tab(deepcopy(self._node_tab[node_id]), aprs_object)
 
+    # == IGate Tab =====================
+    def _process_igate_status(self, aprs_pack: dict):
+        a_from = aprs_pack.get('from', '')
+        raw = aprs_pack.get('raw', '') or aprs_pack.get('comment', '')
+        if not raw or '<IGATE,' not in raw:
+            return
+
+        # Beispiel:
+        # <IGATE,MSG_CNT=103,PKT_CNT=6,...>
+        try:
+            igate_str = raw.split('<IGATE,', 1)[1]
+            parts = igate_str.split(',')
+
+            data = {}
+            for part in parts:
+                if '=' in part:
+                    k, v = part.split('=', 1)
+                    try:
+                        data[k.strip()] = int(v.strip())
+                    except ValueError:
+                        data[k.strip()] = v.strip()
+                else:
+                    data[part.strip()] = True  # z.B. "IGATE"
+
+        except Exception as e:
+            logger.error(f"IGate parse error: {e}")
+            return
+
+        # Software bestimmen
+        software = aprs_pack.get('software', '')
+        rx_time  = aprs_pack.get('rx_time', '')
+
+        entry = {
+            'rx_time': rx_time,
+            'data': data
+        }
+
+        if a_from not in self._igates_tab:
+            self._igates_tab[a_from] = {
+                'software': software,
+                'last': entry,
+                'history': [entry]
+            }
+        else:
+            ig = self._igates_tab[a_from]
+
+            ig['software'] = software  # ggf. updaten
+            ig['last']     = entry
+            ig['history'].append(entry)
+
+            # Optional: History begrenzen
+            if len(ig['history']) > 100:
+                ig['history'].pop(0)
+
+        # Optional: nach vorne sortieren (wie node_tab)
+        self._igates_tab.move_to_end(a_from, last=False)
+
+        ais_mon_gui = self._get_ais_mon_gui()
+        if hasattr(ais_mon_gui, 'update_igate_tab'):
+            ais_mon_gui.update_igate_tab(a_from)
+
+    # =======================
     def get_node_tab(self):
         return self._node_tab
 
@@ -124,6 +207,9 @@ class APRSnodeTab:
 
     def get_obj_tab(self):
         return self._object_tab
+
+    def get_igate_tab(self):
+        return self._igates_tab
 
     def _get_ais_mon_gui(self):
         gui = self._port_handler.get_gui()

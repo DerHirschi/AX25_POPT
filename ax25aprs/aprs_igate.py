@@ -1,4 +1,4 @@
-from cfg.constant import APRS_IGATE_RATE_LIMIT
+from ax25aprs.aprs_constant import APRS_IGATE_RATE_LIMIT
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from datetime import datetime

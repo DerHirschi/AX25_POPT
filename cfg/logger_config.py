@@ -37,7 +37,7 @@ else:
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("chardet").setLevel(logging.WARNING)
-logging.getLogger("aprslib").setLevel(logging.INFO)
+#logging.getLogger("aprslib").setLevel(logging.WARNING)
 logging.getLogger("playsound").setLevel(logging.WARNING)
 logging.getLogger("playsound3").setLevel(logging.WARNING)
 logging.getLogger("gtts").setLevel(logging.WARNING)

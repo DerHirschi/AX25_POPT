@@ -4,10 +4,10 @@ from tkinter import ttk
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import lob_gen, get_strTab
-from gui.aprs.guiAPRS_Settings_AIS import APRSaisSettings
-from gui.aprs.guiAPRS_Settings_Beacon import APRSbeaconSettings
-from gui.aprs.guiAPRS_Settings_Digi import APRSdigiSettings
-from gui.aprs.guiAPRS_Settings_IGate import APRSigateSettings
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_AIS import APRSaisSettings
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Beacon import APRSbeaconSettings
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Digi import APRSdigiSettings
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_IGate import APRSigateSettings
 
 
 class APRSSettingsMain(tk.Toplevel):

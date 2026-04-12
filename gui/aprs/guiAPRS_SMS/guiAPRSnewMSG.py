@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe
-from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID
+from ax25aprs.aprs_constant import APRS_SW_ID, APRS_INET_PORT_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, zeilenumbruch, convert_umlaute_to_ascii

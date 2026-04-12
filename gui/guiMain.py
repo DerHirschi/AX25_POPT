@@ -14,9 +14,9 @@ from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
-from gui.aprs.guiAISmon import AISmonitor
-from gui.aprs.guiAPRS_Settings_Main import APRSSettingsMain
-from gui.aprs.guiAPRS_pn_msg import APRS_msg_SYS_PN
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon import AISmonitor
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Main import APRSSettingsMain
+from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
 #from gui.aprs.guiAPRS_symbol_tab import APRSymbolTab
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList

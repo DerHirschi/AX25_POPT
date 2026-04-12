@@ -3,7 +3,7 @@ from collections import deque
 
 from ax25.ax25_util.ax25Statistics import get_dx_tx_alarm_his_pack
 from ax25aprs.aprs_dec import get_last_digi_fm_path, parse_aprs_fm_aprsframe
-from cfg.constant import APRS_TRACER_COMMENT, APRS_SW_ID
+from ax25aprs.aprs_constant import APRS_SW_ID, APRS_TRACER_COMMENT
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs

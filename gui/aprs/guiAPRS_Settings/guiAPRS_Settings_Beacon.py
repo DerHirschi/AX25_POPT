@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.messagebox import askyesno
 
-from cfg.constant import APRS_INET_PORT_ID, APRS_POS_BEACON_COMMENT_MAX
+from ax25aprs.aprs_constant import APRS_INET_PORT_ID, APRS_POS_BEACON_COMMENT_MAX
 from cfg.default_config import getNew_APRS_beacon_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG

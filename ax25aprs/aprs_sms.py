@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe, extract_ack, is_cq_call
-from cfg.constant import APRS_SW_ID
+from ax25aprs.aprs_constant import APRS_SW_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import zeilenumbruch_lines, convert_umlaute_to_ascii

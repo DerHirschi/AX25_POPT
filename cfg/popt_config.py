@@ -31,7 +31,8 @@ class Main_CFG:
             'mh_cfg': getNew_MH_cfg,
             ##########################
             # -- APRS
-            'aprs_node_tab': {},
+            'aprs_node_tab':  {},
+            'aprs_IGate_tab': {},
             'aprs_ais':   getNew_APRS_ais_cfg,
             'aprs_igate': getNew_APRS_IGate_cfg,
             'aprs_digi':  getNew_APRS_DIGI_cfg,
@@ -40,8 +41,8 @@ class Main_CFG:
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': {},
-            'gui_pacman': {},
-            'conn_history': [],
+            'gui_pacman':       {},
+            'conn_history':     [],
             ##########################
             # -- Beacon
             'beacon_tasks': [],
@@ -305,6 +306,12 @@ class Main_CFG:
 
     def set_APRS_node_tab(self, node_tab: dict):
         self._config['aprs_node_tab'] = node_tab
+
+    def get_APRS_igate_tab(self):
+        return self._config['aprs_IGate_tab']
+
+    def set_APRS_igate_tab(self, igate_tab: dict):
+        self._config['aprs_IGate_tab'] = igate_tab
 
     def get_APRS_beacon_cfg(self):
         return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
