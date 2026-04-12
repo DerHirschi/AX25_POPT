@@ -14,7 +14,9 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_BL_Tab import APRSmonBLTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_IGate_Tab import IGateTab
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Msg_Tab import APRSmonMSGTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Node_Tab import APRSmonNodeTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Obj_Tab import APRSmonObjTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Pack_Tab import APRSmonPackTree
@@ -91,18 +93,16 @@ class AISmonitor(tk.Toplevel):
         self._node_tree_cl  = APRSmonNodeTree(tab, self, self._port_handler)
         self._obj_tree_cl   = APRSmonObjTree( tab, self, self._port_handler)
         self._wx_tree_cl    = APRSmonWXTree(  tab, self)
-        msg_list_f   = ttk.Frame(tab)
-        bl_list_f    = ttk.Frame(tab)
+        self._msg_tree_cl   = APRSmonMSGTree( tab, self)
+        self._bl_tree_cl    = APRSmonBLTree(  tab, self)
         igate_list_f.pack(fill='both', expand=True)
-        msg_list_f.pack(  fill='both', expand=True)
-        bl_list_f.pack(   fill='both', expand=True)
         ##############################################
         tab.add(self._node_tree_cl, text="Node-List")
-        tab.add(igate_list_f,text="IGate Status")
+        tab.add(igate_list_f,       text="IGate Status")
         tab.add(self._obj_tree_cl,  text="Objects")
         tab.add(self._wx_tree_cl,   text="WX")
-        tab.add(msg_list_f,  text="Msg")
-        tab.add(bl_list_f,   text="Bulletin")
+        tab.add(self._msg_tree_cl,  text="Msg")
+        tab.add(self._bl_tree_cl,   text="Bulletin")
         tab.add(self._pack_tree_cl, text="Packet-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
@@ -201,102 +201,13 @@ class AISmonitor(tk.Toplevel):
                    command=lambda : self._clear_map_markers()
         ).pack(anchor='w', padx=20)
         ########################################################
-        ########################################################
-        # Node-List
-        ########################################################
-        ########################################################
-        # WX
-        ########################################################
-        # P MSG
-        columns = (
-            'node_id',
-            'to',
-            'port',
-            'via',
-            'path',
-            'loc',
-            'dist',
-            'rx_time',
-            'comment',
-        )
-        self._msg_tree = ttk.Treeview(msg_list_f, columns=columns, show='tree headings')
-        self._msg_tree.pack(side='left', fill='both', expand=True)
-        # add a scrollbar
-        scrollbar = ttk.Scrollbar(msg_list_f, orient='vertical', command=self._msg_tree.yview)
-        self._msg_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side='left', fill='y')
 
-        self._msg_tree.heading('#0', text='Symbol')
-        self._msg_tree.heading('node_id', text=self._getTabStr('from'), command=lambda: self._sort_entry('node_id', self._msg_tree))
-        self._msg_tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to', self._msg_tree))
-        self._msg_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._msg_tree))
-        self._msg_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._msg_tree))
-        self._msg_tree.heading('path', text="Path", command=lambda: self._sort_entry('path', self._msg_tree))
-        self._msg_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._msg_tree))
-        self._msg_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._msg_tree))
-        self._msg_tree.heading('rx_time', text=self._getTabStr('date_time'),
-                               command=lambda: self._sort_entry('rx_time', self._msg_tree))
-        self._msg_tree.heading('comment', text="Msg", command=lambda: self._sort_entry('comment', self._msg_tree))
-
-        self._msg_tree.column('#0', anchor='w', stretch=False, width=50)
-        self._msg_tree.column("node_id", anchor='w', stretch=False, width=80)
-        self._msg_tree.column("to", anchor='w', stretch=False, width=80)
-        self._msg_tree.column("port", anchor='w', stretch=False, width=60)
-        self._msg_tree.column("via", anchor='w', stretch=False, width=80)
-        self._msg_tree.column("path", anchor='w', stretch=False, width=200)
-        self._msg_tree.column("loc", anchor='w', stretch=False, width=90)
-        self._msg_tree.column("dist", anchor='w', stretch=False, width=50)
-        self._msg_tree.column("rx_time", anchor='w', stretch=False, width=80)
-        self._msg_tree.column("comment", anchor='w', stretch=True, width=80)
-        ########################################################
-        # Bulletin
-        columns = (
-            'node_id',
-            'to',
-            'port',
-            'via',
-            'path',
-            'loc',
-            'dist',
-            'rx_time',
-            'comment',
-        )
-        self._bl_tree = ttk.Treeview(bl_list_f, columns=columns, show='tree headings')
-        self._bl_tree.pack(side='left', fill='both', expand=True)
-        # add a scrollbar
-        scrollbar = ttk.Scrollbar(bl_list_f, orient='vertical', command=self._bl_tree.yview)
-        self._bl_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side='left', fill='y')
-
-        self._bl_tree.heading('#0', text='Symbol')
-        self._bl_tree.heading('node_id', text="BL ID",
-                               command=lambda: self._sort_entry('node_id', self._bl_tree))
-        self._bl_tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to', self._bl_tree))
-        self._bl_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._bl_tree))
-        self._bl_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._bl_tree))
-        self._bl_tree.heading('path', text="Path", command=lambda: self._sort_entry('path', self._bl_tree))
-        self._bl_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._bl_tree))
-        self._bl_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._bl_tree))
-        self._bl_tree.heading('rx_time', text=self._getTabStr('date_time'),
-                               command=lambda: self._sort_entry('rx_time', self._bl_tree))
-        self._bl_tree.heading('comment', text="Msg", command=lambda: self._sort_entry('comment', self._bl_tree))
-
-        self._bl_tree.column('#0', anchor='w', stretch=False, width=50)
-        self._bl_tree.column("node_id", anchor='w', stretch=False, width=80)
-        self._bl_tree.column("to", anchor='w', stretch=False, width=80)
-        self._bl_tree.column("port", anchor='w', stretch=False, width=60)
-        self._bl_tree.column("via", anchor='w', stretch=False, width=80)
-        self._bl_tree.column("path", anchor='w', stretch=False, width=200)
-        self._bl_tree.column("loc", anchor='w', stretch=False, width=90)
-        self._bl_tree.column("dist", anchor='w', stretch=False, width=50)
-        self._bl_tree.column("rx_time", anchor='w', stretch=False, width=80)
-        self._bl_tree.column("comment", anchor='w', stretch=True, width=80)
         ########################################################
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         ########################################################
-        self._bl_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree))
-        self._msg_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree))
+        self._bl_tree_cl.bl_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree_cl.bl_tree))
+        self._msg_tree_cl.msg_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree_cl.msg_tree))
         self._obj_tree_cl.obj_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._obj_tree_cl.obj_tree))
         self._pack_tree_cl.mon_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._pack_tree_cl.mon_tree))
         self._node_tree_cl.node_tree.bind('<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._node_tree_cl.node_tree))
@@ -316,17 +227,6 @@ class AISmonitor(tk.Toplevel):
 
 
     #############################################################
-    def _sort_entry(self, col, tree):
-        """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
-        if True:
-            """Disabled"""
-            return
-        tmp = [(tree.set(k, col), k) for k in tree.get_children('')]
-        tmp.sort(reverse=self._sort_rev)
-        self._sort_rev = not self._sort_rev
-        for index, (val, k) in enumerate(tmp):
-            tree.move(k, '', int(index))
-
     @staticmethod
     def _del_tree(tree):
         for i in tree.get_children():
@@ -411,99 +311,6 @@ class AISmonitor(tk.Toplevel):
         self._obj_tree_cl.obj_tree_update(object_ent)
 
     #############################################################
-    # Node Tree
-    #############################################################
-    # WX Tree (init in _init_ais_mon)
-
-    #############################################################
-    # MSG Tree (init in _init_ais_mon)
-    def _get_treedata_fm_msg_pack(self, aprs_pack: dict):
-        symbol  =  self.get_symbol_fm_node_tab(aprs_pack.get('from', ''))
-        msg_text = aprs_pack.get('message_text', '')
-        if not msg_text and aprs_pack.get('response', ''):
-            msg_text = f"{aprs_pack.get('response', '')} {aprs_pack.get('msgNo', '')}"
-        return (
-            aprs_pack.get('from', ''),
-            aprs_pack.get('addresse', '') if aprs_pack.get('addresse', '') else aprs_pack.get('to', ''),
-            aprs_pack.get('port_id', ''),
-            aprs_pack.get('via', ''),
-            '>'.join(aprs_pack.get('path', [])),
-            aprs_pack.get('locator', ''),
-            round(aprs_pack.get('distance', -1)),
-            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-            msg_text,
-            symbol,
-        )
-
-    def _msg_tree_update(self, aprs_pack: dict):
-        if aprs_pack.get('format', '') != 'message':
-            return
-        node_id = aprs_pack.get('from', '')
-        if not node_id:
-            return
-        port_filter = self.port_filter_var.get()
-        port = aprs_pack.get('port_id', '')
-
-        if port_filter and port_filter != port:
-            return
-        selected_node_ids = []
-        for selected_item in self._msg_tree.selection():
-            selected_node_ids.append(self._msg_tree.set(selected_item, 'node_id'))
-
-        tree_data   = self._get_treedata_fm_msg_pack(aprs_pack)
-        if tree_data:
-            self.add_to_tree(tree_data, tree=self._msg_tree, add_to_end=False, auto_scroll=True, replace_ent=False)
-
-        if node_id in selected_node_ids:
-            for item in self._msg_tree.get_children():
-                if self._msg_tree.set(item, 'node_id') == node_id:
-                    self._msg_tree.selection_add(item)
-                    break
-
-    #############################################################
-    # BL Tree (init in _init_ais_mon)
-    def _get_treedata_fm_bl_pack(self, aprs_pack: dict):
-        symbol   =  self.get_symbol_fm_node_tab(aprs_pack.get('from', ''))
-        msg_text = aprs_pack.get('message_text', '')
-        return (
-            aprs_pack.get('from', ''),
-            aprs_pack.get('msgNo', ''),
-            aprs_pack.get('port_id', ''),
-            aprs_pack.get('via', ''),
-            '>'.join(aprs_pack.get('path', [])),
-            aprs_pack.get('locator', ''),
-            round(aprs_pack.get('distance', -1)),
-            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-            msg_text,
-            symbol,
-        )
-
-    def _bl_tree_update(self, aprs_pack: dict):
-        if aprs_pack.get('format', '') != 'bulletin':
-            return
-        node_id = aprs_pack.get('from', '')
-        if not node_id:
-            return
-        port_filter = self.port_filter_var.get()
-        port = aprs_pack.get('port_id', '')
-
-        if port_filter and port_filter != port:
-            return
-        selected_node_ids = []
-        for selected_item in self._bl_tree.selection():
-            selected_node_ids.append(self._bl_tree.set(selected_item, 'node_id'))
-
-        tree_data = self._get_treedata_fm_bl_pack(aprs_pack)
-        if tree_data:
-            self.add_to_tree(tree_data, tree=self._bl_tree, add_to_end=False, auto_scroll=True, replace_ent=False)
-
-        if node_id in selected_node_ids:
-            for item in self._bl_tree.get_children():
-                if self._bl_tree.set(item, 'node_id') == node_id:
-                    self._bl_tree.selection_add(item)
-                    break
-
-    #############################################################
     def init_ais_mon(self, init_tree=True):
         if not self._ais_obj:
             self.text_widget.insert(tk.END, "*** ERROR: No AIS found ***")
@@ -535,17 +342,17 @@ class AISmonitor(tk.Toplevel):
                                           add_to_end=False,
                                           replace_ent=True)
                 elif el.get('format', '') == 'message':
-                    msg_tree_data = self._get_treedata_fm_msg_pack(el)
+                    msg_tree_data = self._msg_tree_cl.get_treedata_fm_msg_pack(el)
                     if msg_tree_data:
                         self.add_to_tree(tree_data=msg_tree_data,
-                                          tree=self._msg_tree,
+                                          tree=self._msg_tree_cl.msg_tree,
                                           add_to_end=False,
                                           replace_ent=False)
                 elif el.get('format', '') == 'bulletin':
-                    bl_tree_data = self._get_treedata_fm_bl_pack(el)
+                    bl_tree_data = self._bl_tree_cl.get_treedata_fm_bl_pack(el)
                     if bl_tree_data:
                         self.add_to_tree(tree_data=bl_tree_data,
-                                          tree=self._bl_tree,
+                                          tree=self._bl_tree_cl.bl_tree,
                                           add_to_end=False,
                                           replace_ent=False)
             # self._add_treedata(tree_data)
@@ -639,16 +446,16 @@ class AISmonitor(tk.Toplevel):
                 tmp = tk_filter_bad_chars(tmp)
                 self.text_widget.insert(tk.END, tmp)
                 self._wx_tree_cl.wx_tree_update(pack)
-                self._msg_tree_update(pack)
-                self._bl_tree_update(pack)
+                self._msg_tree_cl.msg_tree_update(pack)
+                self._bl_tree_cl.bl_tree_update(pack)
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
             tmp = tk_filter_bad_chars(tmp)
             self.text_widget.insert(tk.END, tmp)
             self._wx_tree_cl.wx_tree_update(pack)
-            self._msg_tree_update(pack)
-            self._bl_tree_update(pack)
+            self._msg_tree_cl.msg_tree_update(pack)
+            self._bl_tree_cl.bl_tree_update(pack)
         if tr:
             self._scroll_to_end()
 
@@ -926,22 +733,6 @@ class AISmonitor(tk.Toplevel):
         if self._autoscroll_var.get():
             self.text_widget.see(tk.END)
 
-    """
-    def _destroy_win(self):
-        # self.tasker = lambda: 0
-        self._map_widget.running   = False
-        #while self._map_widget.pre_cache_thread.is_alive():
-        #    print('wait')
-        #    time.sleep(0.04)
-        #self._map_widget.delete_all_path()
-        #self._map_widget.delete_all_marker()
-        #self._map_widget.delete_all_polygon()
-        self._map_widget.destroy()
-        #self._map_widget = None
-        self._root_cl.aprs_mon_win = None
-        # self._ais_obj.ais_rx_buff = self._tmp_buffer + self._ais_obj.ais_rx_buff
-        self.destroy()
-    """
     #####################################################
     def _add_thread_gc(self, thread):
         if hasattr(self._root_cl, 'add_thread_gc'):
