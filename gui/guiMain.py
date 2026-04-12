@@ -2290,6 +2290,8 @@ class PoPT_GUI_Main:
             if hasattr(self.BBS_fwd_q_list, 'tasker'):
                 # TODO 2 Sec Tasker
                 self.BBS_fwd_q_list.tasker()
+            # APRS - MSG Spooler
+            self._update_aprs_spooler()
             if SOUND.master_sound_on:
                 # TODO Sound Task
                 self._rx_beep_sound()
@@ -2366,7 +2368,7 @@ class PoPT_GUI_Main:
 
 
     ######################################################################
-    def update_aprs_spooler(self):
+    def _update_aprs_spooler(self):
         self._add_tasker_q("update_aprs_spooler", None)
 
     def _update_aprs_spooler_task(self):

@@ -6,7 +6,7 @@ import aprslib
 from cfg.logger_config import logger
 from datetime import datetime
 
-from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame, parse_aprs_fm_aprsframe
+from ax25aprs.aprs_dec import parse_aprs_fm_ax25frame
 from cfg.constant import APRS_SW_ID, APRS_INET_PORT_ID, APRS_MAX_BUFFER, APRS_MAX_OBJ_TAB
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import locator_distance, coordinates_to_locator
@@ -14,12 +14,14 @@ from .aprs_digi import APRSDigiPeater
 from .aprs_igate import APRSiGate
 from .aprs_sms import APRSsms
 from .aprs_tracer import APRSTracer
+from .aprs_wx import APRSwx
 
 
 class APRSmain(object):
     def __init__(self, port_handler):
         logger.info("APRS-Main: Init")
         """ APRS-Server Stuff """
+        self._ais           = None
         ais_cfg             = POPT_CFG.get_CFG_aprs_ais()
         self.ais_loc        = ais_cfg.get('ais_loc', '')
         self._port_handler  = port_handler
@@ -28,18 +30,16 @@ class APRSmain(object):
             own_loc = POPT_CFG.get_guiCFG_locator()
             if own_loc:
                 self.ais_loc = own_loc
-        self._ais_active        = ais_cfg.get('ais_active', False)
         """ APRS-Node List """
         self._node_tab          = OrderedDict(POPT_CFG.get_APRS_node_tab())
         self._object_tab        = OrderedDict()  # Reported Objects
+        """ WX """
+        self._aprs_wx           = APRSwx(self, port_handler)
         """ APRS-Message Stuff """
         self._aprs_sms          = APRSsms(self, port_handler)
         """ Beacon Tracer """
         self._aprs_tracer               = APRSTracer(self, port_handler)
         """ Load CFGs and Init (Login to APRS-Server) """
-        """ AIS """
-        self._ais = None
-        self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
         """ I-Gate """
         self._i_gate                    = APRSiGate(self, port_handler)
         """ DIGI """
@@ -48,10 +48,12 @@ class APRSmain(object):
         self.loop_is_running            = False
         self._non_prio_task_timer       = time.time()
         self._parm_non_prio_task_timer  = 1
-        self._wx_update_tr              = False
         """ Watchdog """
         self._parm_watchdog = 60  # Sec.
         self._watchdog_last = time.time() + self._parm_watchdog
+        """ AIS """
+        self.ais_rx_buff = deque([] * APRS_MAX_BUFFER, maxlen=APRS_MAX_BUFFER)
+        self._ais_active = ais_cfg.get('ais_active', False)
         if self._ais_active:
             self._login()
         logger.info("APRS-IS: Init complete")
@@ -62,17 +64,15 @@ class APRSmain(object):
     def save_conf_to_file(self):
         logger.info("Save APRS Conf")
         POPT_CFG.set_APRS_node_tab(self._node_tab)
-
         # Tracer
         self._aprs_tracer.save_param()
-
         # APRS-SMS
         self._aprs_sms.aprs_sms_save()
 
 
     def reinit(self):
         self._port_handler.reinit_aprs_beacon_task()
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        ais_cfg          = POPT_CFG.get_CFG_aprs_ais()
         self.ais_loc     = ais_cfg.get('ais_loc', '')
         if not self.ais_loc:
             own_loc = POPT_CFG.get_guiCFG_locator()
@@ -184,9 +184,7 @@ class APRSmain(object):
             self._aprs_sms.aprs_sms_tasker()
             # Tracer
             self._aprs_tracer.aprs_tracer_tasker()
-            # update GUIs
-            if hasattr(self._port_handler, 'update_gui_aprs_spooler'):
-                self._port_handler.update_gui_aprs_spooler()
+
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             return True
         return False
@@ -303,10 +301,7 @@ class APRSmain(object):
         if self._aprs_sms.aprs_sms_rx(aprs_pack=aprs_pack):
             return True
         # APRS Weather
-        elif self._aprs_wx_msg_rx(aprs_pack=aprs_pack):
-            # print(aprs_pack)
-            user_db = self._get_userDB()
-            user_db.set_typ(aprs_pack.get('from', ''), 'APRS-WX')
+        elif self._aprs_wx.aprs_wx_msg_rx(aprs_pack=aprs_pack):
             return True
         # Tracer
         elif self._tracer_msg_rx(aprs_pack):
@@ -453,78 +448,17 @@ class APRSmain(object):
 
     ##########################
     # WX
-    def _aprs_wx_msg_rx(self, aprs_pack):
-        if not aprs_pack.get("weather", False):
-            return False
-        new_aprs_pack = self._correct_wrong_wx_data(aprs_pack)
-        from_aprs = new_aprs_pack.get('from', '')
-        if from_aprs:
-            ########
-            # db
-            db = self._get_db()
-            if db:
-                db.aprsWX_insert_data(new_aprs_pack)
-
-            self._wx_update_tr = True
-            return True
-        return False
-
-    def _get_db(self):
-        return self._port_handler.get_database()
-
-    @staticmethod
-    def _correct_wrong_wx_data(aprs_pack):
-        raw = aprs_pack.get('raw', '')
-        if raw:
-            if 'h100b' in raw or 'b9' in raw:
-                raw = raw.replace('h100b', 'h00b').replace('b9', 'b09')
-                new_pack = parse_aprs_fm_aprsframe(raw)
-                new_pack['locator'] = str(aprs_pack.get('locator', ''))
-                new_pack['distance'] = float(aprs_pack.get('distance', -1))
-                new_pack['port_id'] = str(aprs_pack.get('port_id', ''))
-                new_pack['rx_time'] = aprs_pack['rx_time']
-                return new_pack
-        return aprs_pack
-
     def get_wx_data(self, last_rx_days=1):
-        db = self._get_db()
-        if not db:
-            return []
-        return list(db.aprsWX_get_data_f_wxTree(last_rx_days=last_rx_days))
-        # return dict(self.aprs_wx_msg_pool)
+        return self._aprs_wx.get_wx_data(last_rx_days)
 
     def get_wx_data_f_call(self, call: str):
-        db = self._get_db()
-        if not db:
-            return []
-        return list(db.aprsWX_get_data_f_call(call))
+        return self._aprs_wx.get_wx_data_f_call(call)
 
     def delete_wx_data(self):
-        db = self._get_db()
-        if db:
-            db.aprsWX_delete_data()
+        self._aprs_wx.delete_wx_data()
 
-    #####################
-    #
-    def _get_loc(self, aprs_pack):
-        lat = aprs_pack.get('latitude', None)
-        lon = aprs_pack.get('longitude', None)
-        if lat is not None and lon is not None:
-            return coordinates_to_locator(
-                aprs_pack.get('latitude', 0),
-                aprs_pack.get('longitude', 0)
-            )
-        user_db = self._get_userDB()
-
-        db_ent = user_db.get_entry(aprs_pack.get('from', ''), add_new=False)
-        if db_ent:
-            return db_ent.LOC
-        return ''
-
-    def _get_loc_dist(self, locator):
-        if self.ais_loc and locator:
-            return locator_distance(locator, self.ais_loc)
-        return -1
+    def get_update_tr(self):
+        return self._aprs_wx.get_update_tr()
 
     #########################################
     # APRS MSG System
@@ -572,7 +506,7 @@ class APRSmain(object):
         self._aprs_tracer.tracer_sendit()
 
     def tracer_reset_auto_timer(self, ext_timer=None):
-        self._aprs_tracer.tracer_reset_auto_timer()
+        self._aprs_tracer.tracer_reset_auto_timer(ext_timer)
 
     def tracer_get_last_send(self):
         return self._aprs_tracer.tracer_get_last_send()
@@ -627,6 +561,8 @@ class APRSmain(object):
     def get_obj_tab(self):
         return self._object_tab
 
+    ############################################
+    # Helper
     def _get_userDB(self):
         try:
             return self._port_handler.get_userDB()
@@ -634,15 +570,28 @@ class APRSmain(object):
             logger.error(ex)
             return None
 
-    ############################################
-    def get_update_tr(self):
-        if not self._wx_update_tr:
-            return False
-        self._wx_update_tr = False
-        return True
-
     def _get_ais_mon_gui(self):
         gui = self._port_handler.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):
             return gui.get_ais_mon_gui()
         return None
+
+    def _get_loc(self, aprs_pack):
+        lat = aprs_pack.get('latitude', None)
+        lon = aprs_pack.get('longitude', None)
+        if lat is not None and lon is not None:
+            return coordinates_to_locator(
+                aprs_pack.get('latitude', 0),
+                aprs_pack.get('longitude', 0)
+            )
+        user_db = self._get_userDB()
+
+        db_ent = user_db.get_entry(aprs_pack.get('from', ''), add_new=False)
+        if db_ent:
+            return db_ent.LOC
+        return ''
+
+    def _get_loc_dist(self, locator):
+        if self.ais_loc and locator:
+            return locator_distance(locator, self.ais_loc)
+        return -1
