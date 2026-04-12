@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
+from ax25aprs.aprs_dec import is_cq_call
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -44,8 +45,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
             ph.set_aprsMailAlarm_PH(False)
         self._aprs_ais       = root_win.get_AIS_mainGUI()
         self._aprs_icon_tab  = root_win.get_aprs_icon_tab_16()
-        self._aprs_pn_msg    = list(self._aprs_ais.aprs_msg_pool['message'])
-        self._aprs_bl_msg    = list(self._aprs_ais.aprs_msg_pool['bulletin'])
+        self._aprs_pn_msg    = list(self._aprs_ais.get_aprs_msg_pool()['message'])
+        self._aprs_bl_msg    = list(self._aprs_ais.get_aprs_msg_pool()['bulletin'])
         """
         for el in self._aprs_bl_msg:
             print(el)
@@ -344,7 +345,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
     ################################
     def _update_tree(self):
-        self._aprs_pn_msg = list(self._aprs_ais.aprs_msg_pool['message'])
+        self._aprs_pn_msg = list(self._aprs_ais.get_aprs_msg_pool()['message'])
         self._aprs_pn_msg.reverse()
 
         for i in self._messages_treeview.get_children():
@@ -361,7 +362,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 tag = 'is_chat'
             elif from_msg.get('addresse', '') in POPT_CFG.get_stat_CFG_keys() \
                     or from_msg.get('from', '') in POPT_CFG.get_stat_CFG_keys()\
-                    or self._aprs_ais.is_cq_call(from_msg.get('addresse', '')):
+                    or is_cq_call(from_msg.get('addresse', '')):
                 tag = 'is_own'
             else:
                 tag = 'not_own'
@@ -387,7 +388,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 self._messages_treeview.insert('', 'end', values=tree_data, tags=tag)
 
     def _update_bl_tree(self):
-        self._aprs_bl_msg = list(self._aprs_ais.aprs_msg_pool['bulletin'])
+        self._aprs_bl_msg = list(self._aprs_ais.get_aprs_msg_pool()['bulletin'])
         self._aprs_bl_msg.reverse()
 
         for i in self._bl_messages_treeview.get_children():
@@ -606,14 +607,14 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
                                   message=self._getTabStr('msg_box_delete_data_msg'),
                                   parent=self):
-            self._aprs_ais.aprs_msg_pool['message'] = []
+            self._aprs_ais.del_pn_msg_pool()
             self._update_tree()
 
     def _btn_del_all_bl_msg(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),
                                   message=self._getTabStr('msg_box_delete_data_msg'),
                                   parent=self):
-            self._aprs_ais.aprs_msg_pool['bulletin'] = []
+            self._aprs_ais.del_bl_msg_pool()
             self._update_bl_tree()
 
     #####################################################

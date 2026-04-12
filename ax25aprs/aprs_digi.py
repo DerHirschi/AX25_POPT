@@ -5,7 +5,7 @@ from cfg.popt_config import POPT_CFG
 
 class APRSDigiPeater:
     def __init__(self):
-        #self._port_handler  = port_handler
+        logger.info("APRS-DIGI: Init")
 
         self._dupe_cache    = {}
         self._dupe_time     = 30

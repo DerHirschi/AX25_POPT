@@ -4,12 +4,14 @@ from collections import deque
 from ax25.ax25_util.ax25Statistics import get_dx_tx_alarm_his_pack
 from ax25aprs.aprs_dec import get_last_digi_fm_path, parse_aprs_fm_aprsframe
 from cfg.constant import APRS_TRACER_COMMENT, APRS_SW_ID
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.loc_fnc import decimal_degrees_to_aprs
 
 
 class APRSTracer:
     def __init__(self, aprs_main, port_handler):
+        logger.info("APRS-Tracer: Init")
         self._aprs_main     = aprs_main
         self._port_handler  = port_handler
 
@@ -40,6 +42,7 @@ class APRSTracer:
         self._be_tracer_interval_timer  = time.time()
 
     def save_param(self):
+        logger.info("APRS-Tracer: Save Conf")
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         ais_cfg['be_tracer_active']         = bool(self.be_tracer_active)
         ais_cfg['be_tracer_traced_packets'] = dict(self._be_tracer_traced_packets)
@@ -48,7 +51,7 @@ class APRSTracer:
         POPT_CFG.set_CFG_aprs_ais(ais_cfg)
 
     # ==========
-    def aprs_tracer_task(self):
+    def aprs_tracer_tasker(self):
         # Send Tracer Beacon in intervall
         # self._update_gui_icon()
         if self.be_tracer_active:

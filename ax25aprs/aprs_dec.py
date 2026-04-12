@@ -1,5 +1,6 @@
 import aprslib
 from UserDB.UserDBmain import USER_DB
+from cfg.constant import APRS_CQ_ADDRESSES
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
@@ -225,3 +226,8 @@ def get_last_digi_fm_path(pack: dict):
             res = call[:-1]
     return res
 
+def is_cq_call(aprs_call: str):
+    for cq_call in APRS_CQ_ADDRESSES:
+        if aprs_call.startswith(cq_call):
+            return True
+    return False

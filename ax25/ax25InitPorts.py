@@ -17,7 +17,7 @@ from sound.popt_sound import SOUND
 from sql_db.db_main import SQL_Database
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25_util.ax25Statistics import MH
-from ax25aprs.aprs_station import APRS_ais
+from ax25aprs.aprs_station import APRSmain
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
 from ax25.ax25_ports import AX25DeviceTAB
@@ -557,7 +557,7 @@ class AX25PortHandler(object):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
         logger.info("PH: APRS-AIS Init")
         if aprs_obj is None:
-            self._aprs_ais = APRS_ais(self)
+            self._aprs_ais = APRSmain(self)
         else:
             logger.info("PH: APRS-AIS ReInit")
             self._aprs_ais = aprs_obj

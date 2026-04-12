@@ -7,6 +7,7 @@ import time
 
 class APRSiGate:
     def __init__(self, aprs_ais, port_handler):
+        logger.info("APRS-IGate: Init")
         self._aprs_ais     = aprs_ais
         self._port_handler = port_handler
 
@@ -244,7 +245,7 @@ class APRSiGate:
 
     def send_full_aprs_to_is(self, aprs_pack: dict):
         """Sendet RF-Paket als korrekten flachen TNC2-String an APRS-IS"""
-        ais = self._aprs_ais.get_ais()
+        ais = self._aprs_ais.get_ais
         if ais is None or not self._igate_active or not self._igate_call:
             if not self._igate_call:
                 logger.error("APRS I-Gate: Kein igate_call (ais_call) gesetzt!")
