@@ -1,6 +1,5 @@
 from datetime import datetime
 from tkinter import ttk
-import tkinter as tk
 
 from cfg.constant import APRS_MAX_TREE_ITEMS
 from cfg.popt_config import POPT_CFG
@@ -19,12 +18,8 @@ class APRSmonObjTree(ttk.Frame):
         self._sort_rev     = False
         # =================
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._set_node_c   = lambda n: f"Total Nodes: {n}"
         # =================
-        self._call_filter_list        = self._aprsMon_root.call_filter_list
         self._port_filter_var         = self._aprsMon_root.port_filter_var
-        self._call_filter_calls_var   = self._aprsMon_root.call_filter_calls_var
-        self._node_count_label_var    = tk.StringVar(self)
         # =================
         columns = (
             'node_id',

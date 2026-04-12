@@ -17,6 +17,7 @@ from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_IGate_Tab import IGateTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Node_Tab import APRSmonNodeTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Obj_Tab import APRSmonObjTree
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_WX_Tab import APRSmonWXTree
 
 
 class AISmonitor(tk.Toplevel):
@@ -65,13 +66,10 @@ class AISmonitor(tk.Toplevel):
         self._quit                   = False
         self.is_destroyed            = False
         ##############################################
-        self._set_node_c = lambda n: f"Total Nodes: {n}"
-        ##############################################
         self._autoscroll_var        = tk.BooleanVar(self, value=True)
         self._call_filter           = tk.BooleanVar(self, value=False)
         self.call_filter_calls_var  = tk.StringVar(self)
         self.port_filter_var        = tk.StringVar(self,  value='')
-        self._node_count_label_var  = tk.StringVar(self,  value=self._set_node_c(0))
         ##############################################
         main_f = ttk.Frame(self)
         main_f.pack(fill='both', expand=True)
@@ -88,25 +86,21 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         pack_list_f  = ttk.Frame(tab)
         igate_list_f = ttk.Frame(tab)
-        # node_list_f  = ttk.Frame(tab)
         self._igate_tab     = IGateTab(self, igate_list_f)
         self._node_tree_cl  = APRSmonNodeTree(tab, self, self._port_handler)
-        self._obj_tree_cl   = APRSmonObjTree(tab, self, self._port_handler)
-        #obj_list_f   = ttk.Frame(tab)
-        wx_list_f    = ttk.Frame(tab)
+        self._obj_tree_cl   = APRSmonObjTree( tab, self, self._port_handler)
+        self._wx_tree_cl    = APRSmonWXTree(  tab, self, self._port_handler)
         msg_list_f   = ttk.Frame(tab)
         bl_list_f    = ttk.Frame(tab)
         pack_list_f.pack( fill='both', expand=True)
         igate_list_f.pack(fill='both', expand=True)
-        #obj_list_f.pack(  fill='both', expand=True)
-        wx_list_f.pack(   fill='both', expand=True)
         msg_list_f.pack(  fill='both', expand=True)
         bl_list_f.pack(   fill='both', expand=True)
         ##############################################
         tab.add(self._node_tree_cl, text="Node-List")
         tab.add(igate_list_f,text="IGate Status")
         tab.add(self._obj_tree_cl,  text="Objects")
-        tab.add(wx_list_f,   text="WX")
+        tab.add(self._wx_tree_cl,   text="WX")
         tab.add(msg_list_f,  text="Msg")
         tab.add(bl_list_f,   text="Bulletin")
         tab.add(pack_list_f, text="Packet-Monitor")
@@ -253,40 +247,6 @@ class AISmonitor(tk.Toplevel):
         ########################################################
         ########################################################
         # WX
-        columns = (
-            'node_id',
-            'port',
-            'via',
-            'loc',
-            'dist',
-            'rx_time',
-            'comment',
-        )
-        self._wx_tree = ttk.Treeview(wx_list_f, columns=columns, show='tree headings')
-        self._wx_tree.pack(side='left', fill='both', expand=True)
-        # add a scrollbar
-        scrollbar = ttk.Scrollbar(wx_list_f, orient='vertical', command=self._wx_tree.yview)
-        self._wx_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side='left', fill='y')
-
-        self._wx_tree.heading('#0', text='Symbol')
-        self._wx_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self._wx_tree))
-        self._wx_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._wx_tree))
-        self._wx_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self._wx_tree))
-        self._wx_tree.heading('loc', text="Locator", command=lambda: self._sort_entry('loc', self._wx_tree))
-        self._wx_tree.heading('dist', text="km", command=lambda: self._sort_entry('dist', self._wx_tree))
-        self._wx_tree.heading('rx_time', text=self._getTabStr('date_time'),
-                               command=lambda: self._sort_entry('rx_time', self._wx_tree))
-        self._wx_tree.heading('comment', text="Data", command=lambda: self._sort_entry('comment', self._wx_tree))
-
-        self._wx_tree.column('#0', anchor='w', stretch=False, width=50)
-        self._wx_tree.column("node_id", anchor='w', stretch=False, width=80)
-        self._wx_tree.column("port", anchor='w', stretch=False, width=60)
-        self._wx_tree.column("via", anchor='w', stretch=False, width=80)
-        self._wx_tree.column("loc", anchor='w', stretch=False, width=90)
-        self._wx_tree.column("dist", anchor='w', stretch=False, width=50)
-        self._wx_tree.column("rx_time", anchor='w', stretch=False, width=80)
-        self._wx_tree.column("comment", anchor='w', stretch=True, width=80)
         ########################################################
         # P MSG
         columns = (
@@ -415,7 +375,6 @@ class AISmonitor(tk.Toplevel):
         for i in tree.get_children():
             tree.delete(i)
 
-
     def add_to_tree(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True, replace_ent=False, prio=True):
         self._add_tasker_q("_add_to_tree", (tree_data, tree, add_to_end, auto_scroll, replace_ent), prio=prio)
 
@@ -498,59 +457,11 @@ class AISmonitor(tk.Toplevel):
     # Node Tree
     #############################################################
     # WX Tree (init in _init_ais_mon)
-    def _get_treedata_fm_wx_pack(self, aprs_pack: dict):
-        wx_data = ' - '.join([f"{k}: {val}" for k, val in aprs_pack.get('weather', {}).items()])
-        symbol  =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
-        return (
-            aprs_pack.get('from', ''),
-            aprs_pack.get('port_id', ''),
-            aprs_pack.get('via', ''),
-            aprs_pack.get('locator', ''),
-            round(aprs_pack.get('distance', -1)),
-            aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-            wx_data,
-            symbol,
-        )
-
-    def _wx_tree_update(self, aprs_pack: dict):
-        if not aprs_pack.get('weather', {}):
-            return
-        node_id = aprs_pack.get('from', '')
-        if not node_id:
-            return
-        port_filter = self.port_filter_var.get()
-        port = aprs_pack.get('port_id', '')
-
-        if port_filter and port_filter != port:
-            return
-        selected_node_ids = []
-        for selected_item in self._wx_tree.selection():
-            selected_node_ids.append(self._wx_tree.set(selected_item, 'node_id'))
-
-        items    = list(self._wx_tree.get_children())
-        list_len = len(items)
-        """
-        for index, item in enumerate(items):
-            if self._wx_tree.set(item, 'node_id') == node_id:
-                self._wx_tree.delete(item)
-                break
-        """
-
-        auto_scroll = list_len == len(list(self._wx_tree.get_children()))
-        tree_data   = self._get_treedata_fm_wx_pack(aprs_pack)
-        if tree_data:
-            self.add_to_tree(tree_data, tree=self._wx_tree, add_to_end=False, auto_scroll=auto_scroll, replace_ent=True)
-
-        if node_id in selected_node_ids:
-            for item in self._wx_tree.get_children():
-                if self._wx_tree.set(item, 'node_id') == node_id:
-                    self._wx_tree.selection_add(item)
-                    break
 
     #############################################################
     # MSG Tree (init in _init_ais_mon)
     def _get_treedata_fm_msg_pack(self, aprs_pack: dict):
-        symbol  =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
+        symbol  =  self.get_symbol_fm_node_tab(aprs_pack.get('from', ''))
         msg_text = aprs_pack.get('message_text', '')
         if not msg_text and aprs_pack.get('response', ''):
             msg_text = f"{aprs_pack.get('response', '')} {aprs_pack.get('msgNo', '')}"
@@ -595,7 +506,7 @@ class AISmonitor(tk.Toplevel):
     #############################################################
     # BL Tree (init in _init_ais_mon)
     def _get_treedata_fm_bl_pack(self, aprs_pack: dict):
-        symbol   =  self._get_symbol_fm_node_tab(aprs_pack.get('from', ''))
+        symbol   =  self.get_symbol_fm_node_tab(aprs_pack.get('from', ''))
         msg_text = aprs_pack.get('message_text', '')
         return (
             aprs_pack.get('from', ''),
@@ -660,10 +571,10 @@ class AISmonitor(tk.Toplevel):
                                       replace_ent=False,
                                       prio=False)
                 if el.get('weather', {}):
-                    wx_tree_data = self._get_treedata_fm_wx_pack(el)
+                    wx_tree_data = self._wx_tree_cl.get_treedata_fm_wx_pack(el)
                     if wx_tree_data:
                         self.add_to_tree(tree_data=wx_tree_data,
-                                          tree=self._wx_tree,
+                                          tree=self._wx_tree_cl.wx_tree,
                                           add_to_end=False,
                                           replace_ent=True)
                 elif el.get('format', '') == 'message':
@@ -770,7 +681,7 @@ class AISmonitor(tk.Toplevel):
                 tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
                 tmp = tk_filter_bad_chars(tmp)
                 self.text_widget.insert(tk.END, tmp)
-                self._wx_tree_update(pack)
+                self._wx_tree_cl.wx_tree_update(pack)
                 self._msg_tree_update(pack)
                 self._bl_tree_update(pack)
         else:
@@ -778,7 +689,7 @@ class AISmonitor(tk.Toplevel):
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
             tmp = tk_filter_bad_chars(tmp)
             self.text_widget.insert(tk.END, tmp)
-            self._wx_tree_update(pack)
+            self._wx_tree_cl.wx_tree_update(pack)
             self._msg_tree_update(pack)
             self._bl_tree_update(pack)
         if tr:
@@ -804,6 +715,12 @@ class AISmonitor(tk.Toplevel):
         node_tab_ent, object_ent = arg
         self._node_tree_cl.node_tree_update(node_tab_ent, object_ent)
 
+    def update_igate_tab(self, call: str):
+        self._add_tasker_q("update_igate_tab", call)
+
+    def _update_igate_tab_task(self, call: str):
+        if hasattr(self, '_igate_tab'):
+            self._igate_tab.update_tree(call)
     #######################################
     # MAP
     def _get_station_icon(self, call: str):
@@ -813,7 +730,7 @@ class AISmonitor(tk.Toplevel):
         if not hasattr(user_db, 'get_typ'):
             logger.error("not hasattr(user_db, 'get_typ')")
             return default_icon
-        symbol   = self._get_symbol_fm_node_tab(call) # ('', '')
+        symbol   = self.get_symbol_fm_node_tab(call) # ('', '')
         stat_typ = user_db.get_typ(call)
 
         # Beispiel-Implementierung: Zuweisung basierend auf Stationstyp
@@ -910,7 +827,6 @@ class AISmonitor(tk.Toplevel):
 
         self._map_widget.fit_bounding_box((north_lat, west_lon), (south_lat, east_lon))
     ##########################
-
     def _update_marker(self, node_id, lat, lon, symbol_table, symbol, last_update):
         if not node_id or lat is None or lon is None:
             return
@@ -966,7 +882,7 @@ class AISmonitor(tk.Toplevel):
     def set_ais_obj(self):
         self._ais_obj = self._port_handler.get_aprs_ais()
 
-    def _get_symbol_fm_node_tab(self, node_id: str):
+    def get_symbol_fm_node_tab(self, node_id: str):
         if hasattr(self._ais_obj, 'get_symbol_fm_node_tab'):
             return self._ais_obj.get_symbol_fm_node_tab(node_id)
         return '', ''
@@ -985,14 +901,6 @@ class AISmonitor(tk.Toplevel):
         except Exception as ex:
             logger.error(ex)
             return None
-
-    # == IGate Tab =============================
-    def update_igate_tab(self, call: str):
-        self._add_tasker_q("update_igate_tab", call)
-
-    def _update_igate_tab_task(self, call: str):
-        if hasattr(self, '_igate_tab'):
-            self._igate_tab.update_tree(call)
 
     #######################################
 
@@ -1027,7 +935,7 @@ class AISmonitor(tk.Toplevel):
         self._del_tree(tree=self._mon_tree)
         self._del_tree(tree=self._node_tree_cl.node_tree)
         self._del_tree(tree=self._obj_tree_cl.obj_tree)
-        self._del_tree(tree=self._wx_tree)
+        self._del_tree(tree=self._wx_tree_cl.wx_tree)
         self.init_ais_mon()
         self._node_tree_cl.node_tree_init()
         self._obj_tree_cl.obj_tree_init()
@@ -1040,7 +948,7 @@ class AISmonitor(tk.Toplevel):
         self._del_tree(tree=self._mon_tree)
         self._del_tree(tree=self._node_tree_cl.node_tree)
         self._del_tree(tree=self._obj_tree_cl.obj_tree)
-        self._del_tree(tree=self._wx_tree)
+        self._del_tree(tree=self._wx_tree_cl.wx_tree)
         self.init_ais_mon()
         self._node_tree_cl.node_tree_init()
         self._obj_tree_cl.obj_tree_init()
@@ -1055,7 +963,7 @@ class AISmonitor(tk.Toplevel):
             self._del_tree(tree=self._mon_tree)
             self._del_tree(tree=self._node_tree_cl.node_tree)
             self._del_tree(tree=self._obj_tree_cl.obj_tree)
-            self._del_tree(tree=self._wx_tree)
+            self._del_tree(tree=self._wx_tree_cl.wx_tree)
 
     def _scroll_to_end(self):
         if self._autoscroll_var.get():
