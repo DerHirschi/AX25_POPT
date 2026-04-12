@@ -17,6 +17,7 @@ from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_IGate_Tab import IGateTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Node_Tab import APRSmonNodeTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Obj_Tab import APRSmonObjTree
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Pack_Tab import APRSmonPackTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_WX_Tab import APRSmonWXTree
 
 
@@ -84,15 +85,14 @@ class AISmonitor(tk.Toplevel):
         tab = ttk.Notebook(tree_f)
         tab.pack(fill='both', expand=True)
         ##############################################
-        pack_list_f  = ttk.Frame(tab)
         igate_list_f = ttk.Frame(tab)
+        self._pack_tree_cl  = APRSmonPackTree(tab, self)
         self._igate_tab     = IGateTab(self, igate_list_f)
         self._node_tree_cl  = APRSmonNodeTree(tab, self, self._port_handler)
         self._obj_tree_cl   = APRSmonObjTree( tab, self, self._port_handler)
-        self._wx_tree_cl    = APRSmonWXTree(  tab, self, self._port_handler)
+        self._wx_tree_cl    = APRSmonWXTree(  tab, self)
         msg_list_f   = ttk.Frame(tab)
         bl_list_f    = ttk.Frame(tab)
-        pack_list_f.pack( fill='both', expand=True)
         igate_list_f.pack(fill='both', expand=True)
         msg_list_f.pack(  fill='both', expand=True)
         bl_list_f.pack(   fill='both', expand=True)
@@ -103,7 +103,7 @@ class AISmonitor(tk.Toplevel):
         tab.add(self._wx_tree_cl,   text="WX")
         tab.add(msg_list_f,  text="Msg")
         tab.add(bl_list_f,   text="Bulletin")
-        tab.add(pack_list_f, text="Packet-Monitor")
+        tab.add(self._pack_tree_cl, text="Packet-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
         opt = [
@@ -118,47 +118,6 @@ class AISmonitor(tk.Toplevel):
         port_filter_m.pack(side='left', padx=0)
         ##############################################
         # Frame für den linken Bereich
-        columns = (
-            'from',
-            'to',
-            'port',
-            'via',
-            'path',
-            'loc',
-            'typ',
-            'rx_time',
-            'comment',
-            'raw',
-        )
-        self._mon_tree = ttk.Treeview(pack_list_f, columns=columns, show='tree headings')
-        self._mon_tree.pack(side='left', fill='both', expand=True)
-        # add a scrollbar
-        scrollbar = ttk.Scrollbar(pack_list_f, orient='vertical', command=self._mon_tree.yview)
-        self._mon_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side='left', fill='y')
-
-        self._mon_tree.heading('#0', text='Symbol')
-        self._mon_tree.heading('from', text=self._getTabStr('from'), command=lambda: self._sort_entry('from', self._mon_tree))
-        self._mon_tree.heading('to', text=self._getTabStr('to'), command=lambda: self._sort_entry('to', self._mon_tree))
-        self._mon_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self._mon_tree))
-        self._mon_tree.heading('via', text='VIA', command=lambda: self._sort_entry('via', self._mon_tree))
-        self._mon_tree.heading('path', text='Path', command=lambda: self._sort_entry('path', self._mon_tree))
-        self._mon_tree.heading('loc', text='Locator', command=lambda: self._sort_entry('loc', self._mon_tree))
-        self._mon_tree.heading('typ', text='Typ', command=lambda: self._sort_entry('typ', self._mon_tree))
-        self._mon_tree.heading('rx_time', text=self._getTabStr('date_time'), command=lambda: self._sort_entry('rx_time', self._mon_tree))
-        self._mon_tree.heading('comment', text=self._getTabStr('message'), command=lambda: self._sort_entry('comment', self._mon_tree))
-        self._mon_tree.heading('raw', text='RAW', command=lambda: self._sort_entry('raw', self._mon_tree))
-        self._mon_tree.column('#0', anchor='w', stretch=False, width=50)
-        self._mon_tree.column("from", anchor='w', stretch=False, width=80)
-        self._mon_tree.column("to", anchor='w', stretch=False, width=80)
-        self._mon_tree.column("port", anchor='w', stretch=False, width=60)
-        self._mon_tree.column("via", anchor='w', stretch=False, width=80)
-        self._mon_tree.column("path", anchor='w', stretch=False, width=200)
-        self._mon_tree.column("loc", anchor='w', stretch=False, width=120)
-        self._mon_tree.column("typ", anchor='w', stretch=False, width=100)
-        self._mon_tree.column("rx_time", anchor='w', stretch=False, width=70)
-        self._mon_tree.column("comment", anchor='w', stretch=True, width=20)
-        self._mon_tree.column("raw", anchor='w', stretch=True, width=20)
         ##############################################
         # PW für den rechten Bereich
         tab2 = ttk.Notebook(mon_f)
@@ -339,7 +298,7 @@ class AISmonitor(tk.Toplevel):
         self._bl_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree))
         self._msg_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree))
         self._obj_tree_cl.obj_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._obj_tree_cl.obj_tree))
-        self._mon_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._mon_tree))
+        self._pack_tree_cl.mon_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._pack_tree_cl.mon_tree))
         self._node_tree_cl.node_tree.bind('<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._node_tree_cl.node_tree))
 
         if self._ais_obj is not None:
@@ -359,8 +318,6 @@ class AISmonitor(tk.Toplevel):
     #############################################################
     def _sort_entry(self, col, tree):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """
-        if tree == self._mon_tree:
-            return
         if True:
             """Disabled"""
             return
@@ -566,7 +523,7 @@ class AISmonitor(tk.Toplevel):
                 tree_data = self._get_treedata_fm_pack(el)
                 if tree_data:
                     self.add_to_tree(tree_data=tree_data,
-                                      tree=self._mon_tree,
+                                      tree=self._pack_tree_cl.mon_tree,
                                       add_to_end=False,
                                       replace_ent=False,
                                       prio=False)
@@ -674,7 +631,7 @@ class AISmonitor(tk.Toplevel):
         tr = False
         tree_data = self._get_treedata_fm_pack(pack)
         #self._add_treedata(tree_data)
-        self.add_to_tree(tree_data, tree=self._mon_tree, add_to_end=False, replace_ent=False, prio=False)
+        self.add_to_tree(tree_data, tree=self._pack_tree_cl.mon_tree, add_to_end=False, replace_ent=False, prio=False)
         if self._call_filter.get():
             if pack['from'] in self.call_filter_list:
                 tr = True
@@ -932,7 +889,7 @@ class AISmonitor(tk.Toplevel):
 
     def _chk_port_filter(self):
         self.text_widget.delete(0.0, tk.END)
-        self._del_tree(tree=self._mon_tree)
+        self._del_tree(tree=self._pack_tree_cl.mon_tree)
         self._del_tree(tree=self._node_tree_cl.node_tree)
         self._del_tree(tree=self._obj_tree_cl.obj_tree)
         self._del_tree(tree=self._wx_tree_cl.wx_tree)
@@ -945,7 +902,7 @@ class AISmonitor(tk.Toplevel):
         self._call_filter.set(False)
         self.call_filter_calls_var.set('')
         self.text_widget.delete(0.0, tk.END)
-        self._del_tree(tree=self._mon_tree)
+        self._del_tree(tree=self._pack_tree_cl.mon_tree)
         self._del_tree(tree=self._node_tree_cl.node_tree)
         self._del_tree(tree=self._obj_tree_cl.obj_tree)
         self._del_tree(tree=self._wx_tree_cl.wx_tree)
@@ -960,7 +917,7 @@ class AISmonitor(tk.Toplevel):
             if hasattr(self._ais_obj, 'del_ais_rx_buff'):
                 self._ais_obj.del_ais_rx_buff()
             self.text_widget.delete(0.0, tk.END)
-            self._del_tree(tree=self._mon_tree)
+            self._del_tree(tree=self._pack_tree_cl.mon_tree)
             self._del_tree(tree=self._node_tree_cl.node_tree)
             self._del_tree(tree=self._obj_tree_cl.obj_tree)
             self._del_tree(tree=self._wx_tree_cl.wx_tree)

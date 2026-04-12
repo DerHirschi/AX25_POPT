@@ -1,19 +1,16 @@
 from datetime import datetime
 from tkinter import ttk
 
-from cfg.constant import APRS_MAX_TREE_ITEMS
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
 
 class APRSmonWXTree(ttk.Frame):
-    def __init__(self, parent, aprs_mon_root, port_handler):
+    def __init__(self, parent, aprs_mon_root):
         super().__init__(parent)
         self.pack(fill='both', expand=True)
         # =================
         self._aprsMon_root = aprs_mon_root
-        self._port_handler = port_handler
-        self._ais_obj      = port_handler.get_aprs_ais()
         # =================
         self._sort_rev     = False
         # =================
