@@ -1473,6 +1473,20 @@ STR_TABLE = {
         '',
         '',
         ''),  #
+
+    'right_level_editor': (
+        'Rechte-Level Editor',
+        'Rights Level Editor',
+        'Rechtenniveau Editor',
+        'Éditeur de niveau de droits',
+        'Editor úrovně práv',
+        'Edytor poziomu praw',
+        'Editor de Nível de Direitos',
+        'Editor Livello Diritti',
+        'Редактор уровней прав',
+        'Редактор рівнів прав',
+    ),
+
     'clean_qso': (
         'QSO löschen',
         'delete QSO',

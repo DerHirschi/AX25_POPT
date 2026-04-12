@@ -996,7 +996,6 @@ class AX25Port(object):
             else:
                 axip_add = self._mh.get_AXIP_fm_DB_MH(call_str=dest_call)
 
-        print(via_calls)
         frame = AX25Frame(
             dict(
                 from_call_str=str(own_call),

@@ -406,7 +406,8 @@ class DefaultCLI(object):
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
-            self._init_popt_remote()
+            # FIXME: PRP-Remote Disabled
+            #   self._init_popt_remote()
             return True
 
         return False

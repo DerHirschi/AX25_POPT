@@ -851,14 +851,15 @@ class PoPT_GUI_Main:
                               command=lambda: self._open_settings_window('priv_win'),
                               underline=0)
         MenuTools.add_separator()
-        MenuTools.add_command(label='Remote Monitor',
-                              command=lambda: self.open_window('remote_monitor'),
-                              underline=0)
+        # FIXME: PRP-Remote Disabled
+        #MenuTools.add_command(label='Remote Monitor',
+        #                      command=lambda: self.open_window('remote_monitor'),
+        #                      underline=0)
         MenuTools.add_command(label='Dual-Port Monitor',
                               command=lambda: self.open_window('dualPort_monitor'),
                               underline=0)
         MenuTools.add_separator()
-        MenuTools.add_command(label=self._getTabStr('Rechte-Level-Editor'),
+        MenuTools.add_command(label=self._getTabStr('right_level_editor'),
                               command=lambda: self.open_window('right_level_editor'),
                               underline=0)
         MenuTools.add_command(label='Block List',
