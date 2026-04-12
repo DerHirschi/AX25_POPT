@@ -677,7 +677,7 @@ class DefaultCLI(object):
 
     def _get_alarm_out_cli(self, max_ent=10):
         alarm_his = dict(self._port_handler.get_MH().dx_alarm_perma_hist)
-        alarm_his.update(dict(self._port_handler.get_aprs_ais().be_tracer_alarm_hist))
+        alarm_his.update(dict(self._port_handler.get_aprs_ais().get_be_tracer_alarm_hist()))
         if not alarm_his:
             return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
         out = '\r'
@@ -1315,8 +1315,9 @@ class DefaultCLI(object):
         data = aprs_ais.tracer_traces_get()
         if not data:
             return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
-        intervall   = aprs_ais.be_tracer_interval
-        active      = aprs_ais.be_tracer_active
+        ais_cfg     = POPT_CFG.get_CFG_aprs_ais()
+        intervall   = ais_cfg.get('be_tracer_interval', 5)
+        active      = ais_cfg.get('be_tracer_active', 5)
         last_send   = aprs_ais.tracer_get_last_send()
         last_send   = get_timedelta_str_fm_sec(last_send, r_just=False)
         if not active:
@@ -1325,11 +1326,11 @@ class DefaultCLI(object):
             intervall_str = str(intervall)
         # out = '\r # APRS-Tracer Beacon\r\r'
         out = '\r'
-        out += f'Tracer Port     : {aprs_ais.be_tracer_port}\r'
-        out += f'Tracer Call     : {aprs_ais.be_tracer_station}\r'
-        out += f'Tracer WIDE Path: {aprs_ais.be_tracer_wide}\r'
+        out += f"Tracer Port     : {ais_cfg.get('be_tracer_port', 0)}\r"
+        out += f"Tracer Call     : {ais_cfg.get('be_tracer_station', 'NOCALL')}\r"
+        out += f"Tracer WIDE Path: {ais_cfg.get('be_tracer_wide', 1)}\r"
         out += f'Tracer intervall: {intervall_str}\r'
-        out += f'Auto Tracer     : {BOOL_ON_OFF.get(aprs_ais.be_auto_tracer_active, False).lower()}\r'
+        out += f"Auto Tracer     : {BOOL_ON_OFF.get(ais_cfg.get('be_auto_tracer_active', False), False).lower()}\r"
         # out += f'APRS-Server     : {constant.BOOL_ON_OFF.get(self._port_handler.aprs_ais., False).lower()}\r'
         out += f'Last Trace send : {last_send}\r\r'
         out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'

@@ -1087,6 +1087,8 @@ class MHWin(tk.Toplevel):
     """
     ##########################
 
+    def get_port_handler(self):
+        return self._root_win.get_PH_mainGUI()
 
     def get_mh(self):
         try:

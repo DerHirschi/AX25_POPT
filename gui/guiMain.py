@@ -3947,7 +3947,7 @@ class PoPT_GUI_Main:
     def set_tracer(self, state=None):
         ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
-            ais_obj.be_tracer_active = bool(self.setting_tracer.get())
+            ais_obj.set_be_tracer_active(bool(self.setting_tracer.get()))
         else:
             self.setting_tracer.set(False)
         self.set_auto_tracer()
@@ -3959,7 +3959,7 @@ class PoPT_GUI_Main:
     def get_tracer(self):
         ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
-            return bool(ais_obj.be_tracer_active)
+            return bool(ais_obj.get_be_tracer_active)
         return False
 
     """
@@ -3973,7 +3973,7 @@ class PoPT_GUI_Main:
     def set_tracer_fm_aprs(self):
         ais_obj = self._port_handler.get_aprs_ais()
         if ais_obj is not None:
-            self.setting_tracer.set(ais_obj.be_tracer_active)
+            self.setting_tracer.set(ais_obj.get_be_tracer_active)
         else:
             self.setting_tracer.set(False)
         self.tabbed_sideFrame.set_auto_tracer_state()
@@ -3995,10 +3995,8 @@ class PoPT_GUI_Main:
         # self.set_tracer_icon()
 
     def get_auto_tracer_duration(self):
-        ais_obj = self._port_handler.get_aprs_ais()
-        if ais_obj is None:
-            return 0
-        return ais_obj.be_auto_tracer_duration
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        return ais_cfg.get('be_auto_tracer_duration', 60)
 
     def set_auto_tracer_duration(self, dur):
         ais_obj = self._port_handler.get_aprs_ais()
