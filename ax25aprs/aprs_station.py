@@ -253,9 +253,10 @@ class APRSmain(object):
         packet['port_id'] = APRS_INET_PORT_ID
         packet['rx_time'] = datetime.now()
 
-        # === NEU: I-Gate IS → RF ===
-        if self._i_gate.should_gate_to_rf(packet):
-            self.send_APRS_as_UI(packet)  # oder eine eigene _send_igate_to_rf Methode
+        # === I-Gate IS → RF ===
+        new_packet =  self._i_gate.should_gate_to_rf(packet)
+        if new_packet is not None:
+            self.send_APRS_as_UI(new_packet, digi=True)  # oder eine eigene _send_igate_to_rf Methode
 
         # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
         self._aprs_process_rx(aprs_pack=packet)
@@ -323,7 +324,7 @@ class APRSmain(object):
             self.send_APRS_as_UI(pack)
 
     def send_APRS_as_UI(self, pack, digi=False):
-        port_id = pack.get('port_id', '')
+        port_id = pack.get('tx_port', '') or pack.get('port_id', '')
         if not port_id:
             return
         try:
@@ -474,6 +475,13 @@ class APRSmain(object):
         return self._aprs_node_tab.get_igate_tab()
 
     ############################################
+    # Digi/IGate Mon
+    def get_igate_mon(self):
+        return self._i_gate.get_igate_mon_buf()
+
+    def get_digi_mon(self):
+        return self._digi.get_digi_mon_buf()
+    ############################################
     # Helper
     def _get_userDB(self):
         try:
@@ -507,3 +515,5 @@ class APRSmain(object):
         if self.ais_loc and locator:
             return locator_distance(locator, self.ais_loc)
         return -1
+
+    ##########################################

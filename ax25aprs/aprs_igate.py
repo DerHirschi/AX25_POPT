@@ -1,4 +1,6 @@
-from ax25aprs.aprs_constant import APRS_IGATE_RATE_LIMIT
+from collections import deque
+
+from ax25aprs.aprs_constant import APRS_IGATE_RATE_LIMIT, APRS_INET_PORT_ID
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from datetime import datetime
@@ -31,6 +33,9 @@ class APRSiGate:
         # ====================
         self._dupe_cache = {}
         self._tx_counter = []
+        # ====================
+        # === Verlauf/Monitor
+        self._monitor_buffer = deque([], maxlen=10000)
         # ====================
         self._get_node_tab = lambda : self._aprs_ais.get_node_tab()
 
@@ -136,70 +141,85 @@ class APRSiGate:
         # =========================
         # OK → darf ins IS
         # =========================
+        aprs_pack['dir'] = 'in'
+        self._monitor_buffer.append(aprs_pack)
         return True, aprs_pack
 
     def should_gate_to_rf(self, aprs_pack: dict):
         """Entscheidet, ob ein Paket vom APRS-IS auf RF gesendet werden soll.
            Sehr restriktiv! Standard ist nur Messages + Positions von lokalen Stationen."""
         if not (self._igate_active and self._igate_is_to_rf):
-            return False
+            return None
 
         packet_format = aprs_pack.get('format', '')
 
         raw = aprs_pack.get('raw', '')
         if self._is_duplicate(raw):
-            return False
+            return None
         # 1. Nur Messages und Positions sind sinnvoll für IS→RF
         if packet_format not in ['message', 'position', 'object', 'item', 'wx']:
-            return False
+            return None
 
         # 2. Keine Pakete, die schon über RF kamen oder NOGATE/RFONLY haben
         via  = aprs_pack.get('via', '') or ''
         path = aprs_pack.get('path', [])
         if any(x.upper() in [p.upper() for p in path] for x in ['NOGATE', 'RFONLY']):
-            return False
+            return None
         if ',qAX,' in via or 'TCPXX' in via.upper():   # ungültiger Login auf IS
-            return False
+            return None
 
         # 3. Bei Messages: Zielstation muss kürzlich lokal gehört worden sein
         if packet_format == 'message':
             to_call = aprs_pack.get('address', '') or aprs_pack.get('addresse', '') or aprs_pack.get('to', '')
             if not to_call:
-                return False
+                return None
 
             # Schau in node_tab, ob wir die Station kürzlich gehört haben
             node_tab = self._get_node_tab()
             node = node_tab.get(to_call.upper(), {})
             if not node:
-                return False
+                return None
 
             rx_time = node.get('rx_time')
             if not rx_time:
-                return False
+                return None
 
             age_minutes = (datetime.now() - rx_time).total_seconds() / 60
             if age_minutes > self._igate_local_time:
-                return False
+                return None
 
             # Optional: Entfernung prüfen
             dist = node.get('distance', -1)
             if dist > 0 and dist > self._igate_max_distance:
-                return False
+                return None
 
-            return True
+            if not node.get('port_id', ''):
+                return None
+
+            # Auf HF Port empfange?
+            if node.get('port_id', '') == APRS_INET_PORT_ID:
+                return None
+
+            aprs_pack['dir'] = 'in'
+            aprs_pack['tx_port'] = node.get('port_id')
+            self._monitor_buffer.append(aprs_pack)
+            return aprs_pack
 
         # 4. Bei Positions/Objects/WX: nur wenn Station kürzlich gehört wurde (oder eigene Config-Regel)
         # Hier kannst du später erweitern (z.B. nur innerhalb 50 km)
         node_tab = self._get_node_tab()
         node = node_tab.get(aprs_pack.get('from', '').upper(), {})
-        if node:
+        if node and node.get('port_id', '') and node.get('port_id', '') != APRS_INET_PORT_ID:
             age_minutes = (datetime.now() - node.get('rx_time', datetime.now())).total_seconds() / 60
             if age_minutes < self._igate_local_time * 2:   # etwas großzügiger für Positions
                 dist = node.get('distance', -1)
                 if dist <= self._igate_max_distance or dist < 0:
-                    return True
+                    aprs_pack['dir'] = 'in'
+                    aprs_pack['tx_port'] = node.get('port_id')
+                    self._monitor_buffer.append(aprs_pack)
+                    return aprs_pack
 
-        return False
+        return None
 
     def _is_duplicate(self, raw):
         now = time.time()
@@ -291,8 +311,13 @@ class APRSiGate:
             logger.info(f"IGate RF→IS: {from_call} via {clean_path or 'direct'} → IS")
             logger.debug(f"Sent to IS: {packet_str}")
             logger.debug(f"Sent to IS aprs-pack: {aprs_pack}")
-
+            aprs_pack['dir'] = 'out'
+            aprs_pack['tx_port'] = APRS_INET_PORT_ID
+            aprs_pack['tx_time'] = datetime.now()
         except Exception as e:
             logger.error(f"send_full_aprs_to_is Fehler: {e}", exc_info=True)
 
 
+    ############################################################
+    def get_igate_mon_buf(self):
+        return self._monitor_buffer

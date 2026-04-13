@@ -21,6 +21,7 @@ from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Node_Tab import APRSmonNodeTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Obj_Tab import APRSmonObjTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Pack_Tab import APRSmonPackTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_WX_Tab import APRSmonWXTree
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_ownIGate_Mon import APRSmonIGateMonTree
 
 
 class AISmonitor(tk.Toplevel):
@@ -95,6 +96,7 @@ class AISmonitor(tk.Toplevel):
         self._wx_tree_cl    = APRSmonWXTree(  tab, self)
         self._msg_tree_cl   = APRSmonMSGTree( tab, self)
         self._bl_tree_cl    = APRSmonBLTree(  tab, self)
+        self._igate_mon_cl  = APRSmonIGateMonTree(tab, self, self._port_handler)
         igate_list_f.pack(fill='both', expand=True)
         ##############################################
         tab.add(self._node_tree_cl, text="Node-List")
@@ -104,6 +106,7 @@ class AISmonitor(tk.Toplevel):
         tab.add(self._msg_tree_cl,  text="Msg")
         tab.add(self._bl_tree_cl,   text="Bulletin")
         tab.add(self._pack_tree_cl, text="Packet-Monitor")
+        tab.add(self._igate_mon_cl, text="IGate-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
         opt = [
@@ -206,9 +209,9 @@ class AISmonitor(tk.Toplevel):
         self.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.bind('<Control-minus>', lambda event: self._decrease_textsize())
         ########################################################
-        self._bl_tree_cl.bl_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree_cl.bl_tree))
-        self._msg_tree_cl.msg_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree_cl.msg_tree))
-        self._obj_tree_cl.obj_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._obj_tree_cl.obj_tree))
+        self._bl_tree_cl.bl_tree.bind(    '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._bl_tree_cl.bl_tree))
+        self._msg_tree_cl.msg_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._msg_tree_cl.msg_tree))
+        self._obj_tree_cl.obj_tree.bind(  '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._obj_tree_cl.obj_tree))
         self._pack_tree_cl.mon_tree.bind( '<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._pack_tree_cl.mon_tree))
         self._node_tree_cl.node_tree.bind('<<TreeviewSelect>>', lambda e: self._draw_connection(e, self._node_tree_cl.node_tree))
 
@@ -223,6 +226,7 @@ class AISmonitor(tk.Toplevel):
         self._obj_tree_cl.obj_tree_init()
         self._igate_tab.init_tree()
         self.init_ais_mon()
+        self.update_igate_mon_tab()
         root_win.aprs_mon_win = self
 
 
@@ -410,6 +414,8 @@ class AISmonitor(tk.Toplevel):
                 self._add_to_tree_task(tree_data, tree, add_to_end, auto_scroll, replace_ent)
             elif task == 'update_igate_tab':
                 self._update_igate_tab_task(arg)
+            elif task == 'update_igate_mon_tab':
+                self._update_igate_mon_tab_task()
             tasker_n -= 1
 
         return True
@@ -448,6 +454,7 @@ class AISmonitor(tk.Toplevel):
                 self._wx_tree_cl.wx_tree_update(pack)
                 self._msg_tree_cl.msg_tree_update(pack)
                 self._bl_tree_cl.bl_tree_update(pack)
+                self.update_igate_mon_tab()
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
@@ -456,6 +463,7 @@ class AISmonitor(tk.Toplevel):
             self._wx_tree_cl.wx_tree_update(pack)
             self._msg_tree_cl.msg_tree_update(pack)
             self._bl_tree_cl.bl_tree_update(pack)
+            self.update_igate_mon_tab()
         if tr:
             self._scroll_to_end()
 
@@ -485,6 +493,13 @@ class AISmonitor(tk.Toplevel):
     def _update_igate_tab_task(self, call: str):
         if hasattr(self, '_igate_tab'):
             self._igate_tab.update_tree(call)
+
+    def update_igate_mon_tab(self):
+        self._add_tasker_q("update_igate_mon_tab", None)
+
+    def _update_igate_mon_tab_task(self):
+        self._igate_mon_cl.update_tree()
+
     #######################################
     # MAP
     def _get_station_icon(self, call: str):

@@ -1,4 +1,7 @@
 import time
+from collections import deque
+from datetime import datetime
+
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 
@@ -22,6 +25,9 @@ class APRSDigiPeater:
         self._trace_all     = digi_cfg.get('digi_trace_all',    True)
         self._dupe_time     = digi_cfg.get('digi_dup_time',     30)
         self._digi_ports    = digi_cfg.get('digi_ports',        [])
+
+        # === Verlauf/Monitor
+        self._monitor_buffer = deque([], maxlen=10000)
 
         # === Config Check
         if not self._mycall:
@@ -77,6 +83,12 @@ class APRSDigiPeater:
         logger.debug(f"APRS-DIGI ({self._mycall}): {aprs_pack.get('from')} → {new_path}")
         logger.debug(f"APRS-DIGI ({self._mycall}): APRS-Pack → {aprs_pack}")
         logger.debug(f"APRS-DIGI ({self._mycall}): New-Pack → {new_pack}")
+        # ==== DIGI Monitor
+        new_pack['tx_time'] = datetime.now()
+        new_pack['dir']  = 'out'
+        aprs_pack['dir'] = 'in'
+        self._monitor_buffer.append(aprs_pack)
+        self._monitor_buffer.append(new_pack)
 
         return new_pack
 
@@ -184,3 +196,7 @@ class APRSDigiPeater:
             k: t for k, t in self._dupe_cache.items()
             if now - t < self._dupe_time
         }
+
+    ############################################################
+    def get_digi_mon_buf(self):
+        return self._monitor_buffer
