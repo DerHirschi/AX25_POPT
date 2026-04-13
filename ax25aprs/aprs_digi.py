@@ -48,7 +48,7 @@ class APRSDigiPeater:
 
         # 8. Eigene Calls
         from_call = aprs_pack.get('from', '').upper()
-        to_call = aprs_pack.get('addresse', '').upper()
+        to_call   = aprs_pack.get('addresse', '').upper()
         if (to_call in POPT_CFG.get_stat_CFG_keys() or
                 from_call in POPT_CFG.get_stat_CFG_keys()):
             logger.info("APRS-DIGI: To/From Call is own Station. No Digipeating...")
@@ -85,8 +85,8 @@ class APRSDigiPeater:
         logger.debug(f"APRS-DIGI ({self._mycall}): New-Pack → {new_pack}")
         # ==== DIGI Monitor
         new_pack['tx_time'] = datetime.now()
-        new_pack['dir']  = 'out'
-        aprs_pack['dir'] = 'in'
+        new_pack['dir']     = 'out'
+        aprs_pack['dir']    = 'in'
         self._monitor_buffer.append(aprs_pack)
         self._monitor_buffer.append(new_pack)
 
@@ -200,3 +200,4 @@ class APRSDigiPeater:
     ############################################################
     def get_digi_mon_buf(self):
         return self._monitor_buffer
+

@@ -15,6 +15,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_BL_Tab import APRSmonBLTree
+from gui.aprs.guiAPRS_Monitor.guiAPRSmon_DIGI_Tab import APRSmonDIGIMonTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_IGate_Tab import IGateTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Msg_Tab import APRSmonMSGTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Node_Tab import APRSmonNodeTree
@@ -97,6 +98,7 @@ class AISmonitor(tk.Toplevel):
         self._msg_tree_cl   = APRSmonMSGTree( tab, self)
         self._bl_tree_cl    = APRSmonBLTree(  tab, self)
         self._igate_mon_cl  = APRSmonIGateMonTree(tab, self, self._port_handler)
+        self._digi_mon_cl   = APRSmonDIGIMonTree(tab, self, self._port_handler)
         igate_list_f.pack(fill='both', expand=True)
         ##############################################
         tab.add(self._node_tree_cl, text="Node-List")
@@ -107,6 +109,7 @@ class AISmonitor(tk.Toplevel):
         tab.add(self._bl_tree_cl,   text="Bulletin")
         tab.add(self._pack_tree_cl, text="Packet-Monitor")
         tab.add(self._igate_mon_cl, text="IGate-Monitor")
+        tab.add(self._digi_mon_cl,  text="DIGI-Monitor")
         ##############################################
         ttk.Label(tree_f, text='Port-Filter:').pack(side='left', anchor='w', padx=10)
         opt = [
@@ -227,6 +230,7 @@ class AISmonitor(tk.Toplevel):
         self._igate_tab.init_tree()
         self.init_ais_mon()
         self.update_igate_mon_tab()
+        self.update_digi_mon_tab()
         root_win.aprs_mon_win = self
 
 
@@ -416,6 +420,8 @@ class AISmonitor(tk.Toplevel):
                 self._update_igate_tab_task(arg)
             elif task == 'update_igate_mon_tab':
                 self._update_igate_mon_tab_task()
+            elif task == 'update_digi_mon_tab':
+                self._update_digi_mon_tab_task()
             tasker_n -= 1
 
         return True
@@ -455,6 +461,7 @@ class AISmonitor(tk.Toplevel):
                 self._msg_tree_cl.msg_tree_update(pack)
                 self._bl_tree_cl.bl_tree_update(pack)
                 self.update_igate_mon_tab()
+                self.update_digi_mon_tab()
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
@@ -464,6 +471,7 @@ class AISmonitor(tk.Toplevel):
             self._msg_tree_cl.msg_tree_update(pack)
             self._bl_tree_cl.bl_tree_update(pack)
             self.update_igate_mon_tab()
+            self.update_digi_mon_tab()
         if tr:
             self._scroll_to_end()
 
@@ -499,6 +507,12 @@ class AISmonitor(tk.Toplevel):
 
     def _update_igate_mon_tab_task(self):
         self._igate_mon_cl.update_tree()
+
+    def update_digi_mon_tab(self):
+        self._add_tasker_q("update_digi_mon_tab", None)
+
+    def _update_digi_mon_tab_task(self):
+        self._digi_mon_cl.update_tree()
 
     #######################################
     # MAP
@@ -605,7 +619,7 @@ class AISmonitor(tk.Toplevel):
         east_lon = max_lon + padding
 
         self._map_widget.fit_bounding_box((north_lat, west_lon), (south_lat, east_lon))
-    ##########################
+    #######################################
     def _update_marker(self, node_id, lat, lon, symbol_table, symbol, last_update):
         if not node_id or lat is None or lon is None:
             return

@@ -4,7 +4,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
 
-class APRSmonIGateMonTree(ttk.Frame):
+class APRSmonDIGIMonTree(ttk.Frame):
     def __init__(self, parent, aprs_mon_root, port_handler):
         super().__init__(parent)
         self.pack(fill='both', expand=True)
@@ -27,29 +27,29 @@ class APRSmonIGateMonTree(ttk.Frame):
             'rx_time',
             'comment',
         )
-        self.own_igate_tree = ttk.Treeview(self, columns=columns, show='tree headings')
-        self.own_igate_tree.pack(side='left', fill='both', expand=True)
+        self.digi_tree = ttk.Treeview(self, columns=columns, show='tree headings')
+        self.digi_tree.pack(side='left', fill='both', expand=True)
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(self, orient='vertical', command=self.own_igate_tree.yview)
-        self.own_igate_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar = ttk.Scrollbar(self, orient='vertical', command=self.digi_tree.yview)
+        self.digi_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='left', fill='y')
 
-        self.own_igate_tree.heading('#0', text='Symbol')
-        self.own_igate_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self.own_igate_tree))
-        self.own_igate_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self.own_igate_tree))
-        self.own_igate_tree.heading('txport', text="TX-Port", command=lambda: self._sort_entry('txport', self.own_igate_tree))
-        self.own_igate_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self.own_igate_tree))
-        self.own_igate_tree.heading('rx_time', text=self._getTabStr('date_time'),
-                                    command=lambda: self._sort_entry('rx_time', self.own_igate_tree))
-        self.own_igate_tree.heading('comment', text="Data", command=lambda: self._sort_entry('comment', self.own_igate_tree))
+        self.digi_tree.heading('#0', text='Symbol')
+        self.digi_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self.digi_tree))
+        self.digi_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self.digi_tree))
+        self.digi_tree.heading('txport', text="TX-Port", command=lambda: self._sort_entry('txport', self.digi_tree))
+        self.digi_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self.digi_tree))
+        self.digi_tree.heading('rx_time', text=self._getTabStr('date_time'),
+                               command=lambda: self._sort_entry('rx_time', self.digi_tree))
+        self.digi_tree.heading('comment', text="Data", command=lambda: self._sort_entry('comment', self.digi_tree))
 
-        self.own_igate_tree.column('#0', anchor='w', stretch=False, width=50)
-        self.own_igate_tree.column("node_id", anchor='w', stretch=False, width=80)
-        self.own_igate_tree.column("port", anchor='w', stretch=False, width=60)
-        self.own_igate_tree.column("txport", anchor='w', stretch=False, width=60)
-        self.own_igate_tree.column("via", anchor='w', stretch=False, width=80)
-        self.own_igate_tree.column("rx_time", anchor='w', stretch=False, width=80)
-        self.own_igate_tree.column("comment", anchor='w', stretch=True, width=80)
+        self.digi_tree.column('#0', anchor='w', stretch=False, width=50)
+        self.digi_tree.column("node_id", anchor='w', stretch=False, width=80)
+        self.digi_tree.column("port", anchor='w', stretch=False, width=60)
+        self.digi_tree.column("txport", anchor='w', stretch=False, width=60)
+        self.digi_tree.column("via", anchor='w', stretch=False, width=80)
+        self.digi_tree.column("rx_time", anchor='w', stretch=False, width=80)
+        self.digi_tree.column("comment", anchor='w', stretch=True, width=80)
 
 
     #############################################################
@@ -58,13 +58,13 @@ class APRSmonIGateMonTree(ttk.Frame):
         if not self._ais_obj:
             return
 
-        mon_buf = self._ais_obj.get_igate_mon()
+        mon_buf = self._ais_obj.get_digi_mon()
         if not mon_buf:
             return
 
         # aktuellen Inhalt löschen
-        for item in self.own_igate_tree.get_children():
-            self.own_igate_tree.delete(item)
+        for item in self.digi_tree.get_children():
+            self.digi_tree.delete(item)
 
         port_filter = self._port_filter_var.get() if self._port_filter_var else None
 
@@ -89,7 +89,7 @@ class APRSmonIGateMonTree(ttk.Frame):
 
             symbol = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
 
-            self.own_igate_tree.insert(
+            self.digi_tree.insert(
                 '',
                 'end',
                 text=symbol,

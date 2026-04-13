@@ -12,13 +12,12 @@ class APRSiGate:
         logger.info("APRS-IGate: Init")
         self._aprs_ais     = aprs_ais
         self._port_handler = port_handler
-
         # ====================
         # CFG
         igate_cfg                = POPT_CFG.get_CFG_aprs_igate()
-        self._igate_active       = igate_cfg.get('igate_active',       True)  # Globaler Schalter
+        self._igate_active       = igate_cfg.get('igate_active',       True)   # Globaler Schalter
         self._igate_rf_to_is     = igate_cfg.get('igate_rf_to_is',     True)   # RF → IS (meist immer an)
-        self._igate_is_to_rf     = igate_cfg.get('igate_is_to_rf',     True)  # IS → RF (vorsichtig!)
+        self._igate_is_to_rf     = igate_cfg.get('igate_is_to_rf',     True)   # IS → RF (vorsichtig!)
         self._igate_max_distance = igate_cfg.get('igate_max_distance', 80)     # km für IS→RF
         self._igate_local_time   = igate_cfg.get('igate_local_time',   45)     # Minuten, wie lange eine Station "lokal" gilt
         self._igate_ports        = igate_cfg.get('igate_ports',        [])     # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)

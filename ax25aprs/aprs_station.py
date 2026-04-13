@@ -515,5 +515,3 @@ class APRSmain(object):
         if self.ais_loc and locator:
             return locator_distance(locator, self.ais_loc)
         return -1
-
-    ##########################################
