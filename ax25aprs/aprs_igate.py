@@ -57,11 +57,11 @@ class APRSiGate:
     # I-Gate Helper
     def should_gate_to_is(self, aprs_pack: dict):
         if not (self._igate_active and self._igate_rf_to_is):
-            return False, None
+            return None
 
         port_id = aprs_pack.get('port_id', '')
         if str(port_id) not in map(str, self._igate_ports):
-            return False, None
+            return None
 
         packet_format = aprs_pack.get('format', '')
         via  = aprs_pack.get('via', '') or ''
@@ -71,10 +71,10 @@ class APRSiGate:
         # 1. Internet Müll raus filtern
         # =========================
         if any(x in via.upper() for x in ['TCPIP', 'TCPXX', 'qAR', 'qAO', 'qAC']):
-            return False, None
+            return None
 
         if any(p.upper() in ['TCPIP', 'TCPXX', 'NOGATE', 'RFONLY'] for p in path):
-            return False, None
+            return None
 
         # =========================
         # 2. Thirdparty unwrap
@@ -82,7 +82,7 @@ class APRSiGate:
         if packet_format == 'thirdparty':
             aprs_pack = self._unwrap_thirdparty(aprs_pack)
             if not aprs_pack:
-                return False, None
+                return None
 
             # OPTIONAL STRICT MODE:
             # Wenn du KEIN Re-Gating willst:
@@ -98,33 +98,33 @@ class APRSiGate:
         # 3. Nur "echte RF Pakete"
         # =========================
         if not any('*' in p for p in path):
-            return False, None
+            return None
 
         # =========================
         # 4. Rate Limit
         # =========================
         if not self._allow_tx():
-            return False, None
+            return None
 
         # =========================
         # 5. Duplikate
         # =========================
         raw = aprs_pack.get('raw', '')
         if self._is_duplicate(raw):
-            return False, None
+            return None
 
         # =========================
         # 6. Queries raus
         # =========================
         if packet_format == 'query' or aprs_pack.get('raw_message_text', '').startswith('?'):
-            return False, None
+            return None
 
         # =========================
         # 7. Ungültige Calls
         # =========================
         from_call = aprs_pack.get('from', '').upper()
         if from_call.startswith(('WIDE', 'RELAY', 'TRACE', 'NOCALL', 'N0CALL')):
-            return False, None
+            return None
 
         # =========================
         # 8. Eigene Calls
@@ -142,7 +142,7 @@ class APRSiGate:
         # =========================
         aprs_pack['dir'] = 'in'
         self._monitor_buffer.append(aprs_pack)
-        return True, aprs_pack
+        return aprs_pack
 
     def should_gate_to_rf(self, aprs_pack: dict):
         """Entscheidet, ob ein Paket vom APRS-IS auf RF gesendet werden soll.
@@ -310,7 +310,7 @@ class APRSiGate:
             logger.info(f"IGate RF→IS: {from_call} via {clean_path or 'direct'} → IS")
             logger.debug(f"Sent to IS: {packet_str}")
             logger.debug(f"Sent to IS aprs-pack: {aprs_pack}")
-            aprs_pack['dir'] = 'out'
+            aprs_pack['dir'] = 'in'
             aprs_pack['tx_port'] = APRS_INET_PORT_ID
             aprs_pack['tx_time'] = datetime.now()
         except Exception as e:

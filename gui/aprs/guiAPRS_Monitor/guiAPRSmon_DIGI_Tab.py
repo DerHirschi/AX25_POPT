@@ -23,6 +23,7 @@ class APRSmonDIGIMonTree(ttk.Frame):
             'node_id',
             'port',
             'txport',
+            'dir',
             'via',
             'rx_time',
             'comment',
@@ -36,8 +37,9 @@ class APRSmonDIGIMonTree(ttk.Frame):
 
         self.digi_tree.heading('#0', text='Symbol')
         self.digi_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self.digi_tree))
-        self.digi_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self.digi_tree))
+        self.digi_tree.heading('port', text="RX-Port", command=lambda: self._sort_entry('port', self.digi_tree))
         self.digi_tree.heading('txport', text="TX-Port", command=lambda: self._sort_entry('txport', self.digi_tree))
+        self.digi_tree.heading('dir', text="Direction", command=lambda: self._sort_entry('txport', self.digi_tree))
         self.digi_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self.digi_tree))
         self.digi_tree.heading('rx_time', text=self._getTabStr('date_time'),
                                command=lambda: self._sort_entry('rx_time', self.digi_tree))
@@ -47,14 +49,14 @@ class APRSmonDIGIMonTree(ttk.Frame):
         self.digi_tree.column("node_id", anchor='w', stretch=False, width=80)
         self.digi_tree.column("port", anchor='w', stretch=False, width=60)
         self.digi_tree.column("txport", anchor='w', stretch=False, width=60)
+        self.digi_tree.column("dir", anchor='w', stretch=False, width=80)
         self.digi_tree.column("via", anchor='w', stretch=False, width=80)
         self.digi_tree.column("rx_time", anchor='w', stretch=False, width=80)
         self.digi_tree.column("comment", anchor='w', stretch=True, width=80)
 
-
     #############################################################
     def update_tree(self):
-        """Treeview mit I-Gate Monitor Daten füllen"""
+        """Treeview mit DIGI Monitor Daten füllen"""
         if not self._ais_obj:
             return
 
@@ -72,29 +74,37 @@ class APRSmonDIGIMonTree(ttk.Frame):
             port_id = str(pack.get('port_id', ''))
 
             # Port Filter
-            if port_filter and port_filter != 'ALL':
+            if port_filter:
                 if port_id != str(port_filter):
                     continue
 
             node_id = pack.get('from', '')
-            port = port_id
-            txport = pack.get('tx_port', '')
-            via = pack.get('via', '') or ','.join(pack.get('path', []))
+            port    = port_id
+            txport  = pack.get('tx_port', '')
+            dire    = pack.get('dir', '')
+            via     = pack.get('via', '') or ','.join(pack.get('path', []))
 
             rx_time = pack.get('rx_time', '')
             if rx_time:
                 rx_time = rx_time.strftime('%d.%m.%y %H:%M:%S')
 
             comment = pack.get('raw_message_text', '') or pack.get('comment', '')
+            symbol  = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
 
-            symbol = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
-
-            self.digi_tree.insert(
-                '',
-                'end',
-                text=symbol,
-                values=(node_id, port, txport, via, rx_time, comment)
-            )
+            self._aprsMon_root.add_to_tree(
+                tree_data=(node_id, port, txport, dire, via, rx_time, comment, symbol),
+                tree=self.digi_tree,
+                add_to_end=False,
+                auto_scroll=False,
+                replace_ent=False)
+            """
+                        self.digi_tree.insert(
+                            '',
+                            'end',
+                            text=symbol,
+                            values=(node_id, port, txport, dire, via, rx_time, comment)
+                        )
+            """
 
 
     #############################################################

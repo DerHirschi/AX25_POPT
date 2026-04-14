@@ -279,12 +279,12 @@ class APRSmain(object):
         aprs_pack['rx_time'] = datetime.now()
 
         # === I-Gate RF → IS ===
-        ok, pack = self._i_gate.should_gate_to_is(aprs_pack)
-        if ok:
+        pack = self._i_gate.should_gate_to_is(dict(aprs_pack))
+        if pack is not None:
             self._i_gate.send_full_aprs_to_is(pack)
 
         # === DIGI ===
-        digi_pack = self._digi.handle_rx(aprs_pack)
+        digi_pack = self._digi.handle_rx(dict(aprs_pack))
         if digi_pack:
             self.send_APRS_as_UI(digi_pack, digi=True)
 

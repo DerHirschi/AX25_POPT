@@ -23,6 +23,7 @@ class APRSmonIGateMonTree(ttk.Frame):
             'node_id',
             'port',
             'txport',
+            'dir',
             'via',
             'rx_time',
             'comment',
@@ -38,6 +39,7 @@ class APRSmonIGateMonTree(ttk.Frame):
         self.own_igate_tree.heading('node_id', text="ID", command=lambda: self._sort_entry('node_id', self.own_igate_tree))
         self.own_igate_tree.heading('port', text="Port", command=lambda: self._sort_entry('port', self.own_igate_tree))
         self.own_igate_tree.heading('txport', text="TX-Port", command=lambda: self._sort_entry('txport', self.own_igate_tree))
+        self.own_igate_tree.heading('dir', text="Direction", command=lambda: self._sort_entry('via', self.own_igate_tree))
         self.own_igate_tree.heading('via', text="VIA", command=lambda: self._sort_entry('via', self.own_igate_tree))
         self.own_igate_tree.heading('rx_time', text=self._getTabStr('date_time'),
                                     command=lambda: self._sort_entry('rx_time', self.own_igate_tree))
@@ -47,6 +49,7 @@ class APRSmonIGateMonTree(ttk.Frame):
         self.own_igate_tree.column("node_id", anchor='w', stretch=False, width=80)
         self.own_igate_tree.column("port", anchor='w', stretch=False, width=60)
         self.own_igate_tree.column("txport", anchor='w', stretch=False, width=60)
+        self.own_igate_tree.column("dir", anchor='w', stretch=False, width=80)
         self.own_igate_tree.column("via", anchor='w', stretch=False, width=80)
         self.own_igate_tree.column("rx_time", anchor='w', stretch=False, width=80)
         self.own_igate_tree.column("comment", anchor='w', stretch=True, width=80)
@@ -77,9 +80,10 @@ class APRSmonIGateMonTree(ttk.Frame):
                     continue
 
             node_id = pack.get('from', '')
-            port = port_id
-            txport = pack.get('tx_port', '')
-            via = pack.get('via', '') or ','.join(pack.get('path', []))
+            port    = port_id
+            txport  = pack.get('tx_port', '')
+            dire    = pack.get('dir', '')
+            via     = pack.get('via', '') or ','.join(pack.get('path', []))
 
             rx_time = pack.get('rx_time', '')
             if rx_time:
@@ -89,12 +93,21 @@ class APRSmonIGateMonTree(ttk.Frame):
 
             symbol = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
 
+            """
             self.own_igate_tree.insert(
                 '',
                 'end',
                 text=symbol,
                 values=(node_id, port, txport, via, rx_time, comment)
             )
+            """
+
+            self._aprsMon_root.add_to_tree(
+                tree_data=(node_id, port, txport, dire, via, rx_time, comment, symbol),
+                tree=self.own_igate_tree,
+                add_to_end=False,
+                auto_scroll=False,
+                replace_ent=False)
 
 
     #############################################################

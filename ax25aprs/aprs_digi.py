@@ -76,9 +76,11 @@ class APRSDigiPeater:
         new_pack['path']             = new_path
         raw                          = aprs_pack.get('raw', '')
         if ':' in raw:
-            new_pack['raw_message_text'] = raw.split(':', 1)[1]
+            new_pack['raw_message_text']  = raw.split(':', 1)[1]
+            aprs_pack['raw_message_text'] = raw.split(':', 1)[1]
         else:
-            new_pack['raw_message_text'] = ''
+            new_pack['raw_message_text']  = ''
+            aprs_pack['raw_message_text'] = ''
 
         logger.debug(f"APRS-DIGI ({self._mycall}): {aprs_pack.get('from')} → {new_path}")
         logger.debug(f"APRS-DIGI ({self._mycall}): APRS-Pack → {aprs_pack}")
@@ -86,6 +88,7 @@ class APRSDigiPeater:
         # ==== DIGI Monitor
         new_pack['tx_time'] = datetime.now()
         new_pack['dir']     = 'out'
+        new_pack['txport']  = port_id
         aprs_pack['dir']    = 'in'
         self._monitor_buffer.append(aprs_pack)
         self._monitor_buffer.append(new_pack)
