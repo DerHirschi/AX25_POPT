@@ -229,8 +229,8 @@ class AISmonitor(tk.Toplevel):
         self._obj_tree_cl.obj_tree_init()
         self._igate_tab.init_tree()
         self.init_ais_mon()
-        self.update_igate_mon_tab()
-        self.update_digi_mon_tab()
+        self._igate_mon_cl.init_tree()
+        self._digi_mon_cl.init_tree()
         root_win.aprs_mon_win = self
 
 
@@ -312,6 +312,16 @@ class AISmonitor(tk.Toplevel):
                 aprs_pack.get('raw', ''),
                 (aprs_pack.get('symbol_table', ''), aprs_pack.get('symbol', ''))
             )
+
+    #############################################################
+    # IGate Tree
+    def igate_tree_update(self, pack: dict):
+        self._igate_mon_cl.igate_tree_update(pack)
+
+    #############################################################
+    # DIGI Tree
+    def digi_tree_update(self, pack: dict):
+        self._digi_mon_cl.digi_tree_update(pack)
 
     #############################################################
     # Obj Tree
@@ -418,10 +428,6 @@ class AISmonitor(tk.Toplevel):
                 self._add_to_tree_task(tree_data, tree, add_to_end, auto_scroll, replace_ent)
             elif task == 'update_igate_tab':
                 self._update_igate_tab_task(arg)
-            elif task == 'update_igate_mon_tab':
-                self._update_igate_mon_tab_task()
-            elif task == 'update_digi_mon_tab':
-                self._update_digi_mon_tab_task()
             tasker_n -= 1
 
         return True
@@ -460,8 +466,6 @@ class AISmonitor(tk.Toplevel):
                 self._wx_tree_cl.wx_tree_update(pack)
                 self._msg_tree_cl.msg_tree_update(pack)
                 self._bl_tree_cl.bl_tree_update(pack)
-                #self.update_igate_mon_tab()
-                #self.update_digi_mon_tab()
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
@@ -470,8 +474,6 @@ class AISmonitor(tk.Toplevel):
             self._wx_tree_cl.wx_tree_update(pack)
             self._msg_tree_cl.msg_tree_update(pack)
             self._bl_tree_cl.bl_tree_update(pack)
-            self.update_igate_mon_tab()
-            self.update_digi_mon_tab()
         if tr:
             self._scroll_to_end()
 
@@ -501,18 +503,6 @@ class AISmonitor(tk.Toplevel):
     def _update_igate_tab_task(self, call: str):
         if hasattr(self, '_igate_tab'):
             self._igate_tab.update_tree(call)
-
-    def update_igate_mon_tab(self):
-        self._add_tasker_q("update_igate_mon_tab", None)
-
-    def _update_igate_mon_tab_task(self):
-        self._igate_mon_cl.update_tree()
-
-    def update_digi_mon_tab(self):
-        self._add_tasker_q("update_digi_mon_tab", None)
-
-    def _update_digi_mon_tab_task(self):
-        self._digi_mon_cl.update_tree()
 
     #######################################
     # MAP

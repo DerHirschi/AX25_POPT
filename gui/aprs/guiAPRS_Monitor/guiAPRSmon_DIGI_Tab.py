@@ -14,7 +14,6 @@ class APRSmonDIGIMonTree(ttk.Frame):
         self._ais_obj      = port_handler.get_aprs_ais()
         # =================
         self._sort_rev     = False
-        self._old_mon_buf  = []
         # =================
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # =================
@@ -56,61 +55,46 @@ class APRSmonDIGIMonTree(ttk.Frame):
         self.digi_tree.column("comment", anchor='w', stretch=True, width=80)
 
     #############################################################
-    def update_tree(self):
+    def init_tree(self):
         """Treeview mit DIGI Monitor Daten füllen"""
         if not self._ais_obj:
             return
 
-        mon_buf = self._ais_obj.get_digi_mon()
+        mon_buf = list(self._ais_obj.get_digi_mon())
         if not mon_buf:
             return
-        if mon_buf == self._old_mon_buf:
-            return
-        self._old_mon_buf = list(mon_buf)
-
-        # aktuellen Inhalt löschen
-        for item in self.digi_tree.get_children():
-            self.digi_tree.delete(item)
-
-        port_filter = self._port_filter_var.get() if self._port_filter_var else None
 
         for pack in reversed(mon_buf):
-            port_id = str(pack.get('port_id', ''))
+            self.digi_tree_update(pack, init=True)
 
-            # Port Filter
-            if port_filter:
-                if port_id != str(port_filter):
-                    continue
+    def digi_tree_update(self, pack: dict, init=False):
+        port_filter = self._port_filter_var.get()
+        port_id = str(pack.get('port_id', ''))
 
-            node_id = pack.get('from', '')
-            port    = port_id
-            txport  = pack.get('tx_port', '')
-            dire    = pack.get('dir', '')
-            via     = pack.get('via', '') or ','.join(pack.get('path', []))
+        # Port Filter
+        if port_filter:
+            if port_id != str(port_filter):
+                return
 
-            rx_time = pack.get('rx_time', '')
-            if rx_time:
-                rx_time = rx_time.strftime('%d.%m.%y %H:%M:%S')
+        node_id = pack.get('from', '')
+        port = port_id
+        txport = pack.get('tx_port', '')
+        dire = pack.get('dir', '')
+        via = pack.get('via', '') or ','.join(pack.get('path', []))
 
-            comment = pack.get('raw_message_text', '') or pack.get('comment', '')
-            symbol  = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
+        rx_time = pack.get('rx_time', '')
+        if rx_time:
+            rx_time = rx_time.strftime('%d.%m.%y %H:%M:%S')
 
-            self._aprsMon_root.add_to_tree(
-                tree_data=(node_id, port, txport, dire, via, rx_time, comment, symbol),
-                tree=self.digi_tree,
-                add_to_end=True,
-                auto_scroll=False,
-                replace_ent=False)
-            """
-                        self.digi_tree.insert(
-                            '',
-                            'end',
-                            text=symbol,
-                            values=(node_id, port, txport, dire, via, rx_time, comment)
-                        )
-            """
+        comment = pack.get('raw_message_text', '') or pack.get('comment', '')
+        symbol = self._aprsMon_root.get_symbol_fm_node_tab(node_id)
 
-
+        self._aprsMon_root.add_to_tree(
+            tree_data=(node_id, port, txport, dire, via, rx_time, comment, symbol),
+            tree=self.digi_tree,
+            add_to_end=init,
+            auto_scroll=False,
+            replace_ent=False)
     #############################################################
     def _sort_entry(self, col, tree):
         """ Source: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort """

@@ -147,32 +147,10 @@ def _try_toparse_body(packet_type, body, parsed):
         if 'IGATE,' in body:
             logger.debug("Detected IGATE status frame")
 
-            igate_data = {}
-            igate_match = re.search(r'<IGATE([^>]*)>', (packet_type + body))
-
-            if igate_match:
-                content = igate_match.group(1)
-                parts = content.split(',')
-
-                for part in parts:
-                    part = part.strip()
-                    if not part:
-                        continue
-
-                    if '=' in part:
-                        k, v = part.split('=', 1)
-                        try:
-                            igate_data[k.strip()] = int(v.strip())
-                        except ValueError:
-                            igate_data[k.strip()] = v.strip()
-                    else:
-                        igate_data[part] = True
-
             result.update({
                 'format': 'igate',
                 'status': body,
                 'raw': (packet_type + body),
-                'igate': igate_data
             })
 
     elif packet_type == '>':
@@ -220,7 +198,7 @@ def _try_toparse_body(packet_type, body, parsed):
     # ==========================================================
     # Fallback: Unknown aber behalten
     else:
-        logger.debug("Unknown packet type fallback")
+        #logger.debug("Unknown packet type fallback")
 
         result.update({
             'format': 'unknown',

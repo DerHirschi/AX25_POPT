@@ -7,9 +7,9 @@ from cfg.popt_config import POPT_CFG
 
 
 class APRSDigiPeater:
-    def __init__(self):
+    def __init__(self, aprs_main):
         logger.info("APRS-DIGI: Init")
-
+        self._aprs_main     = aprs_main
         self._dupe_cache    = {}
         self._dupe_time     = 30
         # ====================
@@ -92,7 +92,8 @@ class APRSDigiPeater:
         aprs_pack['dir']    = 'in'
         self._monitor_buffer.append(aprs_pack)
         self._monitor_buffer.append(new_pack)
-
+        self._aprs_main.gui_add_digi_mon_pack(aprs_pack)
+        self._aprs_main.gui_add_digi_mon_pack(new_pack)
         return new_pack
 
     ############################################################

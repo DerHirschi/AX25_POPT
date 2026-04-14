@@ -142,6 +142,7 @@ class APRSiGate:
         # =========================
         aprs_pack['dir'] = 'in'
         self._monitor_buffer.append(aprs_pack)
+        self._update_igate_mon_gui(aprs_pack)
         return aprs_pack
 
     def should_gate_to_rf(self, aprs_pack: dict):
@@ -202,6 +203,7 @@ class APRSiGate:
             aprs_pack['dir'] = 'in'
             aprs_pack['tx_port'] = node.get('port_id')
             self._monitor_buffer.append(aprs_pack)
+            self._update_igate_mon_gui(aprs_pack)
             return aprs_pack
 
         # 4. Bei Positions/Objects/WX: nur wenn Station kürzlich gehört wurde (oder eigene Config-Regel)
@@ -216,6 +218,7 @@ class APRSiGate:
                     aprs_pack['dir'] = 'in'
                     aprs_pack['tx_port'] = node.get('port_id')
                     self._monitor_buffer.append(aprs_pack)
+                    self._update_igate_mon_gui(aprs_pack)
                     return aprs_pack
 
         return None
@@ -320,3 +323,6 @@ class APRSiGate:
     ############################################################
     def get_igate_mon_buf(self):
         return self._monitor_buffer
+
+    def _update_igate_mon_gui(self, aprs_pack: dict):
+        self._aprs_ais.gui_add_igate_mon_pack(aprs_pack)

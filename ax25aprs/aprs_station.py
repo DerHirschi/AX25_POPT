@@ -43,7 +43,7 @@ class APRSmain(object):
         """ I-Gate """
         self._i_gate            = APRSiGate(self, port_handler)
         """ DIGI """
-        self._digi              = APRSDigiPeater()
+        self._digi              = APRSDigiPeater(self)
         """ Loop Control """
         self.loop_is_running            = False
         self._non_prio_task_timer       = time.time()
@@ -482,6 +482,26 @@ class APRSmain(object):
     def get_digi_mon(self):
         return self._digi.get_digi_mon_buf()
     ############################################
+    # GUI
+    def gui_add_igate_mon_pack(self, aprs_pack: dict):
+        gui = self._get_ais_mon_gui()
+        if not gui:
+            return
+        gui.igate_tree_update(aprs_pack)
+
+
+    def gui_add_digi_mon_pack(self, aprs_pack: dict):
+        gui = self._get_ais_mon_gui()
+        if not gui:
+            return
+        gui.digi_tree_update(aprs_pack)
+
+    def _get_ais_mon_gui(self):
+        gui = self._port_handler.get_gui()
+        if hasattr(gui, 'get_ais_mon_gui'):
+            return gui.get_ais_mon_gui()
+        return None
+    ############################################
     # Helper
     def _get_userDB(self):
         try:
@@ -489,12 +509,6 @@ class APRSmain(object):
         except Exception as ex:
             logger.error(ex)
             return None
-
-    def _get_ais_mon_gui(self):
-        gui = self._port_handler.get_gui()
-        if hasattr(gui, 'get_ais_mon_gui'):
-            return gui.get_ais_mon_gui()
-        return None
 
     def _get_loc(self, aprs_pack):
         lat = aprs_pack.get('latitude', None)
