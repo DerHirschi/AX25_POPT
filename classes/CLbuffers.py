@@ -16,11 +16,10 @@ class ListBuffer:
 
     @property
     def buffer_read(self):
+        if self.is_empty:
+            return None
         self._get_thread_lock()
-        try:
-            ret = self._buffer.pop(0)
-        except IndexError:
-            ret = None
+        ret = self._buffer.pop(0)
         self._threadLock = False
         return ret
 

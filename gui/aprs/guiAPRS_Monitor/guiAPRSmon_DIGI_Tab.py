@@ -14,6 +14,7 @@ class APRSmonDIGIMonTree(ttk.Frame):
         self._ais_obj      = port_handler.get_aprs_ais()
         # =================
         self._sort_rev     = False
+        self._old_mon_buf  = []
         # =================
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # =================
@@ -63,6 +64,9 @@ class APRSmonDIGIMonTree(ttk.Frame):
         mon_buf = self._ais_obj.get_digi_mon()
         if not mon_buf:
             return
+        if mon_buf == self._old_mon_buf:
+            return
+        self._old_mon_buf = list(mon_buf)
 
         # aktuellen Inhalt löschen
         for item in self.digi_tree.get_children():
@@ -94,7 +98,7 @@ class APRSmonDIGIMonTree(ttk.Frame):
             self._aprsMon_root.add_to_tree(
                 tree_data=(node_id, port, txport, dire, via, rx_time, comment, symbol),
                 tree=self.digi_tree,
-                add_to_end=False,
+                add_to_end=True,
                 auto_scroll=False,
                 replace_ent=False)
             """

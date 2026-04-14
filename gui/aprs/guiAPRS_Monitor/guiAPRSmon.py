@@ -460,8 +460,8 @@ class AISmonitor(tk.Toplevel):
                 self._wx_tree_cl.wx_tree_update(pack)
                 self._msg_tree_cl.msg_tree_update(pack)
                 self._bl_tree_cl.bl_tree_update(pack)
-                self.update_igate_mon_tab()
-                self.update_digi_mon_tab()
+                #self.update_igate_mon_tab()
+                #self.update_digi_mon_tab()
         else:
             tr = True
             tmp = format_aprs_f_aprs_mon(pack, self._ais_obj.ais_loc)
@@ -806,6 +806,7 @@ class AISmonitor(tk.Toplevel):
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
         return all(not thread.is_alive() for thread in map_threads)
+
     # ==========================================
     def get_ais_obj(self):
         return self._ais_obj
