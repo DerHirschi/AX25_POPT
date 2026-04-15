@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import convert_str_to_datetime, get_strTab
@@ -37,7 +37,7 @@ class PlotWindow(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         ##############################
-        self._mh = PORT_HANDLER.get_MH()
+        self._mh = POPT_HANDLER.get_MH()
         ##################
         upper_frame = tk.Frame(self)
         upper_frame.pack()

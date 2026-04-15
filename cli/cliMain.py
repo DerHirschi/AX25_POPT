@@ -900,8 +900,8 @@ class DefaultCLI(object):
         total_pac = total_i = total_ui = total_data_down = total_data_up = total_rej = 0
         port_data_raw = {}  # für Graphen später speichern!
 
-        for port_id in self._port_handler.ax25_ports.keys():
-            port = self._port_handler.ax25_ports[port_id]
+        for port_id in self._port_handler.port_manager.ax25_ports.keys():
+            port = self._port_handler.port_manager.ax25_ports[port_id]
             port_name = str(port.portname)[:4].ljust(4)
 
             raw_data = mh.PortStat_get_data_by_port(port_id)
@@ -1043,7 +1043,7 @@ class DefaultCLI(object):
                 avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
                 graph_data.append({f"P{port_id}": avg_bytes})
 
-            port_name = self._port_handler.ax25_ports[port_id].portname
+            port_name = self._port_handler.port_manager.ax25_ports[port_id].portname
             graph = generate_ascii_graph(
                 graph_data,
                 f"Port {port_id} – {port_name} – Bytes/min – {hours}h",
@@ -1597,8 +1597,8 @@ class DefaultCLI(object):
     def _cmd_port(self):  # TODO Pipe
         ret = f"\r      < {self._getTabStr_CLI('port_overview')} >\r\r"
         ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
-        for port_id in self._port_handler.ax25_ports.keys():
-            port = self._port_handler.ax25_ports[port_id]
+        for port_id in self._port_handler.port_manager.ax25_ports.keys():
+            port = self._port_handler.port_manager.ax25_ports[port_id]
             name = str(port.portname).ljust(7)
             typ = port.port_typ.ljust(15)
             if port.dualPort_primaryPort in [port, None]:

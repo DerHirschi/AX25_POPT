@@ -10,7 +10,7 @@ from cfg.popt_config import POPT_CFG
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 from matplotlib.lines import Line2D
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from fnc.gui_fnc import generate_random_hex_color
 from fnc.str_fnc import convert_str_to_datetime
 
@@ -57,8 +57,8 @@ class FwdGraph(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         #######################################################################
-        self._db = PORT_HANDLER.get_database()
-        self._user_DB = PORT_HANDLER.get_userDB()
+        self._db = POPT_HANDLER.get_database()
+        self._user_DB = POPT_HANDLER.get_userDB()
         self._db_raw = self._db.bbs_get_fwdPaths()
         self._path_data = {}
         self._call_info_vars = {}

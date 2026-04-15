@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -14,7 +14,7 @@ class WXWin(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win  = root_win
-        self._ais_obj   = PORT_HANDLER.get_aprs_ais()
+        self._ais_obj   = POPT_HANDLER.get_aprs_ais()
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars

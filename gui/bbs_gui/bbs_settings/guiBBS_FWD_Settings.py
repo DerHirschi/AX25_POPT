@@ -4,7 +4,7 @@ from tkinter.messagebox import askyesno
 
 from cfg.default_config import getNew_BBS_FWD_cfg
 from cfg.logger_config import logger
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr, validate_ax25Call
 from fnc.str_fnc import get_strTab
@@ -151,7 +151,7 @@ class BBS_FWD_Settings(ttk.Frame):
                  width=20).pack(side=tk.LEFT, expand=False)
 
         ttk.Label(p_id_f, text='Port ID: ').pack(side=tk.LEFT, expand=False)
-        options = list(PORT_HANDLER.get_all_ports().keys())
+        options = list(POPT_HANDLER.get_all_ports().keys())
         if not options:
             options = ['-']
             port_id_var.set(options[0])

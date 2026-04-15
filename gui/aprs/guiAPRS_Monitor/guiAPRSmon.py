@@ -732,9 +732,13 @@ class AISmonitor(tk.Toplevel):
         self._del_tree(tree=self._node_tree_cl.node_tree)
         self._del_tree(tree=self._obj_tree_cl.obj_tree)
         self._del_tree(tree=self._wx_tree_cl.wx_tree)
+        self._del_tree(tree=self._igate_mon_cl.own_igate_tree)
+        self._del_tree(tree=self._digi_mon_cl.digi_tree)
         self.init_ais_mon()
         self._node_tree_cl.node_tree_init()
         self._obj_tree_cl.obj_tree_init()
+        self._igate_mon_cl.init_tree()
+        self._digi_mon_cl.init_tree()
 
     def _del_buffer(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_delete_data'),

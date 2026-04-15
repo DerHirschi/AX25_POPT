@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -17,8 +16,9 @@ class MSG_Center(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
-        PORT_HANDLER.set_pmsMailAlarm(False)
-        self._bbs_obj           = PORT_HANDLER.get_bbs()
+        popt_handler            = root_win.get_PH_mainGUI()
+        popt_handler.set_pmsMailAlarm(False)
+        self._bbs_obj           = popt_handler.get_bbs()
         self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         ###################################

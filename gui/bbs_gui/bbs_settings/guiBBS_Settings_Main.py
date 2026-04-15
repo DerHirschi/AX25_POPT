@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
@@ -40,7 +40,7 @@ class BBSSettingsMain(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         self._lang      = POPT_CFG.get_guiCFG_language()
-        self._bbs_obj   = PORT_HANDLER.get_bbs()
+        self._bbs_obj   = POPT_HANDLER.get_bbs()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
         self.add_win    = None

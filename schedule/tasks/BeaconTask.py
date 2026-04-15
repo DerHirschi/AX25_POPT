@@ -46,7 +46,7 @@ class BeaconTask:
             logger.warning('Beacon: kein Text gesetzt!')
             return
         self._text = replace_StringVARS(self._text,
-                                        port=self._port_handler.get_port_by_id(self._conf.get('port_id', 0)),
+                                        port=self._port_handler.port_manager.get_port_by_id(self._conf.get('port_id', 0)),
                                         )
         add_str = self._conf.get('dest_call', '')
         vias = ' '.join(self._conf.get('via_calls', []))

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, Menu
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.constant import DUALPORT_TX_MODE
 from cfg.default_config import getNew_dualPort_cfg
 from cfg.logger_config import logger
@@ -17,7 +17,7 @@ class DP_cfg_Tab(ttk.Frame):
         port_frame = ttk.Frame(self)
         port_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        port_opt = list(PORT_HANDLER.ax25_ports.keys())
+        port_opt = list(POPT_HANDLER.port_manager.ax25_ports.keys())
         self._prim_port_var = tk.StringVar(self)
         self._sec_port_var  = tk.StringVar(self)
 
@@ -202,7 +202,7 @@ class DualPortSettingsWin(tk.Toplevel):
                         new_cfg[prim_port_id] = cfg
 
         POPT_CFG.set_dualPort_CFG(new_cfg)
-        PORT_HANDLER.set_dualPort_fm_cfg()
+        POPT_HANDLER.port_manager.set_dualPort_fm_cfg()
 
     def _save_cfg(self):
         self._set_cfg_to_port()
@@ -221,7 +221,7 @@ class DualPortSettingsWin(tk.Toplevel):
                 bool(cfg.get('primary_port_id', -1) == cfg.get('secondary_port_id', -1))
         )):
             return
-        all_dualPorts = PORT_HANDLER.get_all_dualPorts_primary()
+        all_dualPorts = POPT_HANDLER.port_manager.get_all_dualPorts_primary()
         prim_port_id = cfg.get('primary_port_id', -1)
         if prim_port_id in all_dualPorts.keys():
             return

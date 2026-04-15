@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 
 
 class AlarmIconFrame(tk.Frame):
@@ -321,7 +321,7 @@ class AlarmIconFrame(tk.Frame):
 
     def _TracerIcon_tasker(self):
         """  """
-        tracer  = PORT_HANDLER.get_aprs_ais()
+        tracer  = POPT_HANDLER.get_aprs_ais()
         alarm_k = 'tracer'
         if not tracer:
             if self._tracer_label.cget('state') == 'normal':

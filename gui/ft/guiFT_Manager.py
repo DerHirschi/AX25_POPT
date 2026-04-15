@@ -3,7 +3,7 @@ import time
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number, get_strTab
@@ -200,7 +200,7 @@ class FileTransferManager(tk.Toplevel):
     def _populate_query_list(self):
         data = []
         self._ft_obj_list = []
-        ft_dict = PORT_HANDLER.get_all_ft_query()
+        ft_dict = POPT_HANDLER.get_all_ft_query()
         for ch_id in ft_dict:
             ft_list = ft_dict[ch_id]
             for el in ft_list:

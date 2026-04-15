@@ -520,7 +520,7 @@ class PipeToolSettings(tk.Toplevel):
                 conn.set_pipe(pipe_cfg=pipe_cfg)
             else:
                 # self._port_handler.add_pipe_PH(pipe)
-                port = self._port_handler.get_port_by_id(pipe_cfg['pipe_parm_port'])
+                port = self._port_handler.port_manager.get_port_by_id(pipe_cfg['pipe_parm_port'])
                 if port:
                     port.add_pipe(pipe_cfg=pipe_cfg)
 

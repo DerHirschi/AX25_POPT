@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
 from cfg.popt_config import POPT_CFG
@@ -95,7 +95,7 @@ class BeaconTab:
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
         self.port_select_var.set(str(beacon.get('port_id', 0)))  # default value
-        opt = list(PORT_HANDLER.get_all_ports().keys())
+        opt = list(POPT_HANDLER.get_all_ports().keys())
         if not opt:
             opt = ['0']
         opt = [self.port_select_var.get()] + opt
@@ -427,7 +427,7 @@ class BeaconSettings(ttk.Frame):
 
     @staticmethod
     def _re_init_beacons():
-        PORT_HANDLER.reinit_beacon_task()
+        POPT_HANDLER.reinit_beacon_task()
 
     def _new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False

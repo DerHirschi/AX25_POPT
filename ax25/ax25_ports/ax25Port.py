@@ -670,8 +670,8 @@ class AX25Port(object):
     def _tx_rxecho_buf(self):
         tr = False
         # RX-Echo
-        if self.port_id in self._port_handler.rx_echo.keys():
-            for fr in self._port_handler.rx_echo[self.port_id].tx_buff:
+        if self.port_id in self._port_handler.port_manager.rx_echo.keys():
+            for fr in self._port_handler.port_manager.rx_echo[self.port_id].tx_buff:
                 try:
                     self.tx(frame=fr)
                     tr = True
@@ -681,12 +681,12 @@ class AX25Port(object):
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
                 # self._gui_monitor(ax25frame=fr, tx=True)
-            self._port_handler.rx_echo[self.port_id].tx_buff = []
+            self._port_handler.port_manager.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def _rx_echo(self, ax25_frame):
-        if self._port_handler.rx_echo_on:
-            self._port_handler.rx_echo_input(ax_frame=ax25_frame, receiving_port_id=self.port_id)
+        if self._port_handler.port_manager.rx_echo_on:
+            self._port_handler.port_manager.rx_echo_input(ax_frame=ax25_frame, receiving_port_id=self.port_id)
 
     ##########################################################
     # DualPort
@@ -769,7 +769,7 @@ class AX25Port(object):
 
     def _dualPort_monitor_input(self, ax25frame, tx: bool, double=False):
         if not self.check_dualPort():
-            return False
+            return
         data = dict(
             tx=bool(tx),
             ax25frame=ax25frame.get_frame_conf(),

@@ -21,7 +21,7 @@ if first_setup or not POPT_CFG.get_first_setup():
 
 #############################################
 logger.info("Starte Port-Handler")
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 
 if __name__ == '__main__':
     logger.info(f"PoPT_{VER} erfolgreich gestartet....")
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     logger.info("Lade GUI")
     import gui.guiMain
     logger.info(f"Starte GUI.")
-    gui.guiMain.PoPT_GUI_Main(PORT_HANDLER)
+    gui.guiMain.PoPT_GUI_Main(POPT_HANDLER)
 
     # PORT_HANDLER.unblock_all_ports()
     # PORT_HANDLER.close_popt()

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.constant import FONT, COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -16,7 +16,7 @@ class MSG_Center_base(ttk.Frame):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.style              = root_win.style
         self._root_win          = root_win
-        self._bbs_obj           = PORT_HANDLER.get_bbs()
+        self._bbs_obj           = POPT_HANDLER.get_bbs()
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         self.text_size          = root_win.text_size
         self._text_size_tabs    = 10

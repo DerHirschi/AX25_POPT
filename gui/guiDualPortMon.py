@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, TclError, Menu
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
 from cfg.logger_config import logger
@@ -250,7 +250,7 @@ class DualPort_Monitor(tk.Toplevel):
         self._tabControl_prim_ports.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
         self.tab_list: {int: DP_MonitorTab} = {}
 
-        all_prim_Ports = PORT_HANDLER.get_all_dualPorts_primary()
+        all_prim_Ports = POPT_HANDLER.port_manager.get_all_dualPorts_primary()
         i = 0
         for port_id in all_prim_Ports.keys():
             port = all_prim_Ports.get(port_id, None)

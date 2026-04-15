@@ -65,8 +65,6 @@ class APRSmonIGateMonTree(ttk.Frame):
         if not mon_buf:
             return
 
-        #port_filter = self._port_filter_var.get() if self._port_filter_var else None
-
         for pack in reversed(mon_buf):
             self.igate_tree_update(pack, init=True)
 
@@ -84,8 +82,8 @@ class APRSmonIGateMonTree(ttk.Frame):
         dire = pack.get('dir', '')
         via = pack.get('via', '') or ','.join(pack.get('path', []))
 
-        rx_time = pack.get('rx_time', '')
-        if rx_time:
+        rx_time = pack.get('rx_time', None)
+        if hasattr(rx_time, 'strftime'):
             rx_time = rx_time.strftime('%d.%m.%y %H:%M:%S')
 
         comment = pack.get('raw_message_text', '') or pack.get('comment', '')

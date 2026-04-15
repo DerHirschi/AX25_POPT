@@ -292,7 +292,7 @@ class AX25DigiConnection:
         if self._conf_digi_ssid_port:
             tx_port_id = int(self._digi_ssid)
 
-        port = self._port_handler.get_port_by_id(tx_port_id)
+        port = self._port_handler.port_manager.get_port_by_id(tx_port_id)
         if not port:
             logger.warning(f"UI-DIGI ERROR: No Port: {tx_port_id} - DIGI: {self._digi_call} - SSID: {self._digi_ssid}")
             return

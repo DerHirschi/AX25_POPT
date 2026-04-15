@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import math
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.constant import COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -11,7 +11,7 @@ class RxEchoSettings(ttk.Frame):
     def __init__(self, tabctl, root_win=None):
         ttk.Frame.__init__(self, tabctl)
         # VARS
-        n_ports = len(PORT_HANDLER.get_all_ports().keys())
+        n_ports = len(POPT_HANDLER.get_all_ports().keys())
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
         self.win_height = 650
@@ -25,9 +25,9 @@ class RxEchoSettings(ttk.Frame):
         x = 30
         fg, bg = self._get_colorMap()
 
-        for i in range(len(list(PORT_HANDLER.get_all_ports().keys()))):
-            k = list(PORT_HANDLER.get_all_ports().keys())[i]
-            port = PORT_HANDLER.get_all_ports()[k]
+        for i in range(len(list(POPT_HANDLER.get_all_ports().keys()))):
+            k = list(POPT_HANDLER.get_all_ports().keys())[i]
+            port = POPT_HANDLER.get_all_ports()[k]
             var_dict = {}
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port.port_id)
             text = 'Port {}: {}'.format(port.port_id, port_cfg.get('parm_PortName', ''))
@@ -39,7 +39,7 @@ class RxEchoSettings(ttk.Frame):
             label.place(x=x, y=y)
 
             yy = y + 20
-            for kk in list(PORT_HANDLER.get_all_ports().keys()):
+            for kk in list(POPT_HANDLER.get_all_ports().keys()):
                 if kk != k:
                     # RX
                     rx_text = 'Port {} RX'.format(kk)
@@ -91,7 +91,7 @@ class RxEchoSettings(ttk.Frame):
 
     def _check_cmd(self, k, kk):
         """Aktualisiert die Label-Farben für Paar-Zustände."""
-        for k in PORT_HANDLER.rx_echo.keys():
+        for k in POPT_HANDLER.port_manager.rx_echo.keys():
             if k in self.check_vars.keys():
                 for kk in list(self.check_vars[k].keys()):
                     # RX
@@ -106,8 +106,8 @@ class RxEchoSettings(ttk.Frame):
                                 calls = var.split(' ')
                         else:
                             calls = var.split(' ')
-                        PORT_HANDLER.rx_echo[k].rx_ports[kk] = list(calls)
-                        PORT_HANDLER.rx_echo[kk].tx_ports[k] = list(calls)
+                        POPT_HANDLER.port_manager.rx_echo[k].rx_ports[kk] = list(calls)
+                        POPT_HANDLER.port_manager.rx_echo[kk].tx_ports[k] = list(calls)
                         self.check_vars[kk][k][7].set(var)
                         self.check_vars[k][kk][6].set(var)
                     else:
@@ -117,10 +117,10 @@ class RxEchoSettings(ttk.Frame):
                         self.check_vars[kk][k][5].configure(
                             background=self.off_color[0], foreground=self.off_color[2]
                         )
-                        if kk in list(PORT_HANDLER.rx_echo[k].rx_ports.keys()):
-                            del PORT_HANDLER.rx_echo[k].rx_ports[kk]
-                        if k in list(PORT_HANDLER.rx_echo[kk].tx_ports.keys()):
-                            del PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                        if kk in list(POPT_HANDLER.port_manager.rx_echo[k].rx_ports.keys()):
+                            del POPT_HANDLER.port_manager.rx_echo[k].rx_ports[kk]
+                        if k in list(POPT_HANDLER.port_manager.rx_echo[kk].tx_ports.keys()):
+                            del POPT_HANDLER.port_manager.rx_echo[kk].tx_ports[k]
 
                     # TX
                     if self.check_vars[k][kk][1].get() and self.check_vars[kk][k][0].get():
@@ -134,8 +134,8 @@ class RxEchoSettings(ttk.Frame):
                                 calls = var.split(' ')
                         else:
                             calls = var.split(' ')
-                        PORT_HANDLER.rx_echo[k].tx_ports[kk] = calls
-                        PORT_HANDLER.rx_echo[kk].rx_ports[k] = calls
+                        POPT_HANDLER.port_manager.rx_echo[k].tx_ports[kk] = calls
+                        POPT_HANDLER.port_manager.rx_echo[kk].rx_ports[k] = calls
                         self.check_vars[kk][k][6].set(var)
                         self.check_vars[k][kk][7].set(var)
                     else:
@@ -145,21 +145,21 @@ class RxEchoSettings(ttk.Frame):
                         self.check_vars[kk][k][4].configure(
                             background=self.off_color[0], foreground=self.off_color[2]
                         )
-                        if kk in list(PORT_HANDLER.rx_echo[k].tx_ports.keys()):
-                            del PORT_HANDLER.rx_echo[k].tx_ports[kk]
-                        if k in list(PORT_HANDLER.rx_echo[kk].rx_ports.keys()):
-                            del PORT_HANDLER.rx_echo[kk].rx_ports[k]
+                        if kk in list(POPT_HANDLER.port_manager.rx_echo[k].tx_ports.keys()):
+                            del POPT_HANDLER.port_manager.rx_echo[k].tx_ports[kk]
+                        if k in list(POPT_HANDLER.port_manager.rx_echo[kk].rx_ports.keys()):
+                            del POPT_HANDLER.port_manager.rx_echo[kk].rx_ports[k]
 
     def _update_settings(self):
-        for k in PORT_HANDLER.rx_echo.keys():
+        for k in POPT_HANDLER.port_manager.rx_echo.keys():
             if k in self.check_vars.keys():
                 for kk in list(self.check_vars[k].keys()):
                     tr_k_kk = False
                     tr_kk_k = False
                     # RX
                     try:
-                        if k in PORT_HANDLER.rx_echo[kk].tx_ports.keys():
-                            call_list_kk_k = PORT_HANDLER.rx_echo[kk].tx_ports[k]
+                        if k in POPT_HANDLER.port_manager.rx_echo[kk].tx_ports.keys():
+                            call_list_kk_k = POPT_HANDLER.port_manager.rx_echo[kk].tx_ports[k]
                             call_st = ' '.join(call_list_kk_k)
                             self.check_vars[kk][k][7].set(call_st)
                             self.check_vars[kk][k][1].set(True)
@@ -171,8 +171,8 @@ class RxEchoSettings(ttk.Frame):
                         self.check_vars[kk][k][1].set(False)
                         self.check_vars[kk][k][7].set('')
 
-                    if kk in PORT_HANDLER.rx_echo[k].rx_ports.keys():
-                        call_list_k_kk = PORT_HANDLER.rx_echo[k].rx_ports[kk]
+                    if kk in POPT_HANDLER.port_manager.rx_echo[k].rx_ports.keys():
+                        call_list_k_kk = POPT_HANDLER.port_manager.rx_echo[k].rx_ports[kk]
                         call_st = ' '.join(call_list_k_kk)
                         self.check_vars[k][kk][6].set(call_st)
                         self.check_vars[k][kk][0].set(True)

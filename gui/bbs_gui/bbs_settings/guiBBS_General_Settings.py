@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
+from core.popt_core import POPT_HANDLER
 from cfg.constant import CLI_TYP_BOX
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_ax25Call
@@ -13,7 +13,7 @@ class BBSGeneralSettings(ttk.Frame):
         ttk.Frame.__init__(self, tabctl)
         self.style      = root_win.style
         self._root_win  = root_win
-        self._bbs_obj   = PORT_HANDLER.get_bbs()
+        self._bbs_obj   = POPT_HANDLER.get_bbs()
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # CFG

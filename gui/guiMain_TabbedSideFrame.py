@@ -490,7 +490,7 @@ class SideTabbedFrame:
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
         # self._mon_port_on_vars = {}
-        all_ports = port_handler.ax25_ports
+        all_ports = port_handler.port_manager.ax25_ports
         i = 1
         for port_id in all_ports:
             # self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
@@ -661,7 +661,7 @@ class SideTabbedFrame:
 
     def _set_rx_echo(self, event=None):
         port_handler = self._root_class.get_PH_mainGUI()
-        port_handler.rx_echo_on = bool(self._root_class.setting_rx_echo.get())
+        port_handler.port_manager.rx_echo_on = bool(self._root_class.setting_rx_echo.get())
         self._root_class.set_rxEcho_icon(self._root_class.setting_rx_echo.get())
 
     def set_auto_tracer_state(self):
