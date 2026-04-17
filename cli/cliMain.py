@@ -622,7 +622,7 @@ class DefaultCLI(object):
             via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
             vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
 
-        conn = self._port_handler.new_outgoing_connection(
+        conn = self._port_handler.connection_manager.new_outgoing_connection(
                 own_call=self._to_call_str,
                 dest_call=dest_call,
                 via_calls=vias,

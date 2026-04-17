@@ -34,7 +34,7 @@ class AutoConnTask:
             dest_call = self._conf.get('via_calls')[0]
             via_calls = []
 
-        connection = port_handler.new_outgoing_connection(
+        connection = port_handler.connection_manager.new_outgoing_connection(
             dest_call=  dest_call,
             own_call=   self._conf.get('own_call'),
             via_calls=  via_calls,                            # Auto lookup in MH if not exclusive Mode

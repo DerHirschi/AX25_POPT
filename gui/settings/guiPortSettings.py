@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
+from ax25.ax25_ports import AX25DeviceTAB
 from core.popt_core import POPT_HANDLER
 from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
     TNC_KISS_END_CMD, KISSDEVICES, COLOR_MAP
@@ -24,7 +25,7 @@ class PortSetTab:
 
         self._need_reinit = False
         self._port_setting: dict = new_settings
-        port_types = POPT_HANDLER.get_ax25types_keys()
+        port_types = list(AX25DeviceTAB.keys())
         if not is_linux() or is_macos():
             port_types.remove('AX25KERNEL')
         self.tab = ttk.Frame(tabclt)
@@ -1093,7 +1094,7 @@ class PortSettingsWin(ttk.Frame):
                 ind = int(ind.replace('Port ', '')[0])
                 del_port_data(ind)
 
-                POPT_HANDLER.disco_conn_fm_port(ind)
+                POPT_HANDLER.connection_manager.disco_conn_fm_port(ind)
                 POPT_HANDLER.port_manager.close_port(ind)
                 if POPT_CFG.del_port_CFG_fm_id(ind):
                     del self._tab_list[ind]
@@ -1118,7 +1119,7 @@ class PortSettingsWin(ttk.Frame):
             self._tab_list[port_id].set_vars_to_cfg()
             if self._tab_list[port_id].need_reinit():
                 if POPT_HANDLER.get_all_connections():
-                    POPT_HANDLER.disco_all_Conn()
+                    POPT_HANDLER.connection_manager.disco_all_Conn()
                     # messagebox.showinfo('Stationen werden disconnected!', 'Es werden alle Stationen disconnected')
                     messagebox.showinfo(get_strTab('all_disco1', self._lang),
                                         get_strTab('all_disco2', self._lang),

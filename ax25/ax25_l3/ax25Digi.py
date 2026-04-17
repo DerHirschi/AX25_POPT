@@ -96,7 +96,7 @@ class AX25DigiConnection:
             tx_port_id = int(self._digi_ssid)
 
         # print(f"DIGI INIT: axConf: {ax25_frame_conf}")
-        tx_conn = self._port_handler.new_outgoing_connection(
+        tx_conn = self._port_handler.connection_manager.new_outgoing_connection(
             dest_call=self._ax25_conf.get('to_call_str', ''),
             own_call=self._ax25_conf.get('from_call_str', ''),
             via_calls=self._ax25_conf.get('via_calls_str', []),  # Auto lookup in MH if not exclusive Mode
@@ -131,7 +131,7 @@ class AX25DigiConnection:
         self._tx_conn_uid = str(self._tx_conn.uid)
         self._tx_port = self._tx_conn.own_port
         # self._rx_port.add_digi_conn(self)       #####################################################
-        logger.debug(f"LinkConn : {self._port_handler.link_connections.items()}")
+        logger.debug(f"LinkConn : {self._port_handler.connection_manager.link_connections.items()}")
         logger.debug(f"LinkConn : txConns: {self._tx_port.connections}")
         logger.debug(f"LinkConn : txConn UID: {self._tx_conn.uid}")
         logger.debug(f"LinkConn : txConn_UID: {self._tx_conn_uid}")
@@ -159,10 +159,10 @@ class AX25DigiConnection:
                 self._state_0_error()
                 return False
             self._rx_port.connections[str(self._rx_conn_uid)] = self._rx_conn
-            self._port_handler.insert_new_connection_PH(self._rx_conn, is_service=True)
+            self._port_handler.connection_manager.insert_new_connection_PH(self._rx_conn, is_service=True)
             self._state = 3
 
-            logger.debug(f"LinkConn Accept: {self._port_handler.link_connections.items()}")
+            logger.debug(f"LinkConn Accept: {self._port_handler.connection_manager.link_connections.items()}")
             logger.debug(f"RX-State: {self._rx_conn.l3_state_id}")
             logger.debug(f"TX-State: {self._tx_conn.l3_state_id}")
             return True

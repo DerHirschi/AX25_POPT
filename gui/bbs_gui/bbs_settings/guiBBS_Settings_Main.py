@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
@@ -39,8 +38,9 @@ class BBSSettingsMain(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
+        self._popt_handler = root_win.get_PH_mainGUI()
         self._lang      = POPT_CFG.get_guiCFG_language()
-        self._bbs_obj   = POPT_HANDLER.get_bbs()
+        self._bbs_obj   = self._popt_handler.get_bbs()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
         self.add_win    = None
@@ -183,6 +183,9 @@ class BBSSettingsMain(tk.Toplevel):
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'update_win'):
                 tab.update_win()
+
+    def get_popt_handler(self):
+        return self._popt_handler
 
     def destroy_win(self):
         if hasattr(self.add_win, 'destroy'):

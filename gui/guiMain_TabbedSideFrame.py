@@ -1157,7 +1157,7 @@ class SideTabbedFrame:
         if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
                                   message=self._getTabStr('disconnect_all_ask'), parent=self._root_class.main_win):
             port_handler = self._root_class.get_PH_mainGUI()
-            port_handler.disco_all_Conn()
+            port_handler.connection_manager.disco_all_Conn()
 
     def get_tab_index(self):
         try:

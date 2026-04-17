@@ -454,7 +454,7 @@ class PipeToolSettings(tk.Toplevel):
         self.tabControl = ttk.Notebook(main_f, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list = []
-        all_pipes = self._port_handler.get_all_pipes()
+        all_pipes = self._port_handler.pipe_manager.get_all_pipes()
         for pipe in all_pipes:
             pipe_cfg = pipe.get_cfg_fm_pipe()
             if ((pipe_cfg.get('pipe_parm_permanent', False) and not pipe_cfg.get('pipe_parm_Proto', True)) or

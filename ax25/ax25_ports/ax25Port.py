@@ -211,10 +211,10 @@ class AX25Port(object):
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
         """
-        if uid in self._port_handler.link_connections.keys():
+        if uid in self._port_handler.connection_manager.link_connections.keys():
             # logger.debug(self._logTag + f"Link-Conn RX: {uid}")
-            conn = self._port_handler.link_connections[uid][0]
-            link_call = str(self._port_handler.link_connections[uid][1])
+            conn = self._port_handler.connection_manager.link_connections[uid][0]
+            link_call = str(self._port_handler.connection_manager.link_connections[uid][1])
             """
             logger.debug(self._logTag + f"Link-Conn RX link_call: {link_call}")
             logger.debug(self._logTag + f"Link-Conn RX is_link_remote: {conn.is_link_remote}")
@@ -838,19 +838,19 @@ class AX25Port(object):
 
     def add_pipe(self, pipe_cfg=None, pipe=None):
         if pipe is None and not pipe_cfg:
-            return False
+            return None
         if pipe is None:
             try:
                 pipe = AX25Pipe(pipe_cfg=pipe_cfg)
             except AttributeError:
                 logger.error(f"Port {self.port_id}: AttributeError while adding AX25Pipe")
-                return False
+                return None
             except Exception as ex:
                 logger.error(f"Port {self.port_id}: Error while adding AX25Pipe")
                 logger.error(ex)
-                return False
+                return None
         self.pipes[pipe.get_pipe_uid()] = pipe
-        return True
+        return pipe
 
     def del_pipe(self, pipe):
         if not pipe:
@@ -943,7 +943,7 @@ class AX25Port(object):
         return conn
 
     def del_connections(self, conn):
-        self._port_handler.del_link(conn.uid)
+        self._port_handler.connection_manager.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         for conn_uid in list(self.connections.keys()):

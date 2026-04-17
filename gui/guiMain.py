@@ -535,12 +535,12 @@ class PoPT_GUI_Main:
         if self._quit:
             return
         self._set_port_blocking(1)
-        self._popt_handler.disco_all_Conn()
+        self._popt_handler.connection_manager.disco_all_Conn()
         self._quit = True
         self._popt_handler.close_sound_PH()
         self._thread_gc += SOUND.get_sound_thread()
         self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
-        self._popt_handler.disco_all_Conn()
+        self._popt_handler.connection_manager.disco_all_Conn()
         self._Pacman.save_path_data()
         logger.info('GUI: Closing GUI')
         for wn in [
@@ -3224,7 +3224,7 @@ class PoPT_GUI_Main:
         if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
                                   message=self._getTabStr('disconnect_all_ask'),
                                   parent=self.main_win):
-            self._popt_handler.disco_all_Conn()
+            self._popt_handler.connection_manager.disco_all_Conn()
 
     # DISCO ENDE
     #######################################################################

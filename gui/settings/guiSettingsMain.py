@@ -27,6 +27,7 @@ class SettingsMain(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width = 1200
         win_height = 660
+        self._popt_handler = root_win.get_PH_mainGUI()
         self.style      = root_win.style
         self.style_name = root_win.style_name
         self.geometry(f"{win_width}x"
@@ -183,6 +184,9 @@ class SettingsMain(tk.Toplevel):
     def _abort_btn(self):
         self._root_win.sysMsg_to_monitor(get_strTab('hin2', self._lang))
         self.destroy_win()
+
+    def get_popt_handler(self):
+        return self._popt_handler
 
     def destroy_win(self):
         for strTab_name, tab in self._tab_list.items():

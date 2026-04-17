@@ -75,7 +75,7 @@ class ConverseCLI(DefaultCLI):
 
     def _cmd_q(self):
         """Beendet die Verbindung"""
-        self._port_handler.update_conn_history(self._connection, disco=True, inter_connect=True)
+        self._port_handler.connection_manager.update_conn_history(self._connection, disco=True, inter_connect=True)
         self._remove_fm_converse()
         self._connection.cli      = self._prev_cli
         self._connection.cli_type = str(self._prev_cli.cli_name)

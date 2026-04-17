@@ -1134,7 +1134,7 @@ class PRP_remoteGUI(tk.Toplevel):
     def get_conn_by_uid(self, uid: str):
         ph = self._root.get_PH_mainGUI()
         if hasattr(ph, 'get_connections_by_uid'):
-            return ph.get_connections_by_uid(uid)
+            return ph.connection_manager.get_connections_by_uid(uid)
         return None
     ####################################################
     #

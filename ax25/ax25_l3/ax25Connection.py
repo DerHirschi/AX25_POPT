@@ -279,7 +279,7 @@ class AX25Conn:
     # Converse Interconnect
     def enter_converse_cli(self):
         self.cli = ConverseCLI(self)
-        self._port_handler.update_conn_history(self, disco=False, inter_connect=True)
+        self._port_handler.connection_manager.update_conn_history(self, disco=False, inter_connect=True)
         #self.cli_type = str(self.cli.cli_name)
 
     # ========= TX
@@ -860,7 +860,7 @@ class AX25Conn:
     def new_link_connection(self, conn):
         if conn is None:
             return False
-        if conn.uid in self._port_handler.link_connections.keys():
+        if conn.uid in self._port_handler.connection_manager.link_connections.keys():
             conn.change_l3_state(4)
             conn.zustand_exec.tx()
             return False
@@ -874,10 +874,10 @@ class AX25Conn:
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
             self.digi_call = digi_call
             print("LC 1")
-            self._port_handler.link_connections[str(conn.uid)] = conn, ''
+            self._port_handler.connection_manager.link_connections[str(conn.uid)] = conn, ''
         else:
             print("LC 2")
-            self._port_handler.link_connections[str(conn.uid)] = conn, conn.my_call_str
+            self._port_handler.connection_manager.link_connections[str(conn.uid)] = conn, conn.my_call_str
 
         self.LINK_Connection = conn
         self.is_link = True
@@ -891,14 +891,14 @@ class AX25Conn:
             print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
-        if self.uid in list(self._port_handler.link_connections.keys()):
+        if self.uid in list(self._port_handler.connection_manager.link_connections.keys()):
             self.change_l3_state(4)
             self._l3_state_exec.tx()
-            logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.link_connections")
-            logger.error(f"{self.uid} - {self._port_handler.link_connections.keys()}")
+            logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.connection_manager.link_connections")
+            logger.error(f"{self.uid} - {self._port_handler.connection_manager.link_connections.keys()}")
             return False
         self.digi_call = str(conn.digi_call)
-        self._port_handler.link_connections[str(self.uid)] = self, str(conn.digi_call)
+        self._port_handler.connection_manager.link_connections[str(self.uid)] = self, str(conn.digi_call)
         # self._port_handler.link_connections[str(reverse_uid(self.uid))] = conn, str(conn.digi_call)
 
         self.LINK_Connection = conn
@@ -932,7 +932,7 @@ class AX25Conn:
                     self.LINK_Connection.conn_disco()
                     # self.LINK_Connection.zustand_exec.tx(None)
                 else:
-                    self._port_handler.del_link(self.LINK_Connection.uid)
+                    self._port_handler.connection_manager.del_link(self.LINK_Connection.uid)
                     # print(self.l3_state_id)
                     # if self.l3_state_id not in [0, 1]:
                     # if reconnect and not self.digi_call:
@@ -969,7 +969,7 @@ class AX25Conn:
             # print(f'LINK CLEANUP link_connections K : {self._port_handler.link_connections.keys()}')
             self.LINK_Connection = None
             self.is_link = False
-        self._port_handler.del_link(self.uid)
+        self._port_handler.connection_manager.del_link(self.uid)
 
     def _link_cleanup(self):
         # self.link_disco()
@@ -1020,7 +1020,7 @@ class AX25Conn:
         self._link_cleanup()
         self._bbsFwd_disc()
         self.own_port.del_connections(conn=self)
-        self._port_handler.end_connection(self)   # Doppelt ..
+        self._port_handler.connection_manager.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self, reconn=True):
@@ -1052,11 +1052,12 @@ class AX25Conn:
         self.vs = 0
         self._port_handler.reset_connection(connection=self) # TODO .. Not Used anymore .. Delete ..
     """
-
-    def is_dico(self):
+    """
+    def is_disco(self):
         if self.l3_state_id in [0, 1]:
             return True
         return False
+    """
 
     def is_incoming_connection(self):
         return True if self.l3_state_id == 1 else False
@@ -1347,7 +1348,7 @@ class AX25Conn:
     # New Connection Handling
     def accept_connection(self):
         self._set_user_db_ent()
-        self._port_handler.accept_new_connection(self)
+        self._port_handler.connection_manager.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
             logger.debug(f"Conn {self.uid}: accept_digi_connection is LINK")
@@ -1379,7 +1380,7 @@ class AX25Conn:
     def insert_new_connection(self):
         """ Insert connection for handling """
         is_service = self._is_service_connection
-        self._port_handler.insert_new_connection_PH(new_conn=self, is_service=is_service)
+        self._port_handler.connection_manager.insert_new_connection_PH(new_conn=self, is_service=is_service)
 
     # ======= Interconnect Lookup
     def _set_dest_call_fm_data_inp(self, raw_data: b''):

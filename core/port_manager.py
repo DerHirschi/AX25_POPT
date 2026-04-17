@@ -27,13 +27,15 @@ class PortManager:
         """ Thread Garbage Collector """
         self._thread_gc         = popt_handler.thread_gc
 
+    # =================================
+    # Init
     def init_port(self, port_id: int):
-        logger.info("PH: Initialisiere Port: {}".format(port_id))
+        logger.info("PortManager: Initialisiere Port: {}".format(port_id))
         if port_id in self.ax25_ports.keys():
             port = self.ax25_ports[port_id]
             if hasattr(port, 'ende'):
                 if not port.ende:
-                    logger.error('PH: Could not initialise Port {}. Port already in use'.format(port_id))
+                    logger.error('PortManager: Could not initialise Port {}. Port already in use'.format(port_id))
                     self._popt_handler.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
                     return False
                 del self.ax25_ports[port_id]
@@ -41,10 +43,10 @@ class PortManager:
         # Init CFG
         new_cfg = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
         if not new_cfg:
-            logger.info(f'PH: Port {port_id} disabled.')
+            logger.info(f'PortManager: Port {port_id} disabled.')
             return False
         if new_cfg.get('parm_PortTyp', '') not in AX25DeviceTAB.keys():
-            logger.info(f'PH: Port {port_id} disabled.')
+            logger.info(f'PortManager: Port {port_id} disabled.')
             return False
         #########################
         # Init Port/Device
@@ -52,7 +54,7 @@ class PortManager:
             temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](int(port_id), self._popt_handler)
         except AX25DeviceFAIL as e:
             self._popt_handler.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
-            logger.error(f'PH: Could not initialise Port {port_id}. {e}')
+            logger.error(f'PortManager: Could not initialise Port {port_id}. {e}')
             return False
         ##########################
         # Start Port/Device Thread
@@ -60,7 +62,7 @@ class PortManager:
         ##########################
         # Start Port/Device Thread
         if not temp.device_is_running:
-            logger.error('PH: Could not initialise Port {}. Device not running.'.format(port_id))
+            logger.error('PortManager: Could not initialise Port {}. Device not running.'.format(port_id))
             self._popt_handler.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             del temp
             return False
@@ -68,8 +70,10 @@ class PortManager:
         # Gather all Ports in dict: ax25_ports
         self.ax25_ports[port_id]    = temp
         self.rx_echo[port_id]       = RxEchoVars(port_id) # TODO Cleanup / OPT
+        """ Pipe Tool """
+        self._popt_handler.pipe_manager.pipeTool_init_by_port(port_id)
         self._popt_handler.sysmsg_to_gui(get_strTab('port_init', POPT_CFG.get_guiCFG_language()).format(port_id))
-        logger.info(f"PH: Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
+        logger.info(f"PortManager: Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
         return True
 
     def reinit_port(self, port_id: int):
@@ -80,7 +84,7 @@ class PortManager:
 
     def _reinit_port_th(self, port_id: int):
         self._popt_handler.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
-        logger.info(f"PH: Reinit Port {port_id}")
+        logger.info(f"PortManager: Reinit Port {port_id}")
         #self.disco_conn_fm_port(port_id)
         self.close_port(port_id)
         time.sleep(1)  # Cooldown for Device
@@ -90,17 +94,22 @@ class PortManager:
             port = self.ax25_ports[port_id]
             port.set_block_incoming_conn(0)
         except Exception as ex:
-            logger.error(f"PH: Error Reinit port: {ex}")
+            logger.error(f"PortManager: Error Reinit port: {ex}")
+
+        self._popt_handler.pipe_manager.pipeTool_init_by_port(port_id)
         ##########################
         # Pipe-Tool Init
 
+    # =================================
+    # Close
     def close_port(self, port_id: int):
         # self.sysmsg_to_gui(get_strTab('close_port', POPT_CFG.get_guiCFG_language()).format(port_id))
         # self.sysmsg_to_gui('Info: Versuche Port {} zu schließen.'.format(port_id))
-        logger.info('PH: Versuche Port {} zu schließen.'.format(port_id))
+        logger.info('PortManager: Versuche Port {} zu schließen.'.format(port_id))
         if port_id in list(self.rx_echo.keys()):
             del self.rx_echo[port_id]
         if port_id in list(self.ax25_ports.keys()):
+            self._popt_handler.pipe_manager.close_pipes_by_port(port_id)
             port = self.ax25_ports[port_id]
             if port.connections:
                 port.disco_all_conns()
@@ -108,7 +117,7 @@ class PortManager:
             port.close()
 
             while not port.ende:
-                logger.debug(f"PH: Warte auf Port {port_id}")
+                logger.debug(f"PortManager: Warte auf Port {port_id}")
                 time.sleep(0.5)
                 port.close()
 
@@ -117,18 +126,18 @@ class PortManager:
             # del port
         # self.sysmsg_to_gui(get_strTab('port_closed', POPT_CFG.get_guiCFG_language()).format(port_id))
         #self.sysmsg_to_gui('Info: Port {} erfolgreich geschlossen.'.format(port_id))
-        logger.info('PH: Port {} erfolgreich geschlossen.'.format(port_id))
+        logger.info('PortManager: Port {} erfolgreich geschlossen.'.format(port_id))
 
     def close_all_ports(self):
         for k in list(self.ax25_ports.keys()):
-            logger.info(f"PH: Closing Port {k}")
+            logger.info(f"PortManager: Closing Port {k}")
             self._popt_handler.sysmsg_to_gui(f"Closing Port {k}")
             self.close_port(k)
 
     """
     def reinit_all_ports(self):
         self.sysmsg_to_gui(get_strTab('all_port_reinit', POPT_CFG.get_guiCFG_language()))
-        logger.info("PH: Reinit all Ports")
+        logger.info("PortManager: Reinit all Ports")
         for port_id in list(self.ax25_ports.keys()):
             self.close_port(port_id=port_id)
         time.sleep(1)  # Cooldown for Device
@@ -138,7 +147,7 @@ class PortManager:
         # Pipe-Tool Init
         self.set_diesel()
     """
-
+    """
     def set_kiss_param_all_ports(self):
         for port_id, port in self.ax25_ports.items():
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
@@ -148,9 +157,12 @@ class PortManager:
                 try:
                     port.set_kiss_parm()
                 except AX25DeviceFAIL as e:
-                    logger.error(f"PH: set_kiss_parm() Port: {port_id} - {e}")
+                    logger.error(f"PortManager: set_kiss_parm() Port: {port_id} - {e}")
                     pass
+    """
 
+    # =================================
+    # Connection Block
     def unblock_all_ports(self):
         for port_id, port in self.ax25_ports.items():
             if hasattr(port, 'set_block_incoming_conn'):
@@ -173,6 +185,8 @@ class PortManager:
     def get_all_ports_f_cfg(self):
         return dict(self.ax25_ports)
 
+    # =================================
+    # Getta
     def get_all_ports(self):
         ret = {}
         for port_id, port in self.ax25_ports.items():
@@ -197,9 +211,9 @@ class PortManager:
                 return port
             else:
                 return port.get_dualPort_primary()
-        return False
+        return None
 
-    ####################
+    # =================================
     # Dual Port
     def set_dualPort_fm_cfg(self):
         dualPort_cfg = POPT_CFG.get_dualPort_CFG()
@@ -248,7 +262,7 @@ class PortManager:
             return port.get_dualPort_primary()
         return None
 
-    ######################
+    # =================================
     # RX-ECHO Handling
     def rx_echo_input(self, ax_frame, receiving_port_id):
         """Opt by Grok3-AI"""
