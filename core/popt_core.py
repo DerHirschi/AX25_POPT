@@ -4,10 +4,9 @@ import threading
 
 from ax25.ax25LocalConverse import LocalConverse
 from ax25.ax25_ports.ax25Multicast import ax25Multicast
-from cfg.default_config import getNew_ConnHistory_struc
 #from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
-from cfg.logger_config import logger, LOG_BOOK
+from cfg.logger_config import logger
 from core.connection_manager import ConnectionManager
 from core.pipe_manager import PipeManager
 from core.port_manager import PortManager
@@ -21,9 +20,7 @@ from ax25.ax25_util.ax25Statistics import MH
 from ax25aprs.aprs_station import APRSmain
 from bbs.bbs_Error import bbsInitError
 from bbs.bbs_main import BBS
-from ax25.ax25_ports import AX25DeviceTAB
-from cfg.constant import MAX_PORTS, SERVICE_CH_START, MON_BATCH_TO_PROCESS, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, \
-    CLI_TYP_TASK_FWD
+from cfg.constant import MAX_PORTS, MON_BATCH_TO_PROCESS
 from sql_db.sql_Error import SQLConnectionError
 
 
@@ -42,15 +39,18 @@ class PoPTCore(object):
             # print("Database Init Error !! Can't start PoPT !")
             raise SQLConnectionError
         ###########################
-        self._start_time        = datetime.now()
-        self.is_running         = True
-        self._ph_end            = False
-        #self._glb_port_blocking = 1
-        self.thread_gc          = []
+        self._start_time    = datetime.now()
+        self.is_running     = True
+        self._ph_end        = False
+        self.thread_gc      = []    # Thread GC
         ###########################
         self._gui           = None
         self._bbs           = None
         self._aprs_ais      = None
+        #######################################################
+        self._monitor_buffer            = []
+        self._remote_monitor_buffer_tx  = []
+        self._remote_monitor_buffer_rx  = []
         #######################################################
         # Init UserDB
         self._userDB        = USER_DB
@@ -59,40 +59,15 @@ class PoPTCore(object):
         self._mh            = MH(self)
         self._mh.set_DB(self._db)
         #######################################################
-        # Init Sound Modul
-        self._sound         = SOUND
-        ###########################
-        # Moduls
+        self._sound             = SOUND
         self.port_manager       = PortManager(self)
         self.connection_manager = ConnectionManager(self)
         self.pipe_manager       = PipeManager(self)
-        ###########################
-
-        # self.routingTable = None
-
-        # self._scheduled_tasker  = None
-        #######################################################
-        # VARs
-        #self.ax25_ports         = {}
-        # self.ch_echo: {int:  [AX25Conn]} = {}
-        #self.link_connections   = {}  # {str: AX25Conn} UID Index
-        #self.rx_echo            = {}
-        #self.rx_echo_on         = False
-        #######################################################
-        self._monitor_buffer            = []
-        self._remote_monitor_buffer_tx  = []
-        self._remote_monitor_buffer_rx  = []
-
-        #######################################################
-        # Init Routing Table
-        #logger.info("PH: Routing Table Init")
-        #self._routingTable      = RoutingTable()
-        self._routingTable      = None  # NetRom TODO
         #######################################################
         # Scheduled Tasks
         logger.info("PH: Scheduled Tasks Init")
         # self._init_SchedTasker()
-        self._scheduled_tasker = PoPTSchedule_Tasker(self)
+        self._scheduled_tasker  = PoPTSchedule_Tasker(self)
         #######################################################
         # MCast Server Init
         logger.info("PH: MCast-Server Init")
@@ -101,6 +76,11 @@ class PoPTCore(object):
         # MCast Server Init
         logger.info("PH: Local Converse Init")
         self._local_conv_obj    = LocalConverse(self)
+        #######################################################
+        # Init Routing Table
+        #logger.info("PH: Routing Table Init")
+        #self._routingTable      = RoutingTable()
+        self._routingTable      = None  # NetRom TODO
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
@@ -144,11 +124,6 @@ class PoPTCore(object):
         #self.unblock_all_ports()
         #######################################################
         logger.info("PH: Init Complete")
-
-
-    def __del__(self):
-        pass
-        # logger.info("Ende PoPT Ver.: {}".format(VER))
 
     #######################################################################
     # Port Handler Tasker
@@ -437,15 +412,7 @@ class PoPTCore(object):
         #if self._gui and self.is_running:
         if hasattr(self._gui, 'sysMsg_to_monitor'):
             self._gui.sysMsg_to_monitor(msg)
-    """
-    def close_gui(self):
-        # self.close_all_ports()
-        if self._gui is not None:
-            tmp = self._gui
-            self._gui = None
-            tmp.main_win.quit()
-            tmp.main_win.destroy()
-    """
+
     def update_gui_aprs_msg_win(self, aprs_pack):
         if hasattr(self._gui, 'update_aprs_msg_win'):
             self._gui.update_aprs_msg_win(aprs_pack)
@@ -568,26 +535,6 @@ class PoPTCore(object):
         if port_id not in self.port_manager.ax25_ports.keys():
             return []
         return POPT_CFG.get_stationCalls_fm_port(port_id)
-
-    def get_free_ssid_s_fm_call(self, call: str):
-        all_ownCalls = POPT_CFG.get_all_stationCalls()
-        if call not in all_ownCalls:
-            return []
-        res_ssid = list(range(16))
-        all_conn = self.get_all_connections()
-        for ch_id, conn in all_conn.items():
-            if str(conn.my_call) != call:
-                continue
-            try:
-                ssid = int(str(conn.my_call_str).split('-')[-1])
-            except ValueError:
-                ssid = 0
-            if ssid not in res_ssid:
-                #logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
-                #logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
-                continue
-            res_ssid.remove(ssid)
-        return res_ssid
 
     ###############################
     # BBS
@@ -775,42 +722,6 @@ class PoPTCore(object):
     # Local Converse Mode
     def get_loConverse(self):
         return self._local_conv_obj
-    ##############################################################
-    #
-    def debug_Connections(self):
-        all_conn = self.connection_manager.get_all_connections(with_null=True)
-        all_linkConn = self.connection_manager.link_connections
-        all_digiConn = self.get_all_digiConn()
-        """
-        self.set_pmsMailAlarm(True)
-        self.set_aprsMailAlarm_PH(True)
-        self.set_noty_bell_PH(True)
-        """
-        print('ALL Conn ----------------------')
-        for ch_id, conn in all_conn.items():
-            print(f"CH-ID: {ch_id} - UID: {conn.uid} - STATE: {conn.l3_state_id}")
-        print('ALL LinkConn ------------------')
-        for link_uid, (conn, link) in all_linkConn.items():
-            print(f"LINK-UID: {link_uid} - UID: {conn.uid} - STATE: {conn.l3_state_id} - LINK: {link}")
-            print(f"LINK: conn:           {conn}                            link_conn: {conn.LINK_Connection}")
-            print(f"LINK: link_conn.conn: {conn.LINK_Connection.LINK_Connection} conn: {conn.LINK_Connection.LINK_Connection.LINK_Connection}")
-        print('ALL DIGIConn ------------------')
-        for digi_uid, conn in all_digiConn.items():
-            print(f"digi-UID: {digi_uid} - STATE: {conn.l3_state_id} - rx-conn: {conn.get_rx_conn()} - tx-conn: {conn.get_tx_conn()}")
-
-        #######################################################################
-        """
-        logger.debug("=================Port-Watch-Dog====================")
-        for port_id, port in self.get_all_ports().items():
-            logger.debug(f"Port {port_id}: WD > {time.time() - port.port_w_dog}")
-            logger.debug(f"Port {port_id}: Loop is running > {port.loop_is_running}")
-            logger.debug(f"Port {port_id}: Device is running > {port.device_is_running}")
-            logger.debug(f"Port {port_id}: Device > {port.device}")
-            if hasattr(port.device, 'readall'):
-                logger.debug(f"Port {port_id}: readall > {port.device.readall()}")
-            logger.debug("")
-        logger.debug("====================================================")
-        """
 
 
 POPT_HANDLER = PoPTCore()

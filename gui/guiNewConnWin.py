@@ -166,7 +166,7 @@ class NewConnWin(tk.Toplevel):
                   font=("TkFixedFont", 11),
                   ).pack(side=tk.LEFT, padx=15)
         #####
-        free_ssid_list = self._popt_handler.get_free_ssid_s_fm_call(self._own_call_var.get())
+        free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(self._own_call_var.get())
         if not free_ssid_list:
             free_ssid_list = ['', '']
         else:
@@ -414,7 +414,7 @@ class NewConnWin(tk.Toplevel):
         if own_call:
             self._own_call_var.set(own_call)
             self._set_ssid()
-            free_ssid_list = self._popt_handler.get_free_ssid_s_fm_call(own_call)
+            free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(own_call)
             if ssid in free_ssid_list:
                 self._own_ssid_var.set(ssid)
 
@@ -431,12 +431,12 @@ class NewConnWin(tk.Toplevel):
         if own_call:
             self._own_call_var.set(own_call)
             self._set_ssid()
-            free_ssid_list = self._popt_handler.get_free_ssid_s_fm_call(own_call)
+            free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(own_call)
             if ssid in free_ssid_list:
                 self._own_ssid_var.set(ssid)
 
     def _set_ssid(self, event=None):
-        free_ssid_list = self._popt_handler.get_free_ssid_s_fm_call(self._own_call_var.get())
+        free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(self._own_call_var.get())
         if not free_ssid_list:
             free_ssid_list = ['']
 

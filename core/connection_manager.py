@@ -310,6 +310,26 @@ class ConnectionManager:
                     """
         return dict(ret)
 
+    def get_free_ssid_s_fm_call(self, call: str):
+        all_ownCalls = POPT_CFG.get_all_stationCalls()
+        if call not in all_ownCalls:
+            return []
+        res_ssid = list(range(16))
+        all_conn = self.get_all_connections()
+        for ch_id, conn in all_conn.items():
+            if str(conn.my_call) != call:
+                continue
+            try:
+                ssid = int(str(conn.my_call_str).split('-')[-1])
+            except ValueError:
+                ssid = 0
+            if ssid not in res_ssid:
+                #logger.warning(self._logTag + "get_free_ssid_s_fm_call:")
+                #logger.warning(self._logTag + f"  Double SSID({ssid}) for {call}")
+                continue
+            res_ssid.remove(ssid)
+        return res_ssid
+
 
     """
     def reset_connection(self, connection):
