@@ -1,5 +1,4 @@
 from datetime import datetime
-import time
 import threading
 
 from ax25.ax25LocalConverse import LocalConverse
@@ -8,9 +7,9 @@ from ax25.ax25_ports.ax25Multicast import ax25Multicast
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from core.connection_manager import ConnectionManager
+from core.core_tasker import PoPTCoreTasker
 from core.pipe_manager import PipeManager
 from core.port_manager import PortManager
-from fnc.one_wire_fnc import get_1wire_temperature, is_1wire_device
 from poptGPIO.poptGPIO_main import poptGPIO_main
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -63,18 +62,8 @@ class PoPTCore(object):
         self.port_manager       = PortManager(self)
         self.connection_manager = ConnectionManager(self)
         self.pipe_manager       = PipeManager(self)
-        #######################################################
-        # Scheduled Tasks
-        logger.info("PH: Scheduled Tasks Init")
-        # self._init_SchedTasker()
         self._scheduled_tasker  = PoPTSchedule_Tasker(self)
-        #######################################################
-        # MCast Server Init
-        logger.info("PH: MCast-Server Init")
         self._mcast_server      = ax25Multicast(self)
-        #######################################################
-        # MCast Server Init
-        logger.info("PH: Local Converse Init")
         self._local_conv_obj    = LocalConverse(self)
         #######################################################
         # Init Routing Table
@@ -107,127 +96,33 @@ class PoPTCore(object):
         except IOError as e:
             logger.warning(f"PH: PoPT-GPIO Init: {e}")
             self._gpio = None
+
         #######################################################
-        # Port Handler Tasker (threaded Loop)
-        logger.info("PH: Tasker Init")
-        self._update_1wire_th   = None                # 1Wire Thread
-        #
-        self._1wire_timer       = time.time() + 10    # + 10 Sec, give some time to Init the rest
-        self._task_timer_05sec  = time.time() + 0.5
-        self._task_timer_1sec   = time.time() + 1
-        self._task_timer_2sec   = time.time() + 2
-        self._task_timer_5sec   = time.time() + 5
-        if not gui_app:
-            self._init_PH_tasker()
+        # Core Tasker
+        self._core_tasker = PoPTCoreTasker(self, gui_app)
         #######################################################
         #logger.info("PH: Unblocking Ports")
         #self.unblock_all_ports()
         #######################################################
         logger.info("PH: Init Complete")
 
+
     #######################################################################
-    # Port Handler Tasker
-    def _init_PH_tasker(self):
-        threading.Thread(target=self._tasker).start()
-
-    def _tasker(self):
-        while self.is_running:
-            self.tasker_gui_th()
-            if not self.is_running:
-                return
-            time.sleep(0.25)
-
+    # Tasker Call fm GUI
     def tasker_gui_th(self):
-        if not self.is_running:
-            return False
-        # TODO Tasker-Q
-        # ret = any((self._5sec_task(),  ret))
-        task_pr = self._prio_task()
-        task_05 = self._05sec_task()
-        task_10 = self._1sec_task()
-        task_20 = self._2sec_task()
+        self._core_tasker.tasker_gui_th()
 
-        return task_pr or task_05 or task_10 or task_20
-
-    def _prio_task(self):
-        """ 0.1 Sec (Mainloop Speed) """
-        task_01 = self._bbs.tasker()            # bbs.tasker-q
-        task_02 = self._gpio_tasker_q()         # gpio.tasker-q
-        task_03 = self._sound.sound_tasker()    # tasker-q
-
-        return task_01 or task_02 or task_03
-
-    def _05sec_task(self):
-        """ 0.5 Sec """
-        if time.time() > self._task_timer_05sec:
-            self._Sched_task()
-            self._aprs_task()
-            self._gpio_task()
-            self.pipe_manager.pipeTool_task()
-            self._task_timer_05sec = time.time() + 0.5
-            return True
-        return False
-
-    def _1sec_task(self):
-        """ 1 Sec """
-        if time.time() > self._task_timer_1sec:
-            self._port_watchdog_task()
-            self._mh_task()         # #################
-            self._tasker_1wire()
-            self._update_remote_monitor_task()
-            self._task_timer_1sec = time.time() + 1
-            return True
-        return False
-
-    def _2sec_task(self):
-        """ 2 Sec """
-        if time.time() > self._task_timer_2sec:
-            self._bbs.main_cron()
-            self._task_timer_2sec = time.time() + 2
-            return True
-        return False
-
-    def _5sec_task(self):
-        """ 5 Sec """
-        if time.time() > self._task_timer_5sec:
-            # self._update_remote_monitor_batch_task()
-            self._task_timer_5sec = time.time() + 5
-            return True
-        return False
-
-    #######################################################################
-    # Port Watchdog
-    def _port_watchdog_task(self):
-        for port_id, port in dict(self.get_all_ports()).items():
-            if hasattr(port, 'get_watchdog_timer'):
-                wd_timer = time.time() - port.get_watchdog_timer()
-                if wd_timer > 10:
-                    if hasattr(port, 'reset_watchdog_timer'):
-                        port.reset_watchdog_timer()
-                    logger.warning("=================Port-Watch-Dog====================")
-                    logger.warning(f"Port : {port_id}")
-                    logger.warning(f"timer: {round(wd_timer)} s")
-                    #logger.info(f"Try to reinit Port {port_id}")
-                    #threading.Thread(target=self.reinit_port, args=(port_id, )).start()
     #######################################################################
     # Thread GC
     def _wait_for_GC_threads(self):
         n = 0
+        logger.info(f"Thread GC: Checking {len(self.thread_gc)} Threads..")
         for th in self.thread_gc:
             if hasattr(th, 'is_alive'):
                 n += 1
                 while th.is_alive():
                     logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
                     th.join(timeout=1)
-    #######################################################################
-    # MH
-    def _mh_task(self):
-        return self._mh.mh_task()
-
-    #######################################################################
-    # Routing Table
-    def get_RoutingTable(self):
-        return self._routingTable
 
     #######################################################################
     # scheduled Tasks
@@ -252,11 +147,6 @@ class PoPTCore(object):
             return self._scheduled_tasker.start_scheduler_Task_manual(conf)
         return None
 
-    def _Sched_task(self):
-        if hasattr(self._scheduled_tasker, 'tasker'):
-            # Scheduler & AutoConn Tasker
-            self._scheduled_tasker.tasker()
-
     def reinit_beacon_task(self):
         if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
             self._scheduled_tasker.reinit_beacon_tasks()
@@ -273,6 +163,8 @@ class PoPTCore(object):
         if hasattr(self._scheduled_tasker, 'reinit_aprs_beacon_tasks'):
             self._scheduled_tasker.reinit_aprs_beacon_tasks()
 
+    def get_scheduled_tasker(self):
+        return self._scheduled_tasker
     ######################################################
     #
     def close_popt(self):
@@ -314,17 +206,7 @@ class PoPTCore(object):
             self._mh.save_PortStat()
             self.sysmsg_to_gui("Saving Connection History")
             self._mh.save_conn_hist()
-        # 1-Wire
-        if self._update_1wire_th is not None:
-            self.sysmsg_to_gui("Closing 1-Wire Thread")
-            n = 0
-            while self._update_1wire_th.is_alive():
-                logger.info("PH: Warte auf 1-Wire Thread")
-                n += 1
-                if n > 40:
-                    logger.error("PH: 1-Wire Thread nicht beendet !!")
-                    break
-                time.sleep(0.5)
+
         logger.info("PH: Saving User-DB Data")
         self.sysmsg_to_gui("Saving User-DB")
         USER_DB.save_data()
@@ -375,7 +257,8 @@ class PoPTCore(object):
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
 
-        threading.Thread(target=self._aprs_ais.ais_rx_task).start()
+        th = threading.Thread(target=self._aprs_ais.ais_rx_task).start()
+        self.thread_gc.append(th)
         gui = self.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):
             ais_mon_gui = gui.get_ais_mon_gui()
@@ -383,11 +266,6 @@ class PoPTCore(object):
                 ais_mon_gui.set_ais_obj()
         logger.info("PH: APRS-AIS Init complete.")
         return True
-
-    def _aprs_task(self):
-        if hasattr(self._aprs_ais, 'task'):
-            return self._aprs_ais.task()
-        return False
 
     def _close_aprs_ais(self):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
@@ -460,7 +338,7 @@ class PoPTCore(object):
 
     ######################################
     # Remote Monitor Stuff
-    def _update_remote_monitor_task(self):
+    def update_remote_monitor_task(self):
         """ Remote Monitor over ax25 | 1 Sec Task"""
         data = list(self._remote_monitor_buffer_tx[:30])  # 22 Pi4
         self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
@@ -515,6 +393,29 @@ class PoPTCore(object):
     def get_sound_modul(self):
         return self._sound
 
+    def get_database(self):
+        return self._db
+
+    def get_userDB(self):
+        return self._userDB
+
+    def get_bbs(self):
+        return self._bbs
+
+    def get_mcast_server(self):
+        return self._mcast_server
+
+    def get_GPIO(self):
+        return self._gpio
+
+    def get_loConverse(self):
+        return self._local_conv_obj
+
+    #######################################################################
+    # Routing Table
+    def get_RoutingTable(self):
+        return self._routingTable
+
     ##################################
     #
     def get_all_digiConn(self):
@@ -545,9 +446,6 @@ class PoPTCore(object):
             except bbsInitError:
                 self._bbs = None
 
-    def get_bbs(self):
-        return self._bbs
-
     ###############################
     # SQL-DB
     def _init_DB(self):
@@ -569,12 +467,6 @@ class PoPTCore(object):
 
     def close_DB(self):
         self._db.close_db()
-
-    def get_database(self):
-        return self._db
-
-    def get_userDB(self):
-        return self._userDB
 
     #################################################
     # Noty Icons
@@ -658,70 +550,5 @@ class PoPTCore(object):
 
         if hasattr(self._gpio, 'set_sysop_alarm'):
             self._gpio.set_sysop_alarm(False)
-
-    ##############################################################
-    # MCast
-    def get_mcast_server(self):
-        return self._mcast_server
-
-    ##############################################################
-    # 1Wire TextVars
-    def _tasker_1wire(self):
-        if time.time() < self._1wire_timer:
-            return
-        if self._update_1wire_th is None:
-            self._oneWire_thread_run()
-            return
-        if self._update_1wire_th.is_alive():
-            return
-        self._oneWire_thread_run()
-        return
-
-    def _oneWire_thread_run(self):
-        self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
-        self._update_1wire_th = threading.Thread(target=self._oneWire_task)
-        self._update_1wire_th.start()
-
-    @staticmethod
-    def _oneWire_task():
-        if not is_1wire_device():
-            return
-        sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
-        if not sensor_cfg:
-            return
-        for textVar, sens_cfg in sensor_cfg.items():
-            sens_cfg: dict
-            sens_id = sens_cfg.get('device_path', '')
-            if not sens_id:
-                continue
-            try:
-                sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
-            except IndexError:
-                logger.warning(f"PH: _oneWire_task IndexError: {textVar}")
-                logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
-                continue
-        # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))
-
-    ##############################################################
-    # GPIO
-    def get_GPIO(self):
-        return self._gpio
-
-    def _gpio_task(self):
-        if hasattr(self._gpio, 'gpio_tasker'):
-            self._gpio.gpio_tasker()
-            return
-        return
-
-    def _gpio_tasker_q(self):
-        if hasattr(self._gpio, 'gpio_tasker_q'):
-            return self._gpio.gpio_tasker_q()
-        return False
-
-    ##############################################################
-    # Local Converse Mode
-    def get_loConverse(self):
-        return self._local_conv_obj
-
 
 POPT_HANDLER = PoPTCore()

@@ -12,6 +12,7 @@ from schedule.tasks.BeaconTask import BeaconTask
 
 class PoPTSchedule_Tasker:
     def __init__(self, port_handler):
+        logger.info("Sched-Tasker: Init")
         self._port_handler = port_handler
         self._scheduled_tasks = {
             TASK_TYP_FWD:           self._start_AutoConnTask,

@@ -56,6 +56,7 @@ class ConverseChannel:
 
 class LocalConverse:
     def __init__(self, port_handler):
+        logger.info("Local-Converse: Init")
         #self._port_handler = port_handler
         self._participants = {}  # Dictionary: {conn_id: connection_obj}
         self._channels     = {
