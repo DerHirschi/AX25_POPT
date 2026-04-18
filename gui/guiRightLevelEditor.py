@@ -6,7 +6,7 @@ from UserDB.UserDBmain import USER_DB
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cli.cli_const import CLI_DEF_CMD_ALL
+from cli.cli_const import CLI_DEF_CMD_ALL, CLI_DEF_CONV_CMD
 from fnc.str_fnc import get_strTab
 from prp.prp_const import PRP_FNC_TAB
 
@@ -49,7 +49,8 @@ class RightLevelEditor(tk.Toplevel):
         #self._functions_tab = PRP_FNC_TAB
         #self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
         self._functions_tab = dict(PRP_FNC_TAB)  # Kopie machen!
-        self._functions     = sorted(list(list(CLI_DEF_CMD_ALL) + list(PRP_FNC_TAB.keys())))
+        self._functions     = sorted(list(CLI_DEF_CMD_ALL)) + list(PRP_FNC_TAB.keys())
+        self._conv_fncs     = sorted(list(CLI_DEF_CONV_CMD))
 
         # Level und Vars
         self._levels = dict(POPT_CFG.right_level_tab)
@@ -211,6 +212,29 @@ class RightLevelEditor(tk.Toplevel):
         for func in self._functions:
             var = tk.BooleanVar()
             text = self._get_function_name(func)
+            cb = ttk.Checkbutton(inner_frame, text=text, variable=var)
+
+            if is_no_login:
+                cb.configure(command=lambda f=func, l=level_name: self._update_dependency(l, f))
+                var.set(func in allowed_no)
+                vars_dict[func] = var
+            else:
+                var.set(func in allowed_with)
+                if func in allowed_no:
+                    cb.config(state="disabled")
+                vars_dict[func] = (var, cb)
+
+            cb.grid(row=row, column=col, sticky="w", padx=15, pady=4)
+            row += 1
+            if row > max_rows:
+                row = 0
+                col += 1
+
+        # ==============
+        # Converse
+        for func in self._conv_fncs:
+            var = tk.BooleanVar()
+            text = f"Converse - {func}"
             cb = ttk.Checkbutton(inner_frame, text=text, variable=var)
 
             if is_no_login:
