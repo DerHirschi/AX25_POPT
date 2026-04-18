@@ -145,7 +145,7 @@ class NewConnWin(tk.Toplevel):
         opt = ['NOCALL']
         if self._port_index in self._popt_handler.get_all_ports().keys():
             # opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
-            opt = self._popt_handler.get_stat_calls_fm_port(self._port_index)
+            opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
             if not opt:
                 opt = ['NOCALL']
         opt = [opt[0]] + opt
@@ -261,7 +261,7 @@ class NewConnWin(tk.Toplevel):
                 if not port:
                     opt = ['']
                 else:
-                    opt = self._popt_handler.get_stat_calls_fm_port(self._port_index)
+                    opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
 
@@ -284,7 +284,7 @@ class NewConnWin(tk.Toplevel):
                 if not port:
                     opt = ['']
                 else:
-                    opt = self._popt_handler.get_stat_calls_fm_port(self._port_index)
+                    opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
                 self._own_call_var.set('')

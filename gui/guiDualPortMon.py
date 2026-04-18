@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, TclError, Menu
 
-from core.popt_core import POPT_HANDLER
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import FONT
 from cfg.logger_config import logger
@@ -13,9 +12,9 @@ class DP_MonitorTab(ttk.Frame):
     def __init__(self, root_win, port):
         ttk.Frame.__init__(self, root_win)
         self.pack(fill=tk.BOTH, expand=True)
-        self._text_size = POPT_CFG.get_guiCFG_text_size()
-        self._port = port
-        self._port_mon_buf = []
+        self._text_size     = POPT_CFG.get_guiCFG_text_size()
+        self._port          = port
+        self._port_mon_buf  = []
         #################################################
         upper_frame = ttk.Frame(self, height=15)
         upper_frame.pack(side=tk.TOP, fill=tk.X, expand=False)
@@ -221,6 +220,7 @@ class DualPort_Monitor(tk.Toplevel):
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win  = root_win
+        self._popt_handler = root_win.get_PH_mainGUI()
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.text_size  = root_win.text_size
         self.title('Dual-Port Monitor')
@@ -250,7 +250,7 @@ class DualPort_Monitor(tk.Toplevel):
         self._tabControl_prim_ports.pack(side=tk.TOP, fill=tk.BOTH, expand=True, )
         self.tab_list: {int: DP_MonitorTab} = {}
 
-        all_prim_Ports = POPT_HANDLER.port_manager.get_all_dualPorts_primary()
+        all_prim_Ports = self._popt_handler.port_manager.get_all_dualPorts_primary()
         i = 0
         for port_id in all_prim_Ports.keys():
             port = all_prim_Ports.get(port_id, None)

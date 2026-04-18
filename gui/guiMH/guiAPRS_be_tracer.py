@@ -56,7 +56,7 @@ class BeaconTracer(ttk.Frame):
         frame_2_stat.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_stat_var = tk.StringVar(self)
         # options = list(PORT_HANDLER.ge)
-        options = self._port_handler.get_stat_calls_fm_port(ais_cfg.get('be_tracer_port', 0))
+        options = self._port_handler.api.get_stat_calls_fm_port(ais_cfg.get('be_tracer_port', 0))
 
         self._be_stat_var.set(ais_cfg.get('be_tracer_station', 'NOCALL'))
         ttk.Label(frame_2_stat, text='Station ').pack(side=tk.LEFT, )
@@ -286,7 +286,7 @@ class BeaconTracer(ttk.Frame):
         except ValueError:
             pass
         else:
-            vals = self._port_handler.get_stat_calls_fm_port(port_id)
+            vals = self._port_handler.api.get_stat_calls_fm_port(port_id)
             if vals:
                 self._be_stat_var.set(vals[0])
             self._be_stat_opt.configure(values=vals)

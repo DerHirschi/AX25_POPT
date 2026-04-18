@@ -741,7 +741,7 @@ class SideTabbedFrame:
     def _chk_mon_port(self, event=None):
         port_handler = self._root_class.get_PH_mainGUI()
         port_id = int(self._root_class.mon_port_var.get())
-        vals = port_handler.get_stat_calls_fm_port(port_id)
+        vals = port_handler.api.get_stat_calls_fm_port(port_id)
         if vals:
             self._root_class.mon_call_var.set(vals[0])
         self._mon_call_ent.configure(values=vals)

@@ -7,6 +7,7 @@ from ax25.ax25_ports.ax25Multicast import ax25Multicast
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from core.connection_manager import ConnectionManager
+from core.core_api import CoreAPI
 from core.core_tasker import PoPTCoreTasker
 from core.pipe_manager import PipeManager
 from core.port_manager import PortManager
@@ -25,7 +26,6 @@ from sql_db.sql_Error import SQLConnectionError
 
 class PoPTCore(object):
     def __init__(self, gui_app=True):
-        self._logTag = "PH> "
         logger.info("PH: Init")
         ###########################
         # Init SQL-DB
@@ -46,6 +46,7 @@ class PoPTCore(object):
         self._gui           = None
         self._bbs           = None
         self._aprs_ais      = None
+        self._gpio          = None
         #######################################################
         self._monitor_buffer            = []
         self._remote_monitor_buffer_tx  = []
@@ -67,27 +68,34 @@ class PoPTCore(object):
         self._local_conv_obj    = LocalConverse(self)
         #######################################################
         # Init Routing Table
-        #logger.info("PH: Routing Table Init")
-        #self._routingTable      = RoutingTable()
-        self._routingTable      = None  # NetRom TODO
+        # logger.info("PH: Routing Table Init")
+        # self._routingTable      = RoutingTable() # NetRom TODO
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
         for port_id in range(MAX_PORTS):  # Max Ports
             self.port_manager.init_port(port_id=port_id)
         logger.info(f"PH: Port Init complete...")
+
         #######################################################
         # Dual Port Init
         logger.info("PH: Dual-Port Init")
         self.port_manager.set_dualPort_fm_cfg()
+
         #######################################################
         # APRS AIS Thread
         logger.info("PH: APRS-Client Init")
         self.init_aprs_ais()
+
+        #######################################################
+        # Zentrale API
+        self.api = CoreAPI(self)
+
         #######################################################
         # BBS
         logger.info("PH: BBS Init")
         self._init_bbs()
+
         #######################################################
         # GPIO
         logger.info("PH: PoPT-GPIO Init")
@@ -95,17 +103,13 @@ class PoPTCore(object):
             self._gpio = poptGPIO_main(self)
         except IOError as e:
             logger.warning(f"PH: PoPT-GPIO Init: {e}")
-            self._gpio = None
 
         #######################################################
         # Core Tasker
         self._core_tasker = PoPTCoreTasker(self, gui_app)
-        #######################################################
-        #logger.info("PH: Unblocking Ports")
-        #self.unblock_all_ports()
+
         #######################################################
         logger.info("PH: Init Complete")
-
 
     #######################################################################
     # Tasker Call fm GUI
@@ -131,49 +135,9 @@ class PoPTCore(object):
             if not thread.is_alive():
                 self.thread_gc.remove(thread)
                 del thread
+
     #######################################################################
-    # scheduled Tasks
-    #def _init_SchedTasker(self):
-    #    self._scheduled_tasker = PoPTSchedule_Tasker(self)
-
-    def insert_SchedTask(self, sched_cfg, conf):
-        if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
-            self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
-    """
-    def del_SchedTask(self, conf):
-        if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
-            self._scheduled_tasker.del_scheduler_Task(conf)
-    """
-
-    def del_SchedTask_by_typ(self, typ: str):
-        if hasattr(self._scheduled_tasker, 'del_scheduler_Task_by_Typ'):
-            self._scheduled_tasker.del_scheduler_Task_by_Typ(typ)
-
-    def start_SchedTask_man(self, conf):
-        if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
-            return self._scheduled_tasker.start_scheduler_Task_manual(conf)
-        return None
-
-    def reinit_beacon_task(self):
-        if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
-            self._scheduled_tasker.reinit_beacon_tasks()
-
-    def init_AutoMail_tasks(self):
-        if hasattr(self._scheduled_tasker, 'init_SchedMail_tasks'):
-            self._scheduled_tasker.init_SchedMail_tasks()
-
-    def reinit_AutoMail_tasks(self):
-        if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
-            self._scheduled_tasker.reinit_SchedMail_tasks()
-
-    def reinit_aprs_beacon_task(self):
-        if hasattr(self._scheduled_tasker, 'reinit_aprs_beacon_tasks'):
-            self._scheduled_tasker.reinit_aprs_beacon_tasks()
-
-    def get_scheduled_tasker(self):
-        return self._scheduled_tasker
-    ######################################################
-    #
+    # Closing
     def close_popt(self):
         logger.info("PH: Closing PoPT")
         # self.block_all_ports(1)
@@ -219,7 +183,7 @@ class PoPTCore(object):
         USER_DB.save_data()
         logger.info("PH: Closing User-DB")
         self.sysmsg_to_gui("Closing User-DB")
-        self.close_DB()
+        self._close_DB()
         logger.info("PH: Saving MCast-Data")
         self.sysmsg_to_gui("Saving MCast-Data")
         self._mcast_server.mcast_save_cfgs()
@@ -239,18 +203,38 @@ class PoPTCore(object):
         self._sound.close_sound()
         return False
 
-    #####################################################
-    # Port Manager
-    def get_all_ports(self):
-        return self.port_manager.get_all_ports()
+    #######################################################################
+    # BBS
+    def _init_bbs(self):
+        if self._bbs is None:
+            try:
+                self._bbs = BBS(self)
+            except bbsInitError:
+                self._bbs = None
 
-    def get_all_port_ids(self):
-        return list(self.port_manager.ax25_ports.keys())
+    #######################################################################
+    # SQL-DB
+    def _init_DB(self):
+        ###############
+        # Init DB
+        if not self._db.error:
+            # DB.check_tables_exists('bbs')
+            # TODO optional Moduls for minimum config
+            self._db.check_tables_exists('bbs')
+            # self._db.check_tables_exists('user_db')
+            self._db.check_tables_exists('aprs')
+            self._db.check_tables_exists('port_stat')
+            # self._db.check_tables_exists('mh')
+            self._db.update_db_tables()
+            if self._db.error:
+                raise SQLConnectionError
+        else:
+            raise SQLConnectionError
 
-    def get_port_by_index(self, index: int):
-        return self.port_manager.get_port_by_index(index)
+    def _close_DB(self):
+        self._db.close_db()
 
-    ######################
+    #######################################################################
     # APRS
     def init_aprs_ais(self, aprs_obj=None):
         """ TODO self.sysmsg_to_gui( bla + StringTab ) """
@@ -285,27 +269,76 @@ class PoPTCore(object):
         self._aprs_ais = None
         return True
 
-    ######################
-    # GUI Handling
-    def set_gui(self, gui=None):
-        """ PreInit: Set GUI Var """
-        logger.info('PH: GUI set')
-        if gui is not None:
-            self._gui = gui
+    #######################################################################
+    # Scheduled Tasks
+    def insert_SchedTask(self, sched_cfg, conf):
+        if hasattr(self._scheduled_tasker, 'insert_scheduler_Task'):
+            self._scheduled_tasker.insert_scheduler_Task(sched_cfg, conf)
+    """
+    def del_SchedTask(self, conf):
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task'):
+            self._scheduled_tasker.del_scheduler_Task(conf)
+    """
 
-    def sysmsg_to_gui(self, msg: str = ''):
-        #if self._gui and self.is_running:
-        if hasattr(self._gui, 'sysMsg_to_monitor'):
-            self._gui.sysMsg_to_monitor(msg)
+    def del_SchedTask_by_typ(self, typ: str):
+        if hasattr(self._scheduled_tasker, 'del_scheduler_Task_by_Typ'):
+            self._scheduled_tasker.del_scheduler_Task_by_Typ(typ)
 
-    def update_gui_aprs_msg_win(self, aprs_pack):
-        if hasattr(self._gui, 'update_aprs_msg_win'):
-            self._gui.update_aprs_msg_win(aprs_pack)
+    def start_SchedTask_man(self, conf):
+        if hasattr(self._scheduled_tasker, 'start_scheduler_Task_manual'):
+            return self._scheduled_tasker.start_scheduler_Task_manual(conf)
+        return None
 
-    ######################
+    def reinit_beacon_task(self):
+        if hasattr(self._scheduled_tasker, 'reinit_beacon_tasks'):
+            self._scheduled_tasker.reinit_beacon_tasks()
+
+    def init_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'init_SchedMail_tasks'):
+            self._scheduled_tasker.init_SchedMail_tasks()
+
+    def reinit_AutoMail_tasks(self):
+        if hasattr(self._scheduled_tasker, 'reinit_SchedMail_tasks'):
+            self._scheduled_tasker.reinit_SchedMail_tasks()
+
+    def reinit_aprs_beacon_task(self):
+        if hasattr(self._scheduled_tasker, 'reinit_aprs_beacon_tasks'):
+            self._scheduled_tasker.reinit_aprs_beacon_tasks()
+
+    def get_scheduled_tasker(self):
+        return self._scheduled_tasker
+
+    ######################################################
+    # Port Manager
+    def get_all_ports(self):
+        return self.port_manager.get_all_ports()
+
+    def get_all_port_ids(self):
+        return list(self.port_manager.ax25_ports.keys())
+
+    def get_port_by_index(self, index: int):
+        return self.port_manager.get_port_by_index(index)
+
+    ##################################
     # Connection Handling
     def get_all_connections(self, with_null=False):
         return self.connection_manager.get_all_connections()
+
+    ##################################
+    # DIGI
+    def get_all_digiConn(self):
+        ret = {}
+        for port_id, port in self.port_manager.ax25_ports.items():
+            if port:
+                all_digi_conn = port.get_digi_conn()
+                for conn_key, conn in all_digi_conn.items():
+                    if conn_key not in ret:
+                        ret[conn_key] = conn
+                    else:
+                        # print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        logger.warning(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        # conn.ch_index += 1
+        return ret
 
     def send_UI(self, conf: dict):
         port_id = conf.get('port_id', 0)
@@ -402,72 +435,25 @@ class PoPTCore(object):
     def get_loConverse(self):
         return self._local_conv_obj
 
-    #######################################################################
-    # Routing Table
-    def get_RoutingTable(self):
-        return self._routingTable
+    ######################
+    # GUI Handling
+    def set_gui(self, gui=None):
+        """ PreInit: Set GUI Var """
+        logger.info('PH: GUI set')
+        if gui is not None:
+            self._gui = gui
 
-    ##################################
-    #
-    def get_all_digiConn(self):
-        ret = {}
-        for port_id, port in self.port_manager.ax25_ports.items():
-            if port:
-                all_digi_conn = port.get_digi_conn()
-                for conn_key, conn in all_digi_conn.items():
-                    if conn_key not in ret:
-                        ret[conn_key] = conn
-                    else:
-                        # print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
-                        logger.warning(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
-                        # conn.ch_index += 1
-        return ret
+    def sysmsg_to_gui(self, msg: str = ''):
+        #if self._gui and self.is_running:
+        if hasattr(self._gui, 'sysMsg_to_monitor'):
+            self._gui.sysMsg_to_monitor(msg)
 
-    def get_stat_calls_fm_port(self, port_id=0):
-        if port_id not in self.port_manager.ax25_ports.keys():
-            return []
-        return POPT_CFG.get_stationCalls_fm_port(port_id)
-
-    ###############################
-    # BBS
-    def _init_bbs(self):
-        if self._bbs is None:
-            try:
-                self._bbs = BBS(self)
-            except bbsInitError:
-                self._bbs = None
-
-    ###############################
-    # SQL-DB
-    def _init_DB(self):
-        ###############
-        # Init DB
-        if not self._db.error:
-            # DB.check_tables_exists('bbs')
-            # TODO optional Moduls for minimum config
-            self._db.check_tables_exists('bbs')
-            # self._db.check_tables_exists('user_db')
-            self._db.check_tables_exists('aprs')
-            self._db.check_tables_exists('port_stat')
-            # self._db.check_tables_exists('mh')
-            self._db.update_db_tables()
-            if self._db.error:
-                raise SQLConnectionError
-        else:
-            raise SQLConnectionError
-
-    def close_DB(self):
-        self._db.close_db()
+    def update_gui_aprs_msg_win(self, aprs_pack):
+        if hasattr(self._gui, 'update_aprs_msg_win'):
+            self._gui.update_aprs_msg_win(aprs_pack)
 
     #################################################
-    # API popt <> GPIO/MQTT/...
-    def get_dxAlarm(self):
-        if self._mh:
-            return self._mh.dx_alarm_trigger
-        return False
-
-    #################################################
-    # Noty Icons
+    # GUI Noty Icons
     def set_dxAlarm(self, set_alarm=True):
         if set_alarm:
             aprs_obj = self.get_aprs_ais()

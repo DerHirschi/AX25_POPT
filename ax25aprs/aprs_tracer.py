@@ -86,7 +86,7 @@ class APRSTracer:
         wide = f'WIDE{wide_c}-{wide_c}'
         path = ','.join(list(self._ais_cfg.get('be_tracer_via', [])) + [wide])
         # dest = APRS_SW_ID
-        if station_call not in self._port_handler.get_stat_calls_fm_port(port_id):
+        if station_call not in self._port_handler.api.get_stat_calls_fm_port(port_id):
             return {}
         add_str = f'{station_call}>{APRS_SW_ID},{path}:'
         msg = self._tracer_build_msg()
