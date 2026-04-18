@@ -368,22 +368,6 @@ class PoPTCore(object):
         self._gui.prp_response_update(resp, remote_uid)
 
     ######################
-    # FT
-    def get_all_ft_query(self):
-        # conn.ft_tx_queue: [FileTX]
-        # conn.ft_tx_activ: FileTX
-        res = {}
-        all_conn = self.get_all_connections()
-        for ch_id in list(all_conn.keys()):
-            conn = all_conn[ch_id]
-            tmp = conn.ft_queue
-            if conn.ft_obj:
-                tmp = [conn.ft_obj] + tmp
-            if tmp:
-                res[ch_id] = tmp
-        return res
-
-    ######################
     # Returns
     def get_gui(self):
         return self._gui
@@ -476,12 +460,14 @@ class PoPTCore(object):
         self._db.close_db()
 
     #################################################
-    # Noty Icons
+    # API popt <> GPIO/MQTT/...
     def get_dxAlarm(self):
         if self._mh:
             return self._mh.dx_alarm_trigger
         return False
 
+    #################################################
+    # Noty Icons
     def set_dxAlarm(self, set_alarm=True):
         if set_alarm:
             aprs_obj = self.get_aprs_ais()
