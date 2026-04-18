@@ -1,8 +1,10 @@
 import threading
 import time
+
+from cfg.constant import GUI_TASKER_TIME_D_UNTIL_BURN
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.one_wire_fnc import is_1wire_device, get_1wire_temperature
+from fnc.one_wire_fnc import oneWire_task
 
 
 class PoPTCoreTasker:
@@ -20,57 +22,84 @@ class PoPTCoreTasker:
         """"""
         self._is_running   = popt_handler.is_running
         """"""
-        self._tasker_th    = threading.Thread(target=self._tasker)
-        self._update_1wire_th: threading.Thread or None  = None  # 1Wire Thread
+        self._update_1wire_th: threading.Thread or None = None  # 1Wire Thread
+        self._tasker_th:       threading.Thread or None = None  # Non GUI Main Thread
         """"""
-        #
         self._1wire_timer      = time.time() + 10  # + 10 Sec, give some time to Init the rest
         self._task_timer_05sec = time.time() + 0.5
         self._task_timer_1sec  = time.time() + 1
         self._task_timer_2sec  = time.time() + 2
         self._task_timer_5sec  = time.time() + 5
+        """"""
         if not gui_app:
             self._init_PH_tasker()
+        """"""
+        self._tasker_q = []
 
-
-
+    # ===================================
+    # No GUI Loop/Thread
     def _init_PH_tasker(self):
-        threading.Thread(target=self._tasker).start()
+        self._tasker_th    = threading.Thread(target=self._tasker)
+        self._tasker_th.start()
 
     def _tasker(self):
         while self._is_running:
-            self.tasker_gui_th()
+            self.popt_core_task()
             if not self._is_running:
                 return
             time.sleep(0.25)
 
-    def tasker_gui_th(self):
+    # ===================================
+    # Main Tasker
+    def popt_core_task(self):
         if not self._is_running:
-            return False
-        # TODO Tasker-Q
-        # ret = any((self._5sec_task(),  ret))
-        task_pr = self._prio_task()
-        task_05 = self._05sec_task()
-        task_10 = self._1sec_task()
-        task_20 = self._2sec_task()
+            self._tasker_q = []
+            return
+        if len(self._tasker_q) > 15:
+            logger.warning("Core-Tasker: self._tasker_q > 15 !!")
+        start_timer = time.time()
+        self._prio_task()
+        self._05sec_task()
+        self._1sec_task()
+        self._2sec_task()
+        t_delta = time.time() - start_timer
+        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
+            logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
+            logger.warning( "   Skipping Tasker-Q")
+            logger.warning(f"   Tasker-Q length: {len(self._tasker_q)}")
+            return
 
-        return task_pr or task_05 or task_10 or task_20
+        while self._tasker_q and t_delta < GUI_TASKER_TIME_D_UNTIL_BURN:
+            fnc = self._tasker_q.pop()
+            fnc()
+            t_delta = time.time() - start_timer
 
+        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
+            logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
+            logger.warning(f"   Tasker-Q length: {len(self._tasker_q)}")
+
+
+
+    # ===================================
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
         task_01 = self._bbs().tasker()          # bbs.tasker-q
         task_02 = self._gpio_tasker_q()         # gpio.tasker-q
         task_03 = self._sound().sound_tasker()  # tasker-q
-
         return task_01 or task_02 or task_03
 
     def _05sec_task(self):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
-            self._Sched_task()
-            self._aprs_task()
+            #self._Sched_task()
+            #self._aprs_task()
             self._gpio_task()
-            self._popt_handler.pipe_manager.pipeTool_task()
+            #self._popt_handler.pipe_manager.pipeTool_task()
+            """"""
+            self._add_task_to_q(self._Sched_task)
+            self._add_task_to_q(self._aprs_task)
+            self._add_task_to_q(self._popt_handler.pipe_manager.pipeTool_task)
+            """"""
             self._task_timer_05sec = time.time() + 0.5
             return True
         return False
@@ -78,10 +107,16 @@ class PoPTCoreTasker:
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
-            self._port_watchdog_task()
-            self._mh_task()         # #################
-            self._tasker_1wire()
-            self._popt_handler.update_remote_monitor_task()
+            #self._port_watchdog_task()
+            #self._mh_task()         # #################
+            #self._tasker_1wire()
+            #self._popt_handler.update_remote_monitor_task()
+            """"""
+            self._add_task_to_q(self._port_watchdog_task)
+            self._add_task_to_q(self._mh_task)
+            self._add_task_to_q(self._tasker_1wire)
+            self._add_task_to_q(self._popt_handler.update_remote_monitor_task)
+            """"""
             self._task_timer_1sec = time.time() + 1
             return True
         return False
@@ -89,7 +124,10 @@ class PoPTCoreTasker:
     def _2sec_task(self):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
-            self._bbs().main_cron()
+            #self._bbs().main_cron()
+            """"""
+            self._add_task_to_q(self._bbs().main_cron)
+            """"""
             self._task_timer_2sec = time.time() + 2
             return True
         return False
@@ -98,9 +136,21 @@ class PoPTCoreTasker:
         """ 5 Sec """
         if time.time() > self._task_timer_5sec:
             # self._update_remote_monitor_batch_task()
+            # self._popt_handler.thread_GC_cleanup_task()
+            """"""
+            self._add_task_to_q(self._popt_handler.thread_GC_cleanup_task)
+            """"""
             self._task_timer_5sec = time.time() + 5
             return True
         return False
+
+    # ===================================
+    # Tasker Q
+    def _add_task_to_q(self, fnc):
+        if fnc in self._tasker_q:
+            logger.warning("Core-Tasker: Task already in Q")
+            return
+        self._tasker_q.append(fnc)
 
     #######################################################################
     # Port Watchdog
@@ -162,26 +212,7 @@ class PoPTCoreTasker:
 
     def _oneWire_thread_run(self):
         self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
-        self._update_1wire_th = threading.Thread(target=self._oneWire_task)
+        self._update_1wire_th = threading.Thread(target=oneWire_task)
         self._thread_gc.append(self._update_1wire_th)
         self._update_1wire_th.start()
 
-    @staticmethod
-    def _oneWire_task():
-        if not is_1wire_device():
-            return
-        sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
-        if not sensor_cfg:
-            return
-        for textVar, sens_cfg in sensor_cfg.items():
-            sens_cfg: dict
-            sens_id = sens_cfg.get('device_path', '')
-            if not sens_id:
-                continue
-            try:
-                sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
-            except IndexError:
-                logger.warning(f"PH: _oneWire_task IndexError: {textVar}")
-                logger.warning(f"PH: _oneWire_task IndexError: {sens_cfg}")
-                continue
-        # POPT_CFG.set_1wire_sensor_cfg(dict(sensor_cfg))

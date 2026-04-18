@@ -2223,9 +2223,9 @@ class PoPT_GUI_Main:
         """ Prio Tasks every Irritation """
         tasker_ret = False
 
-        if hasattr(self._popt_handler, 'tasker_gui_th'):
+        if hasattr(self._popt_handler, 'popt_core_task'):
             timer = time.time()
-            self._popt_handler.tasker_gui_th()
+            self._popt_handler.popt_core_task()
             t_delta = time.time() - timer
             if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")

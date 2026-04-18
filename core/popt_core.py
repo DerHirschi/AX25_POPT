@@ -109,8 +109,9 @@ class PoPTCore(object):
 
     #######################################################################
     # Tasker Call fm GUI
-    def tasker_gui_th(self):
-        self._core_tasker.tasker_gui_th()
+    def popt_core_task(self):
+        """ Called fm GUI Loop """
+        self._core_tasker.popt_core_task()
 
     #######################################################################
     # Thread GC
@@ -124,6 +125,12 @@ class PoPTCore(object):
                     logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
                     th.join(timeout=1)
 
+    def thread_GC_cleanup_task(self):
+        for thread in list(self.thread_gc):
+            thread: threading.Thread
+            if not thread.is_alive():
+                self.thread_gc.remove(thread)
+                del thread
     #######################################################################
     # scheduled Tasks
     #def _init_SchedTasker(self):
