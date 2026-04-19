@@ -23,6 +23,7 @@ from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Obj_Tab import APRSmonObjTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_Pack_Tab import APRSmonPackTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_WX_Tab import APRSmonWXTree
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_ownIGate_Mon import APRSmonIGateMonTree
+from gui.aprs.guiAPRS_SMS_frame import APRSChatFrame
 
 
 class AISmonitor(tk.Toplevel):
@@ -52,12 +53,11 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
-        self._port_handler           = root_win.get_PH_mainGUI()
-        self._ais_obj                = self._port_handler.get_aprs_ais()
+        self._popt_handler           = root_win.get_PH_mainGUI()
+        self._ais_obj                = self._popt_handler.get_aprs_ais()
         self._aprs_icon_tab_16       = root_win.get_aprs_icon_tab_16()
         self._aprs_icon_tab_24       = root_win.get_aprs_icon_tab_24()
         self.call_filter_list        = []
-        self._sort_rev               = False
         ####
         self._tasker_q               = []
         self._tasker_q_prio          = []
@@ -92,13 +92,13 @@ class AISmonitor(tk.Toplevel):
         igate_list_f = ttk.Frame(tab)
         self._pack_tree_cl  = APRSmonPackTree(tab, self)
         self._igate_tab     = IGateTab(self, igate_list_f)
-        self._node_tree_cl  = APRSmonNodeTree(tab, self, self._port_handler)
-        self._obj_tree_cl   = APRSmonObjTree( tab, self, self._port_handler)
+        self._node_tree_cl  = APRSmonNodeTree(tab, self, self._popt_handler)
+        self._obj_tree_cl   = APRSmonObjTree(tab, self, self._popt_handler)
         self._wx_tree_cl    = APRSmonWXTree(  tab, self)
         self._msg_tree_cl   = APRSmonMSGTree( tab, self)
         self._bl_tree_cl    = APRSmonBLTree(  tab, self)
-        self._igate_mon_cl  = APRSmonIGateMonTree(tab, self, self._port_handler)
-        self._digi_mon_cl   = APRSmonDIGIMonTree(tab, self, self._port_handler)
+        self._igate_mon_cl  = APRSmonIGateMonTree(tab, self, self._popt_handler)
+        self._digi_mon_cl   = APRSmonDIGIMonTree(tab, self, self._popt_handler)
         igate_list_f.pack(fill='both', expand=True)
         ##############################################
         tab.add(self._node_tree_cl, text="Node-List")
@@ -131,12 +131,15 @@ class AISmonitor(tk.Toplevel):
         ##############################################
         mon_tab_f = ttk.Frame(tab2)
         map_tab_f = ttk.Frame(tab2)
+        sms_tab_f = APRSChatFrame(tab2, self._popt_handler)
 
         mon_tab_f.pack(fill='both', expand=True)
         map_tab_f.pack(fill='both', expand=True)
+        sms_tab_f.pack(fill='both', expand=True)
 
         tab2.add(mon_tab_f, text="Monitor")
         tab2.add(map_tab_f, text="Map")
+        tab2.add(sms_tab_f, text="SMS")
         ##############################################
         # Monitor
         left_frame  = ttk.Frame(mon_tab_f)
@@ -193,11 +196,9 @@ class AISmonitor(tk.Toplevel):
         # Erstelle das Map-Widget
         self._map_widget = SafeTkinterMapView(root_win=self, master=f1, corner_radius=0)
         self._map_widget.pack(fill="both", expand=True)
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
-        lat, lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
 
         # Setze die anfängliche Position und Zoom-Level (z. B. Europa)
-        self._map_widget.set_position(lat, lon)  # Paris als Startpunkt
+        self._map_widget.set_position(self._own_lat, self._own_lon)  # Paris als Startpunkt
         self._map_widget.set_zoom(8)
         # self._map_widget.bind("<<MapViewZoom>>", self._on_zoom_change)
         ########################################################
@@ -231,6 +232,7 @@ class AISmonitor(tk.Toplevel):
         self.init_ais_mon()
         self._igate_mon_cl.init_tree()
         self._digi_mon_cl.init_tree()
+        sms_tab_f.update_aprs_msg_frame()
         root_win.aprs_mon_win = self
 
 
@@ -663,7 +665,7 @@ class AISmonitor(tk.Toplevel):
 
     #######################################
     def set_ais_obj(self):
-        self._ais_obj = self._port_handler.get_aprs_ais()
+        self._ais_obj = self._popt_handler.get_aprs_ais()
 
     def get_symbol_fm_node_tab(self, node_id: str):
         if hasattr(self._ais_obj, 'get_symbol_fm_node_tab'):

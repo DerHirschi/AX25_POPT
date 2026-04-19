@@ -489,7 +489,6 @@ class APRSmain(object):
             return
         gui.igate_tree_update(aprs_pack)
 
-
     def gui_add_digi_mon_pack(self, aprs_pack: dict):
         gui = self._get_ais_mon_gui()
         if not gui:

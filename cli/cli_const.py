@@ -4,7 +4,7 @@ CLI_DEF_CMD_ALL = ['?', 'ATR', 'AXIP', 'BELL', 'BWSTAT', 'BYE', 'C!', 'CH', 'CHI
 
 CLI_DEF_CONV_CMD = ['L', 'U', 'H', 'Q']
 
-CLI_DEF_CMD_BASIC = ['QUIT', 'BYE', 'HELP', '?']
+CLI_DEF_CMD_BASIC = ['QUIT', 'BYE', 'HELP', '?', 'Q']
 
 CLI_DEF_CMD_CONV  = ['L', 'H', 'Q', 'U']
 

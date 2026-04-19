@@ -69,7 +69,7 @@ class APRSsms:
             # print(f"THP > {aprs_pack['subpacket']}")
             path    = aprs_pack.get('path', [])
             port_id = aprs_pack.get('port_id', '')
-            rx_time = aprs_pack['rx_time']
+            rx_time = aprs_pack.get('rx_time', datetime.now())
             loc     = aprs_pack['locator']
             dist    = aprs_pack['distance']
 
@@ -115,6 +115,11 @@ class APRSsms:
                 return True
         return False
     """
+    # ============================================
+    def _update_gui_aprs_msg_win(self, aprs_pack):
+        gui = self._port_handler.get_gui()
+        if hasattr(gui, 'update_aprs_msg_win'):
+            gui.update_aprs_msg_win(aprs_pack)
 
     def _update_msg_gui(self, aprs_pack: dict):
         if self._port_handler is None:
@@ -127,8 +132,7 @@ class APRSsms:
             if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
                 self._port_handler.set_aprsMailAlarm_PH(True)
 
-        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
-            self._port_handler.update_gui_aprs_msg_win(aprs_pack)
+        self._update_gui_aprs_msg_win(aprs_pack)
 
     def _aprs_msg_sys_new_msg(self, aprs_pack: dict):
         self._update_msg_gui(aprs_pack)
@@ -197,8 +201,7 @@ class APRSsms:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
                 self._aprs_main.send_it(dict(pack))
-            if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
-                self._port_handler.update_gui_aprs_msg_win(pack)
+            self._update_gui_aprs_msg_win(pack)
             if not pack.get('is_ack', False):
                 self.aprs_msg_pool['message'].append(dict(pack))
                 self._aprs_msg_sys_new_msg(dict(pack))
@@ -255,8 +258,7 @@ class APRSsms:
                         pack['send_timer'] = time.time() + self._parm_resend
                         pack['N'] += 1
                         self._aprs_main.send_it(pack)
-                        if hasattr(self._port_handler, 'update_gui_aprs_msg_win'):
-                            self._port_handler.update_gui_aprs_msg_win(pack)
+                        self._update_gui_aprs_msg_win(pack)
                         if pack['N'] == self._parm_max_n:
                             self._del_address_fm_spooler(pack)
                     # else: self.del_fm_spooler(pack, rx=False)

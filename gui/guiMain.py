@@ -373,6 +373,7 @@ class PoPT_GUI_Main:
         self.locator_calc_window    = None
         self.aprs_mon_win           = None
         self.aprs_pn_msg_win        = None
+        self.aprs_pn_msg_frame      = []
         self.userdb_win             = None
         self.userDB_tree_win        = None
         self.FileSend_win           = None
@@ -2381,6 +2382,11 @@ class PoPT_GUI_Main:
     def _update_aprs_msg_win_task(self, aprs_pack):
         if hasattr(self.aprs_pn_msg_win, 'update_aprs_msg'):
             self.aprs_pn_msg_win.update_aprs_msg(aprs_pack)
+        for aprs_sms_frame in list(self.aprs_pn_msg_frame):
+            if hasattr(aprs_sms_frame, 'update_aprs_msg_frame'):
+                aprs_sms_frame.update_aprs_msg_frame()
+            else:
+                self.aprs_pn_msg_frame.remove(aprs_sms_frame)
 
     def _aprs_wx_tree_task(self):
         ais = self._popt_handler.get_aprs_ais()

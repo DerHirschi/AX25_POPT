@@ -122,12 +122,17 @@ class PoPTCore(object):
     def _wait_for_GC_threads(self):
         n = 0
         logger.info(f"Thread GC: Checking {len(self.thread_gc)} Threads..")
-        for th in self.thread_gc:
+        for th in list(self.thread_gc):
             if hasattr(th, 'is_alive'):
                 n += 1
                 while th.is_alive():
                     logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
                     th.join(timeout=1)
+            logger.info(f"Thread GC: Thread {n} is not alive. Removing Thread.")
+            self.thread_gc.remove(th)
+            del th
+        logger.info(f"Thread GC: done..")
+
 
     def thread_GC_cleanup_task(self):
         for thread in list(self.thread_gc):
@@ -447,10 +452,6 @@ class PoPTCore(object):
         #if self._gui and self.is_running:
         if hasattr(self._gui, 'sysMsg_to_monitor'):
             self._gui.sysMsg_to_monitor(msg)
-
-    def update_gui_aprs_msg_win(self, aprs_pack):
-        if hasattr(self._gui, 'update_aprs_msg_win'):
-            self._gui.update_aprs_msg_win(aprs_pack)
 
     #################################################
     # GUI Noty Icons
