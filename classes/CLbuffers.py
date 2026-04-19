@@ -44,6 +44,11 @@ class ListBuffer:
         self._buffer.pop(i)
         self._threadLock = False
 
+    def buffer_remove(self, value):
+        self._get_thread_lock()
+        self._buffer.remove(value)
+        self._threadLock = False
+
     @property
     def buffer_get(self):
         return list(self._buffer)

@@ -80,6 +80,7 @@ class AX25Pipe(object):
         """ Ctl """
         self.e_count                                 = 0
         self._max_pac_timer                          = time.time()
+        self._work_thread_name  = f"AX25Pipe-{pipe_cfg['pipe_parm_port']}-{self._uid}"
         self._work_thread: None | threading.Thread   = None
         self._is_running                             = False
         self._is_error_limit = lambda : self.e_count > 3
@@ -240,7 +241,7 @@ class AX25Pipe(object):
 
         self._backend_loop_timer = time.time() + self._param_loop_timer
         """"""
-        self._work_thread = threading.Thread(target=self._load_tx_buff_fm_file)
+        self._work_thread = threading.Thread(target=self._load_tx_buff_fm_file, name=self._work_thread_name)
         self._work_thread.start()
 
     def _load_tx_buff_fm_file(self):
@@ -323,7 +324,7 @@ class AX25Pipe(object):
         else:
             target = self._be_tcp_server_rx
 
-        self._work_thread = threading.Thread(target=target)
+        self._work_thread = threading.Thread(target=target, name=self._work_thread_name)
         self._work_thread.start()
 
     def _be_tcp_server_wait_f_client(self):
@@ -496,7 +497,7 @@ class AX25Pipe(object):
             self._work_thread.join()
         self._backend_loop_timer = time.time() + 0.5
 
-        self._work_thread = threading.Thread(target=self._be_tcp_client_rx)
+        self._work_thread = threading.Thread(target=self._be_tcp_client_rx, name=self._work_thread_name)
         self._work_thread.start()
 
     def _be_tcp_client_tx(self):
@@ -612,7 +613,7 @@ class AX25Pipe(object):
             self._work_thread.join()
         self._backend_loop_timer = time.time() + 0.5
 
-        self._work_thread = threading.Thread(target=self._be_serial_rx)
+        self._work_thread = threading.Thread(target=self._be_serial_rx, name=self._work_thread_name)
         self._work_thread.start()
 
     def _be_serial_tx(self):

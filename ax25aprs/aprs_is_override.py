@@ -145,7 +145,7 @@ def _try_toparse_body(packet_type, body, parsed):
     elif packet_type == '<':
         # IGATE SPECIAL PARSER
         if 'IGATE,' in body:
-            logger.debug("Detected IGATE status frame")
+            #logger.debug("Detected IGATE status frame")
 
             result.update({
                 'format': 'igate',

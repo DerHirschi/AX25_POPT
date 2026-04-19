@@ -4,7 +4,7 @@ import time
 from cfg.constant import GUI_TASKER_TIME_D_UNTIL_BURN
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.one_wire_fnc import oneWire_task
+from fnc.one_wire_fnc import oneWire_task, is_1wire_device
 
 
 class PoPTCoreTasker:
@@ -17,19 +17,17 @@ class PoPTCoreTasker:
         self._aprs_ais         = lambda : popt_handler.get_aprs_ais()
         self._sound            = lambda : popt_handler.get_sound_modul()
         self._scheduled_tasker = lambda : popt_handler.get_scheduled_tasker()
-        """ Thread Garbage Collector """
-        self._thread_gc: list  = popt_handler.thread_gc
+        self._thread_manager   = lambda : popt_handler.get_thread_manager()
         """"""
         self._is_running   = popt_handler.is_running
         """"""
-        self._update_1wire_th: threading.Thread or None = None  # 1Wire Thread
         self._tasker_th:       threading.Thread or None = None  # Non GUI Main Thread
         """"""
-        self._1wire_timer      = time.time() + 10  # + 10 Sec, give some time to Init the rest
-        self._task_timer_05sec = time.time() + 0.5
-        self._task_timer_1sec  = time.time() + 1
-        self._task_timer_2sec  = time.time() + 2
-        self._task_timer_5sec  = time.time() + 5
+        self._1wire_timer       = time.time() + 10  # + 10 Sec, give some time to Init the rest
+        self._task_timer_05sec  = time.time() + 0.5
+        self._task_timer_1sec   = time.time() + 1
+        self._task_timer_2sec   = time.time() + 2
+        self._task_timer_30sec  = time.time() + 30
         """"""
         if not gui_app:
             self._init_PH_tasker()
@@ -62,6 +60,7 @@ class PoPTCoreTasker:
         self._05sec_task()
         self._1sec_task()
         self._2sec_task()
+        self._30sec_task()
         t_delta = time.time() - start_timer
         if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
             logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
@@ -71,14 +70,13 @@ class PoPTCoreTasker:
 
         while self._tasker_q and t_delta < GUI_TASKER_TIME_D_UNTIL_BURN:
             fnc = self._tasker_q.pop()
-            fnc()
+            if callable(fnc):
+                fnc()
             t_delta = time.time() - start_timer
 
         if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
             logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
             logger.warning(f"   Tasker-Q length: {len(self._tasker_q)}")
-
-
 
     # ===================================
     def _prio_task(self):
@@ -132,15 +130,14 @@ class PoPTCoreTasker:
             return True
         return False
 
-    def _5sec_task(self):
-        """ 5 Sec """
-        if time.time() > self._task_timer_5sec:
+    def _30sec_task(self):
+        """ 30 Sec """
+        if time.time() > self._task_timer_30sec:
             # self._update_remote_monitor_batch_task()
-            # self._popt_handler.thread_GC_cleanup_task()
             """"""
-            self._add_task_to_q(self._popt_handler.thread_GC_cleanup_task)
+            self._add_task_to_q(self._thread_manager().thread_GC_cleanup_task)
             """"""
-            self._task_timer_5sec = time.time() + 5
+            self._task_timer_30sec = time.time() + 30
             return True
         return False
 
@@ -202,17 +199,16 @@ class PoPTCoreTasker:
     def _tasker_1wire(self):
         if time.time() < self._1wire_timer:
             return
-        if self._update_1wire_th is None:
-            self._oneWire_thread_run()
+        if not is_1wire_device():
+            self._1wire_timer = time.time() + 600
             return
-        if self._update_1wire_th.is_alive():
+        sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
+        if not sensor_cfg:
+            self._1wire_timer = time.time() + 30
             return
-        self._oneWire_thread_run()
-        return
-
-    def _oneWire_thread_run(self):
-        self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
-        self._update_1wire_th = threading.Thread(target=oneWire_task)
-        self._thread_gc.append(self._update_1wire_th)
-        self._update_1wire_th.start()
+        th_name = "oneWire_task"
+        if not self._thread_manager().is_alive_thread(th_name):
+            update_1wire_th = threading.Thread(target=oneWire_task, name=th_name)
+            self._thread_manager().add_thread(update_1wire_th)
+            self._1wire_timer = time.time() + POPT_CFG.get_1wire_loop_timer()
 

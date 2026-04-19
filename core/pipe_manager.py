@@ -6,8 +6,7 @@ class PipeManager:
     def __init__(self, popt_handler):
         logger.info("Pipe-Manager: Init")
         self._popt_handler = popt_handler
-        """ Thread Garbage Collector """
-        self._thread_gc: list   = popt_handler.thread_gc
+        #self._thread_manager = lambda : popt_handler.get_thread_manager()
 
     """ Init """
     def pipeTool_init_by_port(self, port_id: int):
@@ -22,7 +21,7 @@ class PipeManager:
                         logger.info(f"Pipe-Manager: Init Pipe on Port: {port_id}.")
                         pipe = port.add_pipe(pipe_cfg=pipeCfg)
                         """ Add Pipe Thread to PoPT-Handler Thread GC """
-                        self._thread_gc.append(pipe.get_thread())
+                        #self._thread_manager().add_thread(pipe.get_thread())
 
     """ Close """
     def close_all_pipes(self):

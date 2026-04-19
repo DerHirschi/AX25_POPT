@@ -25,7 +25,7 @@ class PortManager:
         self.rx_echo_on         = False
         self._glb_port_blocking = 1
         """ Thread Garbage Collector """
-        self._thread_gc         = popt_handler.thread_gc
+        self._thread_manager    = popt_handler.get_thread_manager()
 
     # =================================
     # Init
@@ -58,12 +58,18 @@ class PortManager:
             return False
         ##########################
         # Start Port/Device Thread
-        threading.Thread(target=temp.port_tasker).start()
+        th_name = f"tasker_port-{port_id}"
+        th = threading.Thread(target=temp.port_tasker, name=th_name)
+        if not self._thread_manager.add_thread(th):
+            logger.error(f'PortManager: Could not start Port-Tasker Thread {port_id} !')
+            temp.close()
+            return False
         ##########################
         # Start Port/Device Thread
         if not temp.device_is_running:
-            logger.error('PortManager: Could not initialise Port {}. Device not running.'.format(port_id))
+            logger.error(f'PortManager: Could not initialise Port {port_id}. Device not running.')
             self._popt_handler.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+            temp.close()
             del temp
             return False
         ######################################
@@ -77,9 +83,14 @@ class PortManager:
         return True
 
     def reinit_port(self, port_id: int):
-        reinit_th = threading.Thread(target=self._reinit_port_th, args=(port_id, ))
-        reinit_th.start()
-        self._thread_gc.append(reinit_th)
+        thread_name = f"reinit_port-{port_id}"
+        reinit_th = threading.Thread(target=self._reinit_port_th,
+                                     args=(port_id, ),
+                                     name=thread_name)
+        if not self._thread_manager.add_thread(reinit_th):
+            logger.error(
+                f"PortManager: Reinit Port {port_id}. Can't start Reinit Thread")
+            return
         self._popt_handler.set_diesel()
 
     def _reinit_port_th(self, port_id: int):

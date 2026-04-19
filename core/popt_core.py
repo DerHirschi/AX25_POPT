@@ -11,6 +11,7 @@ from core.core_api import CoreAPI
 from core.core_tasker import PoPTCoreTasker
 from core.pipe_manager import PipeManager
 from core.port_manager import PortManager
+from core.thread_manager import ThreadManager
 from poptGPIO.poptGPIO_main import poptGPIO_main
 from schedule.popt_sched_tasker import PoPTSchedule_Tasker
 from sound.popt_sound import SOUND
@@ -60,6 +61,7 @@ class PoPTCore(object):
         self._mh.set_DB(self._db)
         #######################################################
         self._sound             = SOUND
+        self._thread_manager    = ThreadManager(self)   # Thread GC
         self.port_manager       = PortManager(self)
         self.connection_manager = ConnectionManager(self)
         self.pipe_manager       = PipeManager(self)
@@ -119,27 +121,8 @@ class PoPTCore(object):
 
     #######################################################################
     # Thread GC
-    def _wait_for_GC_threads(self):
-        n = 0
-        logger.info(f"Thread GC: Checking {len(self.thread_gc)} Threads..")
-        for th in list(self.thread_gc):
-            if hasattr(th, 'is_alive'):
-                n += 1
-                while th.is_alive():
-                    logger.warning(f"  Thread {n} is still alive. Waiting for Thread to be closed !")
-                    th.join(timeout=1)
-            logger.info(f"Thread GC: Thread {n} is not alive. Removing Thread.")
-            self.thread_gc.remove(th)
-            del th
-        logger.info(f"Thread GC: done..")
-
-
-    def thread_GC_cleanup_task(self):
-        for thread in list(self.thread_gc):
-            thread: threading.Thread
-            if not thread.is_alive():
-                self.thread_gc.remove(thread)
-                del thread
+    def add_thread(self, thread):
+        self._thread_manager.add_thread(thread)
 
     #######################################################################
     # Closing
@@ -196,7 +179,7 @@ class PoPTCore(object):
         self.sysmsg_to_gui("Saving MainCFG")
         POPT_CFG.save_MAIN_CFG_to_file()
         logger.info("PH: Checking GC-Threads..")
-        self._wait_for_GC_threads()
+        self._thread_manager.wait_for_GC_threads()
         self._ph_end = True
 
     def get_ph_end(self):
@@ -253,8 +236,10 @@ class PoPTCore(object):
             logger.error("PH: APRS-AIS Init Error! No aprs_ais !")
             return False
 
-        th = threading.Thread(target=self._aprs_ais.ais_rx_task).start()
-        self.thread_gc.append(th)
+        th = threading.Thread(target=self._aprs_ais.ais_rx_task, name='ais_rx_task')
+        if not self._thread_manager.add_thread(th):
+            logger.error("PH: APRS-AIS Init Error! Can't start AIS Thread")
+            return False
         gui = self.get_gui()
         if hasattr(gui, 'get_ais_mon_gui'):
             ais_mon_gui = gui.get_ais_mon_gui()
@@ -407,6 +392,9 @@ class PoPTCore(object):
 
     ######################
     # Returns
+    def get_thread_manager(self):
+        return self._thread_manager
+
     def get_gui(self):
         return self._gui
 
