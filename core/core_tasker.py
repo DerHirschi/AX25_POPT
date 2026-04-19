@@ -62,41 +62,38 @@ class PoPTCoreTasker:
         self._2sec_task()
         self._30sec_task()
         t_delta = time.time() - start_timer
-        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
-            logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
-            logger.warning( "   Skipping Tasker-Q")
-            logger.warning(f"   Tasker-Q length: {len(self._tasker_q)}")
-            return
-
+        n   = 0
+        fnc = None
         while self._tasker_q and t_delta < GUI_TASKER_TIME_D_UNTIL_BURN:
             fnc = self._tasker_q.pop()
             if callable(fnc):
                 fnc()
+            n += 1
             t_delta = time.time() - start_timer
 
         if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
             logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
-            logger.warning(f"   Tasker-Q length: {len(self._tasker_q)}")
+            if hasattr(fnc, '__name__'):
+                logger.warning(f"   -Last Task: {fnc.__name__}")
+            logger.warning(f"   -{n} Tasks done.")
+            logger.warning(f"   -{len(self._tasker_q)} Tasks still in Q.")
 
     # ===================================
     def _prio_task(self):
         """ 0.1 Sec (Mainloop Speed) """
-        task_01 = self._bbs().tasker()          # bbs.tasker-q
-        task_02 = self._gpio_tasker_q()         # gpio.tasker-q
-        task_03 = self._sound().sound_tasker()  # tasker-q
-        return task_01 or task_02 or task_03
+        self._add_task_to_q(self._bbs().tasker)           # bbs.tasker-q
+        self._add_task_to_q(self._gpio_tasker_q)          # tasker-q
+        self._add_task_to_q(self._sound().sound_tasker)   # tasker-q (Threads)
+
 
     def _05sec_task(self):
         """ 0.5 Sec """
         if time.time() > self._task_timer_05sec:
-            #self._Sched_task()
-            #self._aprs_task()
-            self._gpio_task()
-            #self._popt_handler.pipe_manager.pipeTool_task()
             """"""
             self._add_task_to_q(self._Sched_task)
             self._add_task_to_q(self._aprs_task)
             self._add_task_to_q(self._popt_handler.pipe_manager.pipeTool_task)
+            self._add_task_to_q(self._gpio_task)
             """"""
             self._task_timer_05sec = time.time() + 0.5
             return True
@@ -105,10 +102,6 @@ class PoPTCoreTasker:
     def _1sec_task(self):
         """ 1 Sec """
         if time.time() > self._task_timer_1sec:
-            #self._port_watchdog_task()
-            #self._mh_task()         # #################
-            #self._tasker_1wire()
-            #self._popt_handler.update_remote_monitor_task()
             """"""
             self._add_task_to_q(self._port_watchdog_task)
             self._add_task_to_q(self._mh_task)
@@ -122,7 +115,6 @@ class PoPTCoreTasker:
     def _2sec_task(self):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
-            #self._bbs().main_cron()
             """"""
             self._add_task_to_q(self._bbs().main_cron)
             """"""
@@ -145,7 +137,10 @@ class PoPTCoreTasker:
     # Tasker Q
     def _add_task_to_q(self, fnc):
         if fnc in self._tasker_q:
-            logger.warning("Core-Tasker: Task already in Q")
+            if hasattr(fnc, '__name__'):
+                logger.warning(f"Core-Tasker: Task '{fnc.__name__}' already in Q")
+                return
+            logger.warning(f"Core-Tasker: Task '{fnc}' already in Q")
             return
         self._tasker_q.append(fnc)
 
