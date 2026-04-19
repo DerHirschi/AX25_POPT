@@ -535,7 +535,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._dbl_pack.append(aprs_pack)
         if msg_nr:
             self._dbl_pack.append((msg_nr, msg_id))
-        msg += f"Time: {aprs_pack['rx_time'].strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
+        msg += f"Time: {aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
         if msg_nr != '':
             msg += f"Msg#: {msg_nr}\n"
         else:
