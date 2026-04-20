@@ -60,7 +60,7 @@ class BeaconTask:
             'cmd_poll': self._conf.get('cmd_poll', (False, False)),
             'pid': self._conf.get('pid', 0xF0)
         }
-        self._port_handler.send_UI(ui_frame_cfg)
+        self._port_handler.api.send_UI(ui_frame_cfg)
 
     def send_it(self):
         beacon_fnc = {

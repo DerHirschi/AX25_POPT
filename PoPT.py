@@ -1,3 +1,5 @@
+from core.popt_core import PoPTCore
+
 from cfg.cfg_fnc import init_dir_struct
 from cfg.constant import VER, DEBUG_LOG, POPT_BANNER
 from cfg.logger_config import logger, LOG_BOOK
@@ -20,10 +22,9 @@ if first_setup or not POPT_CFG.get_first_setup():
     SetupWizardAPP()
 
 #############################################
-logger.info("Starte Port-Handler")
-from core.popt_core import POPT_HANDLER
-
 if __name__ == '__main__':
+    logger.info("Starte Popt-Core")
+    popt_core = PoPTCore(gui_app=True)
     logger.info(f"PoPT_{VER} erfolgreich gestartet....")
     LOG_BOOK.info(f"PoPT_{VER} erfolgreich gestartet....")
     #############
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     logger.info("Lade GUI")
     import gui.guiMain
     logger.info(f"Starte GUI.")
-    gui.guiMain.PoPT_GUI_Main(POPT_HANDLER)
+    gui.guiMain.PoPT_GUI_Main(popt_core)
 
     # PORT_HANDLER.unblock_all_ports()
     # PORT_HANDLER.close_popt()

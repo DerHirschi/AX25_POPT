@@ -512,7 +512,9 @@ class MHWin(tk.Toplevel):
         self._alarm_newCall_var.set(bool(mh.parm_new_call_alarm))
         self._alarm_seenSince_var.set(str(mh.parm_lastseen_alarm))
         self._alarm_distance_var.set(str(mh.parm_distance_alarm))
-        self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
+        self._tracer_duration_var.set(str(tracer_duration))
         i = 0
         for var in self._alarm_ports:
             if i in mh.parm_alarm_ports:

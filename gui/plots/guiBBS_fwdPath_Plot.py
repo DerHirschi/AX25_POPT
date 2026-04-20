@@ -10,7 +10,6 @@ from cfg.popt_config import POPT_CFG
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 from matplotlib.lines import Line2D
-from core.popt_core import POPT_HANDLER
 from fnc.gui_fnc import generate_random_hex_color
 from fnc.str_fnc import convert_str_to_datetime
 
@@ -44,6 +43,7 @@ class FwdGraph(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self.wm_title("Forward Routes")
         self._root_win = root_win
+        self._popt_handler = root_win.get_PH_mainGUI()
         self.geometry(f"800x"
                       f"600+"
                       f"{self._root_win.main_win.winfo_x()}+"
@@ -57,8 +57,8 @@ class FwdGraph(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         #######################################################################
-        self._db = POPT_HANDLER.get_database()
-        self._user_DB = POPT_HANDLER.get_userDB()
+        self._db = self._popt_handler.get_database()
+        self._user_DB = self._popt_handler.get_userDB()
         self._db_raw = self._db.bbs_get_fwdPaths()
         self._path_data = {}
         self._call_info_vars = {}

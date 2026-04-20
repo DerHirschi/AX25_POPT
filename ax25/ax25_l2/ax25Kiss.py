@@ -559,8 +559,5 @@ class Kiss:
             logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
             return b''
         return self._START_TNC_KISS
-    #############################################################################
-    def get_tnc_emu_status(self):
-        return self._is_tnc_emu, self._is_tnc_emu_kiss
 
 

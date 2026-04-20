@@ -71,7 +71,7 @@ class PoPTCoreTasker:
             n += 1
             t_delta = time.time() - start_timer
 
-        if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
+        if t_delta >= GUI_TASKER_TIME_D_UNTIL_BURN:
             logger.warning(f"Core-Tasker: Overload: Loop needs {round(t_delta, 2)}s to process !!")
             if hasattr(fnc, '__name__'):
                 logger.warning(f"   -Last Task: {fnc.__name__}")

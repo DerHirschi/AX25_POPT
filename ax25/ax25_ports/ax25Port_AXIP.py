@@ -52,7 +52,7 @@ class AXIP(AX25Port):
             # MCast
             if self._port_cfg.get('parm_axip_Multicast', False):
                 logger.info(f"Port {self.port_id}: Set Multicast to Server !!")
-                self._mcast_server = self._port_handler.get_mcast_server()
+                self._mcast_server = self._popt_handler.get_mcast_server()
                 if hasattr(self._mcast_server, 'set_mcast_port'):
                     try:
                         self._mcast_server.set_mcast_port(self)

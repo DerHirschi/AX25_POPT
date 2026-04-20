@@ -18,6 +18,7 @@ class MSG_Center(tk.Toplevel):
         # Vars
         popt_handler            = root_win.get_PH_mainGUI()
         popt_handler.set_pmsMailAlarm(False)
+        self._popt_handler      = popt_handler
         self.bbs_obj            = popt_handler.get_bbs()
         self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
@@ -166,6 +167,9 @@ class MSG_Center(tk.Toplevel):
         # self._pn_tree.selection_set('"Row 0"')
         """
         pass
+
+    def get_popt_handler(self):
+        return self._popt_handler
 
     ####################
     def _do_pms_autoFWD(self):

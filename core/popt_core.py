@@ -312,47 +312,7 @@ class PoPTCore(object):
     ##################################
     # Connection Handling
     def get_all_connections(self, with_null=False):
-        return self.connection_manager.get_all_connections()
-
-    ##################################
-    # DIGI
-    def get_all_digiConn(self):
-        ret = {}
-        for port_id, port in self.port_manager.ax25_ports.items():
-            if port:
-                all_digi_conn = port.get_digi_conn()
-                for conn_key, conn in all_digi_conn.items():
-                    if conn_key not in ret:
-                        ret[conn_key] = conn
-                    else:
-                        # print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
-                        logger.warning(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
-                        # conn.ch_index += 1
-        return ret
-
-    def send_UI(self, conf: dict):
-        port_id = conf.get('port_id', 0)
-        ax25_ports = self.port_manager.get_all_ports()
-        if port_id not in ax25_ports:
-            return False
-        if not all((
-                conf.get('own_call', ''),
-                conf.get('add_str', ''),
-                conf.get('text', b'')
-        )):
-            return False
-        if hasattr(self._mcast_server, 'get_mcast_port_id'):
-            if port_id == self._mcast_server.get_mcast_port_id():
-                self._mcast_server.send_UI_to_all(conf)
-                return True
-        ax25_ports[port_id].send_UI_frame(
-            own_call=conf.get('own_call', ''),
-            add_str=conf.get('add_str', ''),
-            text=conf.get('text', b'')[:256],
-            cmd_poll=conf.get('cmd_poll', (False, False)),
-            pid=conf.get('pid', 0xF0),
-        )
-        return True
+        return self.connection_manager.get_all_connections(with_null)
 
     ######################################
     # Monitor Buffer Stuff
@@ -391,7 +351,7 @@ class PoPTCore(object):
         self._gui.prp_response_update(resp, remote_uid)
 
     ######################
-    # Returns
+    # Getta
     def get_thread_manager(self):
         return self._thread_manager
 
@@ -519,4 +479,3 @@ class PoPTCore(object):
         if hasattr(self._gpio, 'set_sysop_alarm'):
             self._gpio.set_sysop_alarm(False)
 
-POPT_HANDLER = PoPTCore()

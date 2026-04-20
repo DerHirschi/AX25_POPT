@@ -5,7 +5,7 @@ import tkinter as tk
 from collections import deque
 from tkinter import ttk, messagebox
 import threading
-from core.popt_core import POPT_HANDLER
+from core.popt_core import PoPTCore
 from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
@@ -97,7 +97,7 @@ class ChVars(object):
 
 
 class PoPT_GUI_Main:
-    def __init__(self, popt_handler: POPT_HANDLER):
+    def __init__(self, popt_handler: PoPTCore):
         ######################################
         # GUI Stuff
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
@@ -4001,10 +4001,6 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame.set_auto_tracer_state()
         self.tabbed_sideFrame2.set_auto_tracer_state()
         # self.set_tracer_icon()
-
-    def get_auto_tracer_duration(self):
-        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
-        return ais_cfg.get('be_auto_tracer_duration', 60)
 
     def set_auto_tracer_duration(self, dur):
         ais_obj = self._popt_handler.get_aprs_ais()

@@ -288,3 +288,21 @@ class PortManager:
                         logger.debug("PortManager: " +
                             f"RX-Echo: Forwarding frame from {from_call} on port {receiving_port_id} to port {target_port_id}")
                         rx_echo_var.tx_buff.append(ax_frame)
+
+    ##################################
+    # DIGI
+    """
+    def get_all_digiConn(self):
+        ret = {}
+        for port_id, port in self.ax25_ports.items():
+            if port:
+                all_digi_conn = port.get_digi_conn()
+                for conn_key, conn in all_digi_conn.items():
+                    if conn_key not in ret:
+                        ret[conn_key] = conn
+                    else:
+                        # print(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        logger.warning(f"!! Digi-Connection {conn_key} on Port {port_id} has same UID: {conn.uid}")
+                        # conn.ch_index += 1
+        return ret
+    """

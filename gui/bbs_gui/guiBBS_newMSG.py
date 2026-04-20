@@ -3,7 +3,6 @@ from tkinter import ttk
 from tkinter import messagebox
 
 from UserDB.UserDBmain import USER_DB
-from core.popt_core import POPT_HANDLER
 from bbs.bbs_constant import GET_MSG_STRUC
 from cfg.logger_config import logger, BBS_LOG
 from cfg.popt_config import POPT_CFG
@@ -20,11 +19,17 @@ class BBS_newMSG(tk.Toplevel):
     def __init__(self, root_win, reply_msg=None):
         tk.Toplevel.__init__(self, )
         if reply_msg is None:
-            reply_msg   = {}
-        self._root_win  = root_win
-        self._bbs_obj   = POPT_HANDLER.get_bbs()
-        self.text_size  = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+            reply_msg      = {}
+        self._root_win     = root_win
+        if hasattr(root_win, 'get_PH_mainGUI'):
+            self._popt_handler = root_win.get_PH_mainGUI()
+        elif hasattr(root_win, 'get_popt_handler'):
+                self._popt_handler = root_win.get_popt_handler()
+        else:
+            raise AttributeError("No get_popt_handler/get_PH_main_GUI")
+        self._bbs_obj      = self._popt_handler.get_bbs()
+        self.text_size     = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         self.title(self._getTabStr('new_pr_mail'))
         self.style = self._root_win.style
@@ -580,7 +585,7 @@ class BBS_newMSG(tk.Toplevel):
             text = text.decode(enc, 'ignore')
         else:
             text = text.decode(decoder, 'ignore')
-        text = replace_StringVARS(input_string=text, port_handler=POPT_HANDLER)
+        text = replace_StringVARS(input_string=text, port_handler=self._popt_handler)
         text = zeilenumbruch_lines(text)
         self._text.insert(tk.INSERT, text)
         self._text.see(tk.INSERT)
@@ -608,7 +613,7 @@ class BBS_newMSG(tk.Toplevel):
             text = text.decode(enc, 'ignore')
         else:
             text = text.decode(ch_enc, 'ignore')
-        text = replace_StringVARS(input_string=text, port_handler=POPT_HANDLER)
+        text = replace_StringVARS(input_string=text, port_handler=self._popt_handler)
         text = zeilenumbruch_lines(text)
         self._text.insert(tk.INSERT, text)
         self._text.see(tk.INSERT)

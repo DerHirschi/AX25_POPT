@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog as fd
 from tkinter import ttk as ttk
 from tkinter import scrolledtext
-from core.popt_core import POPT_HANDLER
 from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
 from cfg.popt_config import POPT_CFG
@@ -17,6 +16,7 @@ class BeaconTab:
         self._need_reinit = False
         self._tab_clt = tabclt
         self._root_win = root
+        self._popt_handler = root.get_popt_handler()
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.own_tab = ttk.Frame(self._tab_clt)
         self.beacon: dict = beacon
@@ -95,7 +95,7 @@ class BeaconTab:
         call_label.place(x=call_x, y=call_y)
         self.port_select_var = tk.StringVar(self.own_tab)
         self.port_select_var.set(str(beacon.get('port_id', 0)))  # default value
-        opt = list(POPT_HANDLER.get_all_ports().keys())
+        opt = list(self._popt_handler.get_all_ports().keys())
         if not opt:
             opt = ['0']
         opt = [self.port_select_var.get()] + opt
@@ -350,13 +350,14 @@ class BeaconTab:
         return self._need_reinit
 
 class BeaconSettings(ttk.Frame):
-    def __init__(self, tabctl, main_win=None):
+    def __init__(self, tabctl, main_win):
         ttk.Frame.__init__(self, tabctl)
-        self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._need_reinit = False
-        self.win_height   = 540
-        self.win_width    = 1060
-        self.schedule_win = None
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._need_reinit  = False
+        self._popt_handler = main_win.get_popt_handler()
+        self.win_height    = 540
+        self.win_width     = 1060
+        self.schedule_win  = None
         ####################################
         # New Station, Del Station Buttons
         ttk.Button(self,
@@ -425,9 +426,8 @@ class BeaconSettings(ttk.Frame):
                 beacon_tasks.append(dict(tab.beacon))
         POPT_CFG.set_Beacon_tasks(beacon_tasks)
 
-    @staticmethod
-    def _re_init_beacons():
-        POPT_HANDLER.reinit_beacon_task()
+    def _re_init_beacons(self):
+        self._popt_handler.reinit_beacon_task()
 
     def _new_beacon_btn_cmd(self):
         # ax25_frame: AX25Frame, port_id: int, repeat_time: int, move_time: int, aprs_stuff: bool = False
@@ -448,6 +448,9 @@ class BeaconSettings(ttk.Frame):
         else:
             del self.tab_list[ind]
             self.tabControl.forget(ind)
+
+    def get_popt_handler(self):
+        return self._popt_handler
 
     def save_config(self):
         self._set_vars()

@@ -1,14 +1,13 @@
 import time
 import tkinter as tk
 
-from core.popt_core import POPT_HANDLER
-
 
 class AlarmIconFrame(tk.Frame):
     def __init__(self, root, main_gui):
         tk.Frame.__init__(self, root, bg='#313336', height=15, width=50)
         self.pack(fill='x', pady=5, expand=False)
-
+        self._popt_handler = main_gui.get_PH_mainGUI()
+        """"""
         self._diesel_label = tk.Label(self, text='➿',
                                       font=('', 12,),
                                       # state='disabled',
@@ -321,7 +320,7 @@ class AlarmIconFrame(tk.Frame):
 
     def _TracerIcon_tasker(self):
         """  """
-        tracer  = POPT_HANDLER.get_aprs_ais()
+        tracer  = self._popt_handler.get_aprs_ais()
         alarm_k = 'tracer'
         if not tracer:
             if self._tracer_label.cget('state') == 'normal':

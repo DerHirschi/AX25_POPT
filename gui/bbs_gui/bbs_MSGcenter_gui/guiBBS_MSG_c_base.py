@@ -16,6 +16,7 @@ class MSG_Center_base(ttk.Frame):
         self.style              = root_win.style
         self._root_win          = root_win
         self._bbs_obj           = root_win.bbs_obj
+        self._popt_handler      = root_win.get_popt_handler()
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         self.text_size          = root_win.text_size
         self._text_size_tabs    = 10
@@ -436,3 +437,5 @@ class MSG_Center_base(ttk.Frame):
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
     #################################
+    def get_popt_handler(self):
+        return self._popt_handler

@@ -14,12 +14,12 @@ from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR
 
 
 class AX25Port(object):
-    def __init__(self, port_id: int, port_handler):
+    def __init__(self, port_id: int, popt_handler):
         self._logTag = f"Port {port_id}: "
         #self.port_w_dog = time.time()   # Debuging
-        self._port_handler              = port_handler
+        self._popt_handler              = popt_handler
         self._loop_watchdog             = time.time()
-        self._loop_is_running           = self._port_handler.is_running
+        self._loop_is_running           = self._popt_handler.is_running
         self.ende                       = False
         self.device                     = None
         self.device_is_running          = False
@@ -62,7 +62,7 @@ class AX25Port(object):
         self.connections        = {}
         #############
         # VARS
-        self._mh            = self._port_handler.get_MH()
+        self._mh            = self._popt_handler.get_MH()
         #############
         """ Dual Port """
         self.dualPort_primaryPort   = None
@@ -106,7 +106,6 @@ class AX25Port(object):
 
     def init(self):
         pass
-
 
     def set_kiss_parm(self):
         pass
@@ -211,10 +210,10 @@ class AX25Port(object):
             logger.debug(f"Port rx_link_handler reverse_uid: FRAME ctl: {ax25_frame.ctl_byte.flag}")
             return False
         """
-        if uid in self._port_handler.connection_manager.link_connections.keys():
+        if uid in self._popt_handler.connection_manager.link_connections.keys():
             # logger.debug(self._logTag + f"Link-Conn RX: {uid}")
-            conn = self._port_handler.connection_manager.link_connections[uid][0]
-            link_call = str(self._port_handler.connection_manager.link_connections[uid][1])
+            conn = self._popt_handler.connection_manager.link_connections[uid][0]
+            link_call = str(self._popt_handler.connection_manager.link_connections[uid][1])
             """
             logger.debug(self._logTag + f"Link-Conn RX link_call: {link_call}")
             logger.debug(self._logTag + f"Link-Conn RX is_link_remote: {conn.is_link_remote}")
@@ -269,7 +268,7 @@ class AX25Port(object):
             # NetRom_decode_UI(ax25_frame_conf)
             return True
         """
-        aprs_ais = self._port_handler.get_aprs_ais()
+        aprs_ais = self._popt_handler.get_aprs_ais()
         if hasattr(aprs_ais, 'aprs_ax25frame_rx'):
             aprs_ais.aprs_ax25frame_rx(
                 port_id=self.port_id,
@@ -290,7 +289,7 @@ class AX25Port(object):
         if ax25_frame.to_call.call_str in POPT_CFG.get_stationCalls_fm_port(self.port_id):
             block_list  = POPT_CFG.get_block_list_by_id(self.port_id)
             block_state = block_list.get(ax25_frame.from_call.call, 0)
-            gui = self._port_handler.get_gui()
+            gui = self._popt_handler.get_gui()
             if block_state == 1:
                 LOG_BOOK.info(f"*** Connection ignored (Block List)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
                 if hasattr(gui, 'set_port_block_warning'):
@@ -364,7 +363,7 @@ class AX25Port(object):
                         if self._block_incoming_conn:
                             LOG_BOOK.info(
                                 f"*** DIGI ignored (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
-                            gui = self._port_handler.get_gui()
+                            gui = self._popt_handler.get_gui()
                             if hasattr(gui, 'set_port_block_warning'):
                                 gui.set_port_block_warning()
                             return True
@@ -417,7 +416,7 @@ class AX25Port(object):
                         if self._block_incoming_conn:
                             LOG_BOOK.info(
                                 f"*** DIGI ignored (Global)! Port: {self.port_id}, Call: {ax25_frame.from_call.call}")
-                            gui = self._port_handler.get_gui()
+                            gui = self._popt_handler.get_gui()
                             if hasattr(gui, 'set_port_block_warning'):
                                 gui.set_port_block_warning()
                             return True
@@ -670,8 +669,8 @@ class AX25Port(object):
     def _tx_rxecho_buf(self):
         tr = False
         # RX-Echo
-        if self.port_id in self._port_handler.port_manager.rx_echo.keys():
-            for fr in self._port_handler.port_manager.rx_echo[self.port_id].tx_buff:
+        if self.port_id in self._popt_handler.port_manager.rx_echo.keys():
+            for fr in self._popt_handler.port_manager.rx_echo[self.port_id].tx_buff:
                 try:
                     self.tx(frame=fr)
                     tr = True
@@ -681,12 +680,12 @@ class AX25Port(object):
                     logger.error('Encoding Error: ! MSG to short !')
                 # Monitor
                 # self._gui_monitor(ax25frame=fr, tx=True)
-            self._port_handler.port_manager.rx_echo[self.port_id].tx_buff = []
+            self._popt_handler.port_manager.rx_echo[self.port_id].tx_buff = []
         return tr
 
     def _rx_echo(self, ax25_frame):
-        if self._port_handler.port_manager.rx_echo_on:
-            self._port_handler.port_manager.rx_echo_input(ax_frame=ax25_frame, receiving_port_id=self.port_id)
+        if self._popt_handler.port_manager.rx_echo_on:
+            self._popt_handler.port_manager.rx_echo_input(ax_frame=ax25_frame, receiving_port_id=self.port_id)
 
     ##########################################################
     # DualPort
@@ -812,30 +811,6 @@ class AX25Port(object):
 
     ############################################################
     # Pipe-Tool
-    """
-    def build_new_pipe(self,
-                       own_call='',
-                       add_str='',
-                       cmd_pf=(False, False),
-                       pid=0xf0
-                       ):
-        if not add_str:
-            return False
-        if not own_call:
-            return False
-        pipe = AX25Pipe(
-            port_id=self.port_id,
-            own_call=own_call,
-            address_str=add_str,
-            cmd_pf=cmd_pf,
-            pid=pid
-        )
-        if pipe.uid not in self.pipes.keys():
-            self.pipes[str(pipe.uid)] = pipe
-            return True
-        return False
-    """
-
     def add_pipe(self, pipe_cfg=None, pipe=None):
         if pipe is None and not pipe_cfg:
             return None
@@ -889,7 +864,7 @@ class AX25Port(object):
             axip_add=tuple(axip_add),
         ))
 
-        conn = self.new_connection(ax25_frame=ax_frame)
+        conn = self._new_connection(ax25_frame=ax_frame)
         if not conn:
             return False
         if link_conn:
@@ -900,7 +875,7 @@ class AX25Port(object):
             return False
         return conn
 
-    def new_connection(self, ax25_frame):
+    def _new_connection(self, ax25_frame):
         """ New Outgoing Connection """
         ax25_frame.ctl_byte.SABMcByte()
         try:
@@ -943,7 +918,7 @@ class AX25Port(object):
         return conn
 
     def del_connections(self, conn):
-        self._port_handler.connection_manager.del_link(conn.uid)
+        self._popt_handler.connection_manager.del_link(conn.uid)
         if conn.uid in self.pipes.keys():
             del self.pipes[conn.uid]
         for conn_uid in list(self.connections.keys()):
@@ -1057,7 +1032,7 @@ class AX25Port(object):
         axframe_conf['tx'] = bool(tx)
         axframe_conf['port'] = int(self.port_id)
         axframe_conf['port_conf'] = dict(self._port_cfg)
-        self._port_handler.update_monitor(ax25frame_conf=axframe_conf)
+        self._popt_handler.update_monitor(ax25frame_conf=axframe_conf)
 
     def _mh_input(self, ax25frame_conf, tx: bool):
         # MH / Port-Statistic
@@ -1107,7 +1082,7 @@ class AX25Port(object):
     #########################################
     #
     def port_get_PH(self):
-        return self._port_handler
+        return self._popt_handler
 
     def port_get_port_cfg(self):
         return dict(self._port_cfg)

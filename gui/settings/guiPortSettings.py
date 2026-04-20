@@ -3,7 +3,6 @@ from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25_ports import AX25DeviceTAB
-from core.popt_core import POPT_HANDLER
 from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
     TNC_KISS_END_CMD, KISSDEVICES, COLOR_MAP
 from cfg.default_config import getNew_port_cfg
@@ -19,6 +18,7 @@ class PortSetTab:
     def __init__(self, main_stt_win, new_settings, tabclt: ttk.Notebook):
         self._main_cl   = main_stt_win
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._popt_handler = main_stt_win.get_popt_handler()
         self._height    = 600
         self._width     = 1059
         height = self._height
@@ -44,7 +44,7 @@ class PortSetTab:
         ######################
         # Not initialised Info
         # all_ports = PORT_HANDLER.ax25_ports
-        all_ports = POPT_HANDLER.port_manager.get_all_ports_f_cfg()
+        all_ports = self._popt_handler.port_manager.get_all_ports_f_cfg()
         new_cfg = getNew_port_cfg()
         if self._port_setting.get('parm_PortNr', -1) in all_ports.keys():
             if not all_ports[self._port_setting.get('parm_PortNr', -1)].device_is_running:
@@ -231,7 +231,7 @@ class PortSetTab:
                                                  state='disabled')
         self._axip_multicast_dd.var = self._axip_multicast_var
         if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
-            mcast_port = POPT_HANDLER.get_mcast_server().get_mcast_port()
+            mcast_port = self._popt_handler.get_mcast_server().get_mcast_port()
             if not hasattr(mcast_port, 'port_id'):
                 self._axip_multicast_dd.configure(state="normal")
                 # if self._port_setting.parm_axip_Multicast:
@@ -518,7 +518,7 @@ class PortSetTab:
         y_f = 1
         # if self._port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
         # if self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)) in PORT_HANDLER.get_all_ports().keys():
-        prim_port = POPT_HANDLER.port_manager.get_dualPort_primary_PH(
+        prim_port = self._popt_handler.port_manager.get_dualPort_primary_PH(
             self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)))
 
         if prim_port:
@@ -659,7 +659,7 @@ class PortSetTab:
 
 
         elif typ == 'AXIP':
-            mcast_port = POPT_HANDLER.get_mcast_server().get_mcast_port()
+            mcast_port = self._popt_handler.get_mcast_server().get_mcast_port()
             if not hasattr(mcast_port, 'port_id'):
                 self._axip_multicast_dd.configure(state="normal")
                 # if self._port_setting.parm_axip_Multicast:
@@ -1013,12 +1013,13 @@ class PortSetTab:
 
 
 class PortSettingsWin(ttk.Frame):
-    def __init__(self, tabctl, root_win=None):
+    def __init__(self, tabctl, root_win):
         ttk.Frame.__init__(self, tabctl)
         win_height = 600
-        win_width = 1059
-        self._need_GUI_reinit = False   # Reinit SettingsGUI Tabs
-        self._lang = POPT_CFG.get_guiCFG_language()
+        win_width  = 1059
+        self._popt_handler      = root_win.get_popt_handler()
+        self._need_GUI_reinit   = False   # Reinit SettingsGUI Tabs
+        self._lang              = POPT_CFG.get_guiCFG_language()
         ##########################
         self.style_name = root_win.style_name
         ####################################
@@ -1049,7 +1050,7 @@ class PortSettingsWin(ttk.Frame):
         # Tab Vars
         self._tab_list: {int: ttk.Frame} = {}
         # Tab Frames ( Port Settings )
-        all_ports = POPT_HANDLER.port_manager.get_all_ports_f_cfg()
+        all_ports = self._popt_handler.port_manager.get_all_ports_f_cfg()
         all_port_cfgs = POPT_CFG.get_port_CFGs()
         for port_id, port_cfg in all_port_cfgs.items():
             # new_settings = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
@@ -1094,8 +1095,8 @@ class PortSettingsWin(ttk.Frame):
                 ind = int(ind.replace('Port ', '')[0])
                 del_port_data(ind)
 
-                POPT_HANDLER.connection_manager.disco_conn_fm_port(ind)
-                POPT_HANDLER.port_manager.close_port(ind)
+                self._popt_handler.connection_manager.disco_conn_fm_port(ind)
+                self._popt_handler.port_manager.close_port(ind)
                 if POPT_CFG.del_port_CFG_fm_id(ind):
                     del self._tab_list[ind]
                     self._tabControl.forget(tab_ind)
@@ -1113,19 +1114,22 @@ class PortSettingsWin(ttk.Frame):
     def _get_config():
         return dict(POPT_CFG.get_port_CFGs())
 
+    def get_popt_handler(self):
+        return self._popt_handler
+
     def save_config(self):
         # old_cfg = self._get_config()
         for port_id in self._tab_list.keys():
             self._tab_list[port_id].set_vars_to_cfg()
             if self._tab_list[port_id].need_reinit():
-                if POPT_HANDLER.get_all_connections():
-                    POPT_HANDLER.connection_manager.disco_all_Conn()
+                if self._popt_handler.get_all_connections():
+                    self._popt_handler.connection_manager.disco_all_Conn()
                     # messagebox.showinfo('Stationen werden disconnected!', 'Es werden alle Stationen disconnected')
                     messagebox.showinfo(get_strTab('all_disco1', self._lang),
                                         get_strTab('all_disco2', self._lang),
                                         parent=self)
 
-                POPT_HANDLER.port_manager.reinit_port(port_id)
+                self._popt_handler.port_manager.reinit_port(port_id)
                 self._need_GUI_reinit = True
         """        
         if old_cfg == self._get_config():
@@ -1136,6 +1140,7 @@ class PortSettingsWin(ttk.Frame):
             threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
             # self._need_GUI_reinit = False
         """
+
         if self._need_GUI_reinit:
-            POPT_HANDLER.port_manager.unblock_all_ports()
+            self._popt_handler.port_manager.unblock_all_ports()
         return self._need_GUI_reinit

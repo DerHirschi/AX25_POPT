@@ -1,21 +1,20 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
-from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
-# from cfg.logger_config import logger
 
 
 class WXWin(tk.Toplevel):
     # TODO all Delete WX-DATA
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win  = root_win
-        self._ais_obj   = POPT_HANDLER.get_aprs_ais()
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win      = root_win
+        self._popt_handler  = root_win.get_PH_mainGUI()
+        self._ais_obj       = self._popt_handler.get_aprs_ais()
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
         self._rev_ent = False

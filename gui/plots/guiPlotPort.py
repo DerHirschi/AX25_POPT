@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime
-from core.popt_core import POPT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import convert_str_to_datetime, get_strTab
@@ -20,8 +19,9 @@ from gui import plt
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
         tk.Toplevel.__init__(self, master=root_cl.main_win)
-        self._root_win  = root_cl
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win     = root_cl
+        self._popt_handler = root_cl.get_PH_mainGUI()
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.wm_title("Port Statistik")
         # self.root_cl = root_cl
         self.geometry(f"800x"
@@ -37,7 +37,7 @@ class PlotWindow(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         ##############################
-        self._mh = POPT_HANDLER.get_MH()
+        self._mh = self._popt_handler.get_MH()
         ##################
         upper_frame = tk.Frame(self)
         upper_frame.pack()
