@@ -12,7 +12,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from cli.StringVARS import replace_StringVARS
-from fnc.str_fnc import tk_filter_bad_chars, get_time_delta, format_number, conv_timestamp_delta, \
+from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon import AISmonitor
 from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Main import APRSSettingsMain
@@ -23,6 +23,7 @@ from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
+from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiRightLevelEditor import RightLevelEditor
@@ -52,16 +53,15 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
-from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, STATION_TYPS, \
-    ENCODINGS, TEXT_SIZE_STATUS, TXT_INP_CURSOR_CLR, \
-    STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
+from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
+    TEXT_SIZE_STATUS, TXT_INP_CURSOR_CLR, \
+    STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     PARAM_MAX_MON_TREE_ITEMS, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
-    TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX, \
-    CLI_TYP_DIGI, CLI_TYP_PIPE
+    TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
 from fnc.os_fnc import is_linux, get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
@@ -202,14 +202,8 @@ class PoPT_GUI_Main:
         self._rx_beep_var           = tk.IntVar(self.main_win)
         self._ts_box_var            = tk.IntVar(self.main_win)
         # Stat INFO (Name,QTH usw)
-        self._stat_info_name_var     = tk.StringVar(self.main_win)
-        self._stat_info_qth_var      = tk.StringVar(self.main_win)
-        self._stat_info_loc_var      = tk.StringVar(self.main_win)
-        self._stat_info_typ_var      = tk.StringVar(self.main_win)
-        self._stat_info_sw_var       = tk.StringVar(self.main_win)
-        self._stat_info_timer_var    = tk.StringVar(self.main_win)
-        self._stat_info_encoding_var = tk.StringVar(self.main_win)
-        self._stat_info_status_var   = tk.StringVar(self.main_win)
+        self.stat_info_encoding_var = tk.StringVar(self.main_win)
+        #self._stat_info_status_var   = tk.StringVar(self.main_win)
         # Tabbed SideFrame FT
         self.ft_progress_var        = tk.StringVar(self.main_win)
         self.ft_size_var            = tk.StringVar(self.main_win)
@@ -331,12 +325,18 @@ class PoPT_GUI_Main:
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient='vertical', )
         self._pw.pack(side='bottom', expand=1, fill='both')
+        # =====================================
         # Upper
         self._TXT_upper_frame   = ttk.Frame(self._pw, borderwidth=0, height=20)
         # Mid
         self._TXT_mid_frame     = ttk.Frame(self._pw, borderwidth=0, )
         # Lower
         self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
+        # =====================================
+        # Connection Status Bar
+        self.ConnStatus_frame   = ConnStatusBar(self, self._TXT_mid_frame)
+        self.ConnStatus_frame.pack(side='bottom', expand=1, fill='both')
+        # =====================================
         # Pack it
         self._TXT_upper_frame.pack(side='bottom', expand=1, fill='both')
         self._TXT_mid_frame.pack(  side='bottom', expand=1, fill='both')
@@ -1176,140 +1176,6 @@ class PoPT_GUI_Main:
         out_txt.pack(      side='left', fill='both', expand=True)
         out_scrollbar.pack(side='left', fill='y',    expand=False)
         out_txt.config(yscrollcommand=out_scrollbar.set)
-        ###############################################
-        # Status bar
-        name_f = ttk.Frame(stat_frame)
-        qth_f  = ttk.Frame(stat_frame)
-        loc_f  = ttk.Frame(stat_frame)
-        typ_f  =  tk.Frame(stat_frame, bg="#0ed8c3")
-        sw_f   =  tk.Frame(stat_frame, bg="#ffd444")
-        stat_f = ttk.Frame(stat_frame)
-        time_f = ttk.Frame(stat_frame)
-        enc_f  = ttk.Frame(stat_frame)
-
-        name_f.pack(side='left', expand=True,  anchor="center")
-        qth_f.pack( side='left', expand=True,  anchor="center")
-        loc_f.pack( side='left', expand=True,  anchor="center", padx=5)
-        typ_f.pack( side='left', expand=True,  anchor="center", fill='x')
-        sw_f.pack(  side='left', expand=True,  anchor="center", fill='x')
-        stat_f.pack(side='left', expand=False, anchor="center")
-        time_f.pack(side='left', expand=False, anchor="center", padx=7)
-        enc_f.pack( side='left', expand=False, anchor="center", fill='x')
-
-        fg, bg = self._get_colorMap()
-
-        name_label = ttk.Label(name_f,
-                               textvariable=self._stat_info_name_var,
-                               # bg=STAT_BAR_CLR,
-                               #height=1,
-                               borderwidth=0,
-                               border=0,
-                               #fg=fg,
-                               #bg=bg,
-                               font=(FONT_STAT_BAR, TEXT_SIZE_STATUS, 'bold')
-
-                               )
-        name_label.pack()
-        name_label.bind('<Button-1>', self.open_user_db_win)
-        qth_label = tk.Label(qth_f,
-                             textvariable=self._stat_info_qth_var,
-                             bg=bg,
-                             fg=fg,
-                             height=1,
-                             borderwidth=0,
-                             border=0,
-                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
-                             )
-        qth_label.bind('<Button-1>', self.open_user_db_win)
-        qth_label.pack()
-        loc_label = tk.Label(loc_f,
-                             textvariable=self._stat_info_loc_var,
-                             bg=bg,
-                             fg=fg,
-                             height=1,
-                             borderwidth=0,
-                             border=0,
-                             font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
-                             )
-        loc_label.bind('<Button-1>', self.open_user_db_win)
-        loc_label.pack()
-
-        opt = list(STATION_TYPS)
-        stat_typ = tk.OptionMenu(
-            typ_f,
-            self._stat_info_typ_var,
-            *opt,
-            command=self._set_stat_typ,
-        )
-        stat_typ.configure(
-            background="#0ed8c3",
-            fg=STAT_BAR_TXT_CLR,
-            #width=8,
-            height=1,
-            borderwidth=0,
-            border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,),
-            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-            highlightthickness=0,
-        )
-        stat_typ.pack(fill='x', expand=True, padx=6)
-
-        tk.Label(sw_f,
-                 textvariable=self._stat_info_sw_var,
-                 #width=18,
-                 bg="#ffd444",
-                 # fg="red3",
-                 height=1,
-                 borderwidth=0,
-                 border=0,
-                 font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                 relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                 highlightthickness=0,
-                 ).pack(fill='x', expand=True, padx=6)
-
-        self.status_label = tk.Label(stat_f,
-                                     textvariable=self._stat_info_status_var,
-                                     bg=STAT_BAR_CLR,
-                                     fg="red3",
-                                     height=1,
-                                     borderwidth=0,
-                                     border=0,
-                                     font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,),
-                                     relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                     highlightthickness=0,
-                                     width=7
-                                     )
-        self.status_label.pack()
-        self.status_label.bind('<Button-1>', self.do_priv)
-
-        ttk.Label(time_f,
-                  textvariable=self._stat_info_timer_var,
-                  #width=6,
-                  # height=1,
-                  borderwidth=0,
-                  border=0,
-                  # bg="steel blue",
-                  # fg="red3",
-                  font=(FONT_STAT_BAR, TEXT_SIZE_STATUS,)
-                  ).pack(fill='x', expand=True)
-        opt = ENCODINGS
-        txt_encoding_ent = tk.OptionMenu(
-            enc_f,
-            self._stat_info_encoding_var,
-            *opt,
-            command=self._change_txt_encoding
-        )
-        txt_encoding_ent.configure(
-            background="steel blue",
-            height=1,
-            width=8,
-            borderwidth=0,
-            border=0,
-            font=(FONT_STAT_BAR, TEXT_SIZE_STATUS - 1,),
-            relief = "flat",  # Flache Optik für ttk-ähnliches Aussehen
-            highlightthickness = 0,
-        )
-        txt_encoding_ent.pack(fill='x', expand=False)
 
         return out_txt
 
@@ -1647,7 +1513,7 @@ class PoPT_GUI_Main:
             return
         if not text:
             return
-        ch_enc = self._stat_info_encoding_var.get()
+        ch_enc = self.stat_info_encoding_var.get()
         if any((ch_enc == enc, not ch_enc)):
             text = text.decode(enc, 'ignore')
         else:
@@ -1666,7 +1532,7 @@ class PoPT_GUI_Main:
             return
         if not text:
             return
-        ch_enc = self._stat_info_encoding_var.get()
+        ch_enc = self.stat_info_encoding_var.get()
         if any((ch_enc == enc, not ch_enc)):
             text = text.decode(enc, 'ignore')
         else:
@@ -1793,7 +1659,7 @@ class PoPT_GUI_Main:
         data = open_file_dialog(self.main_win)
         if not data:
             return
-        ch_enc = self._stat_info_encoding_var.get()
+        ch_enc = self.stat_info_encoding_var.get()
         if not ch_enc:
             data = data.decode('UTF-8', 'ignore')
         else:
@@ -2161,7 +2027,7 @@ class PoPT_GUI_Main:
         """ 1 Sec """
         if time.time() > self._non_non_prio_task_timer:
             #####################
-            self._update_stat_info_conn_timer()
+            self.ConnStatus_frame.update_stat_info_conn_timer()
             self._update_ft_info()
             self._AlarmIcon_tasker1()
             self._chBtn_frame.tasker()
@@ -3128,7 +2994,7 @@ class PoPT_GUI_Main:
                 else:
                     ind = '1.0'
 
-                txt_enc = self._stat_info_encoding_var.get()
+                txt_enc = self.stat_info_encoding_var.get()
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
@@ -3412,102 +3278,7 @@ class PoPT_GUI_Main:
     def _on_channel_status_change_task(self):
         self.tabbed_sideFrame.on_ch_stat_change()
         self.tabbed_sideFrame2.on_ch_stat_change()
-        self.update_station_info()
-
-    def _update_stat_info_conn_timer(self):
-        conn = self.get_conn()
-        if conn is not None:
-            if hasattr(conn, 'cli'):
-                self._stat_info_timer_var.set(get_time_delta(conn.cli.time_start))
-                return
-        if self._stat_info_timer_var.get() != '--:--:--':
-            self._stat_info_timer_var.set('--:--:--')
-
-    def update_station_info(self):
-        name = '-------'
-        qth = '-------'
-        loc = '------'
-        # _dist = 0
-        status = '-------'
-        typ = '-----'
-        sw = '---------'
-        enc = 'UTF-8'
-        conn = self.get_conn()
-        if conn is not None:
-            db_ent = conn.user_db_ent
-            if db_ent:
-                if db_ent.Name:
-                    name = db_ent.Name
-                if db_ent.QTH:
-                    qth = db_ent.QTH
-                if db_ent.LOC:
-                    loc = db_ent.LOC
-                if db_ent.Distance > 0:
-                    loc += f" ({db_ent.Distance} km)"
-                if db_ent.TYP:
-                    typ = db_ent.TYP
-                if db_ent.Software:
-                    sw = db_ent.Software
-                enc = db_ent.Encoding
-            if conn.is_link:
-                status = CLI_TYP_DIGI
-                if self._stat_info_status_var.get() != status:
-                    self._stat_info_status_var.set(status)
-                    self.status_label.bind('<Button-1>', )
-            elif conn.pipe is not None:
-                status = CLI_TYP_PIPE
-                if self._stat_info_status_var.get() != status:
-                    self._stat_info_status_var.set(status)
-                    self.status_label.bind('<Button-1>', )
-            elif conn.ft_obj is not None:
-                status = f'{conn.ft_obj.dir} FILE'
-                if self._stat_info_status_var.get() != status:
-                    self._stat_info_status_var.set(status)
-                    # self.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
-                    self.status_label.bind('<Button-1>', self.open_ft_manager)
-            else:
-                status = ''
-                try:
-                    if conn.cli.sysop_priv:
-                        status += 'S'
-                    else:
-                        status += '-'
-                    if conn.link_holder_on:
-                        status += 'L'
-                    else:
-                        status += '-'
-                    if conn.is_RNR:
-                        status += 'R'
-                    else:
-                        status += '-'
-                except Exception as ex:
-                    logger.error(ex)
-                    status = '---'
-                status += '----'
-                if self._stat_info_status_var.get() != status:
-                    self._stat_info_status_var.set(status)
-                    self.status_label.bind('<Button-1>', self.do_priv)
-        elif self._stat_info_status_var.get() != status:
-            self._stat_info_status_var.set(status)
-            self.status_label.bind('<Button-1>', )
-        """
-        if _dist:
-            loc += f" ({_dist} km)"
-        """
-        # if self.stat_info_status_var.get() != _status:
-        #     self.stat_info_status_var.set(_status)
-        if self._stat_info_name_var.get() != name:
-            self._stat_info_name_var.set(name)
-        if self._stat_info_qth_var.get() != qth:
-            self._stat_info_qth_var.set(qth)
-        if self._stat_info_loc_var.get() != loc:
-            self._stat_info_loc_var.set(loc)
-        if self._stat_info_typ_var.get() != typ:
-            self._stat_info_typ_var.set(typ)
-        if self._stat_info_sw_var.get() != sw:
-            self._stat_info_sw_var.set(sw)
-        if self._stat_info_encoding_var.get() != enc:
-            self._stat_info_encoding_var.set(enc)
+        self.ConnStatus_frame.update_station_info()
 
     def _update_ft_info(self):
         prog_val = 0
@@ -3696,27 +3467,6 @@ class PoPT_GUI_Main:
         self.get_ch_var().timestamp_opt = ts_check
         """
         pass
-
-
-    def _set_stat_typ(self, event=None):
-        conn = self.get_conn()
-        if conn is not None:
-            db_ent = conn.user_db_ent
-            if db_ent:
-                db_ent.TYP = self._stat_info_typ_var.get()
-        else:
-            self._stat_info_typ_var.set('-----')
-
-    def _change_txt_encoding(self, event=None, enc=''):
-        conn = self.get_conn()
-        if conn is not None:
-            db_ent = conn.user_db_ent
-            if db_ent:
-                if not enc:
-                    enc = self._stat_info_encoding_var.get()
-                db_ent.Encoding = enc
-        else:
-            self._stat_info_encoding_var.set('UTF-8')
 
     ##########################################
     #

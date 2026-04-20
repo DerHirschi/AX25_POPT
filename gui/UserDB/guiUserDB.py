@@ -819,7 +819,7 @@ class UserDB(tk.Toplevel):
         self._user_db.save_data()
 
 
-        self._root_win.update_station_info()
+        self._root_win.ConnStatus_frame.update_station_info()
         self._user_db.set_distance_for_all()
         self._update_map()
         self._draw_connection()
