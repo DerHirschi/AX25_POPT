@@ -21,11 +21,11 @@ from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
-from gui.guiMain_AlarmFrame import AlarmIconFrame
-from gui.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiMain.guiMain_AlarmFrame import AlarmIconFrame
+from gui.guiMain.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiRightLevelEditor import RightLevelEditor
 from gui.prp.guiPRP_remote import PRP_remoteGUI
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
 #from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center

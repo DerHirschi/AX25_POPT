@@ -13,7 +13,7 @@ from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.UserDB.guiNewEntry import GUINewUserEntry
 from gui.UserDB.guiUserDB_rights import GUI_PRP_Rights
 from gui.guiMsgBoxes import AskMsg
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class UserDB(tk.Toplevel):

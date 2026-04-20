@@ -6,7 +6,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class MSG_Center_base(ttk.Frame):

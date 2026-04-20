@@ -12,7 +12,7 @@ from fnc.gui_fnc import get_typed, detect_pressed
 from fnc.os_fnc import is_linux
 from fnc.str_fnc import format_number, zeilenumbruch, zeilenumbruch_lines, get_strTab
 from gui.guiMsgBoxes import open_file_dialog, save_file_dialog, WarningMsg
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class BBS_newMSG(tk.Toplevel):

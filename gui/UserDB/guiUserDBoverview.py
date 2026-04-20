@@ -9,7 +9,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.guiMsgBoxes import AskMsg
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class UserDBtreeview(tk.Toplevel):
