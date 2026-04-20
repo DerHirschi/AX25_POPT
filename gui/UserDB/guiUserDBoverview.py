@@ -17,8 +17,8 @@ class UserDBtreeview(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win              = root_win
         self._getTabStr             = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
-        self._aprs_icon_tab_16      = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
+        self._aprs_icon_tab_16      = root_win.guiIcon.get_aprs_icon_tab_16()
         ###################################
         # Vars
         self.title("User-DB")

@@ -18,7 +18,7 @@ class PRP_Tab(ttk.Frame):
         self._root_cl     = root
         self._uid         = uid
         self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._rx_tx_icons = root.get_rx_tx_icons()
+        self._rx_tx_icons = root.guiIcon.get_rx_tx_icons()
         ###############################################
         # Vars
         self._mon_color_bg_rx = 'black'
@@ -1129,7 +1129,7 @@ class PRP_remoteGUI(tk.Toplevel):
 
     ####################################################
     def get_rx_tx_icons(self):
-        return self._root.get_rx_tx_icons()
+        return self._root.guiIcon.get_rx_tx_icons()
 
     def get_conn_by_uid(self, uid: str):
         ph = self._root.get_PH_mainGUI()

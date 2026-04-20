@@ -21,7 +21,7 @@ class UserDB(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root_win          = root
         self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_24  = self._root_win.get_aprs_icon_tab_24()
+        self._aprs_icon_tab_24  = self._root_win.guiIcon.get_aprs_icon_tab_24()
         win_height = 615
         win_width  = 1060
         self.style = root.style

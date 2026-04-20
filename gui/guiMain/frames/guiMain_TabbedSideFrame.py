@@ -15,7 +15,7 @@ class SideTabbedFrame:
     def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
         self._root_class        = main_cl
         self.style              = self._root_class.style
-        self._conn_typ_icon_tab = self._root_class.get_conn_typ_icon_16()
+        self._conn_typ_icon_tab = self._root_class.guiIcon.get_conn_typ_icon_16()
         ##########################################
         self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._get_colorMap  = lambda: COLOR_MAP.get(self._root_class.style_name, ('black', '#d9d9d9'))

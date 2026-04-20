@@ -21,7 +21,7 @@ class MHWin(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win          = root_win
         self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_16  = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_16  = root_win.guiIcon.get_aprs_icon_tab_16()
         self.title("MyHeard")
         self.style = root_win.style
         self.geometry(f"1200x"
@@ -38,8 +38,8 @@ class MHWin(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         ###################################
-        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
-        self._conn_typ_icon_tab     = root_win.get_conn_typ_icon_16()
+        self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
+        self._conn_typ_icon_tab     = root_win.guiIcon.get_conn_typ_icon_16()
         ###################################
         ###################################
         # Vars

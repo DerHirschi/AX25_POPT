@@ -21,8 +21,10 @@ from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
-from gui.guiMain.guiMain_AlarmFrame import AlarmIconFrame
-from gui.guiMain.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
+from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
+from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiRightLevelEditor import RightLevelEditor
 from gui.prp.guiPRP_remote import PRP_remoteGUI
 from gui.gui_classes.guiRightClick_Menu import ContextMenu
@@ -55,15 +57,13 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     STAT_BAR_CLR, STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, CFG_gui_icon_path, \
-    PARAM_MAX_MON_TREE_ITEMS, CFG_aprs_icon_path, CFG_gui_conn_hist_path, GUI_TASKER_Q_RUNTIME, \
+    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+    PARAM_MAX_MON_TREE_ITEMS, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX, \
-    CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, CLI_TYP_CONVERSE, CLI_TYP_NO_CLI, \
-    CLI_TYP_TASK_FWD
+    CLI_TYP_DIGI, CLI_TYP_PIPE
 from fnc.os_fnc import is_linux, get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags, generate_random_hex_color, set_new_tags, cleanup_tags, \
-    build_aprs_icon_tab, get_image
+from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -100,15 +100,13 @@ class PoPT_GUI_Main:
     def __init__(self, popt_handler: PoPTCore):
         ######################################
         # GUI Stuff
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._logTag = 'GUI-Main> '
-        logger.info('start..')
-        guiCfg = POPT_CFG.load_guiPARM_main()
+        self._logTag = 'GUI-Main: '
+        logger.info(self._logTag + 'start..')
         ###########################################
         self.main_win   = tk.Tk()
         ###########################################
         self.style_name = POPT_CFG.get_guiCFG_style_name()
-        logger.info(f'loading Style: {self.style_name}')
+        logger.info(self._logTag + f'loading Style: {self.style_name}')
         self.style = ttk.Style(self.main_win)
 
         if self.style_name in STYLES_AWTHEMES:
@@ -119,41 +117,43 @@ class PoPT_GUI_Main:
                 self.style.tk.call('package', 'require', self.style_name)
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning('awthemes-10.4.0 not found in folder data')
-                logger.warning('  1. If you want to use awthemes, download:')
-                logger.warning('     https://sourceforge.net/projects/tcl-awthemes/')
-                logger.warning('  2. Extract the contents of the file awthemes-10.4.0.zip')
-                logger.warning('     into the data/ folder')
-                logger.warning('')
+                logger.warning(self._logTag + 'awthemes-10.4.0 not found in folder data')
+                logger.warning(self._logTag + '  1. If you want to use awthemes, download:')
+                logger.warning(self._logTag + '     https://sourceforge.net/projects/tcl-awthemes/')
+                logger.warning(self._logTag + '  2. Extract the contents of the file awthemes-10.4.0.zip')
+                logger.warning(self._logTag + '     into the data/ folder')
+                logger.warning(self._logTag + '')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
         else:
             try:
                 self.style.theme_use(self.style_name)
             except tk.TclError:
-                logger.warning(f'GUI: TclError Style{self.style_name}')
+                logger.warning(self._logTag + f'TclError Style{self.style_name}')
                 self.style_name = 'default'
                 self.style.theme_use(self.style_name)
 
-        logger.info(f'Using style_name: {self.style_name}')
-        self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
+        logger.info(self._logTag + f'Using style_name: {self.style_name}')
         #################################################################
         self.main_win.title(f"P.ython o.ther P.acket T.erminal {VER}")
+        guiCfg = POPT_CFG.load_guiPARM_main()
         self.main_win.geometry(f"{guiCfg.get('gui_parm_main_width', 1400)}x{guiCfg.get('gui_parm_main_height', 850)}")
         # self.main_win.attributes('-topmost', 0)
         try:
             self.main_win.iconbitmap("favicon.ico")
         except Exception as ex:
-            logger.warning(f"Couldn't load favicon.ico: {ex}")
-            logger.info("Try to load popt.png.")
+            logger.warning(self._logTag + f"Couldn't load favicon.ico: {ex}")
+            logger.info(self._logTag + "Try to load popt.png.")
             try:
                 self.main_win.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
-                logger.warning(f"Couldn't load popt.png: {ex}")
+                logger.warning(self._logTag + f"Couldn't load popt.png: {ex}")
         self.main_win.protocol("WM_DELETE_WINDOW", self._destroy_win)
         ######################################
         ######################################
         self._popt_handler = popt_handler
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         ######################################
         # Init Vars
         self.mh         = self._popt_handler.get_MH()
@@ -162,95 +162,8 @@ class PoPT_GUI_Main:
         self._root_dir  = get_root_dir()
         self._root_dir  = self._root_dir.replace('/', '//')
         ###############################
-        logger.info("GUI: Init APRS-Icon Tab 16x16")
-        self._aprs_icon_tab_16  = build_aprs_icon_tab((16, 16))
-        logger.info("GUI: Init APRS-Icon Tab 24x24")
-        self._aprs_icon_tab_24  = build_aprs_icon_tab((24, 24))
-        logger.info("GUI: Init Monitor-Tree-Icon Tab 16x16 & 32x16")
-        self._rx_tx_icons       = {
-            'rx':       get_image(CFG_gui_icon_path + '/pfeil_rechts_gruen.png'     ,size=(16, 16)),  # RX
-            'tx':       get_image(CFG_gui_icon_path + '/pfeil_links_rot.png'        ,size=(16, 16)),     # TX
-            'rx-node':  get_image(CFG_gui_icon_path + '/node_rx.png',  size=(32, 16)),
-            'tx-node':  get_image(CFG_gui_icon_path + '/node_tx.png',  size=(32, 16)),
-            'rx-bbs':   get_image(CFG_gui_icon_path + '/bbs_rx.png',   size=(32, 16)),
-            'tx-bbs':   get_image(CFG_gui_icon_path + '/bbs_tx.png',   size=(32, 16)),
-            'rx-term':  get_image(CFG_gui_icon_path + '/term_rx.png',  size=(32, 16)),
-            'tx-term':  get_image(CFG_gui_icon_path + '/term_tx.png',  size=(32, 16)),
-            'rx-dx':    get_image(CFG_gui_icon_path + '/dx_rx.png',    size=(32, 16)),
-            'rx-block': get_image(CFG_gui_icon_path + '/block_rx.png', size=(32, 16)),
-        }
-        logger.info("GUI: InitConnection-Typ-Icon Tab 16x16 & 32x16")
-        self._conn_typ_icons    = {
-            # Connection Tab
-            CLI_TYP_SYSOP:      get_image(CFG_aprs_icon_path + '/0-44.png', size=(16, 16)),
-            CLI_TYP_NODE:       get_image(CFG_aprs_icon_path + '/0-78.png', size=(16, 16)),
-            CLI_TYP_DIGI:       get_image(CFG_aprs_icon_path + '/0-82.png', size=(16, 16)),
-            CLI_TYP_PIPE:       get_image(CFG_aprs_icon_path + '/1-26.png', size=(16, 16)),
-            CLI_TYP_BOX:        get_image(CFG_aprs_icon_path + '/0-34.png', size=(16, 16)),
-            CLI_TYP_TASK_FWD:   get_image(CFG_aprs_icon_path + '/0-61.png', size=(16, 16)),
-            CLI_TYP_CONVERSE:   get_image(CFG_aprs_icon_path + '/1-54.png', size=(16, 16)),
-            # Connection History Tab
-            f'{CLI_TYP_SYSOP}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/term_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_SYSOP}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/term_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_SYSOP}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/term_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_SYSOP}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/term_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_NODE}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/node_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_NODE}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/node_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_NODE}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/node_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_NODE}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/node_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_DIGI}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_DIGI}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_DIGI}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_DIGI}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_NO_CLI}-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/digi_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_NO_CLI}-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/digi_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_NO_CLI}-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/digi_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_NO_CLI}-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/digi_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_PIPE}-CONN-OUT':      get_image(CFG_gui_conn_hist_path + '/pipe_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_PIPE}-CONN-IN':       get_image(CFG_gui_conn_hist_path + '/pipe_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_PIPE}-DISCO-OUT':     get_image(CFG_gui_conn_hist_path + '/pipe_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_PIPE}-DISCO-IN':      get_image(CFG_gui_conn_hist_path + '/pipe_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_BOX}-CONN-OUT':       get_image(CFG_gui_conn_hist_path + '/bbs_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_BOX}-CONN-IN':        get_image(CFG_gui_conn_hist_path + '/bbs_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_BOX}-DISCO-OUT':      get_image(CFG_gui_conn_hist_path + '/bbs_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_BOX}-DISCO-IN':       get_image(CFG_gui_conn_hist_path + '/bbs_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_TASK_FWD}-CONN-OUT': get_image(CFG_gui_conn_hist_path + '/fwd_conn_out.png',  size=(32, 16)),
-            f'{CLI_TYP_TASK_FWD}-CONN-IN':  get_image(CFG_gui_conn_hist_path + '/fwd_conn_in.png',   size=(32, 16)),
-            f'{CLI_TYP_TASK_FWD}-DISCO-OUT':get_image(CFG_gui_conn_hist_path + '/fwd_disco_out.png', size=(32, 16)),
-            f'{CLI_TYP_TASK_FWD}-DISCO-IN': get_image(CFG_gui_conn_hist_path + '/fwd_disco_in.png',  size=(32, 16)),
-
-            f'{CLI_TYP_CONVERSE}-CONN-OUT':    get_image(CFG_gui_conn_hist_path + '/conv_conn_out.png',    size=(32, 16)),
-            f'{CLI_TYP_CONVERSE}-CONN-IN':     get_image(CFG_gui_conn_hist_path + '/conv_conn_in.png',     size=(32, 16)),
-            f'{CLI_TYP_CONVERSE}-DISCO-OUT':   get_image(CFG_gui_conn_hist_path + '/conv_disco_out.png',   size=(32, 16)),
-            f'{CLI_TYP_CONVERSE}-DISCO-IN':    get_image(CFG_gui_conn_hist_path + '/conv_disco_in.png',    size=(32, 16)),
-            f'{CLI_TYP_CONVERSE}-CONN-INTER':  get_image(CFG_gui_conn_hist_path + '/conv_conn_inter.png',  size=(32, 16)),
-            f'{CLI_TYP_CONVERSE}-DISCO-INTER': get_image(CFG_gui_conn_hist_path + '/conv_disco_inter.png', size=(32, 16)),
-
-        }
-        logger.info("GUI: Init FWD-Q-Tree-Icon Tab 16x16")
-        self._fwd_q_flag_icons  = {
-            'F':       get_image(CFG_aprs_icon_path + '/1-26.png',      size=(16, 16)),
-            '$':       get_image(CFG_aprs_icon_path + '/0-82.png',      size=(16, 16)),
-            'S+':      get_image(CFG_gui_icon_path +  '/status_ok.png', size=(16, 16)),
-            'S-':      get_image(CFG_aprs_icon_path + '/1-06.png',      size=(16, 16)),
-            'S=':      get_image(CFG_aprs_icon_path + '/0-67.png',      size=(16, 16)),
-            'R':       get_image(CFG_aprs_icon_path + '/1-65.png',      size=(16, 16)),
-            'H':       get_image(CFG_aprs_icon_path + '/0-72.png',      size=(16, 16)),
-            'EE':      get_image(CFG_aprs_icon_path + '/1-78.png',      size=(16, 16)),
-        }
-        self._fwd_q_flag_icons.update(
-            {
-                'SW' : self._fwd_q_flag_icons['S='],
-                'EO' : self._fwd_q_flag_icons['EE']
-            }
-        )
-        logger.info("GUI: Init Icon Tabs. Done")
+        # Icons
+        self.guiIcon    = GuiIcons()
         #####################
         # Global Cache Tab
         """
@@ -331,7 +244,6 @@ class PoPT_GUI_Main:
         #self._mon_tree_pid_packet_filter_var = tk.StringVar(self.main_win, value='')
         ##############
         # Controlling
-        self._ch_alarm      = False
         self.channel_index  = 1
         self._mon_mode      = 0
         self._tracer_alarm  = False
@@ -341,7 +253,6 @@ class PoPT_GUI_Main:
         self._thread_gc: list[threading.Thread] = []    # Thread Garbage colletor
         self._win_gc                            = []
         # GUI PARAM
-        self._parm_btn_blink_time               = 1  # s
         self._parm_rx_beep_cooldown             = 2  # s
         # Tasker
         self._parm_non_prio_task_timer          = 0.25  # s
@@ -401,7 +312,6 @@ class PoPT_GUI_Main:
         l_frame             = ttk.Frame(self._main_pw)
         self._r_frame       = ttk.Frame(self._main_pw)
         r_pack_frame        = ttk.Frame(self._r_frame)
-        l_frame.pack(      fill='both', expand=True)
         self._r_frame.pack(fill='both', expand=True)
         r_pack_frame.pack( fill='both', expand=True)
         """
@@ -414,11 +324,9 @@ class PoPT_GUI_Main:
         self._main_pw.add(self._r_frame, weight=0)
         ###########################################
         # Channel Buttons
-        self._ch_btn_blink_timer    = time.time()
-        self._con_btn_dict          = {}
-        ch_btn_frame                = ttk.Frame(l_frame)
-        ch_btn_frame.pack(side='bottom', fill='both', )
-        self._init_ch_btn_frame(ch_btn_frame)
+        self._chBtn_frame = ChBtnFrame(self, l_frame)
+        self._chBtn_frame.pack(side='bottom', fill='both', expand=True)
+
         ###########################################
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient='vertical', )
@@ -1049,34 +957,6 @@ class PoPT_GUI_Main:
                                   )
         self._mon_btn.pack(side='left', padx=2)
 
-    def _init_ch_btn_frame(self, root_frame):
-        btn_font = ("fixedsys", 8,)
-        ch_btn_frame = ttk.Frame(root_frame, )
-        ch_btn_frame.pack(side='top', fill='both', expand=True)
-
-        for ch_nr in list(range(1,11)):
-            ch_text_var = tk.StringVar(self.main_win, value=str(ch_nr))
-            ch_btn      = tk.Button(ch_btn_frame,
-                               font=btn_font,
-                               textvariable=ch_text_var,
-                               bg="red",
-                               #command=lambda: self.switch_channel(int(f"{ch_nr}")),
-                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                               highlightthickness=0,
-                               )
-            ch_btn.pack( side='left', anchor="center", expand=True, fill='x')
-            self._con_btn_dict[ch_nr] = ch_btn, ch_text_var
-
-        self._con_btn_dict[1][0].configure(command=lambda: self.switch_channel(1))
-        self._con_btn_dict[2][0].configure(command=lambda: self.switch_channel(2))
-        self._con_btn_dict[3][0].configure(command=lambda: self.switch_channel(3))
-        self._con_btn_dict[4][0].configure(command=lambda: self.switch_channel(4))
-        self._con_btn_dict[5][0].configure(command=lambda: self.switch_channel(5))
-        self._con_btn_dict[6][0].configure(command=lambda: self.switch_channel(6))
-        self._con_btn_dict[7][0].configure(command=lambda: self.switch_channel(7))
-        self._con_btn_dict[8][0].configure(command=lambda: self.switch_channel(8))
-        self._con_btn_dict[9][0].configure(command=lambda: self.switch_channel(9))
-        self._con_btn_dict[10][0].configure(command=lambda: self.switch_channel(10))
 
     def _init_TXT_frame_up(self, is_monitor=False):
         # guiCFG          = POPT_CFG.load_guiPARM_main()
@@ -2284,8 +2164,7 @@ class PoPT_GUI_Main:
             self._update_stat_info_conn_timer()
             self._update_ft_info()
             self._AlarmIcon_tasker1()
-            if self._ch_alarm:
-                self._ch_btn_status_update()
+            self._chBtn_frame.tasker()
             if hasattr(self.settings_win, 'tasker'):
                 self.settings_win.tasker()
             if hasattr(self.BBS_fwd_q_list, 'tasker'):
@@ -2919,7 +2798,7 @@ class PoPT_GUI_Main:
 
             # Get Icon
             icon_k += icon_k_k
-            image = self._rx_tx_icons.get(icon_k)
+            image = self.guiIcon.rx_tx_icons.get(icon_k)
             tree_data_f = [tk_filter_bad_chars(el) if type(el) == str else el for el in tree_data]
             try:
                 self._mon_tree.image_ref = image
@@ -3456,14 +3335,14 @@ class PoPT_GUI_Main:
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
-        self._ch_btn_status_update()
+        self._chBtn_frame.ch_btn_status_update()
 
     def ch_status_update(self):
         """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
         self._add_tasker_q("ch_status_update", None)
 
     def _ch_status_update_task(self):
-        self._ch_btn_status_update()
+        self._chBtn_frame.ch_btn_status_update()
         self.on_channel_status_change()
 
     def _ch_btn_clk(self, ind: int):
@@ -3525,92 +3404,6 @@ class PoPT_GUI_Main:
 
     def _set_noty_bell_active_task(self):
         self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
-
-    def _ch_btn_status_update(self):
-        # TODO Call just if necessary
-        # TODO not calling in Tasker Loop for Channel Alarm (change BTN Color)
-        # self.main_class.on_channel_status_change()
-        ch_alarm = False
-        # if self._port_handler.get_all_connections().keys():
-        for i in list(self._con_btn_dict.keys()):
-            all_conn = self._popt_handler.get_all_connections()
-            if i in list(all_conn.keys()):
-                btn_txt = all_conn[i].to_call_str
-                is_link = all_conn[i].is_link
-                is_pipe = all_conn[i].pipe
-                if is_link:
-                    btn_txt = 'L>' + btn_txt
-                elif is_pipe:
-                    btn_txt = 'P>' + btn_txt
-                if self._con_btn_dict[i][1].get() != btn_txt:
-                    self._con_btn_dict[i][1].set(btn_txt)
-                if i == self.channel_index:
-                    if is_link:
-                        if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue2':
-                            self._con_btn_dict[i][0].configure(bg='SteelBlue2')
-                    elif is_pipe:
-                        if self._con_btn_dict[i][0].cget('bg') != 'cyan2':
-                            self._con_btn_dict[i][0].configure(bg='cyan2')
-                    else:
-                        if self._con_btn_dict[i][0].cget('bg') != 'green2':
-                            self._con_btn_dict[i][0].configure(bg='green2')
-                        self._set_ch_new_data_tr(i, False)
-                else:
-                    if self._get_ch_new_data_tr(i):
-                        if is_link:
-                            if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
-                                self._con_btn_dict[i][0].configure(bg='SteelBlue4')
-                            # ch_alarm = False
-                        elif is_pipe:
-                            if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
-                                self._con_btn_dict[i][0].configure(bg='cyan4')
-                            # ch_alarm = False
-                        else:
-                            ch_alarm = True
-                            self._ch_btn_alarm(self._con_btn_dict[i][0])
-                    else:
-                        if is_link:
-                            # ch_alarm = False
-                            if self._con_btn_dict[i][0].cget('bg') != 'SteelBlue4':
-                                self._con_btn_dict[i][0].configure(bg='SteelBlue4')
-                        elif is_pipe:
-                            if self._con_btn_dict[i][0].cget('bg') != 'cyan4':
-                                self._con_btn_dict[i][0].configure(bg='cyan4')
-                            # ch_alarm = False
-                        else:
-                            if self._con_btn_dict[i][0].cget('bg') != 'green4':
-                                self._con_btn_dict[i][0].configure(bg='green4')
-            else:
-                if self._con_btn_dict[i][1].get() != str(i):
-                    # self.con_btn_dict[i].configure(text=str(i))
-                    self._con_btn_dict[i][1].set(str(i))
-
-                if not self._get_ch_new_data_tr(i):
-                    if i == self.channel_index:
-                        if self._con_btn_dict[i][0].cget('bg') != 'red2':
-                            self._con_btn_dict[i][0].configure(bg='red2')
-                    else:
-                        if self._con_btn_dict[i][0].cget('bg') != 'red4':
-                            self._con_btn_dict[i][0].configure(bg='red4')
-                else:
-                    if i == self.channel_index:
-                        if self._con_btn_dict[i][0].cget('bg') != 'red2':
-                            self._con_btn_dict[i][0].configure(bg='red2')
-                        self._set_ch_new_data_tr(i, False)
-                    else:
-                        if self._con_btn_dict[i][0].cget('bg') != 'yellow':
-                            self._con_btn_dict[i][0].configure(bg='yellow')
-
-
-        if self._ch_btn_blink_timer < time.time():
-            self._ch_btn_blink_timer = time.time() + self._parm_btn_blink_time
-        self._ch_alarm = ch_alarm
-
-    def _ch_btn_alarm(self, btn: tk.Button):
-        if self._ch_btn_blink_timer < time.time():
-            clr = generate_random_hex_color()
-            if btn.cget('bg') != clr:
-                btn.configure(bg=clr)
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
@@ -3944,12 +3737,6 @@ class PoPT_GUI_Main:
                 ret.append(ch_id)
         return ret
 
-    def _get_ch_new_data_tr(self, ch_id):
-        return bool(self.get_ch_var(ch_index=ch_id).new_data_tr)
-
-    def _set_ch_new_data_tr(self, ch_id, state: bool):
-        self.get_ch_var(ch_index=ch_id).new_data_tr = state
-
     ##########################################
     #
     def set_tracer(self, state=None):
@@ -4164,21 +3951,6 @@ class PoPT_GUI_Main:
         logger.error("AttributeError: hasattr(self._port_handler, 'get_aprs_ais')")
         raise AttributeError
 
-    def get_aprs_icon_tab_16(self):
-        return self._aprs_icon_tab_16
-
-    def get_aprs_icon_tab_24(self):
-        return self._aprs_icon_tab_24
-
-    def get_conn_typ_icon_16(self):
-        return self._conn_typ_icons
-
-    def get_rx_tx_icons(self):
-        return self._rx_tx_icons
-
-    def get_fwd_q_icon_16(self):
-        return self._fwd_q_flag_icons
-
     def get_ais_mon_gui(self):
         return self.aprs_mon_win
 
@@ -4187,15 +3959,4 @@ class PoPT_GUI_Main:
         if hasattr(self._popt_handler, 'block_all_ports'):
             self._popt_handler.port_manager.block_all_ports(state)
 
-    #####################################
-    # Cache
-    """
-    def get_MapView_cache(self):
-        return dict(self._global_cache_tab.get('tkMapView_cache', {}))
 
-    def set_MapView_cache(self, cache: dict):
-        #while len(cache) > 10_000:
-        #    del cache[list(cache.keys())[0]]
-
-        self._global_cache_tab['tkMapView_cache'] = dict(cache)
-    """

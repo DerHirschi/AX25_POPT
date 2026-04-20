@@ -55,8 +55,8 @@ class AISmonitor(tk.Toplevel):
         self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
         self._popt_handler           = root_win.get_PH_mainGUI()
         self._ais_obj                = self._popt_handler.get_aprs_ais()
-        self._aprs_icon_tab_16       = root_win.get_aprs_icon_tab_16()
-        self._aprs_icon_tab_24       = root_win.get_aprs_icon_tab_24()
+        self._aprs_icon_tab_16       = root_win.guiIcon.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_24       = root_win.guiIcon.get_aprs_icon_tab_24()
         self.call_filter_list        = []
         ####
         self._tasker_q               = []
