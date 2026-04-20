@@ -26,9 +26,9 @@ from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_Icons import GuiIcons
+from gui.guiMain.guiMain_Menu import GuiMainMenu
 from gui.guiRightLevelEditor import RightLevelEditor
 from gui.prp.guiPRP_remote import PRP_remoteGUI
-from gui.gui_classes.guiRightClick_Menu import ContextMenu
 #from gui.guiRoutingTab import RoutingTableWindow
 #from gui.plots.gui_ConnPath_plot import ConnPathsPlot
 from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
@@ -349,9 +349,9 @@ class PoPT_GUI_Main:
             1: self._init_TXT_frame_mid,
             2: self._init_TXT_frame_low,
         }
-        self._inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
-        self._qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
-        self._mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
+        self.inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
+        self.qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
+        self.mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
 
         if self._mon_tree_frame is not None:
             self._init_mon_tree(self._mon_tree_frame)
@@ -395,10 +395,8 @@ class PoPT_GUI_Main:
         # set KEY BINDS
         self._set_binds()
         self._set_keybinds()
-        # Menubar
-        self._init_menubar()
-        # Right-CLick
-        self._init_r_click_men()
+        # Right-CLick / Menubar
+        self._guiMenu = GuiMainMenu(self)
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
@@ -440,10 +438,13 @@ class PoPT_GUI_Main:
         self.main_win.mainloop()
 
     ##############################################################
+    def quit_popt(self):
+        self._destroy_win()
+
     def _destroy_win(self):
         if self._quit:
             return
-        self._set_port_blocking(1)
+        self.set_port_blocking(1)
         self._popt_handler.connection_manager.disco_all_Conn()
         self._quit = True
         self._popt_handler.close_sound_PH()
@@ -531,10 +532,10 @@ class PoPT_GUI_Main:
 
     def _save_Channel_Vars(self):
         current_ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        current_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
-        current_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        current_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
-        current_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
+        current_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
+        current_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
+        current_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
+        current_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
         for ch_id in list(self._channel_vars.keys()):
@@ -678,261 +679,6 @@ class PoPT_GUI_Main:
         self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
         self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill='both')
         self._canvas.draw()  # Initial draw
-
-    def _init_menubar(self):
-        menubar = tk.Menu(self.main_win, tearoff=False)
-        self.main_win.config(menu=menubar)
-        #########################################################################
-        # Menü 1 "Verbindungen"
-        MenuVerb = tk.Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=self._getTabStr('new_conn'), command=self.open_new_conn_win)
-        MenuVerb.add_command(label=self._getTabStr('disconnect'), command=self._disco_conn)
-        MenuVerb.add_separator()
-        MenuVerb.add_command(label=self._getTabStr('disconnect_all'), command=self._disco_all)
-        MenuVerb.add_separator()
-        MenuVerb.add_command(label=self._getTabStr('port_unblock_all'),
-                             command=lambda: self._set_port_blocking(0) )
-        MenuVerb.add_command(label=self._getTabStr('port_block_ignore_all'),
-                             command=lambda: self._set_port_blocking(1))
-        MenuVerb.add_command(label=self._getTabStr('port_block_reject_all'),
-                             command=lambda: self._set_port_blocking(2))
-        MenuVerb.add_separator()
-        MenuVerb.add_command(label=self._getTabStr('quit'), command=self._destroy_win)
-        menubar.add_cascade(label=self._getTabStr('connections'), menu=MenuVerb, underline=0)
-        #####################################################################
-        # Menü 2 "Bearbeiten"
-        MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=self._getTabStr('copy'), command=self._copy_select, underline=0)
-        MenuEdit.add_command(label=self._getTabStr('past'), command=self._clipboard_past, underline=1)
-        MenuEdit.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('past_qso_f_file'), command=self._insert_fm_file,
-                             underline=0)
-        MenuEdit.add_command(label=self._getTabStr('save_qso_to_file'), command=self._save_to_file,
-                             underline=1)
-        MenuEdit.add_command(label=self._getTabStr('save_mon_to_file'), command=self._save_monitor_to_file,
-                             underline=1)
-        MenuEdit.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('clean_qso_win'), command=self.clear_channel_vars,
-                             underline=0)
-        MenuEdit.add_command(label=self._getTabStr('clean_mon_win'), command=self._clear_monitor_data,
-                             underline=0)
-
-        MenuEdit.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('clean_all_qso_win'), command=self._clear_all_Channel_vars,
-                             underline=0)
-        menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
-        ####################################################################
-        # Menü 3 "Tools"
-        MenuTools = tk.Menu(menubar, tearoff=False)
-        MenuTools.add_command(label="MH", command=self.open_MH_win, underline=0)
-        MenuTools.add_command(label=self._getTabStr('statistic'),
-                              command=lambda: self.open_window('PortStat'),
-                              underline=1)
-        MenuTools.add_separator()
-        MenuTools.add_command(label="User-DB Tree",
-                              command=lambda: self.open_window('userDB_tree'),
-                              underline=0)
-        MenuTools.add_command(label=self._getTabStr('user_db'),
-                              command=lambda: self.open_user_db_win(),
-                              underline=0)
-        MenuTools.add_separator()
-        MenuTools.add_command(label=self._getTabStr('locator_calc'),
-                              command=lambda: self.open_window('locator_calc'),
-                              underline=0)
-        MenuTools.add_separator()
-
-        MenuTools.add_command(label="FT-Manager",
-                              command=lambda: self._open_settings_window('ft_manager'),
-                              underline=0)
-        MenuTools.add_command(label=self._getTabStr('send_file'),
-                              command=lambda: self.open_window('ft_send'),
-                              underline=0)
-        MenuTools.add_separator()
-        MenuTools.add_command(label=self._getTabStr('linkholder'),
-                              command=lambda: self._open_settings_window('l_holder'),
-                              underline=0)
-        MenuTools.add_command(label='Pipe-Tool',
-                              command=lambda: self._open_settings_window('pipe_sett'),
-                              underline=0)
-        MenuTools.add_separator()
-
-        MenuTools.add_command(label='Priv',
-                              command=lambda: self._open_settings_window('priv_win'),
-                              underline=0)
-        MenuTools.add_separator()
-        # FIXME: PRP-Remote Disabled
-        #MenuTools.add_command(label='Remote Monitor',
-        #                      command=lambda: self.open_window('remote_monitor'),
-        #                      underline=0)
-        MenuTools.add_command(label='Dual-Port Monitor',
-                              command=lambda: self.open_window('dualPort_monitor'),
-                              underline=0)
-        MenuTools.add_separator()
-        MenuTools.add_command(label=self._getTabStr('right_level_editor'),
-                              command=lambda: self.open_window('right_level_editor'),
-                              underline=0)
-        MenuTools.add_command(label='Block List',
-                              command=lambda: self.open_BlockList_win(),
-                              underline=0)
-        MenuTools.add_separator()
-
-        MenuTools.add_command(label='Kaffèmaschine',
-                              command=lambda: self._kaffee(),
-                              underline=0)
-
-        menubar.add_cascade(label=self._getTabStr('tools'), menu=MenuTools, underline=0)
-
-        ###################################################################
-        # Menü 4 Einstellungen
-        MenuSettings = tk.Menu(menubar, tearoff=False)
-
-        MenuSettings.add_command(label=self._getTabStr('settings'),
-                                 command=lambda: self._open_settings_window('all_sett'),
-                                 underline=0)
-        MenuSettings.add_separator()
-
-        MenuSettings.add_command(label='Dual-Port',
-                                 command=lambda: self.open_window('dualPort_settings'),
-                                 underline=0)
-
-        menubar.add_cascade(label=self._getTabStr('settings'), menu=MenuSettings, underline=0)
-        ########################################################################
-        # APRS Menu
-        MenuAPRS = tk.Menu(menubar, tearoff=False)
-        MenuAPRS.add_command(label=self._getTabStr('aprs_mon'),
-                             command=lambda: self.open_window('aprs_mon'),
-                             underline=0)
-        #MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
-        #                     underline=0)
-        MenuAPRS.add_separator()
-        MenuAPRS.add_command(label=self._getTabStr('wx_window'),
-                             command=lambda: self.open_window('wx_win'),
-                             underline=0)
-        MenuAPRS.add_command(label=self._getTabStr('pn_msg'),
-                             command=lambda: self.open_window('aprs_msg'),
-                             underline=0)
-        MenuAPRS.add_separator()
-        MenuAPRS.add_command(label=self._getTabStr('settings'),
-                             command=lambda: self._open_settings_window('aprs_sett'),
-                             underline=0)
-        # MenuAPRS.add_separator()
-        menubar.add_cascade(label="APRS", menu=MenuAPRS, underline=0)
-        ################################################################
-        # BBS/PMS
-        MenuBBS = tk.Menu(menubar, tearoff=False)
-        MenuBBS.add_command(label=self._getTabStr('new_msg'),
-                            command=lambda: self.open_window('pms_new_msg'),
-                            underline=0)
-        MenuBBS.add_command(label=self._getTabStr('msg_center'),
-                            command=lambda: self.open_window('pms_msg_center'),
-                            underline=0)
-
-        MenuBBS.add_separator()
-        MenuBBS.add_command(label=self._getTabStr('fwd_list'),
-                            command=lambda: self.open_window('pms_fwq_q'),
-                            underline=0)
-        MenuBBS.add_command(label=self._getTabStr('fwd_path'),
-                            command=lambda: self.open_window('fwdPath'),
-                            underline=0)
-        MenuBBS.add_separator()
-        """
-        MenuBBS.add_command(label=self._getTabStr('start_fwd'),
-                            command=self._do_pms_fwd,
-                            underline=0)
-        """
-
-        MenuBBS.add_command(label=self._getTabStr('start_auto_fwd'),
-                            command=self._do_pms_autoFWD,
-                            underline=0)
-        MenuBBS.add_separator()
-        """
-        MenuBBS.add_command(label='Old Settings',
-                            command=lambda: self._open_settings_window('pms_setting'),
-                            underline=0) # pms_all_sett
-        """
-        MenuBBS.add_command(label=self._getTabStr('settings'),
-                            command=lambda: self._open_settings_window('pms_all_sett'),
-                            underline=0)
-        menubar.add_cascade(label='PMS/BBS', menu=MenuBBS, underline=0)
-        #########################################################################
-        # Menü 5 Hilfe
-        MenuHelp = tk.Menu(menubar, tearoff=False)
-        # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
-        MenuHelp.add_command(label=self._getTabStr('keybind'),
-                             command=lambda: self._open_settings_window('keybinds'),
-                             underline=0)
-        MenuHelp.add_separator()
-        MenuHelp.add_command(label=self._getTabStr('about'),
-                             command=lambda: self._open_settings_window('about'),
-                             underline=0)
-        menubar.add_cascade(label=self._getTabStr('help'), menu=MenuHelp, underline=0)
-
-    def _init_r_click_men(self):
-        # Input
-        inp_txt_men = ContextMenu(self._inp_txt)
-        inp_txt_men.add_item(self._getTabStr('cut'),  self._cut_select)
-        inp_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
-        inp_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
-        inp_txt_men.add_item(self._getTabStr('select_all'), self._select_all)
-        inp_txt_men.add_separator()
-        # inp_txt_men.add_item(self._getTabStr('save_to_file'), self._save_to_file)
-        inp_txt_men.add_item(self._getTabStr('past_f_file'),  self._insert_fm_file)
-        inp_txt_men.add_separator()
-        actions_submenu = inp_txt_men.add_submenu("F-Text")
-        actions_submenu.add_command(label="F1",  command=lambda : self._insert_ftext_fm_menu(1))
-        actions_submenu.add_command(label="F2",  command=lambda : self._insert_ftext_fm_menu(2))
-        actions_submenu.add_command(label="F3",  command=lambda : self._insert_ftext_fm_menu(3))
-        actions_submenu.add_command(label="F4",  command=lambda : self._insert_ftext_fm_menu(4))
-        actions_submenu.add_command(label="F5",  command=lambda : self._insert_ftext_fm_menu(5))
-        actions_submenu.add_command(label="F6",  command=lambda : self._insert_ftext_fm_menu(6))
-        actions_submenu.add_command(label="F7",  command=lambda : self._insert_ftext_fm_menu(7))
-        actions_submenu.add_command(label="F8",  command=lambda : self._insert_ftext_fm_menu(8))
-        actions_submenu.add_command(label="F9",  command=lambda : self._insert_ftext_fm_menu(9))
-        actions_submenu.add_command(label="F10", command=lambda : self._insert_ftext_fm_menu(10))
-        actions_submenu.add_command(label="F11", command=lambda : self._insert_ftext_fm_menu(11))
-        actions_submenu.add_command(label="F12", command=lambda : self._insert_ftext_fm_menu(12))
-        inp_txt_men.add_separator()
-        inp_txt_men.add_item(self._getTabStr('linkholder'),
-                             lambda: self._open_settings_window('l_holder'))
-        inp_txt_men.add_item(label=self._getTabStr('send_file'),
-                             command=lambda: self.open_window('ft_send'))
-        inp_txt_men.add_item(label="Priv",
-                             command=lambda: self.do_priv())
-        inp_txt_men.add_separator()
-        inp_txt_men.add_item(label=self._getTabStr('user_db'),
-                             command=lambda: self.open_user_db_win())
-        inp_txt_men.add_separator()
-        inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
-
-
-        # QSO
-        out_txt_men = ContextMenu(self._qso_txt)
-        out_txt_men.add_item(self._getTabStr('send_selected'), self._send_selected)
-        out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
-        out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
-        out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('linkholder'),
-                             lambda: self._open_settings_window('l_holder'))
-        out_txt_men.add_item(label=self._getTabStr('send_file'),
-                             command=lambda: self.open_window('ft_send'))
-        out_txt_men.add_item(label="Priv",
-                             command=lambda: self.do_priv())
-        out_txt_men.add_separator()
-        out_txt_men.add_item(label=self._getTabStr('user_db'),
-                             command=lambda: self.open_user_db_win())
-        out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
-        # Monitor
-        mon_txt_men = ContextMenu(self._mon_txt)
-        mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
-        mon_txt_men.add_item(self._getTabStr('save_mon_to_file'), self._save_monitor_to_file)
-        mon_txt_men.add_separator()
-        mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
-        # Mon Tab
-        # TODO
-        #mon_tree_men = ContextMenu(self._mon_tree)
-        #mon_tree_men.add_item('Connect', self._monitor_tree_conn_selected)
 
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
@@ -1332,7 +1078,7 @@ class PoPT_GUI_Main:
         self._all_tag_calls = []
         all_stat_cfg = POPT_CFG.get_stat_CFGs()
         if all_stat_cfg:
-            self._qso_txt.configure(state="normal")
+            self.qso_txt.configure(state="normal")
         guiCFG = POPT_CFG.load_guiPARM_main()
         # ==========================
         # QSO Call/Station Tags
@@ -1347,54 +1093,54 @@ class PoPT_GUI_Main:
             rx_tag = 'RX-' + str(call)
             self._all_tag_calls.append(str(call))
 
-            self._qso_txt.tag_config(tx_tag,
-                                     foreground=tx_fg,
-                                     background=tx_bg,
-                                     selectbackground=tx_fg,
-                                     selectforeground=tx_bg,
-                                     )
-            self._qso_txt.tag_config(rx_tag,
-                                     foreground=rx_fg,
-                                     background=tx_bg,
-                                     selectbackground=rx_fg,
-                                     selectforeground=tx_bg,
-                                     )
+            self.qso_txt.tag_config(tx_tag,
+                                    foreground=tx_fg,
+                                    background=tx_bg,
+                                    selectbackground=tx_fg,
+                                    selectforeground=tx_bg,
+                                    )
+            self.qso_txt.tag_config(rx_tag,
+                                    foreground=rx_fg,
+                                    background=tx_bg,
+                                    selectbackground=rx_fg,
+                                    selectforeground=tx_bg,
+                                    )
         # ==========================
         # QSO Sys Msg / Status Msg Tags
-        self._qso_txt.tag_config('SYS-MSG',
-                                 foreground=DEF_QSO_SYSMSG_FG,
-                                 background=DEF_QSO_SYSMSG_BG,
-                                 selectbackground=DEF_QSO_SYSMSG_FG,
-                                 selectforeground=DEF_QSO_SYSMSG_BG,
-                                 )
-        self._qso_txt.tag_config('TX-NOCALL',
-                                 foreground='#ffffff',
-                                 background='#000000',
-                                 selectbackground='#ffffff',
-                                 selectforeground='#000000',
-                                 )
-        self._qso_txt.tag_config('RX-NOCALL',
-                                 foreground='#000000',
-                                 background='#ffffff',
-                                 selectbackground='#000000',
-                                 selectforeground='#ffffff',
-                                 )
+        self.qso_txt.tag_config('SYS-MSG',
+                                foreground=DEF_QSO_SYSMSG_FG,
+                                background=DEF_QSO_SYSMSG_BG,
+                                selectbackground=DEF_QSO_SYSMSG_FG,
+                                selectforeground=DEF_QSO_SYSMSG_BG,
+                                )
+        self.qso_txt.tag_config('TX-NOCALL',
+                                foreground='#ffffff',
+                                background='#000000',
+                                selectbackground='#ffffff',
+                                selectforeground='#000000',
+                                )
+        self.qso_txt.tag_config('RX-NOCALL',
+                                foreground='#000000',
+                                background='#ffffff',
+                                selectbackground='#000000',
+                                selectforeground='#ffffff',
+                                )
         # PRP CLI-ESC Status MSG
-        self._qso_txt.tag_config(TAG_QSO_PRP_STATUS_TX,
-                                 foreground=CLR_QSO_PRP_STATUS_TX,
-                                 background=CLR_QSO_PRP_STATUS_BG,
-                                 selectbackground=CLR_QSO_PRP_STATUS_TX,
-                                 selectforeground=CLR_QSO_PRP_STATUS_BG,
-                                 )
-        self._qso_txt.tag_config(TAG_QSO_PRP_STATUS_RX,
-                                 foreground=CLR_QSO_PRP_STATUS_RX,
-                                 background=CLR_QSO_PRP_STATUS_BG,
-                                 selectbackground=CLR_QSO_PRP_STATUS_RX,
-                                 selectforeground=CLR_QSO_PRP_STATUS_BG,
-                                 )
+        self.qso_txt.tag_config(TAG_QSO_PRP_STATUS_TX,
+                                foreground=CLR_QSO_PRP_STATUS_TX,
+                                background=CLR_QSO_PRP_STATUS_BG,
+                                selectbackground=CLR_QSO_PRP_STATUS_TX,
+                                selectforeground=CLR_QSO_PRP_STATUS_BG,
+                                )
+        self.qso_txt.tag_config(TAG_QSO_PRP_STATUS_RX,
+                                foreground=CLR_QSO_PRP_STATUS_RX,
+                                background=CLR_QSO_PRP_STATUS_BG,
+                                selectbackground=CLR_QSO_PRP_STATUS_RX,
+                                selectforeground=CLR_QSO_PRP_STATUS_BG,
+                                )
 
-        self._qso_txt.configure(state="disabled")
-        self._mon_txt.configure(state="normal")
+        self.qso_txt.configure(state="disabled")
+        self.mon_txt.configure(state="normal")
         # ==========================
         # Monitor Tags
         all_port = self._popt_handler.port_manager.ax25_ports
@@ -1405,34 +1151,34 @@ class PoPT_GUI_Main:
             tx_fg = port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
             tx_bg = port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
             rx_fg = port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
-            self._mon_txt.tag_config(tag_tx, foreground=tx_fg,
-                                     background=tx_bg,
-                                     selectbackground=tx_fg,
-                                     selectforeground=tx_bg,
-                                     )
-            self._mon_txt.tag_config(tag_rx, foreground=rx_fg,
-                                     background=tx_bg,
-                                     selectbackground=rx_fg,
-                                     selectforeground=tx_bg,
-                                     )
-        self._mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
-                                 background=MON_SYS_MSG_CLR_BG)
-        self._mon_txt.configure(state="disabled")
+            self.mon_txt.tag_config(tag_tx, foreground=tx_fg,
+                                    background=tx_bg,
+                                    selectbackground=tx_fg,
+                                    selectforeground=tx_bg,
+                                    )
+            self.mon_txt.tag_config(tag_rx, foreground=rx_fg,
+                                    background=tx_bg,
+                                    selectbackground=rx_fg,
+                                    selectforeground=tx_bg,
+                                    )
+        self.mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
+                                background=MON_SYS_MSG_CLR_BG)
+        self.mon_txt.configure(state="disabled")
         ##
         #self._mon_txt.configure(state="normal")
-        self._inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self._inp_txt.tag_config("send",
-                                 foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
-                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self._inp_txt.tag_raise(tk.SEL)
-        self._qso_txt.tag_raise(tk.SEL)
-        self._mon_txt.tag_raise(tk.SEL)
+        self.inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        self.inp_txt.tag_config("send",
+                                foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
+                                background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
+        self.inp_txt.tag_raise(tk.SEL)
+        self.qso_txt.tag_raise(tk.SEL)
+        self.mon_txt.tag_raise(tk.SEL)
 
     #######################################
     # KEYBIND Stuff
     def _set_binds(self):
-        self._inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
-        self._inp_txt.bind("<KeyRelease>", self._on_key_release_inp_txt)
+        self.inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
+        self.inp_txt.bind("<KeyRelease>", self._on_key_release_inp_txt)
 
     def _set_keybinds(self):
         self.main_win.unbind("<Key-F10>")
@@ -1469,12 +1215,12 @@ class PoPT_GUI_Main:
         # self.main_win.bind('<KP_Enter>', self.snd_text)
         self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
         self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Alt-d>', lambda event: self._disco_conn())
-        self.main_win.bind('<Control-c>', lambda event: self._copy_select())
+        self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
+        self.main_win.bind('<Control-c>', lambda event: self.copy_select())
         #self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
-        self.main_win.bind('<Control-x>', lambda event: self._cut_select())
+        self.main_win.bind('<Control-x>', lambda event: self.cut_select())
         # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
-        self.main_win.bind('<Control-a>', lambda event: self._select_all())
+        self.main_win.bind('<Control-a>', lambda event: self.select_all())
         self.main_win.bind('<Control-plus>', lambda event: self._increase_textsize())
         self.main_win.bind('<Control-minus>', lambda event: self._decrease_textsize())
         # self.main_win.bind('<Control-Right>', lambda event: self._text_win_bigger())
@@ -1484,7 +1230,7 @@ class PoPT_GUI_Main:
 
     def _any_key(self, event: tk.Event):
         if event.keycode == 104:  # Numpad Enter
-            self._inp_txt.insert(tk.INSERT, '\n')
+            self.inp_txt.insert(tk.INSERT, '\n')
             self._snd_text(event)
 
     def _arrow_keys(self, event=None):
@@ -1521,11 +1267,11 @@ class PoPT_GUI_Main:
         conn = self.get_conn()
         text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
         text = zeilenumbruch_lines(text)
-        self._inp_txt.insert(tk.INSERT, text)
+        self.inp_txt.insert(tk.INSERT, text)
         self.see_end_inp_win()
         return
 
-    def _insert_ftext_fm_menu(self, f_nr: int):
+    def insert_ftext_fm_menu(self, f_nr: int):
         try:
             text, enc = POPT_CFG.get_f_text_fm_id(f_id=f_nr)
         except ValueError:
@@ -1540,7 +1286,7 @@ class PoPT_GUI_Main:
         conn = self.get_conn()
         text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
         text = zeilenumbruch_lines(text)
-        self._inp_txt.insert(tk.INSERT, text)
+        self.inp_txt.insert(tk.INSERT, text)
         self.see_end_inp_win()
         return
 
@@ -1583,41 +1329,41 @@ class PoPT_GUI_Main:
     def _increase_textsize(self):
         self.text_size += 1
         self.text_size = max(self.text_size, 3)
-        self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._qso_txt.configure(font=(FONT, self.text_size), )
-        self._mon_txt.configure(font=(FONT, self.text_size), )
+        self.inp_txt.configure(font=(FONT, self.text_size), )
+        self.qso_txt.configure(font=(FONT, self.text_size), )
+        self.mon_txt.configure(font=(FONT, self.text_size), )
 
     def _decrease_textsize(self):
         self.text_size -= 1
         self.text_size = max(self.text_size, 3)
-        self._inp_txt.configure(font=(FONT, self.text_size), )
-        self._qso_txt.configure(font=(FONT, self.text_size), )
-        self._mon_txt.configure(font=(FONT, self.text_size), )
+        self.inp_txt.configure(font=(FONT, self.text_size), )
+        self.qso_txt.configure(font=(FONT, self.text_size), )
+        self.mon_txt.configure(font=(FONT, self.text_size), )
 
     ##########################
     # Clipboard Stuff
-    def _copy_select(self):
-        if self._qso_txt.tag_ranges("sel"):
+    def copy_select(self):
+        if self.qso_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._qso_txt.selection_get())
-            self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self._inp_txt.tag_ranges("sel"):
+            self.main_win.clipboard_append(self.qso_txt.selection_get())
+            self.qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self.inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._inp_txt.selection_get())
-            self._inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self._mon_txt.tag_ranges("sel"):
+            self.main_win.clipboard_append(self.inp_txt.selection_get())
+            self.inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        elif self.mon_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._mon_txt.selection_get())
-            self._mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
+            self.main_win.clipboard_append(self.mon_txt.selection_get())
+            self.mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
 
-    def _cut_select(self):
-        if self._inp_txt.tag_ranges("sel"):
+    def cut_select(self):
+        if self.inp_txt.tag_ranges("sel"):
             self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self._inp_txt.selection_get())
-            self._inp_txt.delete('sel.first', 'sel.last')
-            self._inp_txt.see(tk.INSERT)
+            self.main_win.clipboard_append(self.inp_txt.selection_get())
+            self.inp_txt.delete('sel.first', 'sel.last')
+            self.inp_txt.see(tk.INSERT)
 
-    def _clipboard_past(self):
+    def clipboard_past(self):
         try:
             clp_brd = self.main_win.clipboard_get()
         except tk.TclError:
@@ -1625,37 +1371,37 @@ class PoPT_GUI_Main:
             return
 
         if clp_brd:
-            self._inp_txt.insert(tk.INSERT, clp_brd)
-            self._inp_txt.see(tk.INSERT)
+            self.inp_txt.insert(tk.INSERT, clp_brd)
+            self.inp_txt.see(tk.INSERT)
 
-    def _select_all(self):
-        self._inp_txt.tag_remove("send", "1.0", tk.END)
-        self._inp_txt.tag_add(tk.SEL, "1.0", tk.END)
-        self._inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
-        self._inp_txt.see(tk.INSERT)  #
+    def select_all(self):
+        self.inp_txt.tag_remove("send", "1.0", tk.END)
+        self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
+        self.inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
+        self.inp_txt.see(tk.INSERT)  #
 
-    def _send_selected(self):
+    def send_selected(self):
         if not self.channel_index:
             return
-        if not self._qso_txt.tag_ranges("sel"):
+        if not self.qso_txt.tag_ranges("sel"):
             return
-        selected_text = self._qso_txt.selection_get()
+        selected_text = self.qso_txt.selection_get()
         selected_text += '\n'
         #self._inp_txt.tag_remove('send', '0.0', 'end')
-        self._inp_txt.insert('insert', '\n')
+        self.inp_txt.insert('insert', '\n')
         #ind = self._inp_txt.index(tk.INSERT)
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
-        self._inp_txt.insert('insert', selected_text)
+        ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
+        self.inp_txt.insert('insert', selected_text)
         #self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
         self._snd_text()
-        self._qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        self._inp_txt.tag_remove('send', "0.0", str(self._inp_txt.index('end')))
-        self._inp_txt.tag_add('send', "0.0", str(self._inp_txt.index('end')))
+        self.qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
+        self.inp_txt.tag_remove('send', "0.0", str(self.inp_txt.index('end')))
+        self.inp_txt.tag_add('send', "0.0", str(self.inp_txt.index('end')))
 
     ##########################
     # Pre-write Text Stuff
-    def _insert_fm_file(self):
+    def insert_fm_file(self):
         data = open_file_dialog(self.main_win)
         if not data:
             return
@@ -1665,24 +1411,24 @@ class PoPT_GUI_Main:
         else:
             data = data.decode(ch_enc, 'ignore')
         data = zeilenumbruch_lines(data)
-        self._inp_txt.insert(tk.INSERT, data)
+        self.inp_txt.insert(tk.INSERT, data)
         self.see_end_inp_win()
         return
 
-    def _save_to_file(self):
-        data = self._qso_txt.get('1.0', tk.END)
+    def save_to_file(self):
+        data = self.qso_txt.get('1.0', tk.END)
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data, self.main_win)
 
     ##########################
     # Monitor Text Stuff
-    def _clear_monitor_data(self):
-        self._mon_txt.configure(state='normal')
-        self._mon_txt.delete('1.0', tk.END)
-        self._mon_txt.configure(state='disabled')
+    def clear_monitor_data(self):
+        self.mon_txt.configure(state='normal')
+        self.mon_txt.delete('1.0', tk.END)
+        self.mon_txt.configure(state='disabled')
 
-    def _save_monitor_to_file(self):
-        data = self._mon_txt.get('1.0', tk.END)
+    def save_monitor_to_file(self):
+        data = self.mon_txt.get('1.0', tk.END)
         # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
         save_file_dialog(data)
 
@@ -1717,8 +1463,8 @@ class PoPT_GUI_Main:
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
 
-    def _clear_inpWin(self):
-        self._inp_txt.delete('1.0', tk.END)
+    def clear_inpWin(self):
+        self.inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
         chVars = self._channel_vars[self.channel_index]
         chVars.input_win                = ''
@@ -1726,10 +1472,10 @@ class PoPT_GUI_Main:
         chVars.input_win_index          = '1.0'
         chVars.input_win_cursor_index   = tk.INSERT
 
-    def _clear_qsoWin(self):
-        self._qso_txt.configure(state='normal')
-        self._qso_txt.delete('1.0', tk.END)
-        self._qso_txt.configure(state='disabled')
+    def clear_qsoWin(self):
+        self.qso_txt.configure(state='normal')
+        self.qso_txt.delete('1.0', tk.END)
+        self.qso_txt.configure(state='disabled')
         # del self._channel_vars[self.channel_index]
 
         chVars = self._channel_vars[self.channel_index]
@@ -1738,20 +1484,20 @@ class PoPT_GUI_Main:
         chVars.t2speech_buf     = ''
 
     def clear_channel_vars(self):
-        self._qso_txt.configure(state='normal')
-        self._qso_txt.delete('1.0', tk.END)
-        self._qso_txt.configure(state='disabled')
-        self._inp_txt.delete('1.0', tk.END)
+        self.qso_txt.configure(state='normal')
+        self.qso_txt.delete('1.0', tk.END)
+        self.qso_txt.configure(state='disabled')
+        self.inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
 
         self._channel_vars[self.channel_index] = ChVars()
         self._update_qso_Vars()
 
-    def _clear_all_Channel_vars(self):
-        self._qso_txt.configure(state='normal')
-        self._qso_txt.delete('1.0', tk.END)
-        self._qso_txt.configure(state='disabled')
-        self._inp_txt.delete('1.0', tk.END)
+    def clear_all_Channel_vars(self):
+        self.qso_txt.configure(state='normal')
+        self.qso_txt.delete('1.0', tk.END)
+        self.qso_txt.configure(state='disabled')
+        self.inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
         for ch_id in self._channel_vars.keys():
             self._channel_vars[ch_id] = ChVars()
@@ -2247,17 +1993,17 @@ class PoPT_GUI_Main:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
         if self.channel_index == conn.ch_index:
-            self._qso_txt.configure(state="normal")
-            ind = self._qso_txt.index('end-1c')
-            self._qso_txt.insert('end', inp)
-            ind2 = self._qso_txt.index('end-1c')
+            self.qso_txt.configure(state="normal")
+            ind = self.qso_txt.index('end-1c')
+            self.qso_txt.insert('end', inp)
+            ind2 = self.qso_txt.index('end-1c')
             if tag_name_tx:
-                self._qso_txt.tag_add(tag_name_tx, ind, ind2)
-            self._qso_txt.configure(state="disabled",
-                                    exportselection=True
-                                    )
+                self.qso_txt.tag_add(tag_name_tx, ind, ind2)
+            self.qso_txt.configure(state="disabled",
+                                   exportselection=True
+                                   )
             # TODO Autoscroll
-            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             if tag_name_tx:
@@ -2292,19 +2038,19 @@ class PoPT_GUI_Main:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
 
-            self._qso_txt.configure(state="normal")
+            self.qso_txt.configure(state="normal")
             # configuring a tag called start
-            ind = self._qso_txt.index('end-1c')
-            self._qso_txt.insert('end', out)
-            ind2 = self._qso_txt.index('end-1c')
+            ind = self.qso_txt.index('end-1c')
+            self.qso_txt.insert('end', out)
+            ind2 = self.qso_txt.index('end-1c')
             if tag_name_rx:
-                self._qso_txt.tag_add(tag_name_rx, ind, ind2)
+                self.qso_txt.tag_add(tag_name_rx, ind, ind2)
 
-            self._qso_txt.configure(state="disabled",
-                                    exportselection=True
-                                    )
+            self.qso_txt.configure(state="disabled",
+                                   exportselection=True
+                                   )
             # TODO Autoscroll
-            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
+            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
             Ch_var.new_data_tr = True
@@ -2328,21 +2074,21 @@ class PoPT_GUI_Main:
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr  = False
 
-        self._qso_txt.configure(state="normal")
+        self.qso_txt.configure(state="normal")
 
-        self._qso_txt.delete('1.0', tk.END)
-        self._qso_txt.insert(tk.END, ch_vars.output_win)
-        self._qso_txt.configure(state="disabled")
-        self._qso_txt.see(tk.END)
+        self.qso_txt.delete('1.0', tk.END)
+        self.qso_txt.insert(tk.END, ch_vars.output_win)
+        self.qso_txt.configure(state="disabled")
+        self.qso_txt.see(tk.END)
 
-        self._inp_txt.delete('1.0', tk.END)
-        self._inp_txt.insert(tk.END, ch_vars.input_win[:-1])
-        set_all_tags(self._inp_txt, ch_vars.input_win_tags)
-        set_all_tags(self._qso_txt, ch_vars.output_win_tags)
-        set_new_tags(self._qso_txt, ch_vars.new_tags)
+        self.inp_txt.delete('1.0', tk.END)
+        self.inp_txt.insert(tk.END, ch_vars.input_win[:-1])
+        set_all_tags(self.inp_txt, ch_vars.input_win_tags)
+        set_all_tags(self.qso_txt, ch_vars.output_win_tags)
+        set_new_tags(self.qso_txt, ch_vars.new_tags)
         ch_vars.new_tags = []
-        self._inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
-        self._inp_txt.see(tk.END)
+        self.inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
+        self.inp_txt.see(tk.END)
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
@@ -2375,17 +2121,17 @@ class PoPT_GUI_Main:
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
-            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
+            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index("@0,0")) < 22:
                 tr = True
-            self._qso_txt.configure(state="normal")
+            self.qso_txt.configure(state="normal")
 
-            ind = self._qso_txt.index(tk.INSERT)
-            self._qso_txt.insert('end', data)
-            ind2 = self._qso_txt.index(tk.INSERT)
-            self._qso_txt.tag_add(tag_name, ind, ind2)
-            self._qso_txt.configure(state="disabled",
-                                    exportselection=True
-                                    )
+            ind = self.qso_txt.index(tk.INSERT)
+            self.qso_txt.insert('end', data)
+            ind2 = self.qso_txt.index(tk.INSERT)
+            self.qso_txt.tag_add(tag_name, ind, ind2)
+            self.qso_txt.configure(state="disabled",
+                                   exportselection=True
+                                   )
             if tr or self.get_ch_var().autoscroll:
                 self.see_end_qso_win()
 
@@ -2406,17 +2152,17 @@ class PoPT_GUI_Main:
         ch_vars.output_win += data
         if self.channel_index == ch_index:
             tr = False
-            if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
+            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index("@0,0")) < 22:
                 tr = True
-            self._qso_txt.configure(state="normal")
+            self.qso_txt.configure(state="normal")
 
-            ind = self._qso_txt.index(tk.INSERT)
-            self._qso_txt.insert('end', data)
-            ind2 = self._qso_txt.index(tk.INSERT)
-            self._qso_txt.tag_add(tag_name, ind, ind2)
-            self._qso_txt.configure(state="disabled",
-                                    exportselection=True
-                                    )
+            ind = self.qso_txt.index(tk.INSERT)
+            self.qso_txt.insert('end', data)
+            ind2 = self.qso_txt.index(tk.INSERT)
+            self.qso_txt.tag_add(tag_name, ind, ind2)
+            self.qso_txt.configure(state="disabled",
+                                   exportselection=True
+                                   )
             if tr or self.get_ch_var().autoscroll:
                 self.see_end_qso_win()
 
@@ -2439,14 +2185,14 @@ class PoPT_GUI_Main:
     def _sysMsg_to_monitor_task(self, var: str):
         # var += bytes.fromhex('15').decode('UTF-8')+'\n'
         """ Called from AX25Conn """
-        ind = str(self._mon_txt.index(tk.INSERT))
+        ind = str(self.mon_txt.index(tk.INSERT))
         ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
 
-        self._mon_txt.configure(state="normal")
-        self._mon_txt.insert(ind, ins)
-        ind2 = self._mon_txt.index(tk.INSERT)
-        self._mon_txt.tag_add("sys-msg", ind, ind2)
-        self._mon_txt.configure(state="disabled")
+        self.mon_txt.configure(state="normal")
+        self.mon_txt.insert(ind, ins)
+        ind2 = self.mon_txt.index(tk.INSERT)
+        self.mon_txt.tag_add("sys-msg", ind, ind2)
+        self.mon_txt.configure(state="disabled")
         self._see_end_mon_win()
         if 'Lob: ' in var:
             var = var.split('Lob: ')
@@ -2490,8 +2236,8 @@ class PoPT_GUI_Main:
 
     def _monitor_q_task(self, mon_batch: list):
 
-        self._mon_txt.configure(state="normal")
-        self._mon_txt_tags = set(self._mon_txt.tag_names(None))  # Cache Tags
+        self.mon_txt.configure(state="normal")
+        self._mon_txt_tags = set(self.mon_txt.tag_names(None))  # Cache Tags
 
         full_text = ""
         tags_to_add = []
@@ -2503,7 +2249,7 @@ class PoPT_GUI_Main:
             "decoding": str(self.setting_mon_encoding.get()),
         }
 
-        end_idx = self._mon_txt.index('end-1c')  # Cache Index
+        end_idx = self.mon_txt.index('end-1c')  # Cache Index
         for axframe in mon_batch:
             port_conf    = axframe.get('port_conf', {})
             tx           = axframe.get('tx'       , False)
@@ -2520,34 +2266,34 @@ class PoPT_GUI_Main:
             tags_to_add.append((tag, ind_start, f"{ind_start} + {len(var)}c"))
 
         # Batch-Insert
-        self._mon_txt.insert(tk.END, full_text)
+        self.mon_txt.insert(tk.END, full_text)
 
         # Batch-Tags
         for tag, start, end in tags_to_add:
             if tag in self._mon_txt_tags:
-                self._mon_txt.tag_add(tag, start, end)
+                self.mon_txt.tag_add(tag, start, end)
 
         # Periodisches Cleanup (statt pro Task)
-        cut_len = int(self._mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
+        cut_len = int(self.mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
         if cut_len > 0:
-            self._mon_txt.delete('1.0', f"{cut_len}.0")
+            self.mon_txt.delete('1.0', f"{cut_len}.0")
 
         # Autoscroll
-        tr = float(self._mon_txt.index(tk.END)) - float(self._mon_txt.index(tk.INSERT)) < 15
+        tr = float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index(tk.INSERT)) < 15
         if tr or self.mon_scroll_var.get():
             self._see_end_mon_win()
 
-        self._mon_txt.configure(state="disabled", exportselection=True)
+        self.mon_txt.configure(state="disabled", exportselection=True)
         return True
 
     def see_end_inp_win(self):
-        self._inp_txt.see("end")
+        self.inp_txt.see("end")
 
     def see_end_qso_win(self):
-        self._qso_txt.see("end")
+        self.qso_txt.see("end")
 
     def _see_end_mon_win(self):
-        self._mon_txt.see("end")
+        self.mon_txt.see("end")
 
     # END Monitor WIN
     ###############################################################
@@ -2814,13 +2560,13 @@ class PoPT_GUI_Main:
 
     def open_link_holder_sett(self):
         #self.main_win.update_idletasks()
-        self._open_settings_window('l_holder')
+        self.open_settings_window('l_holder')
 
     def open_ft_manager(self, event=None):
         #self.main_win.update_idletasks()
-        self._open_settings_window('ft_manager')
+        self.open_settings_window('ft_manager')
 
-    def _open_settings_window(self, win_key: str):
+    def open_settings_window(self, win_key: str):
         if not win_key:
             return
         if self.settings_win:
@@ -2966,12 +2712,12 @@ class PoPT_GUI_Main:
 
     #######################################################################
     # DISCO
-    def _disco_conn(self):
+    def disco_conn(self):
         conn = self.get_conn(self.channel_index)
         if conn is not None:
             conn.conn_disco()
 
-    def _disco_all(self):
+    def disco_all(self):
         if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),
                                   message=self._getTabStr('disconnect_all_ask'),
                                   parent=self.main_win):
@@ -2988,8 +2734,8 @@ class PoPT_GUI_Main:
                 ch_vars = self.get_ch_var(ch_index=self.channel_index)
                 ind = str(ch_vars.input_win_index)
                 if ind:
-                    if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
-                        ind = str(self._inp_txt.index(tk.INSERT))
+                    if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
+                        ind = str(self.inp_txt.index(tk.INSERT))
                     ind = str(int(float(ind))) + '.0'
                 else:
                     ind = '1.0'
@@ -2998,18 +2744,18 @@ class PoPT_GUI_Main:
                 if station.user_db_ent:
                     txt_enc = station.user_db_ent.Encoding
                 # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-                tmp_txt = self._inp_txt.get(ind, tk.INSERT)
+                tmp_txt = self.inp_txt.get(ind, tk.INSERT)
 
                 tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
                 station.send_data(tmp_txt)
                 #self._update_qso_tx(station, tmp_txt)
-                self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
-                self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
+                self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
+                self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
 
-                ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
+                ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
 
-                if '.0' in self._inp_txt.index(tk.INSERT):
-                    self._inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
+                if '.0' in self.inp_txt.index(tk.INSERT):
+                    self.inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
 
         else:
             self._send_to_monitor()
@@ -3018,12 +2764,12 @@ class PoPT_GUI_Main:
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ind = str(ch_vars.input_win_index)
         if ind:
-            if float(ind) >= float(self._inp_txt.index(tk.INSERT)):
-                ind = str(self._inp_txt.index(tk.INSERT))
+            if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
+                ind = str(self.inp_txt.index(tk.INSERT))
             ind = str(int(float(ind))) + '.0'
         else:
             ind = '1.0'
-        tmp_txt = self._inp_txt.get(ind, self._inp_txt.index(tk.INSERT))
+        tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
         tmp_txt = tmp_txt.replace('\n', '\r')
         port_id = int(self.mon_port_var.get())
         if port_id in self._popt_handler.get_all_ports().keys():
@@ -3047,27 +2793,27 @@ class PoPT_GUI_Main:
                         pid=pid
                     )
                 # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
-        ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
-        if int(float(self._inp_txt.index(tk.INSERT))) != int(float(self._inp_txt.index(tk.END))) - 1:
-            self._inp_txt.delete(tk.END, tk.END)
+        ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
+        if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
+            self.inp_txt.delete(tk.END, tk.END)
 
     def _on_click_inp_txt(self, event=None):
-        self._inp_txt.tag_add('send', 0.0, tk.END)
-        ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        self._inp_txt.tag_remove('send', ind, tk.INSERT)
+        self.inp_txt.tag_add('send', 0.0, tk.END)
+        ind = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
+        self.inp_txt.tag_remove('send', ind, tk.INSERT)
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         ch_vars.input_win_index = ind
 
     def _on_key_release_inp_txt(self, event=None):
-        ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-        old_text = self._inp_txt.get(ind,  self._inp_txt.index(tk.INSERT))
+        ind = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
+        old_text = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
         text = zeilenumbruch(old_text)
         if old_text == text:
-            self._inp_txt.tag_remove('send', ind, tk.INSERT)
+            self.inp_txt.tag_remove('send', ind, tk.INSERT)
             return
-        self._inp_txt.delete(ind,  self._inp_txt.index(tk.INSERT))
-        self._inp_txt.insert(tk.INSERT, text)
-        self._inp_txt.tag_remove('send', ind, tk.INSERT)
+        self.inp_txt.delete(ind, self.inp_txt.index(tk.INSERT))
+        self.inp_txt.insert(tk.INSERT, text)
+        self.inp_txt.tag_remove('send', ind, tk.INSERT)
 
     # SEND TEXT OUT
     #######################################################################
@@ -3133,12 +2879,12 @@ class PoPT_GUI_Main:
     # ENDConn Path Plot
     #######################################################################
 
-    def _kaffee(self):
+    def kaffee(self):
         self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         #self.open_RoutingTab_win()
 
-    def _do_pms_autoFWD(self):
+    def do_pms_autoFWD(self):
         self._popt_handler.get_bbs().start_man_autoFwd()
 
     def _do_pms_fwd(self):
@@ -3153,7 +2899,7 @@ class PoPT_GUI_Main:
                 if conn.user_db_ent.sys_pw:
                     conn.cli.start_baycom_login()
                 else:
-                    self._open_settings_window('priv_win')
+                    self.open_settings_window('priv_win')
 
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
@@ -3198,7 +2944,7 @@ class PoPT_GUI_Main:
         conn = self.get_conn(self.channel_index)
         if conn:
             if self._conn_btn.cget('bg') != "red":
-                self._conn_btn.configure(bg="red", text="Disconnect", command=self._disco_conn)
+                self._conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
         elif self._conn_btn.cget('bg') != "green":
             self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
         self._chBtn_frame.ch_btn_status_update()
@@ -3213,10 +2959,10 @@ class PoPT_GUI_Main:
 
     def _ch_btn_clk(self, ind: int):
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
-        old_ch_vars.input_win = self._inp_txt.get('1.0', tk.END)
-        old_ch_vars.input_win_tags = get_all_tags(self._inp_txt)
-        old_ch_vars.output_win_tags = get_all_tags(self._qso_txt)
-        old_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
+        old_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
+        old_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
+        old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
+        old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
         self.channel_index = ind
         self._update_qso_Vars()
         self.ch_status_update()
@@ -3705,8 +3451,7 @@ class PoPT_GUI_Main:
         return self.aprs_mon_win
 
     #####################################
-    def _set_port_blocking(self, state=0):
+    def set_port_blocking(self, state=0):
         if hasattr(self._popt_handler, 'block_all_ports'):
             self._popt_handler.port_manager.block_all_ports(state)
-
 
