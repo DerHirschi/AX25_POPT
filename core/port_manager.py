@@ -192,10 +192,6 @@ class PortManager:
 
     def get_glb_port_blocking(self):
         return self._glb_port_blocking
-
-    def get_all_ports_f_cfg(self):
-        return dict(self.ax25_ports)
-
     # =================================
     # Getta
     def get_all_ports(self):
@@ -210,6 +206,9 @@ class PortManager:
             if port_id not in ret.keys():
                 ret[port_id] = port
         return ret
+
+    def get_all_ports_f_cfg(self):
+        return dict(self.ax25_ports)
 
     def get_port_by_id(self, port_id: int):
         # TODO: Doppelte fnc cleanup

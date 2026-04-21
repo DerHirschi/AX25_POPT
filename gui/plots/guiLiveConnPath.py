@@ -25,7 +25,7 @@ from gui import plt
 class LiveConnPath(ttk.Frame):
     def __init__(self, tabctl):
         ttk.Frame.__init__(self, tabctl)
-        self.pack(fill=tk.BOTH, expand=True)
+        self.pack(fill='both', expand=True)
         # self._root_win = root_win
         self._lang = POPT_CFG.get_guiCFG_language()
         self._pos = None

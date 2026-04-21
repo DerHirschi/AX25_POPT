@@ -20,6 +20,7 @@ from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
 from gui.guiMain.frames.guiMain_AX25StatusFrame import AX25StatusFrame
+from gui.guiMain.frames.guiMain_BwPlotFrame import BwPlotFrame
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
@@ -64,10 +65,6 @@ from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
-from gui import FigureCanvasTkAgg, plt
-# from gui import FigureCanvasTkAgg
-# FIX: Tcl_AsyncDelete: async handler deleted by the wrong thread
-# FIX: https://stackoverflow.com/questions/27147300/matplotlib-tcl-asyncdelete-async-handler-deleted-by-the-wrong-thread
 
 
 class ChVars(object):
@@ -153,7 +150,7 @@ class PoPT_GUI_Main:
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         ######################################
         # Init Vars
-        self.mh         = self._popt_handler.get_MH()
+        self._mh        = self._popt_handler.get_MH()
         self.text_size  = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
         self._root_dir  = get_root_dir()
@@ -179,20 +176,6 @@ class PoPT_GUI_Main:
         self.setting_noty_bell      = tk.BooleanVar(self.main_win)
         self.setting_mon_encoding   = tk.StringVar( self.main_win)
         ###################
-        # Status Frame Vars
-        """
-        self._status_name_var       = tk.StringVar(self.main_win)
-        self._status_status_var     = tk.StringVar(self.main_win)
-        self._status_unack_var      = tk.StringVar(self.main_win)
-        self._status_vs_var         = tk.StringVar(self.main_win)
-        self._status_n2_var         = tk.StringVar(self.main_win)
-        self._status_t1_var         = tk.StringVar(self.main_win)
-        self._status_t2_var         = tk.StringVar(self.main_win)
-        self._status_rtt_var        = tk.StringVar(self.main_win)
-        self._status_t3_var         = tk.StringVar(self.main_win)
-        self._rx_beep_var           = tk.IntVar(self.main_win)
-        self._ts_box_var            = tk.IntVar(self.main_win)
-        """
         # Stat INFO (Name,QTH usw)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
         #self._stat_info_status_var   = tk.StringVar(self.main_win)
@@ -370,25 +353,22 @@ class PoPT_GUI_Main:
         tabbedF_lower_frame.pack()
         self._side_pw.add(tabbedF_upper_frame, weight=1)
         self._side_pw.add(tabbedF_lower_frame, weight=1)
-        ##############
+        ################################################
         # tabbed Frame
-        bw_plot_frame           = ttk.Frame(self.main_win)
+        self._BwPlot            = BwPlotFrame(self, self.main_win)
         self._Pacman            = LiveConnPath(self.main_win)
         self.tabbed_sideFrame   = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
-        self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=bw_plot_frame)
-        ############################
-        # Canvas Plot
-        logger.info('GUI: BW-Plot Init')
-        self._bw_plot_x_scale   = []
-        self._bw_plot_lines     = {}
-        self._init_bw_plot(bw_plot_frame)
-        ###########################
+        self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=self._BwPlot)
+
+        ######################################################################
         # GUI Utility Stuff
         self._guiUtils = GuiUtilities(self)
         self._guiUtils.init_menubar()       # MenuBar
         self._guiUtils.init_r_click_men()   # R-Click Menu
         self._guiUtils.set_binds()          # Global Key-Bindings
         self._guiUtils.set_keybinds()       # Key-Bindings
+
+        ######################################################################
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
@@ -509,7 +489,7 @@ class PoPT_GUI_Main:
         #########################
         # Parameter to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_parm_new_call_alarm']   = bool(self.mh.parm_new_call_alarm)
+        guiCfg['gui_parm_new_call_alarm']   = bool(self._mh.parm_new_call_alarm)
         guiCfg['gui_parm_channel_index']    = int(self.channel_index)
         guiCfg['gui_parm_text_size']        = int(self.text_size)
         guiCfg['gui_parm_connect_history']  = dict(self.connect_history)
@@ -623,32 +603,6 @@ class PoPT_GUI_Main:
 
     ###############################################################
     # GUI Init Stuff
-    def _init_bw_plot(self, frame):
-        """Cleanup by Grok3-AI"""
-        # Precompute x-scale (0 to 10 minutes, 60 steps at 10-second intervals)
-        self._bw_plot_x_scale = [i / 6 for i in range(60)]  # 60 steps over 10 minutes
-
-        # Create figure and axis
-        self._bw_fig, self._ax = plt.subplots(dpi=100)
-        self._bw_fig.subplots_adjust(left=0.1, right=0.95, top=0.99, bottom=0.15)
-        self._ax.axis([0, 10, 0, 100])  # X: 0-10 min, Y: 0-100% occupancy
-
-        # Styling
-        fg, bg = COLOR_MAP.get(self.style_name, ('black', 'lightgrey'))
-        self._bw_fig.set_facecolor(bg)
-        self._ax.set_facecolor('#191621')
-        self._ax.xaxis.label.set_color(fg)
-        self._ax.yaxis.label.set_color(fg)
-        self._ax.tick_params(axis='x', colors=fg)
-        self._ax.tick_params(axis='y', colors=fg)
-        self._ax.set_xlabel(self._getTabStr('minutes'))
-        self._ax.set_ylabel(self._getTabStr('occup'))
-
-        # Embed in Tkinter
-        self._canvas = FigureCanvasTkAgg(self._bw_fig, master=frame)
-        self._canvas.get_tk_widget().pack(side=tk.TOP, expand=True, fill='both')
-        self._canvas.draw()  # Initial draw
-
     def _init_btn(self, frame):
         # btn_upper_frame = tk.Frame(frame)
         # btn_upper_frame.pack(anchor='w', fill='x', expand=True)
@@ -671,7 +625,6 @@ class PoPT_GUI_Main:
                                   highlightthickness=0,
                                   )
         self._mon_btn.pack(side='left', padx=2)
-
 
     def _init_TXT_frame_up(self, is_monitor=False):
         # guiCFG          = POPT_CFG.load_guiPARM_main()
@@ -1400,7 +1353,7 @@ class PoPT_GUI_Main:
                 if self._init_state == 2:
                     self.reset_diesel()
             #####################
-            self._update_bw_mon()
+            self._BwPlot.update_bw_mon()
             self._aprs_wx_tree_task()
             #####################
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
@@ -1443,7 +1396,6 @@ class PoPT_GUI_Main:
                             continue
             if hasattr(trash_win, 'tasker'):
                 trash_win.tasker()
-
 
     ######################################################################
     def _update_aprs_spooler(self):
@@ -1888,7 +1840,7 @@ class PoPT_GUI_Main:
     def _monitor_tree_update_task(self, ax25pack_batch: list):
         is_scrolled_to_top  = self._mon_tree.yview()[0] == 0.0
         user_db             = self._popt_handler.get_userDB()
-        mh                  = self._get_mh()
+        mh                  = self._mh
 
         port_filter         = self._mon_tree_port_filter_var.get()
         fm_call_filter      = self._mon_tree_fm_call_filter_var.get().split(' ')
@@ -2382,40 +2334,6 @@ class PoPT_GUI_Main:
 
     # SEND TEXT OUT
     #######################################################################
-    # BW Plot
-    def _update_bw_mon(self):
-        """Cleanup by Grok3-AI"""
-        redraw_needed = False
-        for port_id in self._popt_handler.port_manager.ax25_ports.keys():
-            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
-            baud = port_cfg.get('parm_baud', 1200)
-            data = self.mh.get_bandwidth(port_id, baud)  # Annahme: gibt eine Liste zurück
-
-            label = port_cfg.get('parm_PortName', f'Port {port_id}')
-
-            if port_id not in self._bw_plot_lines:
-                line, = self._ax.plot(self._bw_plot_x_scale, data, label=label)
-                self._bw_plot_lines[port_id] = line
-                self._ax.legend()
-                redraw_needed = True
-            else:
-                # Umwandlung der aktuellen y-Daten in eine Liste für den Vergleich
-                current_ydata = list(self._bw_plot_lines[port_id].get_ydata())
-                if data != current_ydata:  # Direkter Listenvergleich
-                    self._bw_plot_lines[port_id].set_ydata(data)
-                    redraw_needed = True
-
-        if redraw_needed:
-            self._draw_bw_plot()
-
-
-    def _draw_bw_plot(self):
-        """Cleanup by Grok3-AI"""
-        self._bw_fig.canvas.draw()
-        self._bw_fig.canvas.flush_events()
-
-    # END BW Plot
-    #######################################################################
     #######################################################################
     # Conn Path Plot
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
@@ -2440,7 +2358,8 @@ class PoPT_GUI_Main:
         if ch_id == self.channel_index:
             #if not POPT_CFG.get_pacman_fix():
             self._Pacman.update_plot_f_ch(ch_id=ch_id)
-    # ENDConn Path Plot
+
+    # END Conn Path Plot
     #######################################################################
     def kaffee(self):
         self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
@@ -2464,6 +2383,7 @@ class PoPT_GUI_Main:
                 else:
                     self.open_settings_window('priv_win')
 
+    #####################################################################
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
         if self._mon_mode:
@@ -2492,6 +2412,19 @@ class PoPT_GUI_Main:
                 self._ch_btn_clk(ch_ind)
         self.on_channel_status_change()
 
+    def _ch_btn_clk(self, ind: int):
+        old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
+        old_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
+        old_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
+        old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
+        old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
+        self.channel_index = ind
+        self._update_qso_Vars()
+        self.ch_status_update()
+        self.conn_btn_update()
+        self._reset_noty_bell()
+        self._Pacman.update_plot_f_ch(self.channel_index)
+        self._kanal_switch()  # Sprech
     #####################################################################
     #
     def conn_btn_update(self):
@@ -2519,20 +2452,6 @@ class PoPT_GUI_Main:
     def _ch_status_update_task(self):
         self._chBtn_frame.ch_btn_status_update()
         self.on_channel_status_change()
-
-    def _ch_btn_clk(self, ind: int):
-        old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
-        old_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
-        old_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
-        old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
-        old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
-        self.channel_index = ind
-        self._update_qso_Vars()
-        self.ch_status_update()
-        self.conn_btn_update()
-        self._reset_noty_bell()
-        self._Pacman.update_plot_f_ch(self.channel_index)
-        self._kanal_switch()  # Sprech
 
     def _reset_noty_bell(self):
         conn = self.get_conn(self.channel_index)
@@ -2624,105 +2543,7 @@ class PoPT_GUI_Main:
             self.ft_next_tx_var.set(next_tx)
 
     #########################################
-    # TxTframe FNCs
-    """
-    def _update_status_bar(self):
-        ret = False
-        station = self.get_conn(self.channel_index)
-        fg, bg = self._get_colorMap()
-        if station is not None:
-            from_call = str(station.my_call_str)
-            status = AX25L3_STATE_TAB[station.l3_state_id][1]
-            # uid = station.ax25_out_frame.addr_uid
-            n2 = station.n2
-            unAck = f" nACK: {station.get_unACK_buff_len} "
-            vs_vr = f"VS/VR: {station.vr}/{station.vs}"
-            n2_text = f"N2: {n2}"
-            t1_text = f"T1: {max(0, int(station.t1 - time.time()))}"
-            rtt_text = 'RTT: {:.1f}/{:.1f}'.format(station.RTT_Timer.rtt_last, station.RTT_Timer.rtt_average)
-            t3_text = f"T3: {max(0, int(station.t3 - time.time()))}"
-            if station.get_port_cfg.get('parm_T2_auto', True):
-                t2_text = f"T2: {int(station.get_param_T2 * 1000)}A"
-            else:
-                t2_text = f"T2: {int(station.get_param_T2 * 1000)}"
-            status_text, status_bg = self._status_text_tab.get(status, ('', bg))
-            if status_text:
-                status_text = f" {status_text} "
-            ##
-            if self._status_name_var.get() != from_call:
-                self._status_name_var.set(from_call)
-                ret = True
-
-            if self._status_status_var.get() != status_text:
-                self._status_status_var.set(status_text)
-                self._status_status.configure(bg=status_bg)
-                ret = True
-
-            if self._status_unack_var.get() != unAck:
-                self._status_unack_var.set(unAck)
-                if station.get_unACK_buff_len:
-                    if self._status_unack.cget('bg') != 'yellow':
-                        self._status_unack.configure(bg='yellow')
-                else:
-                    if self._status_unack.cget('bg') != 'green':
-                        self._status_unack.configure(bg='green')
-                ret = True
-
-            if self._status_vs_var.get() != vs_vr:
-                self._status_vs_var.set(vs_vr)
-                ret = True
-            if self._status_n2_var.get() != n2_text:
-                self._status_n2_var.set(n2_text)
-                if n2 > 4:
-                    if self._status_n2.cget('bg') != 'yellow':
-                        self._status_n2.configure(fg='black')
-                        self._status_n2.configure(bg='yellow')
-                elif n2 > 10:
-                    if self._status_n2.cget('bg') != 'orange':
-                        self._status_n2.configure(fg='black')
-                        self._status_n2.configure(bg='orange')
-                else:
-                    if self._status_n2.cget('bg') != bg:
-                        self._status_n2.configure(bg=bg)
-                        self._status_n2.configure(fg=fg)
-                ret = True
-
-            if self._status_t1_var.get() != t1_text:
-                self._status_t1_var.set(t1_text)
-                ret = True
-
-            if self._status_t2_var.get() != t2_text:
-                self._status_t2_var.set(t2_text)
-                ret = True
-
-            if self._status_rtt_var.get() != rtt_text:
-                self._status_rtt_var.set(rtt_text)
-                ret = True
-
-            if self._status_t3_var.get() != t3_text:
-                self._status_t3_var.set(t3_text)
-                ret = True
-        else:
-
-            if self._status_status.cget('bg') != bg:
-                # self.status_name.configure(text="", bg=STAT_BAR_CLR)
-                self._status_name_var.set('')
-                self._status_status.configure(bg=bg)
-                self._status_status_var.set('')
-                self._status_unack.configure(bg=bg)
-                self._status_unack_var.set('')
-                self._status_vs_var.set('')
-                self._status_n2.configure(bg=bg)
-                self._status_n2.configure(fg=fg)
-                self._status_n2_var.set('')
-                self._status_t1_var.set('')
-                self._status_t2_var.set('')
-                self._status_t3_var.set('')
-                self._status_rtt_var.set('')
-                ret = True
-        return ret
-    """
-
+    #
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
         if self._mon_mode:
@@ -2807,14 +2628,6 @@ class PoPT_GUI_Main:
             return bool(ais_obj.get_be_tracer_active)
         return False
 
-    """
-    def get_auto_tracer(self):
-        ais_obj = self._port_handler.get_aprs_ais()
-        if ais_obj is not None:
-            return bool(ais_obj.be_auto_tracer_active)
-        return False
-    """
-
     def set_tracer_fm_aprs(self):
         ais_obj = self._popt_handler.get_aprs_ais()
         if ais_obj is not None:
@@ -2845,13 +2658,6 @@ class PoPT_GUI_Main:
             if type(dur) is int:
                 ais_obj.tracer_auto_tracer_duration_set(dur)
                 self.set_auto_tracer()
-
-    #def update_tracer_win(self):
-    #    self._add_tasker_q("update_tracer_win", None)
-
-    #def _update_tracer_win_task(self):
-    #    if hasattr(self.be_tracer_win, 'update_tree_data'):
-    #        self.be_tracer_win.update_tree_data()
 
     ########
     def set_dx_alarm(self, event=None):
@@ -2985,15 +2791,14 @@ class PoPT_GUI_Main:
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
         self.set_var_to_all_ch_param()
 
+    #####################################
+    def set_port_blocking(self, state=0):
+        if hasattr(self._popt_handler, 'block_all_ports'):
+            self._popt_handler.port_manager.block_all_ports(state)
+
+    # =====================================
     def get_PH_mainGUI(self):
         return self._popt_handler
-
-    def _get_mh(self):
-        try:
-            return self._popt_handler.get_MH()
-        except Exception as ex:
-            logger.error(ex)
-            return None
 
     def get_AIS_mainGUI(self):
         if hasattr(self._popt_handler, 'get_aprs_ais'):
@@ -3003,9 +2808,3 @@ class PoPT_GUI_Main:
 
     def get_ais_mon_gui(self):
         return self.aprs_mon_win
-
-    #####################################
-    def set_port_blocking(self, state=0):
-        if hasattr(self._popt_handler, 'block_all_ports'):
-            self._popt_handler.port_manager.block_all_ports(state)
-
