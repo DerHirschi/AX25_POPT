@@ -191,7 +191,7 @@ class SideTabbedFrame:
 
         clear_ch_data_btn = ttk.Button(tab1_kanal,
                                       text=self._getTabStr('clean_qso'),
-                                      command=self._root_class.clear_channel_vars
+                                      command=self._root_class.guiChannels.clear_channel_vars
                                       )
         clear_ch_data_btn.place(x=140, y=135)
 

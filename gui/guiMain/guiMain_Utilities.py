@@ -17,11 +17,12 @@ class GuiUtilities:
         # ===================================
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # ===================================
-        self._main_win  = self._root_cl.main_win
-        self._inp_txt   = self._root_cl.inp_txt
-        self._qso_txt   = self._root_cl.qso_txt
-        self._mon_txt   = self._root_cl.mon_txt
+        self._main_win  = gui_root_cl.main_win
+        self._inp_txt   = gui_root_cl.inp_txt
+        self._qso_txt   = gui_root_cl.qso_txt
+        self._mon_txt   = gui_root_cl.mon_txt
         # ===================================
+        self._guiChannels = gui_root_cl.guiChannels
 
 
     # ===================================
@@ -59,13 +60,13 @@ class GuiUtilities:
         MenuEdit.add_command(label=self._getTabStr('save_mon_to_file'), command=self._save_monitor_to_file,
                              underline=1)
         MenuEdit.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('clean_qso_win'), command=self._root_cl.clear_channel_vars,
+        MenuEdit.add_command(label=self._getTabStr('clean_qso_win'), command=self._guiChannels.clear_channel_vars,
                              underline=0)
         MenuEdit.add_command(label=self._getTabStr('clean_mon_win'), command=self._clear_monitor_data,
                              underline=0)
 
         MenuEdit.add_separator()
-        MenuEdit.add_command(label=self._getTabStr('clean_all_qso_win'), command=self._root_cl.clear_all_Channel_vars,
+        MenuEdit.add_command(label=self._getTabStr('clean_all_qso_win'), command=self._guiChannels.clear_all_Channel_vars,
                              underline=0)
         menubar.add_cascade(label=self._getTabStr('edit'), menu=MenuEdit, underline=0)
         ####################################################################

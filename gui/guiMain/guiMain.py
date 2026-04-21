@@ -9,7 +9,6 @@ from core.popt_core import PoPTCore
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
 from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, get_strTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon import AISmonitor
@@ -25,6 +24,7 @@ from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
+from gui.guiMain.guiMain_ChVars import GUIChannels
 from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiRightLevelEditor import RightLevelEditor
@@ -61,33 +61,10 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
 from fnc.os_fnc import get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags, cleanup_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
-
-
-class ChVars(object):
-    output_win = ''
-    input_win = ''
-    output_win_tags = {}
-    input_win_tags = {}
-    new_tags = []
-    last_tag_name = 'NOCALL'
-    input_win_index = '1.0'
-    input_win_cursor_index = tk.INSERT
-    new_data_tr = False
-    rx_beep_tr = False
-    rx_beep_cooldown = time.time()
-    rx_beep_opt = False
-    timestamp_opt = False
-    t2speech = False
-    t2speech_buf = ''
-    autoscroll = True
-    # live_path_plot_data = {}
-    # live_path_plot_last_node = 'HOME'
-
-    # self.hex_output = True
 
 
 class PoPT_GUI_Main:
@@ -267,12 +244,8 @@ class PoPT_GUI_Main:
         self.routingTab_win         = None
         self.prp_remote_win         = None
         self.right_level_win        = None
-        ####################################
-        ####################################
-        # Window Text Buffers & Channel Vars
-        logger.info('GUI: Channel Vars Init')
-        self.channel_vars = {}
-        self._init_Channel_Vars()
+
+        ######################################
         ######################################
         # L/R PW
         self._main_pw       = ttk.PanedWindow(self.main_win, orient='horizontal')
@@ -286,11 +259,14 @@ class PoPT_GUI_Main:
 
         self._main_pw.add(l_frame,       weight=1)
         self._main_pw.add(self._r_frame, weight=0)
+
+        ###########################################
         ###########################################
         # Channel Buttons
         self._chBtn_frame = ChBtnFrame(self, l_frame)
         self._chBtn_frame.pack(side='bottom', fill='x', expand=True)
 
+        ###########################################
         ###########################################
         # Input Output TXT Frames and Status Bar
         self._pw = ttk.PanedWindow(l_frame, orient='vertical', )
@@ -333,15 +309,23 @@ class PoPT_GUI_Main:
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
         self._pw.add(self._TXT_lower_frame, weight=1)
+
         ######################################################################
         ######################################################################
         # RIGHT Pane
         self._Alarm_Frame = AlarmIconFrame(r_pack_frame, self)
+
         ######################################################################
         # GUI Buttons
         conn_btn_frame = ttk.Frame(r_pack_frame, )
         conn_btn_frame.pack(expand=False, pady=5, fill='x')
         self._init_btn(conn_btn_frame)
+
+        ######################################################################
+        # Channel Vars / GUI Channels
+        self.guiChannels  = GUIChannels(self)
+        self.channel_vars = self.guiChannels.channel_vars
+
         ######################################################################
         # Pane Tabbed Frame
         self._side_pw = ttk.PanedWindow(r_pack_frame, orient='vertical', )
@@ -353,7 +337,7 @@ class PoPT_GUI_Main:
         tabbedF_lower_frame.pack()
         self._side_pw.add(tabbedF_upper_frame, weight=1)
         self._side_pw.add(tabbedF_lower_frame, weight=1)
-        ################################################
+        # ================================================
         # tabbed Frame
         self._BwPlot            = BwPlotFrame(self, self.main_win)
         self._Pacman            = LiveConnPath(self.main_win)
@@ -380,7 +364,7 @@ class PoPT_GUI_Main:
         logger.info('GUI: Text-Tag Init')
         self.set_text_tags()
         # .....
-        self._update_qso_Vars()
+        self.update_qso_Vars()
         ############################
         self._monitor_start_msg()
         ############################
@@ -449,7 +433,7 @@ class PoPT_GUI_Main:
         self.save_GUIvars()
         self._save_parameter()
         self._save_pw_pos()
-        self._save_Channel_Vars()
+        self.guiChannels.save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
         self._sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._popt_handler.close_popt).start()
@@ -495,33 +479,8 @@ class PoPT_GUI_Main:
         guiCfg['gui_parm_connect_history']  = dict(self.connect_history)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
-    def _save_Channel_Vars(self):
-        current_ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        current_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
-        current_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
-        current_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
-        current_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
-        # guiCfg = POPT_CFG.load_guiCH_VARS()
-        ch_vars = {}
-        for ch_id in list(self.channel_vars.keys()):
-            ch_vars[ch_id] = convert_obj_to_dict(self.channel_vars[ch_id])
-            del ch_vars[ch_id]['t2speech_buf']
-            del ch_vars[ch_id]['rx_beep_cooldown']
-            del ch_vars[ch_id]['rx_beep_tr']
-            del ch_vars[ch_id]['output_win_tags']
-            del ch_vars[ch_id]['input_win_tags']
-            ch_vars[ch_id]['output_win_tags'] = cleanup_tags(self.channel_vars[ch_id].output_win_tags)
-            ch_vars[ch_id]['input_win_tags'] = cleanup_tags(self.channel_vars[ch_id].input_win_tags)
-        POPT_CFG.save_guiCH_VARS(dict(ch_vars))
-        # POPT_CFG.save_guiCH_VARS({})
-
     ####################
     # Init Stuff
-    def _init_Channel_Vars(self):
-        cfg_ch_vars = POPT_CFG.load_guiCH_VARS()
-        for ch_id in list(cfg_ch_vars.keys()):
-            self.channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), cfg_ch_vars[ch_id])
-
     def _init_GUI_vars_fm_CFG(self):
         #########################
         # GUI-Vars fm cfg
@@ -997,7 +956,6 @@ class PoPT_GUI_Main:
     # END Init Stuff
     ######################################################################
     ######################################################################
-    # Channel Vars
     def get_conn(self, con_ind: int = 0):
         # TODO Call just if necessary
         # TODO current Chanel.connection to var, prevent unnecessary calls
@@ -1008,41 +966,9 @@ class PoPT_GUI_Main:
             return all_conn[con_ind]
         return None
 
+    # Channel Vars
     def get_ch_var(self, ch_index=0):
-        if ch_index:
-            if ch_index not in self.channel_vars.keys():
-                self.channel_vars[ch_index] = ChVars()
-            return self.channel_vars[ch_index]
-
-        if self.channel_index not in self.channel_vars.keys():
-            self.channel_vars[self.channel_index] = ChVars()
-        return self.channel_vars[self.channel_index]
-
-    def set_var_to_all_ch_param(self):
-        for ch_id in self.channel_vars.keys():
-            ch_vars = self.get_ch_var(ch_index=ch_id)
-            if not ch_vars.t2speech:
-                ch_vars.t2speech_buf = ''
-
-    def clear_channel_vars(self):
-        self.qso_txt.configure(state='normal')
-        self.qso_txt.delete('1.0', tk.END)
-        self.qso_txt.configure(state='disabled')
-        self.inp_txt.delete('1.0', tk.END)
-        # del self._channel_vars[self.channel_index]
-
-        self.channel_vars[self.channel_index] = ChVars()
-        self._update_qso_Vars()
-
-    def clear_all_Channel_vars(self):
-        self.qso_txt.configure(state='normal')
-        self.qso_txt.delete('1.0', tk.END)
-        self.qso_txt.configure(state='disabled')
-        self.inp_txt.delete('1.0', tk.END)
-        # del self._channel_vars[self.channel_index]
-        for ch_id in self.channel_vars.keys():
-            self.channel_vars[ch_id] = ChVars()
-        self._update_qso_Vars()
+        return self.guiChannels.get_ch_var(ch_index=ch_index)
 
     ######################################################################
     # Sound TODO !!!
@@ -1605,7 +1531,7 @@ class PoPT_GUI_Main:
                 )
         Ch_var.rx_beep_tr = True
 
-    def _update_qso_Vars(self):
+    def update_qso_Vars(self):
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         bg = self._get_colorMap()[1]
         ch_vars.new_data_tr = False
@@ -2419,7 +2345,7 @@ class PoPT_GUI_Main:
         old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
         old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
         self.channel_index = ind
-        self._update_qso_Vars()
+        self.update_qso_Vars()
         self.ch_status_update()
         self.conn_btn_update()
         self._reset_noty_bell()
@@ -2789,7 +2715,7 @@ class PoPT_GUI_Main:
             SOUND.master_sprech_on = False
             self.tabbed_sideFrame.t2speech.configure(state='disabled')
             self.tabbed_sideFrame2.t2speech.configure(state='disabled')
-        self.set_var_to_all_ch_param()
+        self.guiChannels.set_var_to_all_ch_param()
 
     #####################################
     def set_port_blocking(self, state=0):
