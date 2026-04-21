@@ -11,9 +11,8 @@ from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import convert_obj_to_dict, set_obj_att_fm_dict
-from cli.StringVARS import replace_StringVARS
 from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str, zeilenumbruch, zeilenumbruch_lines, get_strTab
+    get_kb_str_fm_bytes, conv_time_DE_str, get_strTab
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon import AISmonitor
 from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Main import APRSSettingsMain
 from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
@@ -26,7 +25,7 @@ from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_Icons import GuiIcons
-from gui.guiMain.guiMain_Menu import GuiMainMenu
+from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiRightLevelEditor import RightLevelEditor
 from gui.prp.guiPRP_remote import PRP_remoteGUI
 #from gui.guiRoutingTab import RoutingTableWindow
@@ -51,18 +50,17 @@ from gui.settings.guiLinkholderSettings import LinkHolderSettings
 from gui.UserDB.guiUserDB import UserDB
 from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
-from gui.guiMsgBoxes import open_file_dialog, save_file_dialog
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
     TEXT_SIZE_STATUS, TXT_INP_CURSOR_CLR, \
     STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, F_KEY_TAB_LINUX, F_KEY_TAB_WIN, DEF_QSO_SYSMSG_FG, \
+    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     PARAM_MAX_MON_TREE_ITEMS, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
-from fnc.os_fnc import is_linux, get_root_dir
+from fnc.os_fnc import get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags, cleanup_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
@@ -296,7 +294,7 @@ class PoPT_GUI_Main:
         ####################################
         # Window Text Buffers & Channel Vars
         logger.info('GUI: Channel Vars Init')
-        self._channel_vars = {}
+        self.channel_vars = {}
         self._init_Channel_Vars()
         ######################################
         # ....
@@ -392,17 +390,17 @@ class PoPT_GUI_Main:
         self._bw_plot_lines     = {}
         self._init_bw_plot(bw_plot_frame)
         ###########################
-        # set KEY BINDS
-        self._set_binds()
-        self._set_keybinds()
-        # Right-CLick / Menubar
-        self._guiMenu = GuiMainMenu(self)
+        # GUI Utility Stuff
+        self._guiUtils = GuiUtilities(self)
+        self._guiUtils.init_menubar()       # MenuBar
+        self._guiUtils.init_r_click_men()   # R-Click Menu
+        self._guiUtils.set_binds()          # Global Key-Bindings
+        self._guiUtils.set_keybinds()       # Key-Bindings
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
         logger.info('GUI: Parm/CFG Init')
         self._init_GUI_vars_fm_CFG()
-        self._init_PARM_vars()
         self._set_CFG()
         # Text Tags
         self._all_tag_calls = []
@@ -538,15 +536,15 @@ class PoPT_GUI_Main:
         current_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
-        for ch_id in list(self._channel_vars.keys()):
-            ch_vars[ch_id] = convert_obj_to_dict(self._channel_vars[ch_id])
+        for ch_id in list(self.channel_vars.keys()):
+            ch_vars[ch_id] = convert_obj_to_dict(self.channel_vars[ch_id])
             del ch_vars[ch_id]['t2speech_buf']
             del ch_vars[ch_id]['rx_beep_cooldown']
             del ch_vars[ch_id]['rx_beep_tr']
             del ch_vars[ch_id]['output_win_tags']
             del ch_vars[ch_id]['input_win_tags']
-            ch_vars[ch_id]['output_win_tags'] = cleanup_tags(self._channel_vars[ch_id].output_win_tags)
-            ch_vars[ch_id]['input_win_tags'] = cleanup_tags(self._channel_vars[ch_id].input_win_tags)
+            ch_vars[ch_id]['output_win_tags'] = cleanup_tags(self.channel_vars[ch_id].output_win_tags)
+            ch_vars[ch_id]['input_win_tags'] = cleanup_tags(self.channel_vars[ch_id].input_win_tags)
         POPT_CFG.save_guiCH_VARS(dict(ch_vars))
         # POPT_CFG.save_guiCH_VARS({})
 
@@ -555,7 +553,7 @@ class PoPT_GUI_Main:
     def _init_Channel_Vars(self):
         cfg_ch_vars = POPT_CFG.load_guiCH_VARS()
         for ch_id in list(cfg_ch_vars.keys()):
-            self._channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), cfg_ch_vars[ch_id])
+            self.channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), cfg_ch_vars[ch_id])
 
     def _init_GUI_vars_fm_CFG(self):
         #########################
@@ -590,22 +588,6 @@ class PoPT_GUI_Main:
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
-
-
-    def _init_PARM_vars(self):
-        #########################
-        # Parameter fm cfg
-        # ## guiCfg = POPT_CFG.load_guiPARM_main()
-        # self._port_handler.get_MH().parm_new_call_alarm = guiCfg.get('gui_parm_new_call_alarm', False)
-        # self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
-        # ## self.text_size = guiCfg.get('gui_parm_text_size', 13)
-        # self.connect_history: {str: ConnHistory}
-        # self._mon_buff: (
-        #             ax25frame,
-        #             conf,
-        #             bool(tx)
-        #         )
-        pass
 
     def _set_CFG(self):
         self.set_tracer()
@@ -1174,122 +1156,6 @@ class PoPT_GUI_Main:
         self.qso_txt.tag_raise(tk.SEL)
         self.mon_txt.tag_raise(tk.SEL)
 
-    #######################################
-    # KEYBIND Stuff
-    def _set_binds(self):
-        self.inp_txt.bind("<ButtonRelease-1>", self._on_click_inp_txt)
-        self.inp_txt.bind("<KeyRelease>", self._on_key_release_inp_txt)
-
-    def _set_keybinds(self):
-        self.main_win.unbind("<Key-F10>")
-        self.main_win.unbind("<KeyPress-F10>")
-        # self.main_win.bind("<KeyPress>",lambda event: self.callback(event))
-        # lambda event: print(f"{event.keysym} - {event.keycode}\n {type(event.keysym)} - {type(event.keycode)}
-        #####################
-        # F-TEXT
-        if is_linux():
-            r = 13
-        else:
-            r = 11
-        for fi in range(1, r):
-            self.main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
-        #####################
-        self.main_win.bind('<F1>', lambda event: self.switch_channel(1))
-        self.main_win.bind('<F2>', lambda event: self.switch_channel(2))
-        self.main_win.bind('<F3>', lambda event: self.switch_channel(3))
-        self.main_win.bind('<F4>', lambda event: self.switch_channel(4))
-        self.main_win.bind('<F5>', lambda event: self.switch_channel(5))
-        self.main_win.bind('<F6>', lambda event: self.switch_channel(6))
-        self.main_win.bind('<F7>', lambda event: self.switch_channel(7))
-        self.main_win.bind('<F8>', lambda event: self.switch_channel(8))
-        self.main_win.bind('<F9>', lambda event: self.switch_channel(9))
-        self.main_win.bind('<F10>', lambda event: self.switch_channel(10))
-        self.main_win.bind('<F12>', lambda event: self.switch_channel(0))
-        self.main_win.bind('<Return>', self._snd_text)
-        self.main_win.bind('<KeyRelease-Return>', self._release_return)
-        self.main_win.bind('<Shift-KeyPress-Return>', self._shift_return)
-        self.main_win.bind('<KeyRelease-Left>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Right>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Up>', self._arrow_keys)
-        self.main_win.bind('<KeyRelease-Down>', self._arrow_keys)
-        # self.main_win.bind('<KP_Enter>', self.snd_text)
-        self.main_win.bind('<Alt-c>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Escape>', lambda event: self.open_new_conn_win())
-        self.main_win.bind('<Alt-d>', lambda event: self.disco_conn())
-        self.main_win.bind('<Control-c>', lambda event: self.copy_select())
-        #self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
-        self.main_win.bind('<Control-x>', lambda event: self.cut_select())
-        # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
-        self.main_win.bind('<Control-a>', lambda event: self.select_all())
-        self.main_win.bind('<Control-plus>', lambda event: self._increase_textsize())
-        self.main_win.bind('<Control-minus>', lambda event: self._decrease_textsize())
-        # self.main_win.bind('<Control-Right>', lambda event: self._text_win_bigger())
-        # self.main_win.bind('<Control-Left>', lambda event: self._text_win_smaller())
-
-        self.main_win.bind('<Key>', lambda event: self._any_key(event))
-
-    def _any_key(self, event: tk.Event):
-        if event.keycode == 104:  # Numpad Enter
-            self.inp_txt.insert(tk.INSERT, '\n')
-            self._snd_text(event)
-
-    def _arrow_keys(self, event=None):
-        self._on_click_inp_txt()
-
-    def _shift_return(self, event=None):
-        pass
-
-    def _release_return(self, event=None):
-        pass
-
-    def _insert_ftext(self, event=None):
-        # if not hasattr(event, 'keysym'):
-        if not hasattr(event, 'keycode'):
-            return
-        try:
-            if is_linux():
-                fi = int(F_KEY_TAB_LINUX[event.keycode])
-            else:
-                fi = int(F_KEY_TAB_WIN[event.keycode])
-        except (ValueError, KeyError):
-            return
-        try:
-            text, enc = POPT_CFG.get_f_text_fm_id(f_id=fi)
-        except ValueError:
-            return
-        if not text:
-            return
-        ch_enc = self.stat_info_encoding_var.get()
-        if any((ch_enc == enc, not ch_enc)):
-            text = text.decode(enc, 'ignore')
-        else:
-            text = text.decode(ch_enc, 'ignore')
-        conn = self.get_conn()
-        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
-        text = zeilenumbruch_lines(text)
-        self.inp_txt.insert(tk.INSERT, text)
-        self.see_end_inp_win()
-        return
-
-    def insert_ftext_fm_menu(self, f_nr: int):
-        try:
-            text, enc = POPT_CFG.get_f_text_fm_id(f_id=f_nr)
-        except ValueError:
-            return
-        if not text:
-            return
-        ch_enc = self.stat_info_encoding_var.get()
-        if any((ch_enc == enc, not ch_enc)):
-            text = text.decode(enc, 'ignore')
-        else:
-            text = text.decode(ch_enc, 'ignore')
-        conn = self.get_conn()
-        text = replace_StringVARS(input_string=text, port_handler=self.get_PH_mainGUI(), connection=conn)
-        text = zeilenumbruch_lines(text)
-        self.inp_txt.insert(tk.INSERT, text)
-        self.see_end_inp_win()
-        return
-
     ##########################
     # Start Message in Monitor
     def _monitor_start_msg(self):
@@ -1325,117 +1191,6 @@ class PoPT_GUI_Main:
     ######################################################################
 
     ######################################################################
-    # GUI Sizing/Formatting Stuff
-    def _increase_textsize(self):
-        self.text_size += 1
-        self.text_size = max(self.text_size, 3)
-        self.inp_txt.configure(font=(FONT, self.text_size), )
-        self.qso_txt.configure(font=(FONT, self.text_size), )
-        self.mon_txt.configure(font=(FONT, self.text_size), )
-
-    def _decrease_textsize(self):
-        self.text_size -= 1
-        self.text_size = max(self.text_size, 3)
-        self.inp_txt.configure(font=(FONT, self.text_size), )
-        self.qso_txt.configure(font=(FONT, self.text_size), )
-        self.mon_txt.configure(font=(FONT, self.text_size), )
-
-    ##########################
-    # Clipboard Stuff
-    def copy_select(self):
-        if self.qso_txt.tag_ranges("sel"):
-            self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.qso_txt.selection_get())
-            self.qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self.inp_txt.tag_ranges("sel"):
-            self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.inp_txt.selection_get())
-            self.inp_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        elif self.mon_txt.tag_ranges("sel"):
-            self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.mon_txt.selection_get())
-            self.mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
-
-    def cut_select(self):
-        if self.inp_txt.tag_ranges("sel"):
-            self.main_win.clipboard_clear()
-            self.main_win.clipboard_append(self.inp_txt.selection_get())
-            self.inp_txt.delete('sel.first', 'sel.last')
-            self.inp_txt.see(tk.INSERT)
-
-    def clipboard_past(self):
-        try:
-            clp_brd = self.main_win.clipboard_get()
-        except tk.TclError:
-            logger.warning("GUI: TclError Clipboard no STR")
-            return
-
-        if clp_brd:
-            self.inp_txt.insert(tk.INSERT, clp_brd)
-            self.inp_txt.see(tk.INSERT)
-
-    def select_all(self):
-        self.inp_txt.tag_remove("send", "1.0", tk.END)
-        self.inp_txt.tag_add(tk.SEL, "1.0", tk.END)
-        self.inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
-        self.inp_txt.see(tk.INSERT)  #
-
-    def send_selected(self):
-        if not self.channel_index:
-            return
-        if not self.qso_txt.tag_ranges("sel"):
-            return
-        selected_text = self.qso_txt.selection_get()
-        selected_text += '\n'
-        #self._inp_txt.tag_remove('send', '0.0', 'end')
-        self.inp_txt.insert('insert', '\n')
-        #ind = self._inp_txt.index(tk.INSERT)
-        ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
-        self.inp_txt.insert('insert', selected_text)
-        #self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
-        self._snd_text()
-        self.qso_txt.tag_remove(tk.SEL, "1.0", tk.END)
-        self.inp_txt.tag_remove('send', "0.0", str(self.inp_txt.index('end')))
-        self.inp_txt.tag_add('send', "0.0", str(self.inp_txt.index('end')))
-
-    ##########################
-    # Pre-write Text Stuff
-    def insert_fm_file(self):
-        data = open_file_dialog(self.main_win)
-        if not data:
-            return
-        ch_enc = self.stat_info_encoding_var.get()
-        if not ch_enc:
-            data = data.decode('UTF-8', 'ignore')
-        else:
-            data = data.decode(ch_enc, 'ignore')
-        data = zeilenumbruch_lines(data)
-        self.inp_txt.insert(tk.INSERT, data)
-        self.see_end_inp_win()
-        return
-
-    def save_to_file(self):
-        data = self.qso_txt.get('1.0', tk.END)
-        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
-        save_file_dialog(data, self.main_win)
-
-    ##########################
-    # Monitor Text Stuff
-    def clear_monitor_data(self):
-        self.mon_txt.configure(state='normal')
-        self.mon_txt.delete('1.0', tk.END)
-        self.mon_txt.configure(state='disabled')
-
-    def save_monitor_to_file(self):
-        data = self.mon_txt.get('1.0', tk.END)
-        # FIXME Codec : UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1090-1097: ordinal not in range(256)
-        save_file_dialog(data)
-
-    # END GUI Sizing/Formatting Stuff
-    ######################################################################
-
-    ######################################################################
     # Channel Vars
     def get_conn(self, con_ind: int = 0):
         # TODO Call just if necessary
@@ -1449,39 +1204,19 @@ class PoPT_GUI_Main:
 
     def get_ch_var(self, ch_index=0):
         if ch_index:
-            if ch_index not in self._channel_vars.keys():
-                self._channel_vars[ch_index] = ChVars()
-            return self._channel_vars[ch_index]
+            if ch_index not in self.channel_vars.keys():
+                self.channel_vars[ch_index] = ChVars()
+            return self.channel_vars[ch_index]
 
-        if self.channel_index not in self._channel_vars.keys():
-            self._channel_vars[self.channel_index] = ChVars()
-        return self._channel_vars[self.channel_index]
+        if self.channel_index not in self.channel_vars.keys():
+            self.channel_vars[self.channel_index] = ChVars()
+        return self.channel_vars[self.channel_index]
 
     def set_var_to_all_ch_param(self):
-        for ch_id in self._channel_vars.keys():
+        for ch_id in self.channel_vars.keys():
             ch_vars = self.get_ch_var(ch_index=ch_id)
             if not ch_vars.t2speech:
                 ch_vars.t2speech_buf = ''
-
-    def clear_inpWin(self):
-        self.inp_txt.delete('1.0', tk.END)
-        # del self._channel_vars[self.channel_index]
-        chVars = self._channel_vars[self.channel_index]
-        chVars.input_win                = ''
-        chVars.input_win_tags           = {}
-        chVars.input_win_index          = '1.0'
-        chVars.input_win_cursor_index   = tk.INSERT
-
-    def clear_qsoWin(self):
-        self.qso_txt.configure(state='normal')
-        self.qso_txt.delete('1.0', tk.END)
-        self.qso_txt.configure(state='disabled')
-        # del self._channel_vars[self.channel_index]
-
-        chVars = self._channel_vars[self.channel_index]
-        chVars.output_win       = ''
-        chVars.output_win_tags  = {}
-        chVars.t2speech_buf     = ''
 
     def clear_channel_vars(self):
         self.qso_txt.configure(state='normal')
@@ -1490,7 +1225,7 @@ class PoPT_GUI_Main:
         self.inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
 
-        self._channel_vars[self.channel_index] = ChVars()
+        self.channel_vars[self.channel_index] = ChVars()
         self._update_qso_Vars()
 
     def clear_all_Channel_vars(self):
@@ -1499,8 +1234,8 @@ class PoPT_GUI_Main:
         self.qso_txt.configure(state='disabled')
         self.inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
-        for ch_id in self._channel_vars.keys():
-            self._channel_vars[ch_id] = ChVars()
+        for ch_id in self.channel_vars.keys():
+            self.channel_vars[ch_id] = ChVars()
         self._update_qso_Vars()
 
     ######################################################################
@@ -1558,7 +1293,7 @@ class PoPT_GUI_Main:
             ch_vars.t2speech_buf = ''
 
     def _rx_beep_sound(self):
-        for k in self._channel_vars.keys():
+        for k in self.channel_vars.keys():
             if 0 < k < SERVICE_CH_START:
                 ch_vars = self.get_ch_var(ch_index=k)
                 if ch_vars.rx_beep_cooldown < time.time():
@@ -2727,7 +2462,7 @@ class PoPT_GUI_Main:
     #######################################################################
     #######################################################################
     # SEND TEXT OUT
-    def _snd_text(self, event=None):
+    def snd_text(self, event=None):
         if self.channel_index:
             station = self.get_conn(self.channel_index)
             if station:
@@ -2797,24 +2532,6 @@ class PoPT_GUI_Main:
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
 
-    def _on_click_inp_txt(self, event=None):
-        self.inp_txt.tag_add('send', 0.0, tk.END)
-        ind = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
-        self.inp_txt.tag_remove('send', ind, tk.INSERT)
-        ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        ch_vars.input_win_index = ind
-
-    def _on_key_release_inp_txt(self, event=None):
-        ind = str(int(float(self.inp_txt.index(tk.INSERT)))) + '.0'
-        old_text = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
-        if old_text == text:
-            self.inp_txt.tag_remove('send', ind, tk.INSERT)
-            return
-        self.inp_txt.delete(ind, self.inp_txt.index(tk.INSERT))
-        self.inp_txt.insert(tk.INSERT, text)
-        self.inp_txt.tag_remove('send', ind, tk.INSERT)
-
     # SEND TEXT OUT
     #######################################################################
     # BW Plot
@@ -2869,7 +2586,6 @@ class PoPT_GUI_Main:
     def resetHome_LivePath_plot(self, ch_id: int):
         self._add_tasker_q("resetHome_LivePath_plot", ch_id)
 
-
     def _resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self._Pacman.reset_last_hop(ch_id=ch_id)
@@ -2878,7 +2594,6 @@ class PoPT_GUI_Main:
             self._Pacman.update_plot_f_ch(ch_id=ch_id)
     # ENDConn Path Plot
     #######################################################################
-
     def kaffee(self):
         self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
