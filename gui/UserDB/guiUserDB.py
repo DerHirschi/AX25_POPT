@@ -3,7 +3,6 @@ import random
 import tkinter as tk
 from tkinter import ttk
 
-import ax25.ax25_ports.ax25Port_AXIP
 from UserDB.UserDBmain import Client
 from cfg.constant import ENCODINGS, STATION_TYPS
 from cfg.logger_config import logger
@@ -755,7 +754,7 @@ class UserDB(tk.Toplevel):
             if len(self.current_ent.sys_pw_parm) == 2:
                 self.current_ent.sys_pw_parm.append('SYS')
             self._login_cmd_var.set(str(self.current_ent.sys_pw_parm[2]))
-            axip = ax25.ax25_ports.ax25Port_AXIP.AXIP
+            axip = self.current_ent.AXIP
             if not axip:
                 axip = '', 0
             self._axip_add_var.set(axip[0])
@@ -819,7 +818,7 @@ class UserDB(tk.Toplevel):
         self._user_db.save_data()
 
 
-        self._root_win.ConnStatus_frame.update_station_info()
+        self._root_win.ConnStatusBar.update_station_info()
         self._user_db.set_distance_for_all()
         self._update_map()
         self._draw_connection()
@@ -874,7 +873,7 @@ class UserDB(tk.Toplevel):
             axip_port = int(axip_port)
         except ValueError:
             axip_port = 0
-        ax25.ax25_ports.ax25Port_AXIP.AXIP = (
+        self.current_ent.AXIP = (
             axip_add,
             axip_port
         )

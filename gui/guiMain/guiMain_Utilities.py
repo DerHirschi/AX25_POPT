@@ -49,8 +49,8 @@ class GuiUtilities:
         #####################################################################
         # Menü 2 "Bearbeiten"
         MenuEdit = tk.Menu(menubar, tearoff=False)
-        MenuEdit.add_command(label=self._getTabStr('copy'), command=self.copy_select, underline=0)
-        MenuEdit.add_command(label=self._getTabStr('past'), command=self.clipboard_past, underline=1)
+        MenuEdit.add_command(label=self._getTabStr('copy'), command=self._copy_select, underline=0)
+        MenuEdit.add_command(label=self._getTabStr('past'), command=self._clipboard_past, underline=1)
         MenuEdit.add_separator()
         MenuEdit.add_command(label=self._getTabStr('past_qso_f_file'), command=self._insert_fm_file,
                              underline=0)
@@ -219,10 +219,10 @@ class GuiUtilities:
     def init_r_click_men(self):
         # Input
         inp_txt_men = ContextMenu(self._inp_txt)
-        inp_txt_men.add_item(self._getTabStr('cut'),  self.cut_select)
-        inp_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
-        inp_txt_men.add_item(self._getTabStr('past'), self.clipboard_past)
-        inp_txt_men.add_item(self._getTabStr('select_all'), self.select_all)
+        inp_txt_men.add_item(self._getTabStr('cut'), self._cut_select)
+        inp_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        inp_txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        inp_txt_men.add_item(self._getTabStr('select_all'), self._select_all)
         inp_txt_men.add_separator()
         # inp_txt_men.add_item(self._getTabStr('save_to_file'), self._save_to_file)
         inp_txt_men.add_item(self._getTabStr('past_f_file'), self._insert_fm_file)
@@ -258,7 +258,7 @@ class GuiUtilities:
         out_txt_men = ContextMenu(self._qso_txt)
         out_txt_men.add_item(self._getTabStr('send_selected'), self._send_selected)
         out_txt_men.add_separator()
-        out_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+        out_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('linkholder'),
@@ -274,7 +274,7 @@ class GuiUtilities:
         out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
         # Monitor
         mon_txt_men = ContextMenu(self._mon_txt)
-        mon_txt_men.add_item(self._getTabStr('copy'), self.copy_select)
+        mon_txt_men.add_item(self._getTabStr('copy'), self._copy_select)
         mon_txt_men.add_item(self._getTabStr('save_mon_to_file'), self._save_monitor_to_file)
         mon_txt_men.add_separator()
         mon_txt_men.add_item(self._getTabStr('clean_mon_win'), self._clear_monitor_data)
@@ -303,39 +303,39 @@ class GuiUtilities:
         for fi in range(1, r):
             self._main_win.bind(f'<Shift-F{fi}>', self._insert_ftext)
         #####################
-        self._main_win.bind('<F1>', lambda event: self._root_cl.switch_channel(1))
-        self._main_win.bind('<F2>', lambda event: self._root_cl.switch_channel(2))
-        self._main_win.bind('<F3>', lambda event: self._root_cl.switch_channel(3))
-        self._main_win.bind('<F4>', lambda event: self._root_cl.switch_channel(4))
-        self._main_win.bind('<F5>', lambda event: self._root_cl.switch_channel(5))
-        self._main_win.bind('<F6>', lambda event: self._root_cl.switch_channel(6))
-        self._main_win.bind('<F7>', lambda event: self._root_cl.switch_channel(7))
-        self._main_win.bind('<F8>', lambda event: self._root_cl.switch_channel(8))
-        self._main_win.bind('<F9>', lambda event: self._root_cl.switch_channel(9))
-        self._main_win.bind('<F10>', lambda event: self._root_cl.switch_channel(10))
-        self._main_win.bind('<F12>', lambda event: self._root_cl.switch_channel(0))
-        self._main_win.bind('<Return>', self._root_cl.snd_text)
-        self._main_win.bind('<KeyRelease-Return>', self._release_return)
-        self._main_win.bind('<Shift-KeyPress-Return>', self._shift_return)
-        self._main_win.bind('<KeyRelease-Left>', self._arrow_keys)
-        self._main_win.bind('<KeyRelease-Right>', self._arrow_keys)
-        self._main_win.bind('<KeyRelease-Up>', self._arrow_keys)
-        self._main_win.bind('<KeyRelease-Down>', self._arrow_keys)
+        self._main_win.bind('<F1>',             lambda event: self._root_cl.switch_channel(1))
+        self._main_win.bind('<F2>',             lambda event: self._root_cl.switch_channel(2))
+        self._main_win.bind('<F3>',             lambda event: self._root_cl.switch_channel(3))
+        self._main_win.bind('<F4>',             lambda event: self._root_cl.switch_channel(4))
+        self._main_win.bind('<F5>',             lambda event: self._root_cl.switch_channel(5))
+        self._main_win.bind('<F6>',             lambda event: self._root_cl.switch_channel(6))
+        self._main_win.bind('<F7>',             lambda event: self._root_cl.switch_channel(7))
+        self._main_win.bind('<F8>',             lambda event: self._root_cl.switch_channel(8))
+        self._main_win.bind('<F9>',             lambda event: self._root_cl.switch_channel(9))
+        self._main_win.bind('<F10>',            lambda event: self._root_cl.switch_channel(10))
+        self._main_win.bind('<F12>',            lambda event: self._root_cl.switch_channel(0))
+        self._main_win.bind('<Return>',                 self._root_cl.snd_text)
+        self._main_win.bind('<KeyRelease-Return>',      self._release_return)
+        self._main_win.bind('<Shift-KeyPress-Return>',  self._shift_return)
+        self._main_win.bind('<KeyRelease-Left>',        self._arrow_keys)
+        self._main_win.bind('<KeyRelease-Right>',       self._arrow_keys)
+        self._main_win.bind('<KeyRelease-Up>',          self._arrow_keys)
+        self._main_win.bind('<KeyRelease-Down>',        self._arrow_keys)
         # self.main_win.bind('<KP_Enter>', self.snd_text)
-        self._main_win.bind('<Alt-c>', lambda event: self._root_cl.open_new_conn_win())
-        self._main_win.bind('<Escape>', lambda event: self._root_cl.open_new_conn_win())
-        self._main_win.bind('<Alt-d>', lambda event: self._root_cl.disco_conn())
-        self._main_win.bind('<Control-c>', lambda event: self.copy_select())
-        #self.main_win.bind('<Control-v>', lambda event: self._clipboard_past())
-        self._main_win.bind('<Control-x>', lambda event: self.cut_select())
-        # self.main_win.bind('<Control-v>', lambda event: self.clipboard_past())
-        self._main_win.bind('<Control-a>', lambda event: self.select_all())
-        self._main_win.bind('<Control-plus>', lambda event: self._increase_textsize())
-        self._main_win.bind('<Control-minus>', lambda event: self._decrease_textsize())
+        self._main_win.bind('<Alt-c>',          lambda event: self._root_cl.open_new_conn_win())
+        self._main_win.bind('<Escape>',         lambda event: self._root_cl.open_new_conn_win())
+        self._main_win.bind('<Alt-d>',          lambda event: self._root_cl.disco_conn())
+        self._main_win.bind('<Control-c>',      lambda event: self._copy_select())
+        #self.main_win.bind('<Control-v>',      lambda event: self._clipboard_past())
+        self._main_win.bind('<Control-x>',      lambda event: self._cut_select())
+        # self.main_win.bind('<Control-v>',     lambda event: self.clipboard_past())
+        self._main_win.bind('<Control-a>',      lambda event: self._select_all())
+        self._main_win.bind('<Control-plus>',   lambda event: self._increase_textsize())
+        self._main_win.bind('<Control-minus>',  lambda event: self._decrease_textsize())
         # self.main_win.bind('<Control-Right>', lambda event: self._text_win_bigger())
-        # self.main_win.bind('<Control-Left>', lambda event: self._text_win_smaller())
+        # self.main_win.bind('<Control-Left>',  lambda event: self._text_win_smaller())
 
-        self._main_win.bind('<Key>', lambda event: self._any_key(event))
+        self._main_win.bind('<Key>',            lambda event: self._any_key(event))
 
     # ===================================
     # Keybindings - Helper
@@ -370,10 +370,9 @@ class GuiUtilities:
         self._inp_txt.delete(ind, self._inp_txt.index(tk.INSERT))
         self._inp_txt.insert(tk.INSERT, text)
         self._inp_txt.tag_remove('send', ind, tk.INSERT)
-
     # == Helper =========================
     # Clipboard Stuff
-    def copy_select(self):
+    def _copy_select(self):
         if self._qso_txt.tag_ranges("sel"):
             self._main_win.clipboard_clear()
             self._main_win.clipboard_append(self._qso_txt.selection_get())
@@ -387,14 +386,14 @@ class GuiUtilities:
             self._main_win.clipboard_append(self._mon_txt.selection_get())
             self._mon_txt.tag_remove(tk.SEL, "1.0", tk.END)
 
-    def cut_select(self):
+    def _cut_select(self):
         if self._inp_txt.tag_ranges("sel"):
             self._main_win.clipboard_clear()
             self._main_win.clipboard_append(self._inp_txt.selection_get())
             self._inp_txt.delete('sel.first', 'sel.last')
             self._inp_txt.see(tk.INSERT)
 
-    def clipboard_past(self):
+    def _clipboard_past(self):
         try:
             clp_brd = self._main_win.clipboard_get()
         except tk.TclError:
@@ -405,7 +404,7 @@ class GuiUtilities:
             self._inp_txt.insert(tk.INSERT, clp_brd)
             self._inp_txt.see(tk.INSERT)
 
-    def select_all(self):
+    def _select_all(self):
         self._inp_txt.tag_remove("send", "1.0", tk.END)
         self._inp_txt.tag_add(tk.SEL, "1.0", tk.END)
         self._inp_txt.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang

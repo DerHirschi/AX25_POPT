@@ -6,7 +6,6 @@ from collections import deque
 from tkinter import ttk, messagebox
 import threading
 from core.popt_core import PoPTCore
-from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -20,6 +19,7 @@ from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
 from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
 from gui.guiBlockList import BlockList
 from gui.guiDualPortMon import DualPort_Monitor
+from gui.guiMain.frames.guiMain_AX25StatusFrame import AX25StatusFrame
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
@@ -52,8 +52,7 @@ from gui.guiAbout import About
 from gui.guiHelpKeybinds import KeyBindsHelp
 from gui.ft.guiFileTX import FileSend
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
-    TEXT_SIZE_STATUS, TXT_INP_CURSOR_CLR, \
-    STAT_BAR_TXT_CLR, FONT_STAT_BAR, STATUS_BG, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
+    TXT_INP_CURSOR_CLR, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
@@ -163,13 +162,6 @@ class PoPT_GUI_Main:
         # Icons
         self.guiIcon    = GuiIcons()
         #####################
-        # Global Cache Tab
-        """
-        self._global_cache_tab = dict(
-            tkMapView_cache={},
-        )
-        """
-        #####################
         # Buffer
         self.connect_history        = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
         self._mon_pack_buff         = deque([] * 10000, maxlen=10000)
@@ -188,6 +180,7 @@ class PoPT_GUI_Main:
         self.setting_mon_encoding   = tk.StringVar( self.main_win)
         ###################
         # Status Frame Vars
+        """
         self._status_name_var       = tk.StringVar(self.main_win)
         self._status_status_var     = tk.StringVar(self.main_win)
         self._status_unack_var      = tk.StringVar(self.main_win)
@@ -199,6 +192,7 @@ class PoPT_GUI_Main:
         self._status_t3_var         = tk.StringVar(self.main_win)
         self._rx_beep_var           = tk.IntVar(self.main_win)
         self._ts_box_var            = tk.IntVar(self.main_win)
+        """
         # Stat INFO (Name,QTH usw)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
         #self._stat_info_status_var   = tk.StringVar(self.main_win)
@@ -297,7 +291,7 @@ class PoPT_GUI_Main:
         self.channel_vars = {}
         self._init_Channel_Vars()
         ######################################
-        # ....
+        # L/R PW
         self._main_pw       = ttk.PanedWindow(self.main_win, orient='horizontal')
         self._main_pw.pack(fill='both', expand=True)
 
@@ -306,12 +300,7 @@ class PoPT_GUI_Main:
         r_pack_frame        = ttk.Frame(self._r_frame)
         self._r_frame.pack(fill='both', expand=True)
         r_pack_frame.pack( fill='both', expand=True)
-        """
-        if is_linux():
-            self._main_pw.add(l_frame, weight=150)
-        else:
-            self._main_pw.add(l_frame, weight=3)
-        """
+
         self._main_pw.add(l_frame,       weight=1)
         self._main_pw.add(self._r_frame, weight=0)
         ###########################################
@@ -331,9 +320,13 @@ class PoPT_GUI_Main:
         # Lower
         self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
         # =====================================
+        # AX25 Status Bar
+        self._AX25StatusBar = AX25StatusFrame(self, self._TXT_upper_frame)
+        self._AX25StatusBar.pack(side='bottom', expand=False, fill='x')
+        # =====================================
         # Connection Status Bar
-        self.ConnStatus_frame   = ConnStatusBar(self, self._TXT_mid_frame)
-        self.ConnStatus_frame.pack(side='bottom', expand=1, fill='both')
+        self.ConnStatusBar   = ConnStatusBar(self, self._TXT_mid_frame)
+        self.ConnStatusBar.pack(side='bottom', expand=False, fill='x')
         # =====================================
         # Pack it
         self._TXT_upper_frame.pack(side='bottom', expand=1, fill='both')
@@ -412,12 +405,6 @@ class PoPT_GUI_Main:
         self._monitor_start_msg()
         ############################
         self._Pacman.update_plot_f_ch(self.channel_index)
-        ############################
-        logger.info('GUI: Status-Bar Text Init')
-        self._status_text_tab = {}
-        for k, col in STATUS_BG.items():
-            status_text = get_strTab(k, POPT_CFG.get_guiCFG_language(), warning=False)
-            self._status_text_tab[k] = status_text, col
         ##########################################
         # Menubar fix if app starts in fullscreen
         geom = self.main_win.winfo_geometry()
@@ -689,6 +676,7 @@ class PoPT_GUI_Main:
     def _init_TXT_frame_up(self, is_monitor=False):
         # guiCFG          = POPT_CFG.load_guiPARM_main()
         text_frame      = ttk.Frame(self._TXT_upper_frame)
+        text_frame.pack(side='bottom', fill='both', expand=True)
         if is_monitor:
             self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
             self._mon_pw.pack(fill='both', expand=True)
@@ -726,140 +714,6 @@ class PoPT_GUI_Main:
         inp_scrollbar.pack(side='left', fill='y',     expand=False)
         inp_txt.config(yscrollcommand=inp_scrollbar.set)
         # self.in_txt_win.insert(tk.END, "Inp")
-        ##############
-        # Status Frame
-        status_frame = ttk.Frame(self._TXT_upper_frame, height=18)
-        status_frame.pack( side='bottom', fill='x'   , expand=False)
-        text_frame.pack(   side='bottom', fill='both', expand=True)
-
-        name_f      = ttk.Frame(status_frame, width=60)
-        stat_f      = ttk.Frame(status_frame, width=40)
-        nack_f      = ttk.Frame(status_frame, width=40)
-        vsvr_f      = ttk.Frame(status_frame, width=40)
-        n2_f        = ttk.Frame(status_frame, width=20)
-        t1_f        = ttk.Frame(status_frame, width=20)
-        t2_f        = ttk.Frame(status_frame, width=20)
-        rtt_f       = ttk.Frame(status_frame, width=20)
-        t3_f        = ttk.Frame(status_frame, width=20)
-        rx_beep_f   = ttk.Frame(status_frame, width=50)
-        #ts_f        = ttk.Frame(status_frame, width=20)
-
-        name_f.pack(side='left', expand=True)
-        stat_f.pack(side='left', expand=False)
-        nack_f.pack(side='left', expand=False)
-        vsvr_f.pack(side='left', expand=True)
-        n2_f.pack(  side='left', expand=True)
-        t1_f.pack(  side='left', expand=True)
-        t2_f.pack(  side='left', expand=True)
-        rtt_f.pack( side='left', expand=True)
-        t3_f.pack(  side='left', expand=True)
-        rx_beep_f.pack(side='left', expand=False)
-        #ts_f.pack(  side='left', expand=False)
-
-        fg, bg = self._get_colorMap()
-        tk.Label(name_f,
-                textvariable=self._status_name_var,
-                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                foreground=fg,
-                bg=bg,
-                width=10
-              ).pack(side='left', anchor='w')
-
-        self._status_status = tk.Label(stat_f,
-                                    textvariable=self._status_status_var,
-                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                    bg=bg,
-                                    foreground=STAT_BAR_TXT_CLR,
-                                    #width=8
-                                    )
-        self._status_status.pack()
-
-        self._status_unack = tk.Label(nack_f,
-                                    textvariable=self._status_unack_var,
-                                    foreground=STAT_BAR_TXT_CLR,
-                                    font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                    bg=bg,
-                                    #width=8
-                                   )
-        self._status_unack.pack(side='left', anchor='w', expand=True)
-
-        tk.Label(vsvr_f,
-              textvariable=self._status_vs_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=bg,
-              foreground=fg
-              ).pack(side='left', anchor='w')
-
-        self._status_n2 = tk.Label(n2_f,
-                                textvariable=self._status_n2_var,
-                                font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                bg=bg,
-                                foreground=fg,
-                                width=5
-                                )
-        self._status_n2.pack(side='left', anchor='w')
-
-        tk.Label(t1_f,
-              textvariable=self._status_t1_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=bg,
-              foreground=fg
-              ).pack(side='left', anchor='w')
-        # PARM T2
-        tk.Label(t2_f,
-              textvariable=self._status_t2_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=bg,
-              foreground=fg
-              ).pack(side='left', anchor='w')
-        # RTT
-        tk.Label(rtt_f,
-              textvariable=self._status_rtt_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=bg,
-              foreground=fg
-              ).pack(side='left', anchor='w')
-
-        tk.Label(t3_f,
-              textvariable=self._status_t3_var,
-              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-              bg=bg,
-              foreground=fg
-              ).pack(side='left', anchor='w')
-        # Checkbox RX-BEEP
-        self._rx_beep_box = tk.Checkbutton(rx_beep_f,
-                                        text="RX-BEEP",
-                                        bg=bg,
-                                        font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                        activebackground=bg,
-                                        background=bg,
-                                        borderwidth=0,
-                                        onvalue=1, offvalue=0,
-                                        foreground=fg,
-                                        variable=self._rx_beep_var,
-                                        command=self._chk_rx_beep,
-
-                                           border=False,
-                                           relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                           highlightthickness=0,
-                                        )
-        self._rx_beep_box.pack(side='left', anchor='w')
-        # TODO Checkbox Time Stamp
-        """
-        self._ts_box_box = ttk.Checkbutton(ts_f,
-                                       text="T-S",
-                                       #font=(FONT_STAT_BAR, TEXT_SIZE_STATUS),
-                                       #bg=bg,
-                                       #borderwidth=0,
-                                       #activebackground=bg,
-                                       onvalue=1, offvalue=0,
-                                       #foreground=fg,
-                                       variable=self._ts_box_var,
-                                       command=self._chk_timestamp,
-                                       state='disabled'
-                                       )
-        # self._ts_box_box.pack(side='left', anchor='w') # TODO
-        """
         return inp_txt
 
     def _init_TXT_frame_mid(self, is_monitor=False):
@@ -1189,7 +1043,6 @@ class PoPT_GUI_Main:
 
     # END Init Stuff
     ######################################################################
-
     ######################################################################
     # Channel Vars
     def get_conn(self, con_ind: int = 0):
@@ -1302,10 +1155,8 @@ class PoPT_GUI_Main:
                         if ch_vars.rx_beep_tr:
                             ch_vars.rx_beep_tr = False
                             SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP)
-
     # Sound
     ######################################################################
-    #
     ######################################################################
     # TASKER
     def _tasker(self):  # MAINLOOP
@@ -1487,7 +1338,7 @@ class PoPT_GUI_Main:
             task_01 = self._dualPort_monitor_task()
             task_02 = self._update_qso_win()
             task_03 = self._SideFrame_tasker()
-            task_04 = self._update_status_bar()
+            task_04 = self._AX25StatusBar.update_status_bar()
             task_05 = self._prp_gui_tasker()
             ret = (task_01 or
                    task_02 or
@@ -1508,7 +1359,7 @@ class PoPT_GUI_Main:
         """ 1 Sec """
         if time.time() > self._non_non_prio_task_timer:
             #####################
-            self.ConnStatus_frame.update_stat_info_conn_timer()
+            self.ConnStatusBar.update_stat_info_conn_timer()
             self._update_ft_info()
             self._AlarmIcon_tasker1()
             self._chBtn_frame.tasker()
@@ -1663,7 +1514,6 @@ class PoPT_GUI_Main:
                 self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
     ###############################################################
     # QSO WIN
-
     def _update_qso_win(self):
         all_conn = self._popt_handler.get_all_connections()
         all_conn_ch_index = list(all_conn.keys())
@@ -1827,19 +1677,19 @@ class PoPT_GUI_Main:
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
-            self._rx_beep_var.set(1)
+            self._AX25StatusBar.rx_beep_var.set(1)
             #self._rx_beep_box.select()
-            self._rx_beep_box.configure(bg='green')
+            self._AX25StatusBar.rx_beep_box.configure(bg='green')
         else:
-            self._rx_beep_var.set(0)
+            self._AX25StatusBar.rx_beep_var.set(0)
             #self._rx_beep_box.deselect()
-            self._rx_beep_box.configure(bg=bg)
+            self._AX25StatusBar.rx_beep_box.configure(bg=bg)
 
         if ch_vars.timestamp_opt and self.channel_index:
-            self._ts_box_var.set(True)
+            self._AX25StatusBar.ts_box_var.set(True)
             #self._ts_box_box.configure(bg='green')
         else:
-            self._ts_box_var.set(False)
+            self._AX25StatusBar.ts_box_var.set(False)
             #self._ts_box_box.configure(bg=bg)
 
     def sysMsg_to_qso(self, data: str, ch_index):
@@ -1908,12 +1758,10 @@ class PoPT_GUI_Main:
             ch_vars.new_data_tr = True
         ch_vars.rx_beep_tr = True
         self.ch_status_update()
-
     # END QSO WIN
     ###############################################################
     ###############################################################
     # Monitor WIN
-
     def sysMsg_to_monitor(self, var: str):
         self._add_tasker_q("sysMsg_to_monitor", var)
 
@@ -2739,7 +2587,7 @@ class PoPT_GUI_Main:
     def _on_channel_status_change_task(self):
         self.tabbed_sideFrame.on_ch_stat_change()
         self.tabbed_sideFrame2.on_ch_stat_change()
-        self.ConnStatus_frame.update_station_info()
+        self.ConnStatusBar.update_station_info()
 
     def _update_ft_info(self):
         prog_val = 0
@@ -2777,6 +2625,7 @@ class PoPT_GUI_Main:
 
     #########################################
     # TxTframe FNCs
+    """
     def _update_status_bar(self):
         ret = False
         station = self.get_conn(self.channel_index)
@@ -2872,6 +2721,7 @@ class PoPT_GUI_Main:
                 self._status_rtt_var.set('')
                 ret = True
         return ret
+    """
 
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
@@ -2902,17 +2752,6 @@ class PoPT_GUI_Main:
                 self._pw.remove(self._TXT_lower_frame)
             else:
                 self._pw.remove(self._TXT_mid_frame)
-
-    def _chk_rx_beep(self):
-        rx_beep_check = self._rx_beep_var.get()
-        bg = self._get_colorMap()[1]
-        if rx_beep_check:
-            if self._rx_beep_box.cget('bg') != 'green':
-                self._rx_beep_box.configure(bg='green', activebackground='green')
-        else:
-            if self._rx_beep_box.cget('bg') != bg:
-                self._rx_beep_box.configure(bg=bg, activebackground=bg, background=bg)
-        self.get_ch_var().rx_beep_opt = rx_beep_check
 
     def _chk_timestamp(self):
         """
