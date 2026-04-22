@@ -1224,7 +1224,6 @@ class PoPT_GUI_Main:
     def _update_aprs_spooler(self):
         self._add_tasker_q("update_aprs_spooler", None)
 
-
     def update_aprs_msg_win(self, aprs_pack):
         self._add_tasker_q("update_aprs_msg_win", aprs_pack)
 
@@ -1254,11 +1253,12 @@ class PoPT_GUI_Main:
         )
 
     def _check_port_blocking_task(self):
-        if hasattr(self._popt_handler, 'get_glb_port_blocking'):
-            if not self._popt_handler.port_manager.get_glb_port_blocking():
-                self._Alarm_Frame.set_PortBlocking(set_on=False)
-            else:
-                self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
+        if hasattr(self._popt_handler, 'port_manager'):
+            if hasattr(self._popt_handler.port_manager, 'get_glb_port_blocking'):
+                if not self._popt_handler.port_manager.get_glb_port_blocking():
+                    self._Alarm_Frame.set_PortBlocking(set_on=False)
+                else:
+                    self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
     ###############################################################
     # QSO WIN
     def _update_qso_win(self):
@@ -2360,8 +2360,9 @@ class PoPT_GUI_Main:
 
     #####################################
     def set_port_blocking(self, state=0):
-        if hasattr(self._popt_handler, 'block_all_ports'):
-            self._popt_handler.port_manager.block_all_ports(state)
+        if hasattr(self._popt_handler, 'port_manager'):
+            if hasattr(self._popt_handler.port_manager, 'block_all_ports'):
+                self._popt_handler.port_manager.block_all_ports(state)
 
     # =====================================
     def get_PH_mainGUI(self):
