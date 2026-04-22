@@ -213,7 +213,7 @@ class PoPT_GUI_Main:
         ###########################################
         # Channel Buttons
         self._chBtn_frame = ChBtnFrame(self, l_frame)
-        self._chBtn_frame.pack(side='bottom', fill='x', expand=True)
+        self._chBtn_frame.pack(side='bottom', fill='x', expand=False)
 
         ###########################################
         ###########################################
