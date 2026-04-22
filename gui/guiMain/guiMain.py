@@ -17,6 +17,7 @@ from gui.guiMain.frames.guiMain_BwPlotFrame import BwPlotFrame
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
+from gui.guiMain.frames.guiMain_MonTreeFrame import MonitorTreeFrame
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_ChVars import GUIChannels
 from gui.guiMain.guiMain_Icons import GuiIcons
@@ -28,8 +29,7 @@ from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
-    PARAM_MAX_MON_TREE_ITEMS, GUI_TASKER_Q_RUNTIME, \
-    GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
+    GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
 from fnc.os_fnc import get_root_dir
 from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags
@@ -109,7 +109,7 @@ class PoPT_GUI_Main:
         #####################
         # Buffer
         self.connect_history        = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
-        self._mon_pack_buff         = deque([] * 10000, maxlen=10000)
+        #self._mon_pack_buff         = deque([] * 10000, maxlen=10000)
         self._remote_mon_pack_buff  = {}
         #####################
         # GUI VARS
@@ -153,13 +153,7 @@ class PoPT_GUI_Main:
             self.mon_port_on_vars[port_id] = tk.BooleanVar(self.main_win)
             self.mon_port_on_vars[port_id].set(True)
         self.mon_port_var.set('0')
-        # Monitor Tree
-        self._mon_tree_port_filter_var       = tk.StringVar(self.main_win, value='')
-        self._mon_tree_to_call_filter_var    = tk.StringVar(self.main_win, value='')
-        self._mon_tree_fm_call_filter_var    = tk.StringVar(self.main_win, value='')
-        #self._mon_tree_ctl_packet_filter_var = tk.StringVar(self.main_win, value='')
-        #self._mon_tree_pid_packet_filter_var = tk.StringVar(self.main_win, value='')
-        ##############
+        ################################################
         # Controlling
         self.channel_index  = 1
         self._mon_mode      = 0
@@ -251,9 +245,6 @@ class PoPT_GUI_Main:
         self.inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
         self.qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
         self.mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
-
-        if self._mon_tree_frame is not None:
-            self._init_mon_tree(self._mon_tree_frame)
 
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
@@ -519,7 +510,7 @@ class PoPT_GUI_Main:
             self._mon_pw.pack(fill='both', expand=True)
 
             mon_txt_f = ttk.Frame(self._mon_pw)
-            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f.pack(fill='both', expand=True)
             mon_tab_f.pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
@@ -560,7 +551,7 @@ class PoPT_GUI_Main:
             self._mon_pw.pack(fill='both', expand=True)
 
             mon_txt_f = ttk.Frame(self._mon_pw)
-            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f.pack(fill='both', expand=True)
             mon_tab_f.pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
@@ -606,7 +597,7 @@ class PoPT_GUI_Main:
             self._mon_pw.pack(fill='both', expand=True)
 
             mon_txt_f = ttk.Frame(self._mon_pw)
-            mon_tab_f = ttk.Frame(self._mon_pw)
+            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f. pack(fill='both', expand=True)
             mon_tab_f. pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
@@ -639,112 +630,6 @@ class PoPT_GUI_Main:
         #self._init_mon_tree(mon_tab_f)
         return mon_txt
 
-    def _init_mon_tree(self, frame: ttk.Frame):
-        columns = (
-            'time',
-            'port',
-            'from',
-            'to',
-            'via',
-            'typ',
-            'pid',
-            'nr_ns',
-            'cmd_poll',
-            'size',
-            'data',
-        )
-        mon_tree_pw = ttk.Panedwindow(frame, orient='horizontal')
-        mon_tree_pw.pack(fill='both', expand=True)
-        #
-        mon_f_main = ttk.Frame(mon_tree_pw)
-        mon_f_1 = ttk.Frame(mon_f_main)
-        mon_f_2 = ttk.Frame(mon_f_main)
-        mon_f_1.pack(fill='both', expand=True)
-        mon_f_2.pack(fill='x', expand=False)
-        #
-        mon_filter_f = ttk.Frame(mon_tree_pw)
-        mon_filter_f.pack(fill='x', expand=False)
-        #
-        mon_tree_pw.add(mon_f_main,    weight=0)
-        mon_tree_pw.add(mon_filter_f,  weight=1)
-
-        ###################################################
-        self._mon_tree = ttk.Treeview(mon_f_1, columns=columns, show='tree headings', height=2)
-        self._mon_tree.pack(side='left', fill='both', expand=True)
-
-        self._mon_tree.heading('#0', text="RX/TX")
-        self._mon_tree.heading('time', text=self._getTabStr('time'))
-        self._mon_tree.heading('port', text='Port')
-        self._mon_tree.heading('from', text=self._getTabStr('from'))
-        self._mon_tree.heading('to', text=self._getTabStr('to'))
-        self._mon_tree.heading('via', text='Via')
-        self._mon_tree.heading('typ', text='CTL')
-        self._mon_tree.heading('pid', text='PID')
-        self._mon_tree.heading('nr_ns', text='NS/NR')
-        self._mon_tree.heading('cmd_poll', text='CMD/POLL')
-        self._mon_tree.heading('size', text='Bytes')
-        self._mon_tree.heading('data', text='Data')
-
-        self._mon_tree.column("#0",       anchor='w', stretch=False, width=50)
-        self._mon_tree.column("time",     anchor='w', stretch=False, width=70)
-        self._mon_tree.column("port",     anchor='center', stretch=False, width=30)
-        self._mon_tree.column("from",     anchor='w', stretch=False, width=85)
-        self._mon_tree.column("to",       anchor='w', stretch=False, width=85)
-        self._mon_tree.column("via",      anchor='w', stretch=False, width=120)
-        self._mon_tree.column("typ",      anchor='center', stretch=False, width=50)
-        self._mon_tree.column("pid",      anchor='center', stretch=False, width=100)
-        self._mon_tree.column("nr_ns",    anchor='center', stretch=False, width=45)
-        self._mon_tree.column("cmd_poll", anchor='center', stretch=False, width=50)
-        self._mon_tree.column("size",     anchor='center', stretch=False, width=45)
-        self._mon_tree.column("data",     anchor='w', stretch=False,  width=700)
-
-        #for el in list(range(100)):
-        #    mon_tree.insert('', 'end', values=(el,))
-        # Vertikale Scrollbar
-        scrollbar_y = ttk.Scrollbar(mon_f_1, orient='vertical', command=self._mon_tree.yview)
-        self._mon_tree.configure(yscrollcommand=scrollbar_y.set)
-        scrollbar_y.pack(side='left', fill='y')
-
-        # Horizontale Scrollbar
-        scrollbar_x = ttk.Scrollbar(mon_f_2, orient='horizontal', command=self._mon_tree.xview)
-        self._mon_tree.configure(xscrollcommand=scrollbar_x.set)
-        scrollbar_x.pack(fill='x')
-        ###################################################
-        ttk.Label(mon_filter_f, text="Filter").pack()
-        port_f     = ttk.Frame(mon_filter_f)
-        fm_call_f  = ttk.Frame(mon_filter_f)
-        to_call_f  = ttk.Frame(mon_filter_f)
-        btn_pack_f = ttk.Frame(mon_filter_f)
-        port_f.pack(    fill='x', expand=False, pady=5)
-        fm_call_f.pack( fill='x', expand=False, pady=5)
-        to_call_f.pack( fill='x', expand=False, pady=5)
-        btn_pack_f.pack(fill='x', expand=False, pady=5)
-        # Port
-        ttk.Label(port_f, text='Port').pack(side='left', anchor='w', padx=5)
-        opt = ['', ''] + [str(x) for x in list(POPT_CFG.get_port_CFGs().keys())]
-        ttk.OptionMenu(port_f,
-                       self._mon_tree_port_filter_var,
-                       *opt,
-                       command=lambda e: self._monitor_tree_on_filter_chg()).pack(side='left', anchor='w')
-        # FM Call
-        ttk.Label(fm_call_f, text='From Call').pack(side='left', anchor='w', padx=5)
-        ttk.Entry(fm_call_f,
-                  textvariable=self._mon_tree_fm_call_filter_var,
-                  width=30).pack(side='left', anchor='w', expand=True)
-        # TO Call
-        ttk.Label(to_call_f, text='To Call      ').pack(side='left', anchor='w', padx=5)
-        ttk.Entry(to_call_f,
-                  textvariable=self._mon_tree_to_call_filter_var,
-                  width=30).pack(side='left', anchor='w', expand=True)
-        # BTN
-        ttk.Button(btn_pack_f,
-                   text='Update',
-                   command=lambda: self._monitor_tree_on_filter_chg()
-                   ).pack(side='left', anchor='w', padx=10)
-        ttk.Button(btn_pack_f,
-                   text='Reset',
-                   command=lambda: self._monitor_tree_on_filter_reset()
-                   ).pack(side='right', anchor='e', padx=10)
     #######################################
     # Text Tags
     def set_text_tags(self):
@@ -1088,7 +973,7 @@ class PoPT_GUI_Main:
             while self._tasker_q and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
                 task, arg = self._tasker_q.pop(0)
                 if task == '_monitor_tree_update':
-                    self._monitor_tree_update_task(arg)
+                    self._mon_tree_frame.monitor_tree_update_task(arg)
                 elif task == '_monitor_q_task':
                     self._monitor_q_task(arg)
                 elif task == '_remote_monitor_update_task':
@@ -1537,17 +1422,16 @@ class PoPT_GUI_Main:
         for axframe_conf in mon_buff:
             port_id = axframe_conf.get('port', -1)
 
-            self._mon_pack_buff.append(dict(axframe_conf))
+            self._mon_tree_frame.mon_pack_buff.append(dict(axframe_conf))
             if port_id not in self.mon_port_on_vars:
                 logger.error(f"_monitor_task: port_id ({port_id}) not in mon_port_on_vars({self.mon_port_on_vars.keys()})")
                 continue
             if not self.mon_port_on_vars[port_id].get():
                 continue
-
             new_mon_buff.append(axframe_conf)
 
         """ Monitor Tree """
-        self._monitor_tree_update(new_mon_buff)
+        self.monitor_tree_update(new_mon_buff)
         """ Monitor """
         self._add_tasker_q('_monitor_q_task',
                            new_mon_buff,
@@ -1619,185 +1503,8 @@ class PoPT_GUI_Main:
     ###############################################################
     ###############################################################
     # Monitor Tree
-    def _monitor_tree_update(self, ax25pack_batch: list):
+    def monitor_tree_update(self, ax25pack_batch: list):
         self._add_tasker_q("_monitor_tree_update", ax25pack_batch, prio=False)
-
-    def _monitor_tree_update_task(self, ax25pack_batch: list):
-        is_scrolled_to_top  = self._mon_tree.yview()[0] == 0.0
-        user_db             = self._popt_handler.get_userDB()
-        mh                  = self._mh
-
-        port_filter         = self._mon_tree_port_filter_var.get()
-        fm_call_filter      = self._mon_tree_fm_call_filter_var.get().split(' ')
-        to_call_filter      = self._mon_tree_to_call_filter_var.get().split(' ')
-
-        fm_call_filter      = [str(x.upper()).replace(' ', '') for x in list(fm_call_filter)]
-        to_call_filter      = [str(x.upper()).replace(' ', '') for x in list(to_call_filter)]
-
-        for ax25pack_conf in ax25pack_batch:
-
-            via = [f"{call}{'*' if c_bit else ''}" for call, c_bit in ax25pack_conf.get('via_calls_str_c_bit', [])]
-            ns_nr  = f"{''  if ax25pack_conf.get('ctl_nr', -1) == -1 else ax25pack_conf.get('ctl_nr', -1)}"
-            ns_nr += f"/{'' if ax25pack_conf.get('ctl_ns', -1) == -1 else ax25pack_conf.get('ctl_ns', -1)}"
-            cmd_pl =  f"{'+'  if ax25pack_conf.get('ctl_cmd', False) else '-'}"
-            cmd_pl += f"/{'+' if ax25pack_conf.get('ctl_pf',  False) else '-'}"
-            pay_size  = len(ax25pack_conf.get('payload', b''))
-            payload   = ax25pack_conf.get('payload', b'').decode('UTF-8', 'ignore')
-            payload   = tk_filter_bad_chars(payload)
-            payload   = payload.replace('\n', ' ')
-            from_dist = user_db.get_distance(ax25pack_conf.get('from_call_str', -1))
-            to_dist   = user_db.get_distance(ax25pack_conf.get('to_call_str', -1))
-            from_call = ax25pack_conf.get('from_call_str', '')
-            to_call   = ax25pack_conf.get('to_call_str', '')
-            port      = ax25pack_conf.get('port', -1)
-            ctl       = ax25pack_conf.get('ctl_flag', '')
-            pid       = ax25pack_conf.get('pid_flag', '')
-
-            while '' in fm_call_filter:
-                fm_call_filter.remove('')
-            while '' in to_call_filter:
-                to_call_filter.remove('')
-            #ctl_pack_filter  = self._mon_tree_ctl_packet_filter_var.get()
-            #pid_pack_filter  = self._mon_tree_pid_packet_filter_var.get()
-
-            if (
-                    (port_filter    and port_filter != str(port))         or
-                    (fm_call_filter and from_call not in fm_call_filter)  or
-                    (to_call_filter and to_call   not in to_call_filter)
-
-            ): return
-            raw_from_call = str(from_call)
-            raw_to_call   = str(to_call)
-            if from_dist > 0:
-                from_call += f'({from_dist}km)'
-
-            if to_dist > 0:
-                to_call += f'({to_dist}km)'
-
-            tree_data = (
-                ax25pack_conf.get('rx_time', datetime.datetime.now()).strftime('%H:%M:%S'),
-                port,
-                from_call,
-                to_call,
-                '>'.join(via),
-                ctl,
-                pid,
-                ns_nr,
-                cmd_pl,
-                pay_size,
-                payload,
-            )
-            index = 0
-
-            is_tx = ax25pack_conf.get('tx', True)
-            icon_k = {
-                True:  'tx',
-                False: 'rx',
-            }.get(is_tx, True)
-
-            """
-                '', '-dx',
-                '', '-term',
-                '', '-node',
-                '', '-bbs',
-                '', '-block',
-            """
-            icon_k_k = ''
-            # Is DX ?
-            if not is_tx:
-                is_dx = mh.is_dx_alarm_f_call(raw_from_call)
-                if is_dx:
-                    icon_k_k = '-dx'
-
-            # Is to own Station ?
-            block_list = POPT_CFG.get_block_list().get(port, {})
-            if is_tx:
-                own_station = POPT_CFG.get_stat_CFG_fm_call(raw_from_call.split('-')[0])
-                block_state = block_list.get(raw_to_call.split('-')[0], 0)
-            else:
-                own_station = POPT_CFG.get_stat_CFG_fm_call(raw_to_call.split('-')[0])
-                block_state = block_list.get(raw_from_call.split('-')[0], 0)
-
-            if own_station:
-                if block_state:
-                    icon_k_k = '-block'
-                else:
-                    icon_k_k = dict(
-                        USER=   '-term',
-                        NODE=   '-node',
-                        BOX=    '-bbs',
-                    ).get(own_station.get('stat_parm_cli', ''), '')
-
-            # Get Icon
-            icon_k += icon_k_k
-            image = self.guiIcon.rx_tx_icons.get(icon_k)
-            tree_data_f = [tk_filter_bad_chars(el) if type(el) == str else el for el in tree_data]
-            try:
-                self._mon_tree.image_ref = image
-                self._mon_tree.insert('', index, values=tree_data_f, image=image)
-
-            except tk.TclError as ex:
-                logger.warning("TCL Error in guiMain _monitor_tree_update")
-                logger.warning(ex)
-                continue
-
-        # Begrenze die Anzahl der Einträge
-        tree_items = self._mon_tree.get_children()
-        if len(tree_items) > PARAM_MAX_MON_TREE_ITEMS:
-            # Entferne die ältesten Einträge (am Ende der Liste)
-            for item in tree_items[PARAM_MAX_MON_TREE_ITEMS:]:
-                self._mon_tree.delete(item)
-
-        if not is_scrolled_to_top:
-            try:
-                self._mon_tree.yview_scroll(1, "units")
-            except tk.TclError:
-                pass
-            except Exception as e:
-                null = e
-                # logger.warning(e)
-                pass
-
-    def _monitor_tree_on_filter_chg(self):
-        for i in self._mon_tree.get_children():
-            self._mon_tree.delete(i)
-        batch_len = MON_BATCH_TO_PROCESS * 2
-        mon_buff = list(self._mon_pack_buff)
-        while mon_buff:
-            self._monitor_tree_update(mon_buff[:batch_len])
-            mon_buff = mon_buff[batch_len:]
-
-    def _monitor_tree_on_filter_reset(self):
-        self._mon_tree_port_filter_var.set('')
-        self._mon_tree_fm_call_filter_var.set('')
-        self._mon_tree_to_call_filter_var.set('')
-        self._monitor_tree_on_filter_chg()
-    """
-    def _monitor_tree_conn_selected(self):
-        if not self._mon_tree.selection():
-            return
-        selected =  self._mon_tree.selection()[0]
-        item     = self._mon_tree.item(selected)
-        record     = item['values']
-        call = record[3].split('(')[0]
-        vias = record[5]
-        vias = vias.replace('*', '').split('>')
-        vias.reverse()
-        vias = [x.split('(')[0] for x in list(vias)]
-        vias = ' '.join(vias)
-        port = record[2]
-
-
-        if type(port) is str:
-            port = int(port.split('-')[0])
-
-        if vias:
-            call = f'{call} {vias}'
-        if not self.new_conn_win:
-            self.open_new_conn_win()
-        if self.new_conn_win:
-            self.new_conn_win.preset_ent(call, port)
-    """
 
     ###############################################################
     # Remote Monitor
@@ -2376,3 +2083,6 @@ class PoPT_GUI_Main:
 
     def get_ais_mon_gui(self):
         return self.toplevel_manager.aprs_mon_win
+
+    def get_MH(self):
+        return self._mh

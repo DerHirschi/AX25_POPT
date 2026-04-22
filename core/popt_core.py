@@ -6,6 +6,7 @@ from ax25.ax25_ports.ax25Multicast import ax25Multicast
 #from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
+from classes.CLbuffers import ListBuffer
 from core.connection_manager import ConnectionManager
 from core.core_api import CoreAPI
 from core.core_tasker import PoPTCoreTasker
@@ -49,7 +50,7 @@ class PoPTCore(object):
         self._aprs_ais      = None
         self._gpio          = None
         #######################################################
-        self._monitor_buffer            = []
+        self._monitor_buffer            = ListBuffer()
         self._remote_monitor_buffer_tx  = []
         self._remote_monitor_buffer_rx  = []
         #######################################################
@@ -318,12 +319,11 @@ class PoPTCore(object):
     # Monitor Buffer Stuff
     def update_monitor(self, ax25frame_conf: dict):
         """ Called from AX25Conn """
-        self._monitor_buffer.append(ax25frame_conf)
+        self._monitor_buffer.buffer_write(ax25frame_conf)
         self._remote_monitor_buffer_tx.append(ax25frame_conf)
 
     def get_monitor_data(self):
-        data = list(self._monitor_buffer[:MON_BATCH_TO_PROCESS])  # 22 Pi4
-        self._monitor_buffer = self._monitor_buffer[MON_BATCH_TO_PROCESS:]
+        data = self._monitor_buffer.buffer_read_n(MON_BATCH_TO_PROCESS)
         return data
 
     ######################################

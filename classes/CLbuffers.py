@@ -23,6 +23,15 @@ class ListBuffer:
         self._threadLock = False
         return ret
 
+    def buffer_read_n(self, n: int):
+        if self.is_empty:
+            return None
+        self._get_thread_lock()
+        ret = self._buffer[:n]
+        self._buffer = self._buffer[n:]
+        self._threadLock = False
+        return ret
+
     def buffer_write(self, data):
         self._get_thread_lock()
         self._buffer.append(data)
