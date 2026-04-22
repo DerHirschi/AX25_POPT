@@ -1050,6 +1050,8 @@ class PRP_remoteGUI(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._root      = root_cl
         self.style      = self._root.style
+        self.guiIcon    = self._root.guiIcon
+        # ========================================
         self.title('PRP-Remote')
         self.geometry(f"1200x600+{self._root.main_win.winfo_x()}+{self._root.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_win)
@@ -1129,7 +1131,7 @@ class PRP_remoteGUI(tk.Toplevel):
 
     ####################################################
     def get_rx_tx_icons(self):
-        return self._root.guiIcon.get_rx_tx_icons()
+        return self.guiIcon.get_rx_tx_icons()
 
     def get_conn_by_uid(self, uid: str):
         ph = self._root.get_PH_mainGUI()

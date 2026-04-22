@@ -444,7 +444,7 @@ class GuiUtilities:
             data = data.decode(ch_enc, 'ignore')
         data = zeilenumbruch_lines(data)
         self._inp_txt.insert(tk.INSERT, data)
-        self._root_cl.see_end_inp_win()
+        self._see_end_inp_win()
         return
 
     def _save_to_file(self):
@@ -482,7 +482,7 @@ class GuiUtilities:
         text = replace_StringVARS(input_string=text, port_handler=self._popt_handler, connection=conn)
         text = zeilenumbruch_lines(text)
         self._root_cl.inp_txt.insert(tk.INSERT, text)
-        self._root_cl.see_end_inp_win()
+        self._see_end_inp_win()
         return
 
     def _insert_ftext(self, event=None):
@@ -511,7 +511,7 @@ class GuiUtilities:
         text = replace_StringVARS(input_string=text, port_handler=self._popt_handler, connection=conn)
         text = zeilenumbruch_lines(text)
         self._inp_txt.insert(tk.INSERT, text)
-        self._root_cl.see_end_inp_win()
+        self._see_end_inp_win()
         return
     # ===================================
     def _clear_inpWin(self):
@@ -550,4 +550,6 @@ class GuiUtilities:
         self._qso_txt.configure(font=(FONT, self._root_cl.text_size), )
         self._mon_txt.configure(font=(FONT, self._root_cl.text_size), )
 
-
+    # ===================================
+    def _see_end_inp_win(self):
+        self._inp_txt.see("end")

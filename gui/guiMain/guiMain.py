@@ -279,8 +279,8 @@ class PoPT_GUI_Main:
         self._side_pw.add(tabbedF_lower_frame, weight=1)
         # ================================================
         # tabbed Frame
-        self._BwPlot            = BwPlotFrame(self, self.main_win)
-        self._Pacman            = LiveConnPath(self.main_win)
+        self._BwPlot            = BwPlotFrame( self, self.main_win)
+        self._Pacman            = LiveConnPath(self, self.main_win)
         self.tabbed_sideFrame   = SideTabbedFrame(self, tabbedF_upper_frame, path_frame=self._Pacman)
         self.tabbed_sideFrame2  = SideTabbedFrame(self, tabbedF_lower_frame, plot_frame=self._BwPlot)
 
@@ -915,10 +915,10 @@ class PoPT_GUI_Main:
                     self._on_channel_status_change_task()
                 elif task == 'add_LivePath_plot':
                     node, ch_id, path = arg
-                    self._add_LivePath_plot_task(node, ch_id, path)
+                    self._Pacman.add_LivePath_plot_task(node, ch_id, path)
                 elif task == 'resetHome_LivePath_plot':
                     ch_id = arg
-                    self._resetHome_LivePath_plot_task(ch_id)
+                    self._Pacman.resetHome_LivePath_plot_task(ch_id)
                 elif task == 'sysMsg_to_qso':
                     data, ch_index = arg
                     self.sysMsg_to_qso_task(data, ch_index)
@@ -1490,9 +1490,6 @@ class PoPT_GUI_Main:
         self.mon_txt.configure(state="disabled", exportselection=True)
         return True
 
-    def see_end_inp_win(self):
-        self.inp_txt.see("end")
-
     def see_end_qso_win(self):
         self.qso_txt.see("end")
 
@@ -1648,7 +1645,6 @@ class PoPT_GUI_Main:
         ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
         if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
             self.inp_txt.delete(tk.END, tk.END)
-
     # SEND TEXT OUT
     #######################################################################
     #######################################################################
@@ -1656,25 +1652,8 @@ class PoPT_GUI_Main:
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
         self._add_tasker_q("add_LivePath_plot", (node, ch_id, path))
 
-    def _add_LivePath_plot_task(self, node: str, ch_id: int, path=None):
-        if path is None:
-            path = []
-        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
-        for digi in path:
-            self._Pacman.change_node(node=digi, ch_id=ch_id)
-        self._Pacman.change_node(node=node, ch_id=ch_id)
-        if ch_id == self.channel_index:
-            self._Pacman.update_plot_f_ch(ch_id=ch_id)
-
     def resetHome_LivePath_plot(self, ch_id: int):
         self._add_tasker_q("resetHome_LivePath_plot", ch_id)
-
-    def _resetHome_LivePath_plot_task(self, ch_id: int):
-        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
-        self._Pacman.reset_last_hop(ch_id=ch_id)
-        if ch_id == self.channel_index:
-            #if not POPT_CFG.get_pacman_fix():
-            self._Pacman.update_plot_f_ch(ch_id=ch_id)
 
     # END Conn Path Plot
     #######################################################################
@@ -1767,6 +1746,7 @@ class PoPT_GUI_Main:
         self._reset_noty_bell()
         self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
+
     #####################################################################
     def conn_btn_update(self):
         """
