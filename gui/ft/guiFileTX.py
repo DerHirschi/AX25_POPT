@@ -12,7 +12,7 @@ class FileSend(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self._root_win = main_win
-        main_win.FileSend_win = self
+        main_win.toplevel_manager.FileSend_win = self
         self.win_height = 200
         self.win_width  = 780
         self.style      = main_win.style
@@ -190,7 +190,7 @@ class FileSend(tk.Toplevel):
         self.destroy_win()
 
     def destroy_win(self):
-        self._root_win.FileSend_win = None
+        self._root_win.toplevel_manager.FileSend_win = None
         self.destroy()
 
     def tasker(self):

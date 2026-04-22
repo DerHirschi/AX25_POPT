@@ -11,13 +11,7 @@ from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
     get_kb_str_fm_bytes, conv_time_DE_str, get_strTab
-from gui.aprs.guiAPRS_Monitor.guiAPRSmon import AISmonitor
-from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Main import APRSSettingsMain
-from gui.aprs.guiAPRS_SMS.guiAPRS_pn_msg import APRS_msg_SYS_PN
-#from gui.aprs.guiAPRS_symbol_tab import APRSymbolTab
-from gui.aprs.guiAPRS_wx_tree import WXWin  # !!!!!!!!!!
-from gui.guiBlockList import BlockList
-from gui.guiDualPortMon import DualPort_Monitor
+
 from gui.guiMain.frames.guiMain_AX25StatusFrame import AX25StatusFrame
 from gui.guiMain.frames.guiMain_BwPlotFrame import BwPlotFrame
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
@@ -27,36 +21,13 @@ from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_ChVars import GUIChannels
 from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiMain.guiMain_Utilities import GuiUtilities
-from gui.guiRightLevelEditor import RightLevelEditor
-from gui.prp.guiPRP_remote import PRP_remoteGUI
-#from gui.guiRoutingTab import RoutingTableWindow
-#from gui.plots.gui_ConnPath_plot import ConnPathsPlot
-from gui.bbs_gui.bbs_MSGcenter_gui.guiBBS_MSG_center import MSG_Center
-from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
-from gui.bbs_gui.bbs_settings.guiBBS_Settings_Main import BBSSettingsMain
-from gui.bbs_gui.guiBBS_fwd_q import BBS_fwd_Q
-from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
-from gui.ft.guiFT_Manager import FileTransferManager
-from gui.guiLocatorCalc import LocatorCalculator
-from gui.settings.guiDualPortSettings import DualPortSettingsWin
-from gui.settings.guiPipeToolSettings import PipeToolSettings
-from gui.plots.guiPlotPort import PlotWindow
-from gui.guiPriv import PrivilegWin
+from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from gui.UserDB.guiUserDBoverview import UserDBtreeview
-from gui.guiMH.guiMH import MHWin
-from gui.guiNewConnWin import NewConnWin
-from gui.settings.guiSettingsMain import SettingsMain
-from gui.settings.guiLinkholderSettings import LinkHolderSettings
-from gui.UserDB.guiUserDB import UserDB
-from gui.guiAbout import About
-from gui.guiHelpKeybinds import KeyBindsHelp
-from gui.ft.guiFileTX import FileSend
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
     TXT_INP_CURSOR_CLR, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
     SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
     DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, MAX_SYSOP_CH, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+    DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     PARAM_MAX_MON_TREE_ITEMS, GUI_TASKER_Q_RUNTIME, \
     GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, MON_BATCH_TO_PROCESS, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
@@ -219,31 +190,9 @@ class PoPT_GUI_Main:
         # self._parm_test_task_timer = 60  # 5        # s
         # self._test_task_timer = time.time()
         ########################################
-        ############################
-        # Window
-        self.new_conn_win           = None
-        self.settings_win           = None
-        self.mh_window              = None
-        self.wx_window              = None
-        self.port_stat_win          = None
-        self.be_tracer_win          = None
-        self.locator_calc_window    = None
-        self.aprs_mon_win           = None
-        self.aprs_pn_msg_win        = None
-        self.aprs_pn_msg_frame      = []
-        self.userdb_win             = None
-        self.userDB_tree_win        = None
-        self.FileSend_win           = None
-        self.BBS_fwd_q_list         = None
-        self.MSG_Center_win         = None
-        self.newPMS_MSG_win         = None
-        self.fwd_Path_plot_win      = None
-        self.dualPort_settings_win  = None
-        self.dualPortMon_win        = None
-        self.block_list_win         = None
-        self.routingTab_win         = None
-        self.prp_remote_win         = None
-        self.right_level_win        = None
+        ########################################
+        # Toplevel Win Manager
+        self.toplevel_manager = ToplevelManager(self)
 
         ######################################
         ######################################
@@ -401,33 +350,9 @@ class PoPT_GUI_Main:
         self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._popt_handler.connection_manager.disco_all_Conn()
         self._Pacman.save_path_data()
-        logger.info('GUI: Closing GUI')
-        for wn in [
-            self.new_conn_win,
-            self.settings_win,
-            self.mh_window,
-            self.wx_window,
-            self.userdb_win,
-            self.userDB_tree_win,
-            self.aprs_mon_win,
-            self.aprs_pn_msg_win,
-            self.be_tracer_win,
-            self.BBS_fwd_q_list,
-            self.MSG_Center_win,
-            self.newPMS_MSG_win,
-            self.fwd_Path_plot_win,
-            self.dualPort_settings_win,
-            self.dualPortMon_win,
-            self.block_list_win,
-            self.routingTab_win,
-            self.prp_remote_win,
-            self.right_level_win,
-        ]:
-            if hasattr(wn, 'destroy_win'):
-                wn.destroy_win()
-            if hasattr(wn, 'destroy'):
-                wn.destroy()
-
+        """"""
+        self.toplevel_manager.destroy_win()
+        """"""
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
         self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
@@ -569,7 +494,7 @@ class PoPT_GUI_Main:
                                    text="Connect",
                                    bg="green",
                                    width=8,
-                                   command=self.open_new_conn_win,
+                                   command=self.toplevel_manager.open_new_conn_win,
                                    relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                    highlightthickness=0,
                                    )
@@ -1152,9 +1077,9 @@ class PoPT_GUI_Main:
                 elif task == 'reset_aprsMail_alarm':
                     self._reset_aprsMail_alarm_task()
                 elif task == 'update_aprs_spooler':
-                    self._update_aprs_spooler_task()
+                    self.toplevel_manager.update_aprs_spooler_task()
                 elif task == 'update_aprs_msg_win':
-                    self._update_aprs_msg_win_task(arg)
+                    self.toplevel_manager.update_aprs_msg_win_task(arg)
                 #elif task == 'update_tracer_win':
                 #    self._update_tracer_win_task()
 
@@ -1171,7 +1096,7 @@ class PoPT_GUI_Main:
                     self._remote_monitor_update_task(rem_mon_data ,remote_uid)
                 elif task == '_prp_response_update_task':
                     rem_mon_data, remote_uid = arg
-                    self._prp_response_update_task(rem_mon_data, remote_uid)
+                    self.toplevel_manager.prp_response_update_task(rem_mon_data, remote_uid)
                 elif task == '_init_popt_remote_task':
                     self._init_popt_remote_task(arg)
 
@@ -1180,7 +1105,7 @@ class PoPT_GUI_Main:
     def _tasker_prio(self):
         """ Prio Tasks every Irritation """
         tasker_ret = False
-
+        """ PoPT-Core Tasker """
         if hasattr(self._popt_handler, 'popt_core_task'):
             timer = time.time()
             self._popt_handler.popt_core_task()
@@ -1188,23 +1113,11 @@ class PoPT_GUI_Main:
             if t_delta > GUI_TASKER_TIME_D_UNTIL_BURN:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
 
-        if hasattr(self.userDB_tree_win, 'tasker'):
-            task = self.userDB_tree_win.tasker()
-            tasker_ret = task or tasker_ret
-
-        if hasattr(self.userdb_win, 'tasker'):
-            task = self.userdb_win.tasker()
-            tasker_ret = task or tasker_ret
-
-        # Locator Calc Win
-        if hasattr(self.locator_calc_window, 'tasker'):
-            task = self.locator_calc_window.tasker()
-            tasker_ret = task or tasker_ret
-
+        """ Toplevel Win Tasker """
+        task = self.toplevel_manager.tasker_prio()
+        tasker_ret = task or tasker_ret
         task_01 = self._monitor_task()
-        task_02 = self._ais_monitor_task()
-        task_03 = self._mh_win_task()
-        tasker_ret = tasker_ret or task_01 or task_02 or task_03
+        tasker_ret = tasker_ret or task_01
         return tasker_ret
 
     def _tasker_025_sec(self):
@@ -1212,15 +1125,12 @@ class PoPT_GUI_Main:
         if time.time() > self._non_prio_task_timer:
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
-            # self._aprs_task()
-            # self._monitor_task()
-            task_01 = self._dualPort_monitor_task()
             task_02 = self._update_qso_win()
             task_03 = self._SideFrame_tasker()
             task_04 = self._AX25StatusBar.update_status_bar()
-            task_05 = self._prp_gui_tasker()
-            ret = (task_01 or
-                   task_02 or
+            """ Toplevel Win Tasker """
+            task_05 = self.toplevel_manager.tasker_025_sec()
+            ret = (task_02 or
                    task_03 or
                    task_04 or
                    task_05
@@ -1242,11 +1152,8 @@ class PoPT_GUI_Main:
             self._update_ft_info()
             self._AlarmIcon_tasker1()
             self._chBtn_frame.tasker()
-            if hasattr(self.settings_win, 'tasker'):
-                self.settings_win.tasker()
-            if hasattr(self.BBS_fwd_q_list, 'tasker'):
-                # TODO 2 Sec Tasker
-                self.BBS_fwd_q_list.tasker()
+            """ Toplevel Win Tasker """
+            self.toplevel_manager.tasker_1_sec()
             # APRS - MSG Spooler
             self._update_aprs_spooler()
             if SOUND.master_sound_on:
@@ -1255,17 +1162,6 @@ class PoPT_GUI_Main:
                 if SOUND.master_sprech_on:
                     self._check_sprech_ch_buf()
 
-            #if hasattr(self.routingTab_win, 'tasker'):
-            #    self.routingTab_win.tasker()
-
-            """
-            if self.MSG_Center is not None:
-                self.MSG_Center.tasker()
-            """
-            """
-            if self.aprs_mon_win is not None:
-                self.aprs_mon_win.tasker()
-            """
             #####################
             self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
             return True
@@ -1280,7 +1176,8 @@ class PoPT_GUI_Main:
                     self.reset_diesel()
             #####################
             self._BwPlot.update_bw_mon()
-            self._aprs_wx_tree_task()
+            """ Toplevel Win Tasker """
+            self.toplevel_manager.tasker_5_sec()
             #####################
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True
@@ -1327,37 +1224,9 @@ class PoPT_GUI_Main:
     def _update_aprs_spooler(self):
         self._add_tasker_q("update_aprs_spooler", None)
 
-    def _update_aprs_spooler_task(self):
-        if hasattr(self.aprs_pn_msg_win, 'update_spooler_tree'):
-            self.aprs_pn_msg_win.update_spooler_tree()
 
     def update_aprs_msg_win(self, aprs_pack):
         self._add_tasker_q("update_aprs_msg_win", aprs_pack)
-
-    def _update_aprs_msg_win_task(self, aprs_pack):
-        if hasattr(self.aprs_pn_msg_win, 'update_aprs_msg'):
-            self.aprs_pn_msg_win.update_aprs_msg(aprs_pack)
-        for aprs_sms_frame in list(self.aprs_pn_msg_frame):
-            if hasattr(aprs_sms_frame, 'update_aprs_msg_frame'):
-                aprs_sms_frame.update_aprs_msg_frame()
-            else:
-                self.aprs_pn_msg_frame.remove(aprs_sms_frame)
-
-    def _aprs_wx_tree_task(self):
-        ais = self._popt_handler.get_aprs_ais()
-        if not hasattr(ais, "get_update_tr"):
-            return
-        if not hasattr(self.wx_window, 'update_tree_data'):
-            return
-        update_tr = ais.get_update_tr()
-        if update_tr:
-            self._wx_update_tr = False
-            self.wx_window.update_tree_data()
-
-    def _ais_monitor_task(self):
-        if hasattr(self.aprs_mon_win, 'tasker'):
-           return self.aprs_mon_win.tasker()
-        return False
 
     #######################################################################
     def _AlarmIcon_tasker05(self):
@@ -1660,16 +1529,6 @@ class PoPT_GUI_Main:
             if len(var) > 1:
                 SOUND.sprech(var[1], wait=False)
 
-    """
-    def update_monitor(self, ax25frame, port_conf, tx=False):
-        # Called from AX25Conn 
-        self._mon_buff.append((
-            ax25frame,
-            port_conf,
-            bool(tx)
-        ))
-    """
-
     def _monitor_task(self):
         mon_buff = self._popt_handler.get_monitor_data()
         if not mon_buff:
@@ -1951,14 +1810,8 @@ class PoPT_GUI_Main:
         if uid not in self._remote_mon_pack_buff:
             self._remote_mon_pack_buff[uid] = deque([] * 10000, maxlen=10000)
         # Update Remote Mon GUI if open
-        if hasattr(self.prp_remote_win, 'prp_connection_init'):
-            self.prp_remote_win.prp_connection_init(uid)
-
-    # == Loop Tasker
-    def _prp_gui_tasker(self):
-        if hasattr(self.prp_remote_win, 'tasker'):
-            return self.prp_remote_win.tasker()
-        return False
+        if hasattr(self.toplevel_manager.prp_remote_win, 'prp_connection_init'):
+            self.toplevel_manager.prp_remote_win.prp_connection_init(uid)
 
     # === TX Cmds
     """
@@ -1982,11 +1835,6 @@ class PoPT_GUI_Main:
     def prp_response_update(self, resp: str, remote_uid: str):
         self._add_tasker_q("_prp_response_update_task", (resp, remote_uid), prio=False)
 
-    def _prp_response_update_task(self, resp: str, remote_uid: str):
-        # Update Remote Mon GUI if open
-        if hasattr(self.prp_remote_win, 'gui_prp_response_handler'):
-            self.prp_remote_win.gui_prp_response_handler(resp, remote_uid)
-
     def remote_monitor_update_gui(self, ax25pack: dict, remote_uid: str):
         self._add_tasker_q("_remote_monitor_update_task", (ax25pack, remote_uid), prio=False)
 
@@ -2000,177 +1848,13 @@ class PoPT_GUI_Main:
         self._remote_mon_pack_buff[remote_uid].append(rem_mon_ax25conf)
 
         # == Update Remote Mon GUI if open
-        if hasattr(self.prp_remote_win, 'rem_mon_update'):
-            self.prp_remote_win.rem_mon_update(rem_mon_ax25conf, remote_uid)
+        self.toplevel_manager.prp_remote_update_mon(rem_mon_ax25conf, remote_uid)
 
     # === Getta
     def get_remote_monitor_pack_buffer(self):
         return dict(self._remote_mon_pack_buff)
 
-    ###############################################################
-    # Dual Port
-    def _dualPort_monitor_task(self):
-        if not hasattr(self.dualPortMon_win, 'dB_mon_tasker'):
-            return False
-        return self.dualPortMon_win.dB_mon_tasker()
-
-    ###############################################################
-
-    ###############################################################
-    # Open Toplevel Win
-
-    def open_link_holder_sett(self):
-        #self.main_win.update_idletasks()
-        self.open_settings_window('l_holder')
-
-    def open_ft_manager(self, event=None):
-        #self.main_win.update_idletasks()
-        self.open_settings_window('ft_manager')
-
-    def open_settings_window(self, win_key: str):
-        if not win_key:
-            return
-        if self.settings_win:
-            self.settings_win.lift()
-            return
-        settings_win = {
-            'priv_win': PrivilegWin,            # Priv Win              # TODO move to open_window
-            'keybinds': KeyBindsHelp,           # Keybinds Help WIN     # TODO move to open_window
-            'about': About,                     # About WIN             # TODO move to open_window
-            'aprs_sett': APRSSettingsMain,       # APRS Settings
-            'ft_manager': FileTransferManager,  # FT Manager            # TODO move to open_window
-            'pipe_sett': PipeToolSettings,      # Pipe Tool
-            # 'user_db': UserDB,  # UserDB
-            'l_holder': LinkHolderSettings,     # Linkholder
-            'pms_all_sett': BBSSettingsMain,    # New PMS Settings
-            'all_sett': SettingsMain,           # New All Settings
-        }.get(win_key, '')
-        if callable(settings_win):
-            #self.main_win.update_idletasks()
-            self.settings_win = settings_win(self)
-
-    def open_window(self, win_key: str):
-        # self._open_window('new_conn')
-        if not win_key:
-            return
-        win_list = {
-            'new_conn': (self.new_conn_win, NewConnWin),
-            'wx_win': (self.wx_window, WXWin),
-            'locator_calc': (self.locator_calc_window, LocatorCalculator),
-            'aprs_mon': (self.aprs_mon_win, AISmonitor),
-            'aprs_msg': (self.aprs_pn_msg_win, APRS_msg_SYS_PN),
-            'pms_fwq_q': (self.BBS_fwd_q_list, BBS_fwd_Q),
-            'pms_msg_center': (self.MSG_Center_win, MSG_Center),
-            'pms_new_msg': (self.newPMS_MSG_win, BBS_newMSG),
-            'userDB_tree': (self.userDB_tree_win, UserDBtreeview),
-            'ft_send': (self.FileSend_win, FileSend),
-            'PortStat': (self.port_stat_win, PlotWindow),
-            'fwdPath': (self.fwd_Path_plot_win, FwdGraph),
-            'dualPort_settings': (self.dualPort_settings_win, DualPortSettingsWin),
-            'dualPort_monitor': (self.dualPortMon_win, DualPort_Monitor),
-            'remote_monitor': (self.prp_remote_win, PRP_remoteGUI),
-            'right_level_editor': (self.right_level_win, RightLevelEditor),
-
-            # TODO .......
-
-        }.get(win_key, None)
-        if not win_list:
-            return
-        if win_list[0]:
-            if hasattr(win_list[0], 'lift'):
-                win_list[0].lift()
-            return
-        if callable(win_list[1]):
-            #self.main_win.update_idletasks()
-            win_list[1](self)
-
-    ##########################
-    # UserDB
-    def open_user_db_win(self, event=None, ent_key=''):
-        if self.userdb_win is not None:
-            return
-        if not ent_key:
-            conn = self.get_conn()
-            if conn is not None:
-                ent_key = conn.to_call_str
-        #self.main_win.update_idletasks()
-        self.userdb_win = UserDB(self, ent_key)
-
-    ##########################
-    # New Connection WIN
-    def open_new_conn_win(self):
-        self.open_window('new_conn')
-
-    ######################
-    # APRS Beacon Tracer
-    """
-    def open_be_tracer_win(self):
-        self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
-        if self.be_tracer_win is None:
-            #self.main_win.update_idletasks()
-            self.be_tracer_win = BeaconTracer(self)
-    """
-
-    ###################
-    # MH WIN
-    def open_MH_win(self):
-        """MH WIN"""
-        self.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
-        self._popt_handler.set_dxAlarm(False)
-        self.tabbed_sideFrame.reset_dx_alarm()
-        self.tabbed_sideFrame2.reset_dx_alarm()
-        if hasattr(self.mh_window, 'lift'):
-            self.mh_window.lift()
-            return
-        MHWin(self)
-
-    def _mh_win_task(self):
-        if hasattr(self.mh_window, 'tasker'):
-            return self.mh_window.tasker()
-        return False
-
-    ##################
-    # Black List Win
-    def open_BlockList_win(self):
-        if hasattr(self.block_list_win, 'lift'):
-            self.block_list_win.lift()
-            return
-        if self.block_list_win is not None:
-            logger.error("self.block_list_win is not None. Try to close")
-            if hasattr(self.block_list_win, 'close'):
-                self.block_list_win.close()
-                self.block_list_win = None
-                return
-        self.block_list_win = BlockList(self)
-
-    ##################
-    # Routing tab win
-
-    def open_RoutingTab_win(self):
-        if hasattr(self.routingTab_win, 'lift'):
-            self.routingTab_win.lift()
-            return
-        if not hasattr(self._popt_handler, 'get_RoutingTable'):
-            if hasattr(self.routingTab_win, 'close'):
-                self.routingTab_win.close()
-                self.routingTab_win = None
-                return
-        # RoutingTableWindow(self, self._port_handler.get_RoutingTable())
-
-    #######################################################
-    """
-    def gui_set_distance(self):
-        self._set_distance_fm_conn()
-    """
-    """
-    def _set_distance_fm_conn(self):
-        conn = self.get_conn()
-        if conn is not None:
-            conn.set_distance()
-            return True
-        return False
-    """
-
+    #######################################################################
     #######################################################################
     # DISCO
     def disco_conn(self):
@@ -2295,11 +1979,6 @@ class PoPT_GUI_Main:
     def do_pms_autoFWD(self):
         self._popt_handler.get_bbs().start_man_autoFwd()
 
-    def _do_pms_fwd(self):
-        conn = self.get_conn()
-        if conn is not None:
-            conn.bbsFwd_start_reverse()
-
     def do_priv(self, event=None):
         conn = self.get_conn()
         if conn is not None:
@@ -2307,9 +1986,39 @@ class PoPT_GUI_Main:
                 if conn.user_db_ent.sys_pw:
                     conn.cli.start_baycom_login()
                 else:
-                    self.open_settings_window('priv_win')
+                    self.toplevel_manager.open_settings_window('priv_win')
 
     #####################################################################
+    def _switch_mon_mode(self):
+        txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
+        if self._mon_mode:
+            try:
+                if txtWin_pos_cfg == (1, 0, 2):
+                    self._pw.remove(self._TXT_lower_frame)
+                    self._pw.remove(self._TXT_mid_frame)
+                elif txtWin_pos_cfg == (1, 2, 0):
+                    self._pw.remove(self._TXT_upper_frame)
+                    self._pw.remove(self._TXT_mid_frame)
+                else:
+                    self._pw.remove(self._TXT_upper_frame)
+                    self._pw.remove(self._TXT_lower_frame)
+            except tk.TclError:
+                pass
+            self._pw.add(self._TXT_upper_frame, weight=1)
+            self._pw.add(self._TXT_mid_frame,   weight=1)
+            self._pw.add(self._TXT_lower_frame, weight=1)
+            self._load_pw_pos()
+
+        else:
+            self._save_pw_pos()
+            if txtWin_pos_cfg == (1, 0, 2):
+                self._pw.remove(self._TXT_upper_frame)
+
+            elif txtWin_pos_cfg == (1, 2, 0):
+                self._pw.remove(self._TXT_lower_frame)
+            else:
+                self._pw.remove(self._TXT_mid_frame)
+
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
         if self._mon_mode:
@@ -2352,7 +2061,6 @@ class PoPT_GUI_Main:
         self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
     #####################################################################
-    #
     def conn_btn_update(self):
         """
         Called fm:
@@ -2368,7 +2076,7 @@ class PoPT_GUI_Main:
             if self._conn_btn.cget('bg') != "red":
                 self._conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
         elif self._conn_btn.cget('bg') != "green":
-            self._conn_btn.configure(text="Connect", bg="green", command=self.open_new_conn_win)
+            self._conn_btn.configure(text="Connect", bg="green", command=self.toplevel_manager.open_new_conn_win)
         self._chBtn_frame.ch_btn_status_update()
 
     def ch_status_update(self):
@@ -2469,73 +2177,6 @@ class PoPT_GUI_Main:
             self.ft_next_tx_var.set(next_tx)
 
     #########################################
-    #
-    def _switch_mon_mode(self):
-        txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
-        if self._mon_mode:
-            try:
-                if txtWin_pos_cfg == (1, 0, 2):
-                    self._pw.remove(self._TXT_lower_frame)
-                    self._pw.remove(self._TXT_mid_frame)
-                elif txtWin_pos_cfg == (1, 2, 0):
-                    self._pw.remove(self._TXT_upper_frame)
-                    self._pw.remove(self._TXT_mid_frame)
-                else:
-                    self._pw.remove(self._TXT_upper_frame)
-                    self._pw.remove(self._TXT_lower_frame)
-            except tk.TclError:
-                pass
-            self._pw.add(self._TXT_upper_frame, weight=1)
-            self._pw.add(self._TXT_mid_frame,   weight=1)
-            self._pw.add(self._TXT_lower_frame, weight=1)
-            self._load_pw_pos()
-
-        else:
-            self._save_pw_pos()
-            if txtWin_pos_cfg == (1, 0, 2):
-                self._pw.remove(self._TXT_upper_frame)
-
-            elif txtWin_pos_cfg == (1, 2, 0):
-                self._pw.remove(self._TXT_lower_frame)
-            else:
-                self._pw.remove(self._TXT_mid_frame)
-
-    def _chk_timestamp(self):
-        """
-        ts_check = self._ts_box_var.get()
-        bg = self._get_colorMap()[1]
-        if ts_check:
-            if self._ts_box_box.cget('bg') != 'green':
-                self._ts_box_box.configure(bg='green', activebackground='green')
-        else:
-            if self._ts_box_box.cget('bg') != bg:
-                self._ts_box_box.configure(bg=bg, activebackground=bg)
-
-        self.get_ch_var().timestamp_opt = ts_check
-        """
-        pass
-
-    ##########################################
-    #
-    def get_free_channel(self, start_channel=1):
-        if not start_channel:
-            start_channel = 1
-        if not self.get_conn(con_ind=start_channel):
-            return start_channel
-        for ch_id in range(1, MAX_SYSOP_CH):
-            if not self.get_conn(con_ind=ch_id):
-                return ch_id
-        return None
-
-    def get_all_free_channels(self):
-        ret = []
-        for ch_id in range(1, MAX_SYSOP_CH):
-            if not self.get_conn(con_ind=ch_id):
-                ret.append(ch_id)
-        return ret
-
-    ##########################################
-    #
     def set_tracer(self, state=None):
         ais_obj = self._popt_handler.get_aprs_ais()
         if ais_obj is not None:
@@ -2600,7 +2241,7 @@ class PoPT_GUI_Main:
     ######################################################################
     # Alarm/Icon Frame
     def set_aprsMail_alarm(self):
-        if self.aprs_pn_msg_win:
+        if self.toplevel_manager.aprs_pn_msg_win:
             self._add_tasker_q("reset_aprsMail_alarm", None)
         else:
             self._add_tasker_q("set_aprsMail_alarm", None)
@@ -2650,7 +2291,7 @@ class PoPT_GUI_Main:
         self._add_tasker_q("pmsMail_alarm", None)
 
     def _pmsMail_alarm_task(self):
-        if self.MSG_Center_win:
+        if self.toplevel_manager.MSG_Center_win:
             return
         self._Alarm_Frame.set_pmsMailAlarm(True)
 
@@ -2671,8 +2312,8 @@ class PoPT_GUI_Main:
 
     def _reset_pmsFwd_alarm_task(self):
         self._Alarm_Frame.set_pms_fwd_alarm(False)
-        if self.MSG_Center_win:
-            self.MSG_Center_win.tree_update_task()
+        if self.toplevel_manager.MSG_Center_win:
+            self.toplevel_manager.MSG_Center_win.tree_update_task()
 
     def set_diesel(self):
         self._add_tasker_q("set_diesel", None)
@@ -2733,4 +2374,4 @@ class PoPT_GUI_Main:
         raise AttributeError
 
     def get_ais_mon_gui(self):
-        return self.aprs_mon_win
+        return self.toplevel_manager.aprs_mon_win

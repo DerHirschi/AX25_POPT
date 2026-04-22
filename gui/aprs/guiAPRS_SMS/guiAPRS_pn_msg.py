@@ -292,7 +292,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         button1.pack(side=tk.LEFT, padx=5)
 
 
-        self._root_cl.aprs_pn_msg_win = self
+        self._root_cl.toplevel_manager.aprs_pn_msg_win = self
         self.bind('<Return>', self._send_aprs_msg)
         self._update_tree()
         self._update_bl_tree()
@@ -629,5 +629,5 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         # self._save_pw_pos()
         if hasattr(self.new_msg_win, 'destroy_win'):
             self.new_msg_win.destroy_win()
-        self._root_cl.aprs_pn_msg_win = None
+        self._root_cl.toplevel_manager.aprs_pn_msg_win = None
         self.destroy()

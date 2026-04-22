@@ -44,7 +44,7 @@ class BBSSettingsMain(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
         self.add_win    = None
-        self._root_win.settings_win = self
+        self._root_win.toplevel_manager.settings_win = self
         self.title("PMS/BBS-" + self._getTabStr('settings'))
         ###############################################################
         self._pms_cfg   = POPT_CFG.get_BBS_cfg()
@@ -193,6 +193,6 @@ class BBSSettingsMain(tk.Toplevel):
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 

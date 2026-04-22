@@ -1,6 +1,7 @@
 import time
 import tkinter as tk
 from cfg.cfg_fnc import set_obj_att_fm_dict, convert_obj_to_dict
+from cfg.constant import MAX_SYSOP_CH
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import cleanup_tags, get_all_tags
@@ -109,3 +110,22 @@ class GUIChannels:
         for ch_id in self.channel_vars.keys():
             self.channel_vars[ch_id] = ChVars()
         self._gui_root.update_qso_Vars()
+
+    def get_free_channel(self, start_channel=1):
+        if not start_channel:
+            start_channel = 1
+        if not self._gui_root.get_conn(con_ind=start_channel):
+            return start_channel
+        for ch_id in range(1, MAX_SYSOP_CH):
+            if not self._gui_root.get_conn(con_ind=ch_id):
+                return ch_id
+        return None
+
+    def get_all_free_channels(self):
+        ret = []
+        for ch_id in range(1, MAX_SYSOP_CH):
+            if not self._gui_root.get_conn(con_ind=ch_id):
+                ret.append(ch_id)
+        return ret
+
+

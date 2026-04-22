@@ -33,7 +33,7 @@ class APRSSettingsMain(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
-        self._root_win.settings_win = self
+        self._root_win.toplevel_manager.settings_win = self
         ###############################################################
         self._lang      = POPT_CFG.get_guiCFG_language()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
@@ -158,6 +158,6 @@ class APRSSettingsMain(tk.Toplevel):
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 

@@ -1083,7 +1083,7 @@ class PRP_remoteGUI(tk.Toplevel):
             self._tab_list[uid] = tab
 
         ################################
-        self._root.prp_remote_win = self
+        self._root.toplevel_manager.prp_remote_win = self
 
     ####################################################
     def tasker(self):
@@ -1140,7 +1140,7 @@ class PRP_remoteGUI(tk.Toplevel):
     #
     def _destroy_win(self):
         self.destroy()
-        self._root.prp_remote_win = None
+        self._root.toplevel_manager.prp_remote_win = None
 
     def close(self):
         self._destroy_win()

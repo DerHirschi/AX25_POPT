@@ -21,7 +21,7 @@ class AlarmIconFrame(tk.Frame):
                                   background='#313336',
                                   foreground='#fa2020')
         self._block_in_conn.pack(side='left', padx=3)
-        self._block_in_conn.bind('<Button-1>', lambda event: main_gui.open_BlockList_win())
+        self._block_in_conn.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_BlockList_win())
 
         self._mh_label = tk.Label(self, text='⊛',
                                   font=('', 14),
@@ -29,7 +29,7 @@ class AlarmIconFrame(tk.Frame):
                                   background='#313336',
                                   foreground='#18e002')
         self._mh_label.pack(side='left', padx=3)
-        self._mh_label.bind('<Button-1>', lambda event: main_gui.open_MH_win())
+        self._mh_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_MH_win())
 
         self._tracer_label = tk.Label(self, text='☈',
                                       font=('', 11),
@@ -37,7 +37,7 @@ class AlarmIconFrame(tk.Frame):
                                       state='disabled',
                                       foreground='#18e002')
         self._tracer_label.pack(side='left', padx=3)
-        self._tracer_label.bind('<Button-1>', lambda event: main_gui.open_MH_win())
+        self._tracer_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_MH_win())
 
         self._beacon_label = tk.Label(self, text='⨀',
                                       font=('', 9),
@@ -59,7 +59,7 @@ class AlarmIconFrame(tk.Frame):
                                        state='disabled',
                                        foreground='#18e002')
         self._pms_fwd_label.pack(side='left', padx=3)
-        self._pms_fwd_label.bind('<Button-1>', lambda event: main_gui.open_window('pms_fwq_q'))
+        self._pms_fwd_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('pms_fwq_q'))
 
         self._pms_mail_label = tk.Label(self, text='✉',
                                         font=('', 15,),
@@ -67,7 +67,7 @@ class AlarmIconFrame(tk.Frame):
                                         state='disabled',
                                         foreground='#18e002')
         self._pms_mail_label.pack(side='left', padx=3)
-        self._pms_mail_label.bind('<Button-1>', lambda event: main_gui.open_window('pms_msg_center'))
+        self._pms_mail_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('pms_msg_center'))
 
 
         self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
@@ -76,7 +76,7 @@ class AlarmIconFrame(tk.Frame):
                                          state='disabled',
                                          foreground='#18e002')
         self._aprs_mail_label.pack(side='left', padx=3)
-        self._aprs_mail_label.bind('<Button-1>', lambda event: main_gui.open_window('aprs_msg'))
+        self._aprs_mail_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('aprs_msg'))
 
         self._bell_label = tk.Label(self, text='☎',
                                     font=('', 11,),

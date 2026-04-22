@@ -22,7 +22,7 @@ class RightLevelEditor(tk.Toplevel):
         self._root_win  = parent
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
-        parent.right_level_win = self
+        parent.toplevel_manager.right_level_win = self
 
         win_width  = 1000
         win_height = 700
@@ -363,7 +363,7 @@ class RightLevelEditor(tk.Toplevel):
             self._default_level_combo['values'] = list(self._levels.keys())
 
     def destroy_win(self):
-        self._root_win.right_level_win = None
+        self._root_win.toplevel_manager.right_level_win = None
         self.destroy()
 
     def close(self):

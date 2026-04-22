@@ -110,7 +110,7 @@ class APRSChatFrame(ttk.Frame):
         self._build_ui()
         """"""
         gui = popt_handler.get_gui()
-        gui.aprs_pn_msg_frame.append(self)
+        gui.toplevel_manager.aprs_pn_msg_frame.append(self)
         """"""
         self.update_aprs_msg_frame()
 

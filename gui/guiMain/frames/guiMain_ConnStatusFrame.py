@@ -15,6 +15,7 @@ class ConnStatusBar(ttk.Frame):
         self._gui_root     = gui_root_cl
         self._popt_handler = gui_root_cl.get_PH_mainGUI()
         self._style_name   = gui_root_cl.style_name
+        self._toplevelMng  = gui_root_cl.toplevel_manager
         # ================================
         self._get_colorMap = lambda : COLOR_MAP.get(self._style_name, ('#000000',  '#d9d9d9'))
         # ================================
@@ -66,7 +67,7 @@ class ConnStatusBar(ttk.Frame):
 
                                )
         name_label.pack()
-        name_label.bind('<Button-1>', self._gui_root.open_user_db_win)
+        name_label.bind('<Button-1>', self._toplevelMng.open_user_db_win)
         qth_label = tk.Label(qth_f,
                              textvariable=self._stat_info_qth_var,
                              bg=bg,
@@ -76,7 +77,7 @@ class ConnStatusBar(ttk.Frame):
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
-        qth_label.bind('<Button-1>', self._gui_root.open_user_db_win)
+        qth_label.bind('<Button-1>', self._toplevelMng.open_user_db_win)
         qth_label.pack()
         loc_label = tk.Label(loc_f,
                              textvariable=self._stat_info_loc_var,
@@ -87,7 +88,7 @@ class ConnStatusBar(ttk.Frame):
                              border=0,
                              font=(FONT_STAT_BAR, TEXT_SIZE_STATUS)
                              )
-        loc_label.bind('<Button-1>', self._gui_root.open_user_db_win)
+        loc_label.bind('<Button-1>', self._toplevelMng.open_user_db_win)
         loc_label.pack()
 
         opt = list(STATION_TYPS)
@@ -209,7 +210,7 @@ class ConnStatusBar(ttk.Frame):
                 if self._stat_info_status_var.get() != status:
                     self._stat_info_status_var.set(status)
                     # self.status_label.bind('<Button-1>', lambda: self._open_settings_window('ft_manager'))
-                    self.status_label.bind('<Button-1>', self._gui_root.open_ft_manager)
+                    self.status_label.bind('<Button-1>', self._toplevelMng.open_ft_manager)
             else:
                 status = ''
                 try:

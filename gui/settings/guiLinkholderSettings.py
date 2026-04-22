@@ -12,7 +12,7 @@ class LinkHolderSettings(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
         self.root_win = root
-        self.root_win.settings_win = self
+        self.root_win.toplevel_manager.settings_win = self
         self.win_height = 245
         self.win_width = 850
         self.style = self.root_win.style
@@ -128,7 +128,7 @@ class LinkHolderSettings(tk.Toplevel):
 
     def destroy_win(self):
         self.destroy()
-        self.root_win.settings_win = None
+        self.root_win.toplevel_manager.settings_win = None
 
     def tasker(self):
         pass

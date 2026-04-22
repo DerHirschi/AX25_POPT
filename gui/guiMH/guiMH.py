@@ -483,7 +483,7 @@ class MHWin(tk.Toplevel):
             3: self._update_conn_his,
         }
         #################################
-        self._root_win.mh_window = self
+        self._root_win.toplevel_manager.mh_window = self
         self._update_mh()
         self._update_dx_his()
         self._update_conn_his()
@@ -1134,7 +1134,7 @@ class MHWin(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.mh_window = None
+        self._root_win.toplevel_manager.mh_window = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

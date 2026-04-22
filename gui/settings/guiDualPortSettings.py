@@ -106,7 +106,7 @@ class DualPortSettingsWin(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         self.title('DualPort-Settings')
-        self._root_win.dualPort_settings_win = self
+        self._root_win.toplevel_manager.dualPort_settings_win = self
         ########################################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -249,5 +249,5 @@ class DualPortSettingsWin(tk.Toplevel):
         return self._popt_handler
 
     def destroy_win(self):
-        self._root_win.dualPort_settings_win = None
+        self._root_win.toplevel_manager.dualPort_settings_win = None
         self.destroy()

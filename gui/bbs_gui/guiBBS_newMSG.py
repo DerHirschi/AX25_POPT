@@ -103,7 +103,11 @@ class BBS_newMSG(tk.Toplevel):
         self._init_footer_frame(footer_frame)
         #####################
         # Init Header from reply MSG
-        self._root_win.newPMS_MSG_win = self
+        if hasattr(self._root_win, 'toplevel_manager'):
+            self._root_win.toplevel_manager.newPMS_MSG_win = self
+        else:
+            self._root_win.newPMS_MSG_win = self
+
         if self._reply_msg:
             self._init_data_f_reply()
         self.bind('<Key>',           self._update_msg_size)
@@ -623,5 +627,8 @@ class BBS_newMSG(tk.Toplevel):
         # self._bbs_obj = None
         if hasattr(self._root_win, 'on_bbsTab_select'):
             self._root_win.on_bbsTab_select()
-        self._root_win.newPMS_MSG_win = None
+        if hasattr(self._root_win, 'toplevel_manager'):
+            self._root_win.toplevel_manager.newPMS_MSG_win = None
+        else:
+            self._root_win.newPMS_MSG_win = None
         self.destroy()

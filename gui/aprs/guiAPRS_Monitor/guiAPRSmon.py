@@ -233,7 +233,7 @@ class AISmonitor(tk.Toplevel):
         self._igate_mon_cl.init_tree()
         self._digi_mon_cl.init_tree()
         sms_tab_f.update_aprs_msg_frame()
-        root_win.aprs_mon_win = self
+        root_win.toplevel_manager.aprs_mon_win = self
 
 
     #############################################################
@@ -779,7 +779,7 @@ class AISmonitor(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_cl.aprs_mon_win = None
+        self._root_cl.toplevel_manager.aprs_mon_win = None
         self._root_cl.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

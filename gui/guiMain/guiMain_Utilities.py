@@ -23,6 +23,7 @@ class GuiUtilities:
         self._mon_txt   = gui_root_cl.mon_txt
         # ===================================
         self._guiChannels = gui_root_cl.guiChannels
+        self._toplevelMng = gui_root_cl.toplevel_manager
 
 
     # ===================================
@@ -33,7 +34,7 @@ class GuiUtilities:
         #########################################################################
         # Menü 1 "Verbindungen"
         MenuVerb = tk.Menu(menubar, tearoff=False)
-        MenuVerb.add_command(label=self._getTabStr('new_conn'), command=self._root_cl.open_new_conn_win)
+        MenuVerb.add_command(label=self._getTabStr('new_conn'), command=self._toplevelMng.open_new_conn_win)
         MenuVerb.add_command(label=self._getTabStr('disconnect'), command=self._root_cl.disco_conn)
         MenuVerb.add_separator()
         MenuVerb.add_command(label=self._getTabStr('disconnect_all'), command=self._root_cl.disco_all)
@@ -72,40 +73,40 @@ class GuiUtilities:
         ####################################################################
         # Menü 3 "Tools"
         MenuTools = tk.Menu(menubar, tearoff=False)
-        MenuTools.add_command(label="MH", command=self._root_cl.open_MH_win, underline=0)
+        MenuTools.add_command(label="MH", command=self._toplevelMng.open_MH_win, underline=0)
         MenuTools.add_command(label=self._getTabStr('statistic'),
-                              command=lambda: self._root_cl.open_window('PortStat'),
+                              command=lambda: self._toplevelMng.open_window('PortStat'),
                               underline=1)
         MenuTools.add_separator()
         MenuTools.add_command(label="User-DB Tree",
-                              command=lambda: self._root_cl.open_window('userDB_tree'),
+                              command=lambda: self._toplevelMng.open_window('userDB_tree'),
                               underline=0)
         MenuTools.add_command(label=self._getTabStr('user_db'),
-                              command=lambda: self._root_cl.open_user_db_win(),
+                              command=lambda: self._toplevelMng.open_user_db_win(),
                               underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label=self._getTabStr('locator_calc'),
-                              command=lambda: self._root_cl.open_window('locator_calc'),
+                              command=lambda: self._toplevelMng.open_window('locator_calc'),
                               underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label="FT-Manager",
-                              command=lambda: self._root_cl.open_settings_window('ft_manager'),
+                              command=lambda: self._toplevelMng.open_settings_window('ft_manager'),
                               underline=0)
         MenuTools.add_command(label=self._getTabStr('send_file'),
-                              command=lambda: self._root_cl.open_window('ft_send'),
+                              command=lambda: self._toplevelMng.open_window('ft_send'),
                               underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label=self._getTabStr('linkholder'),
-                              command=lambda: self._root_cl.open_settings_window('l_holder'),
+                              command=lambda: self._toplevelMng.open_settings_window('l_holder'),
                               underline=0)
         MenuTools.add_command(label='Pipe-Tool',
-                              command=lambda: self._root_cl.open_settings_window('pipe_sett'),
+                              command=lambda: self._toplevelMng.open_settings_window('pipe_sett'),
                               underline=0)
         MenuTools.add_separator()
 
         MenuTools.add_command(label='Priv',
-                              command=lambda: self._root_cl.open_settings_window('priv_win'),
+                              command=lambda: self._toplevelMng.open_settings_window('priv_win'),
                               underline=0)
         MenuTools.add_separator()
         # FIXME: PRP-Remote Disabled
@@ -113,14 +114,14 @@ class GuiUtilities:
         #                      command=lambda: self.open_window('remote_monitor'),
         #                      underline=0)
         MenuTools.add_command(label='Dual-Port Monitor',
-                              command=lambda: self._root_cl.open_window('dualPort_monitor'),
+                              command=lambda: self._toplevelMng.open_window('dualPort_monitor'),
                               underline=0)
         MenuTools.add_separator()
         MenuTools.add_command(label=self._getTabStr('right_level_editor'),
-                              command=lambda: self._root_cl.open_window('right_level_editor'),
+                              command=lambda: self._toplevelMng.open_window('right_level_editor'),
                               underline=0)
         MenuTools.add_command(label='Block List',
-                              command=lambda: self._root_cl.open_BlockList_win(),
+                              command=lambda: self._toplevelMng.open_BlockList_win(),
                               underline=0)
         MenuTools.add_separator()
 
@@ -135,12 +136,12 @@ class GuiUtilities:
         MenuSettings = tk.Menu(menubar, tearoff=False)
 
         MenuSettings.add_command(label=self._getTabStr('settings'),
-                                 command=lambda: self._root_cl.open_settings_window('all_sett'),
+                                 command=lambda: self._toplevelMng.open_settings_window('all_sett'),
                                  underline=0)
         MenuSettings.add_separator()
 
         MenuSettings.add_command(label='Dual-Port',
-                                 command=lambda: self._root_cl.open_window('dualPort_settings'),
+                                 command=lambda: self._toplevelMng.open_window('dualPort_settings'),
                                  underline=0)
 
         menubar.add_cascade(label=self._getTabStr('settings'), menu=MenuSettings, underline=0)
@@ -148,20 +149,20 @@ class GuiUtilities:
         # APRS Menu
         MenuAPRS = tk.Menu(menubar, tearoff=False)
         MenuAPRS.add_command(label=self._getTabStr('aprs_mon'),
-                             command=lambda: self._root_cl.open_window('aprs_mon'),
+                             command=lambda: self._toplevelMng.open_window('aprs_mon'),
                              underline=0)
         #MenuAPRS.add_command(label="Beacon Tracer", command=self.open_be_tracer_win,
         #                     underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=self._getTabStr('wx_window'),
-                             command=lambda: self._root_cl.open_window('wx_win'),
+                             command=lambda: self._toplevelMng.open_window('wx_win'),
                              underline=0)
         MenuAPRS.add_command(label=self._getTabStr('pn_msg'),
-                             command=lambda: self._root_cl.open_window('aprs_msg'),
+                             command=lambda: self._toplevelMng.open_window('aprs_msg'),
                              underline=0)
         MenuAPRS.add_separator()
         MenuAPRS.add_command(label=self._getTabStr('settings'),
-                             command=lambda: self._root_cl.open_settings_window('aprs_sett'),
+                             command=lambda: self._toplevelMng.open_settings_window('aprs_sett'),
                              underline=0)
         # MenuAPRS.add_separator()
         menubar.add_cascade(label="APRS", menu=MenuAPRS, underline=0)
@@ -169,18 +170,18 @@ class GuiUtilities:
         # BBS/PMS
         MenuBBS = tk.Menu(menubar, tearoff=False)
         MenuBBS.add_command(label=self._getTabStr('new_msg'),
-                            command=lambda: self._root_cl.open_window('pms_new_msg'),
+                            command=lambda: self._toplevelMng.open_window('pms_new_msg'),
                             underline=0)
         MenuBBS.add_command(label=self._getTabStr('msg_center'),
-                            command=lambda: self._root_cl.open_window('pms_msg_center'),
+                            command=lambda: self._toplevelMng.open_window('pms_msg_center'),
                             underline=0)
 
         MenuBBS.add_separator()
         MenuBBS.add_command(label=self._getTabStr('fwd_list'),
-                            command=lambda: self._root_cl.open_window('pms_fwq_q'),
+                            command=lambda: self._toplevelMng.open_window('pms_fwq_q'),
                             underline=0)
         MenuBBS.add_command(label=self._getTabStr('fwd_path'),
-                            command=lambda: self._root_cl.open_window('fwdPath'),
+                            command=lambda: self._toplevelMng.open_window('fwdPath'),
                             underline=0)
         MenuBBS.add_separator()
         """
@@ -195,11 +196,11 @@ class GuiUtilities:
         MenuBBS.add_separator()
         """
         MenuBBS.add_command(label='Old Settings',
-                            command=lambda: self._root_cl.open_settings_window('pms_setting'),
+                            command=lambda: self._toplevelMng.open_settings_window('pms_setting'),
                             underline=0) # pms_all_sett
         """
         MenuBBS.add_command(label=self._getTabStr('settings'),
-                            command=lambda: self._root_cl.open_settings_window('pms_all_sett'),
+                            command=lambda: self._toplevelMng.open_settings_window('pms_all_sett'),
                             underline=0)
         menubar.add_cascade(label='PMS/BBS', menu=MenuBBS, underline=0)
         #########################################################################
@@ -207,11 +208,11 @@ class GuiUtilities:
         MenuHelp = tk.Menu(menubar, tearoff=False)
         # MenuHelp.add_command(label="Hilfe", command=lambda: False, underline=0)
         MenuHelp.add_command(label=self._getTabStr('keybind'),
-                             command=lambda: self._root_cl.open_settings_window('keybinds'),
+                             command=lambda: self._toplevelMng.open_settings_window('keybinds'),
                              underline=0)
         MenuHelp.add_separator()
         MenuHelp.add_command(label=self._getTabStr('about'),
-                             command=lambda: self._root_cl.open_settings_window('about'),
+                             command=lambda: self._toplevelMng.open_settings_window('about'),
                              underline=0)
         menubar.add_cascade(label=self._getTabStr('help'), menu=MenuHelp, underline=0)
 
@@ -243,14 +244,14 @@ class GuiUtilities:
         actions_submenu.add_command(label="F12", command=lambda : self._insert_ftext_fm_menu(12))
         inp_txt_men.add_separator()
         inp_txt_men.add_item(self._getTabStr('linkholder'),
-                             lambda: self._root_cl.open_settings_window('l_holder'))
+                             lambda: self._toplevelMng.open_settings_window('l_holder'))
         inp_txt_men.add_item(label=self._getTabStr('send_file'),
-                             command=lambda: self._root_cl.open_window('ft_send'))
+                             command=lambda: self._toplevelMng.open_window('ft_send'))
         inp_txt_men.add_item(label="Priv",
                              command=lambda: self._root_cl.do_priv())
         inp_txt_men.add_separator()
         inp_txt_men.add_item(label=self._getTabStr('user_db'),
-                             command=lambda: self._root_cl.open_user_db_win())
+                             command=lambda: self._toplevelMng.open_user_db_win())
         inp_txt_men.add_separator()
         inp_txt_men.add_item(self._getTabStr('clean_prescription_win'), self._clear_inpWin)
 
@@ -263,14 +264,14 @@ class GuiUtilities:
         out_txt_men.add_item(self._getTabStr('save_qso_to_file'), self._save_to_file)
         out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('linkholder'),
-                             lambda: self._root_cl.open_settings_window('l_holder'))
+                             lambda: self._toplevelMng.open_settings_window('l_holder'))
         out_txt_men.add_item(label=self._getTabStr('send_file'),
-                             command=lambda: self._root_cl.open_window('ft_send'))
+                             command=lambda: self._toplevelMng.open_window('ft_send'))
         out_txt_men.add_item(label="Priv",
                              command=lambda: self._root_cl.do_priv())
         out_txt_men.add_separator()
         out_txt_men.add_item(label=self._getTabStr('user_db'),
-                             command=lambda: self._root_cl.open_user_db_win())
+                             command=lambda: self._toplevelMng.open_user_db_win())
         out_txt_men.add_separator()
         out_txt_men.add_item(self._getTabStr('clean_just_qso_win'), self._clear_qsoWin)
         # Monitor
@@ -323,8 +324,8 @@ class GuiUtilities:
         self._main_win.bind('<KeyRelease-Up>',          self._arrow_keys)
         self._main_win.bind('<KeyRelease-Down>',        self._arrow_keys)
         # self.main_win.bind('<KP_Enter>', self.snd_text)
-        self._main_win.bind('<Alt-c>',          lambda event: self._root_cl.open_new_conn_win())
-        self._main_win.bind('<Escape>',         lambda event: self._root_cl.open_new_conn_win())
+        self._main_win.bind('<Alt-c>',          lambda event: self._toplevelMng.open_new_conn_win())
+        self._main_win.bind('<Escape>',         lambda event: self._toplevelMng.open_new_conn_win())
         self._main_win.bind('<Alt-d>',          lambda event: self._root_cl.disco_conn())
         self._main_win.bind('<Control-c>',      lambda event: self._copy_select())
         #self.main_win.bind('<Control-v>',      lambda event: self._clipboard_past())

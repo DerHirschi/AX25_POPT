@@ -121,7 +121,7 @@ class UserDBtreeview(tk.Toplevel):
         self._map_widget.set_position(lat, lon)
         self._map_widget.set_zoom(6)
         ##########################################################################################
-        self._root_win.userDB_tree_win = self
+        self._root_win.toplevel_manager.userDB_tree_win = self
         self._init_tree_data()
         self._update_tree()
         self._update_map()
@@ -326,7 +326,7 @@ class UserDBtreeview(tk.Toplevel):
         if self._key_is_pressed:
             return
         selected = self._selected[-1]
-        self._root_win.open_user_db_win(ent_key=selected)
+        self._root_win.toplevel_manager.open_user_db_win(ent_key=selected)
 
 
     def _sort_entry(self, flag: str):
@@ -417,7 +417,7 @@ class UserDBtreeview(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.userDB_tree_win = None
+        self._root_win.toplevel_manager.userDB_tree_win = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

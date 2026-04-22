@@ -126,7 +126,7 @@ class PlotWindow(tk.Toplevel):
         self._init_menubar()
 
         self._change_xlim()
-        self._root_win.port_stat_win = self
+        self._root_win.toplevel_manager.port_stat_win = self
 
     def _init_chk_frame(self, root_frame):
         tk.Checkbutton(root_frame,
@@ -434,5 +434,5 @@ class PlotWindow(tk.Toplevel):
         plt.close(self._fig)
         self._fig.clear()
         self._canvas.get_tk_widget().destroy()
-        self._root_win.port_stat_win = None
+        self._root_win.toplevel_manager.port_stat_win = None
         self.destroy()

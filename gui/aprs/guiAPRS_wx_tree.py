@@ -120,7 +120,7 @@ class WXWin(tk.Toplevel):
         self._tree.column("wind_speed", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("luminosity", anchor=tk.CENTER, stretch=tk.YES, width=50)
         self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=700)
-        self._root_win.wx_window = self
+        self._root_win.toplevel_manager.wx_window = self
         self._tree_data = []
         self._wx_data = []
         self._init_tree_data()
@@ -216,5 +216,5 @@ class WXWin(tk.Toplevel):
         # self.lift()
 
     def _close(self):
-        self._root_win.wx_window = None
+        self._root_win.toplevel_manager.wx_window = None
         self.destroy()

@@ -378,7 +378,7 @@ class PipeToolSettings(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root        = root
         self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        root.settings_win = self
+        root.toplevel_manager.settings_win = self
         self.win_height   = 600
         self.win_width    = 860
         self.style      = root.style
@@ -550,7 +550,7 @@ class PipeToolSettings(tk.Toplevel):
 
     def _destroy_win(self):
         self.destroy()
-        self._root.settings_win = None
+        self._root.toplevel_manager.settings_win = None
 
     def tasker(self):
         pass

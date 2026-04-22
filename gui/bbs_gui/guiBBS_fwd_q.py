@@ -513,7 +513,7 @@ class BBS_fwd_Q(tk.Toplevel):
         ##########################################################################################
         #self._update_conn_his()
         self._init_menubar()
-        self._root_win.BBS_fwd_q_list = self
+        self._root_win.toplevel_manager.BBS_fwd_q_list = self
         self.tasker()
 
     ##################################################
@@ -1118,5 +1118,5 @@ class BBS_fwd_Q(tk.Toplevel):
 
     def _close(self):
         # self._bbs_obj = None
-        self._root_win.BBS_fwd_q_list = None
+        self._root_win.toplevel_manager.BBS_fwd_q_list = None
         self.destroy()

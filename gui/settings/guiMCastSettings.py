@@ -421,7 +421,7 @@ class MulticastSettings(ttk.Frame):
         self.lift()
         self.title('MCast-Settings')
         """
-        # self._root_win.settings_win = self
+        # self._root_win.toplevel_manager.settings_win = self
         self._mcast_cfg: dict = self._mcast.get_mcast_cfgs()
         #####################################################################
         # Vars
@@ -632,7 +632,7 @@ class MulticastSettings(ttk.Frame):
     def destroy_win(self):
         if hasattr(self.value_win, 'destroy_win'):
             self.value_win.destroy_win()
-        # self._root_win.settings_win = None
+        # self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 
     def _get_config(self):

@@ -151,7 +151,7 @@ class FwdGraph(tk.Toplevel):
         right_frame = tk.Frame(self)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._init_chk_frame(right_frame)
-        self._root_win.fwd_Path_plot_win = self
+        self._root_win.toplevel_manager.fwd_Path_plot_win = self
 
         # self._init_stationInfo_vars(self._path_data)
         ##self._init_vars_fm_raw_data()
@@ -478,5 +478,5 @@ class FwdGraph(tk.Toplevel):
         self._fig.clear()
         plt.close(self._fig)
         self._canvas.get_tk_widget().destroy()
-        self._root_win.fwd_Path_plot_win = None
+        self._root_win.toplevel_manager.fwd_Path_plot_win = None
         self.destroy()

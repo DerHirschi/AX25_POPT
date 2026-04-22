@@ -239,7 +239,7 @@ class DualPort_Monitor(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
-        self._root_win.dualPortMon_win = self
+        self._root_win.toplevel_manager.dualPortMon_win = self
         #################################################
         tab_frame = ttk.Frame(self)
         tab_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -299,7 +299,7 @@ class DualPort_Monitor(tk.Toplevel):
 
 
     def _close(self):
-        self._root_win.dualPortMon_win = None
+        self._root_win.toplevel_manager.dualPortMon_win = None
         for k in self.tab_list.keys():
             self.tab_list[k].close_tab()
         self.destroy()

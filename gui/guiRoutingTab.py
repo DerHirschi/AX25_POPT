@@ -129,7 +129,7 @@ class RoutingTableWindow:
         self._initial_xlim = None
         self._initial_ylim = None
 
-        self._root_win.routingTab_win = self
+        self._root_win.toplevel_manager.routingTab_win = self
         # Initiale Daten laden
         self.update_treeview()
 
@@ -394,7 +394,7 @@ class RoutingTableWindow:
         self._window.destroy()
 
     def close(self):
-        self._root_win.routingTab_win = None
+        self._root_win.toplevel_manager.routingTab_win = None
         self._destroy_win()
 
     def tasker(self):

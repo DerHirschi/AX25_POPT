@@ -148,7 +148,7 @@ class BlockList(tk.Toplevel):
         if hasattr(self.add_win, 'destroy_win'):
             self.add_win.destroy_win()
         self.destroy()
-        self._main.block_list_win = None
+        self._main.toplevel_manager.block_list_win = None
 
     def close(self):
         self._destroy_win()

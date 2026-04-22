@@ -51,7 +51,7 @@ class FileTransferManager(tk.Toplevel):
         self._populate_query_list()
         self._set_abort_pause_btn()
         self._init_menubar()
-        root.settings_win = self
+        root.toplevel_manager.settings_win = self
 
     def _init_menubar(self):
         menubar = Menu(self, tearoff=False)
@@ -61,7 +61,7 @@ class FileTransferManager(tk.Toplevel):
         menubar.add_cascade(label=self._getTabStr('file_1'), menu=MenuVerb, underline=0)
 
     def destroy_win(self):
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 
     def tasker(self):
@@ -332,5 +332,5 @@ class FileTransferManager(tk.Toplevel):
         self.tasker()
 
     def _open_txFile_win(self):
-        self._root_win.open_window('ft_send')
+        self._root_win.toplevel_manager.open_window('ft_send')
 

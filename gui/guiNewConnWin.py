@@ -46,7 +46,7 @@ class NewConnWin(tk.Toplevel):
         self.lift()
         #################################################
         # Vars
-        ch_id = self._main.get_free_channel(self._main.channel_index)
+        ch_id = self._main.guiChannels.get_free_channel(self._main.channel_index)
         self._port_index                 = 0
         self._port_btn: {int: tk.Button} = {}
         self._call_txt_inp_var           = tk.StringVar(self)
@@ -180,7 +180,7 @@ class NewConnWin(tk.Toplevel):
         # CH-ID
         ch_id_frame = ttk.Frame(own_call_frame)
         ch_id_frame.pack(side=tk.LEFT, padx=50)
-        ch_opt = self._main.get_all_free_channels()
+        ch_opt = self._main.guiChannels.get_all_free_channels()
         if not ch_opt:
             ch_opt = ['']
         ch_opt = [ch_id] + ch_opt
@@ -222,7 +222,7 @@ class NewConnWin(tk.Toplevel):
         ##############
         # Menubar
         self._init_menubar()
-        self._main.new_conn_win = self
+        self._main.toplevel_manager.new_conn_win = self
         ##############
         self._set_port_btn()
 
@@ -316,7 +316,7 @@ class NewConnWin(tk.Toplevel):
         try:
             ch_id       = int(self._ch_id_var.get())
         except ValueError:
-            ch_id        = self._main.get_free_channel(self._main.channel_index)
+            ch_id        = self._main.guiChannels.get_free_channel(self._main.channel_index)
         try:
             ssid        = int(self._own_ssid_var.get())
         except ValueError:
@@ -467,4 +467,4 @@ class NewConnWin(tk.Toplevel):
 
     def _destroy_new_conn_win(self):
         self.destroy()
-        self._main.new_conn_win = None
+        self._main.toplevel_manager.new_conn_win = None

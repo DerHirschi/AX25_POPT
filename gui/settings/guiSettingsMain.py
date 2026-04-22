@@ -48,7 +48,7 @@ class SettingsMain(tk.Toplevel):
         self._lang = POPT_CFG.get_guiCFG_language()
         self.title(get_strTab(str_key='settings', lang_index=self._lang))
         self._root_win = root_win
-        self._root_win.settings_win = self
+        self._root_win.toplevel_manager.settings_win = self
         ######################################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -193,5 +193,5 @@ class SettingsMain(tk.Toplevel):
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
 
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()

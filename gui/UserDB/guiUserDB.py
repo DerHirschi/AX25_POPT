@@ -515,7 +515,7 @@ class UserDB(tk.Toplevel):
             self._select_entry_fm_key(ent_key)
         self._rights_tab.on_entry_selected()
         self._update_map()
-        root.userdb_win = self
+        root.toplevel_manager.userdb_win = self
 
     def _init_RClick_menu(self):
         if self._tree:
@@ -1004,7 +1004,7 @@ class UserDB(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.userdb_win = None
+        self._root_win.toplevel_manager.userdb_win = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

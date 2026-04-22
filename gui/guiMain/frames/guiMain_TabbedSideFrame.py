@@ -14,6 +14,7 @@ from sound.popt_sound import SOUND
 class SideTabbedFrame:
     def __init__(self, main_cl, frame, plot_frame=None, path_frame=None):
         self._root_class        = main_cl
+        self._toplevelMng       = main_cl.toplevel_manager
         self.style              = self._root_class.style
         self._conn_typ_icon_tab = self._root_class.guiIcon.get_conn_typ_icon_16()
         ##########################################
@@ -197,7 +198,7 @@ class SideTabbedFrame:
 
         link_holder_settings_btn = ttk.Button(tab1_kanal,
                                              text=self._getTabStr('linkholder'),
-                                             command=self._root_class.open_link_holder_sett
+                                             command=self._toplevelMng.open_link_holder_sett
                                              )
         link_holder_settings_btn.place(x=140, y=165)
 
@@ -251,7 +252,7 @@ class SideTabbedFrame:
                                               mode='determinate',
                                               )
         self.ft_progress.place(x=x, y=y)
-        self.ft_progress.bind('<Button-1>', self._root_class.open_ft_manager)
+        self.ft_progress.bind('<Button-1>', self._toplevelMng.open_ft_manager)
         self.ft_progress['value'] = 0
 
         ttk.Label(tab1_kanal, textvariable=self._root_class.ft_progress_var).place(x=x + 160, y=y)
@@ -796,10 +797,10 @@ class SideTabbedFrame:
 
             if vias:
                 call = f'{call} {vias}'
-            if not self._root_class.new_conn_win:
-                self._root_class.open_new_conn_win()
-            if self._root_class.new_conn_win:
-                self._root_class.new_conn_win.preset_ent(call, port)
+            if not self._toplevelMng.new_conn_win:
+                self._toplevelMng.open_new_conn_win()
+            if self._toplevelMng.new_conn_win:
+                self._toplevelMng.new_conn_win.preset_ent(call, port)
 
     def _connects_entry_selected(self, event=None):
         selected_items = self._connects_tree.selection()
@@ -1148,10 +1149,10 @@ class SideTabbedFrame:
     """
 
     def _open_mh(self):
-        self._root_class.open_MH_win()
+        self._toplevelMng.open_MH_win()
 
     def _open_PortStat(self):
-        self._root_class.open_window('PortStat')
+        self._toplevelMng.open_window('PortStat')
 
     def _disco_all(self):
         if messagebox.askokcancel(title=self._getTabStr('disconnect_all'),

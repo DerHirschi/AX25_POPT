@@ -153,7 +153,7 @@ class LocatorCalculator(tk.Toplevel):
         # Create Calculate button
         calculate_button = ttk.Button(button_frame, text=self._getTabStr('delete'), command=self.clean_vars)
         calculate_button.pack(side=tk.LEFT, padx=5)
-        main_win.locator_calc_window = self
+        main_win.toplevel_manager.locator_calc_window = self
 
     def tasker(self):
         if self._quit:
@@ -377,7 +377,7 @@ class LocatorCalculator(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.locator_calc_window = None
+        self._root_win.toplevel_manager.locator_calc_window = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True
@@ -409,4 +409,4 @@ class LocatorCalculator(tk.Toplevel):
 
     #def destroy_win(self):
     #    self.destroy()
-    #    self._root_win.locator_calc_window = None
+    #    self._root_win.toplevel_manager.locator_calc_window = None
