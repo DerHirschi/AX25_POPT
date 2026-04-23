@@ -23,10 +23,8 @@ from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
-    TXT_INP_CURSOR_CLR, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL,\
-    MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
+from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_sound_RX_BEEP, \
+    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
@@ -221,34 +219,35 @@ class PoPT_GUI_Main:
         # Lower
         self._TXT_lower_frame   = ttk.Frame(self._pw, borderwidth=0, )
         # =====================================
-        # AX25 Status Bar
-        self._AX25StatusBar = AX25StatusFrame(self, self._TXT_upper_frame)
-        self._AX25StatusBar.pack(side='bottom', expand=False, fill='x')
-        # =====================================
-        # Connection Status Bar
-        self.ConnStatusBar   = ConnStatusBar(self, self._TXT_mid_frame)
-        self.ConnStatusBar.pack(side='bottom', expand=False, fill='x')
-        # =====================================
-        # Pack it
         self._TXT_upper_frame.pack(side='bottom', expand=1, fill='both')
         self._TXT_mid_frame.pack(  side='bottom', expand=1, fill='both')
         self._TXT_lower_frame.pack(side='bottom', expand=1, fill='both')
-        self._mon_tree_frame = None
-        self._mon_pw         = None
-        txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
-        winPos_cfgTab = {
-            0: self._init_TXT_frame_up,
-            1: self._init_TXT_frame_mid,
-            2: self._init_TXT_frame_low,
-        }
-        self.inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
-        self.qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
-        #self.mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
-        winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
-
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
         self._pw.add(self._TXT_lower_frame, weight=1)
+        # =====================================
+        winPos_cfgTab = {
+            0: self._TXT_upper_frame,
+            1: self._TXT_mid_frame,
+            2: self._TXT_lower_frame,
+        }
+        txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
+        qso_frame = winPos_cfgTab[txtWin_pos_cfg[1]]
+        # =====================================
+        # AX25 Status Bar
+        self._AX25StatusBar = AX25StatusFrame(self, qso_frame)
+        self._AX25StatusBar.pack(side='top', expand=False, fill='x')
+
+        # =====================================
+        # Connection Status Bar
+        self.ConnStatusBar  = ConnStatusBar(self, qso_frame)
+        self.ConnStatusBar.pack(side='bottom', expand=False, fill='x')
+
+        # =====================================
+        # Text Frames (QSO/PreWrite/Monitor)
+        self._init_prewrite_frame(winPos_cfgTab[txtWin_pos_cfg[0]])
+        self._init_qso_frame(     winPos_cfgTab[txtWin_pos_cfg[1]])
+        self._init_monitor_frame( winPos_cfgTab[txtWin_pos_cfg[2]])
 
         ######################################################################
         ######################################################################
@@ -501,140 +500,69 @@ class PoPT_GUI_Main:
                                   )
         self._mon_btn.pack(side='left', padx=2)
 
-    def _init_TXT_frame_up(self, is_monitor=False):
-        # guiCFG          = POPT_CFG.load_guiPARM_main()
-        text_frame      = ttk.Frame(self._TXT_upper_frame)
-        text_frame.pack(side='bottom', fill='both', expand=True)
-        if is_monitor:
-            self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
-            self._mon_pw.pack(fill='both', expand=True)
-
-            mon_txt_f = MonitorFrame(self, self._mon_pw)
-            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
-            mon_txt_f.pack(fill='both', expand=True)
-            mon_tab_f.pack(fill='both', expand=True)
-            self._mon_pw.add(mon_txt_f, weight=1)
-            self._mon_pw.add(mon_tab_f, weight=0)
-            self._mon_tree_frame = mon_tab_f
-            self.mon_txt = mon_txt_f
-            return mon_txt_f
-
-        mon_txt_f = text_frame
-
-        inp_txt         = tk.Text(mon_txt_f,
-                      #background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
-                      #foreground=guiCFG.get('gui_cfg_vor_col', 'white'),
-                      font=(FONT, self.text_size),
-                      insertbackground=TXT_INP_CURSOR_CLR,
-                      height=30,
-                      width=5,
-                      bd=0,
-                      relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                      highlightthickness=0,
-                      )
-        #inp_txt.tag_config("send",
-        #                         foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
-        #                         background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        inp_scrollbar = ttk.Scrollbar(
-            mon_txt_f,
-            orient='vertical',
-            command=inp_txt.yview
-        )
-        inp_txt.pack(side='left', fill='both',  expand=True)
-        inp_scrollbar.pack(side='left', fill='y',     expand=False)
-        inp_txt.config(yscrollcommand=inp_scrollbar.set)
-        # self.in_txt_win.insert(tk.END, "Inp")
-        return inp_txt
-
-    def _init_TXT_frame_mid(self, is_monitor=False):
-        text_frame = ttk.Frame(self._TXT_mid_frame)
-        if is_monitor:
-            self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
-            self._mon_pw.pack(fill='both', expand=True)
-
-            mon_txt_f = MonitorFrame(self, self._mon_pw)
-            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
-            mon_txt_f.pack(fill='both', expand=True)
-            mon_tab_f.pack(fill='both', expand=True)
-            self._mon_pw.add(mon_txt_f, weight=1)
-            self._mon_pw.add(mon_tab_f, weight=0)
-            self._mon_tree_frame = mon_tab_f
-            self.mon_txt = mon_txt_f
-            return mon_txt_f
-
-        mon_txt_f = text_frame
-
-
-        stat_frame = ttk.Frame(self._TXT_mid_frame, height=1)
-        stat_frame.pack(side='bottom', fill='x',    expand=False)
-        text_frame.pack(side='bottom', fill='both', expand=True)
-        out_txt = tk.Text(mon_txt_f,
-                              background=DEF_QSO_SYSMSG_BG,
-                              foreground=DEF_QSO_SYSMSG_FG,
-                              font=(FONT, self.text_size),
-                              height=30,
-                              width=5,
-                              bd=0,
-                              borderwidth=0,
-                              #state="disabled",
-                                relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                highlightthickness=0,
+    def _init_prewrite_frame(self, parent_frame: ttk.Frame):
+        text_frame   = ttk.Frame(parent_frame)
+        text_frame.pack(fill='both', expand=True)
+        self.inp_txt = tk.Text(text_frame,
+                          background=DEF_QSO_SYSMSG_BG,
+                          foreground=DEF_QSO_SYSMSG_FG,
+                          font=(FONT, self.text_size),
+                          height=30,
+                          width=5,
+                          bd=0,
+                          borderwidth=0,
+                          # state="disabled",
+                          relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                          highlightthickness=0,
 
                           )
-        # out_txt.tag_config("input", foreground="white")
+
         out_scrollbar = ttk.Scrollbar(
-            mon_txt_f,
+            text_frame,
             orient='vertical',
-            command=out_txt.yview
+            command=self.inp_txt.yview
         )
-        out_txt.pack(      side='left', fill='both', expand=True)
-        out_scrollbar.pack(side='left', fill='y',    expand=False)
-        out_txt.config(yscrollcommand=out_scrollbar.set)
+        self.inp_txt.pack(side='left', fill='both', expand=True)
+        out_scrollbar.pack(side='left', fill='y', expand=False)
+        self.inp_txt.config(yscrollcommand=out_scrollbar.set)
 
-        return out_txt
+    def _init_qso_frame(self, parent_frame: ttk.Frame):
+        text_frame   = ttk.Frame(parent_frame)
+        text_frame.pack(fill='both', expand=True)
+        self.qso_txt = tk.Text(text_frame,
+                          background=DEF_QSO_SYSMSG_BG,
+                          foreground=DEF_QSO_SYSMSG_FG,
+                          font=(FONT, self.text_size),
+                          height=30,
+                          width=5,
+                          bd=0,
+                          borderwidth=0,
+                          # state="disabled",
+                          relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
+                          highlightthickness=0,
 
-    def _init_TXT_frame_low(self, is_monitor=False):
-        mon_frame = ttk.Frame(self._TXT_lower_frame)
-        mon_frame.pack(side='bottom', fill='both', expand=True)
-        if is_monitor:
-            self._mon_pw = ttk.Panedwindow(mon_frame, orient='vertical')
-            self._mon_pw.pack(fill='both', expand=True)
+                          )
 
-            mon_txt_f = MonitorFrame(self, self._mon_pw)
-            mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
-            mon_txt_f. pack(fill='both', expand=True)
-            mon_tab_f. pack(fill='both', expand=True)
-            self._mon_pw.add(mon_txt_f, weight=1)
-            self._mon_pw.add(mon_tab_f, weight=0)
-            self._mon_tree_frame = mon_tab_f
-            self.mon_txt = mon_txt_f
-            return mon_txt_f
-
-        mon_txt_f = mon_frame
-
-        mon_txt = tk.Text(mon_txt_f,
-                              background=MON_SYS_MSG_CLR_BG,
-                              foreground=MON_SYS_MSG_CLR_FG,
-                              font=(FONT, self.text_size),
-                              height=30,
-                              width=5,
-                              bd=0,
-                              borderwidth=0,
-                              # state="disabled",
-                              relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                              highlightthickness=0,
-                              )
-        mon_scrollbar = ttk.Scrollbar(
-            mon_txt_f,
+        out_scrollbar = ttk.Scrollbar(
+            text_frame,
             orient='vertical',
-            command=mon_txt.yview
+            command=self.qso_txt.yview
         )
-        mon_txt.pack(side='left', fill='both', expand=True)
-        mon_scrollbar.pack(side='left', fill='y',    expand=False)
-        mon_txt.config(yscrollcommand=mon_scrollbar.set)
-        ################
-        #self._init_mon_tree(mon_tab_f)
-        return mon_txt
+        self.qso_txt.pack(side='left', fill='both', expand=True)
+        out_scrollbar.pack(side='left', fill='y', expand=False)
+        self.qso_txt.config(yscrollcommand=out_scrollbar.set)
+
+    def _init_monitor_frame(self, parent_frame: ttk.Frame):
+        self._mon_pw = ttk.Panedwindow(parent_frame, orient='vertical')
+        self._mon_pw.pack(fill='both', expand=True)
+        mon_txt_f = MonitorFrame(self, self._mon_pw)
+        mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
+        mon_txt_f.pack(fill='both', expand=True)
+        mon_tab_f.pack(fill='both', expand=True)
+        self._mon_pw.add(mon_txt_f, weight=1)
+        self._mon_pw.add(mon_tab_f, weight=0)
+        self._mon_tree_frame = mon_tab_f
+        self.mon_txt = mon_txt_f
 
     #######################################
     # Text Tags
