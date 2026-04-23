@@ -29,7 +29,7 @@ class MonitorFrame(ttk.Frame):
         self._setting_mon_encoding  = gui_root_cl.setting_mon_encoding
         # ================================
         self._init_frame()
-        self._set_tags()
+        self.set_tags()
 
     # ================================
     def _init_frame(self):
@@ -54,7 +54,7 @@ class MonitorFrame(ttk.Frame):
         mon_scrollbar.pack(side='left', fill='y', expand=False)
         self.mon_txt.config(yscrollcommand=mon_scrollbar.set)
 
-    def _set_tags(self):
+    def set_tags(self):
         self.mon_txt.configure(state="normal")
         # ==========================
         # Monitor Tags

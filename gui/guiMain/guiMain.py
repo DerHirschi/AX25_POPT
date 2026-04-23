@@ -7,8 +7,7 @@ import threading
 from core.popt_core import PoPTCore
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
-    get_kb_str_fm_bytes, conv_time_DE_str, get_strTab
+from fnc.str_fnc import format_number, conv_timestamp_delta, get_kb_str_fm_bytes, get_strTab
 
 from gui.guiMain.frames.guiMain_AX25StatusFrame import AX25StatusFrame
 from gui.guiMain.frames.guiMain_BwPlotFrame import BwPlotFrame
@@ -17,6 +16,7 @@ from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_MonFrame import MonitorFrame
 from gui.guiMain.frames.guiMain_MonTreeFrame import MonitorTreeFrame
+from gui.guiMain.frames.guiMain_QsoFrame import QsoFrame
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_ChVars import GUIChannels
 from gui.guiMain.guiMain_Icons import GuiIcons
@@ -24,12 +24,10 @@ from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_QSO_SYSMSG_FG, \
-    DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
-    GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, \
-    TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
+    SERVICE_CH_START, DEF_QSO_SYSMSG_FG, DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+    GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags, set_new_tags
+from fnc.gui_fnc import get_all_tags, set_all_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -232,16 +230,13 @@ class PoPT_GUI_Main:
             2: self._TXT_lower_frame,
         }
         txtWin_pos_cfg  = POPT_CFG.get_guiCFG_textWin_pos()
-        qso_frame = winPos_cfgTab[txtWin_pos_cfg[1]]
         # =====================================
-        # AX25 Status Bar
+        # AX25 Status Bar / Connection Status Bar
+        qso_frame           = winPos_cfgTab[txtWin_pos_cfg[1]]
         self._AX25StatusBar = AX25StatusFrame(self, qso_frame)
-        self._AX25StatusBar.pack(side='top', expand=False, fill='x')
-
-        # =====================================
-        # Connection Status Bar
-        self.ConnStatusBar  = ConnStatusBar(self, qso_frame)
-        self.ConnStatusBar.pack(side='bottom', expand=False, fill='x')
+        self.ConnStatusBar  = ConnStatusBar(  self, qso_frame)
+        self._AX25StatusBar.pack(side='top',    expand=False, fill='x')
+        self.ConnStatusBar.pack( side='bottom', expand=False, fill='x')
 
         # =====================================
         # Text Frames (QSO/PreWrite/Monitor)
@@ -527,30 +522,8 @@ class PoPT_GUI_Main:
         self.inp_txt.config(yscrollcommand=out_scrollbar.set)
 
     def _init_qso_frame(self, parent_frame: ttk.Frame):
-        text_frame   = ttk.Frame(parent_frame)
-        text_frame.pack(fill='both', expand=True)
-        self.qso_txt = tk.Text(text_frame,
-                          background=DEF_QSO_SYSMSG_BG,
-                          foreground=DEF_QSO_SYSMSG_FG,
-                          font=(FONT, self.text_size),
-                          height=30,
-                          width=5,
-                          bd=0,
-                          borderwidth=0,
-                          # state="disabled",
-                          relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                          highlightthickness=0,
-
-                          )
-
-        out_scrollbar = ttk.Scrollbar(
-            text_frame,
-            orient='vertical',
-            command=self.qso_txt.yview
-        )
-        self.qso_txt.pack(side='left', fill='both', expand=True)
-        out_scrollbar.pack(side='left', fill='y', expand=False)
-        self.qso_txt.config(yscrollcommand=out_scrollbar.set)
+        self._qso_frame = QsoFrame(self, parent_frame)
+        self.qso_txt    = self._qso_frame.get_qso_txt()
 
     def _init_monitor_frame(self, parent_frame: ttk.Frame):
         self._mon_pw = ttk.Panedwindow(parent_frame, orient='vertical')
@@ -562,85 +535,20 @@ class PoPT_GUI_Main:
         self._mon_pw.add(mon_txt_f, weight=1)
         self._mon_pw.add(mon_tab_f, weight=0)
         self._mon_tree_frame = mon_tab_f
-        self.mon_txt = mon_txt_f
+        self.mon_txt         = mon_txt_f
 
     #######################################
     # Text Tags
     def set_text_tags(self):
-        self._all_tag_calls = []
-        all_stat_cfg = POPT_CFG.get_stat_CFGs()
-        if all_stat_cfg:
-            self.qso_txt.configure(state="normal")
+        self._qso_frame.set_tags()
+        self.mon_txt.set_tags()
         guiCFG = POPT_CFG.load_guiPARM_main()
-        # ==========================
-        # QSO Call/Station Tags
-        for call in list(all_stat_cfg.keys()):
-            stat_cfg = all_stat_cfg[call]
-            tx_fg = stat_cfg.get('stat_parm_qso_col_text_tx', DEF_STAT_QSO_TX_COL)
-            tx_bg = stat_cfg.get('stat_parm_qso_col_bg', DEF_STAT_QSO_BG_COL)
-
-            rx_fg = stat_cfg.get('stat_parm_qso_col_text_rx', DEF_STAT_QSO_RX_COL)
-
-            tx_tag = 'TX-' + str(call)
-            rx_tag = 'RX-' + str(call)
-            self._all_tag_calls.append(str(call))
-
-            self.qso_txt.tag_config(tx_tag,
-                                    foreground=tx_fg,
-                                    background=tx_bg,
-                                    selectbackground=tx_fg,
-                                    selectforeground=tx_bg,
-                                    )
-            self.qso_txt.tag_config(rx_tag,
-                                    foreground=rx_fg,
-                                    background=tx_bg,
-                                    selectbackground=rx_fg,
-                                    selectforeground=tx_bg,
-                                    )
-        # ==========================
-        # QSO Sys Msg / Status Msg Tags
-        self.qso_txt.tag_config('SYS-MSG',
-                                foreground=DEF_QSO_SYSMSG_FG,
-                                background=DEF_QSO_SYSMSG_BG,
-                                selectbackground=DEF_QSO_SYSMSG_FG,
-                                selectforeground=DEF_QSO_SYSMSG_BG,
-                                )
-        self.qso_txt.tag_config('TX-NOCALL',
-                                foreground='#ffffff',
-                                background='#000000',
-                                selectbackground='#ffffff',
-                                selectforeground='#000000',
-                                )
-        self.qso_txt.tag_config('RX-NOCALL',
-                                foreground='#000000',
-                                background='#ffffff',
-                                selectbackground='#000000',
-                                selectforeground='#ffffff',
-                                )
-        # PRP CLI-ESC Status MSG
-        self.qso_txt.tag_config(TAG_QSO_PRP_STATUS_TX,
-                                foreground=CLR_QSO_PRP_STATUS_TX,
-                                background=CLR_QSO_PRP_STATUS_BG,
-                                selectbackground=CLR_QSO_PRP_STATUS_TX,
-                                selectforeground=CLR_QSO_PRP_STATUS_BG,
-                                )
-        self.qso_txt.tag_config(TAG_QSO_PRP_STATUS_RX,
-                                foreground=CLR_QSO_PRP_STATUS_RX,
-                                background=CLR_QSO_PRP_STATUS_BG,
-                                selectbackground=CLR_QSO_PRP_STATUS_RX,
-                                selectforeground=CLR_QSO_PRP_STATUS_BG,
-                                )
-
-        self.qso_txt.configure(state="disabled")
-
         ##
-        #self._mon_txt.configure(state="normal")
         self.inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self.inp_txt.tag_config("send",
                                 foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self.inp_txt.tag_raise(tk.SEL)
-        self.qso_txt.tag_raise(tk.SEL)
 
     ##########################
     # Start Message in Monitor
@@ -920,7 +828,7 @@ class PoPT_GUI_Main:
         if time.time() > self._non_prio_task_timer:
             self._non_prio_task_timer = time.time() + self._parm_non_prio_task_timer
             #####################
-            task_02 = self._update_qso_win()
+            task_02 = self._qso_frame.update_qso_win()
             task_03 = self._SideFrame_tasker()
             task_04 = self._AX25StatusBar.update_status_bar()
             """ Toplevel Win Tasker """
@@ -1056,163 +964,17 @@ class PoPT_GUI_Main:
                     self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
     ###############################################################
     # QSO WIN
-    def _update_qso_win(self):
-        all_conn = self._popt_handler.get_all_connections()
-        all_conn_ch_index = list(all_conn.keys())
-        tr = False
-        for channel in all_conn_ch_index:
-            conn = all_conn[channel]
-            if conn:
-                if self._update_qso(conn):
-                    tr = True
-        if tr:
-            self.ch_status_update()
-            return True
-        return False
-
-    def _update_qso(self, conn):
-        if not conn:
-            return False
-        if conn.ft_obj:
-            # self.ch_status_update()
-            return True
-        if conn.rx_tx_buf_guiData:
-            self._update_qso_spooler(conn)
-            # self.ch_status_update()
-            return True
-        return False
-
-    def _update_qso_spooler(self, conn):
-        ch_id   = conn.ch_index
-        gui_buf = list(conn.rx_tx_buf_guiData)
-        conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
-        for qso_data in gui_buf:
-            # Sys Msg (Link Setup, Connected to, ...)
-            if qso_data[0] == 'SYS':
-                self.sysMsg_to_qso_task(qso_data[1], ch_id)
-            # PRP Msg (CLI-ESC Status)
-            elif qso_data[0] in [TAG_QSO_PRP_STATUS_TX, TAG_QSO_PRP_STATUS_RX]:
-                self._PRPstatus_to_qso_task(qso_data[1], ch_id, qso_data[0])
-            # QSO Data
-            elif qso_data[0] == 'RX':
-                self._update_qso_rx(conn, qso_data[1])
-            else:
-                self._update_qso_tx(conn, qso_data[1])
-
-    def _update_qso_tx(self, conn, data):
-        txt_enc = 'UTF-8'
-        if conn.user_db_ent:
-            txt_enc = str(conn.user_db_ent.Encoding)
-        my_call_str = str(conn.my_call_str)
-        my_call = str(conn.my_call)
-        inp = data.decode(txt_enc, 'ignore')
-        inp = tk_filter_bad_chars(inp)
-
-        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
-        Ch_var.output_win += inp
-        if my_call_str in self._all_tag_calls:
-            tag_name_tx = f'TX-{my_call_str}'
-            Ch_var.last_tag_name = my_call_str
-        elif my_call in self._all_tag_calls:
-            tag_name_tx = f'TX-{my_call}'
-            Ch_var.last_tag_name = my_call
-        else:
-            tag_name_tx = f'TX-{Ch_var.last_tag_name}'
-
-        if self.channel_index == conn.ch_index:
-            self.qso_txt.configure(state="normal")
-            ind = self.qso_txt.index('end-1c')
-            self.qso_txt.insert('end', inp)
-            ind2 = self.qso_txt.index('end-1c')
-            if tag_name_tx:
-                self.qso_txt.tag_add(tag_name_tx, ind, ind2)
-            self.qso_txt.configure(state="disabled",
-                                   exportselection=True
-                                   )
-            # TODO Autoscroll
-            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
-                self.see_end_qso_win()
-        else:
-            if tag_name_tx:
-                Ch_var.new_tags.append(
-                    (tag_name_tx, len(inp))
-                )
-
-    def _update_qso_rx(self, conn, data):
-        txt_enc = 'UTF-8'
-        if conn.user_db_ent:
-            txt_enc = str(conn.user_db_ent.Encoding)
-        my_call_str = str(conn.my_call_str)
-        my_call = str(conn.my_call)
-        Ch_var = self.get_ch_var(ch_index=conn.ch_index)
-        out = data.decode(txt_enc, 'ignore')
-        out = tk_filter_bad_chars(out)
-
-        # Write RX Date to Window/Channel Buffer
-        Ch_var.output_win += out
-        if my_call_str in self._all_tag_calls:
-            tag_name_rx = f'RX-{my_call_str}'
-            Ch_var.last_tag_name = my_call_str
-        elif my_call in self._all_tag_calls:
-            tag_name_rx = f'RX-{my_call}'
-            Ch_var.last_tag_name = my_call
-        else:
-            logger.error('Conn: _update_qso_rx: no Tagname')
-            logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
-            tag_name_rx = f'RX-{Ch_var.last_tag_name}'
-
-        if self.channel_index == conn.ch_index:
-            if Ch_var.t2speech:
-                Ch_var.t2speech_buf += out.replace('\n', '')
-
-            self.qso_txt.configure(state="normal")
-            # configuring a tag called start
-            ind = self.qso_txt.index('end-1c')
-            self.qso_txt.insert('end', out)
-            ind2 = self.qso_txt.index('end-1c')
-            if tag_name_rx:
-                self.qso_txt.tag_add(tag_name_rx, ind, ind2)
-
-            self.qso_txt.configure(state="disabled",
-                                   exportselection=True
-                                   )
-            # TODO Autoscroll
-            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
-                self.see_end_qso_win()
-        else:
-            Ch_var.new_data_tr = True
-            if Ch_var.t2speech:
-                # TODO ?????????????????????????????????????????????
-                Ch_var.t2speech_buf += '{} {} . {} . {}'.format(
-                    self._getTabStr('channel'),
-                    conn.ch_index,
-                    conn.to_call_str,
-                    out.replace('\n', '')
-                )
-            if tag_name_rx:
-                Ch_var.new_tags.append(
-                    (tag_name_rx, len(out))
-                )
-        Ch_var.rx_beep_tr = True
-
     def update_qso_Vars(self):
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        bg = self._get_colorMap()[1]
+        bg      = self._get_colorMap()[1]
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr  = False
 
-        self.qso_txt.configure(state="normal")
-
-        self.qso_txt.delete('1.0', tk.END)
-        self.qso_txt.insert(tk.END, ch_vars.output_win)
-        self.qso_txt.configure(state="disabled")
-        self.qso_txt.see(tk.END)
+        self._qso_frame.update_qso_Vars()
 
         self.inp_txt.delete('1.0', tk.END)
         self.inp_txt.insert(tk.END, ch_vars.input_win[:-1])
         set_all_tags(self.inp_txt, ch_vars.input_win_tags)
-        set_all_tags(self.qso_txt, ch_vars.output_win_tags)
-        set_new_tags(self.qso_txt, ch_vars.new_tags)
         ch_vars.new_tags = []
         self.inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
         self.inp_txt.see(tk.END)
@@ -1238,68 +1000,7 @@ class PoPT_GUI_Main:
         self._add_tasker_q("sysMsg_to_qso", (data, ch_index))
 
     def sysMsg_to_qso_task(self, data: str, ch_index):
-        if not data or (1 > ch_index > SERVICE_CH_START - 1):
-            return
-        data = data.replace('\r', '')
-        data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
-        data = tk_filter_bad_chars(data)
-        ch_vars = self.get_ch_var(ch_index=ch_index)
-        tag_name = 'SYS-MSG'
-        ch_vars.output_win += data
-        if self.channel_index == ch_index:
-            tr = False
-            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index("@0,0")) < 22:
-                tr = True
-            self.qso_txt.configure(state="normal")
-
-            ind = self.qso_txt.index(tk.INSERT)
-            self.qso_txt.insert('end', data)
-            ind2 = self.qso_txt.index(tk.INSERT)
-            self.qso_txt.tag_add(tag_name, ind, ind2)
-            self.qso_txt.configure(state="disabled",
-                                   exportselection=True
-                                   )
-            if tr or self.get_ch_var().autoscroll:
-                self.see_end_qso_win()
-
-        else:
-            ch_vars.new_tags.append(
-                (tag_name, len(data))
-            )
-            ch_vars.new_data_tr = True
-        ch_vars.rx_beep_tr = True
-        self.ch_status_update()
-
-    def _PRPstatus_to_qso_task(self, data: str, ch_index, tag_name: str):
-        if not data or ch_index < 1:
-            return
-        data                = tk_filter_bad_chars(data)
-        data               += '\n'
-        ch_vars             = self.get_ch_var(ch_index=ch_index)
-        ch_vars.output_win += data
-        if self.channel_index == ch_index:
-            tr = False
-            if float(self.qso_txt.index(tk.END)) - float(self.qso_txt.index("@0,0")) < 22:
-                tr = True
-            self.qso_txt.configure(state="normal")
-
-            ind = self.qso_txt.index(tk.INSERT)
-            self.qso_txt.insert('end', data)
-            ind2 = self.qso_txt.index(tk.INSERT)
-            self.qso_txt.tag_add(tag_name, ind, ind2)
-            self.qso_txt.configure(state="disabled",
-                                   exportselection=True
-                                   )
-            if tr or self.get_ch_var().autoscroll:
-                self.see_end_qso_win()
-
-        else:
-            ch_vars.new_tags.append(
-                (tag_name, len(data))
-            )
-            ch_vars.new_data_tr = True
-        ch_vars.rx_beep_tr = True
-        self.ch_status_update()
+        self._qso_frame.sysMsg_to_qso_task(data, ch_index)
     # END QSO WIN
     ###############################################################
     ###############################################################
@@ -1332,7 +1033,7 @@ class PoPT_GUI_Main:
         return True
 
     def see_end_qso_win(self):
-        self.qso_txt.see("end")
+        self._qso_frame.see_end_qso_win()
 
     # END Monitor WIN
     ###############################################################
