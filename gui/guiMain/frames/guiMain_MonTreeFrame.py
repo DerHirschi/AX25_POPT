@@ -20,8 +20,6 @@ class MonitorTreeFrame(ttk.Frame):
         # ================================
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # ================================
-        self._toplevelMng  = gui_root_cl.toplevel_manager
-        # ================================
         self._mon_tree_port_filter_var    = tk.StringVar(self, value='')
         self._mon_tree_to_call_filter_var = tk.StringVar(self, value='')
         self._mon_tree_fm_call_filter_var = tk.StringVar(self, value='')

@@ -1,4 +1,3 @@
-import datetime
 import random
 import time
 import tkinter as tk
@@ -6,7 +5,6 @@ from collections import deque
 from tkinter import ttk, messagebox
 import threading
 from core.popt_core import PoPTCore
-from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, format_number, conv_timestamp_delta, \
@@ -17,6 +15,7 @@ from gui.guiMain.frames.guiMain_BwPlotFrame import BwPlotFrame
 from gui.guiMain.frames.guiMain_ChBtnFrame import ChBtnFrame
 from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
+from gui.guiMain.frames.guiMain_MonFrame import MonitorFrame
 from gui.guiMain.frames.guiMain_MonTreeFrame import MonitorTreeFrame
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_ChVars import GUIChannels
@@ -25,9 +24,9 @@ from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
 from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, MON_SYS_MSG_CLR_FG, \
-    TXT_INP_CURSOR_CLR, PARAM_MAX_MON_LEN, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, DEF_PORT_MON_TX_COL, MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
+    TXT_INP_CURSOR_CLR, CFG_sound_RX_BEEP, \
+    SERVICE_CH_START, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, DEF_STAT_QSO_RX_COL,\
+    MON_SYS_MSG_CLR_BG, DEF_QSO_SYSMSG_FG, \
     DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY, \
     TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_RX
@@ -244,7 +243,8 @@ class PoPT_GUI_Main:
         }
         self.inp_txt = winPos_cfgTab[txtWin_pos_cfg[0]]()
         self.qso_txt = winPos_cfgTab[txtWin_pos_cfg[1]]()
-        self.mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
+        #self.mon_txt = winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
+        winPos_cfgTab[txtWin_pos_cfg[2]](is_monitor=True)
 
         self._pw.add(self._TXT_upper_frame, weight=1)
         self._pw.add(self._TXT_mid_frame,   weight=1)
@@ -338,20 +338,20 @@ class PoPT_GUI_Main:
         self._quit = True
         self._popt_handler.close_sound_PH()
         self._thread_gc += SOUND.get_sound_thread()
-        self._sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self.mon_txt.sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._popt_handler.connection_manager.disco_all_Conn()
         self._Pacman.save_path_data()
         """"""
         self.toplevel_manager.destroy_win()
         """"""
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self._sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
+        self.mon_txt.sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
         self._save_pw_pos()
         self.guiChannels.save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
-        self._sysMsg_to_monitor_task('Closing Ports.')
+        self.mon_txt.sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._popt_handler.close_popt).start()
         #self.main_win.update_idletasks()
         #self._loop_delay = 800
@@ -509,15 +509,17 @@ class PoPT_GUI_Main:
             self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
             self._mon_pw.pack(fill='both', expand=True)
 
-            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_txt_f = MonitorFrame(self, self._mon_pw)
             mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f.pack(fill='both', expand=True)
             mon_tab_f.pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
             self._mon_pw.add(mon_tab_f, weight=0)
             self._mon_tree_frame = mon_tab_f
-        else:
-            mon_txt_f = text_frame
+            self.mon_txt = mon_txt_f
+            return mon_txt_f
+
+        mon_txt_f = text_frame
 
         inp_txt         = tk.Text(mon_txt_f,
                       #background=guiCFG.get('gui_cfg_vor_bg_col', 'black'),
@@ -550,15 +552,17 @@ class PoPT_GUI_Main:
             self._mon_pw = ttk.Panedwindow(text_frame, orient='vertical')
             self._mon_pw.pack(fill='both', expand=True)
 
-            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_txt_f = MonitorFrame(self, self._mon_pw)
             mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f.pack(fill='both', expand=True)
             mon_tab_f.pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
             self._mon_pw.add(mon_tab_f, weight=0)
             self._mon_tree_frame = mon_tab_f
-        else:
-            mon_txt_f = text_frame
+            self.mon_txt = mon_txt_f
+            return mon_txt_f
+
+        mon_txt_f = text_frame
 
 
         stat_frame = ttk.Frame(self._TXT_mid_frame, height=1)
@@ -596,15 +600,17 @@ class PoPT_GUI_Main:
             self._mon_pw = ttk.Panedwindow(mon_frame, orient='vertical')
             self._mon_pw.pack(fill='both', expand=True)
 
-            mon_txt_f = ttk.Frame(self._mon_pw)
+            mon_txt_f = MonitorFrame(self, self._mon_pw)
             mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
             mon_txt_f. pack(fill='both', expand=True)
             mon_tab_f. pack(fill='both', expand=True)
             self._mon_pw.add(mon_txt_f, weight=1)
             self._mon_pw.add(mon_tab_f, weight=0)
             self._mon_tree_frame = mon_tab_f
-        else:
-            mon_txt_f = mon_frame
+            self.mon_txt = mon_txt_f
+            return mon_txt_f
+
+        mon_txt_f = mon_frame
 
         mon_txt = tk.Text(mon_txt_f,
                               background=MON_SYS_MSG_CLR_BG,
@@ -698,30 +704,7 @@ class PoPT_GUI_Main:
                                 )
 
         self.qso_txt.configure(state="disabled")
-        self.mon_txt.configure(state="normal")
-        # ==========================
-        # Monitor Tags
-        all_port = self._popt_handler.port_manager.ax25_ports
-        for port_id in all_port.keys():
-            tag_tx = f"tx{port_id}"
-            tag_rx = f"rx{port_id}"
-            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
-            tx_fg = port_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)
-            tx_bg = port_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)
-            rx_fg = port_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)
-            self.mon_txt.tag_config(tag_tx, foreground=tx_fg,
-                                    background=tx_bg,
-                                    selectbackground=tx_fg,
-                                    selectforeground=tx_bg,
-                                    )
-            self.mon_txt.tag_config(tag_rx, foreground=rx_fg,
-                                    background=tx_bg,
-                                    selectbackground=rx_fg,
-                                    selectforeground=tx_bg,
-                                    )
-        self.mon_txt.tag_config("sys-msg", foreground=MON_SYS_MSG_CLR_FG,
-                                background=MON_SYS_MSG_CLR_BG)
-        self.mon_txt.configure(state="disabled")
+
         ##
         #self._mon_txt.configure(state="normal")
         self.inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
@@ -730,7 +713,6 @@ class PoPT_GUI_Main:
                                 background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
         self.inp_txt.tag_raise(tk.SEL)
         self.qso_txt.tag_raise(tk.SEL)
-        self.mon_txt.tag_raise(tk.SEL)
 
     ##########################
     # Start Message in Monitor
@@ -741,23 +723,23 @@ class PoPT_GUI_Main:
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
-            self._sysMsg_to_monitor_task(el)
-        self._sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
+            self.mon_txt.sysMsg_to_monitor_task(el)
+        self.mon_txt.sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
-            self._sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
+            self.mon_txt.sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
         all_ports = self._popt_handler.port_manager.ax25_ports
         for port_k in all_ports.keys():
             msg = self._getTabStr('mon_start_msg2')
             if all_ports[port_k].device_is_running:
                 msg = self._getTabStr('mon_start_msg3')
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
-            self._sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
+            self.mon_txt.sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortName', ''),
                                            port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
-            self._sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
+            self.mon_txt.sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortParm', ('', 0))[0],
                                            port_cfg.get('parm_PortParm', ('', 0))[1],
@@ -904,7 +886,7 @@ class PoPT_GUI_Main:
             while self._tasker_q_prio and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
                 task, arg = self._tasker_q_prio.pop(0)
                 if task == 'sysMsg_to_monitor':
-                    self._sysMsg_to_monitor_task(arg)
+                    self.mon_txt.sysMsg_to_monitor_task(arg)
                 elif self._quit:
                     continue
                 elif task == 'conn_btn_update':
@@ -975,7 +957,7 @@ class PoPT_GUI_Main:
                 if task == '_monitor_tree_update':
                     self._mon_tree_frame.monitor_tree_update_task(arg)
                 elif task == '_monitor_q_task':
-                    self._monitor_q_task(arg)
+                    self.mon_txt.monitor_q_task(arg)
                 elif task == '_remote_monitor_update_task':
                     rem_mon_data, remote_uid = arg
                     self._remote_monitor_update_task(rem_mon_data ,remote_uid)
@@ -1397,23 +1379,6 @@ class PoPT_GUI_Main:
     def sysMsg_to_monitor(self, var: str):
         self._add_tasker_q("sysMsg_to_monitor", var)
 
-    def _sysMsg_to_monitor_task(self, var: str):
-        # var += bytes.fromhex('15').decode('UTF-8')+'\n'
-        """ Called from AX25Conn """
-        ind = str(self.mon_txt.index(tk.INSERT))
-        ins = 'SYS {0}: *** {1}\n'.format(datetime.datetime.now().strftime('%H:%M:%S'), var)
-
-        self.mon_txt.configure(state="normal")
-        self.mon_txt.insert(ind, ins)
-        ind2 = self.mon_txt.index(tk.INSERT)
-        self.mon_txt.tag_add("sys-msg", ind, ind2)
-        self.mon_txt.configure(state="disabled")
-        self._see_end_mon_win()
-        if 'Lob: ' in var:
-            var = var.split('Lob: ')
-            if len(var) > 1:
-                SOUND.sprech(var[1], wait=False)
-
     def _monitor_task(self):
         mon_buff = self._popt_handler.get_monitor_data()
         if not mon_buff:
@@ -1438,63 +1403,8 @@ class PoPT_GUI_Main:
                            False)
         return True
 
-    def _monitor_q_task(self, mon_batch: list):
-
-        self.mon_txt.configure(state="normal")
-        self._mon_txt_tags = set(self.mon_txt.tag_names(None))  # Cache Tags
-
-        full_text = ""
-        tags_to_add = []
-        mon_conf = {
-            "distance": bool(self.mon_dec_dist_var.get()),
-            "aprs_dec": bool(self.mon_dec_aprs_var.get()),
-            "nr_dec": bool(self.mon_dec_nr_var.get()),
-            "hex_out": bool(self.mon_dec_hex_var.get()),
-            "decoding": str(self.setting_mon_encoding.get()),
-        }
-
-        end_idx = self.mon_txt.index('end-1c')  # Cache Index
-        for axframe in mon_batch:
-            port_conf    = axframe.get('port_conf', {})
-            tx           = axframe.get('tx'       , False)
-            axframe_conf = axframe
-            port_id = port_conf.get('parm_PortNr', -1)
-            mon_conf['port_name'] = port_conf.get('parm_PortName', '')
-
-            mon_str = monitor_frame_inp(axframe_conf, mon_conf)
-            var = tk_filter_bad_chars(mon_str)
-            full_text += var
-
-            ind_start = f"{end_idx} + {len(full_text) - len(var)}c"
-            tag = f"tx{port_id}" if tx else f"rx{port_id}"
-            tags_to_add.append((tag, ind_start, f"{ind_start} + {len(var)}c"))
-
-        # Batch-Insert
-        self.mon_txt.insert(tk.END, full_text)
-
-        # Batch-Tags
-        for tag, start, end in tags_to_add:
-            if tag in self._mon_txt_tags:
-                self.mon_txt.tag_add(tag, start, end)
-
-        # Periodisches Cleanup (statt pro Task)
-        cut_len = int(self.mon_txt.index('end-1c').split('.')[0]) - PARAM_MAX_MON_LEN + 1
-        if cut_len > 0:
-            self.mon_txt.delete('1.0', f"{cut_len}.0")
-
-        # Autoscroll
-        tr = float(self.mon_txt.index(tk.END)) - float(self.mon_txt.index(tk.INSERT)) < 15
-        if tr or self.mon_scroll_var.get():
-            self._see_end_mon_win()
-
-        self.mon_txt.configure(state="disabled", exportselection=True)
-        return True
-
     def see_end_qso_win(self):
         self.qso_txt.see("end")
-
-    def _see_end_mon_win(self):
-        self.mon_txt.see("end")
 
     # END Monitor WIN
     ###############################################################
@@ -1658,7 +1568,7 @@ class PoPT_GUI_Main:
     # END Conn Path Plot
     #######################################################################
     def kaffee(self):
-        self._sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
+        self.mon_txt.sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         #self.open_RoutingTab_win()
 
