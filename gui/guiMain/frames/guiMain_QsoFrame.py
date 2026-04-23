@@ -19,7 +19,7 @@ class QsoFrame(ttk.Frame):
         self._popt_handler  = gui_root_cl.get_PH_mainGUI()
         # ================================
         self._text_size     = gui_root_cl.text_size
-        self._channel_index = gui_root_cl.channel_index
+        #self._channel_index = self._gui_root.channel_index
         # ================================
         self._all_tag_calls = []
         # ================================
@@ -186,7 +186,7 @@ class QsoFrame(ttk.Frame):
         else:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
 
-        if self._channel_index == conn.ch_index:
+        if self._gui_root.channel_index == conn.ch_index:
             self._qso_txt.configure(state="normal")
             ind = self._qso_txt.index('end-1c')
             self._qso_txt.insert('end', inp)
@@ -228,7 +228,7 @@ class QsoFrame(ttk.Frame):
             logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
             tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
-        if self._channel_index == conn.ch_index:
+        if self._gui_root.channel_index == conn.ch_index:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
 
@@ -264,9 +264,7 @@ class QsoFrame(ttk.Frame):
 
     # ================================
     def update_qso_Vars(self):
-        ch_vars = self._gui_root.get_ch_var(ch_index=self._channel_index)
-        ch_vars.new_data_tr = False
-        ch_vars.rx_beep_tr  = False
+        ch_vars = self._gui_root.get_ch_var(ch_index=self._gui_root.channel_index)
 
         self._qso_txt.configure(state="normal")
 
@@ -289,7 +287,7 @@ class QsoFrame(ttk.Frame):
         ch_vars = self._gui_root.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'
         ch_vars.output_win += data
-        if self._channel_index == ch_index:
+        if self._gui_root.channel_index == ch_index:
             tr = False
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True
@@ -321,7 +319,7 @@ class QsoFrame(ttk.Frame):
         data += '\n'
         ch_vars = self._gui_root.get_ch_var(ch_index=ch_index)
         ch_vars.output_win += data
-        if self._channel_index == ch_index:
+        if self._gui_root.channel_index == ch_index:
             tr = False
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True

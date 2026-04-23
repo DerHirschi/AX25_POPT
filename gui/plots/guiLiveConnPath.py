@@ -2,7 +2,6 @@
 TODO:
     - Port 0 (Monitor) MH-Plot
 """
-import tkinter as tk
 from tkinter import ttk
 
 from gui import FigureCanvasTkAgg as FIGc
@@ -59,8 +58,8 @@ class LiveConnPath(ttk.Frame):
         # BTN Fram
         btn_frame = ttk.Frame(self)
         btn_frame.pack()
-        ttk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side=tk.LEFT, padx=20)
-        ttk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side=tk.LEFT, padx=20)
+        ttk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side="left", padx=20)
+        ttk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side="left", padx=20)
 
         self._g = nx.Graph()
         self._plot1.axis('off')
@@ -227,8 +226,10 @@ class LiveConnPath(ttk.Frame):
         self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
         self._connected_path[ch_id] = ['HOME']
 
-    def update_plot_f_ch(self, ch_id):
-        # self._channel_id = int(ch_id)
+    def update_plot_f_ch(self, ch_id: int or None = None):
+        if ch_id is None:
+            self._update_Graph(self._channel_id)
+            return
         self._update_Graph(ch_id)
 
     def save_path_data(self):

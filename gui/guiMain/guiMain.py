@@ -16,6 +16,7 @@ from gui.guiMain.frames.guiMain_AlarmFrame import AlarmIconFrame
 from gui.guiMain.frames.guiMain_ConnStatusFrame import ConnStatusBar
 from gui.guiMain.frames.guiMain_MonFrame import MonitorFrame
 from gui.guiMain.frames.guiMain_MonTreeFrame import MonitorTreeFrame
+from gui.guiMain.frames.guiMain_PreTxtFrame import PreTxtFrame
 from gui.guiMain.frames.guiMain_QsoFrame import QsoFrame
 from gui.guiMain.frames.guiMain_TabbedSideFrame import SideTabbedFrame
 from gui.guiMain.guiMain_ChVars import GUIChannels
@@ -23,11 +24,11 @@ from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from cfg.constant import FONT, POPT_BANNER, WELCOME_SPEECH, VER, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, DEF_QSO_SYSMSG_FG, DEF_QSO_SYSMSG_BG, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+from cfg.constant import POPT_BANNER, WELCOME_SPEECH, VER, CFG_sound_RX_BEEP, \
+    SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import get_root_dir
-from fnc.gui_fnc import get_all_tags, set_all_tags
+from fnc.gui_fnc import get_all_tags
 from sound.popt_sound import SOUND
 from gui.plots.guiLiveConnPath import LiveConnPath
 
@@ -104,7 +105,6 @@ class PoPT_GUI_Main:
         #####################
         # Buffer
         self.connect_history        = POPT_CFG.load_guiPARM_main().get('gui_parm_connect_history', {})
-        #self._mon_pack_buff         = deque([] * 10000, maxlen=10000)
         self._remote_mon_pack_buff  = {}
         #####################
         # GUI VARS
@@ -121,7 +121,6 @@ class PoPT_GUI_Main:
         ###################
         # Stat INFO (Name,QTH usw)
         self.stat_info_encoding_var = tk.StringVar(self.main_win)
-        #self._stat_info_status_var   = tk.StringVar(self.main_win)
         # Tabbed SideFrame FT
         self.ft_progress_var        = tk.StringVar(self.main_win)
         self.ft_size_var            = tk.StringVar(self.main_win)
@@ -175,9 +174,6 @@ class PoPT_GUI_Main:
         self._tasker_q_prio                     = []
         #
         self._flip025                           = True
-        # #### Tester
-        # self._parm_test_task_timer = 60  # 5        # s
-        # self._test_task_timer = time.time()
         ########################################
         ########################################
         # Toplevel Win Manager
@@ -290,19 +286,16 @@ class PoPT_GUI_Main:
         # set Ch Btn Color
         self.ch_status_update()
         # Init Vars fm CFG
-        logger.info('GUI: Parm/CFG Init')
         self._init_GUI_vars_fm_CFG()
         self._set_CFG()
         # Text Tags
-        self._all_tag_calls = []
-        logger.info('GUI: Text-Tag Init')
         self.set_text_tags()
         # .....
         self.update_qso_Vars()
         ############################
         self._monitor_start_msg()
         ############################
-        self._Pacman.update_plot_f_ch(self.channel_index)
+        self._Pacman.update_plot_f_ch()
         ##########################################
         # Menubar fix if app starts in fullscreen
         geom = self.main_win.winfo_geometry()
@@ -314,10 +307,10 @@ class PoPT_GUI_Main:
         #######################
         # LOOP LOOP LOOP
         self.main_win.after(GUI_TASKER_NOT_BURN_DELAY, self._tasker)
-        logger.info('GUI: Init Done')
-        logger.info("GUI: Unblocking Ports")
+        logger.info(self._logTag + 'Init Done')
+        logger.info(self._logTag + "Unblocking Ports")
         self._popt_handler.port_manager.unblock_all_ports()
-        logger.info('GUI: Start Tasker')
+        logger.info(self._logTag + 'Start Tasker')
         self.main_win.mainloop()
 
     ##############################################################
@@ -496,30 +489,8 @@ class PoPT_GUI_Main:
         self._mon_btn.pack(side='left', padx=2)
 
     def _init_prewrite_frame(self, parent_frame: ttk.Frame):
-        text_frame   = ttk.Frame(parent_frame)
-        text_frame.pack(fill='both', expand=True)
-        self.inp_txt = tk.Text(text_frame,
-                          background=DEF_QSO_SYSMSG_BG,
-                          foreground=DEF_QSO_SYSMSG_FG,
-                          font=(FONT, self.text_size),
-                          height=30,
-                          width=5,
-                          bd=0,
-                          borderwidth=0,
-                          # state="disabled",
-                          relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                          highlightthickness=0,
-
-                          )
-
-        out_scrollbar = ttk.Scrollbar(
-            text_frame,
-            orient='vertical',
-            command=self.inp_txt.yview
-        )
-        self.inp_txt.pack(side='left', fill='both', expand=True)
-        out_scrollbar.pack(side='left', fill='y', expand=False)
-        self.inp_txt.config(yscrollcommand=out_scrollbar.set)
+        self._pre_txt_frame = PreTxtFrame(self, parent_frame)
+        self.inp_txt        = self._pre_txt_frame.get_inp_txt()
 
     def _init_qso_frame(self, parent_frame: ttk.Frame):
         self._qso_frame = QsoFrame(self, parent_frame)
@@ -542,13 +513,7 @@ class PoPT_GUI_Main:
     def set_text_tags(self):
         self._qso_frame.set_tags()
         self.mon_txt.set_tags()
-        guiCFG = POPT_CFG.load_guiPARM_main()
-        ##
-        self.inp_txt.configure(foreground=guiCFG.get('gui_cfg_vor_col', 'white'), background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self.inp_txt.tag_config("send",
-                                foreground=guiCFG.get('gui_cfg_vor_tx_col', '#25db04'),
-                                background=guiCFG.get('gui_cfg_vor_bg_col', 'black'))
-        self.inp_txt.tag_raise(tk.SEL)
+        self._pre_txt_frame.set_tags()
 
     ##########################
     # Start Message in Monitor
@@ -971,22 +936,14 @@ class PoPT_GUI_Main:
         ch_vars.rx_beep_tr  = False
 
         self._qso_frame.update_qso_Vars()
-
-        self.inp_txt.delete('1.0', tk.END)
-        self.inp_txt.insert(tk.END, ch_vars.input_win[:-1])
-        set_all_tags(self.inp_txt, ch_vars.input_win_tags)
-        ch_vars.new_tags = []
-        self.inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
-        self.inp_txt.see(tk.END)
+        self._pre_txt_frame.update_qso_Vars()
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
             self._AX25StatusBar.rx_beep_var.set(1)
-            #self._rx_beep_box.select()
             self._AX25StatusBar.rx_beep_box.configure(bg='green')
         else:
             self._AX25StatusBar.rx_beep_var.set(0)
-            #self._rx_beep_box.deselect()
             self._AX25StatusBar.rx_beep_box.configure(bg=bg)
 
         if ch_vars.timestamp_opt and self.channel_index:
@@ -1001,6 +958,9 @@ class PoPT_GUI_Main:
 
     def sysMsg_to_qso_task(self, data: str, ch_index):
         self._qso_frame.sysMsg_to_qso_task(data, ch_index)
+
+    def see_end_qso_win(self):
+        self._qso_frame.see_end_qso_win()
     # END QSO WIN
     ###############################################################
     ###############################################################
@@ -1031,10 +991,6 @@ class PoPT_GUI_Main:
                            new_mon_buff,
                            False)
         return True
-
-    def see_end_qso_win(self):
-        self._qso_frame.see_end_qso_win()
-
     # END Monitor WIN
     ###############################################################
     ###############################################################
@@ -1114,77 +1070,11 @@ class PoPT_GUI_Main:
     # DISCO ENDE
     #######################################################################
     #######################################################################
-    # SEND TEXT OUT
+    # SEND TEXT
     def snd_text(self, event=None):
-        if self.channel_index:
-            station = self.get_conn(self.channel_index)
-            if station:
-                ch_vars = self.get_ch_var(ch_index=self.channel_index)
-                ind = str(ch_vars.input_win_index)
-                if ind:
-                    if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-                        ind = str(self.inp_txt.index(tk.INSERT))
-                    ind = str(int(float(ind))) + '.0'
-                else:
-                    ind = '1.0'
+        self._pre_txt_frame.snd_text()
 
-                txt_enc = self.stat_info_encoding_var.get()
-                if station.user_db_ent:
-                    txt_enc = station.user_db_ent.Encoding
-                # ind = str(int(float(self._inp_txt.index(tk.INSERT)))) + '.0'
-                tmp_txt = self.inp_txt.get(ind, tk.INSERT)
-
-                tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
-                station.send_data(tmp_txt)
-                #self._update_qso_tx(station, tmp_txt)
-                self.inp_txt.tag_remove('send', ind, str(self.inp_txt.index(tk.INSERT)))
-                self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
-
-                ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
-
-                if '.0' in self.inp_txt.index(tk.INSERT):
-                    self.inp_txt.tag_remove('send', 'insert-1c', tk.INSERT)
-
-        else:
-            self._send_to_monitor()
-
-    def _send_to_monitor(self):
-        ch_vars = self.get_ch_var(ch_index=self.channel_index)
-        ind = str(ch_vars.input_win_index)
-        if ind:
-            if float(ind) >= float(self.inp_txt.index(tk.INSERT)):
-                ind = str(self.inp_txt.index(tk.INSERT))
-            ind = str(int(float(ind))) + '.0'
-        else:
-            ind = '1.0'
-        tmp_txt = self.inp_txt.get(ind, self.inp_txt.index(tk.INSERT))
-        tmp_txt = tmp_txt.replace('\n', '\r')
-        port_id = int(self.mon_port_var.get())
-        if port_id in self._popt_handler.get_all_ports().keys():
-            port = self._popt_handler.get_all_ports()[port_id]
-            add = str(self.mon_to_add_var.get()).upper()
-            own_call = str(self.mon_call_var.get())
-            poll = bool(self.mon_poll_var.get())
-            cmd = bool(self.mon_cmd_var.get())
-            pid = self.mon_pid_var.get()
-            pid = pid.split('>')[0]
-            pid = int(pid, 16)
-            text = tmp_txt.encode()
-            if add and own_call and text:
-                text_list = [text[i:i + 256] for i in range(0, len(text), 256)]
-                for el in text_list:
-                    port.send_UI_frame(
-                        own_call=own_call,
-                        add_str=add,
-                        text=el,
-                        cmd_poll=(cmd, poll),
-                        pid=pid
-                    )
-                # self.inp_txt.tag_add('send', ind, str(self.inp_txt.index(tk.INSERT)))
-        ch_vars.input_win_index = str(self.inp_txt.index(tk.INSERT))
-        if int(float(self.inp_txt.index(tk.INSERT))) != int(float(self.inp_txt.index(tk.END))) - 1:
-            self.inp_txt.delete(tk.END, tk.END)
-    # SEND TEXT OUT
+    # SEND TEXT
     #######################################################################
     #######################################################################
     # Conn Path Plot
@@ -1275,7 +1165,7 @@ class PoPT_GUI_Main:
     def _ch_btn_clk(self, ind: int):
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
         old_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
-        old_ch_vars.input_win_tags = get_all_tags(self.inp_txt)
+        old_ch_vars.input_win_tags  = get_all_tags(self.inp_txt)
         old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
         old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
         self.channel_index = ind
