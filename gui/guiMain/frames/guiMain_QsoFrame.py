@@ -19,7 +19,7 @@ class QsoFrame(ttk.Frame):
         self._popt_handler  = gui_root_cl.get_PH_mainGUI()
         # ================================
         self._text_size     = gui_root_cl.text_size
-        #self._channel_index = self._gui_root.channel_index
+        #self._channel_index = gui_root_cl.channel_index
         # ================================
         self._all_tag_calls = []
         # ================================
@@ -264,6 +264,7 @@ class QsoFrame(ttk.Frame):
 
     # ================================
     def update_qso_Vars(self):
+        #print(f"QSO-Frame ChID: {self._channel_index} - Main ChID: {self._gui_root.channel_index}")
         ch_vars = self._gui_root.get_ch_var(ch_index=self._gui_root.channel_index)
 
         self._qso_txt.configure(state="normal")

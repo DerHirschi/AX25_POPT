@@ -155,3 +155,6 @@ class MonitorFrame(ttk.Frame):
     # ================================
     def _see_end_mon_win(self):
         self.mon_txt.see("end")
+    # ===================================
+    def get_mon_txt(self):
+        return self.mon_txt

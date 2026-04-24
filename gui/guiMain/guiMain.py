@@ -325,20 +325,20 @@ class PoPT_GUI_Main:
         self._quit = True
         self._popt_handler.close_sound_PH()
         self._thread_gc += SOUND.get_sound_thread()
-        self.mon_txt.sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
+        self._monFrame.sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._popt_handler.connection_manager.disco_all_Conn()
         self._Pacman.save_path_data()
         """"""
         self.toplevel_manager.destroy_win()
         """"""
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self.mon_txt.sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
+        self._monFrame.sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
         self.save_GUIvars()
         self._save_parameter()
         self._save_pw_pos()
         self.guiChannels.save_Channel_Vars()
         logger.info('GUI: Closing GUI: Closing Ports.')
-        self.mon_txt.sysMsg_to_monitor_task('Closing Ports.')
+        self._monFrame.sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._popt_handler.close_popt).start()
         #self.main_win.update_idletasks()
         #self._loop_delay = 800
@@ -466,8 +466,6 @@ class PoPT_GUI_Main:
     ###############################################################
     # GUI Init Stuff
     def _init_btn(self, frame):
-        # btn_upper_frame = tk.Frame(frame)
-        # btn_upper_frame.pack(anchor='w', fill='x', expand=True)
         self._conn_btn = tk.Button(frame,
                                    text="Connect",
                                    bg="green",
@@ -499,20 +497,20 @@ class PoPT_GUI_Main:
     def _init_monitor_frame(self, parent_frame: ttk.Frame):
         self._mon_pw = ttk.Panedwindow(parent_frame, orient='vertical')
         self._mon_pw.pack(fill='both', expand=True)
-        mon_txt_f = MonitorFrame(self, self._mon_pw)
-        mon_tab_f = MonitorTreeFrame(self, self._mon_pw)
-        mon_txt_f.pack(fill='both', expand=True)
-        mon_tab_f.pack(fill='both', expand=True)
-        self._mon_pw.add(mon_txt_f, weight=1)
-        self._mon_pw.add(mon_tab_f, weight=0)
-        self._mon_tree_frame = mon_tab_f
-        self.mon_txt         = mon_txt_f
+        self._monFrame = MonitorFrame(self, self._mon_pw)
+        self._mon_tree_frame = MonitorTreeFrame(self, self._mon_pw)
+        self._monFrame.pack(fill='both', expand=True)
+        self._mon_tree_frame.pack(fill='both', expand=True)
+        self._mon_pw.add(self._monFrame, weight=1)
+        self._mon_pw.add(self._mon_tree_frame, weight=0)
+
+        self.mon_txt         = self._monFrame.get_mon_txt()
 
     #######################################
     # Text Tags
     def set_text_tags(self):
         self._qso_frame.set_tags()
-        self.mon_txt.set_tags()
+        self._monFrame.set_tags()
         self._pre_txt_frame.set_tags()
 
     ##########################
@@ -524,23 +522,23 @@ class PoPT_GUI_Main:
         ban = POPT_BANNER.format(VER)
         tmp = ban.split('\r')
         for el in tmp:
-            self.mon_txt.sysMsg_to_monitor_task(el)
-        self.mon_txt.sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
+            self._monFrame.sysMsg_to_monitor_task(el)
+        self._monFrame.sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
         for stat in POPT_CFG.get_stat_CFG_keys():
-            self.mon_txt.sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
+            self._monFrame.sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
         all_ports = self._popt_handler.port_manager.ax25_ports
         for port_k in all_ports.keys():
             msg = self._getTabStr('mon_start_msg2')
             if all_ports[port_k].device_is_running:
                 msg = self._getTabStr('mon_start_msg3')
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
-            self.mon_txt.sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
+            self._monFrame.sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortName', ''),
                                            port_cfg.get('parm_PortTyp', ''),
                                            msg
                                            ))
-            self.mon_txt.sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
+            self._monFrame.sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
                                    .format(port_k,
                                            port_cfg.get('parm_PortParm', ('', 0))[0],
                                            port_cfg.get('parm_PortParm', ('', 0))[1],
@@ -687,7 +685,7 @@ class PoPT_GUI_Main:
             while self._tasker_q_prio and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
                 task, arg = self._tasker_q_prio.pop(0)
                 if task == 'sysMsg_to_monitor':
-                    self.mon_txt.sysMsg_to_monitor_task(arg)
+                    self._monFrame.sysMsg_to_monitor_task(arg)
                 elif self._quit:
                     continue
                 elif task == 'conn_btn_update':
@@ -758,7 +756,7 @@ class PoPT_GUI_Main:
                 if task == '_monitor_tree_update':
                     self._mon_tree_frame.monitor_tree_update_task(arg)
                 elif task == '_monitor_q_task':
-                    self.mon_txt.monitor_q_task(arg)
+                    self._monFrame.monitor_q_task(arg)
                 elif task == '_remote_monitor_update_task':
                     rem_mon_data, remote_uid = arg
                     self._remote_monitor_update_task(rem_mon_data ,remote_uid)
@@ -930,13 +928,13 @@ class PoPT_GUI_Main:
     ###############################################################
     # QSO WIN
     def update_qso_Vars(self):
+        self._qso_frame.update_qso_Vars()
+        self._pre_txt_frame.update_qso_Vars()
+
         ch_vars = self.get_ch_var(ch_index=self.channel_index)
         bg      = self._get_colorMap()[1]
         ch_vars.new_data_tr = False
         ch_vars.rx_beep_tr  = False
-
-        self._qso_frame.update_qso_Vars()
-        self._pre_txt_frame.update_qso_Vars()
 
         # self.main_class: gui.guiMainNew.TkMainWin
         if ch_vars.rx_beep_opt and self.channel_index:
@@ -1087,7 +1085,7 @@ class PoPT_GUI_Main:
     # END Conn Path Plot
     #######################################################################
     def kaffee(self):
-        self.mon_txt.sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
+        self._monFrame.sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
         SOUND.sprech('Gluck gluck gluck blubber blubber')
         #self.open_RoutingTab_win()
 
@@ -1164,11 +1162,11 @@ class PoPT_GUI_Main:
 
     def _ch_btn_clk(self, ind: int):
         old_ch_vars = self.get_ch_var(ch_index=int(self.channel_index))
-        old_ch_vars.input_win = self.inp_txt.get('1.0', tk.END)
+        old_ch_vars.input_win       = self.inp_txt.get('1.0', tk.END)
         old_ch_vars.input_win_tags  = get_all_tags(self.inp_txt)
         old_ch_vars.output_win_tags = get_all_tags(self.qso_txt)
         old_ch_vars.input_win_cursor_index = self.inp_txt.index(tk.INSERT)
-        self.channel_index = ind
+        self.channel_index = int(ind)
         self.update_qso_Vars()
         self.ch_status_update()
         self.conn_btn_update()
