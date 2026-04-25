@@ -130,6 +130,9 @@ class SettingsMain(tk.Toplevel):
 
     ################################################
 
+    def get_root_gui(self):
+        return self._root_win
+
     def get_PH(self):
         return self._root_win.get_PH_mainGUI()
 
@@ -141,11 +144,8 @@ class SettingsMain(tk.Toplevel):
 
     ################################################
     def _save_cfg(self):
-        reinit_tr = False
-        set_tag = False
-        # self.attributes('-topmost', 1)
-        # self.attributes('-topmost', 0)
-        # self.lower()
+        reinit_tr       = False
+        set_tag         = False
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
                 continue
@@ -155,10 +155,10 @@ class SettingsMain(tk.Toplevel):
                     get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
                 )
                 if strTab_name in ['stat_settings', 'port']:
-                    set_tag = True
+                    set_tag   = True
                     reinit_tr = True
                 if strTab_name in ['general_settings']:
-                    set_tag = True
+                    set_tag      = True
 
         if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()

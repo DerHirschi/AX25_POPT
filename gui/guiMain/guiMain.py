@@ -174,6 +174,11 @@ class PoPT_GUI_Main:
         self._tasker_q_prio                     = []
         #
         self._flip025                           = True
+        # Periodisches Speichern der Daten
+        self._parm_save_data_task_timer         = guiCfg.get('param_autosave', 10)  # min
+        self._get_save_data_task_timer          = lambda : time.time() + self._parm_save_data_task_timer * 60
+        self._save_data_task_timer              = self._get_save_data_task_timer()
+
         ########################################
         ########################################
         # Toplevel Win Manager
@@ -327,16 +332,11 @@ class PoPT_GUI_Main:
         self._thread_gc += SOUND.get_sound_thread()
         self._monFrame.sysMsg_to_monitor_task(self._getTabStr('mon_end_msg1'))
         self._popt_handler.connection_manager.disco_all_Conn()
-        self._Pacman.save_path_data()
         """"""
         self.toplevel_manager.destroy_win()
         """"""
         logger.info('GUI: Closing GUI: Save GUI Vars & Parameter.')
-        self._monFrame.sysMsg_to_monitor_task('Saving GUI Vars & Parameter.')
-        self.save_GUIvars()
-        self._save_parameter()
-        self._save_pw_pos()
-        self.guiChannels.save_Channel_Vars()
+        self._save_all_data()
         logger.info('GUI: Closing GUI: Closing Ports.')
         self._monFrame.sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._popt_handler.close_popt).start()
@@ -344,7 +344,15 @@ class PoPT_GUI_Main:
         #self._loop_delay = 800
         #logger.info('GUI: Closing GUI: Done')
 
-    def save_GUIvars(self):
+    def _save_all_data(self):
+        self._monFrame.sysMsg_to_monitor_task('Save all Data')
+        self._Pacman.save_path_data()
+        self._save_GUIvars()
+        self._save_pw_pos()
+        self.guiChannels.save_Channel_Vars()
+        self._popt_handler.save_popt_data()
+
+    def _save_GUIvars(self):
         #########################
         # GUI-Vars to cfg
         guiCfg = POPT_CFG.load_guiPARM_main()
@@ -368,18 +376,13 @@ class PoPT_GUI_Main:
             guiCfg['gui_cfg_rtab_index'] = int(self.tabbed_sideFrame.get_tab_index()), int(self.tabbed_sideFrame2.get_tab_index())
         except (ValueError, tk.TclError):
             pass
-        # guiCfg['gui_cfg_locator'] = str(self.own_loc)
-        # guiCfg['gui_cfg_qth'] = str(self.own_qth)
-        POPT_CFG.save_guiPARM_main(guiCfg)
-
-    def _save_parameter(self):
-        #########################
-        # Parameter to cfg
-        guiCfg = POPT_CFG.load_guiPARM_main()
         guiCfg['gui_parm_new_call_alarm']   = bool(self._mh.parm_new_call_alarm)
         guiCfg['gui_parm_channel_index']    = int(self.channel_index)
         guiCfg['gui_parm_text_size']        = int(self.text_size)
         guiCfg['gui_parm_connect_history']  = dict(self.connect_history)
+        guiCfg['param_autosave']            = int(self._parm_save_data_task_timer)
+        # guiCfg['gui_cfg_locator'] = str(self.own_loc)
+        # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     ####################
@@ -414,6 +417,7 @@ class PoPT_GUI_Main:
         # OWN Loc and QTH
         #self.own_loc = guiCfg.get('gui_cfg_locator', '')
         #self.own_qth = guiCfg.get('gui_cfg_qth', '')
+        """ Tab Index / Side Frame Tabs """
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
@@ -497,11 +501,14 @@ class PoPT_GUI_Main:
     def _init_monitor_frame(self, parent_frame: ttk.Frame):
         self._mon_pw = ttk.Panedwindow(parent_frame, orient='vertical')
         self._mon_pw.pack(fill='both', expand=True)
-        self._monFrame = MonitorFrame(self, self._mon_pw)
+
+        self._monFrame       = MonitorFrame(self, self._mon_pw)
         self._mon_tree_frame = MonitorTreeFrame(self, self._mon_pw)
-        self._monFrame.pack(fill='both', expand=True)
+
+        self._monFrame.pack(      fill='both', expand=True)
         self._mon_tree_frame.pack(fill='both', expand=True)
-        self._mon_pw.add(self._monFrame, weight=1)
+
+        self._mon_pw.add(self._monFrame,       weight=1)
         self._mon_pw.add(self._mon_tree_frame, weight=0)
 
         self.mon_txt         = self._monFrame.get_mon_txt()
@@ -546,21 +553,6 @@ class PoPT_GUI_Main:
 
     # END Init Stuff
     ######################################################################
-    ######################################################################
-    def get_conn(self, con_ind: int = 0):
-        # TODO Call just if necessary
-        # TODO current Chanel.connection to var, prevent unnecessary calls
-        if not con_ind:
-            con_ind = int(self.channel_index)
-        all_conn = self._popt_handler.get_all_connections()
-        if con_ind in all_conn.keys():
-            return all_conn[con_ind]
-        return None
-
-    # Channel Vars
-    def get_ch_var(self, ch_index=0):
-        return self.guiChannels.get_ch_var(ch_index=ch_index)
-
     ######################################################################
     # Sound TODO !!!
     def _kanal_switch(self):
@@ -661,13 +653,15 @@ class PoPT_GUI_Main:
         #if self._tasker_q:
         #    logger.info('GUI: Still jobs in _tasker_q')
         #    return False
-        n = 0
+        th_name = []
         for gc_thread in self._thread_gc:
             if hasattr(gc_thread, 'is_alive'):
                 if gc_thread.is_alive():
-                    n += 1
-        if n:
-            logger.info(f'GUI: Waiting for {n} Threads ! Please Wait ...')
+                    th_name.append(gc_thread.name)
+        if th_name:
+            logger.info(self._logTag + f'Waiting for {len(th_name)} Threads ! Please Wait ...')
+            for thname in th_name:
+                logger.debug(f"  - Waiting for Thread: {thname}")
             return False
         self.main_win.quit()
         try:
@@ -845,6 +839,8 @@ class PoPT_GUI_Main:
             """ Toplevel Win Tasker """
             self.toplevel_manager.tasker_5_sec()
             #####################
+            """ Autosave Task """
+            self._save_all_data_task()
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True
         return False
@@ -885,6 +881,20 @@ class PoPT_GUI_Main:
                             continue
             if hasattr(trash_win, 'tasker'):
                 trash_win.tasker()
+
+    ######################################################################
+    def _save_all_data_task(self):
+        if not self._save_data_task_timer:
+            return
+        if time.time() < self._save_data_task_timer:
+            return
+        logger.info(self._logTag + "Autosave all Data")
+        self._save_all_data()
+        self._save_data_task_timer = self._get_save_data_task_timer()
+
+    def set_parm_autosave(self, timer_minutes: int):
+        self._parm_save_data_task_timer = timer_minutes
+        self._save_data_task_timer = self._get_save_data_task_timer()
 
     ######################################################################
     def _update_aprs_spooler(self):
@@ -961,6 +971,7 @@ class PoPT_GUI_Main:
         self._qso_frame.see_end_qso_win()
     # END QSO WIN
     ###############################################################
+
     ###############################################################
     # Monitor WIN
     def sysMsg_to_monitor(self, var: str):
@@ -1066,6 +1077,20 @@ class PoPT_GUI_Main:
             self._popt_handler.connection_manager.disco_all_Conn()
 
     # DISCO ENDE
+    def kaffee(self):
+        self._monFrame.sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
+        SOUND.sprech('Gluck gluck gluck blubber blubber')
+        #self.open_RoutingTab_win()
+
+    def do_priv(self, event=None):
+        conn = self.get_conn()
+        if conn is not None:
+            if conn.user_db_ent:
+                if conn.user_db_ent.sys_pw:
+                    conn.cli.start_baycom_login()
+                else:
+                    self.toplevel_manager.open_settings_window('priv_win')
+
     #######################################################################
     #######################################################################
     # SEND TEXT
@@ -1084,24 +1109,26 @@ class PoPT_GUI_Main:
 
     # END Conn Path Plot
     #######################################################################
-    def kaffee(self):
-        self._monFrame.sysMsg_to_monitor_task('Hinweis: Hier gibt es nur Muckefuck !')
-        SOUND.sprech('Gluck gluck gluck blubber blubber')
-        #self.open_RoutingTab_win()
+    # =====================================
+    def conn_btn_update(self):
+        """
+        Called fm:
+        self._ch_btn_clk
+        self._port_handler.accept_new_connection
+        self._port_handler.end_connection
+        """
+        self._add_tasker_q("conn_btn_update", None)
 
-    def do_pms_autoFWD(self):
-        self._popt_handler.get_bbs().start_man_autoFwd()
+    def _conn_btn_update_task(self):
+        conn = self.get_conn(self.channel_index)
+        if conn:
+            if self._conn_btn.cget('bg') != "red":
+                self._conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
+        elif self._conn_btn.cget('bg') != "green":
+            self._conn_btn.configure(text="Connect", bg="green", command=self.toplevel_manager.open_new_conn_win)
+        self._chBtn_frame.ch_btn_status_update()
 
-    def do_priv(self, event=None):
-        conn = self.get_conn()
-        if conn is not None:
-            if conn.user_db_ent:
-                if conn.user_db_ent.sys_pw:
-                    conn.cli.start_baycom_login()
-                else:
-                    self.toplevel_manager.open_settings_window('priv_win')
-
-    #####################################################################
+    # =====================================
     def _switch_mon_mode(self):
         txtWin_pos_cfg = POPT_CFG.get_guiCFG_textWin_pos()
         if self._mon_mode:
@@ -1174,25 +1201,7 @@ class PoPT_GUI_Main:
         self._Pacman.update_plot_f_ch(self.channel_index)
         self._kanal_switch()  # Sprech
 
-    #####################################################################
-    def conn_btn_update(self):
-        """
-        Called fm:
-        self._ch_btn_clk
-        self._port_handler.accept_new_connection
-        self._port_handler.end_connection
-        """
-        self._add_tasker_q("conn_btn_update", None)
-
-    def _conn_btn_update_task(self):
-        conn = self.get_conn(self.channel_index)
-        if conn:
-            if self._conn_btn.cget('bg') != "red":
-                self._conn_btn.configure(bg="red", text="Disconnect", command=self.disco_conn)
-        elif self._conn_btn.cget('bg') != "green":
-            self._conn_btn.configure(text="Connect", bg="green", command=self.toplevel_manager.open_new_conn_win)
-        self._chBtn_frame.ch_btn_status_update()
-
+    # =====================================
     def ch_status_update(self):
         """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
         self._add_tasker_q("ch_status_update", None)
@@ -1200,52 +1209,6 @@ class PoPT_GUI_Main:
     def _ch_status_update_task(self):
         self._chBtn_frame.ch_btn_status_update()
         self.on_channel_status_change()
-
-    def _reset_noty_bell(self):
-        conn = self.get_conn(self.channel_index)
-        if not conn:
-            return
-        if conn.noty_bell:
-            conn.noty_bell = False
-            self._popt_handler.reset_noty_bell_PH()
-
-    def reset_noty_bell_alarm(self):
-        self._add_tasker_q("reset_noty_bell_alarm", None)
-
-    def _reset_noty_bell_alarm_task(self):
-        self._Alarm_Frame.set_Bell_alarm(False)
-        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
-
-    def set_noty_bell(self, ch_id, msg=''):
-        self._add_tasker_q("set_noty_bell", (ch_id, msg))
-
-    def _set_noty_bell_task(self, ch_id, msg=''):
-        conn = self.get_conn(ch_id)
-        if not conn:
-            return
-        self._Alarm_Frame.set_Bell_alarm()
-
-        if self.setting_noty_bell.get():
-            if self.setting_sound.get():
-                SOUND.bell_sound()
-            threading.Thread(target=self._noty_bell, args=(ch_id, msg)).start()
-
-    def _noty_bell(self, ch_id, msg=''):
-        conn = self.get_conn(ch_id)
-        if not conn:
-            return
-        if not msg:
-            msg = f"{conn.to_call_str} {self._getTabStr('cmd_bell_gui_msg')}"
-        if messagebox.askokcancel(f"Bell {self._getTabStr('channel')} {ch_id}",
-                                  msg, parent=self.main_win):
-            if not self._quit:
-                self.switch_channel(ch_id)
-
-    def set_noty_bell_active(self):
-        self._add_tasker_q("set_noty_bell_active", None)
-
-    def _set_noty_bell_active_task(self):
-        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
@@ -1256,6 +1219,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.on_ch_stat_change()
         self.ConnStatusBar.update_station_info()
 
+    # =====================================
     def _update_ft_info(self):
         prog_val = 0
         prog_var = '---.- %'
@@ -1460,6 +1424,54 @@ class PoPT_GUI_Main:
     def _set_port_block_warning_task(self):
         self._Alarm_Frame.set_PortBlocking_warning()
 
+    def _reset_noty_bell(self):
+        conn = self.get_conn(self.channel_index)
+        if not conn:
+            return
+        if conn.noty_bell:
+            conn.noty_bell = False
+            self._popt_handler.reset_noty_bell_PH()
+
+    def reset_noty_bell_alarm(self):
+        self._add_tasker_q("reset_noty_bell_alarm", None)
+
+    def _reset_noty_bell_alarm_task(self):
+        self._Alarm_Frame.set_Bell_alarm(False)
+        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+
+    def set_noty_bell(self, ch_id, msg=''):
+        self._add_tasker_q("set_noty_bell", (ch_id, msg))
+
+    def _set_noty_bell_task(self, ch_id, msg=''):
+        conn = self.get_conn(ch_id)
+        if not conn:
+            return
+        self._Alarm_Frame.set_Bell_alarm()
+
+        if self.setting_noty_bell.get():
+            if self.setting_sound.get():
+                SOUND.bell_sound()
+            th = threading.Thread(target=self._noty_bell, args=(ch_id, msg))
+            th.start()
+            self.add_thread_gc(th)
+
+    def _noty_bell(self, ch_id, msg=''):
+        conn = self.get_conn(ch_id)
+        if not conn:
+            return
+        if not msg:
+            msg = f"{conn.to_call_str} {self._getTabStr('cmd_bell_gui_msg')}"
+        if messagebox.askokcancel(f"Bell {self._getTabStr('channel')} {ch_id}",
+                                  msg, parent=self.main_win):
+            if not self._quit:
+                self.switch_channel(ch_id)
+
+    def set_noty_bell_active(self):
+        self._add_tasker_q("set_noty_bell_active", None)
+
+    def _set_noty_bell_active_task(self):
+        self._Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
+
     #####################################
     def chk_master_sprech_on(self):
         if self.setting_sprech.get():
@@ -1477,6 +1489,21 @@ class PoPT_GUI_Main:
         if hasattr(self._popt_handler, 'port_manager'):
             if hasattr(self._popt_handler.port_manager, 'block_all_ports'):
                 self._popt_handler.port_manager.block_all_ports(state)
+
+    # =====================================
+    def get_conn(self, con_ind: int = 0):
+        # TODO Call just if necessary
+        # TODO current Chanel.connection to var, prevent unnecessary calls
+        if not con_ind:
+            con_ind = int(self.channel_index)
+        all_conn = self._popt_handler.get_all_connections()
+        if con_ind in all_conn.keys():
+            return all_conn[con_ind]
+        return None
+
+    # Channel Vars
+    def get_ch_var(self, ch_index=0):
+        return self.guiChannels.get_ch_var(ch_index=ch_index)
 
     # =====================================
     def get_PH_mainGUI(self):

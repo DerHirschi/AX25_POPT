@@ -175,10 +175,10 @@ class Main_CFG:
         self._config['stat_cfgs'] = {}  # Don't save Stat CFG in MainCFG
         self._config['port_cfgs'] = {}  # Don't save Port CFG in MainCFG
 
-        logger.info(f'-------- MAIN CFG Save --------')
+        logger.debug(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
             try:
-                logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
+                logger.debug(f'Main CFG: save {conf_k} - Size: {len(conf)}')
                 # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
             except (TypeError, ValueError):
                 pass
@@ -186,7 +186,7 @@ class Main_CFG:
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
         self._config['port_cfgs'] = tmp_port_cfgs
-        logger.info(f'-------- MAIN CFG Save ENDE --------')
+        logger.debug(f'-------- MAIN CFG Save ENDE --------')
 
     """
     # PIPE

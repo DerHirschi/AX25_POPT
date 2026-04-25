@@ -27,6 +27,7 @@ Neue Implementierungen / Funktionen:
 - CLI-CMD: "CHIST" - zeigt Verbindungsverlauf
 - APRS I-Gate
 - APRS Digepeater
+- Autosave, alle Daten werden Periodisch (einstellbar) gespeichert.
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren

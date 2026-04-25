@@ -156,29 +156,13 @@ class PoPTCore(object):
             logger.info("PH: Closing BBS")
             self.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
-        # MH
-        if self._mh:
-            logger.info("PH: Saving MH-Data")
-            self.sysmsg_to_gui("Saving MH-Data")
-            self._mh.save_mh_data()
-            logger.info("PH: Saving Port Statistic-Data")
-            self.sysmsg_to_gui("Saving Port Statistic-Data")
-            self._mh.save_PortStat()
-            self.sysmsg_to_gui("Saving Connection History")
-            self._mh.save_conn_hist()
-
-        logger.info("PH: Saving User-DB Data")
-        self.sysmsg_to_gui("Saving User-DB")
-        USER_DB.save_data()
-        logger.info("PH: Closing User-DB")
-        self.sysmsg_to_gui("Closing User-DB")
+        # Save Date
+        if not self._gui:
+            self.save_popt_data()
+        # Closing SQL-DB
+        logger.info("PH: Closing SQL-DB")
+        self.sysmsg_to_gui("Closing SQL-DB")
         self._close_DB()
-        logger.info("PH: Saving MCast-Data")
-        self.sysmsg_to_gui("Saving MCast-Data")
-        self._mcast_server.mcast_save_cfgs()
-        logger.info("PH: Saving MainCFG")
-        self.sysmsg_to_gui("Saving MainCFG")
-        POPT_CFG.save_MAIN_CFG_to_file()
         logger.info("PH: Checking GC-Threads..")
         self._thread_manager.wait_for_GC_threads()
         self._ph_end = True
@@ -191,6 +175,22 @@ class PoPTCore(object):
             return True
         self._sound.close_sound()
         return False
+
+    #######################################################################
+    # Saving Cfg/MH/Data
+    def save_popt_data(self):
+        logger.info("PH: Save PoPT-Data")
+        # MH
+        if self._mh:
+            logger.info("PH: Save MH-Data")
+            self._mh.save_mh_data()
+            logger.info("PH: Save Port Statistic-Data")
+            self._mh.save_PortStat()
+            self._mh.save_conn_hist()
+
+        USER_DB.save_data()
+        self._mcast_server.mcast_save_cfgs()
+        POPT_CFG.save_MAIN_CFG_to_file()
 
     #######################################################################
     # BBS

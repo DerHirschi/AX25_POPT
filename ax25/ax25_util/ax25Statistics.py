@@ -1,3 +1,4 @@
+import copy
 import time
 from collections import deque
 from datetime import datetime
@@ -196,9 +197,10 @@ class MH:
         while self._lock:
             logger.info('MH: Save MH, wait for Lock')
             time.sleep(0.05)
-        self._lock = True
         self._save_to_cfg()
-        tmp_mh = self._MH_db
+        self._lock = True
+        tmp_mh = copy.deepcopy(self._MH_db)
+        self._lock = False
         for k in list(tmp_mh.keys()):
             tmp_mh[k] = cleanup_obj_dict(tmp_mh[k])
         try:
@@ -208,7 +210,6 @@ class MH:
             with open(CFG_mh_data_file, 'xb') as outp:
                 pickle.dump(tmp_mh, outp, pickle.HIGHEST_PROTOCOL)
         logger.info('MH: Save MH complete')
-        self._lock = False
 
     def save_PortStat(self):
         if not self._db:
@@ -383,10 +384,10 @@ class MH:
     # MH Stuff
     def mh_task(self):  # TASKER
         """ Called fm Porthandler Tasker """
-        if self._lock:
-            logger.info('MH: Tasker, wait for Lock')
-            return False
         if not self._mh_inp_buffer:
+            return False
+        if self._lock:
+            logger.debug('MH: Task, waiting for Lock')
             return False
         self._lock = True
         for el in list(self._mh_inp_buffer):
@@ -437,9 +438,9 @@ class MH:
             self._MH_db[port_id][call_str] = MyHeard()
             if self.parm_new_call_alarm:
                 dx_alarm = True
-        ent = self._MH_db[port_id][call_str]
-        ent.last_seen = ax25_frame.get('rx_time', datetime.now())
-        ent.own_call = call_str
+        ent: MyHeard() = self._MH_db.get(port_id, {}).get(call_str, MyHeard())
+        ent.last_seen  = ax25_frame.get('rx_time', datetime.now())
+        ent.own_call   = call_str
         ent.pac_n += 1
         if primary_port_id != -1:
             ent.port = f"{primary_port_id}-{org_port_id}"
@@ -447,10 +448,10 @@ class MH:
             ent.port = f"{org_port_id}"
         ent.port_id = int(port_id)
         if not hasattr(ent, 'first_seen_port'):
-            ent.first_seen_port = org_port_id
+            setattr(ent, 'first_seen_port', org_port_id)
         elif ent.first_seen_port is None:
             ent.first_seen_port = org_port_id
-        ent.byte_n += ax25_frame.get('payload_len', 0)
+        ent.byte_n   += ax25_frame.get('payload_len', 0)
         ent.h_byte_n += len(ax25_frame.get('ax25_raw', b'')) - ax25_frame.get('payload_len', 0)
         if ax25_frame.get('ctl_flag', '') == 'REJ':
             ent.rej_n += 1

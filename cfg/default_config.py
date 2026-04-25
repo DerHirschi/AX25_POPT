@@ -383,7 +383,10 @@ def getNew_maniGUI_parm():
         gui_parm_main_height       = 850,
         #################
         # Style name
-        gui_parm_style_name         = "default"
+        gui_parm_style_name         = "default",
+        #################
+        # Autosave
+        param_autosave              = 60 # Minutes
     )
 
 

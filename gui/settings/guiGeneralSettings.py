@@ -27,7 +27,7 @@ class GeneralSettings(ttk.Frame):
     def _build_ui(self, conf):
         # Hauptcontainer mit Padding
         main_container = ttk.Frame(self, padding="20 15")
-        main_container.pack(fill=tk.BOTH, expand=True)
+        main_container.pack(fill='both', expand=True)
         main_container.grid_columnconfigure(0, weight=1)
         main_container.grid_columnconfigure(1, weight=1)
 
@@ -52,7 +52,7 @@ class GeneralSettings(ttk.Frame):
         self._loc_var = tk.StringVar(value=POPT_CFG.get_guiCFG_locator())
         ttk.Entry(loc_lang_frame, textvariable=self._loc_var, width=15).grid(row=2, column=1, sticky="w", pady=(8, 0))
 
-        # ==================== RECHTS: Logging-Einstellungen ====================
+
         """
         log_conf = POPT_CFG.get_log_CFG()
         
@@ -84,7 +84,7 @@ class GeneralSettings(ttk.Frame):
         """
         # ==================== 2. Fensteranordnung & Style ====================
         layout_style_frame = ttk.LabelFrame(main_container, text="Layout & Design", padding="15 10")
-        layout_style_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 15))
+        layout_style_frame.grid(row=1, column=0, columnspan=1, sticky="ew", pady=(0, 15))
 
         # Textfenster-Reihenfolge
         ttk.Label(layout_style_frame, text=self._getTabStr('text_winPos') + ":").grid(row=0, column=0, sticky="w", padx=(0, 10))
@@ -108,6 +108,15 @@ class GeneralSettings(ttk.Frame):
             styles += STYLES_AWTHEMES
         style_menu = ttk.OptionMenu(layout_style_frame, self._style_var, self._style_var.get(), *styles)
         style_menu.grid(row=1, column=1, sticky="w", pady=(8, 0))
+        # ==================== RECHTS: AutoSave ====================
+        as_frame = ttk.LabelFrame(main_container, text=" Autosave", padding="15 3")
+        as_frame.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=(0, 10))
+
+        ttk.Label(as_frame, text=f"Autosave ({self._getTabStr('minutes')}):").grid(row=0, column=0, sticky="w",
+                                                                                   padx=(0, 10))
+        self._autosave_var = tk.StringVar(value=str(conf.get('param_autosave', 10)))
+        ttk.Spinbox(as_frame, from_=0, to=120, increment=5, textvariable=self._autosave_var).grid(row=0, column=1,
+                                                                                         sticky="w")
 
         # ==================== 3. Farben Vorschau (PreWrite-Fenster) ====================
         color_frame = ttk.LabelFrame(main_container, text=f"TX/RX-{self._getTabStr('text_color')} {self._getTabStr('prewritewin')}", padding="15 10")
@@ -127,18 +136,18 @@ class GeneralSettings(ttk.Frame):
             spacing1=4,
             spacing3=4
         )
-        self._color_example_text.pack(pady=(0, 10), fill=tk.X)
+        self._color_example_text.pack(pady=(0, 10), fill='x')
 
         # Beispieltext einfügen
         self._update_preview_text()
 
         # Farbauswahl-Buttons
         btn_frame = ttk.Frame(color_frame)
-        btn_frame.pack(fill=tk.X)
+        btn_frame.pack(fill='x')
 
-        ttk.Button(btn_frame, text=f"TX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('tx_fg')).pack(side=tk.LEFT, padx=8)
-        ttk.Button(btn_frame, text=f"RX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('rx_fg')).pack(side=tk.LEFT, padx=8)
-        ttk.Button(btn_frame, text=self._getTabStr('backgrund'), command=lambda: self._choose_color('tx_bg')).pack(side=tk.LEFT, padx=8)
+        ttk.Button(btn_frame, text=f"TX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('tx_fg')).pack(side='left', padx=8)
+        ttk.Button(btn_frame, text=f"RX-{self._getTabStr('text_color')}", command=lambda: self._choose_color('rx_fg')).pack(side='left', padx=8)
+        ttk.Button(btn_frame, text=self._getTabStr('backgrund'), command=lambda: self._choose_color('tx_bg')).pack(side='left', padx=8)
 
     def _update_preview_text(self):
         self._color_example_text.delete("1.0", tk.END)
@@ -193,6 +202,11 @@ class GeneralSettings(ttk.Frame):
         conf['gui_cfg_vor_col'] = self._fg_rx
         conf['gui_cfg_vor_tx_col'] = self._fg_tx
         conf['gui_cfg_vor_bg_col'] = self._bg_tx
+        # Autosave
+        as_timer = int(self._autosave_var.get())
+        conf['param_autosave'] = as_timer
+        root_win = self._root_win.get_root_gui()
+        root_win.set_parm_autosave(as_timer)
         """
         log_conf = POPT_CFG.get_log_CFG()
         log_conf['bbs_log_level']   = self._bbs_log_level_var.get()
@@ -202,4 +216,5 @@ class GeneralSettings(ttk.Frame):
         """
 
         POPT_CFG.set_guiPARM_main(conf)
+
         return old_conf != conf

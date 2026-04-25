@@ -191,7 +191,7 @@ class GuiUtilities:
         """
 
         MenuBBS.add_command(label=self._getTabStr('start_auto_fwd'),
-                            command=self._root_cl.do_pms_autoFWD,
+                            command=self._do_pms_autoFWD,
                             underline=0)
         MenuBBS.add_separator()
         """
@@ -553,3 +553,7 @@ class GuiUtilities:
     # ===================================
     def _see_end_inp_win(self):
         self._inp_txt.see("end")
+
+    # ===================================
+    def _do_pms_autoFWD(self):
+        self._popt_handler.get_bbs().start_man_autoFwd()
