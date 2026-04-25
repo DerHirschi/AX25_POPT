@@ -1892,7 +1892,7 @@ class DefaultCLI(object):
             self._connection.noty_bell = True
             msg = b' '.join(self._parameter)
             msg = msg.decode(self._encoding[0], self._encoding[1])
-            self._port_handler.set_noty_bell_PH(self._connection.ch_index, msg)
+            self._port_handler.api.set_noty_bell_PH(self._connection.ch_index, msg)
             return f'\r # {self._getTabStr_CLI("cmd_bell")}\r'
         return f'\r # {self._getTabStr_CLI("cmd_bell_again")}\r'
 

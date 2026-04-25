@@ -17,7 +17,7 @@ class MSG_Center(tk.Toplevel):
         ###################################
         # Vars
         popt_handler            = root_win.get_PH_mainGUI()
-        popt_handler.set_pmsMailAlarm(False)
+        popt_handler.api.set_pmsMailAlarm(False)
         self._popt_handler      = popt_handler
         self.bbs_obj            = popt_handler.get_bbs()
         self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))

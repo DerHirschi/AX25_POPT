@@ -257,7 +257,7 @@ class MH:
             self.last_dx_alarm      = time.time()
             self._dx_alarm_hist.append(ent.own_call)
             self._add_dx_alarm_hist(ent=ent)
-            self._port_handler.set_dxAlarm()
+            self._port_handler.api.set_dxAlarm()
 
     def _add_dx_alarm_hist(self, ent):
         via = ''

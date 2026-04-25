@@ -1364,6 +1364,8 @@ class PoPT_GUI_Main:
     def _reset_dx_alarm_task(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
         self._Alarm_Frame.set_dxAlarm_active(dx_alarm)
+        self.tabbed_sideFrame.reset_dx_alarm()
+        self.tabbed_sideFrame2.reset_dx_alarm()
 
     def pmsMail_alarm(self):
         self._add_tasker_q("pmsMail_alarm", None)
@@ -1430,7 +1432,7 @@ class PoPT_GUI_Main:
             return
         if conn.noty_bell:
             conn.noty_bell = False
-            self._popt_handler.reset_noty_bell_PH()
+            self._popt_handler.api.reset_noty_bell_PH()
 
     def reset_noty_bell_alarm(self):
         self._add_tasker_q("reset_noty_bell_alarm", None)

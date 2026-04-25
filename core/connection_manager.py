@@ -102,7 +102,7 @@ class ConnectionManager:
                 self._gui().ch_status_update()
                 self._gui().conn_btn_update()
                 if conn.noty_bell:
-                    self._popt_handler.reset_noty_bell_PH()
+                    self._popt_handler.api.reset_noty_bell_PH()
                 # === PRP GUI Update  handler
                 self._popt_handler.handle_prp_response('', str(conn.uid))
             # Conn History

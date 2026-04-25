@@ -130,7 +130,7 @@ class AutoConnTask:
         bbs = self._port_handler.get_bbs()
         fwd_connections = bbs.get_fwd_connections()
         if not fwd_connections:
-            self._port_handler.set_pmsFwdAlarm(False)
+            self._port_handler.api.set_pmsFwdAlarm(False)
 
     def _end_connection(self):
         # 0

@@ -183,7 +183,7 @@ class APRSTracer:
         if dist >= self._ais_cfg.get('be_tracer_alarm_range', 50):
             # self._be_tracer_is_alarm = True
             if self._port_handler:
-                self._port_handler.set_tracerAlarm(True)
+                self._port_handler.api.set_tracerAlarm(True)
             self._tracer_add_alarm_hist(pack)
             return True
         return False

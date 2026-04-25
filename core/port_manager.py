@@ -36,7 +36,7 @@ class PortManager:
             if hasattr(port, 'ende'):
                 if not port.ende:
                     logger.error('PortManager: Could not initialise Port {}. Port already in use'.format(port_id))
-                    self._popt_handler.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
+                    self._popt_handler.api.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
                     return False
                 del self.ax25_ports[port_id]
         ##########
@@ -53,7 +53,7 @@ class PortManager:
         try:
             temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](int(port_id), self._popt_handler)
         except AX25DeviceFAIL as e:
-            self._popt_handler.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             logger.error(f'PortManager: Could not initialise Port {port_id}. {e}')
             return False
         ##########################
@@ -68,7 +68,7 @@ class PortManager:
         # Start Port/Device Thread
         if not temp.device_is_running:
             logger.error(f'PortManager: Could not initialise Port {port_id}. Device not running.')
-            self._popt_handler.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             temp.close()
             del temp
             return False
@@ -78,7 +78,8 @@ class PortManager:
         self.rx_echo[port_id]       = RxEchoVars(port_id) # TODO Cleanup / OPT
         """ Pipe Tool """
         self._popt_handler.pipe_manager.pipeTool_init_by_port(port_id)
-        self._popt_handler.sysmsg_to_gui(get_strTab('port_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+        if hasattr(self._popt_handler, 'api'):
+            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_init', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PortManager: Port {port_id} Typ: {new_cfg.get('parm_PortTyp', '')} erfolgreich initialisiert.")
         return True
 
@@ -91,10 +92,10 @@ class PortManager:
             logger.error(
                 f"PortManager: Reinit Port {port_id}. Can't start Reinit Thread")
             return
-        self._popt_handler.set_diesel()
+        self._popt_handler.api.set_diesel()
 
     def _reinit_port_th(self, port_id: int):
-        self._popt_handler.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
+        self._popt_handler.api.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PortManager: Reinit Port {port_id}")
         #self.disco_conn_fm_port(port_id)
         self.close_port(port_id)
@@ -142,7 +143,7 @@ class PortManager:
     def close_all_ports(self):
         for k in list(self.ax25_ports.keys()):
             logger.info(f"PortManager: Closing Port {k}")
-            self._popt_handler.sysmsg_to_gui(f"Closing Port {k}")
+            self._popt_handler.api.sysmsg_to_gui(f"Closing Port {k}")
             self.close_port(k)
 
     """
@@ -164,7 +165,7 @@ class PortManager:
             port_cfg = POPT_CFG.get_port_CFG_fm_id(port_id)
             if port_cfg.get('parm_kiss_is_on', True):
                 # time.sleep(1)
-                self._popt_handler.sysmsg_to_gui(get_strTab('send_kiss_parm', POPT_CFG.get_guiCFG_language()).format(port_id))
+                self._popt_handler.api.sysmsg_to_gui(get_strTab('send_kiss_parm', POPT_CFG.get_guiCFG_language()).format(port_id))
                 try:
                     port.set_kiss_parm()
                 except AX25DeviceFAIL as e:

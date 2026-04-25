@@ -41,8 +41,8 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self.lift()
         ##########################
         ph                   = root_win.get_PH_mainGUI()
-        if hasattr(ph, 'set_aprsMailAlarm_PH'):
-            ph.set_aprsMailAlarm_PH(False)
+        if hasattr(ph, 'api'):
+            ph.api.set_aprsMailAlarm_PH(False)
         self._aprs_ais       = root_win.get_AIS_mainGUI()
         self._aprs_icon_tab  = root_win.guiIcon.get_aprs_icon_tab_16()
         self._aprs_pn_msg    = list(self._aprs_ais.get_aprs_msg_pool()['message'])

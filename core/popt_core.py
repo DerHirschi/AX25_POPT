@@ -139,12 +139,12 @@ class PoPTCore(object):
 
         # APRS
         logger.info("PH: Closing APRS-Client")
-        self.sysmsg_to_gui("Closing APRS-Client")
+        self.api.sysmsg_to_gui("Closing APRS-Client")
         self._close_aprs_ais()
         # GPIO
         if hasattr(self._gpio, 'close_gpio_pins'):
             logger.info("PH: Closing GPIO")
-            self.sysmsg_to_gui("Closing GPIO")
+            self.api.sysmsg_to_gui("Closing GPIO")
             self._gpio.close_gpio_pins()
         # Pipes
         logger.info("PH: Closing Pipes")
@@ -154,14 +154,14 @@ class PoPTCore(object):
         # BBS
         if hasattr(self._bbs, 'close'):
             logger.info("PH: Closing BBS")
-            self.sysmsg_to_gui("Closing BBS")
+            self.api.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
         # Save Date
         if not self._gui:
             self.save_popt_data()
         # Closing SQL-DB
         logger.info("PH: Closing SQL-DB")
-        self.sysmsg_to_gui("Closing SQL-DB")
+        self.api.sysmsg_to_gui("Closing SQL-DB")
         self._close_DB()
         logger.info("PH: Checking GC-Threads..")
         self._thread_manager.wait_for_GC_threads()
@@ -395,87 +395,3 @@ class PoPTCore(object):
         logger.info('PH: GUI set')
         if gui is not None:
             self._gui = gui
-
-    def sysmsg_to_gui(self, msg: str = ''):
-        #if self._gui and self.is_running:
-        if hasattr(self._gui, 'sysMsg_to_monitor'):
-            self._gui.sysMsg_to_monitor(msg)
-
-    #################################################
-    # GUI Noty Icons
-    def set_dxAlarm(self, set_alarm=True):
-        if set_alarm:
-            aprs_obj = self.get_aprs_ais()
-            if all((aprs_obj, self._mh)):
-                aprs_obj.tracer_reset_auto_timer(self._mh.last_dx_alarm)
-
-            if self._gui:
-                self._gui.dx_alarm()
-        else:
-            if self._mh:
-                self._mh.dx_alarm_trigger = False
-            if self._gui:
-                self._gui.reset_dx_alarm()
-
-    def set_tracerAlarm(self, set_alarm=True):
-        if self._gui:
-            if set_alarm:
-                self._gui.tracer_alarm()
-            else:
-                self._gui.reset_tracer_alarm()
-
-    def set_aprsMailAlarm_PH(self, set_alarm=True):
-        if self._gui:
-            if set_alarm:
-                self._gui.set_aprsMail_alarm()
-            else:
-                self._gui.reset_aprsMail_alarm()
-
-        if hasattr(self._gpio, 'set_aprs_alarm'):
-            self._gpio.set_aprs_alarm(set_alarm)
-
-    def set_pmsMailAlarm(self, set_alarm=True):
-        if self._gui:
-            if set_alarm:
-                self._gui.pmsMail_alarm()
-            else:
-                self._gui.reset_pmsMail_alarm()
-
-        if hasattr(self._gpio, 'set_pms_alarm'):
-            self._gpio.set_pms_alarm(set_alarm)
-
-    def set_pmsFwdAlarm(self, set_alarm=True):
-        if self._gui:
-            if set_alarm:
-                self._gui.pmsFwd_alarm()
-            else:
-                self._gui.reset_pmsFwd_alarm()
-
-    def set_diesel(self, set_alarm=True):
-        if self._gui:
-            if set_alarm:
-                self._gui.set_diesel()
-            else:
-                self._gui.reset_diesel()
-
-    def set_noty_bell_PH(self, ch_id, msg=''):
-        if self._gui:
-            self._gui.set_noty_bell(ch_id, msg)
-
-        if hasattr(self._gpio, 'set_sysop_alarm'):
-            self._gpio.set_sysop_alarm(True)
-
-    def reset_noty_bell_PH(self):
-        all_conn = self.get_all_connections()
-        for ch in all_conn.keys():
-            conn = all_conn[ch]
-            if conn:
-                if conn.noty_bell:
-                    return
-
-        if hasattr(self._gui, 'reset_noty_bell_alarm'):
-            self._gui.reset_noty_bell_alarm()
-
-        if hasattr(self._gpio, 'set_sysop_alarm'):
-            self._gpio.set_sysop_alarm(False)
-

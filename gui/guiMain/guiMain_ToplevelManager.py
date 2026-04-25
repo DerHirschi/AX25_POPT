@@ -234,9 +234,8 @@ class ToplevelManager:
     def open_MH_win(self):
         """MH WIN"""
         self._gui_root.reset_tracer_alarm()  # ??? PORTHANDLER set_tracerAlram ???
-        self._popt_handler.set_dxAlarm(False)
-        self._gui_root.tabbed_sideFrame.reset_dx_alarm()
-        self._gui_root.tabbed_sideFrame2.reset_dx_alarm()
+        self._popt_handler.api.set_dxAlarm(False)
+
         if hasattr(self.mh_window, 'lift'):
             self.mh_window.lift()
             return

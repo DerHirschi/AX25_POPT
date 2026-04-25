@@ -960,7 +960,7 @@ class BBSConnection:
             return
 
         # self._bbs.handle_incoming_fwd(self._rx_msg_header[k]['bid_mid'])
-        self._bbs.get_port_handler().set_pmsMailAlarm(True)
+        self._bbs.get_port_handler().api.set_pmsMailAlarm(True)
         del self._rx_msg_header[bid]
 
     ########################################################

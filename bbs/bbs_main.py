@@ -313,7 +313,7 @@ class BBS:
         BBS_LOG.info(log_tag + f"Topic: {topic}")
         BBS_LOG.info(log_tag + f"MID: {mid}")
         BBS_LOG.info(log_tag + f"Msg: {msg}")
-        self._port_handler.set_pmsMailAlarm()
+        self._port_handler.api.set_pmsMailAlarm()
 
     #############################################
     # Add preconfigured Mail to the system
@@ -1245,7 +1245,7 @@ class BBS:
         if bbs_conn.e:
             return None
         self._fwd_connections.append(bbs_conn)
-        self._port_handler.set_pmsFwdAlarm(True)
+        self._port_handler.api.set_pmsFwdAlarm(True)
         return bbs_conn
 
     ###################################
@@ -1259,7 +1259,7 @@ class BBS:
         if conn.e:
             return None
         self._fwd_connections.append(conn)
-        self._port_handler.set_pmsFwdAlarm(True)
+        self._port_handler.api.set_pmsFwdAlarm(True)
         return conn
 
     def init_fwd_conn(self, ax25_conn):
@@ -1268,7 +1268,7 @@ class BBS:
         if conn.e:
             return None
         self._fwd_connections.append(conn)
-        self._port_handler.set_pmsFwdAlarm(True)
+        self._port_handler.api.set_pmsFwdAlarm(True)
         return conn
 
     def end_fwd_conn(self, bbs_conn):
@@ -1282,7 +1282,7 @@ class BBS:
                     BBS_LOG.error(logTag + f'Error, delete_incoming_fwd_bid() - {bbs_call} - BID: {bid}')
             self._fwd_connections.remove(bbs_conn)
             if not self._fwd_connections:
-                self._port_handler.set_pmsFwdAlarm(False)
+                self._port_handler.api.set_pmsFwdAlarm(False)
             self._check_msg2fwd()
             return True
         return False
