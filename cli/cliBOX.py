@@ -672,7 +672,7 @@ class BoxCLI(DefaultCLI):
             #     flag += 'N'
             el = list(el)
             el.append(flag)
-            print(el)
+            #print(el)
             try:
                 ret += BOX_MAIL_TAB_DATA(el)[:79] + '\r'
             except IndexError:
@@ -686,7 +686,7 @@ class BoxCLI(DefaultCLI):
             return "\r # Error: No Mail-Box available !\r\r"
 
         msg_list = list(bbs.get_pn_msg_tab_by_call(self._to_call))
-        print(msg_list)
+        #print(msg_list)
         if not msg_list:
             return f"{self._getTabStr_CLI('hint_no_mail')}\r"
         self._ss_state = 1

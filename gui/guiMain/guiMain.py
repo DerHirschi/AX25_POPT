@@ -174,11 +174,6 @@ class PoPT_GUI_Main:
         self._tasker_q_prio                     = []
         #
         self._flip025                           = True
-        # Periodisches Speichern der Daten
-        self._parm_save_data_task_timer         = guiCfg.get('param_autosave', 10)  # min
-        self._get_save_data_task_timer          = lambda : time.time() + self._parm_save_data_task_timer * 60
-        self._save_data_task_timer              = self._get_save_data_task_timer()
-
         ########################################
         ########################################
         # Toplevel Win Manager
@@ -340,17 +335,6 @@ class PoPT_GUI_Main:
         logger.info('GUI: Closing GUI: Closing Ports.')
         self._monFrame.sysMsg_to_monitor_task('Closing Ports.')
         threading.Thread(target=self._popt_handler.close_popt).start()
-        #self.main_win.update_idletasks()
-        #self._loop_delay = 800
-        #logger.info('GUI: Closing GUI: Done')
-
-    def _save_all_data(self):
-        self._monFrame.sysMsg_to_monitor_task('Save all Data')
-        self._Pacman.save_path_data()
-        self._save_GUIvars()
-        self._save_pw_pos()
-        self.guiChannels.save_Channel_Vars()
-        self._popt_handler.save_popt_data()
 
     def _save_GUIvars(self):
         #########################
@@ -380,10 +364,20 @@ class PoPT_GUI_Main:
         guiCfg['gui_parm_channel_index']    = int(self.channel_index)
         guiCfg['gui_parm_text_size']        = int(self.text_size)
         guiCfg['gui_parm_connect_history']  = dict(self.connect_history)
-        guiCfg['param_autosave']            = int(self._parm_save_data_task_timer)
         # guiCfg['gui_cfg_locator'] = str(self.own_loc)
         # guiCfg['gui_cfg_qth'] = str(self.own_qth)
         POPT_CFG.save_guiPARM_main(guiCfg)
+
+    def _save_all_data(self):
+        self._monFrame.sysMsg_to_monitor_task('Save all Data')
+        self._Pacman.save_path_data()
+        self._save_GUIvars()
+        self._save_pw_pos()
+        self.guiChannels.save_Channel_Vars()
+        #self._popt_handler.save_popt_data()
+
+    def add_save_all_data_task(self):
+        self._add_tasker_q("_save_all_data", None, False)
 
     ####################
     # Init Stuff
@@ -759,6 +753,8 @@ class PoPT_GUI_Main:
                     self.toplevel_manager.prp_response_update_task(rem_mon_data, remote_uid)
                 elif task == '_init_popt_remote_task':
                     self._init_popt_remote_task(arg)
+                elif task == '_save_all_data':
+                    self._save_all_data()
 
         return True
 
@@ -774,10 +770,10 @@ class PoPT_GUI_Main:
                 logger.warning(f"PH-Tasker Overload: Loop needs {round(t_delta, 2)}s to process !!")
 
         """ Toplevel Win Tasker """
-        task = self.toplevel_manager.tasker_prio()
-        tasker_ret = task or tasker_ret
-        task_01 = self._monitor_task()
-        tasker_ret = tasker_ret or task_01
+        task        = self.toplevel_manager.tasker_prio()
+        tasker_ret  = task or tasker_ret
+        task_01     = self._monitor_task()
+        tasker_ret  = tasker_ret or task_01
         return tasker_ret
 
     def _tasker_025_sec(self):
@@ -839,8 +835,6 @@ class PoPT_GUI_Main:
             """ Toplevel Win Tasker """
             self.toplevel_manager.tasker_5_sec()
             #####################
-            """ Autosave Task """
-            self._save_all_data_task()
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True
         return False
@@ -883,19 +877,6 @@ class PoPT_GUI_Main:
                 trash_win.tasker()
 
     ######################################################################
-    def _save_all_data_task(self):
-        if not self._save_data_task_timer:
-            return
-        if time.time() < self._save_data_task_timer:
-            return
-        logger.info(self._logTag + "Autosave all Data")
-        self._save_all_data()
-        self._save_data_task_timer = self._get_save_data_task_timer()
-
-    def set_parm_autosave(self, timer_minutes: int):
-        self._parm_save_data_task_timer = timer_minutes
-        self._save_data_task_timer = self._get_save_data_task_timer()
-
     ######################################################################
     def _update_aprs_spooler(self):
         self._add_tasker_q("update_aprs_spooler", None)

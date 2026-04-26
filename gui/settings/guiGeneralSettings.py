@@ -115,7 +115,7 @@ class GeneralSettings(ttk.Frame):
         ttk.Label(as_frame, text=f"Autosave ({self._getTabStr('minutes')}):").grid(row=0, column=0, sticky="w",
                                                                                    padx=(0, 10))
         self._autosave_var = tk.StringVar(value=str(conf.get('param_autosave', 10)))
-        ttk.Spinbox(as_frame, from_=0, to=120, increment=5, textvariable=self._autosave_var).grid(row=0, column=1,
+        ttk.Spinbox(as_frame, from_=0, to=1440, increment=5, textvariable=self._autosave_var).grid(row=0, column=1,
                                                                                          sticky="w")
 
         # ==================== 3. Farben Vorschau (PreWrite-Fenster) ====================
@@ -203,10 +203,7 @@ class GeneralSettings(ttk.Frame):
         conf['gui_cfg_vor_tx_col'] = self._fg_tx
         conf['gui_cfg_vor_bg_col'] = self._bg_tx
         # Autosave
-        as_timer = int(self._autosave_var.get())
-        conf['param_autosave'] = as_timer
-        root_win = self._root_win.get_root_gui()
-        root_win.set_parm_autosave(as_timer)
+        conf['param_autosave'] = int(self._autosave_var.get())
         """
         log_conf = POPT_CFG.get_log_CFG()
         log_conf['bbs_log_level']   = self._bbs_log_level_var.get()
@@ -214,7 +211,7 @@ class GeneralSettings(ttk.Frame):
         log_conf['log_to_console']  = self._console_log_var.get()
         POPT_CFG.set_log_CFG(log_conf)
         """
-
         POPT_CFG.set_guiPARM_main(conf)
-
+        popt_core = self._root_win.get_PH()
+        popt_core.api.set_autosave_param()
         return old_conf != conf

@@ -4,6 +4,7 @@ import time
 from cfg.constant import GUI_TASKER_TIME_D_UNTIL_BURN
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
+from classes.CLbuffers import ListBuffer
 from fnc.one_wire_fnc import oneWire_task, is_1wire_device
 
 
@@ -19,20 +20,26 @@ class PoPTCoreTasker:
         self._scheduled_tasker = lambda : popt_handler.get_scheduled_tasker()
         self._thread_manager   = lambda : popt_handler.get_thread_manager()
         """"""
-        self._is_running   = popt_handler.is_running
+        self._is_running       = popt_handler.is_running
         """"""
-        self._tasker_th:       threading.Thread or None = None  # Non GUI Main Thread
+        self._tasker_th: threading.Thread or None = None  # Non GUI Main Thread
         """"""
         self._1wire_timer       = time.time() + 10  # + 10 Sec, give some time to Init the rest
         self._task_timer_05sec  = time.time() + 0.5
         self._task_timer_1sec   = time.time() + 1
         self._task_timer_2sec   = time.time() + 2
         self._task_timer_30sec  = time.time() + 30
+        """Autosave"""
+        guiCfg = POPT_CFG.load_guiPARM_main()
+        self._parm_save_data_task_timer = guiCfg.get('param_autosave', 60)  # min
+        self._get_save_data_task_timer  = lambda: time.time() + self._parm_save_data_task_timer * 60
+        self._save_data_task_timer      = self._get_save_data_task_timer()
+
         """"""
         if not gui_app:
             self._init_PH_tasker()
         """"""
-        self._tasker_q = []
+        self._tasker_q = ListBuffer()
 
     # ===================================
     # No GUI Loop/Thread
@@ -53,7 +60,7 @@ class PoPTCoreTasker:
         if not self._is_running:
             self._tasker_q = []
             return
-        if len(self._tasker_q) > 15:
+        if self._tasker_q.length > 15:
             logger.warning("Core-Tasker: self._tasker_q > 15 !!")
         start_timer = time.time()
         self._prio_task()
@@ -64,8 +71,8 @@ class PoPTCoreTasker:
         t_delta = time.time() - start_timer
         n   = 0
         fnc = None
-        while self._tasker_q and t_delta < GUI_TASKER_TIME_D_UNTIL_BURN:
-            fnc = self._tasker_q.pop()
+        while not self._tasker_q.is_empty and t_delta < GUI_TASKER_TIME_D_UNTIL_BURN:
+            fnc = self._tasker_q.buffer_read
             if callable(fnc):
                 fnc()
             n += 1
@@ -76,7 +83,7 @@ class PoPTCoreTasker:
             if hasattr(fnc, '__name__'):
                 logger.warning(f"   -Last Task: {fnc.__name__}")
             logger.warning(f"   -{n} Tasks done.")
-            logger.warning(f"   -{len(self._tasker_q)} Tasks still in Q.")
+            logger.warning(f"   -{self._tasker_q.length} Tasks still in Q.")
 
     # ===================================
     def _prio_task(self):
@@ -84,7 +91,6 @@ class PoPTCoreTasker:
         self._add_task_to_q(self._bbs().tasker)           # bbs.tasker-q
         self._add_task_to_q(self._gpio_tasker_q)          # tasker-q
         self._add_task_to_q(self._sound().sound_tasker)   # tasker-q (Threads)
-
 
     def _05sec_task(self):
         """ 0.5 Sec """
@@ -115,8 +121,10 @@ class PoPTCoreTasker:
     def _2sec_task(self):
         """ 2 Sec """
         if time.time() > self._task_timer_2sec:
-            """"""
+            """BBS"""
             self._add_task_to_q(self._bbs().main_cron)
+            """AutoSave"""
+            self._add_task_to_q(self._save_all_data_task)
             """"""
             self._task_timer_2sec = time.time() + 2
             return True
@@ -132,17 +140,30 @@ class PoPTCoreTasker:
             self._task_timer_30sec = time.time() + 30
             return True
         return False
-
     # ===================================
     # Tasker Q
     def _add_task_to_q(self, fnc):
-        if fnc in self._tasker_q:
+        if fnc in self._tasker_q.buffer_get:
             if hasattr(fnc, '__name__'):
                 logger.warning(f"Core-Tasker: Task '{fnc.__name__}' already in Q")
                 return
             logger.warning(f"Core-Tasker: Task '{fnc}' already in Q")
             return
-        self._tasker_q.append(fnc)
+        self._tasker_q.buffer_write(fnc)
+    # ===================================
+    def _save_all_data_task(self):
+        if not self._save_data_task_timer:
+            return
+        if time.time() < self._save_data_task_timer:
+            return
+        logger.info("Core-Tasker: Autosave all Data")
+        self._popt_handler.save_popt_data()
+        self.set_parm_autosave()
+
+    def set_parm_autosave(self):
+        guiCfg = POPT_CFG.load_guiPARM_main()
+        self._parm_save_data_task_timer = guiCfg.get('param_autosave', 60)
+        self._save_data_task_timer = self._get_save_data_task_timer()
 
     #######################################################################
     # Port Watchdog
@@ -158,7 +179,6 @@ class PoPTCoreTasker:
                     logger.warning(f"timer: {round(wd_timer)} s")
                     #logger.info(f"Try to reinit Port {port_id}")
                     #threading.Thread(target=self.reinit_port, args=(port_id, )).start()
-
     #######################################################################
     # Scheduled Tasks
     def _Sched_task(self):
@@ -175,7 +195,6 @@ class PoPTCoreTasker:
     # MH
     def _mh_task(self):
         return self._mh().mh_task()
-
     #######################################################################
     # GPIO
     def _gpio_task(self):
@@ -188,7 +207,6 @@ class PoPTCoreTasker:
         if hasattr(self._gpio(), 'gpio_tasker_q'):
             return self._gpio().gpio_tasker_q()
         return False
-
     ##############################################################
     # 1Wire TextVars
     def _tasker_1wire(self):

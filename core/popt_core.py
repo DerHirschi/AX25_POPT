@@ -43,7 +43,6 @@ class PoPTCore(object):
         self._start_time    = datetime.now()
         self.is_running     = True
         self._ph_end        = False
-        self.thread_gc      = []    # Thread GC
         ###########################
         self._gui           = None
         self._bbs           = None
@@ -187,6 +186,8 @@ class PoPTCore(object):
             logger.info("PH: Save Port Statistic-Data")
             self._mh.save_PortStat()
             self._mh.save_conn_hist()
+        if hasattr(self._gui, 'add_save_all_data_task'):
+            self._gui.add_save_all_data_task()
 
         USER_DB.save_data()
         self._mcast_server.mcast_save_cfgs()
@@ -354,6 +355,10 @@ class PoPTCore(object):
     # Getta
     def get_thread_manager(self):
         return self._thread_manager
+
+    @property
+    def get_core_tasker(self):
+        return self._core_tasker
 
     def get_gui(self):
         return self._gui

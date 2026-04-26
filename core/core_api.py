@@ -11,6 +11,7 @@ class CoreAPI:
         self._aprs              = lambda : popt_handler.get_aprs_ais()
         self._gpio              = lambda : popt_handler.get_GPIO()
         self._port_manager      = popt_handler.port_manager
+        self._core_tasker       = lambda : popt_handler.get_core_tasker
         self._get_macast_server = lambda : popt_handler.get_mcast_server()
         # self._scheduled_tasker  = lambda : popt_handler.get_scheduled_tasker()
 
@@ -51,6 +52,10 @@ class CoreAPI:
         #if self._gui and self.is_running:
         if hasattr(self._gui(), 'sysMsg_to_monitor'):
             self._gui().sysMsg_to_monitor(msg)
+
+    # ===============================================
+    def set_autosave_param(self):
+        self._core_tasker().set_parm_autosave()
 
     # ===============================================
     def set_dxAlarm(self, set_alarm=True):
