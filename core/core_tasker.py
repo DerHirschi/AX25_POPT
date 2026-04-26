@@ -20,7 +20,7 @@ class PoPTCoreTasker:
         self._scheduled_tasker = lambda : popt_handler.get_scheduled_tasker()
         self._thread_manager   = lambda : popt_handler.get_thread_manager()
         """"""
-        self._is_running       = popt_handler.is_running
+        self._is_running       = lambda : popt_handler.is_running
         """"""
         self._tasker_th: threading.Thread or None = None  # Non GUI Main Thread
         """"""
@@ -48,16 +48,16 @@ class PoPTCoreTasker:
         self._tasker_th.start()
 
     def _tasker(self):
-        while self._is_running:
+        while self._is_running():
             self.popt_core_task()
-            if not self._is_running:
+            if not self._is_running():
                 return
             time.sleep(0.25)
 
     # ===================================
     # Main Tasker
     def popt_core_task(self):
-        if not self._is_running:
+        if not self._is_running():
             self._tasker_q = []
             return
         if self._tasker_q.length > 15:
