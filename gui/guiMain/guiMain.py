@@ -1,4 +1,3 @@
-import random
 import time
 import tkinter as tk
 from collections import deque
@@ -24,8 +23,7 @@ from gui.guiMain.guiMain_Icons import GuiIcons
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from cfg.constant import POPT_BANNER, WELCOME_SPEECH, VER, CFG_sound_RX_BEEP, \
-    SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+from cfg.constant import VER, CFG_sound_RX_BEEP, SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_Q_RUNTIME, GUI_TASKER_TIME_D_UNTIL_BURN, GUI_TASKER_BURN_DELAY, GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import get_root_dir
 from fnc.gui_fnc import get_all_tags
@@ -293,7 +291,7 @@ class PoPT_GUI_Main:
         # .....
         self.update_qso_Vars()
         ############################
-        self._monitor_start_msg()
+        self._monFrame.monitor_start_msg()
         ############################
         self._Pacman.update_plot_f_ch()
         ##########################################
@@ -507,43 +505,11 @@ class PoPT_GUI_Main:
 
         self.mon_txt         = self._monFrame.get_mon_txt()
 
-    #######################################
     # Text Tags
     def set_text_tags(self):
         self._qso_frame.set_tags()
         self._monFrame.set_tags()
         self._pre_txt_frame.set_tags()
-
-    ##########################
-    # Start Message in Monitor
-    def _monitor_start_msg(self):
-        # tmp_lang = int(self.language)
-        # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
-        SOUND.sprech(random.choice(WELCOME_SPEECH), wait=False)
-        ban = POPT_BANNER.format(VER)
-        tmp = ban.split('\r')
-        for el in tmp:
-            self._monFrame.sysMsg_to_monitor_task(el)
-        self._monFrame.sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
-        for stat in POPT_CFG.get_stat_CFG_keys():
-            self._monFrame.sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
-        all_ports = self._popt_handler.port_manager.ax25_ports
-        for port_k in all_ports.keys():
-            msg = self._getTabStr('mon_start_msg2')
-            if all_ports[port_k].device_is_running:
-                msg = self._getTabStr('mon_start_msg3')
-            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
-            self._monFrame.sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
-                                   .format(port_k,
-                                           port_cfg.get('parm_PortName', ''),
-                                           port_cfg.get('parm_PortTyp', ''),
-                                           msg
-                                           ))
-            self._monFrame.sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
-                                   .format(port_k,
-                                           port_cfg.get('parm_PortParm', ('', 0))[0],
-                                           port_cfg.get('parm_PortParm', ('', 0))[1],
-                                           ))
 
     # END Init Stuff
     ######################################################################

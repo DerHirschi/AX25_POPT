@@ -1,12 +1,13 @@
+import random
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import MON_SYS_MSG_CLR_BG, MON_SYS_MSG_CLR_FG, FONT, DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, PARAM_MAX_MON_LEN
+    DEF_PORT_MON_RX_COL, PARAM_MAX_MON_LEN, POPT_BANNER, VER, WELCOME_SPEECH
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import tk_filter_bad_chars
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 
 
 class MonitorFrame(ttk.Frame):
@@ -19,6 +20,8 @@ class MonitorFrame(ttk.Frame):
         self._mh           = gui_root_cl.get_MH()
         # ================================
         self._text_size    = gui_root_cl.text_size
+        # ================================
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # ================================
         # GUI Vars
         self._mon_scroll_var        = gui_root_cl.mon_scroll_var
@@ -80,6 +83,35 @@ class MonitorFrame(ttk.Frame):
                                 background=MON_SYS_MSG_CLR_BG)
         self.mon_txt.configure(state="disabled")
         self.mon_txt.tag_raise(tk.SEL)
+    # ================================
+    def monitor_start_msg(self):
+        # tmp_lang = int(self.language)
+        # self.language = random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8])
+        # SOUND.sprech(random.choice(WELCOME_SPEECH), wait=False)
+        ban = POPT_BANNER.format(VER)
+        tmp = ban.split('\r')
+        for el in tmp:
+            self.sysMsg_to_monitor_task(el)
+        self.sysMsg_to_monitor_task('Python Other Packet Terminal ' + VER)
+        for stat in POPT_CFG.get_stat_CFG_keys():
+            self.sysMsg_to_monitor_task(self._getTabStr('mon_start_msg1').format(stat))
+        all_ports = self._popt_handler.port_manager.ax25_ports
+        for port_k in all_ports.keys():
+            msg = self._getTabStr('mon_start_msg2')
+            if all_ports[port_k].device_is_running:
+                msg = self._getTabStr('mon_start_msg3')
+            port_cfg = POPT_CFG.get_port_CFG_fm_id(port_k)
+            self.sysMsg_to_monitor_task('Info: Port {}: {} - {} {}'
+                                   .format(port_k,
+                                           port_cfg.get('parm_PortName', ''),
+                                           port_cfg.get('parm_PortTyp', ''),
+                                           msg
+                                           ))
+            self.sysMsg_to_monitor_task('Info: Port {}: Parameter: {} | {}'
+                                   .format(port_k,
+                                           port_cfg.get('parm_PortParm', ('', 0))[0],
+                                           port_cfg.get('parm_PortParm', ('', 0))[1],
+                                           ))
 
     # ================================
     def sysMsg_to_monitor_task(self, var: str):
