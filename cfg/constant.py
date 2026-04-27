@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.116'
+VER = '2.123.117'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -324,18 +324,15 @@ TNC_KISS_START_CMD = [
     b'\x1b@K\r',
     b'KISSM\r',
     b'KISS ON\r',
-    b'KISS ON\rrestart\r',
     b'\x11\x18\x1bJHOST1\r',
-    TNC_KISS_CMD
 ]
 
 TNC_KISS_END_CMD = [
-    b'\xc0\xff\xc0',
-    b'\xc0\xff\xc0\rrestart\r',
-    b'KISS OFF\rrestart\r',
+    #b'\xc0\xff\xc0',
+    b'\xc0\xff\xc0\r',
+    b'KISS OFF\r',
     b'restart\r',
     b'\x11\x18\x1bJHOST0\r',
-    TNC_KISS_CMD_END
     ]
 
 #########################################

@@ -107,6 +107,7 @@ class APRSSettingsMain(tk.Toplevel):
                 )
         if  POPT_CFG.get_CFG_aprs_ais() != self._ais_cfg:
             POPT_CFG.set_CFG_aprs_ais(self._ais_cfg)
+            POPT_CFG.save_MAIN_CFG_to_file()
 
         if reinit:
             try:
