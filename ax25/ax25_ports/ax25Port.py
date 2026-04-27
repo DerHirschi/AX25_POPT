@@ -79,14 +79,6 @@ class AX25Port(object):
         ##############
         # AXIP VARs
         # self.axip_anti_spam = {}
-        """
-        try:
-            self.init()
-        except AX25DeviceFAIL:
-            # raise AX25DeviceFAIL(self)  # TODO in PortINIT
-            AX25DeviceFAIL(self)
-        """
-
         # ██████████████████████████████████████████████████████████████
         # ███ LOGGING BEI INIT █████████████████████████████████████████
         # ██████████████████████████████████████████████████████████████

@@ -365,6 +365,8 @@ class PoPT_GUI_Main:
         #self._popt_handler.save_popt_data()
 
     def add_save_all_data_task(self):
+        if self._quit:
+            return
         self._GuiTasker.add_tasker_q("_save_all_data", None, False)
 
     ####################

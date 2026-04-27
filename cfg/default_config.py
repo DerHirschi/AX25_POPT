@@ -52,6 +52,10 @@ def getNew_port_cfg():
         parm_kiss_Slot = 30,
         parm_kiss_Tail = 15,
         parm_kiss_F_Duplex = 0,
+        parm_kiss_channel = 0,
+        parm_kiss_multi_ch   = False,
+        parm_kiss_send_init  = False,
+        parm_kiss_send_close = False,
         # Connection Parameter
         parm_PacLen = 160,  # Max Pac len
         parm_MaxFrame = 3,  # Max (I) Frames

@@ -249,7 +249,7 @@ class GuiTasker:
             """ Toplevel Win Tasker """
             self._gui_root.toplevel_manager.tasker_1_sec()
             # APRS - MSG Spooler
-            self._update_aprs_spooler()
+            self.add_tasker_q("update_aprs_spooler", None)
             if SOUND.master_sound_on:
                 # TODO Sound Task
                 self._gui_root.rx_beep_sound()
@@ -380,7 +380,3 @@ class GuiTasker:
     def _sysMsg_to_qso_task(self, data: str, ch_index):
         self._gui_root.qso_frame.sysMsg_to_qso_task(data, ch_index)
 
-    ######################################################################
-    # APRS
-    def _update_aprs_spooler(self):
-        self.add_tasker_q("update_aprs_spooler", None)

@@ -156,8 +156,7 @@ class PoPTCore(object):
             self.api.sysmsg_to_gui("Closing BBS")
             self._bbs.close()
         # Save Date
-        if not self._gui:
-            self.save_popt_data()
+        self.save_popt_data()
         # Closing SQL-DB
         logger.info("PH: Closing SQL-DB")
         self.api.sysmsg_to_gui("Closing SQL-DB")
