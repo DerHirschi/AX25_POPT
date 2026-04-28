@@ -218,6 +218,10 @@ class APRSmain(object):
                 except aprslib.ConnectionError:
                     # print("APRS-Consumer Connection Error")
                     logger.error("APRS-IS: Consumer Connection Error")
+                except OSError:
+                    logger.error("APRS-IS: Consumer OS Error")
+                except Exception as ex:
+                    logger.error(f"APRS-IS: Error: {ex}")
 
                 self.loop_is_running = False
 

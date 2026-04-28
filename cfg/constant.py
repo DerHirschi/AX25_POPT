@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.118'
+VER = '2.123.119'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -323,6 +323,7 @@ F_KEY_TAB_WIN = {
 TNC_KISS_START_CMD = [
     b'\x1b@K\r',
     b'KISSM\r',
+    b'^M\r',
     b'KISS ON\r',
     b'\x11\x18\x1bJHOST1\r',
 ]
