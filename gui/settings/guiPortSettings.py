@@ -486,7 +486,7 @@ class PortSetTab:
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
             self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
 
-            self._param1_label.configure(text='Adresse:')
+            self._param1_label.configure(text=f"{self._getTabStr('address')}:")
             self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
@@ -533,7 +533,7 @@ class PortSetTab:
             self._calc_baud.insert(tk.END, '115200')
             self._calc_baud.configure(state="disabled")
 
-            self._param1_label.configure(text='Adresse:')
+            self._param1_label.configure(text=f"{self._getTabStr('address')}:")
             self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
@@ -598,6 +598,7 @@ class PortSetTab:
                     self._param1_var.set('/dev/ttyS1')
                 elif is_macos():
                     self._param1_var.set('/dev/tty.')
+                    #self._param1_var.set('/dev/cu.')
                 else:
                     self._param1_var.set('COM1')
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
@@ -649,7 +650,7 @@ class PortSetTab:
             self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
             # self.calc_baud.configure(state="normal")
 
-            self._param1_label.configure(text='Address:')
+            self._param1_label.configure(text=f"{self._getTabStr('address')}:")
 
             self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
@@ -872,7 +873,7 @@ class PortSettingsWin(ttk.Frame):
         if msg:
             try:
                 tab_ind = self._tabControl.index('current')
-                ind = self._tabControl.tab('current')
+                ind     = self._tabControl.tab('current')
             except tk.TclError:
                 pass
             else:

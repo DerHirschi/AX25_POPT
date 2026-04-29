@@ -156,7 +156,7 @@ class GuiKissSettings(tk.Toplevel):
             increment=1,
             width=2,
             textvariable=self._kiss_ch_var,
-            state='disabled' # TODO
+            #state='disabled'
         ).pack(side='left')
         # ================================
         multi_ch_f = ttk.Frame(kiss_ch_f)
@@ -164,7 +164,7 @@ class GuiKissSettings(tk.Toplevel):
         ttk.Checkbutton(multi_ch_f,
                         text="Multi Channel",
                         variable=self._kiss_multi_ch_var,
-                        state='disabled' # TODO
+                        #state='disabled'
                         ).pack()
 
         # ================================

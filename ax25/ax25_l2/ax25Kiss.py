@@ -138,7 +138,7 @@ FESC_TFEND = b''.join([FESC, TFEND])    # "FEND is sent as FESC, TFEND"  /  0xC0
 FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
 ##############################################
 # KISS Data Frame CH 0
-KISS_DATA_FRAME_0            = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
+KISS_DATA_FRAME_0           = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
 ##############################################
 # Linux ax25Kernel-DEV Data Frame CH 0
 AX25KERNEL_DATA_FRAME_0     = lambda inp: DATA_FRAME_0 + inp
@@ -157,7 +157,11 @@ class Kiss:
 
         self._port_id           = port_cfg.get('parm_PortNr', -1)
         # TNC Modes (KISS(+x-25 crc), SMACK)
-        self._tnc_ch            = 0
+        self._multi_ch          = port_cfg.get('parm_kiss_multi_ch', False)
+        if self._multi_ch:
+            self._tnc_ch        = port_cfg.get('parm_kiss_channel', 0)
+        else:
+            self._tnc_ch        = 0
         self._fcs_mode          = port_cfg.get('parm_kiss_fcs_mode', 'off') # 'on', 'off', 'auto'
         self._can_smack_ext     = False     # Cfg. SMACK-EXT lookup (buggy)
         #
@@ -301,34 +305,34 @@ class Kiss:
             return True
         if inp.startswith(TNC_EMU_DC1_CMD):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) DC1 (prevents XOFF lockup)> {inp}")
-            self._is_tnc_emu = True
-            self._is_tnc_emu_esc = False
+            self._is_tnc_emu      = True
+            self._is_tnc_emu_esc  = False
             self._is_tnc_emu_kiss = False
             return True
         if inp.startswith(TNC_EMU_CAN_CMD):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) CAN (clears out the garbage)> {inp}")
-            self._is_tnc_emu = True
-            self._is_tnc_emu_esc = False
+            self._is_tnc_emu      = True
+            self._is_tnc_emu_esc  = False
             self._is_tnc_emu_kiss = False
             return True
         if inp.startswith(TNC_EMU_ESC_CMD):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) ESC (command mode)> {inp}")
-            self._is_tnc_emu = True
-            self._is_tnc_emu_esc = True
+            self._is_tnc_emu      = True
+            self._is_tnc_emu_esc  = True
             self._is_tnc_emu_kiss = False
             return True
         if any((inp.startswith(TNC_EMU_KISS_END_CMD), inp.startswith(TNC_EMU_KISS_END_CMD_C0))):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-END> {inp}")
-            self._is_tnc_emu = True
-            self._is_tnc_emu_esc = False
+            self._is_tnc_emu      = True
+            self._is_tnc_emu_esc  = False
             self._is_tnc_emu_kiss = False
             return True
         if any((inp.startswith(TNC_EMU_KISS_CMD), inp.startswith(TNC_EMU_KISS_CMD_03))):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START> {inp}")
             if not self._is_tnc_emu_esc and not inp.startswith(TNC_EMU_KISS_CMD_03):
                 logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) KISS-MODE-START missing TNC-ESC-CMD> {inp}")
-            self._is_tnc_emu = True
-            self._is_tnc_emu_esc = False
+            self._is_tnc_emu      = True
+            self._is_tnc_emu_esc  = False
             self._is_tnc_emu_kiss = True
             return True
         if inp.startswith(FEND + DATA_FRAME_0 + FEND):
