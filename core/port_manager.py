@@ -36,7 +36,8 @@ class PortManager:
             if hasattr(port, 'ende'):
                 if not port.ende:
                     logger.error('PortManager: Could not initialise Port {}. Port already in use'.format(port_id))
-                    self._popt_handler.api.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
+                    if hasattr(self._popt_handler, 'api'):
+                        self._popt_handler.api.sysmsg_to_gui(get_strTab('port_in_use', POPT_CFG.get_guiCFG_language()).format(port_id))
                     return False
                 del self.ax25_ports[port_id]
         ##########
