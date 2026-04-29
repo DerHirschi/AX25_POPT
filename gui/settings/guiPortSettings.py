@@ -3,8 +3,7 @@ from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25_ports import AX25DeviceTAB
-from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, TNC_KISS_START_CMD, \
-    TNC_KISS_END_CMD, KISSDEVICES, COLOR_MAP
+from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, KISSDEVICES, COLOR_MAP
 from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -12,25 +11,25 @@ from fnc.str_fnc import get_strTab
 from gui.guiMsgBoxes import AskMsg
 from cfg.cfg_fnc import del_port_data
 from fnc.os_fnc import is_linux, is_macos
+from gui.settings.guiKISS_Settings import GuiKissSettings
 
 
 class PortSetTab:
     def __init__(self, main_stt_win, new_settings, tabclt: ttk.Notebook):
-        self._main_cl   = main_stt_win
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._main_cl      = main_stt_win
         self._popt_handler = main_stt_win.get_popt_handler()
-        self._height    = 600
-        self._width     = 1059
+        self.kiss_toplevel = None
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._get_colorMap = lambda: COLOR_MAP.get(self._main_cl.style_name, ('black', '#d9d9d9'))
+        self._height       = 600
         height = self._height
 
         self._need_reinit = False
-        self._port_setting: dict = new_settings
-        port_types = list(AX25DeviceTAB.keys())
-        if not is_linux() or is_macos():
-            port_types.remove('AX25KERNEL')
+        self.port_setting: dict = new_settings
+        port_types              = list(AX25DeviceTAB.keys())
+
         self.tab = ttk.Frame(tabclt)
         #################
-        self._get_colorMap = lambda: COLOR_MAP.get(self._main_cl.style_name, ('black', '#d9d9d9'))
         fg, bg = self._get_colorMap()
         #################
         # Port Name
@@ -40,14 +39,14 @@ class PortSetTab:
         name_label.place(x=name_x, y=height - name_y)
         self._prt_name = ttk.Entry(self.tab, width=5)
         self._prt_name.place(x=name_x + 420, y=height - name_y)
-        self._prt_name.insert(tk.END, self._port_setting.get('parm_PortName', ''))
+        self._prt_name.insert(tk.END, self.port_setting.get('parm_PortName', ''))
         ######################
         # Not initialised Info
         # all_ports = PORT_HANDLER.ax25_ports
         all_ports = self._popt_handler.port_manager.get_all_ports_f_cfg()
         new_cfg = getNew_port_cfg()
-        if self._port_setting.get('parm_PortNr', -1) in all_ports.keys():
-            if not all_ports[self._port_setting.get('parm_PortNr', -1)].device_is_running:
+        if self.port_setting.get('parm_PortNr', -1) in all_ports.keys():
+            if not all_ports[self.port_setting.get('parm_PortNr', -1)].device_is_running:
                 x = 520
                 y = 570
                 label = tk.Label(self.tab,
@@ -79,7 +78,7 @@ class PortSetTab:
 
         opt = [self._port_select_var.get()] + port_types
         port_men = ttk.OptionMenu(self.tab, self._port_select_var, *opt, command=self._update_port_parameter)
-        self._port_select_var.set(self._port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
+        self._port_select_var.set(self.port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
         #port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
         #######################
@@ -111,7 +110,7 @@ class PortSetTab:
         ptxd_y = 500
         ptxd_label = ttk.Label(self.tab, text='P-TXD:')
         self._ptxd = ttk.Entry(self.tab, width=5, textvariable=self._p_txd_var)
-        self._p_txd_var.set(self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
+        self._p_txd_var.set(self.port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
         # self._ptxd.insert(tk.END, self._port_setting.get('parm_TXD', new_cfg.get('parm_TXD', 400)))
         ptxd_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_psd_txd'))
 
@@ -124,93 +123,17 @@ class PortSetTab:
         calc_baud_y = 465
         calc_baud_label = ttk.Label(self.tab, text='Baud:')
         self._calc_baud = ttk.Entry(self.tab, width=8)
-        if self._port_setting.get('parm_PortTyp', '') == 'KISSSER':
-            ins = self._port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]
+        if self.port_setting.get('parm_PortTyp', '') == 'KISSSER':
+            ins = self.port_setting.get('parm_PortParm', new_cfg.get('parm_PortParm', ('', 0)))[1]
             self._calc_baud.insert(tk.END, ins)
             self._calc_baud.configure(state="disabled")
         else:
-            ins = self._port_setting.get('parm_baud', new_cfg.get('parm_baud', 1200))
+            ins = self.port_setting.get('parm_baud', new_cfg.get('parm_baud', 1200))
             self._calc_baud.insert(tk.END, ins)
             self._calc_baud.configure(state="normal")
         calc_baud_label.place(x=calc_baud_x, y=height - calc_baud_y)
         self._calc_baud.place(x=calc_baud_x + 80, y=height - calc_baud_y)
 
-        # KISS TXD
-        kiss_txd_x = 210
-        kiss_txd_y = 465
-        kiss_txd_label = ttk.Label(self.tab, text='TXD:')
-        self._kiss_txd = ttk.Entry(self.tab, width=3, textvariable=self._kiss_txd_var)
-        self._kiss_txd_var.set(str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
-        # self._kiss_txd.insert(tk.END, str(self._port_setting.get('parm_kiss_TXD', new_cfg.get('parm_kiss_TXD', 35))))
-        self._kiss_txd.configure(state="normal")
-        if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
-            # ins = self.port_setting.parm_PortParm[1]
-            self._kiss_txd_var.set(str(self._port_setting.get('parm_kiss_TXD',new_cfg.get('parm_kiss_TXD', 35))))
-            self._kiss_txd.configure(state="normal")
-        else:
-            # ins = self.port_setting.parm_baud
-            self._kiss_txd_var.set('0')
-            self._kiss_txd.configure(state="disabled")
-        self._kiss_txd.bind('<KeyRelease>', self.set_need_reinit)
-        kiss_txd_label.place(x=kiss_txd_x, y=height - kiss_txd_y)
-        self._kiss_txd.place(x=kiss_txd_x + 50, y=height - kiss_txd_y)
-        # KISS PERS
-        kiss_pers_x = 320
-        kiss_pers_y = 465
-        kiss_pers_label = ttk.Label(self.tab, text='PERS:')
-        self._kiss_pers = ttk.Entry(self.tab, width=3)
-        if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
-            # ins = self.port_setting.parm_PortParm[1]
-            # self._kiss_pers.insert(tk.END, str(self._port_setting.parm_kiss_Pers))
-            self._kiss_pers.insert(tk.END, str(self._port_setting.get('parm_kiss_Pers',
-                                                              new_cfg.get('parm_kiss_Pers', 16))))
-            self._kiss_pers.configure(state="normal")
-        else:
-            # ins = self.port_setting.parm_baud
-            self._kiss_pers.insert(tk.END, '0')
-            self._kiss_pers.configure(state="disabled")
-        self._kiss_pers.bind('<KeyRelease>', self.set_need_reinit)
-        kiss_pers_label.place(x=kiss_pers_x, y=height - kiss_pers_y)
-        self._kiss_pers.place(x=kiss_pers_x + 60, y=height - kiss_pers_y)
-        # KISS Slot
-        slot_x = 440
-        slot_y = 465
-        slot_label = ttk.Label(self.tab, text='SLOT:')
-        self._kiss_slot = ttk.Entry(self.tab, width=3)
-        # if self.port_setting.parm_PortTyp == 'AXIP':
-        if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
-            # ins = self.port_setting.parm_PortParm[1]
-            # self._kiss_slot.insert(tk.END, str(self._port_setting.parm_kiss_Slot))
-            self._kiss_slot.insert(tk.END,
-                                   str(self._port_setting.get('parm_kiss_Slot',
-                                                              new_cfg.get('parm_kiss_Slot', 30))))
-            self._kiss_slot.configure(state="normal")
-        else:
-            # ins = self.port_setting.parm_baud
-            self._kiss_slot.insert(tk.END, '0')
-            self._kiss_slot.configure(state="disabled")
-        slot_label.place(x=slot_x, y=height - slot_y)
-        self._kiss_slot.bind('<KeyRelease>', self.set_need_reinit)
-        self._kiss_slot.place(x=slot_x + 60, y=height - slot_y)
-        # KISS TAIL
-        kiss_tail_x = 560
-        kiss_tail_y = 465
-        kiss_tail_label = ttk.Label(self.tab, text='TAIL:')
-        self._kiss_tail = ttk.Entry(self.tab, width=3)
-        # if self.port_setting.parm_PortTyp == 'AXIP':
-        if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
-            # ins = self.port_setting.parm_PortParm[1]
-            # self._kiss_tail.insert(tk.END, str(self._port_setting.parm_kiss_Tail))
-            self._kiss_tail.insert(tk.END, str(self._port_setting.get('parm_kiss_Tail',
-                                                              new_cfg.get('parm_kiss_Tail', 15))))
-            self._kiss_tail.configure(state="normal")
-        else:
-            # ins = self.port_setting.parm_baud
-            self._kiss_tail.insert(tk.END, '0')
-            self._kiss_tail.configure(state="disabled")
-        kiss_tail_label.place(x=kiss_tail_x, y=height - kiss_tail_y)
-        self._kiss_tail.bind('<KeyRelease>', self.set_need_reinit)
-        self._kiss_tail.place(x=kiss_tail_x + 50, y=height - kiss_tail_y)
         ########################
 
         ########################
@@ -230,12 +153,12 @@ class PortSetTab:
                                                  #highlightthickness=0,
                                                  state='disabled')
         self._axip_multicast_dd.var = self._axip_multicast_var
-        if self._port_setting.get('parm_PortTyp', '') == 'AXIP':
+        if self.port_setting.get('parm_PortTyp', '') == 'AXIP':
             mcast_port = self._popt_handler.get_mcast_server().get_mcast_port()
             if not hasattr(mcast_port, 'port_id'):
                 self._axip_multicast_dd.configure(state="normal")
                 # if self._port_setting.parm_axip_Multicast:
-                if self._port_setting.get('parm_axip_Multicast', new_cfg.get('parm_axip_Multicast', False)):
+                if self.port_setting.get('parm_axip_Multicast', new_cfg.get('parm_axip_Multicast', False)):
                     self._axip_multicast_var.set(1)
                     #self._axip_multicast_dd.select()
                 else:
@@ -243,7 +166,7 @@ class PortSetTab:
                     #self._axip_multicast_dd.deselect()
             else:
                 mcast_port_id = int(mcast_port.port_id)
-                if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
+                if self.port_setting.get('parm_PortNr', -1) == mcast_port_id:
 
                     self._axip_multicast_dd.configure(state="normal")
                     self._axip_multicast_var.set(1)
@@ -257,70 +180,20 @@ class PortSetTab:
             #self._axip_multicast_dd.deselect()
             self._axip_multicast_dd.configure(state="disabled")
         self._axip_multicast_dd.place(x=axip_multicast_x + 20, y=height - axip_multicast_y)
+
+
         # KISS START / END
         kiss_start_x = 630
         kiss_start_y = 465
-        kiss_start_label = ttk.Label(self.tab, text='KISSMODE START:')
-        kiss_start_label.place(x=kiss_start_x + 50, y=height - kiss_start_y)
-        self._kiss_start_cmd_tab = {}
-        opt = ['']
-        for cmd in TNC_KISS_START_CMD:
-            if str(cmd)[2:-1] not in opt:
-                try:
-                    self._kiss_start_cmd_tab[str(cmd)[2:-1]] = cmd
-                    opt += [str(cmd)[2:-1]]
-                except IndexError:
-                    pass
-        # opt = [''] + [str(x) for x in TNC_KISS_START_CMD] # + ['CUSTOM']
-        self._kiss_start_var = tk.StringVar(self.tab)
-        try:
-            self._kiss_start_var.set(
-                str(self._port_setting.get('parm_kiss_init_cmd', new_cfg.get('parm_kiss_init_cmd', '')))[2:-1]
-            )  # default value
-        except IndexError:
-            self._kiss_start_var.set('')
+        ttk.Button(self.tab, text="KISS CFG", command=lambda : self._open_kiss_cfg_toplevel()).place(
+            x=kiss_start_x + 50, y=height - kiss_start_y
+        )
 
-        opt = [self._kiss_start_var.get()] + opt
-        kiss_start_men = ttk.OptionMenu(self.tab, self._kiss_start_var, *opt, command=self.set_need_reinit)
-        #kiss_start_men.configure(width=10, height=1)
-        kiss_start_men.place(x=kiss_start_x + 220, y=height - kiss_start_y)
-
-        kiss_end_x = 630
-        kiss_end_y = 430
-        kiss_end_label = ttk.Label(self.tab, text='KISSMODE END:')
-        kiss_end_label.place(x=kiss_end_x + 50, y=height - kiss_end_y)
-        self._kiss_end_cmd_tab = {}
-        opt = ['']
-        for cmd in TNC_KISS_END_CMD:
-            if str(cmd)[2:-1] not in opt:
-                try:
-                    self._kiss_end_cmd_tab[str(cmd)[2:-1]] = cmd
-                    opt += [str(cmd)[2:-1]]
-                except IndexError:
-                    pass
-        # opt = [''] + [str(x) for x in TNC_KISS_END_CMD]# + ['CUSTOM']
-        self._kiss_end_var = tk.StringVar(self.tab)
-        try:
-            self._kiss_end_var.set(
-                str(self._port_setting.get('parm_kiss_end_cmd', new_cfg.get('parm_kiss_end_cmd', '')))[2:-1]
-            )  # default value
-        except IndexError:
-            self._kiss_end_var.set('')
-        opt = [self._kiss_end_var.get()] + opt
-        kiss_end_men = ttk.OptionMenu(self.tab, self._kiss_end_var, *opt, command=self.set_need_reinit)
-        #kiss_end_men.configure(width=10, height=1)
-        kiss_end_men.place(x=kiss_end_x + 220, y=height - kiss_end_y)
-        ####################################################################
-        kiss_send_x = 850
-        kiss_send_y = 400
-        self._tnc_emu_var = tk.BooleanVar(self.tab, value=not self._port_setting.get('parm_set_kiss_param', new_cfg.get('parm_set_kiss_param', True)))
-        self._kiss_send = ttk.Checkbutton(self.tab, text='TNC-EMU', variable=self._tnc_emu_var, command=self.set_need_reinit)
-        self._kiss_send.place(x=kiss_send_x, y=height - kiss_send_y)
         ####################################################################
 
         # T2 auto
-        x = 130
-        y = 430
+        x = 310
+        y = 465
         # t1_label = tk.Label(self.tab, text='T1:')
         self._t2_auto_var = tk.BooleanVar(self.tab)
         self._t2_auto = ttk.Checkbutton(self.tab,
@@ -338,11 +211,11 @@ class PortSetTab:
         # t1_label.place(x=t1_x, y=height - t1_y)
         self._t2_auto.place(x=x, y=height - y)
         # T2
-        t2_x = 20
-        t2_y = 430
+        t2_x = 200
+        t2_y = 465
         t2_label = ttk.Label(self.tab, text='T2:')
         self._t2_var = tk.StringVar(self.tab,
-                                    value=self._port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700))
+                                    value=self.port_setting.get('parm_T2', new_cfg.get('parm_T2', 1700))
                                     )
         self._t2 = ttk.Entry(self.tab, width=5, textvariable=self._t2_var)
         # self._t2.insert(tk.END, self._port_setting.parm_T2)
@@ -350,49 +223,28 @@ class PortSetTab:
         t2_label.place(x=t2_x, y=height - t2_y)
         self._t2.place(x=t2_x + 40, y=height - t2_y)
         # T3
-        t3_x = 230
-        t3_y = 430
+        t3_x = 410
+        t3_y = 465
         t3_label = ttk.Label(self.tab, text='T3:')
         self._t3 = ttk.Entry(self.tab, width=5)
         # self._t3.insert(tk.END, self._port_setting.parm_T3)
-        self._t3.insert(tk.END, self._port_setting.get('parm_T3', new_cfg.get('parm_T3', 180)))
+        self._t3.insert(tk.END, self.port_setting.get('parm_T3', new_cfg.get('parm_T3', 180)))
         t3_label.place(x=t3_x, y=height - t3_y)
         self._t3.place(x=t3_x + 40, y=height - t3_y)
         # N2
-        n2_x = 350
-        n2_y = 430
+        n2_x = 530
+        n2_y = 465
         n2_label = ttk.Label(self.tab, text='N2:')
         self._n2 = ttk.Entry(self.tab, width=4)
         # self._n2.insert(tk.END, self._port_setting.parm_N2)
-        self._n2.insert(tk.END, self._port_setting.get('parm_N2', new_cfg.get('parm_N2', 20)))
+        self._n2.insert(tk.END, self.port_setting.get('parm_N2', new_cfg.get('parm_N2', 20)))
         n2_label.place(x=n2_x, y=height - n2_y)
         self._n2.place(x=n2_x + 40, y=height - n2_y)
-        # Kiss duplex
-        x = 520
-        y = 430
-        self._kiss_duplex_var = tk.IntVar(self.tab)
-        self._kiss_duplex_ent = tk.Checkbutton(self.tab,
-                                               text='Full-Duplex',
-                                               variable=self._kiss_duplex_var,
-                                               fg=fg,
-                                               bg=bg,
-                                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
-                                               highlightthickness=0,
-                                               )
-        # self._kiss_duplex_var.set(self._port_setting.parm_kiss_F_Duplex)
-        self._kiss_duplex_var.set(self._port_setting.get('parm_kiss_F_Duplex', new_cfg.get('parm_kiss_F_Duplex', 0)))
-        self._kiss_duplex_ent.place(x=x, y=height - y)
-        if self._port_setting.get('parm_kiss_is_on', new_cfg.get('parm_kiss_is_on', True)):
-            # self._kiss_duplex_var.set(self._port_setting.parm_kiss_F_Duplex)
-            self._kiss_duplex_var.set(self._port_setting.get('parm_kiss_F_Duplex', new_cfg.get('parm_kiss_F_Duplex', 0)))
-        else:
-            self._kiss_duplex_var.set(0)
-            self._kiss_duplex_ent.deselect()
-            self._kiss_duplex_ent.configure(state='disabled')
+
         #######################
         # LAbel
         stdp_x = 20
-        stdp_y = 375
+        stdp_y = 420
         std_pam_label = ttk.Label(self.tab, text=self._getTabStr('port_cfg_std_parm'))
 
         std_pam_label.place(x=stdp_x, y=height - stdp_y)
@@ -400,11 +252,11 @@ class PortSetTab:
         #########################
         # Port Default Packet Length
         pac_len_x = 20
-        pac_len = 340
+        pac_len = 385
         pac_len_label = ttk.Label(self.tab, text='Pac Len:')
         self._pac_len = ttk.Entry(self.tab, width=5)
         # self._pac_len.insert(tk.END, str(self._port_setting.parm_PacLen))
-        self._pac_len.insert(tk.END, str(self._port_setting.get('parm_PacLen', new_cfg.get('parm_PacLen', 160))))
+        self._pac_len.insert(tk.END, str(self.port_setting.get('parm_PacLen', new_cfg.get('parm_PacLen', 160))))
         pac_len_help = ttk.Label(self.tab, text=self._getTabStr('port_cfg_pac_len'))
         pac_len_label.place(x=pac_len_x, y=height - pac_len)
         self._pac_len.place(x=pac_len_x + 80, y=height - pac_len)
@@ -413,16 +265,16 @@ class PortSetTab:
         #########################
         # Port Default Max Pac
         max_pac_x = 20
-        max_pac_y = 305
+        max_pac_y = 350
         max_pac_label = ttk.Label(self.tab, text='Max Pac:')
 
         opt_max_pac = list(range(1, 8))
         self._max_pac_var       = tk.StringVar( self.tab,
-                                                value=str(self._port_setting.get('parm_MaxFrame',
-                                                                                 new_cfg.get('parm_MaxFrame', 3))))
+                                                value=str(self.port_setting.get('parm_MaxFrame',
+                                                                                new_cfg.get('parm_MaxFrame', 3))))
         self._max_pac_auto_var  = tk.BooleanVar(self.tab,
-                                                value=self._port_setting.get('parm_MaxFrameAuto',
-                                                                             new_cfg.get('parm_MaxFrameAuto', True)))
+                                                value=self.port_setting.get('parm_MaxFrameAuto',
+                                                                            new_cfg.get('parm_MaxFrameAuto', True)))
         # self._max_pac_var.set(str(self._port_setting.parm_MaxFrame))  # default value
         opt_max_pac = [self._max_pac_var.get()] + opt_max_pac
         max_pac = ttk.OptionMenu(self.tab, self._max_pac_var, *opt_max_pac)
@@ -456,8 +308,8 @@ class PortSetTab:
                                               width=28,
                                               font=('Courier', 11),
                                               # fg=self._port_setting.parm_mon_clr_tx,
-                                              fg=self._port_setting.get('parm_mon_clr_tx', new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
-                                              bg=self._port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
+                                              fg=self.port_setting.get('parm_mon_clr_tx', new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
+                                              bg=self.port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
                                               # bg=self._port_setting.parm_mon_clr_bg
                                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                               highlightthickness=0,
@@ -471,11 +323,11 @@ class PortSetTab:
                                               font=('Courier', 11),
                                               # fg=self._port_setting.parm_mon_clr_rx,
                                               # bg=self._port_setting.parm_mon_clr_bg
-                                              fg = self._port_setting.get('parm_mon_clr_rx', new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
-                                              bg = self._port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
+                                              fg = self.port_setting.get('parm_mon_clr_rx', new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
+                                              bg = self.port_setting.get('parm_mon_clr_bg', new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
                                               relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                                               highlightthickness=0,
-        )
+                                              )
         self._color_example_text_rx.place(x=100, y=100)
         self._color_example_text_rx.insert(tk.END, 'RX> Test TEXT. 1234. 73...')
         #################
@@ -515,37 +367,38 @@ class PortSetTab:
         # self._all_stat_cfgs = get_all_stat_cfg()
         self._all_stat_cfgs = POPT_CFG.get_stat_CFGs()
         x_f = 0
-        y_f = 1
+        y_f = 0
         # if self._port_setting.parm_PortNr in PORT_HANDLER.get_all_ports().keys():
         # if self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)) in PORT_HANDLER.get_all_ports().keys():
         prim_port = self._popt_handler.port_manager.get_dualPort_primary_PH(
-            self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)))
+            self.port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)))
 
         if prim_port:
             prim_port_id = prim_port.port_id
-            if prim_port_id != self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)):
+            if prim_port_id != self.port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)):
                 cfg_x = 20
                 cfg_y = 290 - 35
                 # prim_port = PORT_HANDLER.get_dualPort_primary_PH(self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1)))
                 # prim_port_id = '! ERROR !'
                 # if prim_port:
                 ttk.Label(self.tab,
-                         text=f"Dual Port: Secondary-P: {self._port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1))}. Primary-P:  {prim_port_id}"
+                         text=f"Dual Port: Secondary-P: {self.port_setting.get('parm_PortNr', new_cfg.get('parm_PortNr', -1))}. Primary-P:  {prim_port_id}"
                          ).place(x=cfg_x, y=height - cfg_y)
 
                 self._update_port_parameter()
                 return
         self._update_port_parameter()
 
-
+        station_frame = ttk.LabelFrame(self.tab, text="Stations", width=450, height=170)
+        station_frame.place(x=5, y=285)
 
         for k in self._all_stat_cfgs.keys():
             # stat = self.all_stat_cfgs[k]
             cfg_x = 20 + x_f
-            cfg_y = 290 - (35 * y_f)  # Yeah X * 0
+            cfg_y = (35 * y_f) + 5
             var = tk.IntVar(self.tab)
 
-            cfg = ttk.Checkbutton(self.tab,
+            cfg = ttk.Checkbutton(station_frame,
                                  text=k,
                                  width=10,
                                  variable=var,
@@ -554,15 +407,15 @@ class PortSetTab:
                                  )
 
             # if k in self._port_setting.parm_StationCalls:
-            if k in self._port_setting.get('parm_StationCalls', new_cfg.get('parm_StationCalls', [])):
+            if k in self.port_setting.get('parm_StationCalls', new_cfg.get('parm_StationCalls', [])):
                 var.set(1)
                 #cfg.select()
             # cfg.var = var
             self._stat_check_vars[k] = var
-            cfg.place(x=cfg_x, y=height - cfg_y)
+            cfg.place(x=cfg_x, y=cfg_y)
             cfg.var = var
             if y_f == 3:
-                y_f = 1
+                y_f = 0
                 x_f += 150
             else:
                 y_f += 1
@@ -571,44 +424,44 @@ class PortSetTab:
         new_cfg = getNew_port_cfg()
         if fg_bg == 'TX':
             # col = askcolor(self._port_setting.parm_mon_clr_tx, title='TX')
-            col: tuple = askcolor(self._port_setting.get('parm_mon_clr_tx',
-                                                  new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
+            col: tuple = askcolor(self.port_setting.get('parm_mon_clr_tx',
+                                                        new_cfg.get('parm_mon_clr_tx', DEF_PORT_MON_TX_COL)),
                                                 parent=self._main_cl,
                                                 title='TX')
             if col[1] is not None:
                 if col:
-                    self._port_setting['parm_mon_clr_tx'] = col[1]
+                    self.port_setting['parm_mon_clr_tx'] = col[1]
                     self._color_example_text_tx.configure(fg=col[1])
         elif fg_bg == 'RX':
             # col = askcolor(self._port_setting.parm_mon_clr_rx, title='RX')
-            col = askcolor(self._port_setting.get('parm_mon_clr_rx',
-                                                  new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
+            col = askcolor(self.port_setting.get('parm_mon_clr_rx',
+                                                 new_cfg.get('parm_mon_clr_rx', DEF_PORT_MON_RX_COL)),
                            parent=self._main_cl,
                            title='RX')
             if col[1] is not None:
                 if col:
                     # self._port_setting.parm_mon_clr_rx = col[1]
-                    self._port_setting['parm_mon_clr_rx'] = col[1]
+                    self.port_setting['parm_mon_clr_rx'] = col[1]
                     self._color_example_text_rx.configure(fg=col[1])
         elif fg_bg == 'BG':
             # col = askcolor(self._port_setting.parm_mon_clr_bg, title=STR_TABLE['bg_color'][self._lang])
-            col = askcolor(self._port_setting.get('parm_mon_clr_bg',
-                                                  new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
+            col = askcolor(self.port_setting.get('parm_mon_clr_bg',
+                                                 new_cfg.get('parm_mon_clr_bg', DEF_PORT_MON_BG_COL)),
                            parent=self._main_cl,
                            title=self._getTabStr('bg_color'))
             if col[1] is not None:
                 if col:
                     # self._port_setting.parm_mon_clr_bg = col[1]
-                    self._port_setting['parm_mon_clr_bg'] = col[1]
+                    self.port_setting['parm_mon_clr_bg'] = col[1]
                     self._color_example_text_tx.configure(bg=col[1])
                     self._color_example_text_rx.configure(bg=col[1])
 
         #self._main_cl.get_root_sett_win().attributes("-topmost", True)
 
     def _update_Mcast_settings(self, event=None):
-        self._main_cl.switch_mcast_chb(self._axip_multicast_var.get(), self._port_setting.get('parm_PortNr', -1))
+        self._main_cl.switch_mcast_chb(self._axip_multicast_var.get(), self.port_setting.get('parm_PortNr', -1))
 
-    def disable_mcast(self, port_id, disable):
+    def disable_mcast(self, disable):
         if self._port_select_var.get() != 'AXIP':
             self._axip_multicast_dd.configure(state='disabled')
         else:
@@ -625,20 +478,13 @@ class PortSetTab:
         typ = self._port_select_var.get()
         new_port_cfg = getNew_port_cfg()
         if typ in ('KISSTCP', 'AGWPE-TCP'):
-            self._kiss_txd.configure(state="normal")
-            self._kiss_pers.configure(state="normal")
-            self._kiss_tail.configure(state="normal")
-            self._kiss_slot.configure(state="normal")
-            self._kiss_duplex_ent.configure(state='normal')
-            self._kiss_send.configure(state='normal')
-            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
 
             self._axip_multicast_dd.configure(state="disabled")
             # self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
-            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
 
             self._param1_label.configure(text='Adresse:')
             self._param1_ent.destroy()
@@ -654,8 +500,8 @@ class PortSetTab:
             self._param2_ent.place(x=param_sel_x + 500 + 50, y=height - param_sel_y + param_next_line)
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
-            self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
+            self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
 
         elif typ == 'AXIP':
@@ -663,7 +509,7 @@ class PortSetTab:
             if not hasattr(mcast_port, 'port_id'):
                 self._axip_multicast_dd.configure(state="normal")
                 # if self._port_setting.parm_axip_Multicast:
-                if self._port_setting.get('parm_axip_Multicast',False):
+                if self.port_setting.get('parm_axip_Multicast', False):
                     self._axip_multicast_var.set(1)
                     #self._axip_multicast_dd.select()
                 else:
@@ -671,7 +517,7 @@ class PortSetTab:
                     #self._axip_multicast_dd.deselect()
             else:
                 mcast_port_id = int(mcast_port.port_id)
-                if self._port_setting.get('parm_PortNr', -1) == mcast_port_id:
+                if self.port_setting.get('parm_PortNr', -1) == mcast_port_id:
 
                     self._axip_multicast_dd.configure(state="normal")
                     self._axip_multicast_var.set(1)
@@ -681,19 +527,6 @@ class PortSetTab:
                     self._axip_multicast_var.set(0)
                     #self._axip_multicast_dd.deselect()
 
-
-            self._kiss_txd.configure(state="disabled")
-            self._kiss_pers.configure(state="disabled")
-            self._kiss_tail.configure(state="disabled")
-            self._kiss_slot.configure(state="disabled")
-            self._kiss_duplex_ent.configure(state='disabled')
-            self._kiss_send.configure(state='disabled')
-            self._tnc_emu_var.set(value=True)
-
-            #self._ptxd.configure(state="normal")
-            #self._ptxd.delete(0, tk.END)
-            #self._ptxd.insert(tk.END, '1')
-            #self._ptxd.configure(state="disabled")
 
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
@@ -715,33 +548,24 @@ class PortSetTab:
 
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
                 # self._param1_ent.insert(tk.END, self._port_setting.parm_PortParm[0])
-                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+                self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
                 self._param1_var.set('0.0.0.0')
             # if self._port_setting.parm_PortParm[1]:
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
-                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
+                self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
         elif typ == 'KISSSER':
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
 
-            self._kiss_txd.configure(state="normal")
-            self._kiss_pers.configure(state="normal")
-            self._kiss_tail.configure(state="normal")
-            self._kiss_slot.configure(state="normal")
-            self._kiss_duplex_ent.configure(state='normal')
-            self._kiss_send.configure(state='normal')
-            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
-
-            #self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
-            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
             # self.calc_baud.configure(state="normal")
 
             self._param1_label.configure(text='Port:')
@@ -767,8 +591,8 @@ class PortSetTab:
 
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
-                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
+                self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
                 if is_linux():
                     self._param1_var.set('/dev/ttyS1')
@@ -776,26 +600,17 @@ class PortSetTab:
                     self._param1_var.set('/dev/tty.')
                 else:
                     self._param1_var.set('COM1')
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
-                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
+                self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
         elif typ == 'AX25KERNEL':
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
 
-            self._kiss_txd.configure(state="normal")
-            self._kiss_pers.configure(state="normal")
-            self._kiss_tail.configure(state="normal")
-            self._kiss_slot.configure(state="normal")
-            self._kiss_duplex_ent.configure(state='normal')
-            self._kiss_send.configure(state='normal')
-            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', True))
-
-            #self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
-            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
             # self.calc_baud.configure(state="normal")
 
             self._param1_label.configure(text='Interface')
@@ -815,31 +630,23 @@ class PortSetTab:
 
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
-                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0]:
+                self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
                 self._param1_var.set('ax0')
 
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
-                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
+                self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
         elif typ in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
-
-            self._kiss_txd.configure(state="disabled")
-            self._kiss_pers.configure(state="disabled")
-            self._kiss_tail.configure(state="disabled")
-            self._kiss_slot.configure(state="disabled")
-            self._kiss_duplex_ent.configure(state='disabled')
-            self._kiss_send.configure(state='normal')
-            self._tnc_emu_var.set(value=not self._port_setting.get('parm_set_kiss_param', False))
 
             self._ptxd.configure(state="normal")
             self._calc_baud.configure(state="normal")
             self._calc_baud.delete(0, tk.END)
             # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
             # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
-            self._calc_baud.insert(tk.END, self._port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
             # self.calc_baud.configure(state="normal")
 
             self._param1_label.configure(text='Address:')
@@ -859,18 +666,18 @@ class PortSetTab:
 
             # self._param1_ent.delete(0, tk.END)
             self._param2_ent.delete(0, tk.END)
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[0]:
-                self._param1_var.set(self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[0]:
+                self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             else:
                 self._param1_var.set('0.0.0.0')
 
-            if self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[1]:
-                self._param2_ent.insert(tk.END, self._port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+            if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[1]:
+                self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
 
 
-        self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
+        self._t2_var.set(str(self.port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
         # if self._port_setting.parm_T2_auto:
-        if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
+        if self.port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
             self._t2_auto_var.set(True)
             #self._t2_auto.select()
         else:
@@ -880,9 +687,9 @@ class PortSetTab:
         # print(self.port_setting.parm_T2_auto)
 
 
-        self._t2_var.set(str(self._port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
+        self._t2_var.set(str(self.port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
         # if self._port_setting.parm_T2_auto:
-        if self._port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
+        if self.port_setting.get('parm_T2_auto', new_port_cfg.get('parm_T2_auto', True)):
             self._t2_auto_var.set(True)
             #self._t2_auto.select()
         else:
@@ -890,20 +697,14 @@ class PortSetTab:
             #self._t2_auto.deselect()
         self._t2_auto_check()
         # print(self.port_setting.parm_T2_auto)
-
 
     def set_vars_to_cfg(self, event=None):
-        old_cfg = dict(self._port_setting)
+        old_cfg = dict(self.port_setting)
         # Port Name
-        self._port_setting['parm_PortName'] = self._prt_name.get()
+        self.port_setting['parm_PortName'] = self._prt_name.get()
         # Port TYpe
         # old_typ = str(self._port_setting.get('parm_PortTyp', ''))
-        self._port_setting['parm_PortTyp'] = self._port_select_var.get()
-        """
-        if all((self._port_setting.get('parm_PortTyp', ''),
-                self._port_setting.get('parm_PortTyp', '') != old_typ)):
-            self._need_reinit = True
-        """
+        self.port_setting['parm_PortTyp'] = self._port_select_var.get()
         # Port Parameter
         try:
             tmp_param = (self._param1_var.get(), int(self._param2_ent.get()))
@@ -912,76 +713,59 @@ class PortSetTab:
         if self._port_select_var.get() == 'AX25KERNEL':
             tmp_param = (self._param1_var.get(), 0)
 
-        self._port_setting['parm_PortParm'] = tmp_param
-        print(self._port_setting['parm_PortParm'])
+        self.port_setting['parm_PortParm'] = tmp_param
         # Pseudo TXD
         try:
-            self._port_setting['parm_TXD'] = int(self._p_txd_var.get())
+            self.port_setting['parm_TXD'] = int(self._p_txd_var.get())
         except ValueError:
-            self._port_setting['parm_TXD'] = 300
+            self.port_setting['parm_TXD'] = 300
 
         #############
         # KISS
         if self._port_select_var.get() in KISSDEVICES:
-            self._port_setting['parm_kiss_is_on'] = True
-            self._port_setting['parm_kiss_TXD']   = int(self._kiss_txd_var.get())
-            self._port_setting['parm_kiss_Pers']  = int(self._kiss_pers.get())
-            self._port_setting['parm_kiss_Slot']  = int(self._kiss_slot.get())
-            self._port_setting['parm_kiss_Tail']  = int(self._kiss_tail.get())
-            self._port_setting['parm_kiss_F_Duplex'] = self._kiss_duplex_var.get()
-        elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
-            self._port_setting['parm_kiss_is_on'] = True
-        else:
-            self._port_setting['parm_kiss_is_on'] = False
+            self.port_setting['parm_kiss_is_on'] = True
 
-        self._port_setting['parm_kiss_init_cmd'] = self._kiss_start_cmd_tab.get(self._kiss_start_var.get(), b'')
-        self._port_setting['parm_kiss_end_cmd'] = self._kiss_end_cmd_tab.get(self._kiss_end_var.get(), b'')
+        elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
+            self.port_setting['parm_kiss_is_on'] = True
+        else:
+            self.port_setting['parm_kiss_is_on'] = False
         # Baud
         # if self.port_setting.parm_PortTyp == 'KISSSER':
         # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
-        self._port_setting['parm_baud'] = int(self._calc_baud.get())
+        self.port_setting['parm_baud'] = int(self._calc_baud.get())
         # T 2 auto
-        self._port_setting['parm_T2_auto'] = bool(self._t2_auto_var.get())
+        self.port_setting['parm_T2_auto'] = bool(self._t2_auto_var.get())
         # T 2
         try:
-            self._port_setting['parm_T2'] = int(self._t2_var.get())
+            self.port_setting['parm_T2'] = int(self._t2_var.get())
         except ValueError:
             pass
         # T 3
-        self._port_setting['parm_T3'] = int(self._t3.get())
+        self.port_setting['parm_T3'] = int(self._t3.get())
         # N 2
-        self._port_setting['parm_N2'] = int(self._n2.get())
+        self.port_setting['parm_N2'] = int(self._n2.get())
         # Port Default Packet Length
-        self._port_setting['parm_PacLen'] = max(30, min(256, int(self._pac_len.get())))
+        self.port_setting['parm_PacLen'] = max(30, min(256, int(self._pac_len.get())))
         # Port Default Max Pac
-        self._port_setting['parm_MaxFrame'] = int(self._max_pac_var.get())
-        self._port_setting['parm_MaxFrameAuto'] = bool(self._max_pac_auto_var.get())
+        self.port_setting['parm_MaxFrame'] = int(self._max_pac_var.get())
+        self.port_setting['parm_MaxFrameAuto'] = bool(self._max_pac_auto_var.get())
         # Monitor COLOR Selector SIDE Frame
         # TX
         # self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
         # RX
         # self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
-        if self._port_select_var.get() == 'AXIP':
-            self._port_setting['parm_full_duplex'] = True   # FIXME: Alte Programme bekommen Probleme damit.
-        else:
-            self._port_setting['parm_full_duplex'] = False
 
-        self._port_setting['parm_set_kiss_param'] = not bool(self._tnc_emu_var.get())
+        self.port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
 
-        self._port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
-        # self._port_setting['parm_axip_fail'] = int(self._test_fail.get())
-
-        # self._port_setting['parm_StationCalls'] = []
-        # self.port_setting.parm_Stations = []
         stat_calls = []
         for k in self._stat_check_vars.keys():
             if k in self._all_stat_cfgs.keys() and \
                     self._stat_check_vars[k].get():
                 stat_calls.append(k)
 
-        self._port_setting['parm_StationCalls'] = stat_calls
+        self.port_setting['parm_StationCalls'] = stat_calls
         self._save_cfg_to_poptCFG()
-        for cfg_k, cfg_val in self._port_setting.items():
+        for cfg_k, cfg_val in self.port_setting.items():
             if old_cfg.get(cfg_k, None) != cfg_val:
                 self._need_reinit = True
                 return
@@ -994,22 +778,23 @@ class PortSetTab:
         self._need_reinit = True
 
     def _save_cfg_to_poptCFG(self):
-        if not self._port_setting.get('parm_PortTyp'):
+        if not self.port_setting.get('parm_PortTyp'):
             return False
-        POPT_CFG.set_port_CFG_fm_id(self._port_setting.get('parm_PortNr', -1),
-                                    self._port_setting)
+        POPT_CFG.set_port_CFG_fm_id(self.port_setting.get('parm_PortNr', -1),
+                                    self.port_setting)
         return True
 
     def _t2_auto_check(self):
         if self._t2_auto_var.get():
-            #self._t2_auto.configure(bg='green')
-            #self._t2_auto.select()
             self._t2.configure(state='disabled')
         else:
-            fg, bg = self._get_colorMap()
-            #self._t2_auto.configure(bg=bg, fg=fg)
-            #self._t2_auto.deselect()
             self._t2.configure(state='normal')
+
+    def _open_kiss_cfg_toplevel(self):
+        if hasattr(self.kiss_toplevel, 'lift'):
+            self.kiss_toplevel.lift()
+            return
+        self.kiss_toplevel = GuiKissSettings(self._main_cl, self)
 
 
 class PortSettingsWin(ttk.Frame):
@@ -1017,10 +802,12 @@ class PortSettingsWin(ttk.Frame):
         ttk.Frame.__init__(self, tabctl)
         win_height = 600
         win_width  = 1059
+        self.setting_win_root  = root_win
         self._popt_handler      = root_win.get_popt_handler()
         self._need_GUI_reinit   = False   # Reinit SettingsGUI Tabs
         self._lang              = POPT_CFG.get_guiCFG_language()
         ##########################
+        self.style      = root_win.style
         self.style_name = root_win.style_name
         ####################################
         # New Station, Del Station Buttons
@@ -1066,7 +853,7 @@ class PortSettingsWin(ttk.Frame):
     def switch_mcast_chb(self, disable: bool, port_nr: int):
         for port_id, tab in self._tab_list.items():
             if port_id != port_nr:
-                tab.disable_mcast(port_id, disable)
+                tab.disable_mcast(disable)
 
     def _new_port_btn_cmd(self):
         new_prtcfg = getNew_port_cfg()
@@ -1131,15 +918,7 @@ class PortSettingsWin(ttk.Frame):
 
                 self._popt_handler.port_manager.reinit_port(port_id)
                 self._need_GUI_reinit = True
-        """        
-        if old_cfg == self._get_config():
-            return self._need_GUI_reinit
-        """
-        """
-        if self._need_GUI_reinit:
-            threading.Thread(target=PORT_HANDLER.reinit_all_ports).start()
-            # self._need_GUI_reinit = False
-        """
+
 
         if self._need_GUI_reinit:
             self._popt_handler.port_manager.unblock_all_ports()

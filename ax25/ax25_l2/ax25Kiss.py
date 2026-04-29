@@ -150,8 +150,11 @@ class Kiss:
     def __init__(self, port_cfg: dict):
         self.protocol_name =    'KISS'
 
-        self.is_enabled         = port_cfg.get('parm_kiss_is_on', True)
-        self.set_param          = port_cfg.get('parm_set_kiss_param', True)
+        self.is_enabled         = port_cfg.get('parm_kiss_is_on',      True)
+        self.set_param          = port_cfg.get('parm_set_kiss_param',  True)
+        self._send_init_cmd     = port_cfg.get('parm_kiss_send_init',  True)
+        self._send_end_cmd      = port_cfg.get('parm_kiss_send_close', True)
+
         self._port_id           = port_cfg.get('parm_PortNr', -1)
         # TNC Modes (KISS(+x-25 crc), SMACK)
         self._tnc_ch            = 0
@@ -166,8 +169,28 @@ class Kiss:
         self._is_tnc_emu_esc    = False
         self._is_tnc_emu_kiss   = False
         # CFG Flags
-        self._START_TNC_KISS = port_cfg.get('parm_kiss_init_cmd', TNC_KISS_CMD)
-        self._END_TNC_KISS   = port_cfg.get('parm_kiss_end_cmd', TNC_KISS_CMD_END)
+        start_cmd = port_cfg.get('parm_kiss_init_cmd',  [(TNC_KISS_CMD, True)])
+        end_cmd   = port_cfg.get('parm_kiss_end_cmd', [(TNC_KISS_CMD_END, False)])
+        if type(start_cmd) is not list:
+            """ Convert old CFG """
+            cr = b'\r' in start_cmd
+            if cr:
+                cmd = start_cmd[:-1]
+            else:
+                cmd = start_cmd
+            start_cmd = [(cmd, cr)]
+        if type(end_cmd) is not list:
+            """ Convert old CFG """
+            cr = b'\r' in end_cmd
+            if cr:
+                cmd = end_cmd[:-1]
+            else:
+                cmd = end_cmd
+            end_cmd = [(cmd, cr)]
+
+        self._START_TNC_KISS = self._build_tnc_cmds(start_cmd)
+        self._END_TNC_KISS   = self._build_tnc_cmds(end_cmd)
+
         # SET TNC-Parameter
         self._txd_frame    = FEND + KISS_TXD +  bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
         self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
@@ -193,6 +216,18 @@ class Kiss:
         logger.info(f"  Duplex:    {port_cfg.get('parm_kiss_F_Duplex', 0)}")
         logger.info("═" * 60)
 
+    ######################################################################
+    @staticmethod
+    def _build_tnc_cmds(cmd_list: list):
+        res = bytearray()
+        for cmd, cr in cmd_list:
+            if cr:
+                res += (cmd + b'\r')
+            else:
+                res += cmd
+        return res
+
+    ######################################################################
     def set_all_parameter(self):
         if not self.set_param:
             logger.info(f"Kiss: Set TNC-Parameter disabled !")
@@ -548,14 +583,14 @@ class Kiss:
 
     #############################################################################
     def device_end(self):
-        if not self.set_param:
+        if not self._send_end_cmd:
             logger.info(f"Kiss: KISS-END: Set TNC-Parameter disabled !")
             return b''
         # return b''.join([self.FEND, self.RETURN, self.FEND])
         return self._END_TNC_KISS
 
     def device_start(self):
-        if not self.set_param:
+        if not self._send_init_cmd:
             logger.info(f"Kiss: KISS-Start: Set TNC-Parameter disabled !")
             return b''
         return self._START_TNC_KISS

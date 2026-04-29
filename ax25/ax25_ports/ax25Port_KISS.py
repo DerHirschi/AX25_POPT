@@ -12,8 +12,8 @@ from fnc.os_fnc import is_linux
 
 
 class KISSSerial(AX25Port):
-    def __init__(self, port_id: int, port_handler):
-        super().__init__(port_id, port_handler)
+    def __init__(self, port_id: int, popt_handler):
+        super().__init__(port_id, popt_handler)
         self.tnc_protocol = Kiss(self._port_cfg)
         try:
             self.init()

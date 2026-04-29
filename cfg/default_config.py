@@ -43,19 +43,20 @@ def getNew_port_cfg():
 
         parm_TXD = 400,  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
         # Kiss Parameter
-        parm_kiss_is_on = True,
-        parm_set_kiss_param = True,
-        parm_kiss_init_cmd = TNC_KISS_CMD,
-        parm_kiss_end_cmd = TNC_KISS_CMD_END,
-        parm_kiss_TXD = 35,
-        parm_kiss_Pers = 160,
-        parm_kiss_Slot = 30,
-        parm_kiss_Tail = 15,
-        parm_kiss_F_Duplex = 0,
-        parm_kiss_channel = 0,
+        parm_kiss_is_on      = True,
+        parm_set_kiss_param  = True,
+        parm_kiss_send_init  =True,
+        parm_kiss_send_close =True,
+        parm_kiss_init_cmd   = [(TNC_KISS_CMD,     True)],
+        parm_kiss_end_cmd    = [(TNC_KISS_CMD_END, False)],
+        parm_kiss_TXD        = 30,
+        parm_kiss_Pers       = 160,
+        parm_kiss_Slot       = 30,
+        parm_kiss_Tail       = 15,
+        parm_kiss_F_Duplex   = 0,
+        parm_kiss_channel    = 0,
         parm_kiss_multi_ch   = False,
-        parm_kiss_send_init  = False,
-        parm_kiss_send_close = False,
+
         # Connection Parameter
         parm_PacLen = 160,  # Max Pac len
         parm_MaxFrame = 3,  # Max (I) Frames
