@@ -54,7 +54,8 @@ class PortManager:
         try:
             temp = AX25DeviceTAB[new_cfg.get('parm_PortTyp', '')](int(port_id), self._popt_handler)
         except AX25DeviceFAIL as e:
-            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+            if hasattr(self._popt_handler, 'api'):
+                self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             logger.error(f'PortManager: Could not initialise Port {port_id}. {e}')
             return False
         ##########################
@@ -69,7 +70,8 @@ class PortManager:
         # Start Port/Device Thread
         if not temp.device_is_running:
             logger.error(f'PortManager: Could not initialise Port {port_id}. Device not running.')
-            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
+            if hasattr(self._popt_handler, 'api'):
+                self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             temp.close()
             del temp
             return False
@@ -96,7 +98,8 @@ class PortManager:
         self._popt_handler.api.set_diesel()
 
     def _reinit_port_th(self, port_id: int):
-        self._popt_handler.api.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
+        if hasattr(self._popt_handler, 'api'):
+            self._popt_handler.api.sysmsg_to_gui(get_strTab('port_reinit', POPT_CFG.get_guiCFG_language()).format(port_id))
         logger.info(f"PortManager: Reinit Port {port_id}")
         #self.disco_conn_fm_port(port_id)
         self.close_port(port_id)
@@ -108,8 +111,8 @@ class PortManager:
             port.set_block_incoming_conn(0)
         except Exception as ex:
             logger.error(f"PortManager: Error Reinit port: {ex}")
-
-        self._popt_handler.pipe_manager.pipeTool_init_by_port(port_id)
+        if hasattr(self._popt_handler, 'pipe_manager'):
+            self._popt_handler.pipe_manager.pipeTool_init_by_port(port_id)
         ##########################
         # Pipe-Tool Init
 
