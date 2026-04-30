@@ -33,6 +33,9 @@ class KISSSerial(AX25Port):
                                             timeout=0.4,
                                             #write_timeout=0.3
                                             )
+                self.device.dtr = self._port_cfg.get('parm_serial_dtr', False)
+                self.device.rts = self._port_cfg.get('parm_serial_rts', False)
+
                 self.device_is_running = True
             except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
