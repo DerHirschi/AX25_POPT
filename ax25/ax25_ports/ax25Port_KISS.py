@@ -27,23 +27,13 @@ class KISSSerial(AX25Port):
         if self._loop_is_running:
             logger.info("KISS Serial INIT")
             try:
-                if is_macos():
-                    self.device = serial.Serial(self._port_param[0],
-                                                self._port_param[1],
-                                                timeout=0.4,
-                                                rtscts=False,
-                                                dsrdtr=False,
-                                                xonxoff=False,
-                                                )
-                    self.device.dtr = True
-                    self.device.rts = True
-                else:
-                    self.device = serial.Serial(self._port_param[0],
-                                                self._port_param[1],
-                                                timeout=0.4,
-                                                #write_timeout=0.3
-                                                )
-                    self.device_is_running = True
+
+                self.device = serial.Serial(self._port_param[0],
+                                            self._port_param[1],
+                                            timeout=0.4,
+                                            #write_timeout=0.3
+                                            )
+                self.device_is_running = True
             except Exception as e:
                 logger.error(f'Port {self.port_id}: Error. Cant connect to KISS Serial Device {self._port_param}')
                 logger.error('{}'.format(e))
