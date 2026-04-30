@@ -8,7 +8,7 @@ from ax25.ax25_l2.ax25Kiss import Kiss
 from .ax25Port import AX25Port
 from .ax25Port_Classes import RxBuf
 from cfg.logger_config import logger
-from fnc.os_fnc import is_linux, is_macos
+from fnc.os_fnc import is_linux
 
 
 class KISSSerial(AX25Port):
@@ -120,10 +120,7 @@ class KISSSerial(AX25Port):
         while self._loop_is_running and self.device_is_running:
             #self.port_w_dog = time.time()
             try:
-                if is_macos():
-                    recv_buff += self.device.read(1024)
-                else:
-                    recv_buff += self.device.read()
+                recv_buff += self.device.read()
             except serial.SerialException:
                 # There is no new data from serial port
                 if not recv_buff:
