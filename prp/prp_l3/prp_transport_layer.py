@@ -344,7 +344,7 @@ class PRPTransportLayer:
     # ===================================================================
     # Empfangen & Verarbeiten (Server/Client)
     # ===================================================================
-    def handle_transport_frame(self, unpacked_prp_opt: tuple[int, bool, bool], payload: bytes):
+    def handle_transport_frame(self, unpacked_prp_opt: tuple, payload: bytes):
         """
         ══════════════════════════════════════════════════════════════════════════
         3. L3-Daten-Paket (OPT-ID 30)
