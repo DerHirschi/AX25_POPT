@@ -109,7 +109,7 @@ class AGWPE_TCP(AX25Port):
         else:
             return None
 
-    def _tx_device(self, frame):
+    def _tx_device(self, frame, tnc_channel=0):
         try:
             self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
             # self.device.sendall(b'\xC0' + b'\x00' + frame.bytes + b'\xC0')

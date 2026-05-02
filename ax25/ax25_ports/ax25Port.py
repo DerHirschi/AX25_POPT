@@ -2,6 +2,7 @@ import datetime
 import time
 
 from ax25.ax25_ports.ax25Port_Classes import RxBuf
+from ax25.ax25_ports.ax25Port_MultiCH_TNC import MultiChannelTNC
 from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 
 from ax25.ax25_l3.ax25Digi import AX25DigiConnection
@@ -33,12 +34,12 @@ class AX25Port(object):
             logger.error(f"{self._logTag}No Config !!!")
             raise AX25DeviceFAIL(self)
 
-        self._port_param    = self._port_cfg.get('parm_PortParm', ('', 0))
-        self.portname       = self._port_cfg.get('parm_PortName', '')
-        self.port_typ       = self._port_cfg.get('parm_PortTyp', '')
-        self.port_id        = self._port_cfg.get('parm_PortNr', -1)
-        # self._my_stations = port_cfg.get('parm_StationCalls', [])
-        # self.parm_TXD = port_cfg.get('parm_TXD', 400)
+        self._port_param     = self._port_cfg.get('parm_PortParm', ('', 0))
+        self.portname        = self._port_cfg.get('parm_PortName', '')
+        self.port_typ        = self._port_cfg.get('parm_PortTyp', '')
+        self.port_id         = self._port_cfg.get('parm_PortNr', -1)
+        self.tnc_channel     = self._port_cfg.get('parm_kiss_channel', 0)
+        # =============================================================
         self._TXD = time.time()
         # CONFIG ENDE
         #############
@@ -62,8 +63,14 @@ class AX25Port(object):
         self.connections        = {}
         #############
         # VARS
-        self._mh            = self._popt_handler.get_MH()
+        self._mh                = self._popt_handler.get_MH()
         #############
+        """ Multi Channel TNC/KISS """
+        self.multi_ch_tnc = MultiChannelTNC(self, self._popt_handler)
+        # API
+        self.is_multi_ch_tnc    = lambda : self.multi_ch_tnc.is_multi_ch_tnc
+        self.is_multi_ch_master = lambda : not self.multi_ch_tnc.is_multi_ch_slave
+        self.is_multi_ch_slave  = lambda : self.multi_ch_tnc.is_multi_ch_slave
         """ Dual Port """
         self.dualPort_primaryPort   = None
         self.dualPort_secondaryPort = None
@@ -84,15 +91,21 @@ class AX25Port(object):
         # ██████████████████████████████████████████████████████████████
         logger.info("═" * 60)
         logger.info(f"Port INITIALISIERT - Port {self.port_id}")
-        logger.info(f"  Typ:          {self.port_typ}")
-        logger.info(f"  Port-Name:    {self.portname}")
-        logger.info(f"  Parameter:    {self._port_cfg.get('parm_PortParm', None)}")
+        logger.info(f"  Typ         : {self.port_typ}")
+        logger.info(f"  Port-Name   : {self.portname}")
+        logger.info(f"  Parameter   : {self._port_cfg.get('parm_PortParm', None)}")
         logger.info(f"  KISS Enabled: {self._port_cfg.get('parm_kiss_is_on', True)}")
-        logger.info(f"  TXD:    {self._port_cfg.get('parm_kiss_TXD', 35)}")
-        logger.info(f"  Pers:   {self._port_cfg.get('parm_kiss_Pers', 160)}")
-        logger.info(f"  Slot:   {self._port_cfg.get('parm_kiss_Slot', 30)}")
-        logger.info(f"  Tail:   {self._port_cfg.get('parm_kiss_Tail', 15)}")
+        logger.info(f"  TXD   : {self._port_cfg.get('parm_kiss_TXD', 35)}")
+        logger.info(f"  Pers  : {self._port_cfg.get('parm_kiss_Pers', 160)}")
+        logger.info(f"  Slot  : {self._port_cfg.get('parm_kiss_Slot', 30)}")
+        logger.info(f"  Tail  : {self._port_cfg.get('parm_kiss_Tail', 15)}")
         logger.info(f"  Duplex: {self._port_cfg.get('parm_kiss_F_Duplex', 0)}")
+        if self.is_multi_ch_tnc():
+            logger.info(" == Multi Channel KISS / Multi Port TNC ==")
+            logger.info(f"  TNC-Channel   : {self.tnc_channel}")
+            logger.info(f"  Is Master Port: {self.is_multi_ch_master()}")
+            if self.is_multi_ch_slave():
+                logger.info(f"  Master Port   : {self._port_cfg.get('parm_kiss_multi_master', 0)}")
         logger.info("═" * 60)
 
 
@@ -112,7 +125,15 @@ class AX25Port(object):
             self._mcast_server.del_mcast_port()
             self._mcast_server = None
         self._loop_is_running = False
-        self.close_device()
+        """ Multi Channel / multiport TNC """
+        if self.multi_ch_tnc.multi_ch_close_slaves():
+            """ Master """
+            self.close_device()
+        else:
+            """ Slave """
+            self.multi_ch_tnc.multi_ch_close_master()
+            self.device_is_running = False
+            self.ende = True
         # if self.device is not None:
         # self.device.close()
 
@@ -121,32 +142,25 @@ class AX25Port(object):
 
     def tx(self, frame):
         if self._tx_dualPort_handler(frame):
+            """ Dual Port """
             return
-        """
-        if self._port_cfg.get('parm_full_duplex', False):
-            # print('FD')
-            if self._tx_th:
-                if self._tx_th.is_alive():
-                    # print('FD alive')
-                    return
-            self._tx_th = threading.Thread(target=self.tx_out, args=(frame, ))
-            self._tx_th.start()
+        if self.multi_ch_tnc.multi_ch_tx(frame):
+            """ TNC Multi Channel/ Multi Port TNC - Slave Port """
             return
-        """
-        self._tx_out(frame)
+        self.tx_out(frame, self.tnc_channel)
 
-    def _tx_out(self, frame):
+    def tx_out(self, frame, tnc_channel=0):
         setattr(frame, 'rx_time', datetime.datetime.now())
         # frame.rx_time = datetime.datetime.now()
         self._update_monitor(ax25frame=frame, tx=True)
         self._dualPort_monitor_input(ax25frame=frame, tx=True)
         try:
-            self._tx_device(frame)
+            self._tx_device(frame, tnc_channel)
         except (AX25DeviceERROR, AX25DeviceFAIL):
             logger.error(f"Error: tx_device() Port: {self.port_id}")
             self.close()
 
-    def _tx_device(self, frame):
+    def _tx_device(self, frame, tnc_channel=0):
         pass
 
     def tx_multicast(self, frame):
@@ -483,6 +497,30 @@ class AX25Port(object):
         self._digi_buf.append(ax25frame)
 
     #################################################
+    # Multi Channel TNC/KISS
+    # Slave
+    def init_multi_ch_slave(self):
+        if self.multi_ch_tnc.init_multi_channel_tnc():
+
+            return
+        AX25DeviceFAIL(self)
+
+    def task_multi_ch_slave(self):
+        """ Multi Channel Slave Port Task """
+        self._loop_watchdog = time.time()
+        self._task_Port()
+        if time.time() > self._TXD:
+            self._tx_handler()
+
+    def multi_ch_process_rx_buf(self, rx_buffer: RxBuf):
+        if self.tnc_channel != rx_buffer.tnc_channel:
+            logger.error(self._logTag + "multi_ch_process_rx_buf: TNC Channel Error !!")
+            logger.error(self._logTag + f"  Own TNC-CH: {self.multi_ch_tnc}")
+            logger.error(self._logTag + f"  Buf TNC-CH: {rx_buffer.tnc_channel}")
+            return
+        self._process_rx_buf(rx_buffer)
+
+    #################################################
     # Routing Tab
     """
     def _update_routingTab(self, ax25_conf: dict):
@@ -499,6 +537,11 @@ class AX25Port(object):
     """
     #################################################
     def _process_rx_buf(self, buf):
+        if buf.tnc_channel != self.tnc_channel:
+            """ Multi Channel TNC """
+            self.multi_ch_tnc.multi_ch_rx(buf)
+            return
+
         self._set_TXD()
         self._set_digi_TXD()
         ax25frame = AX25Frame()
@@ -515,7 +558,7 @@ class AX25Port(object):
             return
         ax25frame.axip_add          = buf.axip_add
         ax25frame_conf              = ax25frame.get_frame_conf()
-        ax25frame_conf['port_id']   = int(self.port_id)     # TODO using port_id fm this cfg
+        ax25frame_conf['port_id']   = int(self.port_id)
         # self._update_routingTab(ax25frame_conf)
         if not self._rx_dualPort_handler(ax25_frame=ax25frame):
             self._update_monitor(ax25frame=ax25frame, tx=False)
@@ -526,7 +569,6 @@ class AX25Port(object):
             if hasattr(self._mcast_server, 'mcast_rx'):
                 self._mcast_server.mcast_rx(ax25frame=ax25frame)
         self._rx_echo(ax25_frame=ax25frame)
-
 
     def _rx_dualPort_handler(self, ax25_frame):
         if not self.dualPort_cfg:
@@ -563,7 +605,15 @@ class AX25Port(object):
         if not self.check_dualPort():
             return False
         tx_port = self.get_dualPort_txPort(frame.to_call.call_str)
-        tx_port._tx_out(frame)
+        if tx_port.is_multi_ch_slave():
+            if hasattr(tx_port.multi_ch_tnc.multi_ch_master_port, 'tx_out'):
+                self.dualPort_echoFilter.append(bytes(frame.data_bytes))
+                self.dualPort_echoFilter = self.dualPort_echoFilter[-7:]
+                tx_port.multi_ch_tnc.multi_ch_master_port.tx_out(frame, tx_port.tnc_channel)
+                return True
+            logger.error(self._logTag + "Multi Channel: Master Port not available")
+            return True
+        tx_port.tx_out(frame, tx_port.tnc_channel)
         self.dualPort_echoFilter.append(bytes(frame.data_bytes))
         self.dualPort_echoFilter = self.dualPort_echoFilter[-7:]
         return True
@@ -1065,6 +1115,8 @@ class AX25Port(object):
         """ Execute Port related Cronjob like Beacon sending"""
         self._task_connections()
         self._digi_task()
+        """ Multi Channel TNC """
+        self.multi_ch_tnc.multi_ch_slave_tasks()
 
     def _task_connections(self):
         """ Execute Cronjob on all Connections"""

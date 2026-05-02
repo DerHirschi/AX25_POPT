@@ -104,7 +104,7 @@ class AXIP(AX25Port):
             logger.error(f"Port {self.port_id}: Error in _rx: {e}")
             return RxBuf()
 
-    def _tx_device(self, frame, multicast=True):
+    def _tx_device(self, frame, tnc_channel=0, multicast=True):
         if not hasattr(frame, 'axip_add'):
             return
         if not frame.axip_add:

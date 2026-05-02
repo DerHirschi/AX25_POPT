@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.123.126'
+VER = '2.123.127'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -17,7 +17,8 @@ GUI_TASKER_NOT_BURN_DELAY    = 90   # GUI-loop Delay
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
-KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
+KISSDEVICES       = ('KISSSER', 'KISSTCP', 'AX25KERNEL')
+MULTI_CH_TNC_DEV  = ('KISSSER', 'KISSTCP', 'TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL') # Can't test TNC-EMU-TCP-SRV and TNC-EMU-TCP-CL
 """"""
 MAX_PORTS           = 10       #
 MAX_SYSOP_CH        = 30       #

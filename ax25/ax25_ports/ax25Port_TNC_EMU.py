@@ -12,6 +12,10 @@ class TNC_EMU_TCP_SRV(AX25Port):
     def __init__(self, port_id: int, port_handler):
         super().__init__(port_id, port_handler)
         self.tnc_protocol = Kiss(self._port_cfg)
+        if self.is_multi_ch_slave():
+            if self.multi_ch_tnc.init_multi_channel_tnc():
+                return
+            AX25DeviceFAIL(self)
         try:
             self.init()
         except AX25DeviceFAIL:
@@ -139,7 +143,7 @@ class TNC_EMU_TCP_SRV(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
                 if recv_buff:
-                    de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
+                    de_kiss_fr = self.tnc_protocol.decode_tnc_multi_ch(recv_buff)
                     if de_kiss_fr is not None:
                         ret = RxBuf()
                         ret.raw_data = bytes(de_kiss_fr)
@@ -156,12 +160,12 @@ class TNC_EMU_TCP_SRV(AX25Port):
                     return None
             return None
 
-    def _tx_device(self, frame):
+    def _tx_device(self, frame, tnc_channel=0):
         if self._tnc_emu_connection is None:
             return
         ###################################
         try:
-            self._tnc_emu_connection.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
+            self._tnc_emu_connection.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes, tnc_channel))
         except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
             logger.warning(
                 f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')
@@ -183,6 +187,10 @@ class TNC_EMU_TCP_CL(AX25Port):
     def __init__(self, port_id: int, port_handler):
         super().__init__(port_id, port_handler)
         self.tnc_protocol = Kiss(self._port_cfg)
+        if self.is_multi_ch_slave():
+            if self.multi_ch_tnc.init_multi_channel_tnc():
+                return
+            AX25DeviceFAIL(self)
         try:
             self.init()
         except AX25DeviceFAIL:
@@ -330,7 +338,7 @@ class TNC_EMU_TCP_CL(AX25Port):
                     raise AX25DeviceERROR(e, self)
 
             if recv_buff:
-                de_kiss_fr = self.tnc_protocol.decode_tnc(recv_buff)
+                de_kiss_fr = self.tnc_protocol.decode_tnc_multi_ch(recv_buff)
                 if de_kiss_fr is not None:
                     ret = RxBuf()
                     ret.raw_data = bytes(de_kiss_fr)
@@ -347,9 +355,9 @@ class TNC_EMU_TCP_CL(AX25Port):
                 return None
         return None
 
-    def _tx_device(self, frame):
+    def _tx_device(self, frame, tnc_channel=0):
         try:
-            self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes))
+            self.device.sendall(self.tnc_protocol.encode_tnc(frame.data_bytes, tnc_channel))
         except (ConnectionRefusedError, ConnectionError, BrokenPipeError) as e:
             logger.warning(
                 f'Port {self.port_id}: Error. TNC-EMU Device. Try Reinit Device {self._port_param}')

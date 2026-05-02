@@ -1,9 +1,11 @@
+# TODO: Again
 import tkinter as tk
 from tkinter import ttk as ttk, messagebox
 from tkinter.colorchooser import askcolor
 
 from ax25.ax25_ports import AX25DeviceTAB
-from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, KISSDEVICES, COLOR_MAP
+from cfg.constant import DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, DEF_PORT_MON_RX_COL, KISSDEVICES, COLOR_MAP, \
+    MULTI_CH_TNC_DEV
 from cfg.default_config import getNew_port_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
@@ -15,22 +17,44 @@ from gui.settings.guiKISS_Settings import GuiKissSettings
 
 
 class PortSetTab:
-    def __init__(self, main_stt_win, new_settings, tabclt: ttk.Notebook):
+    def __init__(self, main_stt_win, new_settings, tabclt: ttk.Notebook, port_id: int):
         self._main_cl      = main_stt_win
         self._popt_handler = main_stt_win.get_popt_handler()
+        self._port_id      = port_id
+        # ======================================================
         self.kiss_toplevel = None
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self._get_colorMap = lambda: COLOR_MAP.get(self._main_cl.style_name, ('black', '#d9d9d9'))
+        # ======================================================
         self._height       = 600
         height = self._height
+        fg, bg = self._get_colorMap()
+        # ======================================================
 
         self._need_reinit = False
         self.port_setting: dict = new_settings
-        port_types              = list(AX25DeviceTAB.keys())
+        # ===============================
+        # Multiport Slave erkennen
+        self._slave_master_id = self.port_setting.get('parm_kiss_multi_master', -1)
+        self._is_slave        = self._slave_master_id >= 0
 
+        port_types              = list(AX25DeviceTAB.keys())
+        # ===============================
+        # Add Multiport TNC Master Port
+        self._multi_port_master_types = []
+        multi_ch_masters: dict = self._popt_handler.port_manager.get_multi_ch_master_ports()
+        for port_id in multi_ch_masters.keys():
+            opt_str = f"Multiport(Master-Port): {port_id}"
+            port_types.append(opt_str)
+            self._multi_port_master_types.append(opt_str)
+        # ===============================
+        # Multiport Slave hinzufügen
+        if self._is_slave:
+            slave_str = f"Multiport(Slave): {self._slave_master_id}"
+            port_types.append(slave_str)
+        # ======================================================
         self.tab = ttk.Frame(tabclt)
         #################
-        fg, bg = self._get_colorMap()
         #################
         # GUI Vars
         self._serial_dtr_var     = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_dtr', False))
@@ -87,7 +111,13 @@ class PortSetTab:
 
         opt = [self._port_select_var.get()] + port_types
         port_men = ttk.OptionMenu(self.tab, self._port_select_var, *opt, command=self._update_port_parameter)
-        self._port_select_var.set(self.port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
+        if self._is_slave:
+            self._port_select_var.set(f"Multiport(Slave): {self._slave_master_id}")
+        else:
+            self._port_select_var.set(
+                self.port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', ''))
+            )
+        # self._port_select_var.set(self.port_setting.get('parm_PortTyp', new_cfg.get('parm_PortTyp', '')))  # default value
         #port_men.configure(width=10, height=1)
         port_men.place(x=port_x + 55, y=height - port_y - 5)
         #######################
@@ -191,7 +221,8 @@ class PortSetTab:
         # KISS START / END
         kiss_start_x = 630
         kiss_start_y = 465
-        ttk.Button(self.tab, text="KISS CFG", command=lambda : self._open_kiss_cfg_toplevel()).place(
+        self._kiss_cfg_btn = ttk.Button(self.tab, text="KISS CFG", command=lambda : self._open_kiss_cfg_toplevel())
+        self._kiss_cfg_btn.place(
             x=kiss_start_x + 50, y=height - kiss_start_y
         )
 
@@ -498,6 +529,15 @@ class PortSetTab:
         typ = self._port_select_var.get()
         new_port_cfg = getNew_port_cfg()
 
+        if (typ in KISSDEVICES or
+                typ in MULTI_CH_TNC_DEV or
+                typ in self._multi_port_master_types or
+                "Multiport(Slave): " in typ):
+            self._kiss_cfg_btn.configure(state='normal')
+        else:
+            self._kiss_cfg_btn.configure(state='disabled')
+        # =========================================================
+        #
         if typ in ('KISSTCP', 'AGWPE-TCP'):
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
@@ -510,13 +550,14 @@ class PortSetTab:
             self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
 
             self._param1_label.configure(text=f"{self._getTabStr('address')}:")
-            self._param1_ent.destroy()
+            if self._param1_ent:
+                self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
             self._param2_label.configure(text='Port:')
-            self._param2_ent.configure(width=7)
+            self._param2_ent.configure(width=7, state='normal')
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
             # self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
@@ -526,7 +567,8 @@ class PortSetTab:
             self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
             self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
-
+        # =========================================================
+        #
         elif typ == 'AXIP':
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
@@ -560,13 +602,14 @@ class PortSetTab:
             self._calc_baud.configure(state="disabled")
 
             self._param1_label.configure(text=f"{self._getTabStr('address')}:")
-            self._param1_ent.destroy()
+            if self._param1_ent:
+                self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=28)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
             self._param2_label.configure(text='Port:')
-            self._param2_ent.configure(width=7)
+            self._param2_ent.configure(width=7, state='normal')
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
             # self._param1_ent.place(x=param_sel_x + 80, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 500, y=height - param_sel_y + param_next_line)
@@ -583,6 +626,8 @@ class PortSetTab:
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
 
+        # =========================================================
+        #
         elif typ == 'KISSSER':
             self._serial_dtr_ent.configure(state="normal")
             self._serial_rts_ent.configure(state="normal")
@@ -599,20 +644,22 @@ class PortSetTab:
 
             self._param1_label.configure(text='Port:')
             if is_linux() or is_macos():
-                self._param1_ent.destroy()
+                if self._param1_ent:
+                    self._param1_ent.destroy()
                 self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
                 self._param1_ent.configure(width=15)
                 self._param1_ent.place(x=self._param1_x, y=self._param1_y)
             else:
                 ser_ports = [f"COM{x}" for x in range(1, 100)]
-                self._param1_ent.destroy()
+                if self._param1_ent:
+                    self._param1_ent.destroy()
                 ser_ports = [self._param1_var.get()] + ser_ports
                 self._param1_ent = ttk.OptionMenu(self.tab, self._param1_var, *ser_ports)
                 self._param1_ent.configure(width=7)
                 self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
             self._param2_label.configure(text='Baud:')
-            self._param2_ent.configure(width=7)
+            self._param2_ent.configure(width=7, state='normal')
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
             # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 250, y=height - param_sel_y + param_next_line)
@@ -632,6 +679,8 @@ class PortSetTab:
                     self._param1_var.set('COM1')
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1]:
                 self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[1])
+        # =========================================================
+        #
         elif typ == 'AX25KERNEL':
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
@@ -648,14 +697,15 @@ class PortSetTab:
 
             self._param1_label.configure(text='Interface')
 
-            self._param1_ent.destroy()
+            if self._param1_ent:
+                self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=15)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
 
             self._param2_label.configure(text='')
-            self._param2_ent.configure(width=7)
+            self._param2_ent.configure(width=7, state='normal')
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
             # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 280, y=height - param_sel_y + param_next_line)
@@ -670,6 +720,8 @@ class PortSetTab:
 
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1]:
                 self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+        # =========================================================
+        #
         elif typ in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
@@ -686,21 +738,22 @@ class PortSetTab:
             # self.calc_baud.configure(state="normal")
 
             self._param1_label.configure(text=f"{self._getTabStr('address')}:")
-
-            self._param1_ent.destroy()
+            if self._param1_ent:
+                self._param1_ent.destroy()
             self._param1_ent = ttk.Entry(self.tab, textvariable=self._param1_var)
             self._param1_ent.configure(width=15)
             self._param1_ent.place(x=self._param1_x, y=self._param1_y)
 
 
             self._param2_label.configure(text='Port:')
-            self._param2_ent.configure(width=7)
+            self._param2_ent.configure(width=7, state='normal')
             self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
             # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
             self._param2_label.place(x=param_sel_x + 280, y=height - param_sel_y + param_next_line)
             self._param2_ent.place(x=param_sel_x + 280 + 60, y=height - param_sel_y + param_next_line)
 
             # self._param1_ent.delete(0, tk.END)
+
             self._param2_ent.delete(0, tk.END)
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[0]:
                 self._param1_var.set(self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('', 0)))[0])
@@ -709,6 +762,64 @@ class PortSetTab:
 
             if self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('0.0.0.0', 19800)))[1]:
                 self._param2_ent.insert(tk.END, self.port_setting.get('parm_PortParm', new_port_cfg.get('parm_PortParm', ('ax0', 0)))[1])
+        # =========================================================
+        # Multiport TNC Master
+        elif typ in self._multi_port_master_types:
+            self._serial_dtr_ent.configure(state="disabled")
+            self._serial_rts_ent.configure(state="disabled")
+
+            # self._axip_linktest_dd.configure(state="disabled")
+            self._axip_multicast_dd.configure(state="disabled")
+
+            self._ptxd.configure(state="normal")
+            self._calc_baud.configure(state="normal")
+            self._calc_baud.delete(0, tk.END)
+            # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
+            # self._calc_baud.insert(tk.END, self._port_setting.parm_baud)
+            self._calc_baud.insert(tk.END, self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200)))
+            # self.calc_baud.configure(state="normal")
+
+            self._param1_label.configure(text=f"Multiport TNC Slave of Port {int(self._port_select_var.get()[-2:])}")
+            if self._param1_ent:
+
+                self._param1_ent.destroy()
+
+            self._param2_label.configure(text='')
+            self._param2_ent.configure(width=7, state='disabled')
+            self._param1_label.place(x=param_sel_x, y=height - param_sel_y + param_next_line)
+            # self._param1_ent.place(x=param_sel_x + 50, y=height - param_sel_y + param_next_line)
+            self._param2_label.place(x=param_sel_x + 280, y=height - param_sel_y + param_next_line)
+            self._param2_ent.place(x=param_sel_x + 280 + 60, y=height - param_sel_y + param_next_line)
+
+            # self._param1_ent.delete(0, tk.END)
+            self._param2_ent.delete(0, tk.END)
+        # =========================================================
+        # Multiport SLAVE
+        elif self.port_setting.get('parm_kiss_multi_master', -1) >= 0:
+            master_id = self.port_setting['parm_kiss_multi_master']
+
+            self._serial_dtr_ent.configure(state="disabled")
+            self._serial_rts_ent.configure(state="disabled")
+            self._axip_multicast_dd.configure(state="disabled")
+
+            self._ptxd.configure(state="normal")
+
+            self._calc_baud.configure(state="normal")
+            self._calc_baud.delete(0, tk.END)
+            self._calc_baud.insert(
+                tk.END,
+                self.port_setting.get('parm_baud', new_port_cfg.get('parm_baud', 1200))
+            )
+
+            self._param1_label.configure(
+                text=f"Multiport TNC Slave of Port {master_id}"
+            )
+
+            if self._param1_ent:
+                self._param1_ent.destroy()
+
+            self._param2_label.configure(text='')
+            self._param2_ent.configure(state='disabled')
 
 
         self._t2_var.set(str(self.port_setting.get('parm_T2', new_port_cfg.get('parm_T2', 1700))))
@@ -739,14 +850,14 @@ class PortSetTab:
         # Port Name
         self.port_setting['parm_PortName'] = self._prt_name.get()
         # Port TYpe
-        # old_typ = str(self._port_setting.get('parm_PortTyp', ''))
-        self.port_setting['parm_PortTyp'] = self._port_select_var.get()
+        port_type = self._port_select_var.get()
+        self.port_setting['parm_PortTyp'] = port_type
         # Port Parameter
         try:
             tmp_param = (self._param1_var.get(), int(self._param2_ent.get()))
         except ValueError:
             tmp_param = (self._param1_var.get(), 0)
-        if self._port_select_var.get() == 'AX25KERNEL':
+        if port_type == 'AX25KERNEL':
             tmp_param = (self._param1_var.get(), 0)
 
         self.port_setting['parm_PortParm'] = tmp_param
@@ -756,18 +867,8 @@ class PortSetTab:
         except ValueError:
             self.port_setting['parm_TXD'] = 300
 
-        #############
-        # KISS
-        if self._port_select_var.get() in KISSDEVICES:
-            self.port_setting['parm_kiss_is_on'] = True
 
-        elif self._port_select_var.get() in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
-            self.port_setting['parm_kiss_is_on'] = True
-        else:
-            self.port_setting['parm_kiss_is_on'] = False
         # Baud
-        # if self.port_setting.parm_PortTyp == 'KISSSER':
-        # self.calc_baud.insert(tk.END, str(self.port_setting.parm_PortParm[1]))
         self.port_setting['parm_baud'] = int(self._calc_baud.get())
         # T 2 auto
         self.port_setting['parm_T2_auto'] = bool(self._t2_auto_var.get())
@@ -788,15 +889,44 @@ class PortSetTab:
         self.port_setting['parm_serial_dtr'] = bool(self._serial_dtr_var.get())
         self.port_setting['parm_serial_rts'] = bool(self._serial_rts_var.get())
 
-
-        # Monitor COLOR Selector SIDE Frame
-        # TX
-        # self.port_setting.parm_mon_clr_tx = self.tx_col_select_var.get()
-        # RX
-        # self.port_setting.parm_mon_clr_rx = self.rx_col_select_var.get()
-
         self.port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
 
+        # ===============================
+        # Multiport TNC
+
+        # MASTER
+        if port_type in self._multi_port_master_types:
+            master_id = int(port_type.split(":")[1].strip())
+            self.port_setting['parm_kiss_multi_master'] = master_id
+
+            master_port_cfg = POPT_CFG.get_port_CFG_fm_id(master_id)
+            master_typ = master_port_cfg.get('parm_PortTyp', '')
+            self.port_setting['parm_PortTyp'] = master_typ
+
+        # SLAVE
+        elif "Multiport(Slave)" in port_type:
+            master_id = int(port_type.split(":")[1].strip())
+            self.port_setting['parm_kiss_multi_master'] = master_id
+
+            master_port_cfg = POPT_CFG.get_port_CFG_fm_id(master_id)
+            master_typ = master_port_cfg.get('parm_PortTyp', '')
+            self.port_setting['parm_PortTyp'] = master_typ
+
+        # NORMAL
+        else:
+            self.port_setting['parm_kiss_multi_master'] = -1
+
+        #############
+        # KISS
+        if port_type in KISSDEVICES:
+            self.port_setting['parm_kiss_is_on'] = True
+
+        elif port_type in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
+            self.port_setting['parm_kiss_is_on'] = True
+        else:
+            self.port_setting['parm_kiss_is_on'] = False
+        # ===============================
+        # Calls
         stat_calls = []
         for k in self._stat_check_vars.keys():
             if k in self._all_stat_cfgs.keys() and \
@@ -836,6 +966,17 @@ class PortSetTab:
             return
         self.kiss_toplevel = GuiKissSettings(self._main_cl, self)
 
+    # ===========================
+    # Multiport
+    def is_multiport_master(self):
+        return bool(self._port_select_var.get() in MULTI_CH_TNC_DEV)
+
+    def get_multiport_master(self):
+        typ = self._port_select_var.get()
+        if typ not in self._multi_port_master_types:
+            return -1
+
+        return int(typ[-2:])
 
 class PortSettingsWin(ttk.Frame):
     def __init__(self, tabctl, root_win):
@@ -881,7 +1022,7 @@ class PortSettingsWin(ttk.Frame):
         all_port_cfgs = POPT_CFG.get_port_CFGs()
         for port_id, port_cfg in all_port_cfgs.items():
             # new_settings = POPT_CFG.get_port_CFG_fm_id(port_id=port_id)
-            tab = PortSetTab(self, port_cfg, self._tabControl)
+            tab = PortSetTab(self, port_cfg, self._tabControl, port_id)
             self._tab_list[port_id] = tab
             port_lable_text = 'Port {}'.format(port_id)
             if port_id not in all_ports:
@@ -901,7 +1042,7 @@ class PortSettingsWin(ttk.Frame):
         while prt_id in self._tab_list.keys():
             prt_id += 1
         new_prtcfg['parm_PortNr'] = int(prt_id)
-        tab = PortSetTab(self, new_prtcfg , self._tabControl)
+        tab = PortSetTab(self, new_prtcfg , self._tabControl, -1)
         tab.set_need_reinit()
         self._tabControl.add(tab.tab, text=f'Port {prt_id}')
         self._tabControl.select(prt_id)

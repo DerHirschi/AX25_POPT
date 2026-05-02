@@ -58,16 +58,20 @@ class PortManager:
                 self._popt_handler.api.sysmsg_to_gui(get_strTab('port_not_init', POPT_CFG.get_guiCFG_language()).format(port_id))
             logger.error(f'PortManager: Could not initialise Port {port_id}. {e}')
             return False
-        ##########################
-        # Start Port/Device Thread
-        th_name = f"tasker_port-{port_id}"
-        th = threading.Thread(target=temp.port_tasker, name=th_name)
-        if not self._thread_manager.add_thread(th):
-            logger.error(f'PortManager: Could not start Port-Tasker Thread {port_id} !')
-            temp.close()
-            return False
-        ##########################
-        # Start Port/Device Thread
+        #####################################################
+        # Start Port/Device Thread if TNC Multiport Master
+        if temp.is_multi_ch_slave():
+            """ TNC Multiport Slave """
+            logger.info(f'PortManager: Port {port_id} is TNC Multiport Slave.')
+        else:
+            th_name = f"tasker_port-{port_id}"
+            th = threading.Thread(target=temp.port_tasker, name=th_name)
+            if not self._thread_manager.add_thread(th):
+                logger.error(f'PortManager: Could not start Port-Tasker Thread {port_id} !')
+                temp.close()
+                return False
+        ###########################################
+        # Check
         if not temp.device_is_running:
             logger.error(f'PortManager: Could not initialise Port {port_id}. Device not running.')
             if hasattr(self._popt_handler, 'api'):
@@ -216,7 +220,6 @@ class PortManager:
         return dict(self.ax25_ports)
 
     def get_port_by_id(self, port_id: int):
-        # TODO: Doppelte fnc cleanup
         return self.ax25_ports.get(port_id, None)
 
     def get_port_by_index(self, index: int):
@@ -227,6 +230,21 @@ class PortManager:
             else:
                 return port.get_dualPort_primary()
         return None
+
+    # == Multiport TNC
+    def get_multi_ch_master_ports(self):
+        ret = {}
+        for port_id, port in self.ax25_ports.items():
+            if hasattr(port, 'is_multi_ch_tnc') and hasattr(port, 'is_multi_ch_master'):
+                if port.is_multi_ch_tnc() and port.is_multi_ch_master():
+                    ret[port_id] = port
+        return ret
+
+    def is_multiport_slave(self, port_id: int):
+        port = self.ax25_ports.get(port_id, None)
+        if hasattr(port, 'is_multi_ch_slave'):
+            return port.is_multi_ch_slave()
+        return False
 
     # =================================
     # Dual Port

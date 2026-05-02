@@ -102,6 +102,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - AX25KERNEL (Linux AX.25 Device) (root rights needed)
 - TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX (TFPCX).)
 - TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator) (AmigaTNC))
+- Multiport TNC (via KISS Devices)
 
 #### Tools / Functions / Buildins
   <img src="https://repository-images.githubusercontent.com/600855071/e2db0bca-43d0-4c66-815c-0dad85c4d500" width="60%" height="60%"/>
@@ -113,6 +114,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
   - APRS Monitor
   - APRS Decoder for Monitor
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
+- MultiPort TNC via KISS
 - RX-Echo (Packet echoing to another Port/Device)
 - Environment variablen replacement for:
   - Beacon

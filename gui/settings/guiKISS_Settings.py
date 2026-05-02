@@ -37,6 +37,10 @@ class GuiKissSettings(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         # ================================
+        self._is_multiport_master  = lambda : self._port_sett_root.is_multiport_master()
+        self._get_multiport_master = lambda : self._port_sett_root.get_multiport_master()
+
+        # ================================
         # GUI Vars
 
         self._kiss_txd_var      = tk.StringVar(self, value=str(self.port_setting.get('parm_kiss_TXD', 30)))
@@ -79,23 +83,26 @@ class GuiKissSettings(tk.Toplevel):
         init_opt_f.pack(side='left', padx=5, pady=5)
         param_opt_f.pack(side='left', padx=5, anchor='nw')
         # ================================
-        ttk.Checkbutton(init_opt_f,
+        self._kiss_init_chk = ttk.Checkbutton(init_opt_f,
                         text="Send KISS Init to TNC",
                         variable=self._kiss_send_kiss_init_var,
-                        command=lambda : self._set_kiss_param_ent()).pack(padx=5, pady=5, fill='x')
-        ttk.Checkbutton(init_opt_f,
+                        command=lambda : self._set_kiss_param_ent())
+        self._kiss_end_chk = ttk.Checkbutton(init_opt_f,
                         text="Send KISS Close to TNC",
                         variable=self._kiss_send_kiss_close_var,
-                        command=lambda : self._set_kiss_param_ent()).pack(padx=5, pady=5, fill='x')
-        ttk.Checkbutton(init_opt_f,
+                        command=lambda : self._set_kiss_param_ent())
+        self._kiss_param_chk = ttk.Checkbutton(init_opt_f,
                         text="Set KISS Parameter on TNC Init",
                         variable=self._kiss_send_kiss_param_var,
-                        command=lambda : self._set_kiss_param_ent()).pack(padx=5, pady=5, fill='x')
-        ttk.Checkbutton(init_opt_f,
+                        command=lambda : self._set_kiss_param_ent())
+        self._kiss_emu_chk = ttk.Checkbutton(init_opt_f,
                         text="Pseudo TNC Emulation (TFPCX/AMIGA-TNC)",
                         variable=self._kiss_tnc_emu_var,
-                        command=lambda : self._set_kiss_param_ent()).pack(padx=5, pady=5, fill='x')
-
+                        command=lambda : self._set_kiss_param_ent())
+        self._kiss_init_chk.pack( padx=5, pady=5, fill='x')
+        self._kiss_end_chk.pack(  padx=5, pady=5, fill='x')
+        self._kiss_param_chk.pack(padx=5, pady=5, fill='x')
+        self._kiss_emu_chk.pack(  padx=5, pady=5, fill='x')
         # ================================
         # ================================
         kiss_param_f  = ttk.LabelFrame(param_opt_f, text="KISS Parameter")
@@ -149,10 +156,20 @@ class GuiKissSettings(tk.Toplevel):
         channel_f = ttk.Frame(kiss_ch_f)
         channel_f.pack(side='left', padx=10, pady=5)
         ttk.Label(channel_f, text='TNC-Channel:').pack(side='left')
+        ch_val = [str(x) for x in range(8)]
+        if not self._is_multiport_master():
+            master_port_cfg = POPT_CFG.get_port_CFG_fm_id(self._get_multiport_master())
+            master_ch = master_port_cfg.get('parm_kiss_channel', 0)
+            ch_val.remove(str(master_ch))
+
+            own_ch_id = int(self._kiss_ch_var.get())
+            while own_ch_id == master_ch:
+                own_ch_id += 1
+            self._kiss_ch_var.set(str(own_ch_id))
+
         ttk.Spinbox(
             channel_f,
-            from_=0,
-            to=7,
+            values=ch_val,
             increment=1,
             width=2,
             textvariable=self._kiss_ch_var,
@@ -161,11 +178,15 @@ class GuiKissSettings(tk.Toplevel):
         # ================================
         multi_ch_f = ttk.Frame(kiss_ch_f)
         multi_ch_f.pack(side='left', padx=10, pady=5)
-        ttk.Checkbutton(multi_ch_f,
-                        text="Multi Channel",
+        multi_port_ent = ttk.Checkbutton(multi_ch_f,
+                        text="Multi Port TNC",
                         variable=self._kiss_multi_ch_var,
                         #state='disabled'
-                        ).pack()
+                        )
+        multi_port_ent.pack()
+        if not self._is_multiport_master():
+            multi_port_ent.configure(state="disabled")
+            self._kiss_multi_ch_var.set(True)
 
         # ================================
         # ================================
@@ -271,7 +292,24 @@ class GuiKissSettings(tk.Toplevel):
     # ================================
     # ChkBtn
     def _set_kiss_param_ent(self):
-        if self._kiss_tnc_emu_var.get():
+        if not self._is_multiport_master():
+            """ Multiport TNC Slave """
+            self._kiss_send_kiss_param_var.set(False)
+            self._kiss_send_kiss_init_var.set(False)
+            self._kiss_send_kiss_close_var.set(False)
+            self._kiss_tnc_emu_var.set(False)
+            self._kiss_param_chk.configure(state='disabled')
+            self._kiss_init_chk.configure(state='disabled')
+            self._kiss_end_chk.configure(state='disabled')
+            self._kiss_emu_chk.configure(state='disabled')
+            for el in self._start_cmd_vars:
+                el[3].configure(state='disabled')
+            for el in self._end_cmd_vars:
+                el[3].configure(state='disabled')
+
+
+
+        if self._kiss_tnc_emu_var.get() and self._is_multiport_master():
             """ TNC EMU """
             self._kiss_send_kiss_param_var.set(False)
             self._kiss_send_kiss_init_var.set(False)

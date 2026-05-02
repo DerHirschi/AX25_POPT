@@ -117,7 +117,7 @@ class AX25KernelDEV(AX25Port):
         else:
             return None
 
-    def _tx_device(self, frame):
+    def _tx_device(self, frame, tnc_channel=0):
         try:
             self.device.sendall(self.tnc_protocol.kiss_ax25kernel(frame.data_bytes))
         except (OSError, ConnectionRefusedError, ConnectionError, socket.timeout) as e:

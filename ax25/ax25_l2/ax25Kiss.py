@@ -101,13 +101,23 @@ KISS_DUPL = b'\xC0\x05'
 ##############################################
 # KISS
 DATA_FRAME_0  = b'\x00'     # Channel 0
-# DATA_FRAME_1  = b'\x10'     # Channel 1
-# DATA_FRAME_2  = b'\x20'     # Channel 2
-# DATA_FRAME_3  = b'\x30'     # Channel 3
-# DATA_FRAME_4  = b'\x40'     # Channel 4
-# DATA_FRAME_5  = b'\x50'     # Channel 5
-# DATA_FRAME_6  = b'\x60'     # Channel 6
-# DATA_FRAME_7  = b'\x70'     # Channel 7
+#DATA_FRAME_1  = b'\x10'     # Channel 1
+#DATA_FRAME_2  = b'\x20'     # Channel 2
+#DATA_FRAME_3  = b'\x30'     # Channel 3
+#DATA_FRAME_4  = b'\x40'     # Channel 4
+#DATA_FRAME_5  = b'\x50'     # Channel 5
+#DATA_FRAME_6  = b'\x60'     # Channel 6
+#DATA_FRAME_7  = b'\x70'     # Channel 7
+KISS_CHANNEL_TAB = {
+    0: b'\x00',
+    1: b'\x10',
+    2: b'\x20',
+    3: b'\x30',
+    4: b'\x40',
+    5: b'\x50',
+    6: b'\x60',
+    7: b'\x70',
+}
 ##############################################
 # SMACK
 SMACK_FRAME_0 = b'\x80'       # SMACK Channel 0
@@ -138,7 +148,8 @@ FESC_TFEND = b''.join([FESC, TFEND])    # "FEND is sent as FESC, TFEND"  /  0xC0
 FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB is sent as 0xDB 0xDD
 ##############################################
 # KISS Data Frame CH 0
-KISS_DATA_FRAME_0           = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
+KISS_DATA_FRAME             = lambda inp, channel: FEND + KISS_CHANNEL_TAB[channel] + inp + FEND
+# KISS_DATA_FRAME_0           = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
 ##############################################
 # Linux ax25Kernel-DEV Data Frame CH 0
 AX25KERNEL_DATA_FRAME_0     = lambda inp: DATA_FRAME_0 + inp
@@ -389,7 +400,7 @@ class Kiss:
 
     #############################################################
     # KISS it
-    def decode_tnc(self, inp: bytes):
+    def decode_tnc_multi_ch(self, inp: bytes):
         """
         Code from: https://github.com/ampledata/kiss
         Escape special codes, per KISS spec.
@@ -401,31 +412,31 @@ class Kiss:
         if not self.is_enabled:
             return inp
         if len(inp) < 3:
-            return None
+            return None, None
         if not inp.endswith(FEND):
-            return None
+            return None, None
         if not inp.startswith(FEND):
-            return None
+            return None, None
         if inp[1] / 16 not in range(0, 16):
             # No KISS-Data Frames 00, 10, 20, ...
             logger.warning(f"De-Kiss: No KISS/SMACK-Data Frames: {int(inp[1] / 16)} ")
             logger.debug(f"> {inp}")
             logger.debug(f"> {inp.hex()}")
-            return None
+            return None, None
 
         if self._is_smack_ext:
             # SMACK-EXT
-            self._tnc_ch = int(inp[1] / 16)
+            tnc_ch       = int(inp[1] / 16)
             org_pack     = inp[1:-1]
-            return self._do_smack_ext_crc_in_packet(org_pack)
+            return self._do_smack_ext_crc_in_packet(org_pack), tnc_ch
 
         if inp[1] / 16 in range(0, 8):
             # KISS & SMACK-EXT
             #logger.debug(f"De-Kiss: Receiving packet on TNC Channel: {int(inp[1] / 16)} ")
             #logger.debug(f"> {inp}")
             #logger.debug(f"> {inp.hex()}")
-            # TODO
-            self._tnc_ch = int(inp[1] / 16)
+
+            tnc_ch       = int(inp[1] / 16)
             org_pack     = inp[1:-1]
             ###################################
             # SMACK-EXT Erkennung (vor Escaping!) ---
@@ -443,27 +454,27 @@ class Kiss:
                         self._is_smack_ext = True
                         self._fcs_mode = 'on'
                         self._no_crc_count = 0
-                        return data[1:]
+                        return data[1:], tnc_ch
 
                 if self._is_smack_ext:
-                    return None
+                    return None, None
             ###################################
             # Escape KISS
             org_pack = org_pack.replace(FESC_TFEND, FEND)
             org_pack = org_pack.replace(FESC_TFESC, FESC)
-            return self._do_kiss_crc_in_packet(org_pack)
+            return self._do_kiss_crc_in_packet(org_pack), tnc_ch
 
         if int(inp[1] / 16) in range(8, 16):
             # SMACK
             logger.warning(f"De-Kiss: Receiving SMACK packet on TNC Channel: {int(inp[1] / 16)} ")
             # logger.warning(f"Kiss: SMACK is not supported yet.")
             logger.warning(f"Kiss: {inp}")
-            self._tnc_ch   = int(inp[1] / 16)
+            tnc_ch         = int(inp[1] / 16)
             self._is_smack = True
             self._fcs_mode = 'on'
             org_pack = inp[1:-1]
-            return self._do_smack_crc_in_packet(org_pack)
-        return None
+            return self._do_smack_crc_in_packet(org_pack), tnc_ch
+        return None, None
 
     def de_kiss_ax25kernel(self, inp: bytes):
         """
@@ -543,7 +554,7 @@ class Kiss:
             return None
 
     ######################################################
-    def encode_tnc(self, inp: bytearray):
+    def encode_tnc(self, inp: bytearray, tnc_channel=0):
         if not self.is_enabled:
             return inp
 
@@ -561,7 +572,9 @@ class Kiss:
         else:
             inp = inp.replace(FESC, FESC_TFESC)
             inp = inp.replace(FEND, FESC_TFEND)
-            return KISS_DATA_FRAME_0(inp)
+
+            # return KISS_DATA_FRAME_0(inp)
+            return KISS_DATA_FRAME(inp, tnc_channel)
 
     def kiss_ax25kernel(self, inp: bytearray):
         """
