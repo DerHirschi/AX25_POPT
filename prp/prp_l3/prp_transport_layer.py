@@ -1088,7 +1088,7 @@ class PRPTransportLayer:
             logger.info(f"PRP L3 [{self._prp_root.uid}] [{prio}]: State {old.value} → {new_state.value}")
         self._l3_state[prio] = new_state
 
-    def _execute_actions(self, prio: bool, actions: list[str]):
+    def _execute_actions(self, prio: bool, actions: list):
         for action in actions:
             fn = getattr(self, action, None)
             if fn:
