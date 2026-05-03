@@ -44,12 +44,6 @@ class AX25Port(object):
         # CONFIG ENDE
         #############
         """ KISS / AGWPE - TNC Protocol """
-        """
-        if self.port_id == 4:
-            self.tnc_protocol   = AGWPEHandler(self._port_cfg)
-        else:
-            self.tnc_protocol   = Kiss(self._port_cfg)
-        """
         self.tnc_protocol = None
         """ DIGI """
         # self.digi_calls = self._port_cfg.parm_Digi_calls

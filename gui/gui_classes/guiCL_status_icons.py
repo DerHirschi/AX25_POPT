@@ -37,7 +37,7 @@ STAT_FRAME_DEF_STAT_CFG = {
 }
 # === Feedback-Blink beim manuellen Ein/Ausschalten ===
 FEEDBACK_BLINK_RATE = 'alarm_025'  # sehr schnelles Blinken für Feedback
-FEEDBACK_BLINK_COUNT = 4           # 6 Wechsel → 3 volle Blink-Zyklen (an-aus-an-aus-an-aus)
+FEEDBACK_BLINK_COUNT = 2           # 6 Wechsel → 3 volle Blink-Zyklen (an-aus-an-aus-an-aus)
 
 GET_DEFAULT_STATE_CFG = lambda: {STAT_FRAME_DEF_STAT_KEY: dict(STAT_FRAME_DEF_STAT_CFG)}
 
@@ -235,8 +235,9 @@ class StatusFrame:
             del self._feedback_icons[name]
 
     # === Public API ===
-    def set_icon_state(self, name: str, enabled: bool) -> bool:
+    def set_icon_state(self, name: str, enabled: bool):
         """Setzt Icon-State und löst kurzes Feedback-Blinken aus"""
+        # Entferne aus alter Rate
         try:
             icon = self._get_icon(name)
 
@@ -317,6 +318,9 @@ class StatusFrame:
         except KeyError:
             return None
 
+    @property
+    def icon_tab(self):
+        return self._icon_tab
 
 if __name__ == '__main__':
 

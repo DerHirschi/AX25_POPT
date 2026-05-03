@@ -224,15 +224,18 @@ class GuiTasker:
             task_04 = self._gui_root.AX25StatusBar.update_status_bar()
             """ Toplevel Win Tasker """
             task_05 = self._gui_root.toplevel_manager.tasker_025_sec()
+            """ Alarm Icon Frame Tasker """
+            task_06 = self._AlarmIcon_tasker()
             ret = (task_02 or
                    task_03 or
                    task_04 or
-                   task_05
+                   task_05 or
+                   task_06
                    )
 
-            if self._flip025:
-                task_05_01 = self._AlarmIcon_tasker05()
-                ret = task_05_01 or ret
+            #if self._flip025:
+            #    task_05_01 = self._AlarmIcon_tasker05()
+            #    ret = task_05_01 or ret
             #####################
             self._flip025 = not self._flip025
             return ret
@@ -244,7 +247,7 @@ class GuiTasker:
             #####################
             self._gui_root.ConnStatusBar.update_stat_info_conn_timer()
             self._gui_root.update_ft_info()
-            self._AlarmIcon_tasker1()
+            self._check_port_blocking_task()
             self._gui_root.chBtn_frame.tasker()
             """ Toplevel Win Tasker """
             self._gui_root.toplevel_manager.tasker_1_sec()
@@ -315,17 +318,12 @@ class GuiTasker:
         self._win_gc_task_timer = time.time() + 1
 
     ######################################################################
-    def _AlarmIcon_tasker05(self):
-        if not hasattr(self._Alarm_Frame, 'AlarmIcon_tasker05'):
+    def _AlarmIcon_tasker(self):
+        if not hasattr(self._Alarm_Frame, 'statusbar_tasker'):
             return False
-        self._Alarm_Frame.AlarmIcon_tasker05()
+        self._Alarm_Frame.statusbar_tasker()
         return True
 
-    def _AlarmIcon_tasker1(self):
-        self._check_port_blocking_task()
-        if not hasattr(self._Alarm_Frame, 'AlarmIcon_tasker1'):
-            return
-        self._Alarm_Frame.AlarmIcon_tasker1()
 
     def _SideFrame_tasker(self):
         if self._flip025:
@@ -345,7 +343,7 @@ class GuiTasker:
                 if not self._popt_handler.port_manager.get_glb_port_blocking():
                     self._Alarm_Frame.set_PortBlocking(set_on=False)
                 else:
-                    self._Alarm_Frame.set_PortBlocking(set_on=True, blinking=True)
+                    self._Alarm_Frame.set_PortBlocking(set_on=True)
 
     ######################################################################
     def _monitor_task(self):

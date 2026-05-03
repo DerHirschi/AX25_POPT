@@ -1,369 +1,328 @@
 import time
 import tkinter as tk
 
+from classes.CLbuffers import LockedDict, ListBuffer
+from gui.gui_classes.guiCL_status_icons import STATE_ICON_DEF_COLOR_DISABLED, STAT_FRAME_DEF_STAT_KEY, \
+    STAT_FRAME_DEF_VAL_NO_ALARM, StatusFrame
+
+STATUS_FRM_CFG = {
+            'horizontal': True,
+            'icon_size': 10,
+            'icon_pad': 3,
+            'bg_color': '#313336',
+            'icon_cfg': {
+                'diesel': {
+                    'icon_size': 12,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '➿',
+                                          'color': 'orange',
+                                          'color_disabled': STATE_ICON_DEF_COLOR_DISABLED,
+
+                                          'blink_rate': STAT_FRAME_DEF_VAL_NO_ALARM,
+                                          'init_state': True,
+                                          'invert_blink': False,
+
+                                          'alarm_reset_behavior': 'restore'
+                                          },
+
+                    }
+                },
+                'conn_block': {
+                    'icon_size': 13,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '⛝',
+                                          'color': '#fa2020',
+                                          'blink_rate': 'alarm_025',
+                                          'init_state': False,
+                                          'invert_blink': True,
+                                          'alarm_reset_behavior': 'restore'
+                                          },
+
+                    }
+                },
+                'dx_alarm': {
+                    'icon_size': 14,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '⊛',
+                                                  'color': '#18e002',
+                                                  'blink_rate': 'alarm_05',
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': True,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'tracer': {
+                    'icon_size': 11,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '☈',
+                                          'color': '#f0d402',
+                                          'blink_rate': 'alarm_05',
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+                        'at_active': {'symbol': '☈',
+                                          'color': '#18e002',
+                                          'blink_rate': 'alarm_05',
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+                        #'alarm': {'symbol': '☈',
+                        #                  'color': '#03cefc',
+                        #                  'blink_rate': 'alarm_05',
+                        #                  'alarm_reset_behavior': 'restore',
+                        #                  'invert_blink': False,
+                        #                  'init_state': True},
+                    }
+                },
+                'beacon': {
+                    'icon_size': 9,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '⨀',
+                                          'color': '#18e002',
+                                          'blink_rate': STAT_FRAME_DEF_VAL_NO_ALARM,
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'rx_echo': {
+                    'icon_size': 14,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '⤨',
+                                          'color': '#18e002',
+                                          'blink_rate': STAT_FRAME_DEF_VAL_NO_ALARM,
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'bbs_fwd': {
+                    'icon_size': 15,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '✉⇄',
+                                          'color': '#18e002',
+                                          'blink_rate': STAT_FRAME_DEF_VAL_NO_ALARM,
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'new_mail': {
+                    'icon_size': 15,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '✉',
+                                          'color': '#18e002',
+                                          'blink_rate': 'alarm_1',
+                                          'alarm_reset_behavior': 'disable',
+                                          'invert_blink': True,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'new_aprs_mail': {
+                    'icon_size': 15,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': 'Ⓐ✉',
+                                          'color': '#18e002',
+                                          'blink_rate': 'alarm_1',
+                                          'alarm_reset_behavior': 'disable',
+                                          'invert_blink': False,
+
+                                          'init_state': False},
+
+                    }
+                },
+                'bell': {
+                    'icon_size': 11,
+                    'state_cfg': {
+                        STAT_FRAME_DEF_STAT_KEY: {'symbol': '☎',
+                                          'color': '#18e002',
+                                          'blink_rate': 'alarm_05',
+                                          'alarm_reset_behavior': 'restore',
+                                          'invert_blink': True,
+
+                                          'init_state': False},
+
+
+                    }
+                },
+            }
+        }
 
 class AlarmIconFrame(tk.Frame):
     def __init__(self, root, main_gui):
-        tk.Frame.__init__(self, root, bg='#313336', height=15, width=50)
-        self.pack(fill='x', pady=5, expand=False)
-        self._popt_handler = main_gui.get_PH_mainGUI()
-        """"""
-        self._diesel_label = tk.Label(self, text='➿',
-                                      font=('', 12,),
-                                      # state='disabled',
-                                      background='#313336',
-                                      foreground='orange')
-        self._diesel_label.pack(side='left', padx=5)
+        tk.Frame.__init__(self, root, bg='#313336')
+        self.pack(fill='x', expand=False)
+        self._popt_handler     = main_gui.get_PH_mainGUI()
+        self._toplevel_manager = main_gui.toplevel_manager
+        # =============================
+        # New Frame
+        new_frame = tk.Frame(self, bg='#313336', height=12)
+        new_frame.pack(fill='x', pady=5, expand=False)
 
-        self._block_in_conn = tk.Label(self, text='⛝',
-                                  font=('', 13),
-                                  state='disabled',
-                                  background='#313336',
-                                  foreground='#fa2020')
-        self._block_in_conn.pack(side='left', padx=3)
-        self._block_in_conn.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_BlockList_win())
-
-        self._mh_label = tk.Label(self, text='⊛',
-                                  font=('', 14),
-                                  state='disabled',
-                                  background='#313336',
-                                  foreground='#18e002')
-        self._mh_label.pack(side='left', padx=3)
-        self._mh_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_MH_win())
-
-        self._tracer_label = tk.Label(self, text='☈',
-                                      font=('', 11),
-                                      background='#313336',
-                                      state='disabled',
-                                      foreground='#18e002')
-        self._tracer_label.pack(side='left', padx=3)
-        self._tracer_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_MH_win())
-
-        self._beacon_label = tk.Label(self, text='⨀',
-                                      font=('', 9),
-                                      background='#313336',
-                                      state='disabled',
-                                      foreground='#18e002')
-        self._beacon_label.pack(side='left', padx=3)
-
-        self._rxEcho_label = tk.Label(self, text='⤨',
-                                      font=('', 14),
-                                      background='#313336',
-                                      state='disabled',
-                                      foreground='#18e002')
-        self._rxEcho_label.pack(side='left', padx=3)
-
-        self._pms_fwd_label = tk.Label(self, text='✉⇄',
-                                       font=('', 15,),
-                                       background='#313336',
-                                       state='disabled',
-                                       foreground='#18e002')
-        self._pms_fwd_label.pack(side='left', padx=3)
-        self._pms_fwd_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('pms_fwq_q'))
-
-        self._pms_mail_label = tk.Label(self, text='✉',
-                                        font=('', 15,),
-                                        background='#313336',
-                                        state='disabled',
-                                        foreground='#18e002')
-        self._pms_mail_label.pack(side='left', padx=3)
-        self._pms_mail_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('pms_msg_center'))
-
-
-        self._aprs_mail_label = tk.Label(self, text='Ⓐ✉',
-                                         font=('', 15,),
-                                         background='#313336',
-                                         state='disabled',
-                                         foreground='#18e002')
-        self._aprs_mail_label.pack(side='left', padx=3)
-        self._aprs_mail_label.bind('<Button-1>', lambda event: main_gui.toplevel_manager.open_window('aprs_msg'))
-
-        self._bell_label = tk.Label(self, text='☎',
-                                    font=('', 11,),
-                                    background='#313336',
-                                    state='disabled',
-                                    foreground='#18e002')
-        self._bell_label.pack(side='left', padx=3)
-
-        ##############################
-        self._fwd_alarm_state       = False
-        self._aprsMail_alarm_state  = False
-        ##############################
-        # Tasker
-        self._alarm_labels = {
-            'diesel':       self._diesel_label,
-            'block_conn':   self._block_in_conn,
-            'dx':           self._mh_label,
-            'tracer':       self._tracer_label,
-            'beacon':       self._beacon_label,
-            'rxecho':       self._rxEcho_label,
-            'aprsmail':     self._aprs_mail_label,
-            'pmsmail':      self._pms_mail_label,
-            'pmsfwd':       self._pms_fwd_label,
-            'bell':         self._bell_label,
-        }
-        self._05_blink = {}
-        self._1_blink  = {}
-        for k in self._alarm_labels.keys():
-            self._05_blink[k] = 0
-            self._1_blink[k]  = 0
+        # =============================
+        # Status  Frame
+        self._status_frame = StatusFrame(new_frame, status_frame_cfg=STATUS_FRM_CFG)
+        # =============================
+        # Bindings
+        icon_tab = self._status_frame.icon_tab
+        icon_tab['conn_block'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_BlockList_win())
+        icon_tab['dx_alarm'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_MH_win())
+        icon_tab['tracer'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_MH_win())
+        icon_tab['bbs_fwd'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_window('pms_fwq_q'))
+        icon_tab['new_mail'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_window('pms_msg_center'))
+        icon_tab['new_aprs_mail'].icon.bind(
+            '<Button-1>', lambda event: self._toplevel_manager.open_window('aprs_msg'))
 
         ##############################
         # States
-        self._glb_port_blocking = False
+        self._glb_port_blocking     = False
+        self._autoTracer_state      = False
+        self._Tracer_state          = False
+        self._fwd_alarm_state       = False
+        self._aprsMail_alarm_state  = False
 
-    def AlarmIcon_tasker05(self):
-        for k in list(self._05_blink.keys()):
-            if self._05_blink[k]:
-                if self._05_blink[k] > 0:
-                    self._05_blink[k] -= 1
-                if k in self._alarm_labels.keys():
-                    if self._alarm_labels[k].cget('state') == 'disabled':
-                        self._alarm_labels[k].configure(state='normal')
-                    else:
-                        self._alarm_labels[k].configure(state='disabled')
+        ##############################
+        # Alarm Reset Tasker
+        self._alar_reset_tasks = ListBuffer()
+        # tasker 0,5 Sek
+        self._flip05 = False
 
-    def AlarmIcon_tasker1(self):
-        for k in list(self._1_blink.keys()):
-            if self._1_blink[k]:
-                if self._1_blink[k] > 0:
-                    self._1_blink[k] -= 1
-                if k in self._alarm_labels.keys():
-                    if self._alarm_labels[k].cget('state') == 'disabled':
-                        self._alarm_labels[k].configure(state='normal')
-                    else:
-                        self._alarm_labels[k].configure(state='disabled')
-        self._TracerIcon_tasker()
+    def statusbar_tasker(self):
+        self._status_frame.tasker()
+        self._alarm_reset_task()
+        if self._flip05:
+            self._TracerIcon_tasker()
+        self._flip05 = not self._flip05
 
-    def _add_blink_task(self, alarm_k: str, blink_n: int, sec05=True):
-        if not blink_n:
+    ###################################
+    # Alarm Reset
+    def _alarm_reset_task(self):
+        if self._alar_reset_tasks.is_empty:
             return
-        if sec05:
-            self._05_blink[alarm_k] += blink_n
-        else:
-            self._1_blink[alarm_k] += blink_n
+        reset_tasks = self._alar_reset_tasks.buffer_get
+        now = time.time()
+        for name, timer in reset_tasks:
+            if now >= timer:
+                self._status_frame.set_icon_alarm_state(name, False)
+                self._alar_reset_tasks.buffer_remove((name, timer))
 
-    def _is_blink_task(self, alarm_k):
-        task_05 = self._05_blink.get(alarm_k, 0)
-        task_1  = self._1_blink.get(alarm_k, 0)
-        if any((task_05, task_1)):
-            return True
-        return False
+    def _add_alarm_reset(self, icon_name: str, timer_sec: int):
+        reset_tasks = self._alar_reset_tasks.buffer_get
+        for name, timer in reset_tasks:
+            if name == icon_name:
+                return
+        self._alar_reset_tasks.buffer_write(
+            (icon_name, time.time() + timer_sec)
+        )
 
-    def _remove_blink_task(self, alarm_k: str, sec05=True):
-        if sec05:
-            if self._05_blink[alarm_k]:
-                self._05_blink[alarm_k] = 0
-        else:
-            if self._1_blink[alarm_k]:
-                self._1_blink[alarm_k] = 0
-        """
-        if label.cget('state') == 'normal':
-            label.configure(state='disabled')
-        """
 
     ###################################
     #
-    def set_PortBlocking(self, set_on=True, blinking=True):
-        if set_on:
-            if self._glb_port_blocking:
-                return
-            if self._block_in_conn.cget('foreground') != '#fa2020':
-                self._block_in_conn.configure(foreground='#fa2020')
-            if blinking:
-                self._add_blink_task('block_conn', -1, sec05=True)
-            elif self._block_in_conn.cget('state') == 'disabled':
-                self._add_blink_task('block_conn', 3, sec05=True)
-            elif self._block_in_conn.cget('state') == 'normal':
-                self._add_blink_task('block_conn', 2, sec05=True)
-            self._glb_port_blocking = True
-        elif not set_on:
-            if not self._glb_port_blocking:
-                return
-            self._remove_blink_task('block_conn', sec05=True)
-            if self._block_in_conn.cget('state') == 'normal':
-                self._add_blink_task('block_conn', 1, sec05=True)
-            self._glb_port_blocking = False
-            #else:
-            #    self._add_blink_task('block_conn', 2, sec05=True)
+    def set_PortBlocking(self, set_on=True):
+        if self._glb_port_blocking == set_on:
+            return
+        self._status_frame.set_icon_state('conn_block', set_on)
+        self._glb_port_blocking = set_on
 
     def set_PortBlocking_warning(self):
         if self._glb_port_blocking:
             return
-        if self._1_blink['block_conn']:
-            return
-        if self._block_in_conn.cget('foreground') != '#ecf70f':
-            self._block_in_conn.configure(foreground='#ecf70f')
-
-        if self._block_in_conn.cget('state') == 'disabled':
-            self._add_blink_task('block_conn', 4, sec05=False)
-        else:
-            self._add_blink_task('block_conn', 5, sec05=False)
-
+        self._status_frame.set_icon_alarm_state('conn_block', True)
+        self._add_alarm_reset('conn_block', 3)
 
     def set_dxAlarm(self, alarm_set=True):
-        if alarm_set:
-            """
-            if self._mh_label.cget('foreground') != '#18e002':
-                self._mh_label.configure(foreground='#18e002')
-            """
-            self._add_blink_task('dx', -1, sec05=False)
-        else:
-            """
-            if self._mh_label.cget('foreground') != '#f0d402':
-                self._mh_label.configure(foreground='#f0d402')
-            """
-            self._remove_blink_task('dx', sec05=False)
+        self._status_frame.set_icon_alarm_state('dx_alarm', alarm_set)
 
     def set_dxAlarm_active(self, alarm_set=True):
         self.set_dxAlarm(False)
-        if alarm_set:
-            """
-            if self._mh_label.cget('foreground') != '#f0d402':
-                self._mh_label.configure(foreground='#f0d402')
-            """
-            if self._mh_label.cget('state') == 'disabled':
-                self._add_blink_task('dx', 3, sec05=True)
-            return
-        if self._mh_label.cget('state') == 'normal':
-            self._add_blink_task('dx', 3, sec05=True)
-        return
+        self._status_frame.set_icon_state('dx_alarm', alarm_set)
 
     def set_Bell_alarm(self, alarm_set=True):
-        if alarm_set:
-            self._add_blink_task('bell', -1, sec05=False)
-        else:
-            self._remove_blink_task('bell', sec05=False)
+        self._status_frame.set_icon_alarm_state('bell', alarm_set)
 
     def set_Bell_active(self, alarm_set=True):
-        if alarm_set:
-            if self._bell_label.cget('state') == 'disabled':
-                self._add_blink_task('bell', 3, sec05=True)
-            return
-        if self._bell_label.cget('state') == 'normal':
-            self._add_blink_task('bell', 3, sec05=True)
-        return
+        self._status_frame.set_icon_state('bell', alarm_set)
 
     def set_aprsMail_alarm(self, alarm_set=True):
-        if alarm_set:
-            if self._aprsMail_alarm_state:
-                return
-            self._aprsMail_alarm_state = True
-            self._add_blink_task('aprsmail', 3, sec05=True)
-
-        else:
-            if not self._aprsMail_alarm_state:
-                return
-            self._aprsMail_alarm_state = False
-            self._add_blink_task('aprsmail', 3, sec05=True)
-
-    def set_tracerAlarm(self, alarm_set=True):
-        if alarm_set:
-            self._add_blink_task('tracer', -1, sec05=False)
-        else:
-            self._remove_blink_task('tracer', sec05=False)
+        if self._aprsMail_alarm_state == alarm_set:
+            return
+        self._status_frame.set_icon_alarm_state('new_aprs_mail', alarm_set)
+        self._aprsMail_alarm_state = alarm_set
 
     def set_pmsMailAlarm(self, alarm_set=True):
-        if alarm_set:
-            self._add_blink_task('pmsmail', -1, sec05=False)
-        else:
-            self._remove_blink_task('pmsmail', sec05=False)
-            if self._pms_mail_label.cget('state') == 'normal':
-                self._pms_mail_label.configure(state='disabled')
+        self._status_frame.set_icon_alarm_state('new_mail', alarm_set)
 
     def set_diesel(self, alarm_set=True):
-        if alarm_set:
-            if self._diesel_label.cget('state') == 'disabled':
-                self._diesel_label.configure(state='normal')
-        else:
-            if self._diesel_label.cget('state') == 'normal':
-                self._diesel_label.configure(state='disabled')
+        self._status_frame.set_icon_state('diesel', alarm_set)
 
     def set_pms_fwd_alarm(self, alarm_set=True):
-        if alarm_set:
-            if self._fwd_alarm_state:
-                return
-            self._fwd_alarm_state = True
-            self._add_blink_task('pmsfwd', 3, sec05=True)
-        else:
-            if not self._fwd_alarm_state:
-                return
-            self._fwd_alarm_state = False
-            self._add_blink_task('pmsfwd', 3, sec05=True)
+        if self._fwd_alarm_state == alarm_set:
+            return
+        self._status_frame.set_icon_state('bbs_fwd', alarm_set)
+        self._fwd_alarm_state = alarm_set
 
     def set_beacon_icon(self, alarm_set=True):
-        if alarm_set:
-            if self._beacon_label.cget('state') == 'disabled':
-                bl = 3
-            else:
-                bl = 2
-        else:
-            if self._beacon_label.cget('state') == 'normal':
-                bl = 3
-            else:
-                bl = 2
-        self._add_blink_task('beacon', bl, sec05=True)
+        self._status_frame.set_icon_state('beacon', alarm_set)
 
     def set_rxEcho_icon(self, alarm_set=True):
-        if alarm_set:
-            if self._rxEcho_label.cget('state') == 'disabled':
-                bl = 3
-            else:
-                bl = 2
-        else:
-            if self._rxEcho_label.cget('state') == 'normal':
-                bl = 3
-            else:
-                bl = 2
+        self._status_frame.set_icon_state('rx_echo', alarm_set)
 
-        self._add_blink_task('rxecho', bl, sec05=True)
+    def set_tracerAlarm(self, alarm_set=True):
+        # self._status_frame.set_icon_state_cfg('tracer', 'alarm')
+        self._status_frame.set_icon_alarm_state('tracer', alarm_set)
+
+    def set_autoTracer(self, set_val=True):
+        if self._autoTracer_state == set_val:
+            return
+        self._status_frame.set_icon_state_cfg('tracer', 'at_active')
+        self._status_frame.set_icon_state('tracer', set_val)
+        self._autoTracer_state = set_val
+        if set_val:
+            self._Tracer_state     = not set_val
+
+    def set_Tracer(self, set_val=True):
+        if self._Tracer_state == set_val:
+            return
+        self._status_frame.set_icon_state_cfg('tracer', STAT_FRAME_DEF_STAT_KEY)
+        self._status_frame.set_icon_state('tracer', set_val)
+        self._Tracer_state = set_val
+        if set_val:
+            self._autoTracer_state     = not set_val
 
     def _TracerIcon_tasker(self):
         """  """
         tracer  = self._popt_handler.get_aprs_ais()
-        alarm_k = 'tracer'
         if not tracer:
-            if self._tracer_label.cget('state') == 'normal':
-                if not self._is_blink_task(alarm_k):
-                    # self._tracer_label.configure(state='disabled')
-                    self._add_blink_task(alarm_k, 3, sec05=True)
+            self.set_Tracer(False)
             return
         at_active = tracer.tracer_auto_tracer_get_active()
         t_active  = tracer.tracer_tracer_get_active()
         if not t_active and not at_active:
-            if self._tracer_label.cget('state') == 'normal':
-                if not self._is_blink_task(alarm_k):
-                    # self._tracer_label.configure(state='disabled')
-                    self._add_blink_task(alarm_k, 3, sec05=True)
+            self.set_Tracer(False)
+            self.set_autoTracer(False)
             return
-        bl = 0
-        if not at_active:
-            if self._tracer_label.cget('foreground') != '#18e002':
-                self._tracer_label.configure(foreground='#18e002')
-                bl = 2
-            if self._tracer_label.cget('state') == 'disabled':
-                if not self._is_blink_task(alarm_k):
-                    # self._tracer_label.configure(state='disabled')
-                    bl = 3
-            self._add_blink_task(alarm_k, bl, sec05=True)
+
+        if not at_active and t_active:
+            self.set_Tracer(True)
             return
-        at_timer = tracer.tracer_auto_tracer_get_active_timer()
-        if at_timer < time.time():
-            if self._tracer_label.cget('foreground') != '#f0d402':
-                self._tracer_label.configure(foreground='#f0d402')
-                bl = 2
-            if self._tracer_label.cget('state') == 'disabled':
-                if not self._is_blink_task(alarm_k):
-                    # self._tracer_label.configure(state='disabled')
-                    bl = 3
-            self._add_blink_task(alarm_k, bl, sec05=True)
-            return
-        if self._tracer_label.cget('foreground') != '#03cefc':
-            self._tracer_label.configure(foreground='#03cefc')
-            bl = 2
-        if self._tracer_label.cget('state') == 'disabled':
-            if not self._is_blink_task(alarm_k):
-                # self._tracer_label.configure(state='disabled')
-                bl = 3
-        self._add_blink_task(alarm_k, bl, sec05=True)
+        if at_active:
+            self.set_autoTracer(True)
+
         return
