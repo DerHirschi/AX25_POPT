@@ -1,7 +1,7 @@
 from datetime import datetime
 import threading
 
-from ax25.ax25LocalConverse import LocalConverse
+from cli.LocalConverse import LocalConverse
 from ax25.ax25_ports.ax25Multicast import ax25Multicast
 #from ax25.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
