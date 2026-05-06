@@ -91,13 +91,18 @@ from cfg.logger_config import logger
 from ax25 import crc_x25
 from fnc.crc_fnc import crc16_ccitt
 
+
 #############################
-KISS_TXD  = b'\xC0\x01'
-KISS_PERS = b'\xC0\x02'
-KISS_SLOT = b'\xC0\x03'
-KISS_TAIL = b'\xC0\x04'
-KISS_DUPL = b'\xC0\x05'
+#ch 1
+#KISS_TXD  = b'\xC0\x11'    hex(17)
+#KISS_PERS = b'\xC0\x12'
+#KISS_SLOT = b'\xC0\x13'
+#KISS_TAIL = b'\xC0\x14'
+#KISS_DUPL = b'\xC0\x15'    hex(21)
 # KISS_DUPL = b'\xC0\x0F' # CRC-Mode ???
+
+#ch 2
+#KISS_TXD  = b'\xC0\x21'    hex(33)
 ##############################################
 # KISS
 DATA_FRAME_0  = b'\x00'     # Channel 0
@@ -150,6 +155,17 @@ FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB
 # KISS Data Frame CH 0
 KISS_DATA_FRAME             = lambda inp, channel: FEND + KISS_CHANNEL_TAB[channel] + inp + FEND
 # KISS_DATA_FRAME_0           = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
+#############################
+KISS_TXD   = lambda tnc_ch: FEND + int(tnc_ch * 16 + 1).to_bytes()
+KISS_PERS  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 2).to_bytes()
+KISS_SLOT  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 3).to_bytes()
+KISS_TAIL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 4).to_bytes()
+KISS_DUPL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 5).to_bytes()
+KISS_TXD_K  = b'\xC0\x01'
+KISS_PERS_K = b'\xC0\x02'
+KISS_SLOT_K = b'\xC0\x03'
+KISS_TAIL_K = b'\xC0\x04'
+KISS_DUPL_K = b'\xC0\x05'
 ##############################################
 # Linux ax25Kernel-DEV Data Frame CH 0
 AX25KERNEL_DATA_FRAME_0     = lambda inp: DATA_FRAME_0 + inp
@@ -168,11 +184,9 @@ class Kiss:
 
         self._port_id           = port_cfg.get('parm_PortNr', -1)
         # TNC Modes (KISS(+x-25 crc), SMACK)
-        self._multi_ch          = port_cfg.get('parm_kiss_multi_ch', False)
-        if self._multi_ch:
-            self._tnc_ch        = port_cfg.get('parm_kiss_channel', 0)
-        else:
-            self._tnc_ch        = 0
+        #self._multi_ch          = port_cfg.get('parm_kiss_multi_ch', False)
+        self._tnc_ch            = port_cfg.get('parm_kiss_channel', 0)
+
         self._fcs_mode          = port_cfg.get('parm_kiss_fcs_mode', 'off') # 'on', 'off', 'auto'
         self._can_smack_ext     = False     # Cfg. SMACK-EXT lookup (buggy)
         #
@@ -207,11 +221,11 @@ class Kiss:
         self._END_TNC_KISS   = self._build_tnc_cmds(end_cmd)
 
         # SET TNC-Parameter
-        self._txd_frame    = FEND + KISS_TXD +  bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2)) + FEND
-        self._pers_frame   = FEND + KISS_PERS + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
-        self._slot_frame   = FEND + KISS_SLOT + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2)) + FEND
-        self._tail_frame   = FEND + KISS_TAIL + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2)) + FEND
-        self._duplex_frame = FEND + KISS_DUPL + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2)) + FEND
+        self._txd_frame    = FEND + KISS_TXD(self._tnc_ch)  + bytes.fromhex(hex(port_cfg.get('parm_kiss_TXD', 35))[2:].zfill(2))   + FEND
+        self._pers_frame   = FEND + KISS_PERS(self._tnc_ch) + bytes.fromhex(hex(port_cfg.get('parm_kiss_Pers', 160))[2:].zfill(2)) + FEND
+        self._slot_frame   = FEND + KISS_SLOT(self._tnc_ch) + bytes.fromhex(hex(port_cfg.get('parm_kiss_Slot', 30))[2:].zfill(2))  + FEND
+        self._tail_frame   = FEND + KISS_TAIL(self._tnc_ch) + bytes.fromhex(hex(port_cfg.get('parm_kiss_Tail', 15))[2:].zfill(2))  + FEND
+        self._duplex_frame = FEND + KISS_DUPL(self._tnc_ch) + bytes.fromhex(str(port_cfg.get('parm_kiss_F_Duplex', 0)).zfill(2))   + FEND
 
         # ██████████████████████████████████████████████████████████████
         # ███ LOGGING BEI INIT █████████████████████████████████████████
@@ -219,7 +233,7 @@ class Kiss:
         logger.info("═" * 60)
         logger.info(f"KISS INITIALISIERT - Port {self._port_id}")
         logger.info(f"  Enabled:          {self.is_enabled}")
-        #logger.info(f"  Multi-Channel:    {self.multi_channel}")
+        logger.info(f"  TNC Ch:           {self._tnc_ch}")
         logger.info(f"  FCS Mode:         {self._fcs_mode.upper()} {'← DEFAULT FÜR DIREWOLF!' if port_cfg.get('parm_kiss_fcs_mode', 'auto') == 'off' else ''}")
         logger.info(f"  Set KISS Params:  {self.set_param}")
         logger.info(f"  Start-CMD: {self._START_TNC_KISS}")
@@ -274,31 +288,31 @@ class Kiss:
         if not all((self._is_tnc_emu, self._is_tnc_emu_kiss)):
             logger.warning(f"Kiss: TNC-CMD received (TNC-EMU) but not in KISS-MODE> {inp}")
 
-        if inp.startswith(KISS_TXD):
+        if inp.startswith(KISS_TXD_K):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TXD > {inp}")
             try:
                 logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TXD: {inp[2]}")
             except (SyntaxError, IndexError):
                 pass
-        elif inp.startswith(KISS_PERS):
+        elif inp.startswith(KISS_PERS_K):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) PERS > {inp}")
             try:
                 logger.info(f"Kiss: TNC-CMD received (TNC-EMU) PERS: {inp[2]}")
             except (SyntaxError, IndexError):
                 pass
-        elif inp.startswith(KISS_SLOT):
+        elif inp.startswith(KISS_SLOT_K):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) SLOT > {inp}")
             try:
                 logger.info(f"Kiss: TNC-CMD received (TNC-EMU) SLOT: {inp[2]}")
             except (SyntaxError, IndexError):
                 pass
-        elif inp.startswith(KISS_TAIL):
+        elif inp.startswith(KISS_TAIL_K):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TAIL > {inp}")
             try:
                 logger.info(f"Kiss: TNC-CMD received (TNC-EMU) TAIL: {inp[2]}")
             except (SyntaxError, IndexError):
                 pass
-        elif inp.startswith(KISS_DUPL):
+        elif inp.startswith(KISS_DUPL_K):
             logger.info(f"Kiss: TNC-CMD received (TNC-EMU) F-Duplex > {inp}")
             try:
                 logger.info(f"Kiss: TNC-CMD received (TNC-EMU) F-Duplex: {inp[2]}")
@@ -350,11 +364,11 @@ class Kiss:
             logger.warning(f"Kiss: Empty KISS Frame > {inp}")
             return True
         if any((
-                inp.startswith(KISS_TXD),
-                inp.startswith(KISS_PERS),
-                inp.startswith(KISS_SLOT),
-                inp.startswith(KISS_TAIL),
-                inp.startswith(KISS_DUPL),
+                inp.startswith(KISS_TXD_K),
+                inp.startswith(KISS_PERS_K),
+                inp.startswith(KISS_SLOT_K),
+                inp.startswith(KISS_TAIL_K),
+                inp.startswith(KISS_DUPL_K),
         )) and inp.endswith(FEND):
             self._dec_tnc_emu_parameter(inp)
             return True

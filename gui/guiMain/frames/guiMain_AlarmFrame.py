@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 
-from classes.CLbuffers import LockedDict, ListBuffer
+from classes.CLbuffers import ListBuffer
 from gui.gui_classes.guiCL_status_icons import STATE_ICON_DEF_COLOR_DISABLED, STAT_FRAME_DEF_STAT_KEY, \
     STAT_FRAME_DEF_VAL_NO_ALARM, StatusFrame
 

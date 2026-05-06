@@ -294,11 +294,11 @@ class GuiKissSettings(tk.Toplevel):
     def _set_kiss_param_ent(self):
         if not self._is_multiport_master():
             """ Multiport TNC Slave """
-            self._kiss_send_kiss_param_var.set(False)
+            #self._kiss_send_kiss_param_var.set(False)
             self._kiss_send_kiss_init_var.set(False)
             self._kiss_send_kiss_close_var.set(False)
             self._kiss_tnc_emu_var.set(False)
-            self._kiss_param_chk.configure(state='disabled')
+            #self._kiss_param_chk.configure(state='disabled')
             self._kiss_init_chk.configure(state='disabled')
             self._kiss_end_chk.configure(state='disabled')
             self._kiss_emu_chk.configure(state='disabled')

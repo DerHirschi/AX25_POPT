@@ -918,10 +918,10 @@ class PortSetTab:
 
         #############
         # KISS
-        if port_type in KISSDEVICES:
+        if self.port_setting['parm_PortTyp'] in KISSDEVICES :
             self.port_setting['parm_kiss_is_on'] = True
 
-        elif port_type in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
+        elif self.port_setting['parm_PortTyp'] in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             self.port_setting['parm_kiss_is_on'] = True
         else:
             self.port_setting['parm_kiss_is_on'] = False

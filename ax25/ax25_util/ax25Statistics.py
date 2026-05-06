@@ -146,9 +146,6 @@ class MH:
         self._load_fm_cfg()
         logger.info("MH: Init Complete")
 
-    def __del__(self):
-        pass
-
     def _load_MH_old(self, mh_load):
         if not mh_load:
             return
