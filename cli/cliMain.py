@@ -149,8 +149,6 @@ class DefaultCLI(object):
             '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
         }
 
-        self.get_cmds = lambda : list(self._command_set.keys())
-
         self._str_cmd_exec = {
             b'#REQUESTNAME:': self._str_cmd_req_name,
             b'#NAM#': self._cmd_set_name,
@@ -176,10 +174,6 @@ class DefaultCLI(object):
             if 'OP' in self._command_set:
                 del self._command_set['OP']
         self._baycom_auto_login()
-        """
-        if type(self.prefix) is str:  # Fix for old CFG Files
-            self.prefix = self.prefix.encode(self._encoding[0], self._encoding[1])
-        """
 
 
     def init(self):
@@ -469,9 +463,8 @@ class DefaultCLI(object):
 
     # GUI
     def _gui_channel_status_change(self):
-        gui = self._gui
-        if hasattr(gui, 'on_channel_status_change'):
-            gui.on_channel_status_change()
+        if hasattr(self._gui, 'on_channel_status_change'):
+            self._gui.on_channel_status_change()
 
     # APRS-Messanger C-Text Noty
     def _aprs_cText_noty(self):
@@ -488,7 +481,6 @@ class DefaultCLI(object):
     #########################################################
     # CMD exec
     def _find_cmd(self):
-        # TODO AGAIN
         if self._cmd:
             self._env_var_cmd = False
             inp_cmd = str(self._cmd.decode(self._encoding[0], 'ignore'))

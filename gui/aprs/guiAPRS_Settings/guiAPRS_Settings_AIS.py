@@ -16,14 +16,15 @@ class APRSaisSettings(ttk.Frame):
         self._ais_cfg: dict = self._root_win.get_aprs_cfg()
         ###################################
         # VAR's
-        self._ais_call_var = tk.StringVar(self,  value=    self._ais_cfg.get('ais_call', ''))
-        self._ais_pass_var = tk.StringVar(self,  value=    self._ais_cfg.get('ais_pass', ''))
-        self._ais_host_var = tk.StringVar(self,  value=    self._ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))[0])
-        self._ais_port_var = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))[1]))
-        self._ais_loc_var  = tk.StringVar(self,  value=    self._ais_cfg.get('ais_loc', ''))
-        self._ais_lat_var  = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_lat', 0.0)))
-        self._ais_lon_var  = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_lon', 0.0)))
-        self._ais_run_var  = tk.BooleanVar(self, value=    self._ais_cfg.get('ais_active', False))
+        self._ais_call_var    = tk.StringVar(self,  value=    self._ais_cfg.get('ais_call', ''))
+        self._ais_pass_var    = tk.StringVar(self,  value=    self._ais_cfg.get('ais_pass', ''))
+        self._ais_filter_var  = tk.StringVar(self,  value=    self._ais_cfg.get('ais_filter', ''))
+        self._ais_host_var    = tk.StringVar(self,  value=    self._ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))[0])
+        self._ais_port_var    = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))[1]))
+        self._ais_loc_var     = tk.StringVar(self,  value=    self._ais_cfg.get('ais_loc', ''))
+        self._ais_lat_var     = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_lat', 0.0)))
+        self._ais_lon_var     = tk.StringVar(self,  value=str(self._ais_cfg.get('ais_lon', 0.0)))
+        self._ais_run_var     = tk.BooleanVar(self, value=    self._ais_cfg.get('ais_active', False))
         ###################################
         fram_l = ttk.Frame(self)
         fram_r = ttk.Frame(self)
@@ -62,6 +63,13 @@ class APRSaisSettings(ttk.Frame):
 
         ttk.Label(port_f, text=f"Server-{self._getTabStr('port')}: ").grid(row=0, column=0, sticky='w')
         ttk.Entry(port_f, textvariable=self._ais_port_var, width=10).grid(row=0, column=1, sticky='w')
+
+        ##########
+        filter_f = ttk.Frame(fram_l)
+        filter_f.pack(anchor='w', pady=5)
+
+        ttk.Label(filter_f, text='Filter Server').pack(side='left')
+        ttk.Entry(filter_f, textvariable=self._ais_filter_var).pack(side='left', padx=5)
         #######
         connect_f = ttk.Frame(fram_l)
         connect_f.pack(anchor='w', pady=5)
@@ -69,6 +77,8 @@ class APRSaisSettings(ttk.Frame):
         ttk.Checkbutton(connect_f,
                         text=self._getTabStr('conn_2_aprs_server'),
                         variable=self._ais_run_var).pack(anchor='w')
+
+
         ###################################
         # fram_r
         loc_f = ttk.Frame(fram_r)
@@ -123,6 +133,7 @@ class APRSaisSettings(ttk.Frame):
         aprs_cfg                = self._root_win.get_aprs_cfg()
         aprs_cfg['ais_call']    = self._ais_call_var.get()
         aprs_cfg['ais_pass']    = self._ais_pass_var.get()
+        aprs_cfg['ais_filter']  = self._ais_filter_var.get()
         aprs_cfg['ais_loc']     = self._ais_loc_var.get()
         try:
             aprs_cfg['ais_lat'] = float(self._ais_lat_var.get())

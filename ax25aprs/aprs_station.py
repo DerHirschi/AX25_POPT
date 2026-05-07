@@ -95,10 +95,11 @@ class APRSmain(object):
         self._i_gate.reinit()
 
     def _login(self):
-        ais_cfg  = POPT_CFG.get_CFG_aprs_ais()
-        ais_host = ais_cfg.get('ais_host', ('cbaprs.dyndns.org', 27234))
-        ais_call = ais_cfg.get('ais_call', '')
-        ais_pass = ais_cfg.get('ais_pass', '')
+        ais_cfg    = POPT_CFG.get_CFG_aprs_ais()
+        ais_host   = ais_cfg.get('ais_host',   ('cbaprs.dyndns.org', 27234))
+        ais_call   = ais_cfg.get('ais_call',   '')
+        ais_pass   = ais_cfg.get('ais_pass',   '')
+        ais_filter = ais_cfg.get('ais_filter', 'r/0/0/99999')
         if not all((ais_call, ais_pass, ais_host[0])):
             logger.error("APRS-IS: Config Error.")
             return False
@@ -140,7 +141,9 @@ class APRSmain(object):
             self._ais = None
             return False
 
-        self._ais.set_filter('r/0/0/99999')
+        if ais_filter:
+            self._ais.set_filter(ais_filter)
+        #self._ais.set_filter('r/0/0/99999')
         # finally:
         #     self.ais.close()
         logger.info("APRS-IS: APRS-Server Login successful")

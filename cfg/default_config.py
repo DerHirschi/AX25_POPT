@@ -297,6 +297,7 @@ def getNew_APRS_ais_cfg():
     return {
         'ais_call': '',
         'ais_pass': '',
+        'ais_filter': 'r/0/0/99999',
         'ais_loc': '',
         'ais_lat': 0.0,
         'ais_lon': 0.0,
