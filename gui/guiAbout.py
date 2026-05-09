@@ -13,7 +13,7 @@ class About(tk.Toplevel):
 
         self.title("Über PoPT")
         self.win_width = 680
-        self.win_height = 560
+        self.win_height = 580
         self.geometry(f"{self.win_width}x{self.win_height}+"
                       f"{self.main_cl.main_win.winfo_x() + 50}+"
                       f"{self.main_cl.main_win.winfo_y() + 50}")
