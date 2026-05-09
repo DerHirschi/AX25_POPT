@@ -1,14 +1,14 @@
 from datetime import datetime
 
 from cfg.popt_config import POPT_CFG
-from cli.BaycomLogin import BaycomLogin
+from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import (STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, CLI_TYP_SYSOP,
-                          CLI_TYP_NO_CLI)
+from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, CLI_TYP_SYSOP
 from cli.cli_commands.cli_cmd_infos import CliCmdInfos
 from cli.cli_commands.cli_cmd_myHeard import CliCmdMyHeard
 from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
+from cli.cli_commands.cli_cmd_status import CliCmdStatus
 from cli.cli_commands.cli_cmd_userDB import CliCmdUserDB
 from cli.cli_const import CLI_DEF_CMD_BASIC
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
@@ -100,23 +100,27 @@ class DefaultCLI(object):
         self._statistics_cmds = CliCmdStatistics(self)
         self._my_heard_cmds   = CliCmdMyHeard(self)
         self._infos_cmds      = CliCmdInfos(self)
+        self._status_cmds     = CliCmdStatus(self)
         self._user_db_cmds    = CliCmdUserDB(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
+
             # CMD: (needed lookup len(cmd), cmd_fnc, Help-Str, Str-Vars allowed)
             'QUIT':     (1, self._cmd_q,                            'Quit',              True),
             'BYE':      (1, self._cmd_q,                            'Bye',               True),
             'ECHO':     (1, self._cmd_echo,                         'Echo',              False),
+
             # NODE Stuff
             'CONNECT':  (1, self._cmd_connect,                      'Connect',           False),
             'C!':       (2, self._cmd_connect_exclusive,            'Connect Exclusive (No MH-Path-Lookup)', False),
-            'PORT':     (1, self._cmd_port,                         'Ports',                                 False),
+
             # Statistics
             'PSTAT':    (2, self._statistics_cmds.cmd_pstat,        f"Port {self._getTabStr_CLI('statistic')}", False),
             'BWSTAT':   (2, self._statistics_cmds.cmd_bwstat,       self._getTabStr_CLI('cmd_help_bwstat'),     False),
             'CSTAT':    (2, self._statistics_cmds.cmd_cstats,       self._getTabStr_CLI('cmd_help_cstat'),      False),
             'WX':       (0, self._statistics_cmds.cmd_wx,           self._getTabStr_CLI('cmd_help_wx'),         False),
+
             # MH
             'MH':       (0, self._my_heard_cmds.cmd_mh,             'MYHeard List',                         False),
             'LMH':      (0, self._my_heard_cmds.cmd_mhl,            'Long MYHeard List',                    False),
@@ -125,8 +129,11 @@ class DefaultCLI(object):
             'CHIST':    (3, self._my_heard_cmds.cmd_chist,          self._getTabStr_CLI('cmd_help_chist'),  False),
             'ATR':      (2, self._my_heard_cmds.cmd_aprs_trace,     'APRS-Tracer',                          False),
 
+            # Status
+            'PORT':     (1, self._status_cmds.cmd_port,             'Ports',                                    False),
+            'LCSTATUS': (2, self._status_cmds.cmd_lcstatus,         self._getTabStr_CLI('cmd_help_lcstatus'),   False),
+
             #
-            'LCSTATUS': (2, self._cmd_lcstatus,                     self._getTabStr_CLI('cmd_help_lcstatus'),   False),
             'CH':       (2, self._cmd_ch,                           self._getTabStr_CLI('cmd_help_ch'),         False),
             'RTT':      (2, self._cmd_rtt,                          self._getTabStr_CLI('cmd_help_rtt'),        False),
             # Remote Monitor
@@ -136,6 +143,7 @@ class DefaultCLI(object):
             #'ACHAT':    (2, self.,                                 'APRS-Messenger',                       False),
             #
             'BELL':     (2, self._cmd_bell,                         self._getTabStr_CLI('cmd_help_bell'),   False),
+
             # User/Station Info
             'INFO':     (1, self._infos_cmds.cmd_i,                 'Info',                                 True),
             'LINFO':    (2, self._infos_cmds.cmd_li,                'Long Info',                            True),
@@ -691,75 +699,6 @@ class DefaultCLI(object):
             self._connection.set_user_db_language(self._cli_lang)
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
         return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
-
-    def _cmd_port(self):  # TODO Pipe
-        ret = f"\r      < {self._getTabStr_CLI('port_overview')} >\r\r"
-        ret += "-#--Name----PortTyp----------Stations--Typ------Digi-\r"
-        for port_id in self._port_handler.port_manager.ax25_ports.keys():
-            port = self._port_handler.port_manager.ax25_ports[port_id]
-            name = str(port.portname).ljust(7)
-            typ = port.port_typ.ljust(15)
-            if port.dualPort_primaryPort in [port, None]:
-
-                stations = self._port_handler.api.get_stat_calls_fm_port(port_id)
-                if not stations:
-                    stations = ['']
-                digi = ''
-
-                if POPT_CFG.get_digi_CFG_for_Call(stations[0]).get('digi_enabled', False) and stations[0]:
-                    digi = '(DIGI)'
-                if POPT_CFG.get_stat_CFG_fm_call(stations[0]):
-                    digi = f"{POPT_CFG.get_stat_CFG_fm_call(stations[0]).get('stat_parm_cli', CLI_TYP_NO_CLI).ljust(7)} " + digi
-
-                ret += f" {str(port_id).ljust(2)} {name} {typ}  {stations[0].ljust(9)} {digi}\r"
-                for stat in stations[1:]:
-                    digi = ''
-                    if POPT_CFG.get_digi_CFG_for_Call(stat).get('digi_enabled', False):
-                        digi = '(DIGI)'
-                    if POPT_CFG.get_stat_CFG_fm_call(stat):
-                        digi = f"{POPT_CFG.get_stat_CFG_fm_call(stat).get('stat_parm_cli', CLI_TYP_NO_CLI).ljust(7)} " + digi
-                    ret += f"                             {stat.ljust(9)} {digi}\r"
-            else:
-                if port.dualPort_primaryPort:
-                    ret += f" {str(port_id).ljust(2)} {name} {typ}  Dual-Port: Secondary from Port {port.dualPort_primaryPort.port_id} \r"
-        ret += '\r'
-        return ret
-
-    def _cmd_lcstatus(self):
-        """ Long Connect-Status """
-        ret = '\r'
-        ret += "--Ch--Port--MyCall----Call------Name----------LOC----QTH-----------Connect\r"
-        all_conn = self._port_handler.get_all_connections()
-        for k in all_conn.keys():
-            ch = k
-            conn = all_conn[k]
-            time_start = conn.time_start  # TODO DateSTR
-            port_id = conn.own_port.port_id
-            my_call = conn.my_call_str
-            to_call = conn.to_call_str
-            db_ent = conn.user_db_ent
-            name = ''
-            loc = ''
-            qth = ''
-            if db_ent:
-                name = db_ent.Name
-                loc = db_ent.LOC
-                qth = db_ent.QTH
-            if self._connection.ch_index == ch:
-                ret += ">"
-            else:
-                ret += " "
-
-            ret += f" {str(ch).ljust(3)} " \
-                   f"{str(port_id).ljust(3)}   " \
-                   f"{my_call.ljust(9)} " \
-                   f"{to_call.ljust(9)} " \
-                   f"{name.ljust(13)[:13]} " \
-                   f"{loc.ljust(6)[:6]} " \
-                   f"{qth.ljust(13)[:13]} " \
-                   f"{time_start.strftime('%H:%M:%S')}\r"
-
-        return ret + "\r"
 
     def _cmd_ch(self):
         if not self._parameter:

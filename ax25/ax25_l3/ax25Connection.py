@@ -9,7 +9,7 @@ from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB, S1Frei, S2Aufbau
 from ax25.ax25_l3.ax25RTT import RTT
 from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
 from classes.CLbuffers import ByteArrayBuffer
-from cli.cliConv import ConverseCLI
+from cli.cli_frontends.cliConv import ConverseCLI
 from cli import CLI_OPT, NoneCLI
 from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
