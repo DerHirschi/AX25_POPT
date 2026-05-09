@@ -1,5 +1,5 @@
 from cfg.constant import CLI_TYP_PIPE
-from cli.cliMain import NoneCLI
+from cli.cliNONE import NoneCLI
 from cli.cliNODE import NodeCLI
 from cli.cliSYSOP import UserCLI
 from cli.cliMCAST import MCastCLI

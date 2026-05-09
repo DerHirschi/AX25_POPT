@@ -1,5 +1,5 @@
 from cfg.constant import CLI_TYP_SYSOP
-from cli.cliMain import DefaultCLI
+from cli.cli_main.cliMain import DefaultCLI
 
 
 class UserCLI(DefaultCLI):

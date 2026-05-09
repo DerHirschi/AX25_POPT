@@ -8,6 +8,7 @@ from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
     CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from cli.cli_const import CLI_DEF_CMD_BASIC
+from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
@@ -75,15 +76,15 @@ class DefaultCLI(object):
         self._raw_input         = b''
         self._cmd               = b''
         self._last_line         = b''
-        self._new_last_line     = b''   # TODO ???????????????????????
+        self.new_last_line      = b''   # TODO ???????????????????????
         self._parameter         = []
         self._env_var_cmd       = False
-        self._skip_prompt       = False
+        self.skip_prompt        = False
 
         self._sys_login         = None
         self.sysop_priv         = False
 
-        self._rtt_active        = False
+        self.rtt_active         = False
 
         self._tx_buffer         = bytearray()
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
@@ -129,9 +130,9 @@ class DefaultCLI(object):
             'NEWS':     (2, self._cmd_news,                 'NEWS', True),
             # USER DB
             'USER':     (2, self._cmd_user_db_detail, self._getTabStr_CLI('cmd_help_user_db'), False),
-            'NAME':     (1, self._cmd_set_name, self._getTabStr_CLI('cmd_help_set_name'), False),
-            'QTH':      (3, self._cmd_set_qth, self._getTabStr_CLI('cmd_help_set_qth'), False),
-            'LOC':      (3, self._cmd_set_loc, self._getTabStr_CLI('cmd_help_set_loc'), False),
+            'NAME':     (1, self.cmd_set_name, self._getTabStr_CLI('cmd_help_set_name'), False),
+            'QTH':      (3, self.cmd_set_qth, self._getTabStr_CLI('cmd_help_set_qth'), False),
+            'LOC':      (3, self.cmd_set_loc, self._getTabStr_CLI('cmd_help_set_loc'), False),
             'ZIP':      (3, self._cmd_set_zip, self._getTabStr_CLI('cmd_help_set_zip'), False),
             'PRMAIL':   (2, self._cmd_set_pr_mail, self._getTabStr_CLI('cmd_help_set_prmail'), False),
             'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr_CLI('cmd_help_set_email'), False),
@@ -149,13 +150,7 @@ class DefaultCLI(object):
             '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
         }
 
-        self._str_cmd_exec = {
-            b'#REQUESTNAME:': self._str_cmd_req_name,
-            b'#NAM#': self._cmd_set_name,
-            b'#QTH#': self._cmd_set_qth,
-            b'#LOC#': self._cmd_set_loc,
-            b'#RTT#': self._str_cmd_recv_rtt,
-        }
+        self._StrCommands  = CliStrCommands(self)
 
         self._state_exec = {
             0: self._s0,  # C-Text
@@ -181,6 +176,42 @@ class DefaultCLI(object):
 
     ########################################################
     @property
+    def connection(self):
+        return self._connection
+
+    @property
+    def popt_handler(self):
+        return self._port_handler
+
+    @property
+    def own_port(self):
+        return self._own_port
+
+    @property
+    def userDB(self):
+        return self._user_db
+
+    @property
+    def userDB_ent(self):
+        return self._connection.user_db_ent
+
+    @property
+    def cli_lang(self):
+        return self._connection.cli_language
+
+    @property
+    def cli_encoding(self):
+        return self._encoding
+
+    @property
+    def parameter(self):
+        return self._parameter
+
+    def set_parameter(self, new_parameter: list):
+        self._parameter = list(new_parameter)
+
+    ########################################################
+    @property
     def _gui(self):
         return self._port_handler.get_gui()
 
@@ -203,11 +234,11 @@ class DefaultCLI(object):
     ##################################
     # Helper
     # TX-Stuff
-    def _get_ts_prompt(self):
+    def get_ts_prompt(self):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
     def send_prompt(self):
-        self._send_output(self._get_ts_prompt(), env_vars=False)
+        self._send_output(self.get_ts_prompt(), env_vars=False)
 
     def _send_output(self, ret, env_vars=True):
         if not ret:
@@ -257,7 +288,7 @@ class DefaultCLI(object):
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
         self._connection.send_data((f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
-                                    + self._get_ts_prompt()).encode(self._encoding[0], 'ignore'))
+                                    + self.get_ts_prompt()).encode(self._encoding[0], 'ignore'))
 
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
@@ -516,7 +547,7 @@ class DefaultCLI(object):
             ret = tuple(self._command_set[cmd])[1]()
 
             # == Cleanup
-            self._new_last_line = b''
+            self.new_last_line = b''
 
             # == Return
             if ret:
@@ -541,29 +572,10 @@ class DefaultCLI(object):
         ret = self._find_cmd()
         if self._crone_state_index not in [100] and \
                 self._state_index not in [2, 4, 8]:  # Not Quit| 8 = BBS send msg
-            if self._skip_prompt:
-                self._skip_prompt = False
+            if self.skip_prompt:
+                self.skip_prompt = False
             else:
-                ret += self._get_ts_prompt()
-        return ret
-
-    def _exec_str_cmd(self):
-        inp_lines = self._last_line + self._raw_input
-        inp_lines = inp_lines.replace(b'\n', b'\r')
-        inp_lines = inp_lines.split(b'\r')
-        ret = ''
-        self._new_last_line = inp_lines[-1]
-        for li in inp_lines:
-            for str_cmd, cmd_fnc in self._str_cmd_exec.items():
-                if li.startswith(str_cmd):
-                    self._cmd = str_cmd
-                    self._parameter = [li[len(str_cmd):]]
-                    ret = cmd_fnc()
-                    self._cmd = b''
-                    self._send_output(ret, env_vars=False)
-                    self._last_line = b''
-                    self._new_last_line = b''
-                    return ret
+                ret += self.get_ts_prompt()
         return ret
 
     def _decode_param(self, defaults=None):
@@ -635,7 +647,7 @@ class DefaultCLI(object):
         ret = ''
         for el in self._parameter:
             ret += el.decode(self._encoding[0], self._encoding[1]) + ' '
-        self._skip_prompt = True
+        self.skip_prompt = True
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
@@ -1445,7 +1457,7 @@ class DefaultCLI(object):
                    f"{self._getTabStr_CLI('cli_no_user_db_ent')}" \
                    "\r"
 
-    def _cmd_set_name(self):
+    def cmd_set_name(self):
         if not self._parameter:
             if self._user_db_ent:
                 return f" #\r Name: {self._user_db_ent.Name}\r"
@@ -1464,7 +1476,7 @@ class DefaultCLI(object):
         logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
-    def _cmd_set_qth(self):
+    def cmd_set_qth(self):
         if not self._parameter:
             if self._user_db_ent:
                 return f"\r # QTH: {self._user_db_ent.QTH}\r"
@@ -1483,7 +1495,7 @@ class DefaultCLI(object):
         logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
         return "\r # USER-DB Error !\r"
 
-    def _cmd_set_loc(self):
+    def cmd_set_loc(self):
         if not self._parameter:
             if self._user_db_ent:
                 if self._user_db_ent.Distance:
@@ -1900,57 +1912,17 @@ class DefaultCLI(object):
         return self._getTabStr_CLI('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
 
     def _cmd_conv(self):
-        self._skip_prompt = True
+        self.skip_prompt = True
         self._connection.enter_converse_cli()
+
     # RTT CMD
     def _cmd_rtt(self):
+        """ Response executed in self._StrCommands """
         rtt_timer = str(datetime.now().strftime('%H:%M:%S.%f'))
-        self._skip_prompt = True
-        self._rtt_active  = True
+        self.skip_prompt = True
+        self.rtt_active  = True
 
         return f"//E #RTT#{rtt_timer[:-3]}\r"
-
-    def _str_cmd_recv_rtt(self):
-        self._skip_prompt = False
-        if not self._rtt_active:
-            return ''
-        self._rtt_active = False
-        try:
-            timer_val   = self._parameter[0].decode(self._encoding[0], 'ignore')
-            dt_sent = datetime.strptime(timer_val + "000", '%H:%M:%S.%f')
-            dt_recv = datetime.now()
-
-            dt_sent_same_day = datetime.combine(dt_recv.date(), dt_sent.time())
-            dt_recv_same_day = dt_recv
-            # 4. Tagesüberlauf prüfen: wenn empfangen < gesendet → +1 Tag
-            if dt_recv_same_day < dt_sent_same_day:
-                dt_recv_same_day += timedelta(days=1)
-
-            # 5. Differenz berechnen
-            time_d = dt_recv_same_day - dt_sent_same_day
-            total_seconds = time_d.total_seconds()
-            # 6. In MM:SS.mmm umwandeln
-            minutes = int(total_seconds // 60)
-            seconds = int(total_seconds % 60)
-            milliseconds = int((total_seconds - int(total_seconds)) * 1000)
-
-            str_to_snd = '\r'
-            str_to_snd += self._getTabStr_CLI('cmd_rtt_1')
-            if minutes:
-                str_to_snd += f"{minutes:02d} {self._getTabStr_CLI('minutes')} - "
-
-            str_to_snd += f"{seconds:02d}.{milliseconds:01d} {self._getTabStr_CLI('seconds')}"
-            self._skip_prompt = False
-            str_to_snd += '\r\r'
-            if self.service_cli:
-                return str_to_snd + self._get_ts_prompt()
-            return str_to_snd
-
-        except Exception as ex:
-            logger.warning(f"RTT parse error: {ex}")
-            if self.service_cli:
-                return ' # Error\r\r' + self._get_ts_prompt()
-            return ' # Error\r\r'
 
     # PoPT Remote Monitor
     """
@@ -1960,55 +1932,6 @@ class DefaultCLI(object):
         remote_monitor_conf['mon_port'] = 0
         self._connection.set_remote_mon(remote_monitor_conf)
     """
-
-    ##############################################
-    def _str_cmd_req_name(self):
-        stat_cfg: dict = self._connection.get_stat_cfg
-        name = stat_cfg.get('stat_parm_Name', '')
-        qth = POPT_CFG.get_guiCFG_qth()
-        # qth = self._connection.stat_cfg.stat_parm_QTH
-        loc = POPT_CFG.get_guiCFG_locator()
-        # loc = self._connection.stat_cfg.stat_parm_LOC
-        if name:
-            name = f'\r#NAM# {name}\r'
-        if qth:
-            qth = f'\r#QTH# {qth}\r'
-        if loc:
-            if hasattr(self.stat_identifier, 'software'):
-                if 'PoPT' == self.stat_identifier.software:
-                    loc = f'\r#LOC# {loc}\r'
-            else:
-                try:
-                    loc = f'\r#LOC# {loc[:6]}\r'
-                except IndexError:
-                    loc = ''
-        tmp = self._parameter[0]
-        cmd_dict = {
-            b'+++#': name + qth + loc,
-            b'++-#': name + qth,
-            b'+--#': name,
-            b'+-+#': name + loc,
-            b'--+#': loc,
-            b'-++#': qth + loc,
-        }
-        req_name = '-'
-        req_qth = '-'
-        req_loc = '-'
-        if self._user_db_ent:
-            if not self._user_db_ent.Name:
-                req_name = '+'
-            if not self._user_db_ent.QTH:
-                req_qth = '+'
-            if not self._user_db_ent.LOC:
-                req_loc = '+'
-        req_str = req_name + req_qth + req_loc
-        if '+' in req_str:
-            req_str = '\r#REQUESTNAME:' + req_str + '#\r'
-        else:
-            req_str = ''
-        if tmp in cmd_dict.keys():
-            return cmd_dict[tmp] + req_str
-        return ''
 
     ##############################################
     def cli_exec(self, inp=b''):
@@ -2045,7 +1968,7 @@ class DefaultCLI(object):
         ret += self._c_text
         #ret += self._aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
-            ret += self._get_ts_prompt()
+            ret += self.get_ts_prompt()
         self._send_output(ret, env_vars=True)
         return ''
 
@@ -2064,14 +1987,19 @@ class DefaultCLI(object):
         """
         ########################
         # Check String Commands
-        if self._exec_str_cmd():
-            self._last_line = self._new_last_line   # TODO Cleanup this VAR mess
+        str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
+        if str_cmd_ret:
+            self._send_output(str_cmd_ret, env_vars=False)
+            self._last_line    = b''
+            self.new_last_line = b''
             return ''
+        ########################
+        # Check Abort Cmd
         if self._check_abort_cmd():
             return ''
         self._input = self._raw_input               # TODO Cleanup this VAR mess
         self._send_output(self._exec_cmd(), self._env_var_cmd)
-        self._last_line = self._new_last_line       # TODO Cleanup this VAR mess
+        self._last_line = self.new_last_line       # TODO Cleanup this VAR mess
         return ''
 
     def _s2(self):
@@ -2122,7 +2050,7 @@ class DefaultCLI(object):
             # print(f'CLI LinkDisco : {self._connection.uid}')
             self._connection.link_disco()
         self.change_cli_state(1)
-        return self._get_ts_prompt()
+        return self.get_ts_prompt()
 
     @staticmethod
     def _s5():
@@ -2214,7 +2142,7 @@ class DefaultCLI(object):
                 self._last_line = b''
                 self._input = self._raw_input
                 self._send_output(self._exec_cmd(), env_vars=False)
-                self._last_line = self._new_last_line
+                self._last_line = self.new_last_line
                 return
 
     ########################################################
@@ -2230,35 +2158,3 @@ class DefaultCLI(object):
             if self._connection.l3_state_id not in [0, 1, 4]:
                 self._connection.change_l3_state(4)
 
-class NoneCLI(DefaultCLI):
-    """ ? To Disable CLI / Remote ? """
-    cli_name = CLI_TYP_NO_CLI  # DON'T CHANGE !
-    service_cli = False
-    # _c_text = ''
-    # bye_text = ''
-    prefix = b''
-    can_sidestop = False
-    new_aprs_msg_noty = False
-
-    def init(self):
-        self._commands_cfg = []
-
-    def cli_exec(self, inp=b''):
-
-        self._raw_input += bytes(inp)
-        #if self.stat_identifier is None:
-        #    self._raw_input += bytes(inp)
-        return self._software_identifier()
-
-
-    def _exec_cmd(self):
-        return ''
-
-    def cli_cron(self):
-        pass
-
-    def _baycom_auto_login(self):
-        return False
-
-    def cli_update_monitor(self, ax25frame_conf: dict):
-        pass

@@ -1,6 +1,6 @@
 from cli.LocalConverse import LocalConverse
 from cfg.constant import CLI_TYP_SYSOP, CLI_TYP_CONVERSE
-from cli.cliMain import DefaultCLI
+from cli.cli_main.cliMain import DefaultCLI
 from fnc.str_fnc import get_time_delta
 
 

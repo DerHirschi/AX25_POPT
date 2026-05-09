@@ -6,7 +6,7 @@ from bbs.bbs_fnc import generate_sid
 from cfg.constant import BBS_SW_ID, NO_REMOTE_STATION_TYPE, LANG_IND, CLI_TYP_BOX
 from cfg.logger_config import logger, BBS_LOG
 from cli.StringVARS import replace_StringVARS
-from cli.cliMain import DefaultCLI
+from cli.cli_main.cliMain import DefaultCLI
 from cli.cliStationIdent import get_station_id_obj
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.str_fnc import zeilenumbruch, find_eol
@@ -111,7 +111,7 @@ class BoxCLI(DefaultCLI):
 
             # == Senden
             ret = bbs_id_flag + '\r'
-            self._send_output(ret + self._get_ts_prompt(), env_vars=True)
+            self._send_output(ret + self.get_ts_prompt(), env_vars=True)
             return ''
 
         ret += self._c_text
@@ -149,7 +149,7 @@ class BoxCLI(DefaultCLI):
 
         if not self._user_db_ent.PRmail:
             ret += self._getTabStr_CLI('box_no_hbbs_address')
-        self._send_output(ret + self._get_ts_prompt(), env_vars=True)
+        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
 
         return ''
 
@@ -186,12 +186,17 @@ class BoxCLI(DefaultCLI):
                 return ''
         ########################
         # Check String Commands
-        if not self._exec_str_cmd():
-            if self._check_abort_cmd():
-                return ''
-            self._input = self._raw_input
-            self._send_output(self._exec_cmd(), self._env_var_cmd)
-        self._last_line = self._new_last_line
+        str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
+        if str_cmd_ret:
+            self._send_output(str_cmd_ret, env_vars=False)
+            self._last_line     = b''
+            self.new_last_line  = b''
+            return ''
+        if self._check_abort_cmd():
+            return ''
+        self._input = self._raw_input
+        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self._last_line = self.new_last_line
         return ''
 
     def _s2(self):
@@ -210,7 +215,7 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr_CLI('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self._get_ts_prompt()), env_vars=False)
+                self._send_output(self._getTabStr_CLI('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self.get_ts_prompt()), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])
@@ -265,7 +270,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self._get_ts_prompt(), env_vars=False)
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
@@ -275,7 +280,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self._get_ts_prompt(), env_vars=False)
+                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return
             bid, fwd_bbs_list = ret
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
@@ -295,7 +300,7 @@ class BoxCLI(DefaultCLI):
                     len(self._out_msg.get('msg', b''))
                 )
 
-            ret_text += self._get_ts_prompt()
+            ret_text += self.get_ts_prompt()
             self._send_output(ret_text, env_vars=False)
 
             self._out_msg = GET_MSG_STRUC()
@@ -406,7 +411,7 @@ class BoxCLI(DefaultCLI):
                                                                           self._user_db_ent.QTH,
                                                                           self._user_db_ent.LOC,
                                                                           )
-                    ret += self._get_ts_prompt()
+                    ret += self.get_ts_prompt()
                     self._send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
@@ -434,7 +439,7 @@ class BoxCLI(DefaultCLI):
                         new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                         if new_mail:
                             ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
-                        ret += self._get_ts_prompt()
+                        ret += self.get_ts_prompt()
                         self._send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
@@ -475,7 +480,7 @@ class BoxCLI(DefaultCLI):
                 new_mail = self._bbs.get_new_pn_count_by_call(self._to_call)
                 if new_mail:
                     ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
-                ret += self._get_ts_prompt()
+                ret += self.get_ts_prompt()
                 self._send_output(ret, env_vars=True)
                 self._s9_state = 10
                 self.can_sidestop = True
@@ -1128,7 +1133,7 @@ class BoxCLI(DefaultCLI):
         return ret
     ########################################################################
 
-    def _get_ts_prompt(self):
+    def get_ts_prompt(self):
         return f"\r({datetime.now().strftime('%H:%M:%S')}) {self._my_call_str}>\r"
 
     ########################################################################

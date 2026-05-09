@@ -1,6 +1,6 @@
 from cfg.constant import CLI_TYP_MCAST
 from cfg.logger_config import logger
-from cli.cliMain import DefaultCLI
+from cli.cli_main.cliMain import DefaultCLI
 from fnc.socket_fnc import get_ip_by_hostname
 
 
@@ -71,7 +71,7 @@ class MCastCLI(DefaultCLI):
         out += self._c_text
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
-        out += self._get_ts_prompt()
+        out += self.get_ts_prompt()
         self._send_output(out, env_vars=True)
         return ''
 
@@ -79,10 +79,17 @@ class MCastCLI(DefaultCLI):
         self._software_identifier()
         ########################
         # Check String Commands
-        if not self._exec_str_cmd():
-            self._input = self._raw_input
-            self._send_output(self._exec_cmd(), self._env_var_cmd)
-        self._last_line = self._new_last_line
+        str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
+        if str_cmd_ret:
+            self._send_output(str_cmd_ret, env_vars=False)
+            self._last_line    = b''
+            self.new_last_line = b''
+            return ''
+        if self._check_abort_cmd():
+            return ''
+        self._input = self._raw_input
+        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self._last_line = self.new_last_line
         return ''
 
     #############################################################

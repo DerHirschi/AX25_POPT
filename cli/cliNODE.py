@@ -1,5 +1,5 @@
 from cfg.constant import CLI_TYP_NODE
-from cli.cliMain import DefaultCLI
+from cli.cli_main.cliMain import DefaultCLI
 
 
 class NodeCLI(DefaultCLI):

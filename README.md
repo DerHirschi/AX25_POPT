@@ -113,6 +113,8 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
   - Private Message System
   - APRS Monitor
   - APRS Decoder for Monitor
+  - I-Gate
+  - Digipeater
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
 - MultiPort TNC via KISS
 - RX-Echo (Packet echoing to another Port/Device)

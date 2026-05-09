@@ -10,8 +10,7 @@ from ax25.ax25_l3.ax25RTT import RTT
 from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
 from classes.CLbuffers import ByteArrayBuffer
 from cli.cliConv import ConverseCLI
-from cli.cliMain import NoneCLI
-from cli import CLI_OPT
+from cli import CLI_OPT, NoneCLI
 from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
 from UserDB.UserDBmain import USER_DB
 from ax25.ax25_l2.ax25dec_enc import AX25Frame
