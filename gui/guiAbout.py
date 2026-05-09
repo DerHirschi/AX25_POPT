@@ -94,8 +94,9 @@ class About(tk.Toplevel):
 
         thanks_text = (
             "• ClaudeMa (GitHub) — Französische Übersetzung\n"
-            "• NL1NOD (CB-Call)  — Niederländische Übersetzung & intensives Testen\n"
-            "• CT1DRB (HAM-Call) — Testen & Unterstützung"
+            "• NL1NOD (CB-Call)  — Niederländische Übersetzung, Testen & Unterstützung\n"
+            "• CT1DRB (HAM-Call) — Testen & Unterstützung\n"
+            "• CB7ALM (CB-Call)  — Testen & Unterstützung"
         )
 
         ttk.Label(thanks_frame, text=thanks_text,
