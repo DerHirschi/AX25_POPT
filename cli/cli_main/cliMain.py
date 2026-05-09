@@ -1,5 +1,4 @@
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
@@ -7,13 +6,14 @@ from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
 from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
     CLI_TYP_SYSOP, CLI_TYP_NO_CLI
+from cli.cli_commands.cli_cmd_myHeard import CliCmdMyHeard
+from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
 from cli.cli_const import CLI_DEF_CMD_BASIC
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
-from fnc.ascii_graph import generate_ascii_graph
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_macos, is_linux, is_windows
 from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    convert_str_to_datetime, zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
+    zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -95,41 +95,50 @@ class DefaultCLI(object):
             0:   self._cron_s0,     # No CMDs / Do nothing
             100: self._cron_s_quit  # QUIT
         }
+        # ============================================
+        # Command sets Init
+        self._statistics_cmds = CliCmdStatistics(self)
+        self._my_heard_cmds   = CliCmdMyHeard(self)
+
         # Standard Commands ( GLOBAL )
         self._command_set = {
             # CMD: (needed lookup len(cmd), cmd_fnc, Help-Str, Str-Vars)
-            'QUIT':     (1, self._cmd_q,                    'Quit',             True),
-            'BYE':      (1, self._cmd_q,                    'Bye',              True),
-            'ECHO':     (1, self._cmd_echo,                 'Echo',             False),
+            'QUIT':     (1, self._cmd_q,                        'Quit',              True),
+            'BYE':      (1, self._cmd_q,                        'Bye',               True),
+            'ECHO':     (1, self._cmd_echo,                     'Echo',              False),
             # NODE Stuff
-            'CONNECT':  (1, self._cmd_connect,              'Connect',           False),
-            'C!':       (2, self._cmd_connect_exclusive,    'Connect Exclusive (No MH-Path-Lookup)', False),
-            'PORT':     (1, self._cmd_port,                 'Ports',             False),
-            'PSTAT':    (2, self._cmd_pstat,                f"Port {self._getTabStr_CLI('statistic')}", False),
-            'BWSTAT':   (2, self._cmd_bwstat,               self._getTabStr_CLI('cmd_help_bwstat'), False),
-            'MH':       (0, self._cmd_mh,                   'MYHeard List',      False),
-            'LMH':      (0, self._cmd_mhl,                  'Long MYHeard List', False),
-            'AXIP':     (2, self._cmd_axip,                 'AXIP-MH List',      False),
-            'DXLIST':   (2, self._cmd_dxlist,               'DX/Tracer Alarm List', False),
-            'LCSTATUS': (2, self._cmd_lcstatus,             self._getTabStr_CLI('cmd_help_lcstatus'), False),
-            'CSTAT':    (2, self._cmd_cstats,               self._getTabStr_CLI('cmd_help_cstat'), False),
-            'CHIST':    (3, self._cmd_chist,                self._getTabStr_CLI('cmd_help_chist'), False),
-            'CH':       (2, self._cmd_ch,                   self._getTabStr_CLI('cmd_help_ch'), False),
-            'RTT':      (2, self._cmd_rtt,                  self._getTabStr_CLI('cmd_help_rtt'), False),
+            'CONNECT':  (1, self._cmd_connect,                  'Connect',           False),
+            'C!':       (2, self._cmd_connect_exclusive,        'Connect Exclusive (No MH-Path-Lookup)', False),
+            'PORT':     (1, self._cmd_port,                     'Ports',                                 False),
+            # Statistics
+            'PSTAT':    (2, self._statistics_cmds.cmd_pstat,    f"Port {self._getTabStr_CLI('statistic')}", False),
+            'BWSTAT':   (2, self._statistics_cmds.cmd_bwstat,   self._getTabStr_CLI('cmd_help_bwstat'),     False),
+            'CSTAT':    (2, self._statistics_cmds.cmd_cstats,   self._getTabStr_CLI('cmd_help_cstat'),      False),
+            'WX':       (0, self._statistics_cmds.cmd_wx,       self._getTabStr_CLI('cmd_help_wx'),         False),
+            # MH
+            'MH':       (0, self._my_heard_cmds.cmd_mh,         'MYHeard List',                         False),
+            'LMH':      (0, self._my_heard_cmds.cmd_mhl,        'Long MYHeard List',                    False),
+            'AXIP':     (2, self._my_heard_cmds.cmd_axip,       'AXIP-MH List',                         False),
+            'DXLIST':   (2, self._my_heard_cmds.cmd_dxlist,     'DX/Tracer Alarm List',                 False),
+            'CHIST':    (3, self._my_heard_cmds.cmd_chist,      self._getTabStr_CLI('cmd_help_chist'),  False),
+
+            #
+            'LCSTATUS': (2, self._cmd_lcstatus,                 self._getTabStr_CLI('cmd_help_lcstatus'),   False),
+            'CH':       (2, self._cmd_ch,                       self._getTabStr_CLI('cmd_help_ch'),         False),
+            'RTT':      (2, self._cmd_rtt,                      self._getTabStr_CLI('cmd_help_rtt'),        False),
             # Remote Monitor
             # 'PREMON':   (2, self._cmd_set_gui_remote_mon,   "PoPT Remote Monitor", False),
 
             # APRS Stuff
-            #'ACHAT':    (2, self.,                          'APRS-Messenger', False),
-            'ATR':      (2, self._cmd_aprs_trace,           'APRS-Tracer', False),
-            'WX':       (0, self._cmd_wx, self._getTabStr_CLI('cmd_help_wx'), False),
+            #'ACHAT':    (2, self.,                             'APRS-Messenger',                       False),
+            'ATR':      (2, self._cmd_aprs_trace,               'APRS-Tracer',                          False),
             # User/Station Info
-            'BELL':     (2, self._cmd_bell, self._getTabStr_CLI('cmd_help_bell'), False),
-            'INFO':     (1, self._cmd_i,                    'Info', True),
-            'LINFO':    (2, self._cmd_li,                   'Long Info', True),
-            'NEWS':     (2, self._cmd_news,                 'NEWS', True),
+            'BELL':     (2, self._cmd_bell,                     self._getTabStr_CLI('cmd_help_bell'),   False),
+            'INFO':     (1, self._cmd_i,                        'Info',                                 True),
+            'LINFO':    (2, self._cmd_li,                       'Long Info',                            True),
+            'NEWS':     (2, self._cmd_news,                     'NEWS',                                 True),
             # USER DB
-            'USER':     (2, self._cmd_user_db_detail, self._getTabStr_CLI('cmd_help_user_db'), False),
+            'USER':     (2, self._cmd_user_db_detail, self._getTabStr_CLI('cmd_help_user_db'),          False),
             'NAME':     (1, self.cmd_set_name, self._getTabStr_CLI('cmd_help_set_name'), False),
             'QTH':      (3, self.cmd_set_qth, self._getTabStr_CLI('cmd_help_set_qth'), False),
             'LOC':      (3, self.cmd_set_loc, self._getTabStr_CLI('cmd_help_set_loc'), False),
@@ -668,643 +677,6 @@ class DefaultCLI(object):
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
         return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
 
-    def _cmd_dxlist(self):
-        parm = 10
-        if self._parameter:
-            try:
-                parm = int(self._parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_alarm_out_cli(max_ent=parm)
-
-        return ret + '\r'
-
-    def _get_alarm_out_cli(self, max_ent=10):
-        alarm_his = dict(self._port_handler.get_MH().dx_alarm_perma_hist)
-        alarm_his.update(dict(self._port_handler.get_aprs_ais().get_be_tracer_alarm_hist()))
-        if not alarm_his:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        out = '\r'
-        out += "-----Time-Port---Call------via-------LOC------Dist(km)--Type---\r"
-        max_c = 0
-        key_list = list(alarm_his.keys())
-        key_list.sort(reverse=True)
-        for _k in key_list:
-            max_c += 1
-            if max_c > max_ent:
-                break
-            time_delta_str = get_timedelta_CLIstr(alarm_his[_k]['ts'])
-            via = alarm_his[_k]['via']
-            loc = alarm_his[_k]['loc']
-            dis = str(alarm_his[_k]['dist'])
-            typ = alarm_his[_k]['typ']
-            port = str(alarm_his[_k]['port_id'])
-            call = alarm_his[_k]['call_str']
-
-            out += f' {time_delta_str} {port:6} {call:10}{via:10}{loc:9}{dis:10}{typ}\r'
-
-        return out
-
-    def _cmd_axip(self):
-        parm = 10
-        if self._parameter:
-            try:
-                parm = int(self._parameter[0])
-            except ValueError:
-                pass
-        ret = self._get_axip_out_cli(max_ent=parm)
-
-        return ret + '\r'
-
-    def _get_axip_out_cli(self, max_ent=10):
-        ent = self._port_handler.get_MH().get_sort_mh_entry('last', reverse=False)
-        dbl_ent = []
-        if not ent:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        max_c = 0
-        out = '\r'
-        # out += '\r                       < AXIP - Clients >\r\r'
-        out += '-Call------IP:Port---------------------------Last------------\r'
-        for k in ent.keys():
-            if ent[k].own_call not in dbl_ent:
-                dbl_ent.append(ent[k].own_call)
-                axip_add = self._port_handler.get_MH().get_AXIP_fm_DB_MH(ent[k].own_call)
-                if axip_add[0]:
-                    max_c += 1
-                    if max_c > max_ent:
-                        break
-                    out += ' {:9} {:33} {:8}\r'.format(
-                        ent[k].own_call,
-                        axip_add[0] + ':' + str(axip_add[1]),
-                        get_timedelta_CLIstr(ent[k].last_seen, r_just=False)
-                    )
-        return out
-
-    def _cmd_mh(self):
-        last_port_id = len(self._port_handler.get_all_port_ids())
-        if last_port_id > 20:
-            max_ent = int(last_port_id)
-        else:
-            max_ent = 20
-        self._decode_param(defaults=[
-            max_ent,  # Entry's
-            -1,  # Port
-        ])
-
-        parm = self._parameter[0]
-        if parm < last_port_id:
-            port = self._parameter[0]
-            if self._parameter[1] == -1:
-                parm = 20
-            else:
-                parm = self._parameter[1]
-        else:
-            port = self._parameter[1]
-        ret = self._get_mh_out_cli(max_ent=parm, port_id=port)
-        return ret + '\r'
-
-    def _get_mh_out_cli(self, max_ent=20, port_id=-1):
-        sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
-        if not sort_list:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        out = ''
-        c = 0
-        max_c = 0
-
-        for call in list(sort_list.keys()):
-            if port_id == -1 or port_id == sort_list[call].port_id:
-                max_c += 1
-                if max_c > max_ent:
-                    break
-                time_delta_str = get_timedelta_CLIstr(sort_list[call].last_seen)
-                call_str = sort_list[call].own_call
-                if sort_list[call].route:
-                    call_str += '*'
-                out += f'{time_delta_str} P:{sort_list[call].port_id:2} {call_str:10}'.ljust(27, " ")
-
-                c += 1
-                if c == 2:  # Breite
-                    c = 0
-                    out += '\r'
-        if not out:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        return '\r' + out
-
-    def _cmd_mhl(self):
-        last_port_id = len(self._port_handler.get_all_port_ids())
-        if last_port_id > 10:
-            max_ent = int(last_port_id)
-        else:
-            max_ent = 10
-        self._decode_param(defaults=[
-            max_ent,  # Entry's
-            -1,  # Port
-        ])
-
-        parm = self._parameter[0]
-        if parm < last_port_id:
-            port = self._parameter[0]
-            if self._parameter[1] == -1:
-                parm = 10
-            else:
-                parm = self._parameter[1]
-        else:
-            port = self._parameter[1]
-
-        ret = self._get_mh_long_out_cli(max_ent=parm, port_id=port)
-
-        return ret + '\r'
-
-    def _get_mh_long_out_cli(self, max_ent=10, port_id=-1):
-        sort_list = self._port_handler.get_MH().get_sort_mh_entry('last', False)
-        if not sort_list:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        out = ''
-        max_c = 0
-        """
-        tp = 0
-        tb = 0
-        rj = 0
-        """
-
-        for call in list(sort_list.keys()):
-            if port_id == -1 or port_id == sort_list[call].port_id:
-                max_c += 1
-                if max_c > max_ent:
-                    break
-                time_delta_str = get_timedelta_CLIstr(sort_list[call].last_seen)
-                via = sort_list[call].route
-                if via:
-                    via = via[-1]
-                else:
-                    via = ''
-                loc = ''
-                dis = ''
-                typ = ''
-                userdb_ent = USER_DB.get_entry(sort_list[call].own_call, add_new=False)
-                if userdb_ent:
-                    loc = userdb_ent.LOC
-                    if userdb_ent.Distance:
-                        dis = str(userdb_ent.Distance)
-                    typ = userdb_ent.TYP
-
-                out += (f' {time_delta_str:9}{str(sort_list[call].port_id).ljust(5)}{sort_list[call].own_call:10}'
-                        f'{via:10}{loc:9}{dis:10}{typ:7}{sort_list[call].pac_n}')
-
-                out += '\r'
-        if not out:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r'
-        return "\r-----Time-Port-Call------via-------LOC------Dist(km)--Type---Packets\r" + out
-
-    def _cmd_pstat(self):
-        """ Port Statistiken (wie WX) """
-        mh = self._port_handler.get_MH()
-        if not mh:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
-
-        parm = 168  # Standard: letzte 168 Stunden (7 Tage)
-        self._decode_param()
-        if self._parameter:
-            try:
-                parm = int(self._parameter[0])
-                if parm < 1:
-                    parm = 1
-                if parm > 168:  # max 7 Tage
-                    parm = 168
-            except ValueError:
-                pass
-
-        ret = self._get_pstat_cli_out(hours=parm)
-        return ret + '\r'
-
-    def _get_pstat_cli_out(self, hours=168):
-        mh = self._port_handler.get_MH()
-        if not mh:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
-
-        port_cfg = dict(POPT_CFG.get_port_CFGs())
-        now = datetime.now()
-        start_time = now - timedelta(hours=hours)
-
-        # EXAKTE INDIzes aus deinem Plot-Script (getestet & 100% korrekt!)
-        TIME_IDX        = 1  # timestamt_dt
-        N_PACK_IDX      = 3  # Gesamt-Pakete
-        N_I_IDX         = 15  # I-Frames (Anzahl)
-        N_UI_IDX        = 24  # UI-Frames (Anzahl)
-        DATA_DOWN_IDX   = 27  # Payload ↓ (Bytes)
-        DATA_UP_IDX     = 26  # Total ↑ (mit Header) → DATA_UP = Total - Payload
-        N_REJ_IDX       = 19  # REJ
-
-        # Header
-        out = '\r'
-        out += f" Port-{self._getTabStr_CLI('statistic')} – {hours} {self._getTabStr_CLI('hours')}\r"
-        out += "─" * 79 + "\r"
-        out += "Port    Packets  I-Frames  UI       Bytes RX  Bytes TX  REJ  Bandwidth(10m Avg)\r"
-        out += "------- -------  --------  -------  --------  --------  ---  ------------------\r"
-        total_pac = total_i = total_ui = total_data_down = total_data_up = total_rej = 0
-        port_data_raw = {}  # für Graphen später speichern!
-
-        for port_id in self._port_handler.port_manager.ax25_ports.keys():
-            port = self._port_handler.port_manager.ax25_ports[port_id]
-            port_name = str(port.portname)[:4].ljust(4)
-
-            raw_data = mh.PortStat_get_data_by_port(port_id)
-            if not raw_data:
-                continue
-
-            port_data_raw[port_id] = raw_data  # speichern für Graph!
-            pac = i = ui = data_down = data_up = rej = 0
-
-            for row in raw_data:
-                try:
-                    ts_str = row[TIME_IDX]
-                    ts = convert_str_to_datetime(ts_str)
-                    if ts < start_time:
-                        continue
-
-                    pac       += row[N_PACK_IDX]
-                    i         += row[N_I_IDX]
-                    ui        += row[N_UI_IDX]
-                    data_down += row[DATA_DOWN_IDX]
-                    data_up   += row[DATA_UP_IDX] - row[DATA_DOWN_IDX]
-                    rej       += row[N_REJ_IDX]
-
-                except (IndexError, ValueError, TypeError) as e:
-                    logger.debug(f"PSTAT IndexError bei Port {port_id}: {e} | row: {row}")
-                    continue
-
-            total_pac       += pac
-            total_i         += i
-            total_ui        += ui
-            total_data_down += data_down
-            total_data_up   += data_up
-            total_rej       += rej
-
-            # Bandwidth (letzte 6 Samples = 1 Minute → 10s Avg)
-            bw_data = mh.get_bandwidth(port_id, baud=port_cfg.get(port_id, {}).get('parm_baud', 1200))
-            bw_avg = sum(bw_data) / len(bw_data) if bw_data else 0.0
-            bw_str = f"{bw_avg:5.1f}%"
-
-            out += (f"{port_id:2} {port_name} "
-                    f"{pac:7}  {i:8}  {ui:7}  "
-                    f" {data_down // 1024:6}k  "
-                    f" {data_up // 1024:6}k  "
-                    f"{rej:3}  {bw_str}\r")
-
-        # Gesamtzeile
-        out += "------- -------  --------  -------  --------  --------  ---  ------------------\r"
-        out += (f"        {total_pac:7}  {total_i:8}  {total_ui:7}  "
-                f" {total_data_down // 1024:6}k  "
-                f" {total_data_up // 1024:6}k  "
-                f"{total_rej:3}  Total\r")
-
-        # Bandbreiten-Graph (immer, auch bei >24h)
-        #out += '\r' + self._get_port_bw_cli_out()
-        # ============================
-        # 2. BALKEN-DIAGRAMME (NEU!)
-        # ============================
-        out += "\r\r" + "═" * 79 + "\r"
-        out += f" {self._getTabStr_CLI('history')} (Bytes) – {hours} {self._getTabStr_CLI('hours')}\r"
-        out += "═" * 79 + "\r\r"
-
-        # --- Gesamt über alle Ports ---
-        total_per_minute = defaultdict(int)
-        for port_id, raw_data in port_data_raw.items():
-            for row in raw_data:
-                try:
-                    ts_str = row[1]
-                    ts = convert_str_to_datetime(ts_str)
-                    if ts < start_time:
-                        continue
-                    minute_key = ts.strftime("%Y-%m-%d %H:%M")
-                    total_per_minute[minute_key] += row[DATA_UP_IDX]  # DATA_W_HEADER
-                except Exception as ex:
-                    logger.warning(ex)
-                    continue
-
-        if total_per_minute:
-            sorted_minutes = sorted(total_per_minute.items())
-            #dates = [t[0].split(" ")[0] for t in sorted_minutes]
-            #values = [t[1] for t in sorted_minutes]
-
-            # Auf Stunden reduzieren (für Lesbarkeit)
-            hourly = defaultdict(int)
-            hourly_count = defaultdict(int)
-            for (ts_str, bytes_val) in sorted_minutes:
-                hour_key = ts_str[:13] + ":00"
-                hourly[hour_key] += bytes_val
-                hourly_count[hour_key] += 1
-
-            graph_data = []
-            labels = []
-            for hk in sorted(hourly.keys()):
-                avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
-                graph_data.append({"total": avg_bytes})
-                labels.append(hk[11:13] + "h")
-
-            graph = generate_ascii_graph(
-                graph_data,
-                f"{self._getTabStr_CLI('history')} (Bytes) (all Ports) – {hours}h",
-                datasets={'total': '█'},
-                chart_type='bar',
-                graph_height=10,
-                graph_width=min(len(graph_data), 78),
-                bar_mode=True,
-                expand=True
-            )
-            out += graph + "\r\r"
-
-        # --- Einzelne Ports ---
-        for port_id in sorted(port_data_raw.keys()):
-            per_minute = defaultdict(int)
-            raw_data = port_data_raw[port_id]
-
-            for row in raw_data:
-                try:
-                    ts_str = row[1]
-                    ts = convert_str_to_datetime(ts_str)
-                    if ts < start_time:
-                        continue
-                    minute_key = ts.strftime("%Y-%m-%d %H:%M")
-                    per_minute[minute_key] += row[DATA_UP_IDX]
-                except Exception as ex:
-                    logger.debug(ex)
-                    continue
-
-            if not per_minute:
-                continue
-
-            sorted_minutes = sorted(per_minute.items())
-            hourly = defaultdict(int)
-            hourly_count = defaultdict(int)
-            for (ts_str, bytes_val) in sorted_minutes:
-                hour_key = ts_str[:13] + ":00"
-                hourly[hour_key] += bytes_val
-                hourly_count[hour_key] += 1
-
-            graph_data = []
-            for hk in sorted(hourly.keys()):
-                avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
-                graph_data.append({f"P{port_id}": avg_bytes})
-
-            port_name = self._port_handler.port_manager.ax25_ports[port_id].portname
-            graph = generate_ascii_graph(
-                graph_data,
-                f"Port {port_id} – {port_name} – Bytes/min – {hours}h",
-                datasets={f"P{port_id}": '█'},
-                chart_type='bar',
-                graph_height=8,
-                graph_width=min(len(graph_data), 78),
-                bar_mode=True,
-                expand=True
-            )
-            out += graph + "\r\r"
-
-        return out + '\r\r'
-
-    def _cmd_bwstat(self):
-        mh = self._port_handler.get_MH()
-        if not mh:
-            return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
-
-        out = f"\r {self._getTabStr_CLI('cmd_bwstat_1')}\r"
-        total_bw = []
-        port_bw  = {}
-        port_cfg = dict(POPT_CFG.get_port_CFGs())
-        port_ids = list(port_cfg.keys())
-
-        # KORREKTUR: port_bw richtig befüllen
-        for k in port_ids:
-            bw_list = mh.get_bandwidth(k, baud=port_cfg.get(k, {}).get('parm_baud', 1200))
-            port_bw[k] = bw_list[-60:]  # letzten 10 Minuten
-
-        # Gesamtbandbreite
-        for i in range(60):
-            bw_sum = 0
-            count = 0
-            for p in port_ids:
-                if p in port_bw and i < len(port_bw[p]):
-                    bw_sum += port_bw[p][-(i+1)]
-                    count += 1
-            total_bw.append(bw_sum / count if count else 0)
-
-        graph = generate_ascii_graph(
-            [{'total': v} for v in reversed(total_bw[-60:])],
-            self._getTabStr_CLI('cmd_bwstat_2'),
-            datasets={'total': '█'},
-            chart_type='bar',
-            graph_height=8,
-            graph_width=60,
-            bar_mode=True,
-            expand=False
-        )
-        out += graph
-
-        # Einzelne Ports
-        for k in port_ids:
-            if k not in port_bw or not port_bw[k]:
-                continue
-            if not sum(port_bw[k]):
-                out += f"\r\rPort {k}: {self._getTabStr_CLI('cli_no_data')}"
-                continue
-            out += '\r\r'
-            graph = generate_ascii_graph(
-                [{f'P{k}': v} for v in port_bw[k]],
-                self._getTabStr_CLI('cmd_bwstat_3').format(k),
-                datasets={f'P{k}': '█'},
-                chart_type='bar',
-                graph_height=8,
-                graph_width=60,
-                bar_mode=True,
-                expand=False
-            )
-            out += graph
-
-        return out + '\r\r'
-
-    def _cmd_wx(self):
-        """ WX Stations """
-        aprs_ais = self._port_handler.get_aprs_ais()
-        if aprs_ais is None:
-            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
-        parm = 10
-        ret = ''
-        self._decode_param()
-        if self._parameter:
-            if self._parameter[0].isdigit():
-                try:
-                    parm = int(self._parameter[0])
-                except ValueError:
-                    pass
-                ret = self._get_wx_cli_out(max_ent=parm)
-            else:
-                call = str(self._parameter[0]).upper()
-                if validate_ax25Call(call):
-                    le = parm
-                    if len(self._parameter) == 2:
-                        try:
-                            le = int(self._parameter[1])
-                        except ValueError:
-                            pass
-                    ret = self._get_wx_fm_call_cli_out(call=call, max_ent=le)
-        else:
-            ret = self._get_wx_cli_out(max_ent=parm)
-        if not ret:
-            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
-        return ret + '\r'
-
-    def _get_wx_fm_call_cli_out(self, call, max_ent=10):
-        aprs_ais = self._port_handler.get_aprs_ais()
-        if not hasattr(aprs_ais, 'get_wx_data_f_call'):
-            return f'\r # {self._getTabStr_CLI("cli_no_wx_data")}\r\r'
-        data       = list(aprs_ais.get_wx_data_f_call(call))
-        if not data:
-            return ''
-        data.reverse()
-        data_len = len(data)
-        max_c = 0
-        loc = f'{data[0][12][:6]}({data[0][16]}km)'
-        out = '\r'
-        out += f'WX-Station: {call}\r'
-        out += f'Locator   : {loc}\r'
-        out += f'Comment   : {data[0][11]}\r'
-        out += f'Datapoints: {data_len}\r\r'
-        out += '-----Last-Port--Temp-Press---Hum-Lum-Rain(24h)-WindGust\r'
-        time_range = 72
-        init_time  = data[0][15].split(' ')[-1].split(':')[0]
-        init_dict  = {}
-        if data[0][5]:
-            try:
-                init_dict['temp'] = float(data[0][5])
-            except ValueError:
-                pass
-        if  data[0][0]:
-            try:
-                init_dict['pres'] = float(data[0][0])
-            except ValueError:
-                pass
-        if  data[0][1]:
-            try:
-                init_dict['hum'] = float(data[0][1])
-            except ValueError:
-                pass
-
-        temp_graph_data = [init_dict]
-        for el in data:
-            time_st = el[15].split(' ')[-1].split(':')[0]
-            if  str(time_st) != str(init_time):
-                max_c += 1
-                if max_c <= max_ent:
-                    # td = get_timedelta_CLIstr(el[15].split(' ')[-1])
-                    td = el[15].split(' ')[-1]
-                    # pres = f'{el[0]:.2f}'
-                    pres = f'{el[0]}'
-                    # rain = f'{el[3]:.3f}'
-                    rain = f'{el[3]}'
-                    # out += f'{td.rjust(9):10}{"":6}'
-                    out += f'{td.rjust(9):10}{el[-1]:6}'
-                    out += f'{str(el[5]):5}'
-                    out += f'{pres:7} '
-                    out += f'{el[1]:3} '
-                    out += f'{el[9]:3} '
-                    out += f'{rain:9} '
-                    # out += f'{el[7]:.3f}\r'
-                    out += f'{el[7]}\r'
-
-
-                temp_dict = {}
-                if 'temp' in init_dict:
-                    try:
-                        temp_dict['temp'] = float(el[5])
-                    except ValueError:
-                        pass
-                if 'pres' in init_dict:
-                    try:
-                        temp_dict['pres'] = float(el[0])
-                    except ValueError:
-                        pass
-                if 'hum' in init_dict:
-                    try:
-                        temp_dict['hum'] = float(el[1])
-                    except ValueError:
-                        pass
-                temp_graph_data.append(temp_dict)
-                init_time = time_st
-            if len(temp_graph_data) >= time_range :
-                break
-
-        if 'temp' in init_dict:
-            datasets = {'temp': '+'}
-            temp_graph = generate_ascii_graph(temp_graph_data,
-                                         f"{self._getTabStr_CLI('temperature')}(C) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
-                                              datasets,
-                                              chart_type='line',
-                                              graph_height=12,
-                                              graph_width=time_range,
-                                              expand=True)
-            out += '\r'
-            out += '\r'
-            out += temp_graph
-
-        if 'pres' in init_dict:
-            datasets = {'pres': '+'}
-            press_graph = generate_ascii_graph(temp_graph_data,
-                                              f"{self._getTabStr_CLI('wx_press')}(hPa) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
-                                               datasets,
-                                               chart_type='line',
-                                               graph_height=12,
-                                               graph_width=time_range,
-                                               expand=True)
-            out += '\r'
-            out += '\r'
-            out += press_graph
-
-        if 'hum' in init_dict:
-            datasets = {'hum': '+'}
-            hum_graph = generate_ascii_graph(temp_graph_data,
-                                              f"{self._getTabStr_CLI('wx_hum')}(%) - {call} - {time_range} {self._getTabStr_CLI('hours')}",
-                                             datasets,
-                                             chart_type='line',
-                                             graph_height=12,
-                                             graph_width=time_range,
-                                             expand=True)
-
-            out += '\r'
-            out += '\r'
-            out += hum_graph
-
-        out += '\r'
-        return out
-
-    def _get_wx_cli_out(self, max_ent=10):
-        db = self._port_handler.get_database()
-        if not db:
-            return ''
-
-        # _data = self._port_handler.aprs_ais.get_wx_entry_sort_distance()
-        data = db.aprsWX_get_data_f_CLItree(last_rx_days=3)
-        if not data:
-            return ''
-
-        max_c = 0
-        out = '\r-----Last-Port--Call------LOC-------------Temp-Press---Hum-Lum-Rain(24h)-\r'
-        for el in data:
-            max_c += 1
-            if max_c > max_ent:
-                break
-            # _ent = self._port_handler.aprs_ais.aprs_wx_msg_pool[k][-1]
-            td = get_timedelta_CLIstr(convert_str_to_datetime(el[0]))
-            loc = f'{el[3].upper()[:6]}({int(el[4])}km)'
-            pres = f'{el[5]}'
-            rain = f'{el[7]}'
-            out += f'{td.rjust(9):10}{el[2]:6}{el[1]:10}{loc:16}'
-            out += f'{el[8]:5}'
-            out += f'{pres:7} '
-            out += f'{el[6]:3} '
-            out += f'{el[9]:3} '
-            out += f'{rain:6}\r'
-        return out
-
     def _cmd_aprs_trace(self):
         """APRS Tracer"""
         aprs_ais = self._port_handler.get_aprs_ais()
@@ -1547,11 +919,11 @@ class DefaultCLI(object):
                 return f"\r # PR-Mail: {self._user_db_ent.PRmail}\r"
             return "\r # USER-DB Error !\r"
         if self._user_db_ent:
-            self._user_db_ent.PRmail = (self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')).upper()
+            self._user_db_ent.PRmail = (self._parameter[0]
+                .decode(self._encoding[0], self._encoding[1])
+                                        .replace(' ', '')
+                                        .replace('\n', '')
+                                        .replace('\r', '')).upper()
             self._user_db_ent.last_edit = conv_time_DE_str()
             return "\r" \
                    f"{self._getTabStr_CLI('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
@@ -1666,167 +1038,6 @@ class DefaultCLI(object):
                    f"{time_start.strftime('%H:%M:%S')}\r"
 
         return ret + "\r"
-
-    def _cmd_cstats(self):
-        # By Grok-AI
-        end_date   = datetime.now()
-        start_date = end_date - timedelta(days=7)
-
-        # Verbindungshistorie abrufen (kompletter Datensatz)
-        mh = self._port_handler.get_MH()
-        if not hasattr(mh, 'get_conn_hist'):
-            return "\r # Error: Connection history not available !\r\r"
-
-        conn_hist = mh.get_conn_hist()
-
-        # Datenstruktur für die Statistik: days[date_obj][hour_int] = count
-        days = defaultdict(lambda: defaultdict(int))
-        total_duration = 0
-        unique_users = set()
-        total_connections = 0
-        #killed_messages = 0  # Annahme: Keine gelöschten Nachrichten
-        #read_messages = 0  # Annahme: Keine gelesenen Nachrichten
-
-        # Alle Tage im Zeitraum generieren (für vollständige Tabelle, auch bei 0-Verbindungen)
-        start_d  = start_date.date()
-        end_d    = end_date.date()
-        all_days = []
-        current  = start_d
-        while current <= end_d:
-            all_days.append(current)
-            current += timedelta(days=1)
-        sorted_days = sorted(all_days)  # Sortiert nach Datum
-
-        # Verbindungen analysieren und filtern
-        for entry in conn_hist:
-            if not entry.get('disco', False):  # Nur abgeschlossene Verbindungen
-                continue
-            if entry.get('own_call', '').split('-')[0] != self._my_call_str.split('-')[0]:  # Nur zur eigenen Station
-                continue
-            conn_time = entry.get('time', datetime.min)
-            if not (start_date <= conn_time <= end_date):  # Filter nach Zeitraum
-                continue
-            duration = entry['duration'].total_seconds() / 60  # Dauer in Minuten
-            user = entry['from_call']
-
-            # Tag und Stunde extrahieren
-            day_key  = conn_time.date()
-            hour_key = conn_time.hour  # int
-
-            # Zählen der Verbindungen pro Tag und Stunde
-            days[day_key][hour_key] += 1
-            total_duration += duration
-            unique_users.add(user)
-            total_connections += 1
-
-        # Ausgabe generieren
-        ret = '\r'
-        ret += f"{f'For the period from {start_date.day}-{start_date.month} to {end_date.day}-{end_date.month}.':^79}\r\r"
-
-        # Stundenüberschrift
-        hours_header = ' '.join(f'{h:02d}' for h in range(24))
-        ret += f"Da {hours_header} Totl\r"
-
-        # Daten pro Tag (alle Tage im Zeitraum, auch mit 0)
-        for day in sorted_days:
-            day_str = day.strftime('%d')
-            row = [days[day].get(h, 0) for h in range(24)]
-            total = sum(row)
-            row_str = ' '.join(f'{x if x > 0 else ".":>2}' for x in row)
-            ret += f'{day_str} {row_str} {total:>4}\r'
-
-        # Trennlinie (angepasst an 24 Stunden)
-        sep_line = ' '.join(['--'] * 24) + ' ----'
-        ret += sep_line + '\r'
-
-        # Gesamtsummen pro Stunde (über alle Tage)
-        hour_totals = [sum(days[d].get(h, 0) for d in sorted_days) for h in range(24)]
-        total_all = sum(hour_totals)
-        totals_str = ' '.join(f'{x:>2}' for x in hour_totals)  # >2 für Ausrichtung, " 0" oder " 3"
-        ret += f"Tt {totals_str} {total_all:>4}\r"
-        ret += '\r'
-
-        # Zusätzliche Metriken
-        total_minutes = int(total_duration)
-        mean_time_per_conn = total_minutes / total_connections if total_connections > 0 else 0
-        mean_time_per_user = total_minutes / len(unique_users) if unique_users else 0
-
-        ret += f"{'Total time of connections':<36}: {total_minutes:>3} minutes, ({total_minutes // 60:>2} H {total_minutes % 60:>2} mn).\r"
-        ret += f"{'Mean time per connection':<36}: {mean_time_per_conn:.1f} min/connection.\r"
-        ret += f"{'Total time per user':<36}: {mean_time_per_user:.1f} min/user.\r"
-        #ret += f"{'Number of killed messages':<36}: {killed_messages:>3}\r"
-        #ret += f"{'Number of read messages':<36}: {read_messages:>3}\r"
-        ret += f"{'Number of users':<36}: {len(unique_users)}\r"
-        unique_users = list(unique_users)
-        while len(unique_users) > 4:
-            ret += f"{'Users':<36}: {' '.join(unique_users[:5]):>3}\r"
-            unique_users = unique_users[5:]
-        if unique_users:
-            ret += f"{'Users':<36}: {' '.join(unique_users):>3}\r"
-
-        return ret + '\r'
-
-    def _cmd_chist(self):
-        """Connection History der eigenen Station (letzte 30 Tage)"""
-        mh = self._port_handler.get_MH()
-        if not hasattr(mh, 'get_conn_hist'):
-            return f"\r # {self._getTabStr_CLI('cli_no_data')}\r\r"
-
-        # Nur abgeschlossene Verbindungen zu unserer eigenen Station
-        own_call_base = self._my_call_str.split('-')[0].upper()
-        conn_hist = mh.get_conn_hist()
-
-        now = datetime.now()
-        start_time = now - timedelta(days=30)
-
-        entries = []
-        for e in conn_hist:
-            if not e.get('disco', False):
-                continue
-            if e.get('own_call', '').split('-')[0].upper() != own_call_base:
-                continue
-            if 'Task:' in e.get('typ', ''):
-                continue
-            ts = e.get('time', None)
-            if not ts or ts < start_time:
-                continue
-            entries.append(e)
-
-        # Sortierung: neueste zuerst
-        entries.sort(key=lambda x: x.get('time', datetime.min), reverse=True)
-
-        if not entries:
-            return f"\r # {self._getTabStr_CLI('cli_no_data')}\r\r"
-
-        out = "\r"
-        out += f" Connection-History {own_call_base} – {self._getTabStr_CLI('last_30_days')} ({len(entries)} {self._getTabStr_CLI('connections')})\r"
-        out += "─" * 71 + "\r"
-        out += self._getTabStr_CLI('cmd_chist_tab')
-        out += "────────── ──────── ──────  ───────── ────  ──────────────────────\r"
-
-        for e in entries:
-            ts = e.get('time')
-            duration = e.get('duration', timedelta())
-            dur_str = f"{duration.seconds // 60:02d}:{duration.seconds % 60:02d}"
-            if duration.days:
-                dur_str = f"{duration.days}d {dur_str}"
-
-            from_call = e.get('from_call', '???')
-            port = e.get('port_id', '')
-            db_ent = USER_DB.get_entry(from_call, add_new=False)
-
-            loc_dist = ""
-            if db_ent:
-                if db_ent.LOC:
-                    loc_dist = db_ent.LOC.ljust(8)
-                if db_ent.Distance != -1:
-                    loc_dist += f"  / {db_ent.Distance} km"
-
-            out += f"{ts.strftime('%d.%m.%Y')} {ts.strftime('%H:%M')}    {str(dur_str).ljust(6)}  {from_call.ljust(9)} {str(port).ljust(4)}  {loc_dist[:30]}\r"
-
-        out += "─" * 79 + "\r"
-        return out + "\r"
-
 
     def _cmd_ch(self):
         if not self._parameter:

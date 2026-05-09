@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cli.cli_main.cliMain_modulBase import CliModulBase
+from cli.cli_modulBase import CliModulBase
 
 
 class CliStrCommands(CliModulBase):

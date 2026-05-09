@@ -9,7 +9,7 @@ class CliModulBase:
         # ================================
         self._connection    = cli_main.connection
         self._own_port      = cli_main.own_port
-        self._port_handler  = cli_main.popt_handler
+        self._popt_handler  = cli_main.popt_handler
         self._user_db       = cli_main.userDB
         self._user_db_ent   = cli_main.userDB_ent
         self._cli_lang      = cli_main.cli_lang
@@ -34,5 +34,26 @@ class CliModulBase:
     def _get_ts_prompt(self):
         return self._cliMain.get_ts_prompt()
 
+    def _decode_param(self, defaults=None):
+        if defaults is None:
+            defaults = []
+        if type(defaults) is not list:
+            defaults = []
+        tmp = []
+        if not defaults:
+            for el in self._parameter:
+                tmp.append(el.decode(self._get_encoding()[0], 'ignore').replace('\r', ''))
+        else:
+            for el in defaults:
+                if len(self._parameter) > len(tmp):
+                    tmp_parm = self._parameter[len(tmp)].decode(self._get_encoding()[0], 'ignore').replace('\r', '')
+                    try:
+                        tmp_parm = type(el)(tmp_parm)
+                    except ValueError:
+                        tmp_parm = el
+                else:
+                    tmp_parm = el
+                tmp.append(tmp_parm)
+        self._cliMain.set_parameter(tmp)
 
 
