@@ -237,10 +237,13 @@ class StatusFrame:
     # === Public API ===
     def set_icon_state(self, name: str, enabled: bool):
         """Setzt Icon-State und löst kurzes Feedback-Blinken aus"""
-        # Entferne aus alter Rate
-        try:
-            icon = self._get_icon(name)
 
+        try:
+            # Entferne aus alter Rate
+            if name in self._feedback_icons:
+                del self._feedback_icons[name]
+
+            icon = self._get_icon(name)
             # Alten Zustand merken, um zu prüfen, ob sich etwas geändert hat
             was_enabled = icon.icon_state
 
