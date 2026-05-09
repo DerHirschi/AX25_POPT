@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from cfg.constant import VER
 from cfg.logger_config import logger
+from PIL import Image, ImageTk  # Für bessere Bildbehandlung (optional aber empfohlen)
 
 
 class About(tk.Toplevel):
@@ -9,16 +10,18 @@ class About(tk.Toplevel):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self.main_cl = main_win
         self.style = main_win.style
-        self.win_height = 200
-        self.win_width = 700
-        self.title("Über")
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
-                      f"{self.main_cl.main_win.winfo_x()}+"
-                      f"{self.main_cl.main_win.winfo_y()}")
-        # self.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+
+        self.title("Über PoPT")
+        self.win_width = 680
+        self.win_height = 560
+        self.geometry(f"{self.win_width}x{self.win_height}+"
+                      f"{self.main_cl.main_win.winfo_x() + 50}+"
+                      f"{self.main_cl.main_win.winfo_y() + 50}")
+
         self.resizable(False, False)
+        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+
+        # Icon
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -26,46 +29,102 @@ class About(tk.Toplevel):
                 self.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
                 logger.warning(ex)
-        self.lift()
-        ##########################
-        main_f = ttk.Frame(self)
-        main_f.pack(fill=tk.BOTH, expand=True)
-        ##########################
-        # OK
-        ok_bt = ttk.Button(main_f,
-                          text="Ok",
-                          # height=1,
-                          width=6,
-                          command=self.destroy_win)
-        ok_bt.place(x=20, y=self.win_height - 50)
 
-        x = 40
-        y = 20
-        txt1 = '(P)ython (o)ther (P)acket (T)erminal {}'.format(VER)
-        label = ttk.Label(main_f, text=txt1)
-        #font1 = label.cget('font')
-        #font1 = (font1[0], 13)
-        #label.configure(font=font1)
-        label.place(x=x, y=y)
-        x = 40
-        y = 45
-        txt1 = 'by MD2SAW (CB-Radio)'
-        label = ttk.Label(main_f, text=txt1)
-        label.place(x=x, y=y)
-        x = 40
-        y = 70
-        txt1 = 'Mit Unterstützung der PR-Community'
-        label = ttk.Label(main_f, text=txt1)
-        label.place(x=x, y=y)
-        x = 40
-        y = 110
-        txt1 = 'GitHub:  https://github.com/DerHirschi/AX25_POPT'
-        label = ttk.Label(main_f, text=txt1)
-        label.place(x=x, y=y)
+        self.lift()
+        self.configure(background="#f0f0f0")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # ==================== Hauptframe ====================
+        main_f = ttk.Frame(self, padding=20)
+        main_f.pack(fill=tk.BOTH, expand=True)
+
+        # ==================== Header mit Logo ====================
+        header = ttk.Frame(main_f)
+        header.pack(fill=tk.X, pady=(0, 20))
+
+        # PoPT Logo
+        try:
+            img = Image.open("popt.png")
+            img = img.resize((90, 90), Image.Resampling.LANCZOS)
+            self.logo_img = ImageTk.PhotoImage(img)
+
+            logo_label = ttk.Label(header, image=self.logo_img)
+            logo_label.pack(side=tk.LEFT, padx=(0, 20))
+        except Exception:
+            # Fallback: Text-Logo
+            logo_label = ttk.Label(header, text="PoPT",
+                                   font=("Segoe UI", 48, "bold"),
+                                   foreground="#1e88e5")
+            logo_label.pack(side=tk.LEFT, padx=(0, 20))
+
+        # Titel + Version
+        title_frame = ttk.Frame(header)
+        title_frame.pack(side=tk.LEFT, fill=tk.Y)
+
+        ttk.Label(title_frame, text="Python Other Packet Terminal",
+                  font=("Segoe UI", 18, "bold")).pack(anchor="w")
+
+        ttk.Label(title_frame, text=f"Version {VER}",
+                  font=("Segoe UI", 11)).pack(anchor="w")
+
+        ttk.Label(title_frame, text="by MD2SAW (CB-Radio)",
+                  font=("Segoe UI", 10)).pack(anchor="w", pady=(8, 0))
+
+        # ==================== Trennlinie ====================
+        sep = ttk.Separator(main_f, orient="horizontal")
+        sep.pack(fill=tk.X, pady=15)
+
+        # ==================== Dank an die Community ====================
+        comm_frame = ttk.LabelFrame(main_f, text=" Dank an die Packet Radio Community ", padding=15)
+        comm_frame.pack(fill=tk.X, pady=8)
+
+        text = (
+            "Ein großes Dankeschön an die gesamte Packet-Radio-Community!\n"
+            "Besonders an alle Funkamateure (HAM) und CB-Funker, die mit Rat, Tat "
+            "und Testberichten zum Erfolg von PoPT beigetragen haben."
+        )
+        ttk.Label(comm_frame, text=text, wraplength=580,
+                  font=("Segoe UI", 10), justify="left").pack(anchor="w")
+
+        # ==================== Spezielle Danksagungen ====================
+        thanks_frame = ttk.LabelFrame(main_f, text=" Besonderer Dank ", padding=15)
+        thanks_frame.pack(fill=tk.X, pady=8)
+
+        thanks_text = (
+            "• ClaudeMa (GitHub) — Französische Übersetzung\n"
+            "• NL1NOD (CB-Call)  — Niederländische Übersetzung & intensives Testen\n"
+            "• CT1DRB (HAM-Call) — Testen & Unterstützung"
+        )
+
+        ttk.Label(thanks_frame, text=thanks_text,
+                  font=("Segoe UI", 10), justify="left").pack(anchor="w")
+
+        # ==================== GitHub Link ====================
+        gh_frame = ttk.Frame(main_f)
+        gh_frame.pack(fill=tk.X, pady=15)
+
+        ttk.Label(gh_frame, text="Projekt auf GitHub:",
+                  font=("Segoe UI", 10, "bold")).pack(anchor="w")
+
+        link = ttk.Label(gh_frame, text="https://github.com/DerHirschi/AX25_POPT",
+                         font=("Segoe UI", 10), foreground="#0066cc", cursor="hand2")
+        link.pack(anchor="w")
+        link.bind("<Button-1>", lambda e: self.open_github())
+
+        # ==================== OK Button ====================
+        btn_frame = ttk.Frame(main_f)
+        btn_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
+
+        ok_bt = ttk.Button(btn_frame, text="OK", width=12, command=self.destroy_win)
+        ok_bt.pack(side=tk.RIGHT)
+
+    def open_github(self):
+        import webbrowser
+        webbrowser.open("https://github.com/DerHirschi/AX25_POPT")
 
     def destroy_win(self):
         self.destroy()
-        self.main_cl.toplevel_manager.settings_win = None
-
-    def tasker(self):
-        pass
+        if hasattr(self.main_cl, 'toplevel_manager'):
+            self.main_cl.toplevel_manager.settings_win = None
