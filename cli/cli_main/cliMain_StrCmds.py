@@ -11,9 +11,9 @@ class CliStrCommands(CliModulBase):
 
         self._str_cmd_exec = {
             b'#REQUESTNAME:':   self._str_cmd_req_name,
-            b'#NAM#':           self._cliMain.cmd_set_name,
-            b'#QTH#':           self._cliMain.cmd_set_qth,
-            b'#LOC#':           self._cliMain.cmd_set_loc,
+            b'#NAM#':           self._cliMain.user_db_cmds.cmd_set_name,
+            b'#QTH#':           self._cliMain.user_db_cmds.cmd_set_qth,
+            b'#LOC#':           self._cliMain.user_db_cmds.cmd_set_loc,
             b'#RTT#':           self._str_cmd_recv_rtt,
         }
 

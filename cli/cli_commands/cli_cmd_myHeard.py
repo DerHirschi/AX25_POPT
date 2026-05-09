@@ -1,7 +1,9 @@
 from datetime import timedelta, datetime
 
+from cfg.constant import BOOL_ON_OFF
+from cfg.popt_config import POPT_CFG
 from cli.cli_modulBase import CliModulBase
-from fnc.str_fnc import get_timedelta_CLIstr
+from fnc.str_fnc import get_timedelta_CLIstr, get_timedelta_str_fm_sec
 
 
 class CliCmdMyHeard(CliModulBase):
@@ -275,3 +277,65 @@ class CliCmdMyHeard(CliModulBase):
             out += f' {time_delta_str} {port:6} {call:10}{via:10}{loc:9}{dis:10}{typ}\r'
 
         return out
+
+    # ==============================
+    # ATR
+    def cmd_aprs_trace(self):
+        """APRS Tracer"""
+        aprs_ais = self._popt_handler.get_aprs_ais()
+        if aprs_ais is None:
+            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
+        parm = 10
+        if self._parameter:
+            try:
+                parm = int(self._parameter[0])
+            except ValueError:
+                pass
+        data = aprs_ais.tracer_traces_get()
+        if not data:
+            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
+        ais_cfg     = POPT_CFG.get_CFG_aprs_ais()
+        intervall   = ais_cfg.get('be_tracer_interval', 5)
+        active      = ais_cfg.get('be_tracer_active', 5)
+        last_send   = aprs_ais.tracer_get_last_send()
+        last_send   = get_timedelta_str_fm_sec(last_send, r_just=False)
+        if not active:
+            intervall_str = 'off'
+        else:
+            intervall_str = str(intervall)
+        # out = '\r # APRS-Tracer Beacon\r\r'
+        out = '\r'
+        out += f"Tracer Port     : {ais_cfg.get('be_tracer_port', 0)}\r"
+        out += f"Tracer Call     : {ais_cfg.get('be_tracer_station', 'NOCALL')}\r"
+        out += f"Tracer WIDE Path: {ais_cfg.get('be_tracer_wide', 1)}\r"
+        out += f'Tracer intervall: {intervall_str}\r'
+        out += f"Auto Tracer     : {BOOL_ON_OFF.get(ais_cfg.get('be_auto_tracer_active', False), False).lower()}\r"
+        # out += f'APRS-Server     : {constant.BOOL_ON_OFF.get(self._port_handler.aprs_ais., False).lower()}\r'
+        out += f'Last Trace send : {last_send}\r\r'
+        out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
+        max_c = 0
+        for k in data:
+            max_c += 1
+            if max_c > parm:
+                break
+            ent = data[k][-1]
+            td = get_timedelta_CLIstr(ent['rx_time'])
+            # path = ', '.join(ent.get('path', []))
+            loc = f'{ent.get("locator", "------")[:6]}({round(ent.get("distance", -1))}km)'
+            call = ent.get('call', '')
+            path_raw = ent.get('path', [])
+            path = ''
+            c = 0
+            for _el in path_raw:
+                path += f'{_el}> '
+                c += 1
+                if c == 3:
+                    path += '\r' + ''.rjust(42, ' ')
+                    c = 0
+
+            out += f'{td.rjust(9):10}{ent.get("port_id", "-"):6}{call:10}{loc:16}'
+            out += f'{path[:-2]}'
+            out += '\r'
+
+        return out + '\r'
+

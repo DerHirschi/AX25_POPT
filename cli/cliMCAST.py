@@ -15,7 +15,7 @@ class MCastCLI(DefaultCLI):
 
     def init(self):
         # NO USER-DB Ctext
-        self._c_text = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text = self.load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._c_text = self._c_text.replace('\n', '\r')
         # Standard Commands ( GLOBAL )
         self._command_set.update( {

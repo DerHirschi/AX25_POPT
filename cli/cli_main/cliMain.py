@@ -4,16 +4,16 @@ from cfg.popt_config import POPT_CFG
 from cli.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, BOOL_ON_OFF, \
-    CLI_TYP_SYSOP, CLI_TYP_NO_CLI
+from cfg.constant import (STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, CLI_TYP_SYSOP,
+                          CLI_TYP_NO_CLI)
+from cli.cli_commands.cli_cmd_infos import CliCmdInfos
 from cli.cli_commands.cli_cmd_myHeard import CliCmdMyHeard
 from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
+from cli.cli_commands.cli_cmd_userDB import CliCmdUserDB
 from cli.cli_const import CLI_DEF_CMD_BASIC
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
-from fnc.os_fnc import is_macos, is_linux, is_windows
-from fnc.str_fnc import get_time_delta, find_decoding, get_timedelta_str_fm_sec, get_timedelta_CLIstr, \
-    zeilenumbruch_lines, get_strTab, zeilenumbruch, find_eol, conv_time_DE_str
+from fnc.str_fnc import get_time_delta, find_decoding, zeilenumbruch_lines, get_strTab, find_eol
 from fnc.ax25_fnc import validate_ax25Call
 from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
@@ -34,7 +34,7 @@ class DefaultCLI(object):
         stat_cfg: dict              = connection.get_stat_cfg
         self._stat_cfg_index_call   = stat_cfg.get('stat_parm_Call', 'NOCALL')
 
-        self._c_text                = self._load_fm_file(self._stat_cfg_index_call + '.ctx')
+        self._c_text                = self.load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection            = connection
         self._own_port              = connection.own_port
         self._port_handler          = connection.own_port.port_get_PH()
@@ -99,61 +99,65 @@ class DefaultCLI(object):
         # Command sets Init
         self._statistics_cmds = CliCmdStatistics(self)
         self._my_heard_cmds   = CliCmdMyHeard(self)
+        self._infos_cmds      = CliCmdInfos(self)
+        self._user_db_cmds    = CliCmdUserDB(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
-            # CMD: (needed lookup len(cmd), cmd_fnc, Help-Str, Str-Vars)
-            'QUIT':     (1, self._cmd_q,                        'Quit',              True),
-            'BYE':      (1, self._cmd_q,                        'Bye',               True),
-            'ECHO':     (1, self._cmd_echo,                     'Echo',              False),
+            # CMD: (needed lookup len(cmd), cmd_fnc, Help-Str, Str-Vars allowed)
+            'QUIT':     (1, self._cmd_q,                            'Quit',              True),
+            'BYE':      (1, self._cmd_q,                            'Bye',               True),
+            'ECHO':     (1, self._cmd_echo,                         'Echo',              False),
             # NODE Stuff
-            'CONNECT':  (1, self._cmd_connect,                  'Connect',           False),
-            'C!':       (2, self._cmd_connect_exclusive,        'Connect Exclusive (No MH-Path-Lookup)', False),
-            'PORT':     (1, self._cmd_port,                     'Ports',                                 False),
+            'CONNECT':  (1, self._cmd_connect,                      'Connect',           False),
+            'C!':       (2, self._cmd_connect_exclusive,            'Connect Exclusive (No MH-Path-Lookup)', False),
+            'PORT':     (1, self._cmd_port,                         'Ports',                                 False),
             # Statistics
-            'PSTAT':    (2, self._statistics_cmds.cmd_pstat,    f"Port {self._getTabStr_CLI('statistic')}", False),
-            'BWSTAT':   (2, self._statistics_cmds.cmd_bwstat,   self._getTabStr_CLI('cmd_help_bwstat'),     False),
-            'CSTAT':    (2, self._statistics_cmds.cmd_cstats,   self._getTabStr_CLI('cmd_help_cstat'),      False),
-            'WX':       (0, self._statistics_cmds.cmd_wx,       self._getTabStr_CLI('cmd_help_wx'),         False),
+            'PSTAT':    (2, self._statistics_cmds.cmd_pstat,        f"Port {self._getTabStr_CLI('statistic')}", False),
+            'BWSTAT':   (2, self._statistics_cmds.cmd_bwstat,       self._getTabStr_CLI('cmd_help_bwstat'),     False),
+            'CSTAT':    (2, self._statistics_cmds.cmd_cstats,       self._getTabStr_CLI('cmd_help_cstat'),      False),
+            'WX':       (0, self._statistics_cmds.cmd_wx,           self._getTabStr_CLI('cmd_help_wx'),         False),
             # MH
-            'MH':       (0, self._my_heard_cmds.cmd_mh,         'MYHeard List',                         False),
-            'LMH':      (0, self._my_heard_cmds.cmd_mhl,        'Long MYHeard List',                    False),
-            'AXIP':     (2, self._my_heard_cmds.cmd_axip,       'AXIP-MH List',                         False),
-            'DXLIST':   (2, self._my_heard_cmds.cmd_dxlist,     'DX/Tracer Alarm List',                 False),
-            'CHIST':    (3, self._my_heard_cmds.cmd_chist,      self._getTabStr_CLI('cmd_help_chist'),  False),
+            'MH':       (0, self._my_heard_cmds.cmd_mh,             'MYHeard List',                         False),
+            'LMH':      (0, self._my_heard_cmds.cmd_mhl,            'Long MYHeard List',                    False),
+            'AXIP':     (2, self._my_heard_cmds.cmd_axip,           'AXIP-MH List',                         False),
+            'DXLIST':   (2, self._my_heard_cmds.cmd_dxlist,         'DX/Tracer Alarm List',                 False),
+            'CHIST':    (3, self._my_heard_cmds.cmd_chist,          self._getTabStr_CLI('cmd_help_chist'),  False),
+            'ATR':      (2, self._my_heard_cmds.cmd_aprs_trace,     'APRS-Tracer',                          False),
 
             #
-            'LCSTATUS': (2, self._cmd_lcstatus,                 self._getTabStr_CLI('cmd_help_lcstatus'),   False),
-            'CH':       (2, self._cmd_ch,                       self._getTabStr_CLI('cmd_help_ch'),         False),
-            'RTT':      (2, self._cmd_rtt,                      self._getTabStr_CLI('cmd_help_rtt'),        False),
+            'LCSTATUS': (2, self._cmd_lcstatus,                     self._getTabStr_CLI('cmd_help_lcstatus'),   False),
+            'CH':       (2, self._cmd_ch,                           self._getTabStr_CLI('cmd_help_ch'),         False),
+            'RTT':      (2, self._cmd_rtt,                          self._getTabStr_CLI('cmd_help_rtt'),        False),
             # Remote Monitor
-            # 'PREMON':   (2, self._cmd_set_gui_remote_mon,   "PoPT Remote Monitor", False),
+            # 'PREMON':   (2, self._cmd_set_gui_remote_mon,         "PoPT Remote Monitor", False),
 
             # APRS Stuff
-            #'ACHAT':    (2, self.,                             'APRS-Messenger',                       False),
-            'ATR':      (2, self._cmd_aprs_trace,               'APRS-Tracer',                          False),
+            #'ACHAT':    (2, self.,                                 'APRS-Messenger',                       False),
+            #
+            'BELL':     (2, self._cmd_bell,                         self._getTabStr_CLI('cmd_help_bell'),   False),
             # User/Station Info
-            'BELL':     (2, self._cmd_bell,                     self._getTabStr_CLI('cmd_help_bell'),   False),
-            'INFO':     (1, self._cmd_i,                        'Info',                                 True),
-            'LINFO':    (2, self._cmd_li,                       'Long Info',                            True),
-            'NEWS':     (2, self._cmd_news,                     'NEWS',                                 True),
+            'INFO':     (1, self._infos_cmds.cmd_i,                 'Info',                                 True),
+            'LINFO':    (2, self._infos_cmds.cmd_li,                'Long Info',                            True),
+            'NEWS':     (2, self._infos_cmds.cmd_news,              'NEWS',                                 True),
+            'POPT':     (4, self._infos_cmds.cmd_popt_banner,       'PoPT Banner',                          False),
+            'VERSION':  (3, self._infos_cmds.cmd_ver,               'Version',                              False),
+
             # USER DB
-            'USER':     (2, self._cmd_user_db_detail, self._getTabStr_CLI('cmd_help_user_db'),          False),
-            'NAME':     (1, self.cmd_set_name, self._getTabStr_CLI('cmd_help_set_name'), False),
-            'QTH':      (3, self.cmd_set_qth, self._getTabStr_CLI('cmd_help_set_qth'), False),
-            'LOC':      (3, self.cmd_set_loc, self._getTabStr_CLI('cmd_help_set_loc'), False),
-            'ZIP':      (3, self._cmd_set_zip, self._getTabStr_CLI('cmd_help_set_zip'), False),
-            'PRMAIL':   (2, self._cmd_set_pr_mail, self._getTabStr_CLI('cmd_help_set_prmail'), False),
-            'EMAIL':    (0, self._cmd_set_e_mail, self._getTabStr_CLI('cmd_help_set_email'), False),
-            'WEB':      (3, self._cmd_set_http, self._getTabStr_CLI('cmd_help_set_http'), False),
+            'USER':     (2, self._user_db_cmds.cmd_user_db_detail,  self._getTabStr_CLI('cmd_help_user_db'),    False),
+            'NAME':     (1, self._user_db_cmds.cmd_set_name,        self._getTabStr_CLI('cmd_help_set_name'),   False),
+            'QTH':      (3, self._user_db_cmds.cmd_set_qth,         self._getTabStr_CLI('cmd_help_set_qth'),    False),
+            'LOC':      (3, self._user_db_cmds.cmd_set_loc,         self._getTabStr_CLI('cmd_help_set_loc'),    False),
+            'ZIP':      (3, self._user_db_cmds.cmd_set_zip,         self._getTabStr_CLI('cmd_help_set_zip'),    False),
+            'PRMAIL':   (2, self._user_db_cmds.cmd_set_pr_mail,     self._getTabStr_CLI('cmd_help_set_prmail'), False),
+            'EMAIL':    (0, self._user_db_cmds.cmd_set_e_mail,      self._getTabStr_CLI('cmd_help_set_email'),  False),
+            'WEB':      (3, self._user_db_cmds.cmd_set_http,        self._getTabStr_CLI('cmd_help_set_http'),   False),
 
             # CLI OPT
             'OP':       (2, self._cmd_op, self._getTabStr_CLI('cmd_op'), False),
             'LANG':     (4, self._cmd_lang, self._getTabStr_CLI('cli_change_language'), False),
             'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'), False),
             #
-            'VERSION':  (3, self._cmd_ver,                  'Version', False),
-            'POPT':     (4, self._cmd_popt_banner,          'PoPT Banner', False),
             'HELP':     (1, self._cmd_help, self._getTabStr_CLI('help'), False),
             'CONV':     (3, self._cmd_conv,                 'Converse', False),
             '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
@@ -184,6 +188,12 @@ class DefaultCLI(object):
         pass
 
     ########################################################
+    # CMD Classes
+    @property
+    def user_db_cmds(self):
+        return self._user_db_cmds
+
+    ########################################################
     @property
     def connection(self):
         return self._connection
@@ -212,6 +222,11 @@ class DefaultCLI(object):
     def cli_encoding(self):
         return self._encoding
 
+    @property
+    def stat_cfg_index_call(self):
+        return self._stat_cfg_index_call
+
+    #######################
     @property
     def parameter(self):
         return self._parameter
@@ -355,7 +370,7 @@ class DefaultCLI(object):
         self._input = self._parameter
         return False
 
-    def _load_fm_file(self, filename: str):
+    def load_fm_file(self, filename: str):
         file_n = CFG_data_path + \
                  CFG_usertxt_path + \
                  self._stat_cfg_index_call + '/' + \
@@ -662,7 +677,7 @@ class DefaultCLI(object):
     def _cmd_q(self):  # Quit
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
-        ret += self._load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
+        ret += self.load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
         self._send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
         return ''
@@ -676,299 +691,6 @@ class DefaultCLI(object):
             self._connection.set_user_db_language(self._cli_lang)
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
         return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
-
-    def _cmd_aprs_trace(self):
-        """APRS Tracer"""
-        aprs_ais = self._port_handler.get_aprs_ais()
-        if aprs_ais is None:
-            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
-        parm = 10
-        if self._parameter:
-            try:
-                parm = int(self._parameter[0])
-            except ValueError:
-                pass
-        data = aprs_ais.tracer_traces_get()
-        if not data:
-            return f'\r # {self._getTabStr_CLI("cli_no_tracer_data")}\r\r'
-        ais_cfg     = POPT_CFG.get_CFG_aprs_ais()
-        intervall   = ais_cfg.get('be_tracer_interval', 5)
-        active      = ais_cfg.get('be_tracer_active', 5)
-        last_send   = aprs_ais.tracer_get_last_send()
-        last_send   = get_timedelta_str_fm_sec(last_send, r_just=False)
-        if not active:
-            intervall_str = 'off'
-        else:
-            intervall_str = str(intervall)
-        # out = '\r # APRS-Tracer Beacon\r\r'
-        out = '\r'
-        out += f"Tracer Port     : {ais_cfg.get('be_tracer_port', 0)}\r"
-        out += f"Tracer Call     : {ais_cfg.get('be_tracer_station', 'NOCALL')}\r"
-        out += f"Tracer WIDE Path: {ais_cfg.get('be_tracer_wide', 1)}\r"
-        out += f'Tracer intervall: {intervall_str}\r'
-        out += f"Auto Tracer     : {BOOL_ON_OFF.get(ais_cfg.get('be_auto_tracer_active', False), False).lower()}\r"
-        # out += f'APRS-Server     : {constant.BOOL_ON_OFF.get(self._port_handler.aprs_ais., False).lower()}\r'
-        out += f'Last Trace send : {last_send}\r\r'
-        out += '-----Last-Port--Call------LOC-------------Path----------------------------------\r'
-        max_c = 0
-        for k in data:
-            max_c += 1
-            if max_c > parm:
-                break
-            ent = data[k][-1]
-            td = get_timedelta_CLIstr(ent['rx_time'])
-            # path = ', '.join(ent.get('path', []))
-            loc = f'{ent.get("locator", "------")[:6]}({round(ent.get("distance", -1))}km)'
-            call = ent.get('call', '')
-            path_raw = ent.get('path', [])
-            path = ''
-            c = 0
-            for _el in path_raw:
-                path += f'{_el}> '
-                c += 1
-                if c == 3:
-                    path += '\r' + ''.rjust(42, ' ')
-                    c = 0
-
-            out += f'{td.rjust(9):10}{ent.get("port_id", "-"):6}{call:10}{loc:16}'
-            out += f'{path[:-2]}'
-            out += '\r'
-
-        return out + '\r'
-
-    @staticmethod
-    def _cmd_popt_banner():
-        ret = '\r$$$$$$$\   $$$$$$\     $$$$$$$\ $$$$$$$$|\r' \
-              '$$  __$$\ $$  __$$\    $$  __$$\|__$$ __|\r' \
-              '$$ |  $$ |$$ /  $$ |   $$ |  $$ |  $$ |\r' \
-              '$$$$$$$  |$$ |  $$ |   $$$$$$$  |  $$ |\r' \
-              '$$  ____/ $$ |  $$ |   $$  ____/   $$ |\r' \
-              '$$ |      $$ |  $$ |   $$ |        $$ |\r' \
-              '$$ |       $$$$$$  |   $$ |        $$ |\r' \
-              '\__|yton   \______/ther\__|acket   \__|erminal\r\r' \
-              f'Version: {VER}'
-        if is_macos():
-            ret += ' - MacOS'
-        elif is_linux():
-            ret += ' - Linux'
-        elif is_windows():
-            ret += ' - Windows'
-        ret += '\r\r'
-        return ret
-
-    @staticmethod
-    def _cmd_ver():
-        ret = '\r-= P.yton o.ther P.acket T.erminal =-\r' \
-              f'-= Version: {VER}'
-        if is_macos():
-            ret += ' - MacOS'
-        elif is_linux():
-            ret += ' - Linux'
-        elif is_windows():
-            ret += ' - Windows'
-        ret += '\r\r'
-        return ret
-
-    def _cmd_i(self):
-        ret = self._load_fm_file(self._stat_cfg_index_call + '.itx')
-        return ret.replace('\n', '\r')
-
-    def _cmd_li(self):
-        ret = self._load_fm_file(self._stat_cfg_index_call + '.litx')
-        return ret.replace('\n', '\r')
-
-    def _cmd_news(self):
-        ret = self._load_fm_file(self._stat_cfg_index_call + '.atx')
-        return ret.replace('\n', '\r')
-
-    def _cmd_user_db_detail(self):
-        if not self._parameter:
-            # max_lines = 20  # TODO: from parameter
-            db_list = list(self._user_db.db.keys())
-            header = "\r" \
-                     f" USER-DB - {len(db_list)} Calls\r" \
-                     "-------------------------------------------------------------------------------\r"
-            ent_ret = ""
-            db_list.sort()
-            # c = 0
-            # colum_c = 0
-            for call in db_list:
-                ent_ret += f"{call} "
-                """
-                colum_c += 1
-                if colum_c > 6:
-                    ent_ret += "\r"
-                    colum_c = 0
-                    c += 1
-                """
-                """
-                if c >= max_lines:
-                    break
-                """
-            ent_ret = zeilenumbruch(ent_ret)
-            ent_ret += "\r-------------------------------------------------------------------------------\r\r"
-            return header + ent_ret
-        else:
-            call_str = self._parameter[0].decode(self._encoding[0], self._encoding[1]).upper()
-            db_ent = self._user_db.get_entry(call_str, add_new=False)
-            if db_ent:
-                header = "\r" \
-                         f"| USER-DB: {call_str}\r" \
-                         "|-------------------\r"
-                ent = db_ent
-                ent_ret = ""
-                for att in dir(ent):
-                    if '__' not in att and \
-                            att not in self._user_db.not_public_vars:
-                        if getattr(ent, att):
-                            ent_ret += f"| {att.ljust(10)}: {getattr(ent, att)}\r"
-                ent_ret += "|-------------------\r\r"
-                return header + ent_ret
-
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_no_user_db_ent')}" \
-                   "\r"
-
-    def cmd_set_name(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f" #\r Name: {self._user_db_ent.Name}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.Name = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_name_set')}: {self._user_db_ent.Name}" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_name NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def cmd_set_qth(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f"\r # QTH: {self._user_db_ent.QTH}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.QTH = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_qth_set')}: {self._user_db_ent.QTH}" \
-                   "\r"
-
-        logger.error("User-DB Error. cli_qth_set NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def cmd_set_loc(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                if self._user_db_ent.Distance:
-                    return f"\r # Locator: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km\r"
-                return f"\r # Locator: {self._user_db_ent.LOC}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.LOC = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            # self._connection.set_distance()
-            self._user_db.set_distance(self._user_db_ent.call_str)
-            if self._user_db_ent.Distance:
-                return "\r" \
-                       f"{self._getTabStr_CLI('cli_loc_set')}: {self._user_db_ent.LOC}" \
-                       "\r"
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_loc_set')}: {self._user_db_ent.LOC} > {round(self._user_db_ent.Distance)} km" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_loc NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def _cmd_set_zip(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f"\r # ZIP: {self._user_db_ent.ZIP}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.ZIP = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_zip_set')}: {self._user_db_ent.ZIP}" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_zip NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def _cmd_set_pr_mail(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f"\r # PR-Mail: {self._user_db_ent.PRmail}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.PRmail = (self._parameter[0]
-                .decode(self._encoding[0], self._encoding[1])
-                                        .replace(' ', '')
-                                        .replace('\n', '')
-                                        .replace('\r', '')).upper()
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_prmail_set')}: {self._user_db_ent.PRmail}" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_pr_mail NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def _cmd_set_e_mail(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f"\r # E-Mail: {self._user_db_ent.Email}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.Email = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_email_set')}: {self._user_db_ent.Email}" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_e_mail NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
-
-    def _cmd_set_http(self):
-        if not self._parameter:
-            if self._user_db_ent:
-                return f"\r # WEB: {self._user_db_ent.HTTP}\r"
-            return "\r # USER-DB Error !\r"
-        if self._user_db_ent:
-            self._user_db_ent.HTTP = self._parameter[0] \
-                .decode(self._encoding[0], self._encoding[1]). \
-                replace(' ', ''). \
-                replace('\n', ''). \
-                replace('\r', '')
-            self._user_db_ent.last_edit = conv_time_DE_str()
-            return "\r" \
-                   f"{self._getTabStr_CLI('cli_http_set')}: {self._user_db_ent.HTTP}" \
-                   "\r"
-
-        logger.error("User-DB Error. cmd_set_http NO ENTRY FOUND !")
-        return "\r # USER-DB Error !\r"
 
     def _cmd_port(self):  # TODO Pipe
         ret = f"\r      < {self._getTabStr_CLI('port_overview')} >\r\r"
@@ -1069,7 +791,7 @@ class DefaultCLI(object):
     def _cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"
         ret = "\r"
-        for k in list(self._get_allowed_cmds()):
+        for k in sorted(list(self._get_allowed_cmds())):
             if self._command_set[k][2]:
                 ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
                                                 k,
