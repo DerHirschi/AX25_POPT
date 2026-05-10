@@ -181,21 +181,22 @@ class CliCmdAprsChat(CliModulBase):
             return "\r # Fehler beim Senden der APRS-Nachricht.\r"
 
     # ===========================================
-    def _aprs_chat_help(self):
+    @staticmethod
+    def _aprs_chat_help():
         """ Interne Hilfe für den APRS-Chat-Modus """
         help_text = (
             "\r\r"
             "=== APRS Chat Hilfe ===\r"
             "--------------------------------------------------\r"
-            "//H          oder //HELP     → Diese Hilfe\r"
-            "//EXIT       oder //Q        → Chat verlassen\r"
-            "//AMSGS [n]                  → Alle Nachrichten anzeigen\r"
-            #"//ACLEAR                     → Gelesene Nachrichten löschen\r"
+            "  //H          oder //HELP     → Diese Hilfe\r"
+            "  //EXIT       oder //Q        → Chat verlassen\r"
+            "  //AMSGS [n]                  → Alle Nachrichten anzeigen\r"
+            #"  //ACLEAR                     → Gelesene Nachrichten löschen\r"
             "\r"
             "Ziel ändern (ohne Chat zu verlassen):\r"
-            "//ACHAT DL1ABC [Port]        → Mit Station chatten\r"
-            "//ACHAT ALL [Port]           → An alle (Bulletin)\r"
-            "//ACHAT CQ [Port]            → An CQ\r"
+            "  //ACHAT DL1ABC [Port]        → Mit Station chatten\r"
+            "  //ACHAT ALL [Port]           → An alle (Bulletin)\r"
+            "  //ACHAT CQ [Port]            → An CQ\r"
             "\r"
             "Tipps:\r"
             "- Nachrichten werden direkt gesendet\r"
@@ -258,4 +259,18 @@ class CliCmdAprsChat(CliModulBase):
         aprs_ais = self._popt_handler.get_aprs_ais()
         if aprs_ais and hasattr(aprs_ais.aprs_sms, 'unregister_callback'):
             aprs_ais.aprs_sms.unregister_callback(self._aprs_msg_callback)
+
+    # =====================================
+    # APRS-Messanger C-Text Noty
+    def aprs_cText_noty(self):
+        if not self._cliMain.new_aprs_msg_noty:
+            return ''
+        aprs_ais = self._popt_handler.get_aprs_ais()
+        if not hasattr(aprs_ais, 'get_pn_msg_for_call'):
+            return ''
+        my_aprs_msg = aprs_ais.get_pn_msg_for_call(self._to_call)
+        if not my_aprs_msg:
+            return ''
+        return self._getTabStr_CLI('aprs_new_mail_ctext').format(len(my_aprs_msg))
+
 

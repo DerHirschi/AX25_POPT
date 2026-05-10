@@ -558,18 +558,6 @@ class DefaultCLI(object):
         if hasattr(self._gui, 'on_channel_status_change'):
             self._gui.on_channel_status_change()
 
-    # APRS-Messanger C-Text Noty
-    def _aprs_cText_noty(self):
-        if not self.new_aprs_msg_noty:
-            return ''
-        aprs_ais = self._port_handler.get_aprs_ais()
-        if not hasattr(aprs_ais, 'get_pn_msg_for_call'):
-            return ''
-        my_aprs_msg = aprs_ais.get_pn_msg_for_call(self._to_call)
-        if not my_aprs_msg:
-            return ''
-        return self._getTabStr_CLI('aprs_new_mail_ctext').format(len(my_aprs_msg))
-
     #########################################################
     # CMD exec
     def _find_cmd(self):
@@ -843,7 +831,7 @@ class DefaultCLI(object):
         self._state_index = 1
         ret = self._get_own_identy_str() + '\r'
         ret += self._c_text
-        #ret += self._aprs_cText_noty()
+        ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
             ret += self.get_ts_prompt()
         self.send_output(ret, env_vars=True)

@@ -4376,10 +4376,10 @@ STR_TABLE = {
 
     'aprs_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AC\r\r',
-        '\r # APRS: You have {} new message(s). Reading with AC\r\r',
-        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AC\r\r',
-        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AC\r\r',
+        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AMS\r\r',
+        '\r # APRS: You have {} new message(s). Reading with AMS\r\r',
+        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AMS\r\r',
+        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AMS\r\r',
         '',
         '',
         '',
