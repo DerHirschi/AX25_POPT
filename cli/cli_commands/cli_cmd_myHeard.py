@@ -15,12 +15,9 @@ class CliCmdMyHeard(CliModulBase):
     # MH
     def cmd_mh(self):
         last_port_id = len(self._popt_handler.get_all_port_ids())
-        if last_port_id > 20:
-            max_ent = int(last_port_id)
-        else:
-            max_ent = 20
+
         self._decode_param(defaults=[
-            max_ent,  # Entry's
+            0,  # Entry's
             -1,  # Port
         ])
 
@@ -67,12 +64,9 @@ class CliCmdMyHeard(CliModulBase):
     # LMH
     def cmd_mhl(self):
         last_port_id = len(self._popt_handler.get_all_port_ids())
-        if last_port_id > 10:
-            max_ent = int(last_port_id)
-        else:
-            max_ent = 10
+
         self._decode_param(defaults=[
-            max_ent,  # Entry's
+            0,  # Entry's
             -1,  # Port
         ])
 

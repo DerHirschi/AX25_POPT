@@ -19,6 +19,8 @@ class ConverseCLI(DefaultCLI):
         ##########
         self._prev_cli = connection.cli
         self._connection.cli_type = str(self.cli_name)
+        self._port_handler.connection_manager.update_conn_history(connection, disco=False, inter_connect=True)
+
         # C-Text
         self._s0()
         self._add_to_converse()

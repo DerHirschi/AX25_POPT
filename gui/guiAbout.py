@@ -4,14 +4,18 @@ from cfg.constant import VER
 from cfg.logger_config import logger
 from PIL import Image, ImageTk  # Für bessere Bildbehandlung (optional aber empfohlen)
 
+from cfg.popt_config import POPT_CFG
+from fnc.str_fnc import get_strTab
+
 
 class About(tk.Toplevel):
     def __init__(self, main_win):
         tk.Toplevel.__init__(self, master=main_win.main_win)
         self.main_cl = main_win
         self.style = main_win.style
+        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
-        self.title("Über PoPT")
+        self.title(f"{self._getTabStr('about')} PoPT")
         self.win_width = 680
         self.win_height = 580
         self.geometry(f"{self.win_width}x{self.win_height}+"
@@ -38,11 +42,11 @@ class About(tk.Toplevel):
     def create_widgets(self):
         # ==================== Hauptframe ====================
         main_f = ttk.Frame(self, padding=20)
-        main_f.pack(fill=tk.BOTH, expand=True)
+        main_f.pack(fill='both', expand=True)
 
         # ==================== Header mit Logo ====================
         header = ttk.Frame(main_f)
-        header.pack(fill=tk.X, pady=(0, 20))
+        header.pack(fill='x', pady=(0, 20))
 
         # PoPT Logo
         try:
@@ -51,19 +55,20 @@ class About(tk.Toplevel):
             self.logo_img = ImageTk.PhotoImage(img)
 
             logo_label = ttk.Label(header, image=self.logo_img)
-            logo_label.pack(side=tk.LEFT, padx=(0, 20))
-        except Exception:
+            logo_label.pack(side='left', padx=(0, 20))
+        except Exception as ex:
+            null = ex
             # Fallback: Text-Logo
             logo_label = ttk.Label(header, text="PoPT",
                                    font=("Segoe UI", 48, "bold"),
                                    foreground="#1e88e5")
-            logo_label.pack(side=tk.LEFT, padx=(0, 20))
+            logo_label.pack(side='left', padx=(0, 20))
 
         # Titel + Version
         title_frame = ttk.Frame(header)
-        title_frame.pack(side=tk.LEFT, fill=tk.Y)
+        title_frame.pack(side='left', fill='y')
 
-        ttk.Label(title_frame, text="Python Other Packet Terminal",
+        ttk.Label(title_frame, text="Python other Packet Terminal",
                   font=("Segoe UI", 18, "bold")).pack(anchor="w")
 
         ttk.Label(title_frame, text=f"Version {VER}",
@@ -74,11 +79,11 @@ class About(tk.Toplevel):
 
         # ==================== Trennlinie ====================
         sep = ttk.Separator(main_f, orient="horizontal")
-        sep.pack(fill=tk.X, pady=15)
+        sep.pack(fill='x', pady=15)
 
         # ==================== Dank an die Community ====================
         comm_frame = ttk.LabelFrame(main_f, text=" Dank an die Packet Radio Community ", padding=15)
-        comm_frame.pack(fill=tk.X, pady=8)
+        comm_frame.pack(fill='x', pady=8)
 
         text = (
             "Ein großes Dankeschön an die gesamte Packet-Radio-Community!\n"
@@ -90,7 +95,7 @@ class About(tk.Toplevel):
 
         # ==================== Spezielle Danksagungen ====================
         thanks_frame = ttk.LabelFrame(main_f, text=" Besonderer Dank ", padding=15)
-        thanks_frame.pack(fill=tk.X, pady=8)
+        thanks_frame.pack(fill='x', pady=8)
 
         thanks_text = (
             "• ClaudeMa (GitHub) — Französische Übersetzung\n"
@@ -104,7 +109,7 @@ class About(tk.Toplevel):
 
         # ==================== GitHub Link ====================
         gh_frame = ttk.Frame(main_f)
-        gh_frame.pack(fill=tk.X, pady=15)
+        gh_frame.pack(fill='x', pady=15)
 
         ttk.Label(gh_frame, text="Projekt auf GitHub:",
                   font=("Segoe UI", 10, "bold")).pack(anchor="w")
@@ -116,10 +121,10 @@ class About(tk.Toplevel):
 
         # ==================== OK Button ====================
         btn_frame = ttk.Frame(main_f)
-        btn_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(10, 0))
+        btn_frame.pack(side='bottom', fill='x', pady=(10, 0))
 
         ok_bt = ttk.Button(btn_frame, text="OK", width=12, command=self.destroy_win)
-        ok_bt.pack(side=tk.RIGHT)
+        ok_bt.pack(side='right')
 
     def open_github(self):
         import webbrowser

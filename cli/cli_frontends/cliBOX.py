@@ -530,7 +530,7 @@ class BoxCLI(DefaultCLI):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
 
-        self._decode_param(defaults=[''])
+        self._decode_param(defaults=[str])
         if not self._parameter:
             return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
@@ -567,7 +567,7 @@ class BoxCLI(DefaultCLI):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
 
-        self._decode_param(defaults=[''])
+        self._decode_param(defaults=[str])
         if not self._parameter:
             return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
@@ -610,7 +610,7 @@ class BoxCLI(DefaultCLI):
             logger.error("CLI: _cmd_box_lb: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
 
-        self._decode_param(defaults=[''])
+        self._decode_param(defaults=[str])
         if not self._parameter:
             return self._getTabStr_CLI('box_parameter_error')
         if not self._parameter[0]:
@@ -766,7 +766,7 @@ class BoxCLI(DefaultCLI):
             return "\r # Error: No Mail-Box available !\r\r"
 
         # self._parameter = self._parameter[0]
-        self._decode_param(defaults=[-1])
+        self._decode_param(defaults=[int])
 
         if not self._parameter:
             return self._getTabStr_CLI('box_parameter_error')
@@ -813,7 +813,7 @@ class BoxCLI(DefaultCLI):
             logger.error(self._logTag + "_cmd_box_km: No BBS available")
             return "\r # Error: No Mail-Box available !\r\r"
         self._parameter = self._parameter[:5]
-        default_types = [-1 for x in self._parameter]
+        default_types = [int for x in self._parameter]
         self._decode_param(defaults=default_types)
 
         ret = bbs.del_pn_in_by_IDs(self._parameter, self._to_call)
@@ -903,7 +903,7 @@ class BoxCLI(DefaultCLI):
         return ret
 
     def _cmd_box_sp(self):
-        self._decode_param(defaults=[''])
+        self._decode_param(defaults=[str])
         if not self._parameter:
             return self._getTabStr_CLI('box_error_no_address')
 
@@ -969,7 +969,7 @@ class BoxCLI(DefaultCLI):
         return ret
 
     def _cmd_box_sb(self):
-        self._decode_param(defaults=[''])
+        self._decode_param(defaults=[str])
         if not self._parameter:
             return self._getTabStr_CLI('box_error_no_address')
 

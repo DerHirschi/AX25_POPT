@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from cfg.popt_config import POPT_CFG
+from cli.cli_commands.cli_cmd_help import CliCmdHelp
+#from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
@@ -102,6 +104,8 @@ class DefaultCLI(object):
         self._infos_cmds      = CliCmdInfos(self)
         self._status_cmds     = CliCmdStatus(self)
         self._user_db_cmds    = CliCmdUserDB(self)
+        self._help_cmds       = CliCmdHelp(self)
+        #self._poker_cmds      = CliCmdPoker(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
@@ -114,6 +118,7 @@ class DefaultCLI(object):
             # NODE Stuff
             'CONNECT':  (1, self._cmd_connect,                      'Connect',           False),
             'C!':       (2, self._cmd_connect_exclusive,            'Connect Exclusive (No MH-Path-Lookup)', False),
+            'CONV':     (3, self._cmd_conv,                         'Converse',                                 False),
 
             # Statistics
             'PSTAT':    (2, self._statistics_cmds.cmd_pstat,        f"Port {self._getTabStr_CLI('statistic')}", False),
@@ -166,9 +171,11 @@ class DefaultCLI(object):
             'LANG':     (4, self._cmd_lang, self._getTabStr_CLI('cli_change_language'), False),
             'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'), False),
             #
-            'HELP':     (1, self._cmd_help, self._getTabStr_CLI('help'), False),
-            'CONV':     (3, self._cmd_conv,                 'Converse', False),
-            '?':        (0, self._cmd_shelp, self._getTabStr_CLI('cmd_shelp'), False),
+            'HELP':     (1, self._help_cmds.cmd_help,                         self._getTabStr_CLI('help'),        False),
+            '?':        (0, self._help_cmds.cmd_shelp,                        self._getTabStr_CLI('cmd_shelp'),   False),
+            # Poker
+            #'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
+
         }
 
         self._StrCommands  = CliStrCommands(self)
@@ -234,6 +241,10 @@ class DefaultCLI(object):
     def stat_cfg_index_call(self):
         return self._stat_cfg_index_call
 
+    @property
+    def command_set(self):
+        return self._command_set
+
     #######################
     @property
     def parameter(self):
@@ -255,7 +266,7 @@ class DefaultCLI(object):
 
     ##################################
     # Rechte / CMD Update
-    def _get_allowed_cmds(self):
+    def get_allowed_cmds(self):
         if hasattr(self._prp, 'prp_rights'):
             allowed = self._prp.prp_rights.get_allowed_cli_commands(self._connection.to_call_str, self.cli_name)
             return [cmd for cmd in self._command_set if cmd in allowed]
@@ -548,7 +559,7 @@ class DefaultCLI(object):
             self._env_var_cmd = False
             inp_cmd = str(self._cmd.decode(self._encoding[0], 'ignore'))
             inp_cmd = inp_cmd.replace(' ', '')
-            cmds    = self._get_allowed_cmds()
+            cmds    = self.get_allowed_cmds()
             treffer = []
             for cmd in cmds:
                 if self._command_set[cmd][0]:
@@ -726,30 +737,6 @@ class DefaultCLI(object):
         to_send += param[1] + b'\r'
         to_conn.send_data(to_send)
         return self._getTabStr_CLI('ch_cmd_send').format(ch_id, to_conn.to_call_str)
-
-    def _cmd_help(self):
-        # ret = f"\r   < {self._getTabStr('help')} >\r"
-        ret = "\r"
-        for k in sorted(list(self._get_allowed_cmds())):
-            if self._command_set[k][2]:
-                ret += '\r {}{:10} = {}'.format(self.prefix.decode('UTF-8', 'ignore'),
-                                                k,
-                                                self._command_set[k][2])
-        ret += '\r\r'
-        return ret
-
-    def _cmd_shelp(self):
-        ret = '\r # '
-        c = 0
-        cmds = list(self._get_allowed_cmds())
-        cmds.sort()
-        for k in cmds:
-            ret += (k + ' ')
-            if len(ret) - c > 60:
-                ret += '\r # '
-                c += 60
-        ret += '\r\r'
-        return ret
 
     def _cmd_umlaut(self):
         # print(self.parameter)

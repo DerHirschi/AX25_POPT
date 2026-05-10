@@ -26,6 +26,7 @@ Optimierung/Änderungen:
 - Port-Einstellungen: Extra Fenster für KISS Einstellungen/Parameter
   - Zusätzlich Custom TNC-Kommandos möglich (Für KISS-Mode init)
 - Port-Einstellungen: Flusskontrolle Optionen für serielle Geräte (DTR/RTS)
+- "About" Fenster
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "CHIST" - zeigt Verbindungsverlauf
