@@ -37,6 +37,8 @@ Neue Implementierungen / Funktionen:
 - Autosave, alle Daten werden Periodisch (einstellbar) gespeichert.
 - Multiport TNC (KISS) support
 - APRS-Chat über NODE/BSS CLI (experimentell)
+  - CLI-CMD "ACHAT"
+  - CLI-CMD "AMSGS"
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren
