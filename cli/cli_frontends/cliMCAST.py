@@ -52,7 +52,7 @@ class MCastCLI(DefaultCLI):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
         if ret:
-            self._send_output(ret, env_vars=False)
+            self.send_output(ret, env_vars=False)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -63,7 +63,7 @@ class MCastCLI(DefaultCLI):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
         if ret:
-            self._send_output(ret, env_vars=False)
+            self.send_output(ret, env_vars=False)
 
     def _s0(self):  # C-Text
         self._state_index = 1
@@ -72,7 +72,7 @@ class MCastCLI(DefaultCLI):
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
         out += self.get_ts_prompt()
-        self._send_output(out, env_vars=True)
+        self.send_output(out, env_vars=True)
         return ''
 
     def _s1(self):
@@ -81,14 +81,14 @@ class MCastCLI(DefaultCLI):
         # Check String Commands
         str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
         if str_cmd_ret:
-            self._send_output(str_cmd_ret, env_vars=False)
+            self.send_output(str_cmd_ret, env_vars=False)
             self._last_line    = b''
             self.new_last_line = b''
             return ''
         if self._check_abort_cmd():
             return ''
         self._input = self._raw_input
-        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self.send_output(self.exec_cmd(), self._env_var_cmd)
         self._last_line = self.new_last_line
         return ''
 

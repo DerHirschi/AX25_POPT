@@ -36,6 +36,7 @@ Neue Implementierungen / Funktionen:
 - APRS-Monitor: Tabelle/Monitor für I-Gate & APRS-DIGI Pakete
 - Autosave, alle Daten werden Periodisch (einstellbar) gespeichert.
 - Multiport TNC (KISS) support
+- APRS-Chat über NODE/BSS CLI (experimentell)
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren

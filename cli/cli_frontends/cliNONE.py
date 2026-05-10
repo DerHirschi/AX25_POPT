@@ -24,7 +24,7 @@ class NoneCLI(DefaultCLI):
         return self._software_identifier()
 
 
-    def _exec_cmd(self):
+    def exec_cmd(self):
         return ''
 
     def cli_cron(self):

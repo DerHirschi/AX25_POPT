@@ -340,7 +340,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                     or (aprs_pack.get('addresse', '') == self._chat_address[0]
                         and aprs_pack.get('from', '') == self._sender_var.get()):
                 self._build_new_chat_fm_chat_address()
-        elif 'bulletin' == aprs_pack['format']:
+        elif 'bulletin' == aprs_pack.get('format', ''):
             self._update_tree()
 
     ################################

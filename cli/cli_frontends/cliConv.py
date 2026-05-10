@@ -85,7 +85,7 @@ class ConverseCLI(DefaultCLI):
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r*** {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r"
         ret += "*** Converse session terminated.\r\r"
-        self._send_output(ret, env_vars=True)
+        self.send_output(ret, env_vars=True)
         if not self._connection.cli_type == CLI_TYP_SYSOP:
             self._connection.cli.send_prompt()
         # self._crone_state_index = 100  # Quit State
@@ -101,7 +101,7 @@ class ConverseCLI(DefaultCLI):
         #ret = self._send_sw_id()
         ret = "\r*** Looking up Converse-Mode\r"
 
-        self._send_output(ret, env_vars=True)
+        self.send_output(ret, env_vars=True)
         return ''
 
     def _s1(self):
@@ -111,7 +111,7 @@ class ConverseCLI(DefaultCLI):
         if self._is_prefix():
             # Kommando erkannt
             ret = self._find_cmd()
-            self._send_output(ret, self._env_var_cmd)
+            self.send_output(ret, self._env_var_cmd)
         else:
             # Kein Kommando, Nachricht an Kanal weiterleiten
             message = self._raw_input.replace(b'\n', b'\r')

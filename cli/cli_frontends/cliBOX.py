@@ -111,7 +111,7 @@ class BoxCLI(DefaultCLI):
 
             # == Senden
             ret = bbs_id_flag + '\r'
-            self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+            self.send_output(ret + self.get_ts_prompt(), env_vars=True)
             return ''
 
         ret += self._c_text
@@ -130,7 +130,7 @@ class BoxCLI(DefaultCLI):
             self._user_db_ent.bbs_newUser = False
             self.change_cli_state(9)
             self.can_sidestop = False
-            self._send_output(ret, env_vars=True)
+            self.send_output(ret, env_vars=True)
             self._bbs.send_sysop_msg(
                 topic=self._getTabStr_GUI('bbs_new_user_sysopMsg_top'),
                 msg=self._getTabStr_GUI('bbs_new_user_sysopMsg_msg').format(self._to_call,
@@ -149,7 +149,7 @@ class BoxCLI(DefaultCLI):
 
         if not self._user_db_ent.PRmail:
             ret += self._getTabStr_CLI('box_no_hbbs_address')
-        self._send_output(ret + self.get_ts_prompt(), env_vars=True)
+        self.send_output(ret + self.get_ts_prompt(), env_vars=True)
 
         return ''
 
@@ -188,14 +188,14 @@ class BoxCLI(DefaultCLI):
         # Check String Commands
         str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
         if str_cmd_ret:
-            self._send_output(str_cmd_ret, env_vars=False)
+            self.send_output(str_cmd_ret, env_vars=False)
             self._last_line     = b''
             self.new_last_line  = b''
             return ''
         if self._check_abort_cmd():
             return ''
         self._input = self._raw_input
-        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self.send_output(self.exec_cmd(), self._env_var_cmd)
         self._last_line = self.new_last_line
         return ''
 
@@ -215,14 +215,14 @@ class BoxCLI(DefaultCLI):
                 # Nachricht fuer {} anulliert.
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output(self._getTabStr_CLI('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self.get_ts_prompt()), env_vars=False)
+                self.send_output(self._getTabStr_CLI('box_cmd_sp_abort_msg').format(self._out_msg.get('receiver', ) + self.get_ts_prompt()), env_vars=False)
                 self._out_msg = GET_MSG_STRUC()
                 return
             self._input = eol.join(lines[1:])
 
             self._out_msg.update(dict(subject=subject))
             # Text eingeben ... (Ende mit /EX oder Ctrl-Z) :
-            self._send_output(self._getTabStr_CLI('box_cmd_sp_enter_msg'), env_vars=False)
+            self.send_output(self._getTabStr_CLI('box_cmd_sp_enter_msg'), env_vars=False)
             self._send_msg_state = 1
             return
         if self._send_msg_state == 1:
@@ -270,7 +270,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
+                self.send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return
 
             ret = self._bbs.add_cli_msg_to_fwd_by_id(mid)
@@ -280,7 +280,7 @@ class BoxCLI(DefaultCLI):
                 self._out_msg = GET_MSG_STRUC()
                 self._send_msg_state = 0
                 self.change_cli_state(1)
-                self._send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
+                self.send_output("\r # Error !! Please contact Sysop !!\r\r" + self.get_ts_prompt(), env_vars=False)
                 return
             bid, fwd_bbs_list = ret
             # Ok. Nachricht an Adresse MD2SAW @ wird geforwardet
@@ -301,7 +301,7 @@ class BoxCLI(DefaultCLI):
                 )
 
             ret_text += self.get_ts_prompt()
-            self._send_output(ret_text, env_vars=False)
+            self.send_output(ret_text, env_vars=False)
 
             self._out_msg = GET_MSG_STRUC()
             self._send_msg_state = 0
@@ -323,7 +323,7 @@ class BoxCLI(DefaultCLI):
                     if self._user_db_ent.Name:
                         ret += f" {self._user_db_ent.Name} ?\r"
                         ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
-                    self._send_output(ret, env_vars=False)
+                    self.send_output(ret, env_vars=False)
                     self._s9_state = 1
                     return
                 try:
@@ -338,7 +338,7 @@ class BoxCLI(DefaultCLI):
                         else:
                             ret += f"{lang} > {k}\r"
                     ret += '>'
-                    self._send_output(ret)
+                    self.send_output(ret)
                     return
                 if lang_opt not in LANG_IND.values():
                     ret = self._getTabStr_CLI('box_parameter_error')
@@ -350,7 +350,7 @@ class BoxCLI(DefaultCLI):
                         else:
                             ret += f"{lang} > {k}\r"
                     ret += '>'
-                    self._send_output(ret)
+                    self.send_output(ret)
                     return
                 self._cli_lang = lang_opt
                 self._connection.set_user_db_language(self._cli_lang)
@@ -359,7 +359,7 @@ class BoxCLI(DefaultCLI):
             if self._user_db_ent.Name:
                 ret += f" {self._user_db_ent.Name} ?\r"
                 ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
-            self._send_output(ret, env_vars=False)
+            self.send_output(ret, env_vars=False)
 
             self._s9_state   = 1
         elif self._s9_state == 1:
@@ -373,7 +373,7 @@ class BoxCLI(DefaultCLI):
             if self._user_db_ent.QTH:
                 ret += f" {self._user_db_ent.QTH} ?\r"
                 ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
-            self._send_output(ret)
+            self.send_output(ret)
             self._s9_state = 2
         elif self._s9_state == 2:
             if self._raw_input == eol and self._user_db_ent.QTH:
@@ -385,7 +385,7 @@ class BoxCLI(DefaultCLI):
             if self._user_db_ent.LOC:
                 ret += f" {self._user_db_ent.LOC} ?\r"
                 ret += self._getTabStr_CLI('bbs_new_user_reg_confirm')
-            self._send_output(ret)
+            self.send_output(ret)
             self._s9_state   = 3
         elif self._s9_state == 3:
             if self._raw_input == eol and self._user_db_ent.LOC:
@@ -394,16 +394,16 @@ class BoxCLI(DefaultCLI):
                 loc = self._raw_input.replace(eol, b'').decode(self._encoding[0], 'ignore').upper()
                 self._user_db_ent.LOC = str(loc)
             if self._user_db_ent.PRmail:
-                self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_1').format(self._user_db_ent.PRmail.split('@')[-1]))
+                self.send_output(self._getTabStr_CLI('bbs_new_user_reg2_1').format(self._user_db_ent.PRmail.split('@')[-1]))
                 self._s9_state = 41
             else:
-                self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
+                self.send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
                 self._s9_state   = 4
         elif self._s9_state == 41:
             if self._raw_input.endswith(eol):
                 anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
                 if anw in [b'N']:
-                    self._send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
+                    self.send_output(self._getTabStr_CLI('bbs_new_user_reg2_2'), env_vars=False)
                     self._s9_state = 4
                 else:
                     ret = self._getTabStr_CLI('bbs_new_user_reg4').format(self._user_db_ent.Name,
@@ -412,7 +412,7 @@ class BoxCLI(DefaultCLI):
                                                                           self._user_db_ent.LOC,
                                                                           )
                     ret += self.get_ts_prompt()
-                    self._send_output(ret, env_vars=True)
+                    self.send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
                     self.change_cli_state(1)
@@ -420,7 +420,7 @@ class BoxCLI(DefaultCLI):
             if self._raw_input.endswith(eol):
                 anw = self._raw_input.replace(eol, b'').upper().replace(b' ', b'')
                 if anw in [b'N']:
-                    self._send_output(self._getTabStr_CLI('bbs_new_user_reg3'), env_vars=False)
+                    self.send_output(self._getTabStr_CLI('bbs_new_user_reg3'), env_vars=False)
                     self._s9_state = 5
                 else:
                     pms_cfg  = self._bbs.get_pms_cfg()
@@ -428,7 +428,7 @@ class BoxCLI(DefaultCLI):
                     regio    = pms_cfg.get('regio', '')
                     if not all((bbs_call, regio)):
                         BBS_LOG.error(self._logTag + f"S9-2: no bbs_call({bbs_call}) or regio({regio})")
-                        self._send_output("\r # Error: BBS-Error !\r\r")
+                        self.send_output("\r # Error: BBS-Error !\r\r")
                     else:
                         self._user_db_ent.PRmail = f"{self._to_call}@{bbs_call}.{regio}"
                         ret = self._getTabStr_CLI('bbs_new_user_reg4').format(self._user_db_ent.Name,
@@ -440,7 +440,7 @@ class BoxCLI(DefaultCLI):
                         if new_mail:
                             ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
                         ret += self.get_ts_prompt()
-                        self._send_output(ret, env_vars=True)
+                        self.send_output(ret, env_vars=True)
                     self._s9_state = 10
                     self.can_sidestop = True
                     self.change_cli_state(1)
@@ -462,7 +462,7 @@ class BoxCLI(DefaultCLI):
                         db_ent.TYP
                     )
                     ret += self._getTabStr_CLI('bbs_new_user_reg2_2')
-                    self._send_output(ret)
+                    self.send_output(ret)
                     self._s9_state = 4
                     return
                 elif not db_ent.PRmail:
@@ -481,13 +481,13 @@ class BoxCLI(DefaultCLI):
                 if new_mail:
                     ret += self._getTabStr_CLI('box_new_mail_ctext').format(new_mail)
                 ret += self.get_ts_prompt()
-                self._send_output(ret, env_vars=True)
+                self.send_output(ret, env_vars=True)
                 self._s9_state = 10
                 self.can_sidestop = True
                 self.change_cli_state(1)
         else:
             BBS_LOG.error(self._logTag + f"S9-?: self._s9_state = {self._s9_state}")
-            self._send_output("\r # Error: BBS-Error S9 !\r\r")
+            self.send_output("\r # Error: BBS-Error S9 !\r\r")
             self._s9_state = 10
             self.can_sidestop = True
             self.change_cli_state(1)
@@ -495,7 +495,7 @@ class BoxCLI(DefaultCLI):
 
     ##############################################
     #
-    def _send_output(self, ret, env_vars=False):
+    def send_output(self, ret, env_vars=False):
         if ret:
             if self._state_index in [8]:
                 # Send Msg

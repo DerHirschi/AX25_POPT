@@ -35,6 +35,8 @@ class APRSsms:
                 arps_msg['address'] = str(arps_msg.get('addresse', ''))
                 # del arps_msg['addresse']
 
+        self._callbacks = []  # Liste von Callbacks
+
     # ====================
     def aprs_sms_save(self):
         logger.info("APRS-SMS: Save Conf")
@@ -133,9 +135,6 @@ class APRSsms:
                 self._port_handler.api.set_aprsMailAlarm_PH(True)
 
         self._update_gui_aprs_msg_win(aprs_pack)
-
-    def _aprs_msg_sys_new_msg(self, aprs_pack: dict):
-        self._update_msg_gui(aprs_pack)
 
     @staticmethod
     def _aprs_msg_sys_new_bn(aprs_pack: dict):
@@ -306,3 +305,28 @@ class APRSsms:
 
     def del_bl_msg_pool(self):
         self.aprs_msg_pool['bulletin'] = []
+
+    # ==================================================
+    # Callbacks
+    def _aprs_msg_sys_new_msg(self, aprs_pack: dict):
+        self._update_msg_gui(aprs_pack)
+        self._notify_callbacks(aprs_pack)
+
+    def register_callback(self, callback):
+        """Callback registrieren (callable)"""
+        if callable(callback) and callback not in self._callbacks:
+            self._callbacks.append(callback)
+
+    def unregister_callback(self, callback):
+        """Callback entfernen"""
+        if callback in self._callbacks:
+            self._callbacks.remove(callback)
+
+    def _notify_callbacks(self, msg: dict):
+        """Interne Methode — wird nach Empfang einer neuen Nachricht aufgerufen"""
+        for cb in self._callbacks[:]:  # Kopie, falls sich Liste während Aufruf ändert
+            try:
+                cb(msg)
+            except Exception as e:
+                logger.error(f"APRS Callback Error: {e}")
+

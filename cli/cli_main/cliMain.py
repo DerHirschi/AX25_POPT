@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from cfg.popt_config import POPT_CFG
+from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
 #from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
@@ -105,6 +106,7 @@ class DefaultCLI(object):
         self._status_cmds     = CliCmdStatus(self)
         self._user_db_cmds    = CliCmdUserDB(self)
         self._help_cmds       = CliCmdHelp(self)
+        self._aprs_chat_cmds  = CliCmdAprsChat(self)
         #self._poker_cmds      = CliCmdPoker(self)
 
         # Standard Commands ( GLOBAL )
@@ -144,8 +146,9 @@ class DefaultCLI(object):
             # Remote Monitor
             # 'PREMON':   (2, self._cmd_set_gui_remote_mon,         "PoPT Remote Monitor", False),
 
-            # APRS Stuff
-            #'ACHAT':    (2, self.,                                 'APRS-Messenger',                       False),
+            # APRS Chat
+            'ACHAT':    (2, self._aprs_chat_cmds.cmd_aprs_chat,     'APRS Chat / Messenger',                       False),
+            'AMSGS':    (2, self._aprs_chat_cmds.cmd_aprs_msgs,     'APRS Messages',                       False),
             #
             'BELL':     (2, self._cmd_bell,                         self._getTabStr_CLI('cmd_help_bell'),   False),
 
@@ -189,6 +192,7 @@ class DefaultCLI(object):
             5: self._s5,  # Nothing / no remote
             6: self._s6,  # Auto Baycom Login Shit
             7: self._s7,  # Box Side Stop / Paging | Wait for input
+            8: self._aprs_chat_cmds.s8_aprs_chat,  # APRS Chat Mode
         }
 
         self.init()
@@ -245,13 +249,27 @@ class DefaultCLI(object):
     def command_set(self):
         return self._command_set
 
+    @property
+    def state_index(self):
+        return self._state_index
+
     #######################
+    # Input Parameter
     @property
     def parameter(self):
         return self._parameter
 
     def set_parameter(self, new_parameter: list):
         self._parameter = list(new_parameter)
+
+    #######################
+    # Input
+    @property
+    def raw_input(self):
+        return self._raw_input
+
+    def set_input(self, val):
+        self._input = val
 
     ########################################################
     @property
@@ -281,9 +299,9 @@ class DefaultCLI(object):
         return f"\r{self._my_call_str} ({datetime.now().strftime('%H:%M:%S')})>"
 
     def send_prompt(self):
-        self._send_output(self.get_ts_prompt(), env_vars=False)
+        self.send_output(self.get_ts_prompt(), env_vars=False)
 
-    def _send_output(self, ret, env_vars=True):
+    def send_output(self, ret, env_vars=True):
         if not ret:
             return
         if type(ret) is str:
@@ -410,7 +428,7 @@ class DefaultCLI(object):
                         sys_pw=self._user_db_ent.sys_pw,
                         login_cmd=login_cmd,
                     )
-                    self._send_output(self._sys_login.start(), env_vars=False)
+                    self.send_output(self._sys_login.start(), env_vars=False)
                     self.change_cli_state(3)
 
     def _baycom_auto_login(self):
@@ -521,9 +539,9 @@ class DefaultCLI(object):
             if self.stat_identifier is not None:
                 if self.stat_identifier:
                     if self.stat_identifier.typ == 'SYSOP':
-                        self._send_output(f'\r//N {name}\r', env_vars=False)
+                        self.send_output(f'\r//N {name}\r', env_vars=False)
                     else:
-                        self._send_output(f'\rN {name}\r', env_vars=False)
+                        self.send_output(f'\rN {name}\r', env_vars=False)
     ###################################
     # Init PoPT Remote (Monitor)
     def _init_popt_remote(self):
@@ -601,7 +619,7 @@ class DefaultCLI(object):
 
         return ""
 
-    def _exec_cmd(self):
+    def exec_cmd(self):
         if not self._last_line.endswith(b'\r'):
             self._last_line += b'\r'
         self._input = self._last_line + self._input
@@ -697,7 +715,7 @@ class DefaultCLI(object):
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
         ret += self.load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
-        self._send_output(ret, env_vars=True)
+        self.send_output(ret, env_vars=True)
         self._crone_state_index = 100  # Quit State
         return ''
 
@@ -798,7 +816,7 @@ class DefaultCLI(object):
         self._raw_input = bytes(inp)
         ret = self._state_exec[self._state_index]()
         if ret:
-            self._send_output(ret, env_vars=False)
+            self.send_output(ret, env_vars=False)
 
     def cli_cron(self):
         """ Global Crone Tasks """
@@ -809,7 +827,7 @@ class DefaultCLI(object):
         """ State Crone Tasks """
         ret = self._cron_state_exec[self._crone_state_index]()
         if ret:
-            self._send_output(ret, env_vars=False)
+            self.send_output(ret, env_vars=False)
 
     def cli_update_monitor(self, ax25frame_conf:dict):
         pass
@@ -828,7 +846,7 @@ class DefaultCLI(object):
         #ret += self._aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
             ret += self.get_ts_prompt()
-        self._send_output(ret, env_vars=True)
+        self.send_output(ret, env_vars=True)
         return ''
 
     def _s1(self):
@@ -848,7 +866,7 @@ class DefaultCLI(object):
         # Check String Commands
         str_cmd_ret = self._StrCommands.exec_str_cmd(self._last_line + self._raw_input)
         if str_cmd_ret:
-            self._send_output(str_cmd_ret, env_vars=False)
+            self.send_output(str_cmd_ret, env_vars=False)
             self._last_line    = b''
             self.new_last_line = b''
             return ''
@@ -857,7 +875,7 @@ class DefaultCLI(object):
         if self._check_abort_cmd():
             return ''
         self._input = self._raw_input               # TODO Cleanup this VAR mess
-        self._send_output(self._exec_cmd(), self._env_var_cmd)
+        self.send_output(self.exec_cmd(), self._env_var_cmd)
         self._last_line = self.new_last_line       # TODO Cleanup this VAR mess
         return ''
 
@@ -1000,7 +1018,7 @@ class DefaultCLI(object):
                 self.change_cli_state(1)
                 self._last_line = b''
                 self._input = self._raw_input
-                self._send_output(self._exec_cmd(), env_vars=False)
+                self.send_output(self.exec_cmd(), env_vars=False)
                 self._last_line = self.new_last_line
                 return
 

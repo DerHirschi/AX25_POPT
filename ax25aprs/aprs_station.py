@@ -37,7 +37,7 @@ class APRSmain(object):
         """ WX """
         self._aprs_wx           = APRSwx(self, port_handler)
         """ APRS-Message Stuff """
-        self._aprs_sms          = APRSsms(self, port_handler)
+        self.aprs_sms           = APRSsms(self, port_handler)
         """ Beacon Tracer """
         self._aprs_tracer       = APRSTracer(self, port_handler)
         """ I-Gate """
@@ -69,7 +69,7 @@ class APRSmain(object):
         # Tracer
         self._aprs_tracer.save_param()
         # APRS-SMS
-        self._aprs_sms.aprs_sms_save()
+        self.aprs_sms.aprs_sms_save()
 
 
     def reinit(self):
@@ -188,7 +188,7 @@ class APRSmain(object):
             # WatchDog
             self._watchdog_task()
             # SMS
-            self._aprs_sms.aprs_sms_tasker()
+            self.aprs_sms.aprs_sms_tasker()
             # Tracer
             self._aprs_tracer.aprs_tracer_tasker()
 
@@ -312,7 +312,7 @@ class APRSmain(object):
         # Node Tab
         self._aprs_node_tab.node_tab_process_rx(aprs_pack)
         # APRS PN/BULLETIN MSG
-        if self._aprs_sms.aprs_sms_rx(aprs_pack=aprs_pack):
+        if self.aprs_sms.aprs_sms_rx(aprs_pack=aprs_pack):
             return True
         # APRS Weather
         elif self._aprs_wx.aprs_wx_msg_rx(aprs_pack=aprs_pack):
@@ -333,13 +333,16 @@ class APRSmain(object):
     def send_APRS_as_UI(self, pack, digi=False):
         port_id = pack.get('tx_port', '') or pack.get('port_id', '')
         if not port_id:
+            print(1)
             return
         try:
             port_id = int(port_id)
         except ValueError:
+            print(2)
             return
         ax_port = self._port_handler.get_all_ports().get(port_id, None)
         if not ax_port:
+            print(3)
             return
         path      = pack.get('path', [])
         msg_text  = pack.get('raw_message_text', '').encode('UTF-8', 'ignore')
@@ -386,14 +389,14 @@ class APRSmain(object):
     # APRS MSG System
     # TX-Stuff
     def send_aprs_text_msg(self, answer_pack, msg='', with_ack=False):
-        return self._aprs_sms.send_aprs_text_msg(
+        return self.aprs_sms.send_aprs_text_msg(
             answer_pack=answer_pack,
             msg=msg,
             with_ack=with_ack,
         )
 
     def send_pn_msg(self, pack, msg, with_ack=False):
-        return self._aprs_sms.send_pn_msg(
+        return self.aprs_sms.send_pn_msg(
             pack=pack,
             msg=msg,
             with_ack=with_ack
@@ -401,26 +404,26 @@ class APRSmain(object):
 
     # Spooler
     def reset_spooler(self):
-        self._aprs_sms.reset_spooler()
+        self.aprs_sms.reset_spooler()
 
     def del_spooler(self):
-        self._aprs_sms.del_spooler()
+        self.aprs_sms.del_spooler()
 
     def get_spooler_buffer(self):
-        return self._aprs_sms.get_spooler_buffer()
+        return self.aprs_sms.get_spooler_buffer()
 
     def get_pn_msg_for_call(self, call: str):
-        return self._aprs_sms.get_pn_msg_for_call(call)
+        return self.aprs_sms.get_pn_msg_for_call(call)
 
     # APRS MSG Pool
     def get_aprs_msg_pool(self):
-        return self._aprs_sms.aprs_msg_pool
+        return self.aprs_sms.aprs_msg_pool
 
     def del_pn_msg_pool(self):
-        self._aprs_sms.del_pn_msg_pool()
+        self.aprs_sms.del_pn_msg_pool()
 
     def del_bl_msg_pool(self):
-        self._aprs_sms.del_bl_msg_pool()
+        self.aprs_sms.del_bl_msg_pool()
 
     #########################################
     # Beacon Tracer

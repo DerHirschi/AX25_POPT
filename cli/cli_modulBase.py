@@ -31,6 +31,10 @@ class CliModulBase:
     def _stat_identifier(self):
         return self._cliMain.stat_identifier
 
+    @property
+    def _raw_input(self):
+        return self._cliMain.raw_input
+
     def _get_ts_prompt(self):
         return self._cliMain.get_ts_prompt()
 
