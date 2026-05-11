@@ -11,9 +11,11 @@ class CliCmdAprsChat(CliModulBase):
     def __init__(self, cli_main):
         super().__init__(cli_main=cli_main)
 
-        self._aprs_chat_port   = 0
-        self._aprs_chat_target = 'ALL'
-        self._aprs_chat_path   = ['WIDE7-7']
+        self._aprs_chat_port        = 0
+        self._aprs_chat_target      = 'ALL'
+        max_hops                    = 7
+        self._aprs_chat_max_hops    = max_hops
+        self._aprs_chat_path        = [f'WIDE{max_hops}-{max_hops}']
 
     # ===========================================
     def cmd_aprs_chat(self):
@@ -43,10 +45,10 @@ class CliCmdAprsChat(CliModulBase):
             ret += self._getTabStr_CLI('aprs_chat_enter') + "\r"
             ret += self._getTabStr_CLI('aprs_chat_help') + "\r\r"
             ret += self._get_recent_aprs_msgs()
+            self._cliMain.change_cli_state(8)
         else:
             ret += '\r'
 
-        self._cliMain.change_cli_state(8)
         return ret
 
     # ===========================================
@@ -151,7 +153,8 @@ class CliCmdAprsChat(CliModulBase):
             return ''
 
         raw_text: str = self._raw_input.decode(self._get_encoding()[0], 'ignore')
-        text = raw_text.upper().strip()
+        splited_text = raw_text.upper().strip().split(' ')
+        text = splited_text[0]
 
         # Exit
         if text in ('//EXIT', '//Q', '//QUIT', 'EXIT', 'QUIT'):
@@ -161,7 +164,13 @@ class CliCmdAprsChat(CliModulBase):
 
         # Hilfe
         if text in ('//H', '//HELP', '//?'):
-            return self._aprs_chat_help() + self._get_ts_prompt()
+            return self._aprs_chat_help()
+
+        # WIDE (set max Hops)
+        if text in ('//WIDE', '//W', '//WI'):
+            if len(splited_text) != 2:
+                return "\r" + self._getTabStr_CLI('box_parameter_error') + "\r"
+            return self._set_hops(splited_text[1])
 
         # Normale CLI-Befehle im Chat-Modus
         if raw_text.startswith('//'):
@@ -193,6 +202,27 @@ class CliCmdAprsChat(CliModulBase):
         return "" if success else "\r" + self._getTabStr_CLI('aprs_send_error') + "\r"
 
     # ===========================================
+    def _set_hops(self, hops: str):
+        #self._decode_param(defaults=[7])
+        try:
+            max_hops = int(hops)
+        except (ValueError, IndexError):
+            max_hops = 7
+        if max_hops not in range(1,8):
+            return  "\r" + self._getTabStr_CLI('cli_error') + ": Value: 1 - 7"+ "\r"
+
+        self._aprs_chat_max_hops = max_hops
+        self._aprs_chat_path     = [f'WIDE{max_hops}-{max_hops}']
+        path_str = ' '.join(self._aprs_chat_path)
+
+        ret = ("\r" +
+                f" # Max Hops {max_hops} ({f'WIDE{max_hops}-{max_hops}'})\r\r" +
+                self._getTabStr_CLI('aprs_chat_title').format(
+                self._aprs_chat_target, self._aprs_chat_port, path_str) + "\r")
+
+        return ret
+
+    # ===========================================
     def _aprs_chat_help(self):
         """ Interne Hilfe für den APRS-Chat """
         return (
@@ -200,6 +230,7 @@ class CliCmdAprsChat(CliModulBase):
             self._getTabStr_CLI('aprs_chat_help_title') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_border') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_h') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_max_hops') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_exit') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_amsgs') + "\r\r" +
             self._getTabStr_CLI('aprs_chat_help_achange') + "\r" +

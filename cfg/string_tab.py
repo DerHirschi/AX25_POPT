@@ -6131,42 +6131,54 @@ STR_TABLE = {
                              ) * 10,
 
     'aprs_chat_help_h': (
-        "  //H  oder //HELP     → Diese Hilfe",
-        "  //H  or  //HELP      → This help",
-        "  //H  of   //HELP     → Deze hulp",
-        "  //H  ou  //HELP      → Cette aide",
-        "  //H  nebo //HELP     → Tato nápověda",
-        "  //H  lub  //HELP     → Ta pomoc",
-        "  //H  ou  //HELP      → Esta ajuda",
-        "  //H  o   //HELP      → Questo aiuto",
-        "  //H  или //HELP      → Эта помощь",
-        "  //H  або //HELP      → Ця допомога",
+        "  //H  oder //HELP     - Diese Hilfe",
+        "  //H  or  //HELP      - This help",
+        "  //H  of   //HELP     - Deze hulp",
+        "  //H  ou  //HELP      - Cette aide",
+        "  //H  nebo //HELP     - Tato nápověda",
+        "  //H  lub  //HELP     - Ta pomoc",
+        "  //H  ou  //HELP      - Esta ajuda",
+        "  //H  o   //HELP      - Questo aiuto",
+        "  //H  или //HELP      - Эта помощь",
+        "  //H  або //HELP      - Ця допомога",
     ),
 
     'aprs_chat_help_exit': (
-        "  //EXIT oder //Q       → Chat verlassen",
-        "  //EXIT or  //Q        → Leave chat",
-        "  //EXIT of   //Q       → Chat verlaten",
-        "  //EXIT ou  //Q        → Quitter le chat",
-        "  //EXIT nebo //Q       → Ukončit chat",
-        "  //EXIT lub  //Q       → Wyjście z czatu",
-        "  //EXIT ou  //Q        → Sair do chat",
-        "  //EXIT o   //Q        → Uscire dal chat",
-        "  //EXIT или //Q        → Выйти из чата",
-        "  //EXIT або //Q        → Вийти з чату",
+        "  //EXIT oder //Q      - Chat verlassen",
+        "  //EXIT or  //Q       - Leave chat",
+        "  //EXIT of   //Q      - Chat verlaten",
+        "  //EXIT ou  //Q       - Quitter le chat",
+        "  //EXIT nebo //Q      - Ukončit chat",
+        "  //EXIT lub  //Q      - Wyjście z czatu",
+        "  //EXIT ou  //Q       - Sair do chat",
+        "  //EXIT o   //Q       - Uscire dal chat",
+        "  //EXIT или //Q       - Выйти из чата",
+        "  //EXIT або //Q       - Вийти з чату",
+    ),
+    'aprs_chat_help_max_hops': (
+        "  //WIDE <HOPS>        - Maximale Hops (1-7) setzen (WIDE[x]-[x])",  # DE
+        "  //WIDE <HOPS>        - Set maximum hops (1-7) (WIDE[x]-[x])",  # EN
+        "  //WIDE <HOPS>        - Maximum hops (1-7) instellen (WIDE[x]-[x])",  # NL
+        "  //WIDE <HOPS>        - Définir le nombre max de hops (1-7) (WIDE[x]-[x])",  # FR
+        "  //WIDE <HOPS>        - Nastavit maximální hops (1-7) (WIDE[x]-[x])",  # CZ
+        "  //WIDE <HOPS>        - Ustaw maksymalną liczbę hops (1-7) (WIDE[x]-[x])",  # PL
+        "  //WIDE <HOPS>        - Definir hops máximo (1-7) (WIDE[x]-[x])",  # PT
+        "  //WIDE <HOPS>        - Imposta hops massimi (1-7) (WIDE[x]-[x])",  # IT
+        "  //WIDE <HOPS>        - Установить максимум hops (1-7) (WIDE[x]-[x])",  # RU
+        "  //WIDE <HOPS>        - Встановити максимум hops (1-7) (WIDE[x]-[x])",  # UA
     ),
 
     'aprs_chat_help_amsgs': (
-        "  //AMSGS [n]           → Alle Nachrichten anzeigen",
-        "  //AMSGS [n]           → Show all messages",
-        "  //AMSGS [n]           → Toon alle berichten",
-        "  //AMSGS [n]           → Afficher tous les messages",
-        "  //AMSGS [n]           → Zobrazit všechny zprávy",
-        "  //AMSGS [n]           → Pokaż wszystkie wiadomości",
-        "  //AMSGS [n]           → Mostrar todas as mensagens",
-        "  //AMSGS [n]           → Mostra tutti i messaggi",
-        "  //AMSGS [n]           → Показать все сообщения",
-        "  //AMSGS [n]           → Показати всі повідомлення",
+        "  //AMSGS [n]          - Alle Nachrichten anzeigen",
+        "  //AMSGS [n]          - Show all messages",
+        "  //AMSGS [n]          - Toon alle berichten",
+        "  //AMSGS [n]          - Afficher tous les messages",
+        "  //AMSGS [n]          - Zobrazit všechny zprávy",
+        "  //AMSGS [n]          - Pokaż wszystkie wiadomości",
+        "  //AMSGS [n]          - Mostrar todas as mensagens",
+        "  //AMSGS [n]          - Mostra tutti i messaggi",
+        "  //AMSGS [n]          - Показать все сообщения",
+        "  //AMSGS [n]          - Показати всі повідомлення",
     ),
 
     'aprs_chat_help_achange': (
@@ -6183,16 +6195,16 @@ STR_TABLE = {
     ),
 
     'aprs_chat_help_achat': (
-        "  //ACHAT <Call> [Port]  → Mit Station chatten",
-        "  //ACHAT <Call> [Port]  → Chat with station",
-        "  //ACHAT <Call> [Port]  → Chatten met station",
-        "  //ACHAT <Call> [Port]  → Chatter avec la station",
-        "  //ACHAT <Call> [Port]  → Chatovat se stanicí",
-        "  //ACHAT <Call> [Port]  → Czat ze stacją",
-        "  //ACHAT <Call> [Port]  → Conversar com estação",
-        "  //ACHAT <Call> [Port]  → Chattare con stazione",
-        "  //ACHAT <Call> [Port]  → Чат со станцией",
-        "  //ACHAT <Call> [Port]  → Чат зі станцією",
+        "  //ACHAT <Call> [Port]  - Mit Station chatten",
+        "  //ACHAT <Call> [Port]  - Chat with station",
+        "  //ACHAT <Call> [Port]  - Chatten met station",
+        "  //ACHAT <Call> [Port]  - Chatter avec la station",
+        "  //ACHAT <Call> [Port]  - Chatovat se stanicí",
+        "  //ACHAT <Call> [Port]  - Czat ze stacją",
+        "  //ACHAT <Call> [Port]  - Conversar com estação",
+        "  //ACHAT <Call> [Port]  - Chattare con stazione",
+        "  //ACHAT <Call> [Port]  - Чат со станцией",
+        "  //ACHAT <Call> [Port]  - Чат зі станцією",
     ),
 
     'aprs_send_error': (
