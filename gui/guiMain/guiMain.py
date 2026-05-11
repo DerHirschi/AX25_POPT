@@ -259,7 +259,7 @@ class PoPT_GUI_Main:
         ######################################################################
         # GUI Utility Stuff
         self._guiUtils = GuiUtilities(self)
-        self._guiUtils.init_menubar()       # MenuBar
+        self._guiUtils.init_menubar()       # MenuBär
         self._guiUtils.init_r_click_men()   # R-Click Menu
         self._guiUtils.set_binds()          # Global Key-Bindings
         self._guiUtils.set_keybinds()       # Key-Bindings

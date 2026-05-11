@@ -823,7 +823,8 @@ class DefaultCLI(object):
     ########################################################
     # == Helper
     def cli_conn_cleanup(self):
-        pass
+        # ====== APRS Chat
+        self._aprs_chat_cmds.aprs_chat_cleanup()
 
     ########################################################
     # States

@@ -4,6 +4,7 @@ from ax25aprs.aprs_constant import APRS_CQ_ADDRESSES
 from ax25aprs.aprs_sms import APRSsms
 from cli.cli_modulBase import CliModulBase
 from fnc.ax25_fnc import validate_ax25Call
+from fnc.str_fnc import zeilenumbruch_lines
 
 
 class CliCmdAprsChat(CliModulBase):
@@ -12,7 +13,7 @@ class CliCmdAprsChat(CliModulBase):
 
         self._aprs_chat_port   = 0
         self._aprs_chat_target = 'ALL'
-        self._aprs_chat_path   = ['WIDE7-7']  # oder aus Config/UserDB
+        self._aprs_chat_path   = ['WIDE7-7']
 
     # ===========================================
     def cmd_aprs_chat(self):
@@ -24,22 +25,31 @@ class CliCmdAprsChat(CliModulBase):
             self._aprs_chat_port = 0
 
         if target not in APRS_CQ_ADDRESSES and not validate_ax25Call(target):
-            return "\r # Ungültiger Call oder Ziel (ALL/CQ)\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_invalid_target') + "\r"
 
         self._aprs_chat_target = target
-        # self._aprs_chat_path = ['WIDE7-7']  # oder aus Config/UserDB
 
-        self._cliMain.change_cli_state(8)  # Wechsel in Chat-Modus
-        # === Callback registrieren ===
+        # Callback registrieren
         aprs_ais = self._popt_handler.get_aprs_ais()
         if aprs_ais and hasattr(aprs_ais.aprs_sms, 'register_callback'):
             aprs_ais.aprs_sms.register_callback(self._aprs_msg_callback)
 
-        ret = f"\r=== APRS Chat mit {target} auf Port {self._aprs_chat_port} via {' '.join(self._aprs_chat_path)} ===\r"
-        ret += "Gib Nachrichten direkt ein. //EXIT zum Verlassen.\r\r"
-        ret += self._get_recent_aprs_msgs()  # letzte 3-5 Nachrichten
+        path_str = ' '.join(self._aprs_chat_path)
+
+        ret = "\r" + self._getTabStr_CLI('aprs_chat_title').format(
+            target, self._aprs_chat_port, path_str) + "\r"
+
+        if self._cliMain.state_index != 8:
+            ret += self._getTabStr_CLI('aprs_chat_enter') + "\r"
+            ret += self._getTabStr_CLI('aprs_chat_help') + "\r\r"
+            ret += self._get_recent_aprs_msgs()
+        else:
+            ret += '\r'
+
+        self._cliMain.change_cli_state(8)
         return ret
 
+    # ===========================================
     def cmd_aprs_msgs(self):
         """ //AMSGS [n] """
         self._decode_param(defaults=[15])
@@ -50,21 +60,19 @@ class CliCmdAprsChat(CliModulBase):
 
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r # APRS-SMS Dienst nicht verfügbar.\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
 
         sms: APRSsms = aprs_ais.aprs_sms
         my_call = self._to_call_str.split('-')[0]
 
-        # Persönliche Nachrichten + Bulletins/CQ
-        personal = sms.get_pn_msg_for_call(my_call)
-        all_msgs = sms.aprs_msg_pool.get('message', [])[-50:]   # letzte 50
+        all_msgs = sms.aprs_msg_pool.get('message', [])[-50:]
 
-        out = "\r=== APRS Messages ===\r"
-        out += f"{'Time':5} {'From':9} {'To':9} Message\r"
-        out += "-" * 70 + "\r"
+        out = "\n" + self._getTabStr_CLI('aprs_msgs_title') + "\n"
+        out += f"{'Time':5} {'From':9} {'To':9} Message\n"
+        out += "-" * 70 + "\n"
 
         shown = 0
-        for msg in reversed(all_msgs):        # Neueste zuerst
+        for msg in reversed(all_msgs):
             if shown >= max_ent:
                 break
 
@@ -76,89 +84,99 @@ class CliCmdAprsChat(CliModulBase):
 
             fr = msg.get('from', '???')[:9]
             to = msg.get('addresse', '???')[:9]
-            text = (msg.get('message_text', '') or '').strip()[:48]
+            text = msg.get('message_text', '').strip()
 
-            marker = '→' if to == my_call else ' '
-            out += f"{ts_str:5} {fr:9}{marker}{to:9} {text}\r"
+            marker = '>' if to == my_call else ' '
+            out += f"{ts_str:5} {fr:9}{marker}{to:9} {text}\n"
             shown += 1
 
         if len(all_msgs) > max_ent:
-            out += f"\r... und {len(all_msgs) - max_ent} weitere Nachrichten\r"
+            out += "\n" + self._getTabStr_CLI('aprs_msgs_more').format(len(all_msgs) - max_ent) + "\n"
 
+        out = zeilenumbruch_lines(out, 79).replace('\n', '\r')
         return out + "\r"
 
+    # ===========================================
     def cmd_aprs_clear(self):
         """ //ACLEAR """
         aprs_ais = self._popt_handler.get_aprs_ais()
         if aprs_ais and hasattr(aprs_ais, 'aprs_sms'):
-            # Optional: Nur eigene ungelesene löschen
             aprs_ais.aprs_sms.aprs_msg_pool['message'] = [
                 m for m in aprs_ais.aprs_sms.aprs_msg_pool['message']
                 if m.get('addresse') != self._to_call_str.split('-')[0]
             ]
-            return "\r # APRS-Nachrichten-Liste bereinigt.\r"
-        return "\r # Fehler.\r"
+            return "\r" + self._getTabStr_CLI('aprs_clear_done') + "\r"
+
+        return "\r" + self._getTabStr_CLI('cli_error') + "\r"
+
     # ===========================================
     def _get_recent_aprs_msgs(self, max_msgs: int = 5):
-        """Zeigt die letzten persönlichen + relevanten APRS-Nachrichten"""
+        """ Zeigt die letzten ungelesenen Nachrichten """
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r # APRS-SMS Dienst nicht verfügbar.\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
 
         sms: APRSsms = aprs_ais.aprs_sms
-        call = self._to_call_str.split('-')[0]  # Dein Call ohne SSID
+        call = self._to_call_str.split('-')[0]
 
         msgs = sms.get_pn_msg_for_call(call)
 
         if not msgs:
-            return f"\r # Keine ungelesenen APRS-Nachrichten für {call}.\r"
+            return "\r" + self._getTabStr_CLI('aprs_recent_no_unread').format(call) + "\r"
 
-        out = f"\r--- Letzte APRS-Nachrichten ({len(msgs)}) ---\r"
-        for msg in msgs[-max_msgs:]:  # Neueste zuerst
+        out = "\n" + self._getTabStr_CLI('aprs_recent_title').format(len(msgs)) + "\n"
+
+        for msg in msgs[-max_msgs:]:
             ts = msg.get('rx_time', '')
             if isinstance(ts, datetime):
-                ts = ts.strftime('%H:%M')
+                ts_str = ts.strftime('%H:%M')
             else:
-                ts = str(ts)[-8:-3] if len(str(ts)) > 8 else ts
+                ts_str = str(ts)[-8:-3] if len(str(ts)) > 8 else ts
 
             sender = msg.get('from', '???')
-            text = msg.get('message_text', '').strip()[:60]
+            text = msg.get('message_text', '').strip()
 
-            # Persönliche Nachrichten hervorheben
             if msg.get('addresse') == call:
-                out += f"{ts} {sender:9}> {text}\r"
+                out += f"{ts_str} {sender:9}> {text}\n"
             else:
-                out += f"{ts} {sender:9}  {text}\r"
+                out += f"{ts_str} {sender:9}  {text}\n"
 
-        out += f"\rAlle Nachrichten mit //AMSGS\r"
+        out += "\n" + self._getTabStr_CLI('aprs_recent_all_cmd') + "\n"
+        out = zeilenumbruch_lines(out, 79).replace('\n', '\r')
         return out
+
     # ===========================================
-    # S8 State
     def s8_aprs_chat(self):
-        if not self._raw_input or not self._raw_input.strip():
+        if not self._raw_input:
             return ''
 
-        raw_text = self._raw_input.decode(self._get_encoding()[0], 'ignore').strip()
-        text = raw_text.upper()
+        raw_text: str = self._raw_input.decode(self._get_encoding()[0], 'ignore')
+        text = raw_text.upper().strip()
 
-        # Exit-Befehle
+        # Exit
         if text in ('//EXIT', '//Q', '//QUIT', 'EXIT', 'QUIT'):
-            self._aprs_chat_cleanup()
+            self.aprs_chat_cleanup()
             self._cliMain.change_cli_state(1)
-            return "\r # APRS Chat beendet.\r" + self._get_ts_prompt()
+            return "\r" + self._getTabStr_CLI('aprs_chat_exit') + "\r" + self._get_ts_prompt()
 
+        # Hilfe
         if text in ('//H', '//HELP', '//?'):
-            return self._aprs_chat_help()
+            return self._aprs_chat_help() + self._get_ts_prompt()
 
-        # Normale CLI-Befehle im Chat-Modus erlauben
+        # Normale CLI-Befehle im Chat-Modus
         if raw_text.startswith('//'):
             self._cliMain.set_input(self._raw_input)
             return self._cliMain.exec_cmd()
 
-        # ==================== Nachricht senden ====================
+        # Nachricht senden
+        raw_text = raw_text.replace('\n', ' ').replace('\r', ' ').strip()
+        if not raw_text:
+            return ''
+
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r # APRS-SMS nicht verfügbar!\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
+
         from_call = self._to_call_str.split('-')[0]
         dt_now = datetime.now()
 
@@ -171,58 +189,35 @@ class CliCmdAprsChat(CliModulBase):
         }
         ack = bool(self._aprs_chat_target not in APRS_CQ_ADDRESSES)
         success = aprs_ais.aprs_sms.send_pn_msg(pack, raw_text, with_ack=ack)
-        if success:
-            # Echo mit Ziel
-            #return (f"{dt_now} [{self._aprs_chat_target}] Port {self._aprs_chat_port} - via: {' '.join(self._aprs_chat_path)}:\r"
-            #        f"      [{from_call}] >>> {text}\r")
-            # return f"\r[{self._aprs_chat_target}] {raw_text}\r"
-            return ""
-        else:
-            return "\r # Fehler beim Senden der APRS-Nachricht.\r"
+
+        return "" if success else "\r" + self._getTabStr_CLI('aprs_send_error') + "\r"
 
     # ===========================================
-    @staticmethod
-    def _aprs_chat_help():
-        """ Interne Hilfe für den APRS-Chat-Modus """
-        help_text = (
-            "\r\r"
-            "=== APRS Chat Hilfe ===\r"
-            "--------------------------------------------------\r"
-            "  //H          oder //HELP     → Diese Hilfe\r"
-            "  //EXIT       oder //Q        → Chat verlassen\r"
-            "  //AMSGS [n]                  → Alle Nachrichten anzeigen\r"
-            #"  //ACLEAR                     → Gelesene Nachrichten löschen\r"
-            "\r"
-            "Ziel ändern (ohne Chat zu verlassen):\r"
-            "  //ACHAT DL1ABC [Port]        → Mit Station chatten\r"
-            "  //ACHAT ALL [Port]           → An alle (Bulletin)\r"
-            "  //ACHAT CQ [Port]            → An CQ\r"
-            "\r"
-            "Tipps:\r"
-            "- Nachrichten werden direkt gesendet\r"
-            "- Persönliche Nachrichten werden hervorgehoben\r"
-            #"- Callback zeigt neue Nachrichten automatisch\r"
-            "\r"
+    def _aprs_chat_help(self):
+        """ Interne Hilfe für den APRS-Chat """
+        return (
+            "\r\r" +
+            self._getTabStr_CLI('aprs_chat_help_title') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_border') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_h') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_exit') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_amsgs') + "\r\r" +
+            self._getTabStr_CLI('aprs_chat_help_achange') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_achat') + "\r\r"
         )
-        return help_text
+
     # ===========================================
     def _aprs_msg_callback(self, msg: dict):
-        """
-        Wird aufgerufen, wenn eine neue APRS-Nachricht eingeht.
-        Nur aktiv, wenn wir im Chat-Modus (State 8) sind.
-        """
-        # Nur reagieren, wenn wir im APRS-Chat sind
+        """ Callback für neue eingehende APRS-Nachrichten """
         if self._cliMain.state_index != 8:
             return
 
-        # Filter: Nur Nachrichten, die uns betreffen
         my_call = self._to_call_str.split('-')[0]
-        target  = msg.get('addresse', '').upper()
-        path    = msg.get('path', [])
-        sender  = msg.get('from', '')
+        target = msg.get('addresse', '').upper()
+        path = msg.get('path', [])
+        sender = msg.get('from', '')
         port_id = msg.get('port_id', '')
 
-        # Nachricht an uns selbst (persönlich) oder an ALL/CQ wenn wir im ALL-Modus sind
         if not (
             target == my_call or
             (self._aprs_chat_target in APRS_CQ_ADDRESSES and target in APRS_CQ_ADDRESSES) or
@@ -230,39 +225,34 @@ class CliCmdAprsChat(CliModulBase):
         ):
             return
 
-        # Nachricht formatieren
         ts = msg.get('rx_time', '') or msg.get('tx_time', '')
         if isinstance(ts, datetime):
             ts_str = ts.strftime('%H:%M')
         else:
             ts_str = str(ts)[-8:-3] if len(str(ts)) > 5 else ts
 
-        text = (msg.get('message_text', '') or '').strip()
+        text = msg.get('message_text', '').strip()
 
-        # Ausgabe direkt an den User senden
-        if target == my_call or msg.get('tx_time', '') and sender == my_call:
-            output = (f"{ts_str} [{target}] Port {port_id} - via: {' '.join(path)}:\r"
-                      f"      [{sender}] >>> {text}\r")
+        if target == my_call or (msg.get('tx_time') and sender == my_call):
+            output = (f"{ts_str} [{target}] Port {port_id} - via: {' '.join(path)}:\n"
+                      f"[{sender}]>: {text}\n")
         else:
-            output = (f"{ts_str} [{target}] Port {port_id} - via: {' '.join(path)}:\r"
-                      f"      [{sender}] --: {text}\r")
+            output = (f"{ts_str} [{target}] Port {port_id} - via: {' '.join(path)}:\n"
+                      f"[{sender}] : {text}\n")
 
-        # Prompt wieder anzeigen (wichtig im Chat-Modus!)
-        #if self._cliMain.can_sidestop and self._user_db_ent.cli_sidestop:
-        #    # Bei Sidestop etwas vorsichtiger
-        #    output += self._get_ts_prompt()
-
+        output = zeilenumbruch_lines(output, 79).replace('\n', '\r')
         self._cliMain.send_output(output, env_vars=False)
 
-    def _aprs_chat_cleanup(self):
-        """ Callback wieder entfernen beim Verlassen """
+    # ===========================================
+    def aprs_chat_cleanup(self):
+        """ Callback aufräumen """
         aprs_ais = self._popt_handler.get_aprs_ais()
         if aprs_ais and hasattr(aprs_ais.aprs_sms, 'unregister_callback'):
             aprs_ais.aprs_sms.unregister_callback(self._aprs_msg_callback)
 
-    # =====================================
-    # APRS-Messanger C-Text Noty
+    # ===========================================
     def aprs_cText_noty(self):
+        """ Für C-Text Benachrichtigung """
         if not self._cliMain.new_aprs_msg_noty:
             return ''
         aprs_ais = self._popt_handler.get_aprs_ais()
@@ -272,5 +262,4 @@ class CliCmdAprsChat(CliModulBase):
         if not my_aprs_msg:
             return ''
         return self._getTabStr_CLI('aprs_new_mail_ctext').format(len(my_aprs_msg))
-
 

@@ -3439,6 +3439,19 @@ STR_TABLE = {
         '',
         ''),
 
+    'cli_error': (
+        " # Fehler.",
+        " # Error.",
+        " # Fout.",
+        " # Erreur.",
+        " # Chyba.",
+        " # Błąd.",
+        " # Erro.",
+        " # Errore.",
+        " # Ошибка.",
+        " # Помилка.",
+    ),
+
     'cli_no_user_db_ent': (
         ' # Eintag nicht in Benutzer Datenbank vorhanden!',
         ' # Entry not in user database!',
@@ -5948,6 +5961,251 @@ STR_TABLE = {
         'Показати',
     ),
 
+    # ====================== APRS Chat ======================
+    'aprs_chat_invalid_target': (
+        " # Ungültiger Call oder Ziel (ALL/CQ)",  # DE
+        " # Invalid call or target (ALL/CQ)",  # EN
+        " # Ongeldige call of doel (ALL/CQ)",  # NL
+        " # Call ou cible invalide (ALL/CQ)",  # FR
+        " # Neplatný call nebo cíl (ALL/CQ)",  # CZ
+        " # Nieprawidłowy znak lub cel (ALL/CQ)",  # PL
+        " # Call ou destino inválido (ALL/CQ)",  # PT
+        " # Call o target non valido (ALL/CQ)",  # IT
+        " # Недопустимый позывной или цель (ALL/CQ)",  # RU
+        " # Недійсний callsign або ціль (ALL/CQ)",  # UA
+    ),
 
+    'aprs_chat_no_service': (
+        " # APRS-SMS Dienst nicht verfügbar.",  # DE
+        " # APRS-SMS service not available.",  # EN
+        " # APRS-SMS dienst niet beschikbaar.",  # NL
+        " # Service APRS-SMS non disponible.",  # FR
+        " # Služba APRS-SMS není dostupná.",  # CZ
+        " # Usługa APRS-SMS niedostępna.",  # PL
+        " # Serviço APRS-SMS não disponível.",  # PT
+        " # Servizio APRS-SMS non disponibile.",  # IT
+        " # Сервис APRS-SMS недоступен.",  # RU
+        " # Сервіс APRS-SMS недоступний.",  # UA
+    ),
+
+    'aprs_chat_exit': (
+        " # APRS Chat beendet.",  # DE
+        " # APRS Chat ended.",  # EN
+        " # APRS Chat beëindigd.",  # NL
+        " # Chat APRS terminé.",  # FR
+        " # APRS Chat ukončen.",  # CZ
+        " # Czat APRS zakończony.",  # PL
+        " # Chat APRS terminado.",  # PT
+        " # Chat APRS terminato.",  # IT
+        " # Чат APRS завершён.",  # RU
+        " # Чат APRS завершено.",  # UA
+    ),
+
+    'aprs_chat_title': (
+        "=== APRS Chat mit {0} auf Port {1} via {2} ===",  # DE
+        "=== APRS Chat with {0} on Port {1} via {2} ===",  # EN
+        "=== APRS Chat met {0} op Poort {1} via {2} ===",  # NL
+        "=== Chat APRS avec {0} sur Port {1} via {2} ===",  # FR
+        "=== APRS Chat s {0} na Portu {1} via {2} ===",  # CZ
+        "=== Czat APRS z {0} na Porcie {1} via {2} ===",  # PL
+        "=== Chat APRS com {0} na Porta {1} via {2} ===",  # PT
+        "=== Chat APRS con {0} su Porta {1} via {2} ===",  # IT
+        "=== Чат APRS с {0} на Порту {1} via {2} ===",  # RU
+        "=== Чат APRS з {0} на Порту {1} via {2} ===",  # UA
+    ),
+
+    'aprs_chat_enter': (
+        "Gib Nachrichten direkt ein. //EXIT zum Verlassen.",  # DE
+        "Enter messages directly. //EXIT to leave.",  # EN
+        "Voer berichten direct in. //EXIT om te verlaten.",  # NL
+        "Entrez les messages directement. //EXIT pour quitter.",  # FR
+        "Zprávy zadávejte přímo. //EXIT pro ukončení.",  # CZ
+        "Wpisz wiadomości bezpośrednio. //EXIT aby wyjść.",  # PL
+        "Digite mensagens diretamente. //EXIT para sair.",  # PT
+        "Inserisci i messaggi direttamente. //EXIT per uscire.",  # IT
+        "Введите сообщения напрямую. //EXIT для выхода.",  # RU
+        "Вводьте повідомлення безпосередньо. //EXIT для виходу.",  # UA
+    ),
+
+    'aprs_chat_help': (
+        "Hilfe mit //H oder //HELP",                 # DE
+        "Help with //H or //HELP",                   # EN
+        "Help met //H of //HELP",                    # NL
+        "Aide avec //H ou //HELP",                   # FR
+        "Nápověda přes //H nebo //HELP",             # CZ
+        "Pomoc poprzez //H lub //HELP",              # PL
+        "Ajuda com //H ou //HELP",                   # PT
+        "Aiuto con //H o //HELP",                    # IT
+        "Помощь командой //H или //HELP",            # RU
+        "Допомога командою //H або //HELP",          # UA
+    ),
+
+    'aprs_msgs_title': (
+        "=== APRS Messages ===",  # DE
+        "=== APRS Messages ===",  # EN
+        "=== APRS Berichten ===",  # NL
+        "=== Messages APRS ===",  # FR
+        "=== APRS Zprávy ===",  # CZ
+        "=== Wiadomości APRS ===",  # PL
+        "=== Mensagens APRS ===",  # PT
+        "=== Messaggi APRS ===",  # IT
+        "=== Сообщения APRS ===",  # RU
+        "=== Повідомлення APRS ===",  # UA
+    ),
+
+    'aprs_msgs_more': (
+        "... und {0} weitere Nachrichten",
+        "... and {0} more messages",
+        "... en {0} meer berichten",
+        "... et {0} autres messages",
+        "... a {0} dalších zpráv",
+        "... i {0} więcej wiadomości",
+        "... e {0} mais mensagens",
+        "... e {0} altri messaggi",
+        "... и ещё {0} сообщений",
+        "... та ще {0} повідомлень",
+    ),
+
+    'aprs_recent_title': (
+        "--- Letzte APRS-Nachrichten ({0}) ---",
+        "--- Latest APRS Messages ({0}) ---",
+        "--- Laatste APRS-berichten ({0}) ---",
+        "--- Derniers messages APRS ({0}) ---",
+        "--- Poslední APRS zprávy ({0}) ---",
+        "--- Ostatnie wiadomości APRS ({0}) ---",
+        "--- Últimas mensagens APRS ({0}) ---",
+        "--- Ultimi messaggi APRS ({0}) ---",
+        "--- Последние сообщения APRS ({0}) ---",
+        "--- Останні повідомлення APRS ({0}) ---",
+    ),
+
+    'aprs_recent_no_unread': (
+        " # Keine ungelesenen APRS-Nachrichten für {0}.",
+        " # No unread APRS messages for {0}.",
+        " # Geen ongelezen APRS-berichten voor {0}.",
+        " # Aucun message APRS non lu pour {0}.",
+        " # Žádné nepřečtené APRS zprávy pro {0}.",
+        " # Brak nieprzeczytanych wiadomości APRS dla {0}.",
+        " # Nenhuma mensagem APRS não lida para {0}.",
+        " # Nessun messaggio APRS non letto per {0}.",
+        " # Нет непрочитанных сообщений APRS для {0}.",
+        " # Немає непрочитаних повідомлень APRS для {0}.",
+    ),
+
+    'aprs_recent_all_cmd': (
+        "Alle Nachrichten mit //AMSGS",
+        "All messages with //AMSGS",
+        "Alle berichten met //AMSGS",
+        "Tous les messages avec //AMSGS",
+        "Všechny zprávy pomocí //AMSGS",
+        "Wszystkie wiadomości poleceniem //AMSGS",
+        "Todas as mensagens com //AMSGS",
+        "Tutti i messaggi con //AMSGS",
+        "Все сообщения с помощью //AMSGS",
+        "Всі повідомлення за допомогою //AMSGS",
+    ),
+
+    'aprs_clear_done': (
+        " # APRS-Nachrichten-Liste bereinigt.",
+        " # APRS message list cleared.",
+        " # APRS-berichtenlijst opgeschoond.",
+        " # Liste des messages APRS nettoyée.",
+        " # Seznam APRS zpráv vyčištěn.",
+        " # Lista wiadomości APRS wyczyszczona.",
+        " # Lista de mensagens APRS limpa.",
+        " # Lista messaggi APRS pulita.",
+        " # Список сообщений APRS очищен.",
+        " # Список повідомлень APRS очищено.",
+    ),
+
+    # --- Hilfe ---
+    'aprs_chat_help_title': (
+        "=== APRS Chat Hilfe ===", "=== APRS Chat Help ===", "=== APRS Chat Help ===",
+        "=== Aide Chat APRS ===", "=== Nápověda APRS Chat ===", "=== Pomoc Czat APRS ===",
+        "=== Ajuda Chat APRS ===", "=== Aiuto Chat APRS ===", "=== Помощь чата APRS ===",
+        "=== Допомога чату APRS ===",
+    ),
+
+    'aprs_chat_help_border': (
+                                 "--------------------------------------------------",
+                             ) * 10,
+
+    'aprs_chat_help_h': (
+        "  //H  oder //HELP     → Diese Hilfe",
+        "  //H  or  //HELP      → This help",
+        "  //H  of   //HELP     → Deze hulp",
+        "  //H  ou  //HELP      → Cette aide",
+        "  //H  nebo //HELP     → Tato nápověda",
+        "  //H  lub  //HELP     → Ta pomoc",
+        "  //H  ou  //HELP      → Esta ajuda",
+        "  //H  o   //HELP      → Questo aiuto",
+        "  //H  или //HELP      → Эта помощь",
+        "  //H  або //HELP      → Ця допомога",
+    ),
+
+    'aprs_chat_help_exit': (
+        "  //EXIT oder //Q       → Chat verlassen",
+        "  //EXIT or  //Q        → Leave chat",
+        "  //EXIT of   //Q       → Chat verlaten",
+        "  //EXIT ou  //Q        → Quitter le chat",
+        "  //EXIT nebo //Q       → Ukončit chat",
+        "  //EXIT lub  //Q       → Wyjście z czatu",
+        "  //EXIT ou  //Q        → Sair do chat",
+        "  //EXIT o   //Q        → Uscire dal chat",
+        "  //EXIT или //Q        → Выйти из чата",
+        "  //EXIT або //Q        → Вийти з чату",
+    ),
+
+    'aprs_chat_help_amsgs': (
+        "  //AMSGS [n]           → Alle Nachrichten anzeigen",
+        "  //AMSGS [n]           → Show all messages",
+        "  //AMSGS [n]           → Toon alle berichten",
+        "  //AMSGS [n]           → Afficher tous les messages",
+        "  //AMSGS [n]           → Zobrazit všechny zprávy",
+        "  //AMSGS [n]           → Pokaż wszystkie wiadomości",
+        "  //AMSGS [n]           → Mostrar todas as mensagens",
+        "  //AMSGS [n]           → Mostra tutti i messaggi",
+        "  //AMSGS [n]           → Показать все сообщения",
+        "  //AMSGS [n]           → Показати всі повідомлення",
+    ),
+
+    'aprs_chat_help_achange': (
+        "Ziel ändern (ohne Chat zu verlassen):",
+        "Change target (without leaving chat):",
+        "Doel wijzigen (zonder chat te verlaten):",
+        "Changer de cible (sans quitter le chat):",
+        "Změnit cíl (bez ukončení chatu):",
+        "Zmiana celu (bez wychodzenia z czatu):",
+        "Alterar destino (sem sair do chat):",
+        "Cambia target (senza uscire dal chat):",
+        "Сменить цель (не выходя из чата):",
+        "Змінити ціль (не виходячи з чату):",
+    ),
+
+    'aprs_chat_help_achat': (
+        "  //ACHAT <Call> [Port]  → Mit Station chatten",
+        "  //ACHAT <Call> [Port]  → Chat with station",
+        "  //ACHAT <Call> [Port]  → Chatten met station",
+        "  //ACHAT <Call> [Port]  → Chatter avec la station",
+        "  //ACHAT <Call> [Port]  → Chatovat se stanicí",
+        "  //ACHAT <Call> [Port]  → Czat ze stacją",
+        "  //ACHAT <Call> [Port]  → Conversar com estação",
+        "  //ACHAT <Call> [Port]  → Chattare con stazione",
+        "  //ACHAT <Call> [Port]  → Чат со станцией",
+        "  //ACHAT <Call> [Port]  → Чат зі станцією",
+    ),
+
+    'aprs_send_error': (
+        " # Fehler beim Senden der APRS-Nachricht.",  # DE
+        " # Error sending APRS message.",  # EN
+        " # Fout bij verzenden APRS-bericht.",  # NL
+        " # Erreur lors de l'envoi du message APRS.",  # FR
+        " # Chyba při odesílání APRS zprávy.",  # CZ
+        " # Błąd podczas wysyłania wiadomości APRS.",  # PL
+        " # Erro ao enviar mensagem APRS.",  # PT
+        " # Errore nell'invio del messaggio APRS.",  # IT
+        " # Ошибка при отправке APRS-сообщения.",  # RU
+        " # Помилка при відправці APRS-повідомлення.",  # UA
+    ),
 # ======== END =====================
 }   # < End of dict
