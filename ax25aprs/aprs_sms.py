@@ -8,6 +8,7 @@ from ax25aprs.aprs_dec import parse_aprs_fm_aprsframe, extract_ack, is_cq_call
 from ax25aprs.aprs_constant import APRS_SW_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
+from classes.CLbuffers import LockedDict
 from fnc.str_fnc import zeilenumbruch_lines, convert_umlaute_to_ascii
 
 
@@ -24,11 +25,16 @@ class APRSsms:
         self._ack_counter       = ais_cfg.get('aprs_msg_ack_c', 0)
         self._parm_max_n        = 3
         self._parm_resend       = 60
-        self.aprs_msg_pool      = ais_cfg.get('aprs_msg_pool',
-                                         {
-                                             "message": [],
-                                             "bulletin": [],
-                                         })
+        self.aprs_msg_pool      = LockedDict()
+        arps_pool_load = ais_cfg.get('aprs_msg_pool', {
+             "message":  [],
+             "bulletin": [],
+         })
+
+        self.aprs_msg_pool.add("message",  arps_pool_load.get("message",  []))
+        self.aprs_msg_pool.add("bulletin", arps_pool_load.get("bulletin", []))
+
+
         # Convert old data set
         for arps_msg in self.aprs_msg_pool['message']:
             if arps_msg.get('addresse', ''):
@@ -43,7 +49,7 @@ class APRSsms:
 
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         # APRS-Message
-        ais_cfg['aprs_msg_pool'] = dict(self.aprs_msg_pool)
+        ais_cfg['aprs_msg_pool']  = dict(self.aprs_msg_pool)
         ais_cfg['aprs_msg_ack_c'] = int(self._ack_counter)
         POPT_CFG.set_CFG_aprs_ais(ais_cfg)
 

@@ -3439,6 +3439,20 @@ STR_TABLE = {
         '',
         ''),
 
+    'cmd_help_aclear': (
+        'APRS Nachrichten löschen',                    # DE
+        'Delete / Clear APRS Messages',                # EN
+        'APRS Berichten wissen / wissen',              # NL
+        'Supprimer les messages APRS',                 # FR
+        'Smazat APRS zprávy',                          # CZ
+        'Usuń wiadomości APRS',                        # PL
+        'Apagar mensagens APRS',                       # PT
+        'Cancella messaggi APRS',                      # IT
+        'Удалить сообщения APRS',                      # RU
+        'Видалити повідомлення APRS',                  # UA
+    ),
+
+    # =============================
     'cli_error': (
         " # Fehler.",
         " # Error.",
@@ -6180,6 +6194,20 @@ STR_TABLE = {
         "  //AMSGS [n]          - Показать все сообщения",
         "  //AMSGS [n]          - Показати всі повідомлення",
     ),
+
+    'aprs_chat_help_aclear': (
+        '  //ACLEAR             - APRS Nachrichten löschen',                    # DE
+        '  //ACLEAR             - Delete / Clear APRS Messages',                # EN
+        '  //ACLEAR             - APRS Berichten wissen / wissen',              # NL
+        '  //ACLEAR             - Supprimer les messages APRS',                 # FR
+        '  //ACLEAR             - Smazat APRS zprávy',                          # CZ
+        '  //ACLEAR             - Usuń wiadomości APRS',                        # PL
+        '  //ACLEAR             - Apagar mensagens APRS',                       # PT
+        '  //ACLEAR             - Cancella messaggi APRS',                      # IT
+        '  //ACLEAR             - Удалить сообщения APRS',                      # RU
+        '  //ACLEAR             - Видалити повідомлення APRS',                  # UA
+    ),
+
 
     'aprs_chat_help_achange': (
         "Ziel ändern (ohne Chat zu verlassen):",

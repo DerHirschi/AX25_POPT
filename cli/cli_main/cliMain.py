@@ -148,7 +148,8 @@ class DefaultCLI(object):
 
             # APRS Chat
             'ACHAT':    (2, self._aprs_chat_cmds.cmd_aprs_chat,     'APRS Chat / Messenger',                       False),
-            'AMSGS':    (2, self._aprs_chat_cmds.cmd_aprs_msgs,     'APRS Messages',                       False),
+            'AMSGS':    (2, self._aprs_chat_cmds.cmd_aprs_msgs,     'APRS Messages',                        False),
+            'ACLEAR':   (3, self._aprs_chat_cmds.cmd_aprs_clear,    self._getTabStr_CLI('cmd_help_aclear'), False),
             #
             'BELL':     (2, self._cmd_bell,                         self._getTabStr_CLI('cmd_help_bell'),   False),
 

@@ -27,7 +27,7 @@ class CliCmdAprsChat(CliModulBase):
             self._aprs_chat_port = 0
 
         if target not in APRS_CQ_ADDRESSES and not validate_ax25Call(target):
-            return "\r" + self._getTabStr_CLI('aprs_chat_invalid_target') + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_invalid_target') + "\r\r"
 
         self._aprs_chat_target = target
 
@@ -62,7 +62,7 @@ class CliCmdAprsChat(CliModulBase):
 
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r\r"
 
         sms: APRSsms = aprs_ais.aprs_sms
         my_call = self._to_call_str.split('-')[0]
@@ -107,16 +107,16 @@ class CliCmdAprsChat(CliModulBase):
                 m for m in aprs_ais.aprs_sms.aprs_msg_pool['message']
                 if m.get('addresse') != self._to_call_str.split('-')[0]
             ]
-            return "\r" + self._getTabStr_CLI('aprs_clear_done') + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_clear_done') + "\r\r"
 
-        return "\r" + self._getTabStr_CLI('cli_error') + "\r"
+        return "\r" + self._getTabStr_CLI('cli_error') + "\r\r"
 
     # ===========================================
     def _get_recent_aprs_msgs(self, max_msgs: int = 5):
         """ Zeigt die letzten ungelesenen Nachrichten """
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r\r"
 
         sms: APRSsms = aprs_ais.aprs_sms
         call = self._to_call_str.split('-')[0]
@@ -124,7 +124,7 @@ class CliCmdAprsChat(CliModulBase):
         msgs = sms.get_pn_msg_for_call(call)
 
         if not msgs:
-            return "\r" + self._getTabStr_CLI('aprs_recent_no_unread').format(call) + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_recent_no_unread').format(call) + "\r\r"
 
         out = "\n" + self._getTabStr_CLI('aprs_recent_title').format(len(msgs)) + "\n"
 
@@ -169,7 +169,7 @@ class CliCmdAprsChat(CliModulBase):
         # WIDE (set max Hops)
         if text in ('//WIDE', '//W', '//WI'):
             if len(splited_text) != 2:
-                return "\r" + self._getTabStr_CLI('box_parameter_error') + "\r"
+                return "\r" + self._getTabStr_CLI('box_parameter_error') + "\r\r"
             return self._set_hops(splited_text[1])
 
         # Normale CLI-Befehle im Chat-Modus
@@ -184,7 +184,7 @@ class CliCmdAprsChat(CliModulBase):
 
         aprs_ais = self._popt_handler.get_aprs_ais()
         if not aprs_ais or not hasattr(aprs_ais, 'aprs_sms'):
-            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r"
+            return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r\r"
 
         from_call = self._to_call_str.split('-')[0]
         dt_now = datetime.now()
@@ -199,7 +199,7 @@ class CliCmdAprsChat(CliModulBase):
         ack = bool(self._aprs_chat_target not in APRS_CQ_ADDRESSES)
         success = aprs_ais.aprs_sms.send_pn_msg(pack, raw_text, with_ack=ack)
 
-        return "" if success else "\r" + self._getTabStr_CLI('aprs_send_error') + "\r"
+        return "" if success else "\r" + self._getTabStr_CLI('aprs_send_error') + "\r\r"
 
     # ===========================================
     def _set_hops(self, hops: str):
@@ -209,7 +209,7 @@ class CliCmdAprsChat(CliModulBase):
         except (ValueError, IndexError):
             max_hops = 7
         if max_hops not in range(1,8):
-            return  "\r" + self._getTabStr_CLI('cli_error') + ": Value: 1 - 7"+ "\r"
+            return  "\r" + self._getTabStr_CLI('cli_error') + ": Value: 1 - 7"+ "\r\r"
 
         self._aprs_chat_max_hops = max_hops
         self._aprs_chat_path     = [f'WIDE{max_hops}-{max_hops}']
@@ -231,8 +231,9 @@ class CliCmdAprsChat(CliModulBase):
             self._getTabStr_CLI('aprs_chat_help_border') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_h') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_max_hops') + "\r" +
-            self._getTabStr_CLI('aprs_chat_help_exit') + "\r" +
-            self._getTabStr_CLI('aprs_chat_help_amsgs') + "\r\r" +
+            self._getTabStr_CLI('aprs_chat_help_amsgs') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_aclear') + "\r" +
+            self._getTabStr_CLI('aprs_chat_help_exit') + "\r\r" +
             self._getTabStr_CLI('aprs_chat_help_achange') + "\r" +
             self._getTabStr_CLI('aprs_chat_help_achat') + "\r\r"
         )

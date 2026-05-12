@@ -123,6 +123,7 @@ CLI_DEF_CMD_NODE =['QUIT',
                                 # ==== APRS Chat
                                 'ACHAT',
                                 'AMSGS',
+                                'ACLEAR',
                    ]
 
 CLI_DEF_CMD_BOX = ['QUIT',
@@ -181,6 +182,7 @@ CLI_DEF_CMD_BOX = ['QUIT',
                    # ==== APRS Chat
                    'ACHAT',
                    'AMSGS',
+                   'ACLEAR',
                    ]
 
 CLI_DEF_CMD_MCAST = ['QUIT',

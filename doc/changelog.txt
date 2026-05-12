@@ -39,6 +39,7 @@ Neue Implementierungen / Funktionen:
 - APRS-Chat über NODE/BSS CLI (experimentell)
   - CLI-CMD "ACHAT"
   - CLI-CMD "AMSGS"
+  - CLI-CMD "ACLEAR"
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren
