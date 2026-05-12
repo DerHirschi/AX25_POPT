@@ -272,6 +272,7 @@ class CliCmdAprsChat(CliModulBase):
                       f"[{sender}] : {text}\n")
 
         output = zeilenumbruch_lines(output, 79).replace('\n', '\r')
+        output += '\r'
         self._cliMain.send_output(output, env_vars=False)
 
     # ===========================================

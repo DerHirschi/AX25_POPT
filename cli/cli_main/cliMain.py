@@ -366,6 +366,9 @@ class DefaultCLI(object):
     def change_cli_state(self, state: int):
         # print(f"CLI change state: {state} - {self._state_index}")
         self._state_index = state
+        # ===== Remove APRS Chat Callback
+        if self._state_index != 8:
+            self._aprs_chat_cmds.aprs_chat_cleanup()
 
     def _is_prefix(self):
         # Optimized by GROK (x.com) TODO Again
@@ -685,7 +688,7 @@ class DefaultCLI(object):
                 # link_call=str(self._connection.my_call_str)
             )
         if conn[0]:
-            self._state_index = 4
+            self.change_cli_state(4)
             return conn[1]
         return f'\r*** Link Busy: {conn[1]}\r'
 
@@ -829,13 +832,13 @@ class DefaultCLI(object):
     ########################################################
     # States
     def _s0(self):  # C-Text
-        self._state_index = 1
         ret = self._get_own_identy_str() + '\r'
         ret += self._c_text
         ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
             ret += self.get_ts_prompt()
         self.send_output(ret, env_vars=True)
+        self.change_cli_state(1)
         return ''
 
     def _s1(self):
