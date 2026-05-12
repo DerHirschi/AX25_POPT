@@ -102,10 +102,12 @@ class CliCmdAprsChat(CliModulBase):
     def cmd_aprs_clear(self):
         """ //ACLEAR """
         aprs_ais = self._popt_handler.get_aprs_ais()
+        my_call  = self._to_call_str.split('-')[0]
         if aprs_ais and hasattr(aprs_ais, 'aprs_sms'):
             aprs_ais.aprs_sms.aprs_msg_pool['message'] = [
                 m for m in aprs_ais.aprs_sms.aprs_msg_pool['message']
-                if m.get('addresse') != self._to_call_str.split('-')[0]
+                if m.get('addresse') != my_call and
+                   m.get('from') != my_call
             ]
             return "\r" + self._getTabStr_CLI('aprs_clear_done') + "\r\r"
 
