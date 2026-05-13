@@ -14,6 +14,7 @@ from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
 from cli.cli_commands.cli_cmd_status import CliCmdStatus
 from cli.cli_commands.cli_cmd_userDB import CliCmdUserDB
 from cli.cli_const import CLI_DEF_CMD_BASIC
+from cli.cli_main.cliMain_StateManager import CliStateManager
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, zeilenumbruch_lines, get_strTab, find_eol
@@ -71,7 +72,7 @@ class DefaultCLI(object):
 
         self.time_start         = datetime.now()
 
-        self._state_index       = 0
+        #self._state_index       = 0
         self._crone_state_index = 0
         self._ss_state          = 0
 
@@ -93,11 +94,13 @@ class DefaultCLI(object):
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # self._user_db_ent.cli_sidestop = 20
+        # ============================================
         # Crone
         self._cron_state_exec = {
             0:   self._cron_s0,     # No CMDs / Do nothing
             100: self._cron_s_quit  # QUIT
         }
+
         # ============================================
         # Command sets Init
         self._statistics_cmds = CliCmdStatistics(self)
@@ -182,20 +185,27 @@ class DefaultCLI(object):
 
         }
 
+        # ============================================
         self._StrCommands  = CliStrCommands(self)
 
-        self._state_exec = {
-            0: self._s0,  # C-Text
-            1: self._s1,  # Cmd Handler
-            2: self._s2,  # Nothing / no remote !!! Override in NODECLI / cmd_q...
-            3: self._s3,  # Baycom Login Shit
-            4: self._s4,  # Try to connect other Station ( C CMD )
-            5: self._s5,  # Nothing / no remote
-            6: self._s6,  # Auto Baycom Login Shit
-            7: self._s7,  # Box Side Stop / Paging | Wait for input
-            8: self._aprs_chat_cmds.s8_aprs_chat,  # APRS Chat Mode
+        # ============================================
+        state_exec = {
+            0:  self._s0,  # C-Text
+            1:  self._s1,  # Cmd Handler
+            2:  self._s2,  # Nothing / no remote !!! Override in NODECLI / cmd_q...
+            3:  self._s3,  # Baycom Login Shit
+            4:  self._s4,  # Try to connect other Station ( C CMD )
+            5:  self._s5,  # Nothing / no remote
+            6:  self._s6,  # Auto Baycom Login Shit
+            7:  self._s7,  # Box Side Stop / Paging | Wait for input
         }
-
+        self._StateManager = CliStateManager(self)
+        self._StateManager.set_state_tab(state_exec)
+        # ============================================
+        # Add APRS Chat State
+        self._StateManager.add_state(self._aprs_chat_cmds.own_state_id,
+                                     self._aprs_chat_cmds.aprs_chat_state)
+        # ============================================
         self.init()
 
         if not self.can_sidestop:
@@ -250,10 +260,6 @@ class DefaultCLI(object):
     def command_set(self):
         return self._command_set
 
-    @property
-    def state_index(self):
-        return self._state_index
-
     #######################
     # Input Parameter
     @property
@@ -271,6 +277,23 @@ class DefaultCLI(object):
 
     def set_input(self, val):
         self._input = val
+
+    ########################################################
+    # State Tab/Index
+    @property
+    def state_index(self):
+        return self._StateManager.state_index
+
+    def change_cli_state(self, state: int):
+        if state == self.state_index:
+            return
+        # ===== Remove APRS Chat Callback
+        if self.state_index == self._aprs_chat_cmds.own_state_id:
+            self._aprs_chat_cmds.aprs_chat_cleanup()
+
+        if not self._StateManager.set_state_index(state):
+            logger.warning(self._logTag + f"Can't change CLI State to {state}")
+
 
     ########################################################
     @property
@@ -364,13 +387,6 @@ class DefaultCLI(object):
         return False
 
     #
-    def change_cli_state(self, state: int):
-        # print(f"CLI change state: {state} - {self._state_index}")
-        self._state_index = state
-        # ===== Remove APRS Chat Callback
-        if self._state_index != 8:
-            self._aprs_chat_cmds.aprs_chat_cleanup()
-
     def _is_prefix(self):
         # Optimized by GROK (x.com) TODO Again
         if not self.prefix:
@@ -624,7 +640,7 @@ class DefaultCLI(object):
         # CMD Input for No User Terminals ( Node ... )
         ret = self._find_cmd()
         if self._crone_state_index not in [100] and \
-                self._state_index not in [2, 4, 8]:  # Not Quit| 8 = BBS send msg
+                self.state_index not in [2, 4, 8, 10]:  # Not Quit| 8 = BBS send msg, 10 = APRS Chat
             if self.skip_prompt:
                 self.skip_prompt = False
             else:
@@ -806,7 +822,7 @@ class DefaultCLI(object):
     def cli_exec(self, inp=b''):
         """ Exec on RX """
         self._raw_input = bytes(inp)
-        ret = self._state_exec[self._state_index]()
+        ret = self._StateManager.state_exec()
         if ret:
             self.send_output(ret, env_vars=False)
 

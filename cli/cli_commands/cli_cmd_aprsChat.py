@@ -16,6 +16,13 @@ class CliCmdAprsChat(CliModulBase):
         max_hops                    = 7
         self._aprs_chat_max_hops    = max_hops
         self._aprs_chat_path        = [f'WIDE{max_hops}-{max_hops}']
+        # ====================
+        self._own_state_id          = 10  # State ID for CLI State Manager
+
+    # ===========================================
+    @property
+    def own_state_id(self):
+        return self._own_state_id
 
     # ===========================================
     def cmd_aprs_chat(self):
@@ -41,11 +48,11 @@ class CliCmdAprsChat(CliModulBase):
         ret = "\r" + self._getTabStr_CLI('aprs_chat_title').format(
             target, self._aprs_chat_port, path_str) + "\r"
 
-        if self._cliMain.state_index != 8:
+        if self._cliMain.state_index != self._own_state_id:
             ret += self._getTabStr_CLI('aprs_chat_enter') + "\r"
             ret += self._getTabStr_CLI('aprs_chat_help') + "\r\r"
             ret += self._get_recent_aprs_msgs()
-            self._cliMain.change_cli_state(8)
+            self._cliMain.change_cli_state(self._own_state_id)
         else:
             ret += '\r'
 
@@ -150,7 +157,7 @@ class CliCmdAprsChat(CliModulBase):
         return out
 
     # ===========================================
-    def s8_aprs_chat(self):
+    def aprs_chat_state(self):
         if not self._raw_input:
             return ''
 
@@ -243,7 +250,7 @@ class CliCmdAprsChat(CliModulBase):
     # ===========================================
     def _aprs_msg_callback(self, msg: dict):
         """ Callback für neue eingehende APRS-Nachrichten """
-        if self._cliMain.state_index != 8:
+        if self._cliMain.state_index != self._own_state_id:
             return
 
         my_call = self._to_call_str.split('-')[0]

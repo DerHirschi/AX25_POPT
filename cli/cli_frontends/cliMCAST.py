@@ -28,7 +28,7 @@ class MCastCLI(DefaultCLI):
             ##############################################################
         })
 
-        self._state_exec = {
+        state_exec = {
             0: self._s0,  # C-Text
             1: self._s1,  # Cmd Handler
             2: self._state_error,  #
@@ -38,33 +38,17 @@ class MCastCLI(DefaultCLI):
             6: self._state_error,  #
             7: self._s7,  # Box Side Stop / Paging | Wait for input
         }
+        self._StateManager.set_state_tab(state_exec)
 
     def _state_error(self):
         logger.error(f"CLI: McastCLI: State Error: State {self._state_index}")
-        self.change_cli_state(1
-                              )
+        self.change_cli_state(1)
+
     ###############################################
     def _baycom_auto_login(self):
         return False
+
     ###############################################
-
-    def cli_exec(self, inp=b''):
-        self._raw_input = bytes(inp)
-        ret = self._state_exec[self._state_index]()
-        if ret:
-            self.send_output(ret, env_vars=False)
-
-    def cli_cron(self):
-        """ Global Crone Tasks """
-        if not self._connection.is_link:
-            self.cli_state_crone()
-
-    def cli_state_crone(self):
-        """ State Crone Tasks """
-        ret = self._cron_state_exec[self._crone_state_index]()
-        if ret:
-            self.send_output(ret, env_vars=False)
-
     def _s0(self):  # C-Text
         self._state_index = 1
         out =  self._get_own_identy_str() + '\r'
