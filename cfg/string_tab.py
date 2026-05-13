@@ -6068,16 +6068,16 @@ STR_TABLE = {
     ),
 
     'aprs_msgs_more': (
-        "... und {0} weitere Nachrichten",
-        "... and {0} more messages",
-        "... en {0} meer berichten",
-        "... et {0} autres messages",
-        "... a {0} dalších zpráv",
-        "... i {0} więcej wiadomości",
-        "... e {0} mais mensagens",
-        "... e {0} altri messaggi",
-        "... и ещё {0} сообщений",
-        "... та ще {0} повідомлень",
+        "... und weitere Nachrichten",
+        "... and more messages",
+        "... en meer berichten",
+        "... et autres messages",
+        "... a dalších zpráv",
+        "... i więcej wiadomości",
+        "... e mais mensagens",
+        "... e altri messaggi",
+        "... и ещё сообщений",
+        "... та ще повідомлень",
     ),
 
     'aprs_recent_title': (

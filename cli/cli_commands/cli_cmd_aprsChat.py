@@ -84,6 +84,10 @@ class CliCmdAprsChat(CliModulBase):
         for msg in reversed(all_msgs):
             if shown >= max_ent:
                 break
+            fr = msg.get('from', '???')
+            to = msg.get('addresse', '???')
+            if my_call != fr and my_call != to and to not in APRS_CQ_ADDRESSES:
+                continue
 
             ts = msg.get('rx_time', '')
             if isinstance(ts, datetime):
@@ -91,8 +95,6 @@ class CliCmdAprsChat(CliModulBase):
             else:
                 ts_str = str(ts)[-8:-3] if ' ' in str(ts) else str(ts)
 
-            fr = msg.get('from', '???')[:9]
-            to = msg.get('addresse', '???')[:9]
             text = msg.get('message_text', '').strip()
 
             marker = '>' if to == my_call else ' '
@@ -100,7 +102,7 @@ class CliCmdAprsChat(CliModulBase):
             shown += 1
 
         if len(all_msgs) > max_ent:
-            out += "\n" + self._getTabStr_CLI('aprs_msgs_more').format(len(all_msgs) - max_ent) + "\n"
+            out += "\n" + self._getTabStr_CLI('aprs_msgs_more') + "\n"
 
         out = zeilenumbruch_lines(out, 79).replace('\n', '\r')
         return out + "\r"
