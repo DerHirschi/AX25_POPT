@@ -40,6 +40,7 @@ Neue Implementierungen / Funktionen:
   - CLI-CMD "ACHAT"
   - CLI-CMD "AMSGS"
   - CLI-CMD "ACLEAR"
+- CLI-CMD "PATH", zeigt Pfad/Route zu CalL
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren

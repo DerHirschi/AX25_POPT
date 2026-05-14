@@ -2079,6 +2079,18 @@ STR_TABLE = {
         '',
         ''),
 
+    'digi_settings': (
+        'DIGI-Einstellungen',
+        'DIGI-Settings',
+        'DIGI-instellingen',
+        'Paramètres DIGI',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''),
+
     'aprs_server': (
         'APRS-Server',
         'APRS-Server',

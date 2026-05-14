@@ -64,7 +64,9 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                                #'POKER',
                                'HELP',
                                '?',
-                                'L', 'U', 'H', 'Q' # Converse
+                                'L', 'U', 'H', 'Q', # Converse,
+                                # === Path  
+                                'PATH',
                      ]
 
 CLI_DEF_CMD_NODE =['QUIT',
@@ -124,6 +126,8 @@ CLI_DEF_CMD_NODE =['QUIT',
                                 'ACHAT',
                                 'AMSGS',
                                 'ACLEAR',
+                                # === Path
+                                'PATH',
                    ]
 
 CLI_DEF_CMD_BOX = ['QUIT',
@@ -183,6 +187,8 @@ CLI_DEF_CMD_BOX = ['QUIT',
                    'ACHAT',
                    'AMSGS',
                    'ACLEAR',
+                   # === Path
+                   'PATH',
                    ]
 
 CLI_DEF_CMD_MCAST = ['QUIT',

@@ -3,6 +3,7 @@ from datetime import datetime
 from cfg.popt_config import POPT_CFG
 from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
+from cli.cli_commands.cli_cmd_path import CliCmdPath
 #from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
@@ -110,6 +111,7 @@ class DefaultCLI(object):
         self._user_db_cmds    = CliCmdUserDB(self)
         self._help_cmds       = CliCmdHelp(self)
         self._aprs_chat_cmds  = CliCmdAprsChat(self)
+        self._path_cmds       = CliCmdPath(self)
         #self._poker_cmds      = CliCmdPoker(self)
 
         # Standard Commands ( GLOBAL )
@@ -138,6 +140,10 @@ class DefaultCLI(object):
             'DXLIST':   (2, self._my_heard_cmds.cmd_dxlist,         'DX/Tracer Alarm List',                 False),
             'CHIST':    (3, self._my_heard_cmds.cmd_chist,          self._getTabStr_CLI('cmd_help_chist'),  False),
             'ATR':      (2, self._my_heard_cmds.cmd_aprs_trace,     'APRS-Tracer',                          False),
+
+            # Path
+            'PATH':     (2, self._path_cmds.cmd_path,               'Routing / Path to station', False),
+            #'ROUTE':    (2, self._path_cmds.cmd_path,               'Routing / Path to station', False),
 
             # Status
             'PORT':     (1, self._status_cmds.cmd_port,             'Ports',                                    False),
