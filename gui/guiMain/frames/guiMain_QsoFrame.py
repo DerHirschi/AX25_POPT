@@ -156,7 +156,7 @@ class QsoFrame(ttk.Frame):
         for qso_data in gui_buf:
             # Sys Msg (Link Setup, Connected to, ...)
             if qso_data[0] == 'SYS':
-                self.sysMsg_to_qso_task(qso_data[1], ch_id)
+                self.sysMsg_to_qso_task(arg=(qso_data[1], ch_id))
             # PRP Msg (CLI-ESC Status)
             elif qso_data[0] in [TAG_QSO_PRP_STATUS_TX, TAG_QSO_PRP_STATUS_RX]:
                 self._PRPstatus_to_qso_task(qso_data[1], ch_id, qso_data[0])
@@ -279,7 +279,8 @@ class QsoFrame(ttk.Frame):
         ch_vars.new_tags = []
 
     # ================================
-    def sysMsg_to_qso_task(self, data: str, ch_index):
+    def sysMsg_to_qso_task(self, arg: tuple):
+        data, ch_index = arg
         if not data or (1 > ch_index > SERVICE_CH_START - 1):
             return
         data = data.replace('\r', '')

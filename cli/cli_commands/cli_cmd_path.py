@@ -12,7 +12,7 @@ class CliCmdPath(CliModulBase):
 
         call = self._parameter[0].decode(self._get_encoding()[0], 'ignore').upper().strip()
         if not call:
-            return "\r # Kein Call angegeben\r"
+            return f"\r{self._getTabStr_CLI('cli_error_no_call')}\r"
 
         mode = "ALL"
         max_paths = 10
@@ -25,7 +25,9 @@ class CliCmdPath(CliModulBase):
 
         ent = self._mh.mh_get_data_fm_call(call)   # funktioniert port-unabhängig
         if not ent:
-            return f"\r # {call} nicht in MH-Datenbank gefunden.\r"
+            return ("\r" +
+                    self._getTabStr_CLI('cli_error_no_call_in_mh_db').format(call) +
+                    "\r")
 
         out = self._build_path_output(ent, mode, max_paths)
         return out + '\r'
@@ -49,31 +51,23 @@ class CliCmdPath(CliModulBase):
             sorted_routes = sorted_routes[:1]   # nur den kürzesten
 
         dbl_filter = []
-        print(sorted_routes)
         for i, route in enumerate(sorted_routes[:max_paths], 1):
             if route in dbl_filter:
                 continue
+            route: list
             dbl_filter.append(route)
             hops = len(route)
-            path_str = f"{ent.own_call} <─── " + " ─── ".join(route) + f" ─── {self._my_call_str.split('-')[0]}"
+            path_str = f"{ent.own_call} <── " + " ── ".join(route) + f" ── {self._my_call_str.split('-')[0]}"
 
-            marker = "   " if i > 1 else " ← Best" if hops == len(sorted_routes[0]) else ""
+            marker = "   " if i > 1 else " < Best" if hops == len(sorted_routes[0]) else ""
 
             out += f"{i}. {hops} Hops{marker}\r"
             #out += self._ascii_path_box(path_str, hops)
             out += path_str + '\r'
-            out += f"   (letzter Einsatz: {get_timedelta_CLIstr(ent.last_seen)})\r\r"  # könnte man pro Route verbessern
+            out += f"   (Last seen: {get_timedelta_CLIstr(ent.last_seen)})\r\r"  # könnte man pro Route verbessern
 
         if len(ent.all_routes) > max_paths:
-            out += f"... und {len(ent.all_routes) - max_paths} weitere Pfade\r"
+            out += f"... and {len(ent.all_routes) - max_paths} more Routes\r"
 
         return out
 
-    @staticmethod
-    def _ascii_path_box(path_str: str, hops: int):
-        """ Schöne Box """
-        width = min(70, len(path_str) + 4)
-        box = f"╔{'═' * (width-2)}╗\r"
-        box += f"║ {path_str.ljust(width-4)} ║\r"
-        box += f"╚{'═' * (width-2)}╝\r"
-        return box

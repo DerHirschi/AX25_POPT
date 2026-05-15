@@ -185,7 +185,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 
 
 ## Community & Support
-- **Forum:** [Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
+- **Forum:** [Further Information](https://lk0nod.de/forum/forum-264.html)
 - **Telegram:** [PoPT Support](https://t.me/poptsupport)
 - **X:** [@AX25_PoPT](https://x.com/AX25_PoPT)
 

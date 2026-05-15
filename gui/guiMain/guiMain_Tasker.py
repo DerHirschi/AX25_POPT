@@ -105,95 +105,28 @@ class GuiTasker:
 
 
     def _tasker_queue(self, start_time: time.time):
-
-        while not self._tasker_q_prio.is_empty and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
+        # ===== PRIO
+        while (not self._tasker_q_prio.is_empty and
+               self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME)):
             task, arg = self._tasker_q_prio.buffer_read
-            if task == 'sysMsg_to_monitor':
-                self._gui_root.monFrame.sysMsg_to_monitor_task(arg)
-            elif self.quit:
-                continue
-            elif task == 'conn_btn_update':
-                self._gui_root.conn_btn_update_task()
-            elif task == 'ch_status_update':
-                self._gui_root.ch_status_update_task()
-            elif task == 'on_channel_status_change':
-                self._gui_root.on_channel_status_change_task()
-            elif task == 'add_LivePath_plot':
-                node, ch_id, path = arg
-                self._gui_root.Pacman.add_LivePath_plot_task(node, ch_id, path)
-            elif task == 'resetHome_LivePath_plot':
-                ch_id = arg
-                self._gui_root.Pacman.resetHome_LivePath_plot_task(ch_id)
-            elif task == 'sysMsg_to_qso':
-                data, ch_index = arg
-                self._sysMsg_to_qso_task(data, ch_index)
-            elif task == 'dx_alarm':
-                self._gui_root.dx_alarm_task()
-            elif task == 'tracer_alarm':
-                self._gui_root.tracer_alarm_task()
-            elif task == 'reset_tracer_alarm':
-                self._gui_root.reset_tracer_alarm_task()
-            elif task == 'reset_dx_alarm':
-                self._gui_root.reset_dx_alarm_task()
-            elif task == 'pmsMail_alarm':
-                self._gui_root.pmsMail_alarm_task()
-            elif task == 'reset_pmsMail_alarm':
-                self._gui_root.reset_pmsMail_alarm_task()
-            elif task == 'pmsFwd_alarm':
-                self._gui_root.pmsFwd_alarm_task()
-            elif task == 'reset_pmsFwd_alarm':
-                self._gui_root.reset_pmsFwd_alarm_task()
-            elif task == 'set_diesel':
-                self._gui_root.set_diesel_task()
-            elif task == 'reset_diesel':
-                self._gui_root.reset_diesel_task()
-            elif task == 'set_rxEcho_icon':
-                alarm_set = arg
-                self._gui_root.set_rxEcho_icon_task(alarm_set)
-            elif task == 'set_Beacon_icon':
-                alarm_set = arg
-                self._gui_root.set_Beacon_icon_task(alarm_set)
-            elif task == 'set_port_block_warning':
-                self._gui_root.set_port_block_warning_task()
-            elif task == 'reset_noty_bell_alarm':
-                self._gui_root.reset_noty_bell_alarm_task()
-            elif task == 'set_noty_bell':
-                ch_id, msg = arg
-                self._gui_root.set_noty_bell_task(ch_id, msg)
-            elif task == 'set_noty_bell_active':
-                self._gui_root.set_noty_bell_active_task()
-            elif task == 'set_aprsMail_alarm':
-                self._gui_root.set_aprsMail_alarm_task()
-            elif task == 'reset_aprsMail_alarm':
-                self._gui_root.reset_aprsMail_alarm_task()
-            elif task == 'update_aprs_spooler':
-                self._gui_root.toplevel_manager.update_aprs_spooler_task()
-            elif task == 'update_aprs_msg_win':
-                self._gui_root.toplevel_manager.update_aprs_msg_win_task(arg)
-            #elif task == 'update_tracer_win':
-            #    self._update_tracer_win_task()
+            if callable(task):
+                if arg is None:
+                    task()
+                else:
+                    task(arg)
 
         if self.quit:
             return True
 
-        # Non Prio
-        while not self._tasker_q.is_empty and self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME):
+        # ===== Non Prio
+        while (not self._tasker_q.is_empty and
+               self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME)):
                 task, arg = self._tasker_q.buffer_read
-                if task == '_monitor_tree_update':
-                    self._gui_root.mon_tree_frame.monitor_tree_update_task(arg)
-                elif task == '_monitor_q_task':
-                    self._gui_root.monFrame.monitor_q_task(arg)
-                elif task == '_remote_monitor_update_task':
-                    rem_mon_data, remote_uid = arg
-                    self._gui_root.remote_monitor_update_task(rem_mon_data ,remote_uid)
-                elif task == '_prp_response_update_task':
-                    rem_mon_data, remote_uid = arg
-                    self._gui_root.toplevel_manager.prp_response_update_task(rem_mon_data, remote_uid)
-                elif task == '_init_popt_remote_task':
-                    self._gui_root.init_popt_remote_task(arg)
-                elif task == '_save_all_data':
-                    self._gui_root.save_all_data()
-
+                if callable(task):
+                    if arg is None:
+                        task()
+                    else:
+                        task(arg)
         return True
 
     def _tasker_prio(self):
@@ -252,7 +185,7 @@ class GuiTasker:
             """ Toplevel Win Tasker """
             self._gui_root.toplevel_manager.tasker_1_sec()
             # APRS - MSG Spooler
-            self.add_tasker_q("update_aprs_spooler", None)
+            self.add_tasker_q(self._gui_root.toplevel_manager.update_aprs_spooler_task)
             if SOUND.master_sound_on:
                 # TODO Sound Task
                 self._gui_root.rx_beep_sound()
@@ -282,7 +215,7 @@ class GuiTasker:
 
     # END TASKER
     ######################################################################
-    def add_tasker_q(self, fnc: str, arg, prio=True):
+    def add_tasker_q(self, fnc, arg=None, prio=True):
         if prio:
             if (fnc, None) in self._tasker_q_prio.buffer_get:
                 return
@@ -366,7 +299,7 @@ class GuiTasker:
         """ Monitor Tree """
         self._gui_root.monitor_tree_update(new_mon_buff)
         """ Monitor """
-        self.add_tasker_q('_monitor_q_task',
+        self.add_tasker_q(self._gui_root.monFrame.monitor_q_task,
                            new_mon_buff,
                            False)
         return True
@@ -374,7 +307,5 @@ class GuiTasker:
     ######################################################################
     # Q-Tasks
     ######################################################################
-    # QSO
-    def _sysMsg_to_qso_task(self, data: str, ch_index):
-        self._gui_root.qso_frame.sysMsg_to_qso_task(data, ch_index)
+
 

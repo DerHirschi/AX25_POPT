@@ -3465,6 +3465,32 @@ STR_TABLE = {
     ),
 
     # =============================
+    'cli_error_no_call': (
+        " # Kein Call angegeben.",                    # DE
+        " # No call specified.",                      # EN
+        " # Geen call opgegeven.",                    # NL
+        " # Aucun call spécifié.",                    # FR
+        " # Nebyl zadán callsign.",                   # CZ
+        " # Nie podano callsignu.",                   # PL
+        " # Nenhum call especificado.",               # PT
+        " # Nessun call specificato.",                # IT
+        " # Не указан callsign.",                     # RU
+        " # Не вказано callsign.",                    # UA
+    ),
+
+        'cli_error_no_call_in_mh_db': (
+        " # {0} nicht in MH-Datenbank gefunden.",                    # DE
+        " # {0} not found in MH database.",                          # EN
+        " # {0} niet gevonden in MH-database.",                      # NL
+        " # {0} non trouvé dans la base MH.",                        # FR
+        " # {0} nenalezen v MH databázi.",                           # CZ
+        " # {0} nie znaleziono w bazie MH.",                         # PL
+        " # {0} não encontrado na base de dados MH.",                # PT
+        " # {0} non trovato nel database MH.",                       # IT
+        " # {0} не найден в базе MH.",                               # RU
+        " # {0} не знайдено в базі MH.",                             # UA
+    ),
+    # =============================
     'cli_error': (
         " # Fehler.",
         " # Error.",

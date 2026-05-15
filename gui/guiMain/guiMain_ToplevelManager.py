@@ -139,9 +139,10 @@ class ToplevelManager:
                 self.aprs_pn_msg_frame.remove(aprs_sms_frame)
 
     # PRP
-    def prp_response_update_task(self, resp: str, remote_uid: str):
+    def prp_response_update_task(self, arg: tuple):
         # Update Remote Mon GUI if open
         if hasattr(self.prp_remote_win, 'gui_prp_response_handler'):
+            resp, remote_uid = arg
             self.prp_remote_win.gui_prp_response_handler(resp, remote_uid)
 
     def prp_remote_update_mon(self, rem_mon_ax25conf: dict, remote_uid: str):

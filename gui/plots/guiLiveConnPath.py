@@ -67,7 +67,8 @@ class LiveConnPath(ttk.Frame):
         self._canvas.draw()
 
     # ======================================
-    def add_LivePath_plot_task(self, node: str, ch_id: int, path=None):
+    def add_LivePath_plot_task(self, arg: tuple):
+        node, ch_id, path = arg
         if path is None:
             path = []
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")

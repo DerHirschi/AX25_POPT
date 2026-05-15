@@ -367,7 +367,7 @@ class PoPT_GUI_Main:
     def add_save_all_data_task(self):
         if self._quit:
             return
-        self._GuiTasker.add_tasker_q("_save_all_data", None, False)
+        self._GuiTasker.add_tasker_q(self.save_all_data, None, False)
 
     ####################
     # Init Stuff
@@ -582,7 +582,7 @@ class PoPT_GUI_Main:
     ######################################################################
     ######################################################################
     def update_aprs_msg_win(self, aprs_pack):
-        self._GuiTasker.add_tasker_q("update_aprs_msg_win", aprs_pack)
+        self._GuiTasker.add_tasker_q(self.toplevel_manager.update_aprs_msg_win_task, aprs_pack)
 
     #######################################################################
     ###############################################################
@@ -612,10 +612,7 @@ class PoPT_GUI_Main:
             #self._ts_box_box.configure(bg=bg)
 
     def sysMsg_to_qso(self, data: str, ch_index):
-        self._GuiTasker.add_tasker_q("sysMsg_to_qso", (data, ch_index))
-
-    def sysMsg_to_qso_task(self, data: str, ch_index):
-        self.qso_frame.sysMsg_to_qso_task(data, ch_index)
+        self._GuiTasker.add_tasker_q(self.qso_frame.sysMsg_to_qso_task, (data, ch_index))
 
     def see_end_qso_win(self):
         self.qso_frame.see_end_qso_win()
@@ -625,21 +622,21 @@ class PoPT_GUI_Main:
     ###############################################################
     # Monitor WIN
     def sysMsg_to_monitor(self, var: str):
-        self._GuiTasker.add_tasker_q("sysMsg_to_monitor", var)
+        self._GuiTasker.add_tasker_q(self.monFrame.sysMsg_to_monitor_task, var)
 
     # END Monitor WIN
     ###############################################################
     ###############################################################
     # Monitor Tree
     def monitor_tree_update(self, ax25pack_batch: list):
-        self._GuiTasker.add_tasker_q("_monitor_tree_update", ax25pack_batch, prio=False)
+        self._GuiTasker.add_tasker_q(self.mon_tree_frame.monitor_tree_update_task, ax25pack_batch, prio=False)
 
     ###############################################################
     # Remote Monitor
     # === Init
     def init_popt_remote(self, uid: str):
         """ Init fm Connection """
-        self._GuiTasker.add_tasker_q("_init_popt_remote_task", uid, prio=False)
+        self._GuiTasker.add_tasker_q(self.init_popt_remote_task, uid, prio=False)
 
     def init_popt_remote_task(self, uid: str):
         if uid not in self._remote_mon_pack_buff:
@@ -668,12 +665,13 @@ class PoPT_GUI_Main:
     """
     # === RX
     def prp_response_update(self, resp: str, remote_uid: str):
-        self._GuiTasker.add_tasker_q("_prp_response_update_task", (resp, remote_uid), prio=False)
+        self._GuiTasker.add_tasker_q(self.toplevel_manager.prp_response_update_task, (resp, remote_uid), prio=False)
 
     def remote_monitor_update_gui(self, ax25pack: dict, remote_uid: str):
-        self._GuiTasker.add_tasker_q("_remote_monitor_update_task", (ax25pack, remote_uid), prio=False)
+        self._GuiTasker.add_tasker_q(self.remote_monitor_update_task, (ax25pack, remote_uid), prio=False)
 
-    def remote_monitor_update_task(self, rem_mon_ax25conf: dict, remote_uid: str):
+    def remote_monitor_update_task(self, arg: tuple):
+        rem_mon_ax25conf, remote_uid = arg
         if not rem_mon_ax25conf:
             return
 
@@ -729,10 +727,10 @@ class PoPT_GUI_Main:
     #######################################################################
     # Conn Path Plot
     def add_LivePath_plot(self, node: str, ch_id: int, path=None):
-        self._GuiTasker.add_tasker_q("add_LivePath_plot", (node, ch_id, path))
+        self._GuiTasker.add_tasker_q(self.Pacman.add_LivePath_plot_task, (node, ch_id, path))
 
     def resetHome_LivePath_plot(self, ch_id: int):
-        self._GuiTasker.add_tasker_q("resetHome_LivePath_plot", ch_id)
+        self._GuiTasker.add_tasker_q(self.Pacman.resetHome_LivePath_plot_task, ch_id)
 
     # END Conn Path Plot
     #######################################################################
@@ -744,7 +742,7 @@ class PoPT_GUI_Main:
         self._port_handler.accept_new_connection
         self._port_handler.end_connection
         """
-        self._GuiTasker.add_tasker_q("conn_btn_update", None)
+        self._GuiTasker.add_tasker_q(self.conn_btn_update_task)
 
     def conn_btn_update_task(self):
         conn = self.get_conn(self.channel_index)
@@ -831,7 +829,7 @@ class PoPT_GUI_Main:
     # =====================================
     def ch_status_update(self):
         """ Triggerd when Connection Status has changed (Conn-accept, -end, -resset)"""
-        self._GuiTasker.add_tasker_q("ch_status_update", None)
+        self._GuiTasker.add_tasker_q(self.ch_status_update_task)
 
     def ch_status_update_task(self):
         self.chBtn_frame.ch_btn_status_update()
@@ -839,7 +837,7 @@ class PoPT_GUI_Main:
 
     def on_channel_status_change(self):
         """ Triggerd when Connection Status has changed + additional Trigger"""
-        self._GuiTasker.add_tasker_q("on_channel_status_change", None)
+        self._GuiTasker.add_tasker_q(self.on_channel_status_change_task)
 
     def on_channel_status_change_task(self):
         self.tabbed_sideFrame.on_ch_stat_change()
@@ -947,21 +945,21 @@ class PoPT_GUI_Main:
     # Alarm/Icon Frame
     def set_aprsMail_alarm(self):
         if self.toplevel_manager.aprs_pn_msg_win:
-            self._GuiTasker.add_tasker_q("reset_aprsMail_alarm", None)
+            self._GuiTasker.add_tasker_q(self.reset_aprsMail_alarm_task)
         else:
-            self._GuiTasker.add_tasker_q("set_aprsMail_alarm", None)
+            self._GuiTasker.add_tasker_q(self.set_aprsMail_alarm_task)
 
     def set_aprsMail_alarm_task(self):
         self.Alarm_Frame.set_aprsMail_alarm(True)
 
     def reset_aprsMail_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_aprsMail_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_aprsMail_alarm_task)
 
     def reset_aprsMail_alarm_task(self):
         self.Alarm_Frame.set_aprsMail_alarm(False)
 
     def dx_alarm(self):
-        self._GuiTasker.add_tasker_q("dx_alarm", None)
+        self._GuiTasker.add_tasker_q(self.dx_alarm_task)
 
     def dx_alarm_task(self):
         """ Alarm when new User in MH List """
@@ -969,7 +967,7 @@ class PoPT_GUI_Main:
             self.Alarm_Frame.set_dxAlarm(True)
 
     def tracer_alarm(self):
-        self._GuiTasker.add_tasker_q("tracer_alarm", None)
+        self._GuiTasker.add_tasker_q(self.tracer_alarm_task)
 
     def tracer_alarm_task(self):
         """ Tracer Alarm """
@@ -977,7 +975,7 @@ class PoPT_GUI_Main:
         self.Alarm_Frame.set_tracerAlarm(True)
 
     def reset_tracer_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_tracer_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_tracer_alarm_task)
 
     def reset_tracer_alarm_task(self):
         """ Tracer Alarm """
@@ -986,7 +984,7 @@ class PoPT_GUI_Main:
             self._tracer_alarm = False
 
     def reset_dx_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_dx_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_dx_alarm_task)
 
     def reset_dx_alarm_task(self):
         dx_alarm = bool(self.setting_dx_alarm.get())
@@ -995,7 +993,7 @@ class PoPT_GUI_Main:
         self.tabbed_sideFrame2.reset_dx_alarm()
 
     def pmsMail_alarm(self):
-        self._GuiTasker.add_tasker_q("pmsMail_alarm", None)
+        self._GuiTasker.add_tasker_q(self.pmsMail_alarm_task)
 
     def pmsMail_alarm_task(self):
         if self.toplevel_manager.MSG_Center_win:
@@ -1003,19 +1001,19 @@ class PoPT_GUI_Main:
         self.Alarm_Frame.set_pmsMailAlarm(True)
 
     def reset_pmsMail_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_pmsMail_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_pmsMail_alarm_task)
 
     def reset_pmsMail_alarm_task(self):
         self.Alarm_Frame.set_pmsMailAlarm(False)
 
     def pmsFwd_alarm(self):
-        self._GuiTasker.add_tasker_q("pmsFwd_alarm", None)
+        self._GuiTasker.add_tasker_q(self.pmsFwd_alarm_task)
 
     def pmsFwd_alarm_task(self):
         self.Alarm_Frame.set_pms_fwd_alarm(True)
 
     def reset_pmsFwd_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_pmsFwd_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_pmsFwd_alarm_task)
 
     def reset_pmsFwd_alarm_task(self):
         self.Alarm_Frame.set_pms_fwd_alarm(False)
@@ -1023,32 +1021,32 @@ class PoPT_GUI_Main:
             self.toplevel_manager.MSG_Center_win.tree_update_task()
 
     def set_diesel(self):
-        self._GuiTasker.add_tasker_q("set_diesel", None)
+        self._GuiTasker.add_tasker_q(self.set_diesel_task)
 
     def set_diesel_task(self):
         self.Alarm_Frame.set_diesel(True)
         self._init_state = 0
 
     def reset_diesel(self):
-        self._GuiTasker.add_tasker_q("reset_diesel", None)
+        self._GuiTasker.add_tasker_q(self.reset_diesel_task)
 
     def reset_diesel_task(self):
         self.Alarm_Frame.set_diesel(False)
 
     def set_rxEcho_icon(self, alarm_set=True):
-        self._GuiTasker.add_tasker_q("set_rxEcho_icon", alarm_set)
+        self._GuiTasker.add_tasker_q(self.set_rxEcho_icon_task, alarm_set)
 
     def set_rxEcho_icon_task(self, alarm_set=True):
         self.Alarm_Frame.set_rxEcho_icon(alarm_set=alarm_set)
 
     def set_Beacon_icon(self, alarm_set=True):
-        self._GuiTasker.add_tasker_q("set_Beacon_icon", alarm_set)
+        self._GuiTasker.add_tasker_q(self.set_Beacon_icon_task, alarm_set)
 
     def set_Beacon_icon_task(self, alarm_set=True):
         self.Alarm_Frame.set_beacon_icon(alarm_set=alarm_set)
 
     def set_port_block_warning(self):
-        self._GuiTasker.add_tasker_q("set_port_block_warning", None)
+        self._GuiTasker.add_tasker_q(self.set_port_block_warning_task)
 
     def set_port_block_warning_task(self):
         self.Alarm_Frame.set_PortBlocking_warning()
@@ -1062,16 +1060,17 @@ class PoPT_GUI_Main:
             self._popt_handler.api.reset_noty_bell_PH()
 
     def reset_noty_bell_alarm(self):
-        self._GuiTasker.add_tasker_q("reset_noty_bell_alarm", None)
+        self._GuiTasker.add_tasker_q(self.reset_noty_bell_alarm_task)
 
     def reset_noty_bell_alarm_task(self):
         self.Alarm_Frame.set_Bell_alarm(False)
         self.Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
 
     def set_noty_bell(self, ch_id, msg=''):
-        self._GuiTasker.add_tasker_q("set_noty_bell", (ch_id, msg))
+        self._GuiTasker.add_tasker_q(self.set_noty_bell_task, (ch_id, msg))
 
-    def set_noty_bell_task(self, ch_id, msg=''):
+    def set_noty_bell_task(self, arg: tuple):
+        ch_id, msg = arg
         conn = self.get_conn(ch_id)
         if not conn:
             return
@@ -1096,7 +1095,7 @@ class PoPT_GUI_Main:
                 self.switch_channel(ch_id)
 
     def set_noty_bell_active(self):
-        self._GuiTasker.add_tasker_q("set_noty_bell_active", None)
+        self._GuiTasker.add_tasker_q(self.set_noty_bell_active_task)
 
     def set_noty_bell_active_task(self):
         self.Alarm_Frame.set_Bell_active(self.setting_noty_bell.get())
