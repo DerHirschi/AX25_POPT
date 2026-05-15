@@ -54,11 +54,12 @@ class GuiTasker:
     # ================================
     def tasker(self):  # MAINLOOP
         timer_overall    = time.time()
-        self._tasker_queue(timer_overall)
         self._win_gc_tasker()
         if self.quit:
             if self._tasker_quit():
                 return
+            self._tasker_queue(timer_overall)
+
         else:
             self._tasker_prio()                     # Port-Handler Tasker, ..., ...
             task_0_25     = self._tasker_025_sec()  # 0.25 & 0.5 Sec(flip flop)
@@ -67,8 +68,12 @@ class GuiTasker:
             # Nur wenn vorherige Tasks nicht ausgeführt wurden
             if not update_needed:
                 update_needed = self._tasker_5_sec()    # 5.00 Sec
+
+            # Tasker-Q
+            tasker_q = self._tasker_queue(timer_overall)
+
             # Nur wenn vorherige Tasks ausgeführt wurden
-            if update_needed:
+            if update_needed or tasker_q:
                 self._gui_main_win.update_idletasks()
 
         t_delta      = time.time() - timer_overall
@@ -105,6 +110,8 @@ class GuiTasker:
 
 
     def _tasker_queue(self, start_time: time.time):
+        if self._tasker_q_prio.is_empty and self._tasker_q.is_empty:
+            return False
         # ===== PRIO
         while (not self._tasker_q_prio.is_empty and
                self._get_tasker_q_can_run(start_time, GUI_TASKER_Q_RUNTIME)):
@@ -178,19 +185,22 @@ class GuiTasker:
         """ 1 Sec """
         if time.time() > self._non_non_prio_task_timer:
             #####################
-            self._gui_root.ConnStatusBar.update_stat_info_conn_timer()
-            self._gui_root.update_ft_info()
-            self._check_port_blocking_task()
-            self._gui_root.chBtn_frame.tasker()
+            self.add_tasker_q(self._gui_root.ConnStatusBar.update_stat_info_conn_timer)
+            self.add_tasker_q(self._gui_root.update_ft_info)
+            self.add_tasker_q(self._check_port_blocking_task)
+            self.add_tasker_q(self._gui_root.chBtn_frame.tasker)
             """ Toplevel Win Tasker """
-            self._gui_root.toplevel_manager.tasker_1_sec()
+            self.add_tasker_q(self._gui_root.toplevel_manager.tasker_1_sec)
             # APRS - MSG Spooler
             self.add_tasker_q(self._gui_root.toplevel_manager.update_aprs_spooler_task)
+
             if SOUND.master_sound_on:
                 # TODO Sound Task
-                self._gui_root.rx_beep_sound()
+                # self._gui_root.rx_beep_sound()
+                self.add_tasker_q(self._gui_root.rx_beep_sound)
                 if SOUND.master_sprech_on:
-                    self._gui_root.check_sprech_ch_buf()
+                    self.add_tasker_q(self._gui_root.check_sprech_ch_buf)
+                    # self._gui_root.check_sprech_ch_buf()
 
             #####################
             self._non_non_prio_task_timer = time.time() + self._parm_non_non_prio_task_timer
@@ -203,11 +213,12 @@ class GuiTasker:
             if self._init_state < 2:
                 self._init_state += 1
                 if self._init_state == 2:
-                    self._gui_root.reset_diesel()
+                    self.add_tasker_q(self._gui_root.reset_diesel_task)
+
             #####################
-            self._gui_root.BwPlot.update_bw_mon()
+            self.add_tasker_q(self._gui_root.BwPlot.update_bw_mon)
             """ Toplevel Win Tasker """
-            self._gui_root.toplevel_manager.tasker_5_sec()
+            self.add_tasker_q(self._gui_root.toplevel_manager.tasker_5_sec)
             #####################
             self._non_non_non_prio_task_timer = time.time() + self._parm_non_non_non_prio_task_timer
             return True

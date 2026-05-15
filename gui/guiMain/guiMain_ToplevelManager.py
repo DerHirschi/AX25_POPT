@@ -91,11 +91,14 @@ class ToplevelManager:
         return ret
 
     def tasker_1_sec(self):
+        # TODO: Own Tasker Q
         if hasattr(self.settings_win, 'tasker'):
             self.settings_win.tasker()
         if hasattr(self.BBS_fwd_q_list, 'tasker'):
             # TODO 2 Sec Tasker
             self.BBS_fwd_q_list.tasker()
+        # APRS SMS
+        #self.update_aprs_spooler_task()
 
     def tasker_5_sec(self):
         self._aprs_wx_tree_task()

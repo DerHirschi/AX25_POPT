@@ -36,8 +36,8 @@ class CliStateManager(CliModulBase):
             self._state_exec[k] = state_fnc
 
     def add_state(self, k, state_fnc):
-        if k in self._state_exec:
-            logger.warning(f"CLI State-Manager: set_state_tab k({k}) already in _state_exec")
+        #if k in self._state_exec:
+        #    logger.warning(f"CLI State-Manager: set_state_tab k({k}) already in _state_exec")
         if not callable(state_fnc):
             logger.error(f"CLI State-Manager: set_state_tab k({k}) not in callable")
             return
