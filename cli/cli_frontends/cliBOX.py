@@ -142,7 +142,7 @@ class BoxCLI(DefaultCLI):
             return ''
 
         # New APRS Msg Noty
-        #ret += self._aprs_cText_noty()
+        ret += self._aprs_chat_cmds.aprs_cText_noty()
         # New BBS Msg Noty
         new_mail = bbs.get_new_pn_count_by_call(self._to_call)
         if new_mail:
@@ -150,6 +150,7 @@ class BoxCLI(DefaultCLI):
 
         if not self._user_db_ent.PRmail:
             ret += self._getTabStr_CLI('box_no_hbbs_address')
+        ret += '\r'
         self.send_output(ret + self.get_ts_prompt(), env_vars=True)
 
         return ''

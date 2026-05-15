@@ -859,6 +859,7 @@ class DefaultCLI(object):
         ret += self._c_text
         ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
+            ret += '\r'
             ret += self.get_ts_prompt()
         self.send_output(ret, env_vars=True)
         self.change_cli_state(1)

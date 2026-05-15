@@ -4441,10 +4441,10 @@ STR_TABLE = {
 
     'aprs_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AMS\r\r',
-        '\r # APRS: You have {} new message(s). Reading with AMS\r\r',
-        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AMS\r\r',
-        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AMS\r\r',
+        '\r # APRS: Du hast {} neue Nachricht(en). Lesen mit AMS\r',
+        '\r # APRS: You have {} new message(s). Reading with AMS\r',
+        '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AMS\r',
+        '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AMS\r',
         '',
         '',
         '',
@@ -4454,10 +4454,10 @@ STR_TABLE = {
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # BOX: Du hast {} neue Mail(s).\r\r',
-        '\r # BOX: You have {} new mails.\r\r',
-        '\r # BOX: Je hebt {} nieuwe mails.\r\r',
-        '\r # BOX: Vous avez {} nouveaux mails.\r\r',
+        '\r # BOX: Du hast {} neue Mail(s).\r',
+        '\r # BOX: You have {} new mails.\r',
+        '\r # BOX: Je hebt {} nieuwe mails.\r',
+        '\r # BOX: Vous avez {} nouveaux mails.\r',
         '',
         '',
         '',
@@ -4467,10 +4467,10 @@ STR_TABLE = {
 
     'box_no_hbbs_address': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
-        '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r\r',
-        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r\r",
-        '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r\r',
-        "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r\r",
+        '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r',
+        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r",
+        '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r',
+        "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r",
         '',
         '',
         '',
