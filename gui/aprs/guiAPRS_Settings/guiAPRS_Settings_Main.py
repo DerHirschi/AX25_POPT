@@ -8,6 +8,7 @@ from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_AIS import APRSaisSettings
 from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Beacon import APRSbeaconSettings
 from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Digi import APRSdigiSettings
 from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_IGate import APRSigateSettings
+from gui.aprs.guiAPRS_Settings.guiAPRS_Settings_Tracer import APRStracerSettings
 
 
 class APRSSettingsMain(tk.Toplevel):
@@ -35,18 +36,19 @@ class APRSSettingsMain(tk.Toplevel):
         self.lift()
         self._root_win.toplevel_manager.settings_win = self
         ###############################################################
-        self._lang      = POPT_CFG.get_guiCFG_language()
-        self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
-        self.icon_win   = None
+        self._lang         = POPT_CFG.get_guiCFG_language()
+        self._getTabStr    = lambda str_k: get_strTab(str_k, self._lang)
+        self.icon_win      = None
         self.title("APRS-" + self._getTabStr('settings'))
         ###############################################################
         self._ais_cfg: dict     = POPT_CFG.get_CFG_aprs_ais()
         ###############################################################
         self._win_tab   = {
-            'aprs_server'       : APRSaisSettings,
-            'beacon_settings'   : APRSbeaconSettings,
-            'igate_settings'    : APRSigateSettings,
-            'aprs_digi_settings': APRSdigiSettings,
+            'aprs_server'         : APRSaisSettings,
+            'beacon_settings'     : APRSbeaconSettings,
+            'igate_settings'      : APRSigateSettings,
+            'aprs_digi_settings'  : APRSdigiSettings,
+            'aprs_tracer_settings': APRStracerSettings,
         }
         ###############################################################
         main_f = ttk.Frame(self)
@@ -84,6 +86,9 @@ class APRSSettingsMain(tk.Toplevel):
     ################################################
 
     ################################################
+    @property
+    def popt_handler(self):
+        return self._root_win.get_PH_mainGUI()
 
     ################################################
     def _save_cfg(self):

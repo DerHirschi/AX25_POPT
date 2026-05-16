@@ -7,7 +7,6 @@ from cfg.default_config import getNew_APRS_beacon_cfg
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import validate_ax25Call
-from fnc.gui_fnc import build_aprs_icon_tab
 from fnc.str_fnc import get_strTab
 from gui.aprs.guiAPRS_symbol_tab import APRSymbolTab
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
@@ -21,7 +20,7 @@ class APRSbeaconSettings(ttk.Frame):
         self.style_name     = root_win.style_name
         self._root_win      = root_win
         self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab = build_aprs_icon_tab((32, 32))
+        self._aprs_icon_tab = root_win.guiIcon.get_aprs_icon_tab_32()
         ###################################
         # CFG
         ais_cfg:          dict  = self._root_win.get_aprs_cfg()

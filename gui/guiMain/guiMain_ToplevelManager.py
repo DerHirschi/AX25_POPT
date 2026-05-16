@@ -59,6 +59,11 @@ class ToplevelManager:
         # ================================
 
     # ================================
+    @property
+    def popt_handler(self):
+        return self._popt_handler
+
+    # ================================
     def tasker_prio(self):
         """ Prio Tasks every Irritation """
         tasker_ret = False

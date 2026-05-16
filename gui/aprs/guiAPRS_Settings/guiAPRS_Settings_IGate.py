@@ -11,7 +11,7 @@ class APRSigateSettings(ttk.Frame):
         ttk.Frame.__init__(self, tabctl)
         self.style = root_win.style
         self.style_name = root_win.style_name
-        self._root_win = root_win
+        self._root_win  = root_win
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
         ###################################

@@ -2176,6 +2176,18 @@ STR_TABLE = {
         'Digipeater',
         'Digipeater',
     ),
+    'aprs_tracer_settings': (
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+        'Tracer',
+    ),
 
     'digi_active': (
         'APRS Digipeater aktivieren',

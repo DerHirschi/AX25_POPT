@@ -10,6 +10,8 @@ class GuiIcons:
         self.aprs_icon_tab_16 = build_aprs_icon_tab((16, 16))
         logger.info("GuiIcons: Init APRS-Icon Tab 24x24")
         self.aprs_icon_tab_24 = build_aprs_icon_tab((24, 24))
+        logger.info("GuiIcons: Init APRS-Icon Tab 32x32")
+        self.aprs_icon_tab_32 = build_aprs_icon_tab((32, 32))
         logger.info("GuiIcons: Init Monitor-Tree-Icon Tab 16x16 & 32x16")
         self.rx_tx_icons = {
             'rx':       get_image(CFG_gui_icon_path + '/pfeil_rechts_gruen.png', size=(16, 16)),  # RX
@@ -103,6 +105,9 @@ class GuiIcons:
 
     def get_aprs_icon_tab_24(self):
         return self.aprs_icon_tab_24
+
+    def get_aprs_icon_tab_32(self):
+        return self.aprs_icon_tab_32
 
     def get_conn_typ_icon_16(self):
         return self.conn_typ_icons
