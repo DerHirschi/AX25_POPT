@@ -102,6 +102,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - AX25KERNEL (Linux AX.25 Device) (root rights needed)
 - TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX (TFPCX).)
 - TNC-EMU-TCP-CLIENT (Pseudo TNC-Emulator Device to connect e.g. Amiberry (AMIGA-Emulator) (AmigaTNC))
+- Multiport TNC (via KISS Devices)
 
 #### Tools / Functions / Buildins
   <img src="https://repository-images.githubusercontent.com/600855071/e2db0bca-43d0-4c66-815c-0dad85c4d500" width="60%" height="60%"/>
@@ -109,10 +110,13 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - APRS
   - Weather data evaluation
   - Beacon Tracer
-  - Private Message System
+  - Private Message System / Short Message System
   - APRS Monitor
   - APRS Decoder for Monitor
+  - I-Gate
+  - Digipeater (WIDE/TRACE)
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
+- MultiPort TNC via KISS
 - RX-Echo (Packet echoing to another Port/Device)
 - Environment variablen replacement for:
   - Beacon
@@ -135,6 +139,8 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - Node/Digi Functions (No NetRom Routing)
 - MCast Server (Multicast Server for AXIP)
 - Remote Commands / CLI
+  - Rights Level Management
+  - SYSOP Rights-Level with SYS
 - GPIO Functions (capable switch GPIO's on PI and other GPIO-Devices) (root rights needed)
 - 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
 - Pipe-Tool 
@@ -160,6 +166,13 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - English
 - Dutch  (Thanks to Patrick for the Dutch translation)
 - French (Thanks to ClaudeMa)
+  #### Partial translated (AI-Generated) (Fallback to English)
+  - Czech
+  - Polish
+  - Portuguese
+  - Italian
+  - Russian
+  - Ukrainian
 
 #### Keybindings:
 - ESC > New Connection
@@ -181,7 +194,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 
 
 ## Community & Support
-- **Forum:** [Further Information](http://forum.packetradio-salzwedel.de/index.php?board/10-popt/)
+- **Forum:** [Further Information](https://lk0nod.de/forum/forum-264.html)
 - **Telegram:** [PoPT Support](https://t.me/poptsupport)
 - **X:** [@AX25_PoPT](https://x.com/AX25_PoPT)
 

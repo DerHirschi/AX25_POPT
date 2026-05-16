@@ -2,15 +2,8 @@
 TODO:
     - Port 0 (Monitor) MH-Plot
 """
-import threading
-import tkinter as tk
-import traceback
 from tkinter import ttk
 
-from cfg.logger_config import logger
-# from matplotlib.backends._backend_tk import NavigationToolbar2Tk
-#import matplotlib as mpl
-# from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FIGc
 from gui import FigureCanvasTkAgg as FIGc
 import networkx as nx
 import random
@@ -18,25 +11,26 @@ import random
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 
-#mpl.use('Agg')
-#from matplotlib import pyplot as plt2
 from gui import plt
 
 class LiveConnPath(ttk.Frame):
-    def __init__(self, tabctl):
+    def __init__(self, gui_root_cl, tabctl):
         ttk.Frame.__init__(self, tabctl)
-        self.pack(fill=tk.BOTH, expand=True)
+        self.pack(fill='both', expand=True)
         # self._root_win = root_win
-        self._lang = POPT_CFG.get_guiCFG_language()
-        self._pos = None
-        self._channel_id = 1
-        self._path_data = {}
-        path_data = POPT_CFG.get_pacman_data()
+        self._gui_root     = gui_root_cl
+        self._lang         = POPT_CFG.get_guiCFG_language()
+        self._channel_id   = gui_root_cl.channel_index
+        # ================================
+        self._pos            = None
+        self._connected_path = {}
+        # ================================
+        self._path_data      = {}
+        path_data       = POPT_CFG.get_pacman_data()
         for ch_id, ch_data in path_data.items():
             path_data, last_hop, seed = ch_data
             self._path_data[ch_id] = path_data, 'HOME', seed
         # self._path_data = POPT_CFG.get_pacman_data()
-        self._connected_path = {}
         """
         test_data = {
             1: ({
@@ -49,13 +43,13 @@ class LiveConnPath(ttk.Frame):
         ##########################
         # Plot Frame
         g_frame = ttk.Frame(self)
-        g_frame.pack(fill=tk.BOTH, expand=True)
+        g_frame.pack(fill='both', expand=True)
 
         self._fig, self._plot1 = plt.subplots(dpi=50)
         # self._plot2 = self._plot1.twinx()
         self._fig.subplots_adjust(top=1.00, bottom=0.00, left=0.00, right=1.00, hspace=0.00)
         self._canvas = FIGc(self._fig, master=g_frame)
-        self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
+        self._canvas.get_tk_widget().pack(expand=True, fill='both')
         # Werkzeugleisten für die plots erstellen
         # toolbar1 = NavigationToolbar2Tk(self._canvas, g_frame)
         # toolbar1.update()
@@ -64,14 +58,34 @@ class LiveConnPath(ttk.Frame):
         # BTN Fram
         btn_frame = ttk.Frame(self)
         btn_frame.pack()
-        ttk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side=tk.LEFT, padx=20)
-        ttk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side=tk.LEFT, padx=20)
+        ttk.Button(btn_frame, text='Refresh', command=self._refresh_btn).pack(side="left", padx=20)
+        ttk.Button(btn_frame, text=get_strTab('delete', self._lang), command=self._reset_btn).pack(side="left", padx=20)
 
         self._g = nx.Graph()
         self._plot1.axis('off')
         self._fig.set_facecolor('#191621')
         self._canvas.draw()
 
+    # ======================================
+    def add_LivePath_plot_task(self, arg: tuple):
+        node, ch_id, path = arg
+        if path is None:
+            path = []
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
+        for digi in path:
+            self.change_node(node=digi, ch_id=ch_id)
+        self.change_node(node=node, ch_id=ch_id)
+        if ch_id == self._channel_id:
+            self.update_plot_f_ch(ch_id=ch_id)
+
+    def resetHome_LivePath_plot_task(self, ch_id: int):
+        # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
+        self.reset_last_hop(ch_id=ch_id)
+        if ch_id == self._channel_id:
+            #if not POPT_CFG.get_pacman_fix():
+            self.update_plot_f_ch(ch_id=ch_id)
+
+    # ======================================
     def _reset_btn(self, event=None):
         self._path_data[self._channel_id] = ({}, 'HOME', int(random.randint(1, 10000)))
         self._update_Graph(self._channel_id)
@@ -213,10 +227,11 @@ class LiveConnPath(ttk.Frame):
         self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
         self._connected_path[ch_id] = ['HOME']
 
-    def update_plot_f_ch(self, ch_id):
-        self._channel_id = int(ch_id)
+    def update_plot_f_ch(self, ch_id: int or None = None):
+        if ch_id is None:
+            self._update_Graph(self._channel_id)
+            return
         self._update_Graph(ch_id)
-
 
     def save_path_data(self):
         POPT_CFG.set_pacman_data(dict(self._path_data))

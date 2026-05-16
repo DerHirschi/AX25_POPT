@@ -12,7 +12,7 @@ class PrivilegWin(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root_cl = root
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        root.settings_win = self
+        root.toplevel_manager.settings_win = self
         self.win_height = 350
         self.win_width  = 840
         self.style      = root.style
@@ -150,7 +150,7 @@ class PrivilegWin(tk.Toplevel):
 
     def destroy_win(self):
         self.destroy()
-        self._root_cl.settings_win = None
+        self._root_cl.toplevel_manager.settings_win = None
 
     def tasker(self):
         return False

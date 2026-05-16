@@ -3,21 +3,22 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.122.21'
+VER = '2.123.156'
 
 CONSOLE_LOG     = True
-DEBUG_LOG       = False
+DEBUG_LOG       = True
 BBS_DEBUG_LOG   = False
 """ Loop Tweaking """
 MON_BATCH_TO_PROCESS = 80       # Packets fm Monitor Buffer to Process fm GUI
 GUI_TASKER_Q_RUNTIME = 0.20     # gui._tasker_queue() Runtime until break
 GUI_TASKER_TIME_D_UNTIL_BURN = 0.20 # Max Time-Delta until loop delay   = GUI_TASKER_BURN_DELAY
 GUI_TASKER_BURN_DELAY        = 1    # GUI-loop Delay
-GUI_TASKER_NOT_BURN_DELAY    = 90   # GUI-loop Delay
+GUI_TASKER_NOT_BURN_DELAY    = 100   # GUI-loop Delay
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
-KISSDEVICES = ['KISSSER', 'KISSTCP', 'AX25KERNEL']
+KISSDEVICES       = ('KISSSER', 'KISSTCP', 'AX25KERNEL')
+MULTI_CH_TNC_DEV  = ('KISSSER', 'KISSTCP', 'TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL') # Can't test TNC-EMU-TCP-SRV and TNC-EMU-TCP-CL
 """"""
 MAX_PORTS           = 10       #
 MAX_SYSOP_CH        = 30       #
@@ -64,12 +65,12 @@ LANG_IND = {
             'EN': 1,
             'NL': 2,
             'FR': 3,
-            # 'CZ': 4,
-            # 'PL': 5,
-            # 'PT': 6,
-            # 'IT': 7,
-            # 'RU': 8,
-            # 'UA': 9,
+            'CZ': 4,
+            'PL': 5,
+            'PT': 6,
+            'IT': 7,
+            'RU': 8,
+            'UA': 9,
         }
 
 STATION_TYPS = [
@@ -125,12 +126,25 @@ STATION_ID_BBS = [
     'THEBOX',   # TNN BOX ?
     'ProfiPacket',
     'PoPTBOX',
+    'STOP',
+    'DP',
+    'XR',
+    'RLI',
+    'CBBS',
+    'MSYS',
+    'MBL',
+    '4RE',
 ]
 
 STATION_ID_MCAST = [    # TODO Just Dummy yet
     'PoPTMCast',
 ]
-
+"""
+POPT_CMD_LIST = {
+    '2.123.1': ['PREMON'],
+}
+"""
+# Encoding
 ENCODINGS = (
     'CP437',
     'ASCII',
@@ -184,19 +198,13 @@ BBS_REVERS_FWD_CMD = {
 }
 DEV_PRMAIL_ADD = 'MD2SAW@MD2BBS.#SAW.SAA.DEU.EU'
 
-# APRS Stuff
-APRS_SW_ID                  = f"APZPOP"  # TODO get SW ID
-APRS_TRACER_COMMENT         = "PoPT-Tracer"
-APRS_INET_PORT_ID           = 'I-NET'
-APRS_CQ_ADDRESSES           = ['ALL', 'QST', 'CQ']
-APRS_POS_BEACON_COMMENT_MAX = 40
-
 # Locator Calc
 ASCII_0 = 48
 ASCII_A = 65
 ASCII_a = 97
 
 # GUI Stuff
+DEFAULT_BG               = '#121212'   # Sehr dunkles Grau/Schwarz
 DEF_TEXTSIZE             = 13
 FONT                     = "Courier"
 TEXT_SIZE_STATUS         = 10
@@ -209,20 +217,26 @@ PARAM_MAX_MON_LEN        = 100000
 PARAM_MAX_MON_WIDTH      = 100
 PARAM_MAX_MON_TREE_ITEMS = 5000
 MON_SYS_MSG_CLR_FG       = 'red'
-MON_SYS_MSG_CLR_BG       = '#000000'
+MON_SYS_MSG_CLR_BG       = DEFAULT_BG
 CFG_TR_DX_ALARM_BG_CLR   = '#55ed9f'
 GUI_DISABLED_CLR         = '#b1b1b3'
 # Station Default
 DEF_STAT_QSO_TX_COL      = '#ffffff'
 DEF_STAT_QSO_RX_COL      = '#00ff06'
-DEF_STAT_QSO_BG_COL      = '#000000'
+DEF_STAT_QSO_BG_COL      = DEFAULT_BG
 # QSO SysMSG
 DEF_QSO_SYSMSG_FG        = '#fc7126'
-DEF_QSO_SYSMSG_BG        = '#000000'
+DEF_QSO_SYSMSG_BG        = DEFAULT_BG
+# QSO PRP CLI-ESC Status
+CLR_QSO_PRP_STATUS_TX   = '#FF5555'     # Helles Rot
+CLR_QSO_PRP_STATUS_RX   = '#50FA7B'     # Helles Grün
+CLR_QSO_PRP_STATUS_BG   = DEFAULT_BG
+TAG_QSO_PRP_STATUS_TX   = 'PRP-TX'
+TAG_QSO_PRP_STATUS_RX   = 'PRP-RX'
 # Port Default
 DEF_PORT_MON_TX_COL      = 'medium violet red'
 DEF_PORT_MON_RX_COL      = 'green'
-DEF_PORT_MON_BG_COL      = '#000000'
+DEF_PORT_MON_BG_COL      = DEFAULT_BG
 # APRS-MONITOR
 APRS_MAX_TREE_ITEMS     = 10000
 APRS_MAX_BUFFER         = 5000
@@ -310,19 +324,17 @@ F_KEY_TAB_WIN = {
 TNC_KISS_START_CMD = [
     b'\x1b@K\r',
     b'KISSM\r',
+    b'^M\r',
     b'KISS ON\r',
-    b'KISS ON\rrestart\r',
     b'\x11\x18\x1bJHOST1\r',
-    TNC_KISS_CMD
 ]
 
 TNC_KISS_END_CMD = [
-    b'\xc0\xff\xc0',
-    b'\xc0\xff\xc0\rrestart\r',
-    b'KISS OFF\rrestart\r',
+    #b'\xc0\xff\xc0',
+    b'\xc0\xff\xc0\r',
+    b'KISS OFF\r',
     b'restart\r',
     b'\x11\x18\x1bJHOST0\r',
-    TNC_KISS_CMD_END
     ]
 
 #########################################
@@ -451,13 +463,16 @@ TASK_TYP_MAIL           = 'AUTOMAIL'
 #######################################################
 # Local Converse Mode
 LO_CONV_DEF_CH_NAME = 'Default'
+
 #######################################################
 # CLI Types
+
 CLI_TYP_SYSOP    = 'USER'
 CLI_TYP_NODE     = 'NODE'
 CLI_TYP_DIGI     = 'DIGI'
 CLI_TYP_PIPE     = 'PIPE'
 CLI_TYP_BOX      = 'BOX'
 CLI_TYP_CONVERSE = 'CONV'
+CLI_TYP_MCAST    = 'MCAST'
 CLI_TYP_NO_CLI   = 'NO-CLI'
 CLI_TYP_TASK_FWD = 'Task: FWD'

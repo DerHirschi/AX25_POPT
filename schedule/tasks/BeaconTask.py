@@ -46,7 +46,7 @@ class BeaconTask:
             logger.warning('Beacon: kein Text gesetzt!')
             return
         self._text = replace_StringVARS(self._text,
-                                        port=self._port_handler.get_port_by_id(self._conf.get('port_id', 0)),
+                                        port=self._port_handler.port_manager.get_port_by_id(self._conf.get('port_id', 0)),
                                         )
         add_str = self._conf.get('dest_call', '')
         vias = ' '.join(self._conf.get('via_calls', []))
@@ -60,7 +60,7 @@ class BeaconTask:
             'cmd_poll': self._conf.get('cmd_poll', (False, False)),
             'pid': self._conf.get('pid', 0xF0)
         }
-        self._port_handler.send_UI(ui_frame_cfg)
+        self._port_handler.api.send_UI(ui_frame_cfg)
 
     def send_it(self):
         beacon_fnc = {

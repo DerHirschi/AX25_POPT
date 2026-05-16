@@ -5,7 +5,7 @@ from tkinter import filedialog as fd
 # Automatische Port-Erkennung
 import serial.tools.list_ports
 
-from ax25.ax25dec_enc import PIDByte
+from ax25.ax25_l2.ax25dec_enc import PIDByte
 from cfg.constant import COLOR_MAP
 from cfg.default_config import getNew_pipe_cfg
 from cfg.popt_config import POPT_CFG
@@ -300,7 +300,7 @@ class PipeTab:
             port_id = int(port_id)
             if port_id in self._port_handler.get_all_ports().keys():
                 # vals = self._port_handler.get_all_ports()[port_id].my_stations
-                vals = self._port_handler.get_stat_calls_fm_port(port_id)
+                vals = self._port_handler.api.get_stat_calls_fm_port(port_id)
             if vals:
                 self.call_var.set(self.pipe_cfg.get('pipe_parm_own_call', vals[0]))
                 # self.call_var.set(vals[0])
@@ -378,7 +378,7 @@ class PipeToolSettings(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root        = root
         self._getTabStr   = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        root.settings_win = self
+        root.toplevel_manager.settings_win = self
         self.win_height   = 600
         self.win_width    = 860
         self.style      = root.style
@@ -454,7 +454,7 @@ class PipeToolSettings(tk.Toplevel):
         self.tabControl = ttk.Notebook(main_f, height=self.win_height - 140, width=self.win_width - 40)
         self.tabControl.place(x=20, y=self.win_height - 550)
         self.tab_list = []
-        all_pipes = self._port_handler.get_all_pipes()
+        all_pipes = self._port_handler.pipe_manager.get_all_pipes()
         for pipe in all_pipes:
             pipe_cfg = pipe.get_cfg_fm_pipe()
             if ((pipe_cfg.get('pipe_parm_permanent', False) and not pipe_cfg.get('pipe_parm_Proto', True)) or
@@ -520,7 +520,7 @@ class PipeToolSettings(tk.Toplevel):
                 conn.set_pipe(pipe_cfg=pipe_cfg)
             else:
                 # self._port_handler.add_pipe_PH(pipe)
-                port = self._port_handler.get_port_by_id(pipe_cfg['pipe_parm_port'])
+                port = self._port_handler.port_manager.get_port_by_id(pipe_cfg['pipe_parm_port'])
                 if port:
                     port.add_pipe(pipe_cfg=pipe_cfg)
 
@@ -550,7 +550,7 @@ class PipeToolSettings(tk.Toplevel):
 
     def _destroy_win(self):
         self.destroy()
-        self._root.settings_win = None
+        self._root.toplevel_manager.settings_win = None
 
     def tasker(self):
         pass

@@ -53,15 +53,15 @@ class RoutingTableWindow:
 
         # Spalten definieren
         self._columns = [
-            ('callsign', self._getTabStr('Callsign'), 100),
-            ('alias', self._getTabStr('Alias'), 80),
-            ('type', self._getTabStr('Type'), 100),
-            ('protocol', self._getTabStr('Protocol'), 80),
-            ('ports', self._getTabStr('Ports'), 60),
-            ('quality', self._getTabStr('Quality'), 80),
-            ('rtt', self._getTabStr('RTT'), 60),
-            ('hop_count', self._getTabStr('Hops'), 60),
-            ('timestamp', self._getTabStr('Timestamp'), 150)
+            ('callsign', 'Callsign', 100),
+            ('alias', 'Alias', 80),
+            ('type', 'Type', 100),
+            ('protocol', 'Protocol', 80),
+            ('ports', 'Ports', 60),
+            ('quality', 'Quality', 80),
+            ('rtt', 'RTT'), 60,
+            ('hop_count', 'Hops', 60),
+            ('timestamp', 'Timestamp', 150)
         ]
         self._tree['columns'] = [col[0] for col in self._columns]
         for col_id, col_name, width in self._columns:
@@ -129,7 +129,7 @@ class RoutingTableWindow:
         self._initial_xlim = None
         self._initial_ylim = None
 
-        self._root_win.routingTab_win = self
+        self._root_win.toplevel_manager.routingTab_win = self
         # Initiale Daten laden
         self.update_treeview()
 
@@ -394,7 +394,7 @@ class RoutingTableWindow:
         self._window.destroy()
 
     def close(self):
-        self._root_win.routingTab_win = None
+        self._root_win.toplevel_manager.routingTab_win = None
         self._destroy_win()
 
     def tasker(self):

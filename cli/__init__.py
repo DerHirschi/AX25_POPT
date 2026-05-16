@@ -1,9 +1,9 @@
 from cfg.constant import CLI_TYP_PIPE
-from cli.cliMain import NoneCLI
-from cli.cliNODE import NodeCLI
-from cli.cliSYSOP import UserCLI
-from cli.cliMCAST import MCastCLI
-from cli.cliBOX import BoxCLI
+from cli.cli_frontends.cliNONE import NoneCLI
+from cli.cli_frontends.cliNODE import NodeCLI
+from cli.cli_frontends.cliSYSOP import UserCLI
+from cli.cli_frontends.cliMCAST import MCastCLI
+from cli.cli_frontends.cliBOX import BoxCLI
 
 CLI_OPT = {
     UserCLI.cli_name: UserCLI,

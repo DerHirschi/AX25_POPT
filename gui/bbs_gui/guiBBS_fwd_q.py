@@ -18,8 +18,8 @@ class BBS_fwd_Q(tk.Toplevel):
         self._root_win              = root_win
         self._bbs_obj               = port_handler.get_bbs()
         self._getTabStr             = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._conn_typ_icon_tab     = root_win.get_conn_typ_icon_16()
-        self._fwd_Q_icon_tab     = root_win.get_fwd_q_icon_16()
+        self._conn_typ_icon_tab     = root_win.guiIcon.get_conn_typ_icon_16()
+        self._fwd_Q_icon_tab        = root_win.guiIcon.get_fwd_q_icon_16()
         ###################################
         self.title(self._getTabStr('fwd_list'))
         self.style = self._root_win.style
@@ -513,7 +513,7 @@ class BBS_fwd_Q(tk.Toplevel):
         ##########################################################################################
         #self._update_conn_his()
         self._init_menubar()
-        self._root_win.BBS_fwd_q_list = self
+        self._root_win.toplevel_manager.BBS_fwd_q_list = self
         self.tasker()
 
     ##################################################
@@ -1118,5 +1118,5 @@ class BBS_fwd_Q(tk.Toplevel):
 
     def _close(self):
         # self._bbs_obj = None
-        self._root_win.BBS_fwd_q_list = None
+        self._root_win.toplevel_manager.BBS_fwd_q_list = None
         self.destroy()

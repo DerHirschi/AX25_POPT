@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import CFG_TR_DX_ALARM_BG_CLR
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr
@@ -12,8 +11,11 @@ class BeaconTracer(ttk.Frame):
     def __init__(self, root_frame, root_win):
         ttk.Frame.__init__(self, root_frame)
         self.pack(fill='both', expand=True)
-        self._root_win  = root_win
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win     = root_win
+        self._port_handler = self._root_win.get_port_handler()
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._aprs_main    = self._port_handler.get_aprs_ais()
+        ais_cfg            = POPT_CFG.get_CFG_aprs_ais()
         ##############################################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -40,9 +42,9 @@ class BeaconTracer(ttk.Frame):
 
         # Port
         self._be_port_var = tk.StringVar(self)
-        options = list(PORT_HANDLER.get_all_ports().keys())
-        if len(options) > PORT_HANDLER.get_aprs_ais().be_tracer_port:
-            self._be_port_var.set(options[PORT_HANDLER.get_aprs_ais().be_tracer_port])
+        options = list(self._port_handler.get_all_ports().keys())
+        if len(options) > ais_cfg.get('be_tracer_port', 0):
+            self._be_port_var.set(options[ais_cfg.get('be_tracer_port', 0)])
         if not options:
             options = [0]
         ttk.Label(frame_2_port, text='Port ').pack(side=tk.LEFT, padx=5)
@@ -54,9 +56,9 @@ class BeaconTracer(ttk.Frame):
         frame_2_stat.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_stat_var = tk.StringVar(self)
         # options = list(PORT_HANDLER.ge)
-        options = PORT_HANDLER.get_stat_calls_fm_port(PORT_HANDLER.get_aprs_ais().be_tracer_port)
+        options = self._port_handler.api.get_stat_calls_fm_port(ais_cfg.get('be_tracer_port', 0))
 
-        self._be_stat_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_station)
+        self._be_stat_var.set(ais_cfg.get('be_tracer_station', 'NOCALL'))
         ttk.Label(frame_2_stat, text='Station ').pack(side=tk.LEFT, )
         self._be_stat_opt = ttk.Combobox(frame_2_stat,
                                             width=10,
@@ -68,7 +70,7 @@ class BeaconTracer(ttk.Frame):
         frame_2_via = ttk.Frame(upper_frame)
         frame_2_via.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_via_var = tk.StringVar(self)
-        path = ' '.join(PORT_HANDLER.get_aprs_ais().be_tracer_via)
+        path = ' '.join(ais_cfg.get('be_tracer_via', []))
         self._be_via_var.set(path)
         ttk.Label(frame_2_via, text='via ').pack(side=tk.LEFT, )
         ttk.Entry(frame_2_via, textvariable=self._be_via_var, width=25).pack(side=tk.LEFT, )
@@ -78,7 +80,7 @@ class BeaconTracer(ttk.Frame):
         frame_2_wide.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_wide_var = tk.StringVar(self)
 
-        self._be_wide_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_wide))
+        self._be_wide_var.set(str(ais_cfg.get('be_tracer_wide', 1)))
         ttk.Label(frame_2_wide, text='via WIDE ').pack(side=tk.LEFT, )
         ttk.Spinbox(frame_2_wide,
                    from_=1,
@@ -94,7 +96,7 @@ class BeaconTracer(ttk.Frame):
         frame_2_interval.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_interval_var = tk.StringVar(self)
 
-        self._be_interval_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_interval))
+        self._be_interval_var.set(str(ais_cfg.get('be_tracer_interval', 5)))
         ttk.Label(frame_2_interval, text='Interval ').pack(side=tk.LEFT, )
         ttk.Spinbox(frame_2_interval,
                    from_=1,
@@ -109,7 +111,7 @@ class BeaconTracer(ttk.Frame):
         frame_2_active = ttk.Frame(upper_frame)
         frame_2_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=10)
         self._be_active_var = tk.BooleanVar(self)
-        self._be_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_active)
+        self._be_active_var.set(ais_cfg.get('be_tracer_active', False))
         ttk.Label(frame_2_active, text='Activate ').pack(side=tk.LEFT, )
         ttk.Checkbutton(frame_2_active,
                        variable=self._be_active_var,
@@ -140,7 +142,7 @@ class BeaconTracer(ttk.Frame):
         frame_21_active = ttk.Frame(lower_frame)
         frame_21_active.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
         self._alarm_active_var = tk.BooleanVar(self)
-        self._alarm_active_var.set(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active)
+        self._alarm_active_var.set(ais_cfg.get('be_tracer_alarm_active', False))
         ttk.Label(frame_21_active, text='Activate ').pack(side=tk.LEFT, )
         ttk.Checkbutton(frame_21_active,
                        variable=self._alarm_active_var,
@@ -152,7 +154,7 @@ class BeaconTracer(ttk.Frame):
         frame_21_distance.pack(side=tk.LEFT, fill=tk.BOTH, padx=30)
         self._alarm_distance_var = tk.StringVar(self)
 
-        self._alarm_distance_var.set(str(PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range))
+        self._alarm_distance_var.set(str(ais_cfg.get('be_tracer_alarm_range', 50)))
         ttk.Label(frame_21_distance, text='Distance ').pack(side=tk.LEFT, )
         ttk.Spinbox(frame_21_distance,
                    from_=1,
@@ -221,7 +223,7 @@ class BeaconTracer(ttk.Frame):
                 self._tree.insert('', tk.END, values=ret_ent[0], )
 
     def _format_tree_data(self):
-        traces: dict = PORT_HANDLER.get_aprs_ais().tracer_traces_get()
+        traces: dict = self._aprs_main.tracer_traces_get()
         self._tree_data = []
         tr_keys = list(traces.keys())
         tr_keys.reverse()
@@ -252,32 +254,31 @@ class BeaconTracer(ttk.Frame):
 
     def _save_btn(self):
         self._save_vars()
-        self._save_to_cfg()
+        #self._save_to_cfg()
 
     def _save_vars(self):
-        PORT_HANDLER.get_aprs_ais().be_tracer_port = int(self._be_port_var.get())
-        PORT_HANDLER.get_aprs_ais().be_tracer_station = self._be_stat_var.get()
-        PORT_HANDLER.get_aprs_ais().be_tracer_wide = self._be_wide_var.get()
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        ais_cfg['be_tracer_port']           = int(self._be_port_var.get())
+        ais_cfg['be_tracer_station']        = self._be_stat_var.get()
+        ais_cfg['be_tracer_wide']           = self._be_wide_var.get()
         path = get_list_fm_viaStr(self._be_via_var.get())
-        PORT_HANDLER.get_aprs_ais().be_tracer_via = list(path)
-        PORT_HANDLER.get_aprs_ais().be_tracer_interval = int(self._be_interval_var.get())
-        PORT_HANDLER.get_aprs_ais().be_tracer_active = self._be_active_var.get()
-        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active = bool(self._alarm_active_var.get())
-        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range = int(self._alarm_distance_var.get())
+        ais_cfg['be_tracer_via']            = list(path)
+        ais_cfg['be_tracer_interval']       = int(self._be_interval_var.get())
+        ais_cfg['be_tracer_active']         = self._be_active_var.get()
+        ais_cfg['be_tracer_alarm_active']   = bool(self._alarm_active_var.get())
+        ais_cfg['be_tracer_alarm_range']    = int(self._alarm_distance_var.get())
 
-    @staticmethod
-    def _save_to_cfg():
-        PORT_HANDLER.get_aprs_ais().save_conf_to_file()
+        POPT_CFG.set_CFG_aprs_ais(ais_cfg)
 
     def _send_btn(self):
         self._save_vars()
-        PORT_HANDLER.get_aprs_ais().tracer_sendit()
+        self._aprs_main.tracer_sendit()
 
     def _chk_alarm_active(self, event=None):
-        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_active = bool(self._alarm_active_var.get())
+        self._save_vars()
 
     def _set_alarm_distance(self, event=None):
-        PORT_HANDLER.get_aprs_ais().be_tracer_alarm_range = int(self._alarm_distance_var.get())
+        self._save_vars()
 
     def _chk_port(self, event=None):
         try:
@@ -285,20 +286,19 @@ class BeaconTracer(ttk.Frame):
         except ValueError:
             pass
         else:
-            vals = PORT_HANDLER.get_stat_calls_fm_port(port_id)
+            vals = self._port_handler.api.get_stat_calls_fm_port(port_id)
             if vals:
                 self._be_stat_var.set(vals[0])
             self._be_stat_opt.configure(values=vals)
             self._save_vars()
 
     def _chk_active(self, event=None):
-        # FIXME
         self._save_vars()
-        self._root_win.set_tracer_fm_aprs()
+        self._aprs_main.set_be_tracer_active(self._be_active_var.get())
         # self._root_win.set_tracer_icon()
 
     def delete_all_data(self):
-        PORT_HANDLER.get_aprs_ais().tracer_traces_delete()
+        self._aprs_main.tracer_traces_delete()
         self._update_tree_data()
 
     def get_tracer_tree(self):

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -17,10 +16,12 @@ class MSG_Center(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
-        PORT_HANDLER.set_pmsMailAlarm(False)
-        self._bbs_obj           = PORT_HANDLER.get_bbs()
+        popt_handler            = root_win.get_PH_mainGUI()
+        popt_handler.api.set_pmsMailAlarm(False)
+        self._popt_handler      = popt_handler
+        self.bbs_obj            = popt_handler.get_bbs()
         self.text_size          = int(POPT_CFG.load_guiPARM_main().get('guiMsgC_parm_text_size', self._root_win.text_size))
-        self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
+        self.newPMS_MSG_win     = self._root_win.toplevel_manager.newPMS_MSG_win
         ###################################
         self.title(self._getTabStr('msg_center'))
         self.style      = self._root_win.style
@@ -75,7 +76,7 @@ class MSG_Center(tk.Toplevel):
         self.bind('<Control-c>', lambda event: self._copy_select())
         #####################
         # Get Settings fm CFG
-        self._root_win.MSG_Center_win = self
+        self._root_win.toplevel_manager.MSG_Center_win = self
         self._init_Vars_fm_Cfg()
 
     def _init_Menu(self):
@@ -167,14 +168,16 @@ class MSG_Center(tk.Toplevel):
         """
         pass
 
+    def get_popt_handler(self):
+        return self._popt_handler
+
     ####################
     def _do_pms_autoFWD(self):
-        self._bbs_obj.start_man_autoFwd()
+        self.bbs_obj.start_man_autoFwd()
 
 
     ################################
     def _close(self):
         self._save_Vars_to_Cfg()
-        self._bbs_obj = None
-        self._root_win.MSG_Center_win = None
+        self._root_win.toplevel_manager.MSG_Center_win = None
         self.destroy()

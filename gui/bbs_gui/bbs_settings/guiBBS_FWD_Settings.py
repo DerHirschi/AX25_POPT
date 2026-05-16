@@ -4,7 +4,6 @@ from tkinter.messagebox import askyesno
 
 from cfg.default_config import getNew_BBS_FWD_cfg
 from cfg.logger_config import logger
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr, validate_ax25Call
 from fnc.str_fnc import get_strTab
@@ -16,10 +15,11 @@ from schedule.popt_sched import getNew_schedule_config
 class BBS_FWD_Settings(ttk.Frame):
     def __init__(self, tabctl, root_win):
         ttk.Frame.__init__(self, tabctl)
-        self.style      = root_win.style
-        self._logTag    = 'guiBBS_FWD_Settings: '
-        self._root_win  = root_win
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self.style         = root_win.style
+        self._logTag       = 'guiBBS_FWD_Settings: '
+        self._root_win     = root_win
+        self._popt_handler = root_win.get_popt_handler()
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # CFG
         self._pms_cfg: dict = self._root_win.get_root_pms_cfg()
@@ -151,7 +151,7 @@ class BBS_FWD_Settings(ttk.Frame):
                  width=20).pack(side=tk.LEFT, expand=False)
 
         ttk.Label(p_id_f, text='Port ID: ').pack(side=tk.LEFT, expand=False)
-        options = list(PORT_HANDLER.get_all_ports().keys())
+        options = list(self._popt_handler.get_all_ports().keys())
         if not options:
             options = ['-']
             port_id_var.set(options[0])

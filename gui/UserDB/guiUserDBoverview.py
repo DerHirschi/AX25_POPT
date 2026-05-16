@@ -9,7 +9,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.guiMsgBoxes import AskMsg
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class UserDBtreeview(tk.Toplevel):
@@ -17,8 +17,8 @@ class UserDBtreeview(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win              = root_win
         self._getTabStr             = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
-        self._aprs_icon_tab_16      = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
+        self._aprs_icon_tab_16      = root_win.guiIcon.get_aprs_icon_tab_16()
         ###################################
         # Vars
         self.title("User-DB")
@@ -121,7 +121,7 @@ class UserDBtreeview(tk.Toplevel):
         self._map_widget.set_position(lat, lon)
         self._map_widget.set_zoom(6)
         ##########################################################################################
-        self._root_win.userDB_tree_win = self
+        self._root_win.toplevel_manager.userDB_tree_win = self
         self._init_tree_data()
         self._update_tree()
         self._update_map()
@@ -326,7 +326,7 @@ class UserDBtreeview(tk.Toplevel):
         if self._key_is_pressed:
             return
         selected = self._selected[-1]
-        self._root_win.open_user_db_win(ent_key=selected)
+        self._root_win.toplevel_manager.open_user_db_win(ent_key=selected)
 
 
     def _sort_entry(self, flag: str):
@@ -417,7 +417,7 @@ class UserDBtreeview(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.userDB_tree_win = None
+        self._root_win.toplevel_manager.userDB_tree_win = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

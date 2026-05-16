@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import convert_str_to_datetime, get_strTab
@@ -20,8 +19,9 @@ from gui import plt
 class PlotWindow(tk.Toplevel):
     def __init__(self, root_cl):
         tk.Toplevel.__init__(self, master=root_cl.main_win)
-        self._root_win  = root_cl
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win     = root_cl
+        self._popt_handler = root_cl.get_PH_mainGUI()
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.wm_title("Port Statistik")
         # self.root_cl = root_cl
         self.geometry(f"800x"
@@ -37,7 +37,7 @@ class PlotWindow(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         ##############################
-        self._mh = PORT_HANDLER.get_MH()
+        self._mh = self._popt_handler.get_MH()
         ##################
         upper_frame = tk.Frame(self)
         upper_frame.pack()
@@ -126,7 +126,7 @@ class PlotWindow(tk.Toplevel):
         self._init_menubar()
 
         self._change_xlim()
-        self._root_win.port_stat_win = self
+        self._root_win.toplevel_manager.port_stat_win = self
 
     def _init_chk_frame(self, root_frame):
         tk.Checkbutton(root_frame,
@@ -434,5 +434,5 @@ class PlotWindow(tk.Toplevel):
         plt.close(self._fig)
         self._fig.clear()
         self._canvas.get_tk_widget().destroy()
-        self._root_win.port_stat_win = None
+        self._root_win.toplevel_manager.port_stat_win = None
         self.destroy()

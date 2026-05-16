@@ -4,14 +4,15 @@ import tkinter as tk
 from tkinter import ttk
 
 from UserDB.UserDBmain import Client
-from cfg.constant import ENCODINGS, STATION_TYPS
+from cfg.constant import ENCODINGS, STATION_TYPS, LANG_IND
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.UserDB.guiNewEntry import GUINewUserEntry
+from gui.UserDB.guiUserDB_rights import GUI_PRP_Rights
 from gui.guiMsgBoxes import AskMsg
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class UserDB(tk.Toplevel):
@@ -19,18 +20,19 @@ class UserDB(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root.main_win)
         self._root_win          = root
         self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_24  = self._root_win.get_aprs_icon_tab_24()
-        self.win_height = 600
-        self.win_width = 1060
+        self._aprs_icon_tab_24  = self._root_win.guiIcon.get_aprs_icon_tab_24()
+        win_height = 615
+        win_width  = 1060
         self.style = root.style
+        self.style_name = root.style_name
         self.title(self._getTabStr('user_db'))
         # self.geometry("{}x{}".format(self.win_width, self.win_height))
-        self.geometry(f"{self.win_width}x"
-                      f"{self.win_height}+"
+        self.geometry(f"{win_width}x"
+                      f"{win_height}+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self.destroy_win)
-        self.resizable(False, False)
+        self.resizable(True, True)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -40,9 +42,7 @@ class UserDB(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         # self.attributes("-topmost", True)
-        ###############
-        main_f = ttk.Frame(self)
-        main_f.pack(fill='both', expand=True)
+
         ###############
         # VARS
         # self.user_db = root.ax25_port_handler.user_db
@@ -57,7 +57,7 @@ class UserDB(tk.Toplevel):
         self.is_destroyed   = False
         ########################
         self._user_db           = self.get_userDB()
-        self._db_ent            = None
+        self.current_ent        = None
         self.NewUser_ent_win    = None
         self._selected          = []
 
@@ -91,9 +91,17 @@ class UserDB(tk.Toplevel):
         self._stations_node_var = tk.StringVar(self)
         self._stations_bbs_var = tk.StringVar(self)
         self._stations_other_var = tk.StringVar(self)
+        ###############
+        main_f          = ttk.Frame(self)
+        main_f.pack(fill='both', expand=True)
+
+        main_f_upper    = ttk.Frame(main_f)
+        main_f_button   = ttk.Frame(main_f)
+        main_f_upper.pack( fill='both', expand=True)
+        main_f_button.pack(fill='x',    expand=False, pady=10)
         ##########################
         # OK, Save, Cancel
-        ok_bt = ttk.Button(main_f,
+        ok_bt = ttk.Button(main_f_button,
                           text=self._getTabStr('OK'),
                           # font=("TkFixedFont", 15),
                           # bg="green",
@@ -101,7 +109,7 @@ class UserDB(tk.Toplevel):
                           width=6,
                           command=self._ok_btn_cmd)
 
-        save_bt = ttk.Button(main_f,
+        save_bt = ttk.Button(main_f_button,
                             text=self._getTabStr('save'),
                             # font=("TkFixedFont", 15),
                             # bg="green",
@@ -109,52 +117,61 @@ class UserDB(tk.Toplevel):
                             width=7,
                             command=self._save_btn_cmd)
 
-        cancel_bt = ttk.Button(main_f,
+        cancel_bt = ttk.Button(main_f_button,
                               text=self._getTabStr('cancel'),
                               # font=("TkFixedFont", 15),
                               # bg="green",
                               #height=1,
                               width=8,
                               command=self.destroy_win)
-        ok_bt.place(x=20, y=self.win_height - 50)
-        save_bt.place(x=110, y=self.win_height - 50)
-        cancel_bt.place(x=self.win_width - 120, y=self.win_height - 50)
+        ok_bt.pack(    side='left', anchor='w', padx=10)
+        save_bt.pack(  side='left', anchor='w', padx=10)
+        cancel_bt.pack(side='right', anchor='e', padx=10)
         ################################################
-        upper_btn_f = ttk.Frame(main_f)
-        upper_btn_f.place(x=200, y=10)
-        new_bt = ttk.Button(upper_btn_f,
+        # Frames
+        main_f_left   = ttk.Frame(main_f_upper)
+        main_f_right  = ttk.Frame(main_f_upper)
+        main_f_left.pack( side='left', fill='y',    expand=False,  padx=5, pady=5)
+        main_f_right.pack(side='left', fill='both', expand=True,   padx=5, pady=5)
+
+        right_f_upper = ttk.Frame(main_f_right)
+        right_f_lower = ttk.Frame(main_f_right)
+        right_f_upper.pack(fill='x',    expand=False, pady=10)
+        right_f_lower.pack(fill='both', expand=True,  pady=10)
+        ################################################
+
+        new_bt = ttk.Button(right_f_upper,
                            text=self._getTabStr('new'),
-                           # font=("TkFixedFont", 15),
-                           # bg="red",
-                           #height=1,
-                           width=6,
                            command=self._new_btn_cmd
                            )
-        new_bt.pack(side='left')
+        new_bt.pack(side='left', anchor='w', padx=10)
 
-        del_bt = tk.Button(upper_btn_f,
+        del_bt = tk.Button(right_f_upper,
                            text=self._getTabStr('delete'),
                            # font=("TkFixedFont", 15),
                            bg="red",
-                           height=1,
-                           width=6,
                            command=self._del_btn_cmd,
                            relief="flat",  # Flache Optik für ttk-ähnliches Aussehen
                            highlightthickness=0,
                            )
-        del_bt.pack(side='left', padx=50)
+        del_bt.pack(side='left', anchor='w', padx=10)
 
-        self.grid_columnconfigure(0, weight=0, minsize=15)
-        self.grid_columnconfigure(1, weight=0)
-        self.grid_columnconfigure(2, weight=0)
-        self.grid_columnconfigure(3, weight=1, minsize=400)
-        self.grid_rowconfigure(0, weight=0, minsize=50)
+        # Selected Call Label
+        ttk.Label(right_f_upper,
+                  textvariable=self._call_label_var,
+                  font=("Courier", 14, 'bold')
+                  ).pack(side='left', anchor='w', padx=50)
+        ###############################################
+        tree_f   = ttk.Frame(main_f_left)
+        filter_f = ttk.Frame(main_f_left)
+        tree_f.pack(fill='both', expand=True)
+        filter_f.pack(pady=10)
 
-        self._tree = ttk.Treeview(main_f, columns=('call',), show='tree', height=20)
-        self._tree.grid(row=1, column=1, sticky='nw')
-        scrollbar = ttk.Scrollbar(main_f, orient='vertical', command=self._tree.yview)
+        self._tree = ttk.Treeview(tree_f, columns=('call',), show='tree')
+        self._tree.pack(side='left', anchor='w', fill='both', expand=True)
+        scrollbar = ttk.Scrollbar(tree_f, orient='vertical', command=self._tree.yview)
         self._tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.grid(row=1, column=2, sticky='wns')
+        scrollbar.pack(side='left', anchor='w', fill='y', expand=False)
 
         self._tree.bind('<<TreeviewSelect>>', self._select_entry)
         self._tree.column("#0", width=0, minwidth=0)
@@ -167,29 +184,29 @@ class UserDB(tk.Toplevel):
         """
         ##################################
 
-        ttk.Label(main_f, text='Filter').place(x=15, y=self.win_height - 140)
-        filter_ent = ttk.Entry(main_f, textvariable=self._filter_var, width=12)
-        filter_ent.place(x=15, y=self.win_height - 115)
+        ttk.Label(filter_f, text='Filter').pack(side='left', anchor='w', padx=5)
+        filter_ent = ttk.Entry(filter_f, textvariable=self._filter_var, width=12)
+        filter_ent.pack(side='left', anchor='w', padx=5)
         filter_ent.bind('<KeyRelease>', self._update_tree)
 
         ##################################
-        # Selected Call Label
-        ttk.Label(main_f,
-                 textvariable=self._call_label_var,
-                 font=("Courier", 14, 'bold')
-                 ).place(x=int(self.win_width / 2), y=10)
-        ##################################
         # tabs
-        tabControl = ttk.Notebook(main_f, height=self.win_height - 150, width=self.win_width - 220)
-        tabControl.place(x=200, y=50)
+        tabControl = ttk.Notebook(right_f_lower)
+        tabControl.pack(fill='both', expand=True)
         tab1 = ttk.Frame(tabControl)
         tab2 = ttk.Frame(tabControl)
         tab3 = ttk.Frame(tabControl)
         tab4 = ttk.Frame(tabControl)
+        tab5 = ttk.Frame(tabControl)
+
         tabControl.add(tab1, text=self._getTabStr('main_page'))
         tabControl.add(tab2, text=self._getTabStr('settings'))
         tabControl.add(tab3, text=self._getTabStr('passwords'))
         tabControl.add(tab4, text=self._getTabStr('stations'))
+        tabControl.add(tab5, text="PRP Rechte")
+
+        self._rights_tab = GUI_PRP_Rights(tab5, self)
+        self._rights_tab.pack(fill="both", expand=True)
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
         #################################################
         # Entry
@@ -324,20 +341,12 @@ class UserDB(tk.Toplevel):
         x = 10
         y = 400
         ttk.Label(tab1, text=f"{self._getTabStr('language')}: ").place(x=x, y=y)
-        lang_opt = [
-            'DEUTSCH',
-            'ENGLSCH',
-            'NIEDERLÄNDISCH',
-            'FRANZÖSISCH',
-            'FINLAND',
-            'POLNISCH',
-            'PORTUGIESISCH',
-            'ITALIENISCH',
-        ]
-        self._lang_var.set('DEUTSCH')
+        lang_opt = list(LANG_IND.keys())
+        lang_key = ''
+        self._lang_var.set(lang_key)
         lang_opt = [self._lang_var.get()] + lang_opt
         lang_ent = ttk.OptionMenu(tab1, self._lang_var, *lang_opt)
-        lang_ent.configure(state='disabled')  # TODO
+        # lang_ent.configure(state='disabled')
         lang_ent.place(x=x + 80, y=y - 2)
 
         # Connection Counter
@@ -496,8 +505,9 @@ class UserDB(tk.Toplevel):
             self._select_entry_fm_ch_id()
         else:
             self._select_entry_fm_key(ent_key)
+        self._rights_tab.on_entry_selected()
         self._update_map()
-        root.userdb_win = self
+        root.toplevel_manager.userdb_win = self
 
     def _init_RClick_menu(self):
         if self._tree:
@@ -646,20 +656,22 @@ class UserDB(tk.Toplevel):
             item = self._tree.item(selected_item)
             self._selected.append(item['values'][0])
         if self._selected:
-            self._db_ent = self._user_db.get_entry(self._selected[-1])
+            self.current_ent = self._user_db.get_entry(self._selected[-1])
             self._set_var_to_ent()
+            self._rights_tab.on_entry_selected()
+
             return
         self._clean_ent()
 
     def _select_entry_fm_ch_id(self):
         conn = self._root_win.get_conn()
         if conn is not None:
-            self._db_ent = conn.user_db_ent
+            self.current_ent = conn.user_db_ent
             self._set_var_to_ent()
 
     def _select_entry_fm_key(self, key: str):
         if key in self._user_db.db.keys():
-            self._db_ent = self._user_db.db[key]
+            self.current_ent = self._user_db.db[key]
             self._set_var_to_ent()
 
     def _update_tree(self, event=None):
@@ -673,68 +685,76 @@ class UserDB(tk.Toplevel):
 
     def _on_select_sysop(self, event=None):
         lang = POPT_CFG.get_guiCFG_language()
-        if self._db_ent is not None:
+        if self.current_ent is not None:
             msg = AskMsg(titel=get_strTab('userdb_add_sysop_ent1', lang),
                          message=get_strTab('userdb_add_sysop_ent2', lang),
                          parent_win=self)
             if msg:
                 sysop_key = self._sysop_var.get()
                 if sysop_key in self._user_db.db.keys():
-                    self._user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self._db_ent.call_str)
+                    self._user_db.update_var_fm_dbentry(fm_key=sysop_key, to_key=self.current_ent.call_str)
                     self._set_var_to_ent()
 
     def _set_var_to_ent(self):
-        if self._db_ent is not None:
-            self._call_label_var.set(self._db_ent.call_str)
-            self._name_var.set(self._db_ent.Name)
-            self._qth_var.set(self._db_ent.QTH)
-            self._loc_var.set(self._db_ent.LOC)
-            if self._db_ent.Distance < 0:
+        if self.current_ent is not None:
+            self._call_label_var.set(self.current_ent.call_str)
+            self._name_var.set(self.current_ent.Name)
+            self._qth_var.set(self.current_ent.QTH)
+            self._loc_var.set(self.current_ent.LOC)
+            if self.current_ent.Distance < 0:
                 self._dist_var.set("---- km")
             else:
-                self._dist_var.set(f"{round(self._db_ent.Distance, 1)} km")
-            self._prmail_var.set(self._db_ent.PRmail)
-            self._email_var.set(self._db_ent.Email)
-            self._http_var.set(self._db_ent.HTTP)
-            self._encoding_var.set(self._db_ent.Encoding)
-            self._software_var.set(self._db_ent.Software)
-            self._zip_var.set(self._db_ent.ZIP)
-            self._land_var.set(self._db_ent.Land)
-            self._typ_var.set(self._db_ent.TYP)
+                self._dist_var.set(f"{round(self.current_ent.Distance, 1)} km")
+            self._prmail_var.set(self.current_ent.PRmail)
+            self._email_var.set(self.current_ent.Email)
+            self._http_var.set(self.current_ent.HTTP)
+            self._encoding_var.set(self.current_ent.Encoding)
+            self._software_var.set(self.current_ent.Software)
+            self._zip_var.set(self.current_ent.ZIP)
+            self._land_var.set(self.current_ent.Land)
+            self._typ_var.set(self.current_ent.TYP)
 
-            self._pac_len_var.set(str(self._db_ent.pac_len))
-            self._max_pac_var.set(str(self._db_ent.max_pac))
+            self._pac_len_var.set(str(self.current_ent.pac_len))
+            self._max_pac_var.set(str(self.current_ent.max_pac))
             """self.last_edit_var.set(
                 f"{self.db_ent.last_edit.date()} - "
                 f"{self.db_ent.last_edit.time().hour}:"
                 f"{self.db_ent.last_edit.time().minute}"
             )"""
-            self._last_edit_var.set(self._db_ent.last_edit)
-            if type(self._db_ent.last_conn) == str:
-                self._last_conn_var.set(self._db_ent.last_conn)
+            self._last_edit_var.set(self.current_ent.last_edit)
+            if type(self.current_ent.last_conn) == str:
+                self._last_conn_var.set(self.current_ent.last_conn)
             else:
-                self._last_conn_var.set('---' if self._db_ent.last_conn is None else conv_time_DE_str(self._db_ent.last_conn))
-            self._conn_count_var.set(str(self._db_ent.Connects))
+                self._last_conn_var.set('---' if self.current_ent.last_conn is None else conv_time_DE_str(self.current_ent.last_conn))
+            self._conn_count_var.set(str(self.current_ent.Connects))
 
+
+            # ==================
+            lang_keys = list(LANG_IND.keys())
+            current_lang = int(self.current_ent.Language)
+            if current_lang == -1:
+                current_lang = POPT_CFG.get_guiCFG_language()
+            self._lang_var.set(lang_keys[current_lang])
+            # ==================
             self._info_ent.delete(0.0, tk.END)
-            self._info_ent.insert(tk.INSERT, self._db_ent.Info)
+            self._info_ent.insert(tk.INSERT, self.current_ent.Info)
 
             self._ctext_ent.delete(0.0, tk.END)
-            self._ctext_ent.insert(tk.INSERT, self._db_ent.CText)
+            self._ctext_ent.insert(tk.INSERT, self.current_ent.CText)
 
             # self.sys_password_ent.delete(0.0, tk.END)
             self._sys_password_ent.delete(0.0, tk.END)
-            if hasattr(self._db_ent, 'sys_pw_autologin'):
-                self._autoLogin_var.set(bool(self._db_ent.sys_pw_autologin))
+            if hasattr(self.current_ent, 'sys_pw_autologin'):
+                self._autoLogin_var.set(bool(self.current_ent.sys_pw_autologin))
             else:
                 self._autoLogin_var.set(False)
-            self._sys_password_ent.insert(tk.INSERT, str(self._db_ent.sys_pw))
-            self._fake_attempts_var.set(str(self._db_ent.sys_pw_parm[0]))
-            self._fill_char_var.set(str(self._db_ent.sys_pw_parm[1]))
-            if len(self._db_ent.sys_pw_parm) == 2:
-                self._db_ent.sys_pw_parm.append('SYS')
-            self._login_cmd_var.set(str(self._db_ent.sys_pw_parm[2]))
-            axip = self._db_ent.AXIP
+            self._sys_password_ent.insert(tk.INSERT, str(self.current_ent.sys_pw))
+            self._fake_attempts_var.set(str(self.current_ent.sys_pw_parm[0]))
+            self._fill_char_var.set(str(self.current_ent.sys_pw_parm[1]))
+            if len(self.current_ent.sys_pw_parm) == 2:
+                self.current_ent.sys_pw_parm.append('SYS')
+            self._login_cmd_var.set(str(self.current_ent.sys_pw_parm[2]))
+            axip = self.current_ent.AXIP
             if not axip:
                 axip = '', 0
             self._axip_add_var.set(axip[0])
@@ -749,26 +769,26 @@ class UserDB(tk.Toplevel):
     def _update_sysop_opt(self):
         self._sysop_opt_remove()  # remove all options
 
-        if self._db_ent.TYP == 'SYSOP':
+        if self.current_ent.TYP == 'SYSOP':
             self._sysop_var.set('')
             self._sysop_ent.configure(state='disabled')
 
         else:
             self._sysop_ent.configure(state='normal')
-            self._sysop_var.set(self._db_ent.Sysop_Call)
+            self._sysop_var.set(self.current_ent.Sysop_Call)
             # print(f"Sysop_ca: {self._db_ent.Sysop_Call}")
-            self._sysop_ent.setvar(self._db_ent.Sysop_Call)
+            self._sysop_ent.setvar(self.current_ent.Sysop_Call)
 
             for opt in sorted(self._user_db.get_keys_by_typ(typ='SYSOP')):
                 self._sysop_ent['menu'].add_command(label=opt, command=tk._setit(self._sysop_var, opt))
 
     def _update_stations(self):
         sysop_key = ''
-        if self._db_ent is not None:
-            if self._db_ent.TYP == 'SYSOP':
-                sysop_key = self._db_ent.call_str
+        if self.current_ent is not None:
+            if self.current_ent.TYP == 'SYSOP':
+                sysop_key = self.current_ent.call_str
             else:
-                sysop_key = self._db_ent.Sysop_Call
+                sysop_key = self.current_ent.Sysop_Call
 
         node_str  = 'NODES: '
         bbs_str   = 'BBS: '
@@ -792,58 +812,60 @@ class UserDB(tk.Toplevel):
         self._stations_other_var.set(other_str)
 
     def _save_btn_cmd(self):
-        db_entry = self._db_ent
+        db_entry = self.current_ent
+        self._rights_tab.save()
         self._save_vars()
         self._user_db.save_data()
 
 
-        self._root_win.update_station_info()
+        self._root_win.ConnStatusBar.update_station_info()
         self._user_db.set_distance_for_all()
         self._update_map()
         self._draw_connection()
         #self._update_tree()
-        self._db_ent = db_entry
-        if hasattr(self._db_ent, 'call_str'):
-            self._root_win.sysMsg_to_monitor(self._getTabStr('userdb_save_hint').format(self._db_ent.call_str))
-        if self._db_ent is None:
+        self.current_ent = db_entry
+        if hasattr(self.current_ent, 'call_str'):
+            self._root_win.sysMsg_to_monitor(self._getTabStr('userdb_save_hint').format(self.current_ent.call_str))
+        if self.current_ent is None:
             return
         self._set_var_to_ent()
 
     def _save_vars(self):
-        if self._db_ent is None:
+        if self.current_ent is None:
             return
-        self._db_ent.Name   = str(self._name_var.get())
-        self._db_ent.QTH    = str(self._qth_var.get())
-        self._db_ent.LOC    = str(self._loc_var.get())
+        self.current_ent.Name   = str(self._name_var.get())
+        self.current_ent.QTH    = str(self._qth_var.get())
+        self.current_ent.LOC    = str(self._loc_var.get())
 
-        self._db_ent.PRmail = str(self._prmail_var.get())
-        self._db_ent.Email = str(self._email_var.get())
-        self._db_ent.HTTP = str(self._http_var.get())
-        self._db_ent.Encoding = str(self._encoding_var.get())
-        self._db_ent.ZIP = str(self._zip_var.get())
-        self._db_ent.Land = str(self._land_var.get())
+        self.current_ent.PRmail = str(self._prmail_var.get())
+        self.current_ent.Email = str(self._email_var.get())
+        self.current_ent.HTTP = str(self._http_var.get())
+        self.current_ent.Encoding = str(self._encoding_var.get())
+        self.current_ent.ZIP = str(self._zip_var.get())
+        self.current_ent.Land = str(self._land_var.get())
+        self.current_ent.Language = int(LANG_IND.get(self._lang_var.get(), POPT_CFG.get_guiCFG_language()))
 
-        self._db_ent.pac_len = int(self._pac_len_var.get())
-        self._db_ent.max_pac = int(self._max_pac_var.get())
-        self._db_ent.CText = str(self._ctext_ent.get(0.0, tk.END)[:-1])
-        self._db_ent.Info = str(self._info_ent.get(0.0, tk.END)[:-1])
+        self.current_ent.pac_len = int(self._pac_len_var.get())
+        self.current_ent.max_pac = int(self._max_pac_var.get())
+        self.current_ent.CText = str(self._ctext_ent.get(0.0, tk.END)[:-1])
+        self.current_ent.Info = str(self._info_ent.get(0.0, tk.END)[:-1])
 
-        self._db_ent.sys_pw = str(self._sys_password_ent.get(0.0, tk.END)[:-1])
-        self._db_ent.sys_pw_parm = [
+        self.current_ent.sys_pw = str(self._sys_password_ent.get(0.0, tk.END)[:-1])
+        self.current_ent.sys_pw_parm = [
             int(self._fake_attempts_var.get()),
             int(self._fill_char_var.get()),
             str(self._login_cmd_var.get()),
         ]
-        self._db_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
+        self.current_ent.sys_pw_autologin = bool(self._autoLogin_var.get())
 
-        self._db_ent.last_edit = conv_time_DE_str()
-        self._db_ent.TYP = str(self._typ_var.get())
-        if self._db_ent.TYP == 'SYSOP':
-            self._db_ent.Sysop_Call = ''
+        self.current_ent.last_edit = conv_time_DE_str()
+        self.current_ent.TYP = str(self._typ_var.get())
+        if self.current_ent.TYP == 'SYSOP':
+            self.current_ent.Sysop_Call = ''
         else:
             tmp = str(self._sysop_var.get())
-            if tmp != self._db_ent.Sysop_Call:
-                self._db_ent.Sysop_Call = tmp
+            if tmp != self.current_ent.Sysop_Call:
+                self.current_ent.Sysop_Call = tmp
                 self._on_select_sysop()
         axip_add  = self._axip_add_var.get()
         axip_add  = axip_add.replace(' ', '')
@@ -852,16 +874,16 @@ class UserDB(tk.Toplevel):
             axip_port = int(axip_port)
         except ValueError:
             axip_port = 0
-        self._db_ent.AXIP = (
+        self.current_ent.AXIP = (
             axip_add,
             axip_port
         )
-        self._user_db.set_location_fm_locator(self._db_ent.call_str)
-        self._user_db.set_distance(self._db_ent.call_str)
+        self._user_db.set_location_fm_locator(self.current_ent.call_str)
+        self._user_db.set_distance(self.current_ent.call_str)
         # self._root_win.gui_set_distance()
 
     def _clean_ent(self):
-        self._db_ent = None
+        self.current_ent = None
         self._call_label_var.set('')
         self._name_var.set('')
         self._qth_var.set('')
@@ -900,13 +922,13 @@ class UserDB(tk.Toplevel):
         self.destroy_win()
 
     def _del_btn_cmd(self):
-        if self._db_ent is not None:
-            msg = AskMsg(titel=self._getTabStr('userdb_del_hint1').format(self._db_ent.call_str),
-                         message=self._getTabStr('userdb_del_hint2').format(self._db_ent.call_str),
+        if self.current_ent is not None:
+            msg = AskMsg(titel=self._getTabStr('userdb_del_hint1').format(self.current_ent.call_str),
+                         message=self._getTabStr('userdb_del_hint2').format(self.current_ent.call_str),
                          parent_win=self)
             # self.settings_win.lift()
             if msg:
-                self._user_db.del_entry(str(self._db_ent.call_str))
+                self._user_db.del_entry(str(self.current_ent.call_str))
                 self._clean_ent()
                 self._update_tree()
 
@@ -930,7 +952,7 @@ class UserDB(tk.Toplevel):
             self.NewUser_ent_win = GUINewUserEntry(self)
 
     def set_newUser_ent(self, db_entry):
-        self._db_ent = db_entry
+        self.current_ent = db_entry
         self._set_var_to_ent()
 
     #######################################
@@ -983,7 +1005,7 @@ class UserDB(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.userdb_win = None
+        self._root_win.toplevel_manager.userdb_win = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True
@@ -1010,6 +1032,7 @@ class UserDB(tk.Toplevel):
     def destroy_win(self):
         if hasattr(self.NewUser_ent_win, 'destroy_win'):
             self.NewUser_ent_win.destroy_win()
+        self._rights_tab.destroy()
         self._close_me()
 
     def destroy(self):

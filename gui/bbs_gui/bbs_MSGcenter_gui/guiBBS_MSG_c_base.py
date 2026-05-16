@@ -1,13 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.constant import FONT, COLOR_MAP
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.bbs_gui.guiBBS_newMSG import BBS_newMSG
 from gui.guiMsgBoxes import save_file_dialog
-from gui.guiRightClick_Menu import ContextMenu
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class MSG_Center_base(ttk.Frame):
@@ -16,7 +15,8 @@ class MSG_Center_base(ttk.Frame):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.style              = root_win.style
         self._root_win          = root_win
-        self._bbs_obj           = PORT_HANDLER.get_bbs()
+        self._bbs_obj           = root_win.bbs_obj
+        self._popt_handler      = root_win.get_popt_handler()
         self.newPMS_MSG_win     = self._root_win.newPMS_MSG_win
         self.text_size          = root_win.text_size
         self._text_size_tabs    = 10
@@ -437,3 +437,5 @@ class MSG_Center_base(ttk.Frame):
         self._bl_cat_tree.tag_configure('neu', font=(None, self._text_size_tabs, 'bold'))
         self._bl_cat_tree.tag_configure('alt', font=(None, self._text_size_tabs, ''))
     #################################
+    def get_popt_handler(self):
+        return self._popt_handler

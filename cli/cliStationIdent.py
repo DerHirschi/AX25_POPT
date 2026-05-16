@@ -2,8 +2,8 @@ from cfg.constant import STATION_ID_SYSOP, STATION_ID_NODE, STATION_ID_BBS, STAT
     BBS_REVERS_FWD_CMD, STATION_ID_MCAST
 from cfg.logger_config import logger
 
+def get_station_id_obj(inp_line):
 
-def get_station_id_obj(inp_line: str):
     if not inp_line:
         return None
     # TODO MCast
@@ -50,19 +50,19 @@ class DefaultID:
 
     def __init__(self, inp: str):
         setattr(self, 'typ', getattr(self, 'typ'))
-        temp = inp[1:-1].split('-')
-        self.software = temp[0]
-        self.version = temp[1]
-        flags = temp[2]
-        self.id_str = str(inp)
+        temp            = inp[1:-1].split('-')
+        self.software   = temp[0]
+        self.version    = temp[1]
+        flags           = temp[2]
+        self.id_str     = str(inp)
         # NODE & SYSOP Parameter
-        self.didadit = None
-        self.knows_me = None
-        self.txt_encoding = None
-        self.e = False
+        self.didadit        = None
+        self.knows_me       = None
+        self.txt_encoding   = None
+        self.e              = False
         if flags:
-            self.knows_me = True
-            self.didadit = False
+            self.knows_me   = True
+            self.didadit    = False
             if 'D' in flags:
                 self.didadit = True
             if '?' in flags:
@@ -74,8 +74,6 @@ class DefaultID:
         else:
             self.e = True
             logger.error(f"SW-ID Flag Error: {flags} > inp: {inp} > temp: {temp}")
-        # print(f"IF flags: {self.flags}")
-        # print(f"IF knows_me: {self.knows_me}")
 
 
 class NODEid(DefaultID):

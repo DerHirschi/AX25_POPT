@@ -2,7 +2,8 @@ import copy
 
 from cfg.default_config import getNew_BBS_cfg, getNew_maniGUI_parm, \
     getNew_APRS_ais_cfg, getNew_MH_cfg, getNew_digi_cfg, getNew_station_cfg, getNew_port_cfg, getNew_mcast_cfg, \
-    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg
+    getNew_mcast_channel_cfg, getNew_1wire_cfg, getNew_gpio_cfg, getNew_fwdStatistic_cfg, getNew_globalRights, \
+    getNew_RightLevelTab, getNew_APRS_IGate_cfg, getNew_APRS_DIGI_cfg
 from cfg.constant import CFG_MAIN_data_file, MAX_PORTS, DEF_TEXTSIZE, CLI_TYP_SYSOP, CLI_TYP_NO_CLI
 from cfg.cfg_fnc import load_fm_pickle_file, save_to_pickle_file, get_all_stat_CFGs, del_user_data, \
     save_station_CFG_to_file, load_all_port_cfg_fm_file, save_all_port_cfg_to_file
@@ -18,6 +19,9 @@ class Main_CFG:
             ##########################
             'first_setup': False,
             ##########################
+            # Logging
+            #'log_cfg': getNew_Log_cfg,
+            ##########################
             # -- BBS
             'bbs_main': getNew_BBS_cfg,
             'bbs_fwd_statistics': {},
@@ -27,15 +31,18 @@ class Main_CFG:
             'mh_cfg': getNew_MH_cfg,
             ##########################
             # -- APRS
-            'aprs_node_tab': {},
-            'aprs_ais': getNew_APRS_ais_cfg,
+            'aprs_node_tab':  {},
+            'aprs_IGate_tab': {},
+            'aprs_ais':   getNew_APRS_ais_cfg,
+            'aprs_igate': getNew_APRS_IGate_cfg,
+            'aprs_digi':  getNew_APRS_DIGI_cfg,
             ##########################
             # -- GUI
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': {},
-            'gui_pacman': {},
-            'conn_history': [],
+            'gui_pacman':       {},
+            'conn_history':     [],
             ##########################
             # -- Beacon
             'beacon_tasks': [],
@@ -65,6 +72,10 @@ class Main_CFG:
             ##########################
             # -- GPIO CFG
             'gpio_cfg': getNew_gpio_cfg,
+            ##########################
+            # -- PRP/CLI Rechte Global
+            'glb_rights': getNew_globalRights,
+            'right_level_tab': getNew_RightLevelTab,    # Rechte Level
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
@@ -164,10 +175,10 @@ class Main_CFG:
         self._config['stat_cfgs'] = {}  # Don't save Stat CFG in MainCFG
         self._config['port_cfgs'] = {}  # Don't save Port CFG in MainCFG
 
-        logger.info(f'-------- MAIN CFG Save --------')
+        logger.debug(f'-------- MAIN CFG Save --------')
         for conf_k, conf in self._config.items():
             try:
-                logger.info(f'Main CFG: save {conf_k} - Size: {len(conf)}')
+                logger.debug(f'Main CFG: save {conf_k} - Size: {len(conf)}')
                 # logger.debug(f'- type: {type(conf)} - size: {len(conf)} - str_size: {len(str(conf))}')
             except (TypeError, ValueError):
                 pass
@@ -175,7 +186,7 @@ class Main_CFG:
 
         self._config['stat_cfgs'] = tmp_stat_cfgs
         self._config['port_cfgs'] = tmp_port_cfgs
-        logger.info(f'-------- MAIN CFG Save ENDE --------')
+        logger.debug(f'-------- MAIN CFG Save ENDE --------')
 
     """
     # PIPE
@@ -296,8 +307,30 @@ class Main_CFG:
     def set_APRS_node_tab(self, node_tab: dict):
         self._config['aprs_node_tab'] = node_tab
 
+    def get_APRS_igate_tab(self):
+        return self._config['aprs_IGate_tab']
+
+    def set_APRS_igate_tab(self, igate_tab: dict):
+        self._config['aprs_IGate_tab'] = igate_tab
+
     def get_APRS_beacon_cfg(self):
         return copy.deepcopy(self._config.get('aprs_ais', getNew_APRS_ais_cfg()).get('aprs_beacons', {}))
+
+    ####################
+    # APRS - I-Gate
+    def get_CFG_aprs_igate(self):
+        return copy.deepcopy(self._config['aprs_igate'])
+
+    def set_CFG_aprs_igate(self, data: dict):
+        self._config['aprs_igate'] = copy.deepcopy(data)
+
+    ####################
+    # APRS - DIGI
+    def get_CFG_aprs_digi(self):
+        return copy.deepcopy(self._config['aprs_digi'])
+
+    def set_CFG_aprs_digi(self, data: dict):
+        self._config['aprs_digi'] = copy.deepcopy(data)
     ########################################################
     # GUI
     def set_guiCFG_style_name(self, style_name: str):
@@ -403,6 +436,15 @@ class Main_CFG:
         self._config['gui_main_parm']['gui_cfg_pacman_fix'] = bool(value)
     """
 
+    #################################################
+    # Log CFG
+    """
+    def get_log_CFG(self):
+        return dict(self._config.get('log_cfg', getNew_Log_cfg()))
+
+    def set_log_CFG(self, cfg: dict):
+        self._config['log_cfg'] = dict(cfg)
+    """
     #################################################
     # Beacon
     def get_Beacon_tasks(self):
@@ -695,6 +737,15 @@ class Main_CFG:
             self._config['bbs_fwd_statistics'][bbs_call] = copy.deepcopy(stat_dict)
         except Exception as ex:
             logger.error(ex)
+    ############################################
+    # Conn History
+    def set_conn_hist(self, conn_hist: list):
+        conn_hist = list(conn_hist)
+        #conn_hist.reverse()
+        self._config['conn_history'] = list(conn_hist)
+
+    def get_conn_hist(self):
+        return list(self._config.get('conn_history', []))
 
     ###########################################
     # Block List
@@ -707,14 +758,29 @@ class Main_CFG:
     def set_block_list(self, block_tab: dict):
         self._config['block_list'] = block_tab
 
-    ############################################
-    # Conn History
-    def set_conn_hist(self, conn_hist: list):
-        conn_hist = list(conn_hist)
-        #conn_hist.reverse()
-        self._config['conn_history'] = list(conn_hist)
+    ###########################################
+    # ==== Rechte System
+    # == Globale Einstellungen
+    @property
+    def global_rights(self):
+        """ Globale PRP & CLI Rechte """
+        return self._config.get('glb_rights', getNew_globalRights())
 
-    def get_conn_hist(self):
-        return list(self._config.get('conn_history', []))
+    def set_global_rights(self, new_cfg: dict):
+        self._config['glb_rights'] = dict(new_cfg)
+
+    # == Rechte Level Tabelle
+    @property
+    def right_level_tab(self):
+        """ Globale PRP & CLI Rechte """
+        ret = self._config.get('right_level_tab', {})
+        if not ret:
+            ret = getNew_RightLevelTab()
+            self._config['right_level_tab'] = ret
+        return ret
+
+    def set_right_level_tab(self, new_tab: dict):
+        self._config['right_level_tab'] = copy.deepcopy(new_tab)
+
 
 POPT_CFG = Main_CFG()

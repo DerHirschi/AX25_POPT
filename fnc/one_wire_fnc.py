@@ -1,4 +1,6 @@
 from cfg.constant import ONE_WIRE_PATH
+from cfg.logger_config import logger
+from cfg.popt_config import POPT_CFG
 from fnc.file_fnc import get_str_fm_file
 from fnc.os_fnc import is_linux, path_exists
 
@@ -40,4 +42,22 @@ def get_1wire_temperature(device_path: str):
     # tempKelvin = 273 + float(tempData) / 1000
     tempFahrenheit = round(float(tempData) / 1000 * 9.0 / 5.0 + 32.0, 1)
     return float(tempCelsius), float(tempFahrenheit)
+
+def oneWire_task():
+    if not is_1wire_device():
+        return
+    sensor_cfg = POPT_CFG.get_1wire_sensor_cfg()
+    if not sensor_cfg:
+        return
+    for textVar, sens_cfg in sensor_cfg.items():
+        sens_cfg: dict
+        sens_id = sens_cfg.get('device_path', '')
+        if not sens_id:
+            continue
+        try:
+            sens_cfg['device_value'] = str(get_1wire_temperature(sens_id)[0])
+        except IndexError:
+            logger.warning(f"oneWire_task: IndexError: {textVar}")
+            logger.warning(f"oneWire_task: IndexError: {sens_cfg}")
+            continue
 

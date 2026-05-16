@@ -3,7 +3,8 @@ import threading
 from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.os_fnc import get_root_dir
+from fnc.os_fnc import get_root_dir, is_linux, is_macos
+
 # gTTS
 try:
     from gtts import gTTS
@@ -14,8 +15,8 @@ except ImportError:
     GTTS_AVAILABLE = False
     gTTS = None
 # playsound
-from playsound3 import playsound
-"""
+#from playsound3 import playsound
+
 try:
     from playsound3 import playsound
 except ImportError as e:
@@ -24,7 +25,7 @@ except ImportError as e:
         from playsound import playsound
     else:
         raise e
-"""
+
 
 class POPT_Sound:
     def __init__(self):
@@ -64,19 +65,19 @@ class POPT_Sound:
     def _sound_stop_tasker(self):
         if self.master_sound_on:
             return
-        if any((
-            self._sound_th,
+        if (
+            self._sound_th or
             self._bg_sound_th,
-        )):
+        ):
             self._stop_all_sound()
 
     def _speech_tasker_q(self):
         if not self._speech_tasks:
             return False
-        if not all((
-                self.master_sound_on,
+        if not (
+                self.master_sound_on and
                 self.master_sprech_on
-        )):
+        ):
             self._speech_tasks = []
             return False
         if hasattr(self._sound_th, 'is_alive'):
@@ -109,11 +110,11 @@ class POPT_Sound:
         if not GTTS_AVAILABLE:
             return None
 
-        if not all((
-                self.master_sprech_on,
-                self.master_sound_on,
+        if not (
+                self.master_sprech_on and
+                self.master_sound_on  and
                 text
-        )):
+        ):
             return None
 
         lang_cfg = self._get_speech_lang()
@@ -156,11 +157,11 @@ class POPT_Sound:
         if not GTTS_AVAILABLE:
             return False
 
-        if not all((
-            self.master_sprech_on,
-            self.master_sound_on,
+        if not (
+            self.master_sprech_on and
+            self.master_sound_on  and
             text
-        )):
+        ):
             return False
         if wait:
             text = text.replace('\r', '\n')

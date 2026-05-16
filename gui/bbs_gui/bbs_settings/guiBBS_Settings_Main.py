@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab, lob_gen
@@ -39,12 +38,13 @@ class BBSSettingsMain(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         self.lift()
+        self._popt_handler = root_win.get_PH_mainGUI()
         self._lang      = POPT_CFG.get_guiCFG_language()
-        self._bbs_obj   = PORT_HANDLER.get_bbs()
+        self._bbs_obj   = self._popt_handler.get_bbs()
         self._getTabStr = lambda str_k: get_strTab(str_k, self._lang)
         self._root_win  = root_win
         self.add_win    = None
-        self._root_win.settings_win = self
+        self._root_win.toplevel_manager.settings_win = self
         self.title("PMS/BBS-" + self._getTabStr('settings'))
         ###############################################################
         self._pms_cfg   = POPT_CFG.get_BBS_cfg()
@@ -184,12 +184,15 @@ class BBSSettingsMain(tk.Toplevel):
             if hasattr(tab, 'update_win'):
                 tab.update_win()
 
+    def get_popt_handler(self):
+        return self._popt_handler
+
     def destroy_win(self):
         if hasattr(self.add_win, 'destroy'):
             self.add_win.destroy()
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 

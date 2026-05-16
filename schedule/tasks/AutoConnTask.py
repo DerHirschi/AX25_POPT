@@ -34,7 +34,7 @@ class AutoConnTask:
             dest_call = self._conf.get('via_calls')[0]
             via_calls = []
 
-        connection = port_handler.new_outgoing_connection(
+        connection = port_handler.connection_manager.new_outgoing_connection(
             dest_call=  dest_call,
             own_call=   self._conf.get('own_call'),
             via_calls=  via_calls,                            # Auto lookup in MH if not exclusive Mode
@@ -115,7 +115,7 @@ class AutoConnTask:
         if not self._connection:
             self.e = True
             return False
-        state_index = self._connection.get_state()
+        state_index = self._connection.l3_state_id
         if not state_index:
             self.e = True
             return False
@@ -130,13 +130,13 @@ class AutoConnTask:
         bbs = self._port_handler.get_bbs()
         fwd_connections = bbs.get_fwd_connections()
         if not fwd_connections:
-            self._port_handler.set_pmsFwdAlarm(False)
+            self._port_handler.api.set_pmsFwdAlarm(False)
 
     def _end_connection(self):
         # 0
         if not self._connection:
             return
-        if not self._connection.is_buffer_empty():
+        if not self._connection.is_tx_buff_empty:
             return
         self._connection.conn_disco()
 
@@ -159,7 +159,7 @@ class AutoConnTask:
             wait        = step.get('wait', 0)
 
             if self._is_connected():
-                state_index = self._connection.get_state()
+                state_index = self._connection.l3_state_id
                 if state_index != 5:
                     return
                 if not self._conn_script_w_state:
@@ -220,7 +220,7 @@ class AutoConnTask:
             return
         if self._connection.bbs_connection:
             return
-        if self._connection.get_tx_buff_len():
+        if self._connection.get_tx_buff_len:
             return
         if self._connection:
             self._end_connection()

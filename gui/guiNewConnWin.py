@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, Menu
 
 from UserDB.UserDBmain import USER_DB
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import get_list_fm_viaStr
@@ -25,12 +24,13 @@ def getNew_ConnHistory(own_call: str,
 
 
 class NewConnWin(tk.Toplevel):
-    def __init__(self, main_win):
-        tk.Toplevel.__init__(self, master=main_win.main_win)
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._main      = main_win
-        self.style      = self._main.style
-        self._conn_hist = self._main.connect_history
+    def __init__(self, root_gui):
+        tk.Toplevel.__init__(self, master=root_gui.main_win)
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._main          = root_gui
+        self._popt_handler  = root_gui.get_PH_mainGUI()
+        self.style          = self._main.style
+        self._conn_hist     = self._main.connect_history
         self.title(self._getTabStr('newcon_title'))
         self.geometry(f"640x220+{self._main.main_win.winfo_x()}+{self._main.main_win.winfo_y()}")
         self.protocol("WM_DELETE_WINDOW", self._destroy_new_conn_win)
@@ -46,7 +46,7 @@ class NewConnWin(tk.Toplevel):
         self.lift()
         #################################################
         # Vars
-        ch_id = self._main.get_free_channel(self._main.channel_index)
+        ch_id = self._main.guiChannels.get_free_channel(self._main.channel_index)
         self._port_index                 = 0
         self._port_btn: {int: tk.Button} = {}
         self._call_txt_inp_var           = tk.StringVar(self)
@@ -74,11 +74,11 @@ class NewConnWin(tk.Toplevel):
         own_call_frame.pack(  side=tk.TOP,    fill=tk.X, padx=62)
         lower_btn_frame.pack( side=tk.BOTTOM, fill=tk.X)
 
-        port_list = list(PORT_HANDLER.get_all_ports().keys())
+        port_list = list(self._popt_handler.get_all_ports().keys())
         port_list.sort()
         for port in port_list:
             btn = tk.Button(port_btn_frame,
-                            text=PORT_HANDLER.get_all_ports()[port].portname,
+                            text=self._popt_handler.get_all_ports()[port].portname,
                             bg="red",
                             width=5,
                             height=1,
@@ -143,9 +143,9 @@ class NewConnWin(tk.Toplevel):
         ############
         # Own Call
         opt = ['NOCALL']
-        if self._port_index in PORT_HANDLER.get_all_ports().keys():
+        if self._port_index in self._popt_handler.get_all_ports().keys():
             # opt = PORT_HANDLER.get_all_ports()[self._port_index].my_stations
-            opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
+            opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
             if not opt:
                 opt = ['NOCALL']
         opt = [opt[0]] + opt
@@ -166,7 +166,7 @@ class NewConnWin(tk.Toplevel):
                   font=("TkFixedFont", 11),
                   ).pack(side=tk.LEFT, padx=15)
         #####
-        free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(self._own_call_var.get())
+        free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(self._own_call_var.get())
         if not free_ssid_list:
             free_ssid_list = ['', '']
         else:
@@ -180,7 +180,7 @@ class NewConnWin(tk.Toplevel):
         # CH-ID
         ch_id_frame = ttk.Frame(own_call_frame)
         ch_id_frame.pack(side=tk.LEFT, padx=50)
-        ch_opt = self._main.get_all_free_channels()
+        ch_opt = self._main.guiChannels.get_all_free_channels()
         if not ch_opt:
             ch_opt = ['']
         ch_opt = [ch_id] + ch_opt
@@ -222,7 +222,7 @@ class NewConnWin(tk.Toplevel):
         ##############
         # Menubar
         self._init_menubar()
-        self._main.new_conn_win = self
+        self._main.toplevel_manager.new_conn_win = self
         ##############
         self._set_port_btn()
 
@@ -237,7 +237,7 @@ class NewConnWin(tk.Toplevel):
         menubar.add_cascade( label=self._getTabStr('newcon_history'), menu=MenuVerb, underline=0)
 
     def _set_port_index(self, index: int):
-        port = PORT_HANDLER.get_port_by_index(index)
+        port = self._popt_handler.get_port_by_index(index)
         if port:
             index = port.port_id
             self._port_index = index
@@ -248,7 +248,7 @@ class NewConnWin(tk.Toplevel):
                     call_str = call_str.split(' ')[0]
                 self._ax_ip_ip[1].configure(state='normal')
                 self._ax_ip_port[1].configure(state='normal')
-                mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(call_str, 0)
+                mh_ent = self._popt_handler.get_MH().get_AXIP_fm_DB_MH(call_str, 0)
                 # Just if u switch after enter in call
                 if mh_ent[1]:
                     ip  = mh_ent[0]
@@ -257,11 +257,11 @@ class NewConnWin(tk.Toplevel):
                     self._axip_port_var.set(prt)
                 self._call_txt_inp.focus_set()
 
-                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                port = self._popt_handler.get_port_by_index(self._port_index)
                 if not port:
                     opt = ['']
                 else:
-                    opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
+                    opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
 
@@ -280,11 +280,11 @@ class NewConnWin(tk.Toplevel):
                     self._ax_ip_ip[1].configure(state='disabled')
                     self._ax_ip_port[1].configure(state='disabled')
 
-                port = PORT_HANDLER.get_port_by_index(self._port_index)
+                port = self._popt_handler.get_port_by_index(self._port_index)
                 if not port:
                     opt = ['']
                 else:
-                    opt = PORT_HANDLER.get_stat_calls_fm_port(self._port_index)
+                    opt = self._popt_handler.api.get_stat_calls_fm_port(self._port_index)
                 if not opt:
                     opt = ['']
                 self._own_call_var.set('')
@@ -316,7 +316,7 @@ class NewConnWin(tk.Toplevel):
         try:
             ch_id       = int(self._ch_id_var.get())
         except ValueError:
-            ch_id        = self._main.get_free_channel(self._main.channel_index)
+            ch_id        = self._main.guiChannels.get_free_channel(self._main.channel_index)
         try:
             ssid        = int(self._own_ssid_var.get())
         except ValueError:
@@ -337,11 +337,11 @@ class NewConnWin(tk.Toplevel):
 
             call_list = get_list_fm_viaStr(addrs_str)
             if not call_list:
-                self._main.sysMsg_to_qso_task('*** Error. No valid Address.', ch_id)
+                self._main.sysMsg_to_qso('*** Error. No valid Address.', ch_id)
                 return
             dest_call = call_list[0]
             via_calls = call_list[1:]
-            port = PORT_HANDLER.get_port_by_index(self._port_index)
+            port = self._popt_handler.get_port_by_index(self._port_index)
             if port:
                 if port.port_typ == 'AXIP':
                     # Just if u switch after enter in call
@@ -349,7 +349,7 @@ class NewConnWin(tk.Toplevel):
                     axip_port   = self._ax_ip_port[1].get()
                     axip_ip     = get_ip_by_hostname(axip_ip_inp)
                     if not axip_ip and not check_ip_add_format(axip_ip_inp):
-                        mh_ent = PORT_HANDLER.get_MH().get_AXIP_fm_DB_MH(dest_call)
+                        mh_ent = self._popt_handler.get_MH().get_AXIP_fm_DB_MH(dest_call)
                         if mh_ent[0]:
                             ip = mh_ent[0]
                             prt = str(mh_ent[1])
@@ -369,11 +369,14 @@ class NewConnWin(tk.Toplevel):
                     if axip_port.isdigit() and check_ip_add_format(axip_ip):
                         axip_address = axip_ip, int(axip_port)
                     else:
-                        self._main.sysMsg_to_qso_task('*** Error. No valid AXIP-Address.', ch_id)
+                        self._main.sysMsg_to_qso('*** Error. No valid AXIP-Address.', ch_id)
                         return
 
                 # conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
-                conn, msg = PORT_HANDLER.new_outgoing_connection(
+                #msg =  f'\r*** Link Setup to {dest_call} > Port {self._port_index}\r'
+                #self._main.sysMsg_to_qso(msg, ch_id)
+
+                conn, msg = self._popt_handler.connection_manager.new_outgoing_connection(
                     dest_call=dest_call,
                     own_call=own_call,
                     via_calls=via_calls,  # Auto lookup in MH if not exclusive Mode
@@ -383,7 +386,6 @@ class NewConnWin(tk.Toplevel):
                     link_conn=None,  # Linked Connection AX25Conn
                     channel=int(ch_id)  # Channel/Connection Index = Channel-ID
                 )
-                self._main.sysMsg_to_qso_task(msg, ch_id)
 
                 if conn:
                     if addrs_str in list(self._conn_hist.keys()):
@@ -398,6 +400,8 @@ class NewConnWin(tk.Toplevel):
                     )
                     self._main.ch_status_update()
                     self._destroy_new_conn_win()
+                else:
+                    self._main.sysMsg_to_qso(msg, ch_id)
 
     def _set_fm_conn_hist(self, event):
         ent_key  = self._call_txt_inp_var.get().upper()
@@ -414,7 +418,7 @@ class NewConnWin(tk.Toplevel):
         if own_call:
             self._own_call_var.set(own_call)
             self._set_ssid()
-            free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(own_call)
+            free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(own_call)
             if ssid in free_ssid_list:
                 self._own_ssid_var.set(ssid)
 
@@ -431,12 +435,12 @@ class NewConnWin(tk.Toplevel):
         if own_call:
             self._own_call_var.set(own_call)
             self._set_ssid()
-            free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(own_call)
+            free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(own_call)
             if ssid in free_ssid_list:
                 self._own_ssid_var.set(ssid)
 
     def _set_ssid(self, event=None):
-        free_ssid_list = PORT_HANDLER.get_free_ssid_s_fm_call(self._own_call_var.get())
+        free_ssid_list = self._popt_handler.connection_manager.get_free_ssid_s_fm_call(self._own_call_var.get())
         if not free_ssid_list:
             free_ssid_list = ['']
 
@@ -467,4 +471,4 @@ class NewConnWin(tk.Toplevel):
 
     def _destroy_new_conn_win(self):
         self.destroy()
-        self._main.new_conn_win = None
+        self._main.toplevel_manager.new_conn_win = None

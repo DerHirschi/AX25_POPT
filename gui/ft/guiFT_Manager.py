@@ -3,7 +3,6 @@ import time
 import tkinter as tk
 from tkinter import ttk, Menu
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number, get_strTab
@@ -12,8 +11,9 @@ from fnc.str_fnc import get_kb_str_fm_bytes, conv_timestamp_delta, format_number
 class FileTransferManager(tk.Toplevel):
     def __init__(self, root):
         tk.Toplevel.__init__(self, master=root.main_win)
-        self._root_win = root
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win      = root
+        self._popt_handler  = root.get_PH_mainGUI()
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.overview_frame = None
         # self.port_handler = self.root.ax25_port_handler
         self.win_height = 600
@@ -51,7 +51,7 @@ class FileTransferManager(tk.Toplevel):
         self._populate_query_list()
         self._set_abort_pause_btn()
         self._init_menubar()
-        root.settings_win = self
+        root.toplevel_manager.settings_win = self
 
     def _init_menubar(self):
         menubar = Menu(self, tearoff=False)
@@ -61,7 +61,7 @@ class FileTransferManager(tk.Toplevel):
         menubar.add_cascade(label=self._getTabStr('file_1'), menu=MenuVerb, underline=0)
 
     def destroy_win(self):
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()
 
     def tasker(self):
@@ -196,11 +196,24 @@ class FileTransferManager(tk.Toplevel):
         self.cancel_button = ttk.Button(self.bottom_frame, text="Cancel")
         self.cancel_button.pack(side=tk.LEFT, padx=5)
         """
+    def _get_all_ft_query(self):
+        # conn.ft_tx_queue: [FileTX]
+        # conn.ft_tx_activ: FileTX
+        res = {}
+        all_conn = self._popt_handler.get_all_connections()
+        for ch_id in list(all_conn.keys()):
+            conn = all_conn[ch_id]
+            tmp = conn.ft_queue
+            if conn.ft_obj:
+                tmp = [conn.ft_obj] + tmp
+            if tmp:
+                res[ch_id] = tmp
+        return res
 
     def _populate_query_list(self):
         data = []
         self._ft_obj_list = []
-        ft_dict = PORT_HANDLER.get_all_ft_query()
+        ft_dict = self._get_all_ft_query()
         for ch_id in ft_dict:
             ft_list = ft_dict[ch_id]
             for el in ft_list:
@@ -319,5 +332,5 @@ class FileTransferManager(tk.Toplevel):
         self.tasker()
 
     def _open_txFile_win(self):
-        self._root_win.open_window('ft_send')
+        self._root_win.toplevel_manager.open_window('ft_send')
 

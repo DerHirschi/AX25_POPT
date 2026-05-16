@@ -1,0 +1,280 @@
+══════════════════════════════════════════════════════════════════════════
+          PoPT-REMOTE PROTOKOLL (PRP) – Spezifikation
+                    ____      ____      ____
+                  U|  _"\ uU |  _"\ u U|  _"\ u
+                  \| |_) |/ \| |_) |/ \| |_) |/
+                   |  __/    |  _ <    |  __/
+                   |_|       |_| \_\   |_|
+                   ||>>_     //   \\_  ||>>_
+                  (__)__)   (__)  (__)(__)__)
+══════════════════════════════════════════════════════════════════════════
+                   PoPT Remote Protocol v1.5
+                (Stand: 04. Januar 2026)
+══════════════════════════════════════════════════════════════════════════
+
+1. Allgemeine Paketstruktur (Layer 4 – gilt für OPT-ID 0–63)
+══════════════════════════════════════════════════════════════════════════
+
++--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
+|  FLAG  |  FLAG  | OPTBYTE|  LEN (2 Byte little) |    PAYLOAD       | CRC16  | CRC16  |
+|  0x8D  |  0x81  |        |  LSB         MSB     |  variable Länge  | low    | high   |
++--------+--------+--------+--------+-------------+----- ~ ----------+--------+--------+
+   0         1        2        3         4             5 ...  5+L-1      L+5    L+6
+
+  • FLAG-Sequenz      = immer 0x8D 0x81
+  • OPTBYTE           = siehe Abschnitt 2
+  • LEN               = Länge des PAYLOADs (nach Escaping)
+  • PAYLOAD           = ggf. LZHUF-komprimiert → dann escaped
+  • CRC               = CRC16-CCITT (Polynomial 0x1021, Init 0xFFFF, Final-XOR 0x0000)
+                          über Bytes ab OPTBYTE bis letztes Payload-Byte
+
+══════════════════════════════════════════════════════════════════════════
+2. OPTBYTE – Aufbau (1 Byte)
+══════════════════════════════════════════════════════════════════════════
+
+Bit    7   6   5   4   3   2   1   0
+     +---+---+---+---+---+---+---+---+
+     |F2 |F1 |         OPT-ID (0-63)       |
+     +---+---+---+---+---+---+---+---+
+
+  F2 = 1 → Payload ist LZHUF-komprimiert
+  F1 = 1 → Frame ist TX (Command), 0 → RX (Response/ACK)
+  OPT-ID 0…19  → Monitor-Port
+  OPT-ID 20…63 → Steuerbefehle
+
+══════════════════════════════════════════════════════════════════════════
+3. Escaping
+══════════════════════════════════════════════════════════════════════════
+
+0x8D (FEND)  → ersetze durch 0x8F 0x92
+0x8F (FESC)  → ersetze durch 0x8F 0x9B
+
+Empfangsseite:
+  0x8F 0x9B  → ersetze durch 0x8F
+  0x8F 0x92  → ersetze durch 0x8D
+
+══════════════════════════════════════════════════════════════════════════
+4. Monitor-Frame (OPT-ID = 0 … 19)
+══════════════════════════════════════════════════════════════════════════
+
+Payload VOR Kompression und Escaping:
+
++--------------------------------+-------------------------------+
+|       3 Byte BCD Zeit          |   rohes AX.25-Frame (wie vom  |
+|          HH:MM:SS              |   Radio empfangen/gesendet)   |
++--------------------------------+-------------------------------+
+
+→ optional LZHUF-komprimiert (nur wenn kürzer)
+→ dann escaped
+→ dann in das Layer-4-Paket verpackt
+
+══════════════════════════════════════════════════════════════════════════
+5. Steuerbefehle (OPT-ID ≥ 20)
+══════════════════════════════════════════════════════════════════════════
+
+OPT-ID | Richtung TX (CMD)         | Richtung RX (RESP/ACK)      | Payload
+-------+---------------------------+----------------------------+------------------------
+ 20    | Handshake Request         | Handshake Response         | StationID-Str (ASCII)
+ 21    | Abort Request             | Abort Response             | leer
+ 22    | Disconnect                | (kein ACK)                 | leer
+ 23    | Login Request             | Login Challenge            | leer / 16-Byte Nonce
+ 24    | Login Response            | Login ACK                  | SHA256(pw_hash + nonce) / b"OK" oder b"FAIL"
+ 25    | Logout                    | ACK Logout                 | leer
+ 26    | State Update              | ACK State Update           | Binäres State-Update (siehe 5.1) / b'OK' oder b'FAIL'
+ 27    | PRP-Admin                 | ACK/NACK                   | Admin-spezifisch
+ 62    | CLI-Escape                | (kein ACK)                 | CLI-Payload
+ 63    | PRP-Batch Frames          | (kein ACK)                 | Mehrere komplette PRP-Frames (inkl. Flags)
+
+══════════════════════════════════════════════════════════════════════════
+5.1 State Update – OPT-ID 26 (binäres Format)
+══════════════════════════════════════════════════════════════════════════
+
+Payload-Aufbau (vor Kompression/Escaping):
+
+┌────────┬────────┬──────────────┐
+│ Key-ID │ Length │   Value      │  ... (wiederholt)
+│ (1B)   │ (1B)   │ (0–255 Byte) │
+└────────┴────────┴──────────────┘
+
+Key-ID Zuordnung (dynamisch, basierend auf Reihenfolge in _own_states):
+
+    ID  Key-Name         Typ            Kodierung
+    ───────────────────────────────────────────────────────────────
+     0  cli_rem_mon      bool           0x00 = False, 0x01 = True
+     1  gui_rem_mon      bool           0x00 / 0x01
+     2  rem_mon_port     uint8          0–255
+     3  rem_mon_incl     Call-Liste     Null-getrennte UTF-8 Calls + \x00\x00
+     4  rem_mon_excl     Call-Liste     dto.
+     5  batch_mode       enum           0=auto, 1=on, 2=off
+     6  batch_wait       uint16 little  Sekunden
+     7  cli_esc          bool           0x00 / 0x01
+     8  login_ok         bool           (serverseitig ignoriert!)
+
+══════════════════════════════════════════════════════════════════════════
+6. Kompressions-Logik
+══════════════════════════════════════════════════════════════════════════
+
+- Nur LZHUF wird verwendet
+- Wenn komprimiertes Ergebnis kürzer → F2 = 1 und komprimiertes Payload senden
+- Sonst → F2 = 0 und Original-Payload senden
+- Empfänger dekomprimiert nur bei F2 = 1
+
+══════════════════════════════════════════════════════════════════════════
+7. Layer 3: Zuverlässiger Transport (OPT-ID 30–39)
+══════════════════════════════════════════════════════════════════════════
+
+Aktiviert für: PRP-Admin (27), CLI-Escape (62), zukünftige Anwendungen
+
+7.1 L3-Daten-Paket (OPT-ID 39)
+──────────────────────────────────────────────────────────────────────────
+
++--------+--------+--------+-------------+----------+----- ~ ---------+--------+--------+
+| FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | SEQ (1B) |   PAYLOAD      | CRC16  | CRC16  |
+| 0x8D   | 0x81   |   39   | LSB  MSB    |          | (komplettes L4-Frame ohne äußere Flags/CRC) | low    | high   |
++--------+--------+--------+-------------+----------+----- ~ ---------+--------+--------+
+
+OPTBYTE:
+  Bit 7 = Priorität (1 = Prio-Kanal, 0 = Normal-Kanal)
+  Bit 6 = More Follow (1 = weitere Fragmente, 0 = letztes Fragment)
+  Bits 5–0 = 39 (0x27)
+
+SEQ: Sequenznummer (0–255, wrap-around, getrennt pro Kanal)
+
+7.2 L3-ACK/NACK-Paket (OPT-ID 31)
+──────────────────────────────────────────────────────────────────────────
+
++--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+| FLAG   | FLAG   | OPTBYTE| LEN (2B LE) | NEXT_SEQ (1B) | BITMASK (0–254B)   | CRC16  | CRC16  |
+| 0x8D   | 0x81   |   31   | LSB  MSB    |               |                    | low    | high   |
++--------+--------+--------+-------------+---------------+----- ~ --------------+--------+--------+
+
+OPTBYTE:
+  Bit 7 = Priorität (1 = Prio-ACK/NACK)
+  Bit 6 = immer 0
+  Bits 5–0 = 31 (0x1F)
+
+LEN = Gesamtlänge Payload (NEXT_SEQ + Bitmask)
+Bitmask-Länge = LEN – 1 Byte
+Bitmask = 0 → reines ACK (alles bis NEXT_SEQ-1 empfangen)
+
+7.3 L3-Steuerpakete (OPT-ID 30,32–34)
+──────────────────────────────────────────────────────────────────────────
+
+Alle über Prio-Kanal (Bit 7 = 1)
+
+OPT-ID | Name   | Bit 6=0 (Standard)              | Bit 6=1 (Extended)             | Payload
+-------+--------+---------------------------------+--------------------------------+----------------------------------
+ 30    | SYN    | SYN (Verbindungsaufbau)         | SYN-Request (Resync)           | 4 Byte: my_prio, my_noprio, cl_prio, cl_noprio
+ 32    | FIN    | Graceful Close                  | –                              | 1 Byte: my_noprio_seq
+ 33    | RST    | Abort                           | –                              | 4 Byte SEQ wie SYN
+ 34    | ERROR  | Protokollfehler                 | reserviert                     | Fehlercode + optional Text
+
+══════════════════════════════════════════════════════════════════════════
+8. L3-Verfahren – Zusammenfassung
+══════════════════════════════════════════════════════════════════════════
+
+- Zwei unabhängige Kanäle (Prio / NoPrio) mit eigenen SEQ-Zählern
+- Fragmentierung über More-Bit
+- Out-of-order Buffering + Reordering
+- Selektives ACK/NACK mit dynamischer Bitmask (0–254 Bytes)
+- Window-Size konfigurierbar (Standard 128)
+- Lazy-Handshake: Bei erstem DATA automatisch zu ESTABLISHED
+- Retry-Mechanismus mit konfigurierbarem Limit/Timer
+
+══════════════════════════════════════════════════════════════════════════
+9. Aktueller Implementierungsstand (04.01.2026)
+══════════════════════════════════════════════════════════════════════════
+
+Implementiert:
+- Vollständiges L3-Daten + Fragmentierung + More-Bit
+- ACK/NACK mit variabler Bitmask
+- Out-of-order Buffering + Reordering
+- Separate SEQ-Zähler pro Kanal
+- Ignorieren von Paketen außerhalb Fenster
+- Zustandsmaschine mit autom. Übergang bei erstem DATA
+- Retry-Mechanismus
+
+Offen:
+- Vollständiger SYN-Handshake (aktuell lazy)
+- FIN-Graceful-Close
+- RNR/RR Flow Control
+- Keepalive über L3
+
+══════════════════════════════════════════════════════════════════════════
+10. L3-TX-Steuerung
+══════════════════════════════════════════════════════════════════════════
+    ┌──────────────────────────────┐
+    │             IDLE             │
+    │  - kein aktiver Batch        │
+    │  - TX-Buffer evtl. leer      │
+    └───────────────┬──────────────┘
+                    │
+                    │ L4 liefert Payload
+                    │ oder L3 hat Daten
+                    ▼
+    ┌──────────────────────────────┐
+    │        PREPARE_BATCH         │
+    │  - Fragmentierung            │
+    │  - more-follow setzen        │
+    │  - interne Batch-Grenzen     │
+    │  - ACK-Strategie bestimmen   │
+    └───────────────┬──────────────┘
+                    │
+                    │ Frame bereit
+                    ▼
+    ┌─────────────────────────────────────┐
+    │          TX_ALLOWED ?               │◄───────────────┐
+    │  - Half Duplex frei?                │                │
+    │  - T2 abgelaufen?                   │                │
+    │  - RNR aktiv?                       │                │
+    │  - Channel quiet?                   │                │
+    └───────┬────────────────┬────────────┘                │
+            │ nein           │ ja                          │
+            │                ▼                             │
+            │      ┌──────────────────────────────┐        │
+            │      │        SEND_FRAME            │        │
+            │      │  - Frame → phys. TX-Buffer   │        │
+            │      │  - TX über Transporter       │        │
+            │      └──────────────┬───────────────┘        │
+            │                     │ Frame gesendet         │
+            │                     ▼                        │
+            │      ┌──────────────────────────────┐       CTRL
+            │      │   MORE_FOLLOW == TRUE ?      │
+            │      └───────────┬───────────┬──────┘
+            │                  │ ja        │ nein
+            │                  │           ▼
+            │                  │   ┌───────────────────────┐
+            │                  │   │  BATCH_END_REACHED    │
+            │                  │   │  - ACK evtl. anfordern│
+            │                  │   └──────────┬────────────┘
+            │                  │              │
+            │                  │              ▼
+            │                  │   ┌──────────────────────┐
+            │                  │   │    WAIT_FOR_ACK      │◄──────────┐
+            │                  │   │  - T1 läuft          │           │
+            │                  │   │  - ggf. ACK_REQ TX   │           │
+            │                  │   └────┬────────────┬────┘           │
+            │                  │        │ ACK        │ NACK           │
+            │                  │        ▼            ▼                │
+            │                  │   ┌───────────┐ ┌─────────────────┐  │
+            │                  │   │ COMPLETE  │ │  RETRY_SELECT   │  │
+            │                  │   │ - Batch OK│ │ - fehlende      │  │
+            │                  │   └─────┬─────┘ │   Frames        │  │
+            │                  │         │       └─────┬───────────┘  │
+            │                  │         │             │              │
+            │                  │         └─────────────┴──────────────┘
+            │                  │                    Retry als
+            │                  │                    Mini-Batch
+            │                  │
+            │                  └──────────────────────────────────────┐
+            │                                                         │
+            └─────────────────────────────────────────────────────────┘
+
+- ACK-Semantik ist modusabhängig
+Batch-Modus:        ACK = Batch-Abschluss
+Aggressiv-Modus:    ACK = Flow-Control (alle X Frames)
+Passiv-Modus:       ACK sporadisch / Timeout-basiert
+Empfänger darf immer ACK senden, auch unsolicited
+══════════════════════════════════════════════════════════════════════════
+Ende der Spezifikation
+══════════════════════════════════════════════════════════════════════════

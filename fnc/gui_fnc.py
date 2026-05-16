@@ -310,3 +310,4 @@ def build_aprs_icon_tab(size=(16, 16)):
         #("\\", ""): get_image(get_path("1-95"), size),
         #("\\", ""): get_image(get_path("1-96"), size),
     }
+

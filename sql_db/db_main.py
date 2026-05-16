@@ -83,7 +83,7 @@ class SQL_Database:
 
     def check_tables_exists(self, tables: str):
         if not self.error:
-            logger.info(self._logTag + 'überprüfe Tabellen')
+            logger.info(self._logTag + f'überprüfe Tabellen: {tables}')
             try:
                 ret = self.db.get_all_tables()
             except SQLConnectionError as e:

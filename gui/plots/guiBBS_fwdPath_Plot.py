@@ -10,7 +10,6 @@ from cfg.popt_config import POPT_CFG
 #from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from gui import (NavigationToolbar2Tk, FigureCanvasTkAgg)
 from matplotlib.lines import Line2D
-from ax25.ax25InitPorts import PORT_HANDLER
 from fnc.gui_fnc import generate_random_hex_color
 from fnc.str_fnc import convert_str_to_datetime
 
@@ -44,6 +43,7 @@ class FwdGraph(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self.wm_title("Forward Routes")
         self._root_win = root_win
+        self._popt_handler = root_win.get_PH_mainGUI()
         self.geometry(f"800x"
                       f"600+"
                       f"{self._root_win.main_win.winfo_x()}+"
@@ -57,8 +57,8 @@ class FwdGraph(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         #######################################################################
-        self._db = PORT_HANDLER.get_database()
-        self._user_DB = PORT_HANDLER.get_userDB()
+        self._db = self._popt_handler.get_database()
+        self._user_DB = self._popt_handler.get_userDB()
         self._db_raw = self._db.bbs_get_fwdPaths()
         self._path_data = {}
         self._call_info_vars = {}
@@ -151,7 +151,7 @@ class FwdGraph(tk.Toplevel):
         right_frame = tk.Frame(self)
         right_frame.pack(side=tk.LEFT, fill=tk.Y, expand=False)
         self._init_chk_frame(right_frame)
-        self._root_win.fwd_Path_plot_win = self
+        self._root_win.toplevel_manager.fwd_Path_plot_win = self
 
         # self._init_stationInfo_vars(self._path_data)
         ##self._init_vars_fm_raw_data()
@@ -478,5 +478,5 @@ class FwdGraph(tk.Toplevel):
         self._fig.clear()
         plt.close(self._fig)
         self._canvas.get_tk_widget().destroy()
-        self._root_win.fwd_Path_plot_win = None
+        self._root_win.toplevel_manager.fwd_Path_plot_win = None
         self.destroy()

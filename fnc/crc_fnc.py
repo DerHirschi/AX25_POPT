@@ -1,7 +1,7 @@
 from cfg.logger_config import logger
 
-
-
+#####################################################
+# YAPP CRC
 def init_crctab():
     """ By: ChatGP """
     """ YAPP Protocol """
@@ -32,7 +32,8 @@ def get_crc(data: b''):
     return crc
 
 ###################################################################
-def crc_smack(data: bytes):
+# SMACK CRC (CRC16-CCITT)
+def crc16_ccitt(data: bytes):
     """SMACK CRC wie in The Firmware 2.42"""
     """
     by Grok AI

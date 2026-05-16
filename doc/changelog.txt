@@ -1,4 +1,75 @@
 ###########################################################################################################
+# 2.123.x
+Fixes:
+- KISS Decoder (fehlerhaftes Escaping)
+- Eingehende Verbindungen werden geblockt bzw. der Port block wird nicht
+  freigegeben, wenn Port neu initialisiert wird.
+  (Schon wieder, da die reinit Prozedur verändert wurde in der Vorversion)
+- Alle nicht darstellbaren Zeichen für GUI gesperrt.
+  (wenn von der GUI versucht wird, binäre Daten darzustellen die nicht
+   darstellbar sind, gibts es Chaos.
+   Tag Farben & Zeilenumbrüche gehen verloren)
+- Es können keine User-DB Einträge mit SSID hinzugefügt werden
+- Script Error, wenn neue APRS-Nachricht gesendet wird
+- AXIP-Multicast ist nicht auswählbar in Porteinstellungen
+- APRS-SMS sendet kein ACK, um den empfang zu bestätigen.
+
+Optimierung/Änderungen:
+- Pipe-Tool Schleife performance optimiert (CPU-Last)
+- Haupteinstellungen GUI > Allgemeine Einstellungen GUI überarbeitet
+- AX25 Protokoll L3 > T1 wird nicht gestoppt, wenn REJ empfangen wird
+  (Führ zu lange Wartezeiten bis reagiert wird)
+- Monitor Decoder Performance optimiert
+- Schleifen Performance optimiert
+- PoPT AX25-L3 Modul aufgeräumt + Thread Lock für Buffer
+- Diverse PoPT Module aufgeräumt/restrukturiert
+- Port-Einstellungen: Extra Fenster für KISS Einstellungen/Parameter
+  - Zusätzlich Custom TNC-Kommandos möglich (Für KISS-Mode init)
+- Port-Einstellungen: Flusskontrolle Optionen für serielle Geräte (DTR/RTS)
+- "About" Fenster
+
+Neue Implementierungen / Funktionen:
+- CLI-CMD: "CHIST" - zeigt Verbindungsverlauf
+- APRS I-Gate
+- APRS Digepeater
+- APRS-Monitor: Auswertung für I-Gate Status Baken
+- APRS-Monitor: Tabelle/Monitor für I-Gate & APRS-DIGI Pakete
+- Autosave, alle Daten werden Periodisch (einstellbar) gespeichert.
+- Multiport TNC (KISS) support
+- APRS-Chat über NODE/BSS CLI (experimentell)
+  - CLI-CMD "ACHAT"
+  - CLI-CMD "AMSGS"
+  - CLI-CMD "ACLEAR"
+- CLI-CMD "PATH", zeigt Pfad/Route zu CalL
+- CLI-CMD "SYS", Baycom Login um Sysop Privilegien zu erlangen
+- CLI-CMD "LOGOUT", Ausloggen (SYSOP)
+- Weitere Sprachen hinzugefügt:
+  (nur teilweise übersetzt, Fallback auf Englisch)
+  (KI-Generierte Übersetzung)
+  - Tschechisch
+  - Polnisch
+  - Portugiesisch
+  - Italienisch
+  - Russisch
+  - Ukrainisch
+
+*** Fürs Erste deaktiviert (experimentell)
+- PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
+  - Sicheres Login Verfahren
+  - Batch Mode (mehrere unkomprimierte PRP-Frames werden gesammelt und
+    zusammengefasst zu einem, komprimierten PRP-Batch-Paket.
+    (erhöht die Effizienz beim Komprimieren))
+  - CLI-ESC Mode: Daten die mit PRP gesendet wurden können an den
+    normalen Datenstrom(QSO) weitergereicht werden.
+    Ermöglicht das Senden/Empfangen mit Datenkompression.
+- Remote Monitor (nutzt das PoPT-Remote-Protokoll).
+  Überträgt Monitordaten von entfernter PoPT-Node und stellt
+  sie aufbereitet in der HostGUI da. (Ähnlich wie die Monitorausgabe
+  bei TNN nur viel effizienter aufgrund von Datenkomprimierung)
+- Monitor Decoder: PRP-Frame Decoder (Nur Metadaten werden ausgewertet)
+
+###########################################################################################################
+###########################################################################################################
 # 2.122.x
 Fixes:
 - BBS: BID (Boxcall) wird nach Verändern der Einstellungen erst nach Programm

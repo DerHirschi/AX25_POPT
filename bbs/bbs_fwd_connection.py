@@ -622,7 +622,7 @@ class BBSConnection:
                 # Error
                 BBS_LOG.error(logTag + f"Decoding Error: {e} - Header-Line: {el}")
                 #pn_check += FWD_RESP_REJ
-                continue
+                el = el.decode('ASCII', 'ignore')
             if el[:2] in ['FB', 'FA']:
                 msg = parse_forward_header(el)
                 if not msg:
@@ -960,7 +960,7 @@ class BBSConnection:
             return
 
         # self._bbs.handle_incoming_fwd(self._rx_msg_header[k]['bid_mid'])
-        self._bbs.get_port_handler().set_pmsMailAlarm(True)
+        self._bbs.get_port_handler().api.set_pmsMailAlarm(True)
         del self._rx_msg_header[bid]
 
     ########################################################

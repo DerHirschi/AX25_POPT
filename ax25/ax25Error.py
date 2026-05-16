@@ -55,10 +55,9 @@ class AX25DeviceFAIL(Exception):
     def __init__(self, port=None):
         logger.error('AX25DeviceFAIL - Device Init failed!')
         # print('AX25DeviceFAIL - Device Init failed!')
-        if port is not None:
-            if hasattr(port, 'port_id'):
-                logger.error(f'AX25DeviceFAIL - Port: {port.port_id} Init failed!')
-                # print(f'AX25DeviceFAIL - Port: {port.port_id} Init failed!')
+        if hasattr(port, 'port_id'):
+            logger.error(f'AX25DeviceFAIL - Port: {port.port_id} Init failed!')
+            # print(f'AX25DeviceFAIL - Port: {port.port_id} Init failed!')
 
 class AX25ConnectionERROR(Exception):
     def __init__(self, conn=None):
@@ -73,7 +72,7 @@ class AX25ConnectionERROR(Exception):
                 # print(f'AX25ConnectionERROR uid: {conn.uid}')
             # if DEBUG_LOG:
             if hasattr(conn, 'get_stat_cfg'):
-                stat_cfg: dict = conn.get_stat_cfg()
+                stat_cfg: dict = conn.get_stat_cfg
                 logger.error('AX25ConnectionERROR --- stat_cfg ---')
                 logger.error(str(stat_cfg))
                 # print('AX25ConnectionERROR --- stat_cfg ---')

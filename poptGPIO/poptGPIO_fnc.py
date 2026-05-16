@@ -158,7 +158,7 @@ class GPIO_DXAlarmOUT(GPIO_DefaultFNC_OUT):
 
     #########################################################
     def _get_state_var(self):
-        return bool(self._port_handler.get_dxAlarm())
+        return bool(self._port_handler.api.get_dxAlarm())
 
 #############################################################
 # Connection-Alarm

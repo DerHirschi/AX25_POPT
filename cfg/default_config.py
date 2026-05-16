@@ -8,7 +8,17 @@ from schedule.popt_sched import getNew_schedule_config
 
 
 #######################################
-# Station CFG
+# Log CFG
+"""
+def getNew_Log_cfg():
+    return dict(
+        log_level       = 'INFO',
+        bbs_log_level   = 'INFO',
+        log_to_console  = True
+    )
+"""
+#######################################
+# # Station CFG
 def getNew_station_cfg():
     return dict(
         stat_parm_Call='NOCALL',
@@ -32,16 +42,25 @@ def getNew_port_cfg():
         parm_PortParm = ('', 0),    # (IP, Port) | (Serial-Device, Baud)
 
         parm_TXD = 400,  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
+        # Srial Device Parameter
+        parm_serial_rts        = False,
+        parm_serial_dtr        = False,
         # Kiss Parameter
-        parm_kiss_is_on = True,
-        parm_set_kiss_param = True,
-        parm_kiss_init_cmd = TNC_KISS_CMD,
-        parm_kiss_end_cmd = TNC_KISS_CMD_END,
-        parm_kiss_TXD = 35,
-        parm_kiss_Pers = 160,
-        parm_kiss_Slot = 30,
-        parm_kiss_Tail = 15,
-        parm_kiss_F_Duplex = 0,
+        parm_kiss_is_on        = True,
+        parm_set_kiss_param    = True,
+        parm_kiss_send_init    = True,
+        parm_kiss_send_close   = True,
+        parm_kiss_init_cmd     = [(TNC_KISS_CMD,     True)],
+        parm_kiss_end_cmd      = [(TNC_KISS_CMD_END, False)],
+        parm_kiss_TXD          = 30,
+        parm_kiss_Pers         = 160,
+        parm_kiss_Slot         = 30,
+        parm_kiss_Tail         = 15,
+        parm_kiss_F_Duplex     = 0,
+        parm_kiss_channel      = 0,
+        parm_kiss_multi_ch     = False,
+        parm_kiss_multi_master = -1, # Master Port ID | -1 = self is Master
+
         # Connection Parameter
         parm_PacLen = 160,  # Max Pac len
         parm_MaxFrame = 3,  # Max (I) Frames
@@ -196,6 +215,7 @@ def getNew_BBS_User_cfg():
         homeBBS         = '',
     )
 """
+
 #######################################
 # MH / Port-Stat
 def getNew_MH_cfg():
@@ -251,21 +271,33 @@ def getNew_ConnHistory_struc(
     )
 #######################################
 # APRS
-def getNew_APRS_Station_cfg():
-    return {
-        'aprs_parm_loc': '',
-        'aprs_port_id': 0,
-        'aprs_parm_digi': False,
-        'aprs_parm_igate': False,
-        'aprs_parm_igate_tx': False,
-        'aprs_parm_igate_rx': False,
-    }
+def getNew_APRS_IGate_cfg():
+    return dict(
+        igate_active        = True,
+        igate_rf_to_is      = True,
+        igate_is_to_rf      = True,
+        igate_max_distance  = 80,       # km für IS→RF
+        igate_local_time    = 60,       # Minuten, wie lange eine Station "lokal" gilt
+        igate_ports         = [],       # Liste von Port-IDs, auf denen I-Gate aktiv sein soll (leer = alle)
+        igate_dup_time      = 30,       # Doppelte Pakete für X Sek. blocken
+    )
+
+def getNew_APRS_DIGI_cfg():
+    return dict(
+        digi_active         = True,
+        digi_fillin         = True,
+        digi_trace_active   = True,
+        digi_trace_all      = True,
+        digi_dup_time       = 30,
+        digi_ports          = [],
+    )
 
 
 def getNew_APRS_ais_cfg():
     return {
         'ais_call': '',
         'ais_pass': '',
+        'ais_filter': 'r/0/0/99999',
         'ais_loc': '',
         'ais_lat': 0.0,
         'ais_lon': 0.0,
@@ -361,7 +393,10 @@ def getNew_maniGUI_parm():
         gui_parm_main_height       = 850,
         #################
         # Style name
-        gui_parm_style_name         = "default"
+        gui_parm_style_name         = "default",
+        #################
+        # Autosave
+        param_autosave              = 60 # Minutes
     )
 
 
@@ -495,3 +530,36 @@ def getNew_gpio_pin_cfg(pin: int):
                 blink=1,            # Sec / 0 = Off
                 hold_timer=0,       # 0 = until Alarm reset
     )
+
+#####################################################
+# Rechte Management
+
+def getNew_globalRights():
+    return dict(
+        default_level                   = 'basic',  # Default für neue User
+        remote_access_allowed           = True,     #
+        login_required_for_extended     = True,     # Erweiterte Rechte nur mit Login?
+        block_list                      = [],       # Globale Blockliste
+
+    )
+
+def getNew_RightLevelTab():
+    from cli.cli_const import CLI_DEF_CMD_BASIC, CLI_DEF_CMD_ALL
+    return {
+            'guest': {
+                'no_login': CLI_DEF_CMD_BASIC,  # Minimale Basis
+                'with_login': []  # Nichts zusätzlich
+            },
+            'basic': {
+                'no_login': ['cli_esc'] + CLI_DEF_CMD_ALL,
+                'with_login': ['gui_rem_mon']
+            },
+            'extended': {
+                'no_login': ['gui_rem_mon', 'cli_rem_mon', 'cli_esc'] + CLI_DEF_CMD_ALL,
+                'with_login': ['all']
+            },
+            'admin': {
+                'no_login': ['all'],  # Alles erlaubt (auch ohne Login – vorsichtig!)
+                'with_login': ['all']
+            }
+        }

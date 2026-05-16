@@ -129,7 +129,7 @@ class LZHUF_Comp:
         self._match_position = 0
         self._match_length = 0
 
-    def init(self):
+    def _init(self):
         """Initialisiert alle Strukturen und Zähler."""
         self._in_ptr = 0
         self._in_end = 0
@@ -152,7 +152,7 @@ class LZHUF_Comp:
         self._son[:] = array.array('i', [0] * self.T)
         self._parent[:] = array.array('i', [0] * (self.T + self.N_CHAR))
 
-    def getc(self):
+    def _getc(self):
         """Liest ein Zeichen aus dem Eingabepuffer."""
         if self._in_ptr < self._in_end:
             c = self._in_buf[self._in_ptr] & 0xFF
@@ -160,30 +160,30 @@ class LZHUF_Comp:
             return c
         return 0
 
-    def putc(self, c):
+    def _putc(self, c):
         """Schreibt ein Zeichen in den Ausgabepuffer."""
         self._out_buf[self._out_ptr] = c & 0xFF
         self._out_ptr += 1
 
     def encode(self, i_buf):
-        self.init()
+        self._init()
         self._enc_dec = True
         self._in_buf = bytearray(i_buf + b'\x00' * 100)
         self._out_buf = bytearray(len(i_buf) * 2 + 10000)
         self._in_end = len(i_buf)
 
-        self.putc(self._in_end & 0xFF)
-        self.putc((self._in_end >> 8) & 0xFF)
-        self.putc((self._in_end >> 16) & 0xFF)
-        self.putc((self._in_end >> 24) & 0xFF)
+        self._putc(self._in_end & 0xFF)
+        self._putc((self._in_end >> 8) & 0xFF)
+        self._putc((self._in_end >> 16) & 0xFF)
+        self._putc((self._in_end >> 24) & 0xFF)
         self._code_size += 4
 
         if self._in_end == 0:
             return bytearray()
 
         self._text_size = 0
-        self.start_huff()
-        self.init_tree()
+        self._start_huff()
+        self._init_tree()
         s = 0
         r = self.N - self.F
         for i in range(r):
@@ -191,13 +191,13 @@ class LZHUF_Comp:
 
         len_ = 0
         while len_ < self.F and self._in_ptr < self._in_end:
-            self._text_buf[r + len_] = self.getc() & 0xFF
+            self._text_buf[r + len_] = self._getc() & 0xFF
             len_ += 1
         self._text_size = len_
 
         for i in range(1, self.F + 1):
-            self.insert_node(r - i)
-        self.insert_node(r)
+            self._insert_node(r - i)
+        self._insert_node(r)
 
         iteration_count = 0
         max_iterations = 1000000
@@ -212,50 +212,50 @@ class LZHUF_Comp:
                 self._match_length = len_
             if self._match_length <= self.THRESHOLD:
                 self._match_length = 1
-                self.encode_char(self._text_buf[r])
+                self._encode_char(self._text_buf[r])
             else:
-                self.encode_char((255 - self.THRESHOLD) + self._match_length)
-                self.encode_position(self._match_position)
+                self._encode_char((255 - self.THRESHOLD) + self._match_length)
+                self._encode_position(self._match_position)
 
             last_match_length = self._match_length
             i = 0
             while i < last_match_length and self._in_ptr < self._in_end:
                 i += 1
-                self.delete_node(s)
-                c = self.getc()
+                self._delete_node(s)
+                c = self._getc()
                 self._text_buf[s] = c & 0xFF
                 if s < self.F - 1:
                     self._text_buf[s + self.N] = c
                 s = (s + 1) & (self.N - 1)
                 r = (r + 1) & (self.N - 1)
-                self.insert_node(r)
+                self._insert_node(r)
             self._text_size += i
 
             while i < last_match_length:
                 i += 1
-                self.delete_node(s)
+                self._delete_node(s)
                 s = (s + 1) & (self.N - 1)
                 r = (r + 1) & (self.N - 1)
                 len_ -= 1
                 if len_ > 0:
-                    self.insert_node(r)
+                    self._insert_node(r)
 
-        self.encode_end()
+        self._encode_end()
         return self._out_buf[:self._code_size]
 
     def decode(self, i_buf):
         """Dekodierung/Dekomprimierung."""
-        self.init()
+        self._init()
         self._enc_dec = False
         self._in_buf = bytearray(i_buf + b'\x00' * 100)
         # self._out_buf = bytearray((expected_size or 0) + 10000)
         self._in_end = len(i_buf)
 
         # Größe lesen
-        self._text_size = self.getc()
-        self._text_size |= self.getc() << 8
-        self._text_size |= self.getc() << 16
-        self._text_size |= self.getc() << 24
+        self._text_size = self._getc()
+        self._text_size |= self._getc() << 8
+        self._text_size |= self._getc() << 16
+        self._text_size |= self._getc() << 24
 
         if self._text_size == 0:
             return bytearray()
@@ -264,42 +264,42 @@ class LZHUF_Comp:
         # if expected_size is None:
         self._out_buf = bytearray(self._text_size + 10000)
         # print(self._text_size)
-        self.start_huff()
+        self._start_huff()
         for i in range(self.N - self.F):
             self._text_buf[i] = 0x20
 
         r = self.N - self.F
         count = 0
         while count < self._text_size:
-            c = self.decode_char()
+            c = self._decode_char()
             if c < 256:
-                self.putc(c & 0xFF)
+                self._putc(c & 0xFF)
                 self._text_buf[r] = c & 0xFF
                 r = (r + 1) & (self.N - 1)
                 count += 1
             else:
                 try:
-                    i = ((r - self.decode_position()) - 1) & (self.N - 1)
+                    i = ((r - self._decode_position()) - 1) & (self.N - 1)
                 except ValueError:
                     raise ValueError()
                 j = (c - 255) + self.THRESHOLD
                 for k in range(j):
                     c = self._text_buf[(i + k) & (self.N - 1)]
-                    self.putc(c & 0xFF)
+                    self._putc(c & 0xFF)
                     self._text_buf[r] = c & 0xFF
                     r = (r + 1) & (self.N - 1)
                     count += 1
 
         return self._out_buf[:count]
 
-    def init_tree(self):
+    def _init_tree(self):
         """Initialisiert den Baum."""
         for i in range(self.N + 1, self.N + 257):
             self._r_son[i] = self.NODE_NIL
         for i in range(self.N):
             self._dad[i] = self.NODE_NIL
 
-    def insert_node(self, r):
+    def _insert_node(self, r):
         geq = True
         p = self.N + 1 + self._text_buf[r]
         self._r_son[r] = self._l_son[r] = self.NODE_NIL
@@ -370,7 +370,7 @@ class LZHUF_Comp:
                 self._dad[p] = self.NODE_NIL
                 return  # Nach Aktualisierung zurückkehren
 
-    def delete_node(self, p):
+    def _delete_node(self, p):
         """Löscht einen Knoten aus dem Baum."""
         if self._dad[p] == self.NODE_NIL:
             return
@@ -397,35 +397,35 @@ class LZHUF_Comp:
             self._l_son[self._dad[p]] = q
         self._dad[p] = self.NODE_NIL
 
-    def get_bit(self):
+    def _get_bit(self):
         """Liest ein Bit."""
         while self._get_len <= 8:
-            self._get_buf = (self._get_buf | (self.getc() << (8 - self._get_len))) & 0xFFFF
+            self._get_buf = (self._get_buf | (self._getc() << (8 - self._get_len))) & 0xFFFF
             self._get_len += 8
         ret_val = (self._get_buf >> 15) & 0x1
         self._get_buf = (self._get_buf << 1) & 0xFFFF
         self._get_len -= 1
         return ret_val
 
-    def get_byte(self):
+    def _get_byte(self):
         """Liest ein Byte."""
         while self._get_len <= 8:
-            self._get_buf = (self._get_buf | (self.getc() << (8 - self._get_len))) & 0xFFFF
+            self._get_buf = (self._get_buf | (self._getc() << (8 - self._get_len))) & 0xFFFF
             self._get_len += 8
         ret_val = (self._get_buf >> 8) & 0xFF
         self._get_buf = (self._get_buf << 8) & 0xFFFF
         self._get_len -= 8
         return ret_val
 
-    def put_code(self, n, c):
+    def _put_code(self, n, c):
         """Schreibt n Bits."""
         self._put_buf = (self._put_buf | (c >> self._put_len)) & 0xFFFF
         self._put_len += n
         if self._put_len >= 8:
-            self.putc((self._put_buf >> 8) & 0xFF)
+            self._putc((self._put_buf >> 8) & 0xFF)
             self._put_len -= 8
             if self._put_len >= 8:
-                self.putc(self._put_buf & 0xFF)
+                self._putc(self._put_buf & 0xFF)
                 self._code_size += 2
                 self._put_len -= 8
                 self._put_buf = (c << (n - self._put_len)) & 0xFFFF
@@ -433,7 +433,7 @@ class LZHUF_Comp:
                 self._put_buf = ((self._put_buf & 0xFF) << 8) & 0xFFFF
                 self._code_size += 1
 
-    def start_huff(self):
+    def _start_huff(self):
         """Initialisiert den Huffman-Baum."""
         for i in range(self.N_CHAR):
             self._freq[i] = 1
@@ -449,7 +449,7 @@ class LZHUF_Comp:
         self._freq[self.T] = 0xFFFF
         self._parent[self.R] = 0
 
-    def reconst(self):
+    def _reconst(self):
         """Rekonstruiert den Huffman-Baum."""
         j = 0
         for i in range(self.T):
@@ -481,10 +481,10 @@ class LZHUF_Comp:
             if k < self.T:
                 self._parent[k + 1] = i
 
-    def update(self, c):
+    def _update(self, c):
         """Aktualisiert den Huffman-Baum."""
         if self._freq[self.R] == self.MAX_FREQ:
-            self.reconst()
+            self._reconst()
         c = self._parent[c + self.T]
         while c != 0:
             self._freq[c] += 1
@@ -508,7 +508,7 @@ class LZHUF_Comp:
                 c = n
             c = self._parent[c]
 
-    def encode_char(self, c):
+    def _encode_char(self, c):
         """Kodierung eines Zeichens."""
         code, len_ = 0, 0
         k = self._parent[c + self.T]
@@ -518,38 +518,51 @@ class LZHUF_Comp:
                 code |= 0x8000
             len_ += 1
             k = self._parent[k]
-        self.put_code(len_, code)
-        self.update(c)
+        self._put_code(len_, code)
+        self._update(c)
 
-    def encode_position(self, c):
+    def _encode_position(self, c):
         """Kodierung einer Position."""
         i = c >> 6
-        self.put_code(self.P_LEN[i], self.P_CODE[i] << 8)
-        self.put_code(6, (c & 0x3F) << 10)
+        self._put_code(self.P_LEN[i], self.P_CODE[i] << 8)
+        self._put_code(6, (c & 0x3F) << 10)
 
-    def encode_end(self):
+    def _encode_end(self):
         """Beendet die Kodierung."""
         if self._put_len > 0:
-            self.putc(self._put_buf >> 8)
+            self._putc(self._put_buf >> 8)
             self._code_size += 1
 
-    def decode_char(self):
+    def _decode_char(self):
         """Dekodiert ein Zeichen."""
         c = self._son[self.R]
         while c < self.T:
-            c = self._son[c + self.get_bit()]
+            c = self._son[c + self._get_bit()]
         c -= self.T
-        self.update(c)
+        self._update(c)
         return c & 0xFFFF
 
-    def decode_position(self):
+    def _decode_position(self):
         """Dekodiert eine Position."""
-        i = self.get_byte()
+        i = self._get_byte()
         if i >= len(self.D_LEN):
             raise ValueError(f"Invalid position index {i}, max {len(self.D_LEN) - 1}")
         c = (self.D_CODE[i] << 6) & 0xFFFF
         j = self.D_LEN[i] - 2
         while j > 0:
-            i = ((i << 1) | self.get_bit()) & 0xFFFF
+            i = ((i << 1) | self._get_bit()) & 0xFFFF
             j -= 1
         return c | (i & 0x3F)
+
+
+if __name__ == '__main__':
+    test_str = (b"12345  bla bla ===== fg fg fg " * 10)
+    huff_com         = LZHUF_Comp()
+    compressed_msg   = huff_com.encode(test_str)
+    decompressed_msg = huff_com.decode(compressed_msg)
+    print(f"Len Org     : {len(test_str)}")
+    print(f"Len Comp    : {len(compressed_msg)}")
+    print(f"Comp Ratio  : {len(test_str) / len(compressed_msg)}")
+    print(f"Uncompressed: {decompressed_msg}")
+    print(f"")
+

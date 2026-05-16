@@ -1,21 +1,20 @@
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 
-from ax25.ax25InitPorts import PORT_HANDLER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
 from gui.plots.guiAPRS_wx_plot import WXPlotWindow    # !!!!!!!
-# from cfg.logger_config import logger
 
 
 class WXWin(tk.Toplevel):
     # TODO all Delete WX-DATA
     def __init__(self, root_win):
         tk.Toplevel.__init__(self, master=root_win.main_win)
-        self._root_win  = root_win
-        self._ais_obj   = PORT_HANDLER.get_aprs_ais()
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._root_win      = root_win
+        self._popt_handler  = root_win.get_PH_mainGUI()
+        self._ais_obj       = self._popt_handler.get_aprs_ais()
+        self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         ###################################
         # Vars
         self._rev_ent = False
@@ -121,7 +120,7 @@ class WXWin(tk.Toplevel):
         self._tree.column("wind_speed", anchor=tk.CENTER, stretch=tk.YES, width=80)
         self._tree.column("luminosity", anchor=tk.CENTER, stretch=tk.YES, width=50)
         self._tree.column("comment", anchor=tk.CENTER, stretch=tk.YES, width=700)
-        self._root_win.wx_window = self
+        self._root_win.toplevel_manager.wx_window = self
         self._tree_data = []
         self._wx_data = []
         self._init_tree_data()
@@ -217,5 +216,5 @@ class WXWin(tk.Toplevel):
         # self.lift()
 
     def _close(self):
-        self._root_win.wx_window = None
+        self._root_win.toplevel_manager.wx_window = None
         self.destroy()

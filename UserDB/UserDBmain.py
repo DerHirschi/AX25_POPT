@@ -1,5 +1,5 @@
 """
-TODO: Cleanup/Again/Crap
+TODO: Cleanup/Again/Crap/Bullshit/Kurva
 """
 import sys
 # import datetime
@@ -62,16 +62,21 @@ class Client(object):
     max_pac         = 0
     CText           = ''
     routes          = []
-    software_str    = ''
-    sys_pw          = ''
-    sys_pw_autologin = False
-    sys_pw_parm     = [5, 80, 'SYS']
+
     # CLI
     cli_sidestop    = 20
     Language        = -1
     bbs_newUser     = True
     # BOX
     # box_user_cfg = {}
+    # == Private !!!
+    software_str                        = ''
+    sys_pw                              = ''                # PW für Remote Station
+    sys_pw_autologin                    = False
+    sys_pw_parm                         = [5, 80, 'SYS']
+    rights: dict or str or None         = None              # Rechte Level / Custom Rechte
+    auth_password: str or None          = None              # PW für Auth auf PoPT
+    blocked                             = False             # Allow remote Access
 
 class UserDB:
     def __init__(self):
@@ -87,9 +92,15 @@ class UserDB:
             'CText',
             'routes',
             'software_str',
+            # !!!!!!!!!!!!!!!!!!!!!!!
             'sys_pw',
             'sys_pw_parm',
             'sys_pw_autologin',
+            'rights',
+            'auth_password',
+            'blocked',
+            # !!!!!!!!!!!!!!!!!!!!!!!
+
             'boxopt_sidestop',
             'cli_sidestop',
             'Language',
@@ -175,7 +186,7 @@ class UserDB:
                 db_entry.last_conn = str_to_datetime(db_entry.last_conn)
         logger.info("User-DB: Init complete")
 
-    def get_entry(self, call_str: str, add_new=True):
+    def get_entry(self, call_str: str, add_new=True, with_ssid=False):
         if not hasattr(call_str, 'upper'):
             call_str = str(call_str)
 
@@ -185,6 +196,8 @@ class UserDB:
 
         if call_str in self.db.keys():
             return self.db[call_str]
+        elif with_ssid and add_new:
+            return self._new_entry(call_str)
 
         call_tup = call_tuple_fm_call_str(call_str)
         if call_tup[0] in self.db.keys():
@@ -192,7 +205,8 @@ class UserDB:
 
         if add_new:
             # return self._new_entry(call_str)
-            return self._new_entry(call_tup[0]) # Ignore SSID
+            #return self._new_entry(call_tup[0]) # Ignore SSID
+            return self._new_entry(call_str)
 
         return None
 
@@ -230,6 +244,7 @@ class UserDB:
         else:
             if not ent.TYP:
                 ent.TYP = typ
+
     def get_typ(self, call_str: str):
         ent = self.get_entry(call_str, False)
         if not ent:
@@ -276,9 +291,9 @@ class UserDB:
 
     def update_var_fm_dbentry(self, fm_key: str, to_key: str):
         if fm_key not in self.db.keys():
-            return False
+            return
         if to_key not in self.db.keys():
-            return False
+            return
         # new_obj = Client(to_key)
         # print(self.db[to_key])
         for att in list(dir(self.db[to_key])):
@@ -452,6 +467,15 @@ class UserDB:
 
     def get_PRmail(self, call: str):
         return self.db.get(call, Client).PRmail
+
+    ##########################################
+    # Rechte
+    def rename_right_level(self, old_level_name: str, new_level_name: str):
+        for call, db_entry in self.db.items():
+            db_entry: Client
+            if isinstance(db_entry.rights, str):
+                if db_entry.rights == old_level_name:
+                    db_entry.rights = new_level_name
 
     ##########################################
     def get_database(self):

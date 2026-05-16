@@ -27,6 +27,7 @@ class SettingsMain(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         win_width = 1200
         win_height = 660
+        self._popt_handler = root_win.get_PH_mainGUI()
         self.style      = root_win.style
         self.style_name = root_win.style_name
         self.geometry(f"{win_width}x"
@@ -47,7 +48,7 @@ class SettingsMain(tk.Toplevel):
         self._lang = POPT_CFG.get_guiCFG_language()
         self.title(get_strTab(str_key='settings', lang_index=self._lang))
         self._root_win = root_win
-        self._root_win.settings_win = self
+        self._root_win.toplevel_manager.settings_win = self
         ######################################
         main_f = ttk.Frame(self)
         main_f.pack(fill=tk.BOTH, expand=True)
@@ -129,6 +130,9 @@ class SettingsMain(tk.Toplevel):
 
     ################################################
 
+    def get_root_gui(self):
+        return self._root_win
+
     def get_PH(self):
         return self._root_win.get_PH_mainGUI()
 
@@ -140,11 +144,8 @@ class SettingsMain(tk.Toplevel):
 
     ################################################
     def _save_cfg(self):
-        reinit_tr = False
-        set_tag = False
-        # self.attributes('-topmost', 1)
-        # self.attributes('-topmost', 0)
-        # self.lower()
+        reinit_tr       = False
+        set_tag         = False
         for strTab_name, tab in self._tab_list.items():
             if not (hasattr(tab, 'save_config')):
                 continue
@@ -154,10 +155,10 @@ class SettingsMain(tk.Toplevel):
                     get_strTab('setting_saved', self._lang).format(get_strTab(strTab_name, self._lang))
                 )
                 if strTab_name in ['stat_settings', 'port']:
-                    set_tag = True
+                    set_tag   = True
                     reinit_tr = True
                 if strTab_name in ['general_settings']:
-                    set_tag = True
+                    set_tag      = True
 
         if reinit_tr:   # New Station | Station deleted
             self._reinit_tabs()
@@ -184,10 +185,13 @@ class SettingsMain(tk.Toplevel):
         self._root_win.sysMsg_to_monitor(get_strTab('hin2', self._lang))
         self.destroy_win()
 
+    def get_popt_handler(self):
+        return self._popt_handler
+
     def destroy_win(self):
         for strTab_name, tab in self._tab_list.items():
             if hasattr(tab, 'destroy_win'):
                 tab.destroy_win()
 
-        self._root_win.settings_win = None
+        self._root_win.toplevel_manager.settings_win = None
         self.destroy()

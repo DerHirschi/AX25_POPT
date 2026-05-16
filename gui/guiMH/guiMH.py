@@ -5,9 +5,9 @@ import time
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, Menu, messagebox
-from ax25.ax25Statistics import MyHeard
-from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_BOX, CLI_TYP_TASK_FWD, CLI_TYP_SYSOP, CLI_TYP_NODE, \
-    CLI_TYP_DIGI, CLI_TYP_PIPE
+from ax25.ax25_util.ax25Statistics import MyHeard
+from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_DIGI, CLI_TYP_PIPE, CLI_TYP_BOX, \
+    CLI_TYP_TASK_FWD
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, format_number
@@ -21,7 +21,7 @@ class MHWin(tk.Toplevel):
         tk.Toplevel.__init__(self, master=root_win.main_win)
         self._root_win          = root_win
         self._getTabStr         = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab_16  = root_win.get_aprs_icon_tab_16()
+        self._aprs_icon_tab_16  = root_win.guiIcon.get_aprs_icon_tab_16()
         self.title("MyHeard")
         self.style = root_win.style
         self.geometry(f"1200x"
@@ -38,8 +38,8 @@ class MHWin(tk.Toplevel):
                 logger.warning(ex)
         self.lift()
         ###################################
-        self._aprs_icon_tab_24      = root_win.get_aprs_icon_tab_24()
-        self._conn_typ_icon_tab     = root_win.get_conn_typ_icon_16()
+        self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
+        self._conn_typ_icon_tab     = root_win.guiIcon.get_conn_typ_icon_16()
         ###################################
         ###################################
         # Vars
@@ -483,7 +483,7 @@ class MHWin(tk.Toplevel):
             3: self._update_conn_his,
         }
         #################################
-        self._root_win.mh_window = self
+        self._root_win.toplevel_manager.mh_window = self
         self._update_mh()
         self._update_dx_his()
         self._update_conn_his()
@@ -512,7 +512,9 @@ class MHWin(tk.Toplevel):
         self._alarm_newCall_var.set(bool(mh.parm_new_call_alarm))
         self._alarm_seenSince_var.set(str(mh.parm_lastseen_alarm))
         self._alarm_distance_var.set(str(mh.parm_distance_alarm))
-        self._tracer_duration_var.set(str(self._root_win.get_auto_tracer_duration()))
+        ais_cfg = POPT_CFG.get_CFG_aprs_ais()
+        tracer_duration = ais_cfg.get('be_auto_tracer_duration', 60)
+        self._tracer_duration_var.set(str(tracer_duration))
         i = 0
         for var in self._alarm_ports:
             if i in mh.parm_alarm_ports:
@@ -1087,6 +1089,8 @@ class MHWin(tk.Toplevel):
     """
     ##########################
 
+    def get_port_handler(self):
+        return self._root_win.get_PH_mainGUI()
 
     def get_mh(self):
         try:
@@ -1130,7 +1134,7 @@ class MHWin(tk.Toplevel):
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_win.mh_window = None
+        self._root_win.toplevel_manager.mh_window = None
         self._root_win.add_win_gc(self)
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True

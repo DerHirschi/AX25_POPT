@@ -88,11 +88,11 @@ Performance/Opt:
 ✓ KISS
   ✓ kompatibilität TNC nur teilweise
   ✓ Custom KISS/TNC Init setzbar (constant.py)
-    - Custom KISS/TNC Init in GUI setzbar
-  - MultiPortKISS (Direwolf)
+    ✓ Custom KISS/TNC Init in GUI setzbar
+  ✓ MultiPortKISS (Direwolf)
     ✓ RX/Decoding
-    - TX/Decoding
-    - Config / TX usw.
+    ✓ TX/Decoding
+    ✓ Config / TX usw.
 
 - GUI zum konfigurieren und starten/stopen von Direwolf
   - Direwolf Port in dem alle Einstellungen und die DW-Inztanz
@@ -246,6 +246,7 @@ Performance/Opt:
   - IT-Sicherheit (Syspw, Token o.Ä.)
   - Remote Config    (Von Host GUI aus)
   - Remote Steuerung (Von Host GUI aus)
+  ✓ Remote Monitor (Monitor Ausgabe erfolgt über Host GUI)
 
 - Remote-GPIO Tool für PI (Idee von Lars)
   - 1Wire Sensoren lesen
@@ -308,7 +309,7 @@ Performance/Opt:
   ✓ APRS Auto-Tracer nach DX-Alarm(MH-Liste)
     - Überarbeiten
   ✓ APRS WX Stationen (Wetterstationen) Monitoring Auswertung
-  - APRS Digi / I-Gate Funktion
+  ✓ APRS Digi / I-Gate Funktion
   ✓ APRS Baken
   ✓ APRS Map
   ✓ APRS Monitor
@@ -324,16 +325,20 @@ Performance/Opt:
 - Daten Verschlüsselung (AES/RSA)
 ✓ ordentliches Noden System bzw CLI überarbeiten
 - DX-Alarm überarbeiten
-✓ Autoscrolling überarbeiten.
+- Autoscrolling überarbeiten.
 - Optional nur als Konsolen Anwendung ohne GUI.
 - Drucker Ausgabe vom QSO
   - kompatibel mit Nadeldrucker
+- ANSI-Color support
 
 - Torrent ähnliches Filesharing via UI Frames (Siehe ?DMR/DRM?)
   Oder:
   - BBS TSTHOST?
   - 7Plus?
   - Scheduler
+
+- MQTT
+  - Homeassistant API
 
 Evtl. später mal.
 - Web-GUI

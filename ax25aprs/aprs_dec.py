@@ -1,5 +1,6 @@
 import aprslib
 from UserDB.UserDBmain import USER_DB
+from ax25aprs.aprs_constant import APRS_CQ_ADDRESSES, APRS_SW_ID_TAP
 from fnc.loc_fnc import coordinates_to_locator, locator_distance
 
 
@@ -218,10 +219,27 @@ def extract_ack(text):
 
 
 def get_last_digi_fm_path(pack: dict):
-    _path = pack.get('path', [])
-    _res = ''
-    for _call in _path:
-        if _call[-1] == '*':
-            _res = _call[:-1]
-    return _res
+    path = pack.get('path', [])
+    res = ''
+    for call in path:
+        if call[-1] == '*':
+            res = call[:-1]
+    return res
 
+def is_cq_call(aprs_call: str):
+    for cq_call in APRS_CQ_ADDRESSES:
+        if aprs_call.startswith(cq_call):
+            return True
+    return False
+
+def get_aprs_software(to_call: str):
+    if not to_call:
+        return 'Unknown'
+
+    # Prefix bestimmen (z. B. APDW19 -> APDW)
+    for length in (6, 5, 4, 3):
+        prefix = to_call[:length]
+        if prefix in APRS_SW_ID_TAP:
+            return APRS_SW_ID_TAP[prefix]
+
+    return APRS_SW_ID_TAP.get('APRS', 'Unknown')
