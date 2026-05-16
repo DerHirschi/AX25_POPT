@@ -86,20 +86,20 @@ class PRPRightsManager:
         return allowed
 
     # == CLI CMD's
-    def get_allowed_cli_commands(self, call_str: str, cli_type: str):
+    def get_allowed_cli_commands(self, call_str: str, cli_type: str, is_auth: bool):
         """Filtert CLI-Commands pro User/Level/CLI-Typ"""
         self._predefined_levels = POPT_CFG.right_level_tab
         level, custom = self._get_user_level(call_str)
         rights = custom or self._predefined_levels.get(level, self._predefined_levels['guest'])
 
         if self._prp_root is None:
-            is_logged_in = False
+            is_logged_in = is_auth
         else:
-            is_logged_in = self._prp_root.prp_auth.is_authenticated(call_str)
+            is_logged_in = self._prp_root.prp_auth.is_authenticated(call_str) or is_auth
 
-        allowed = rights.get('no_login', [])
+        allowed = list(rights.get('no_login', []))
         if is_logged_in:
-            login_rights = rights.get('with_login', [])
+            login_rights = list(rights.get('with_login', []))
             for cmd in login_rights:
                 if cmd not in allowed:
                     allowed.append(cmd)
@@ -115,7 +115,6 @@ class PRPRightsManager:
 
     # == Passwort-Management
     def get_auth_password(self, call_str: str):
-        # self.set_auth_password(call_str, 'test1234')    #FIXME-DELETE-ME !!!! TESTING
         """Holt das gespeicherte Passwort aus User-DB (gekapselt)"""
         return self._get_user_prop(call_str, 'auth_password', None)
 

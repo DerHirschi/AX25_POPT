@@ -110,11 +110,11 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - APRS
   - Weather data evaluation
   - Beacon Tracer
-  - Private Message System
+  - Private Message System / Short Message System
   - APRS Monitor
   - APRS Decoder for Monitor
   - I-Gate
-  - Digipeater
+  - Digipeater (WIDE/TRACE)
 - Dual Port (for two TNC's on same Frequency e.g. a SDR on a different Antenna)
 - MultiPort TNC via KISS
 - RX-Echo (Packet echoing to another Port/Device)
@@ -139,6 +139,8 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - Node/Digi Functions (No NetRom Routing)
 - MCast Server (Multicast Server for AXIP)
 - Remote Commands / CLI
+  - Rights Level Management
+  - SYSOP Rights-Level with SYS
 - GPIO Functions (capable switch GPIO's on PI and other GPIO-Devices) (root rights needed)
 - 1-Wirer Temperatur Sensors (Sensor data can be embedded in C-Text/I-Text/Beacon)
 - Pipe-Tool 

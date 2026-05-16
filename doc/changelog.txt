@@ -41,6 +41,8 @@ Neue Implementierungen / Funktionen:
   - CLI-CMD "AMSGS"
   - CLI-CMD "ACLEAR"
 - CLI-CMD "PATH", zeigt Pfad/Route zu CalL
+- CLI-CMD "SYS", Baycom Login um Sysop Privilegien zu erlangen
+- CLI-CMD "LOGOUT", Ausloggen (SYSOP)
 *** Fürs Erste deaktiviert (experimentell)
 - PoPT-Remote-Protokoll(PRP) zum Fernsteuern von Stationen.
   - Sicheres Login Verfahren

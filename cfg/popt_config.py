@@ -75,7 +75,7 @@ class Main_CFG:
             ##########################
             # -- PRP/CLI Rechte Global
             'glb_rights': getNew_globalRights,
-            'right_level_tab': {},    # Rechte Level
+            'right_level_tab': getNew_RightLevelTab,    # Rechte Level
         }
         """ Main CFGs """
         self._load_CFG_fm_file()        # Other Configs
@@ -773,14 +773,14 @@ class Main_CFG:
     @property
     def right_level_tab(self):
         """ Globale PRP & CLI Rechte """
-        ret = self._config.get('right_level_tab', getNew_RightLevelTab())
+        ret = self._config.get('right_level_tab', {})
         if not ret:
             ret = getNew_RightLevelTab()
             self._config['right_level_tab'] = ret
         return ret
 
     def set_right_level_tab(self, new_tab: dict):
-        self._config['right_level_tab'] = dict(new_tab)
+        self._config['right_level_tab'] = copy.deepcopy(new_tab)
 
 
 POPT_CFG = Main_CFG()

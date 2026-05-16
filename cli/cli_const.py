@@ -67,6 +67,10 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                                 'L', 'U', 'H', 'Q', # Converse,
                                 # === Path  
                                 'PATH',
+                     # ==== AUTH
+
+                     'SYS',
+                     'LOGOUT',
                      ]
 
 CLI_DEF_CMD_NODE =['QUIT',
@@ -128,6 +132,9 @@ CLI_DEF_CMD_NODE =['QUIT',
                                 'ACLEAR',
                                 # === Path
                                 'PATH',
+                                # ==== AUTH
+                                'SYS',
+                                'LOGOUT',
                    ]
 
 CLI_DEF_CMD_BOX = ['QUIT',
@@ -189,6 +196,9 @@ CLI_DEF_CMD_BOX = ['QUIT',
                    'ACLEAR',
                    # === Path
                    'PATH',
+                   # ==== AUTH
+                   'SYS',
+                   'LOGOUT',
                    ]
 
 CLI_DEF_CMD_MCAST = ['QUIT',

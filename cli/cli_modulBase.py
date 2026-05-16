@@ -22,6 +22,12 @@ class CliModulBase:
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
         # ================================
         self._stat_identifier_str = ''
+        # ====================
+        self._own_state_id = -1  # State ID for CLI State Manager
+
+    @property
+    def own_state_id(self):
+        return self._own_state_id
 
     @property
     def _parameter(self):

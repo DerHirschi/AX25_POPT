@@ -16,6 +16,7 @@ from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
 from cli.cli_commands.cli_cmd_status import CliCmdStatus
 from cli.cli_commands.cli_cmd_userDB import CliCmdUserDB
 from cli.cli_const import CLI_DEF_CMD_BASIC
+from cli.cli_main.BaycomLoginServer import BaycomLoginServer
 from cli.cli_main.cliMain_StateManager import CliStateManager
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
@@ -96,6 +97,10 @@ class DefaultCLI(object):
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # self._user_db_ent.cli_sidestop = 20
         # ============================================
+        # Rights Manager
+        self.rights_manager  = PRPRightsManager(self._port_handler)
+
+        # ============================================
         # Crone
         self._cron_state_exec = {
             0:   self._cron_s0,     # No CMDs / Do nothing
@@ -113,6 +118,7 @@ class DefaultCLI(object):
         self._aprs_chat_cmds  = CliCmdAprsChat(self)
         self._path_cmds       = CliCmdPath(self)
         #self._poker_cmds      = CliCmdPoker(self)
+        self._BaycomAuth_srv  = BaycomLoginServer(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
@@ -188,6 +194,9 @@ class DefaultCLI(object):
             '?':        (0, self._help_cmds.cmd_shelp,                        self._getTabStr_CLI('cmd_shelp'),   False),
             # Poker
             #'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
+            # === Baycom Auth
+            'SYS':      (3, self._BaycomAuth_srv.cmd_baycomSrv_login,  "Sys Login (BaycomAuth)", False),
+            'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout)", False),
 
         }
 
@@ -208,12 +217,15 @@ class DefaultCLI(object):
         self._StateManager = CliStateManager(self)
         self._StateManager.set_state_tab(state_exec)
         # ============================================
-        # Add APRS Chat State
+        # Add APRS Chat State 10
         self._StateManager.add_state(self._aprs_chat_cmds.own_state_id,
                                      self._aprs_chat_cmds.aprs_chat_state)
         # ============================================
-        # Rights Manager
-        self._rights_manager = PRPRightsManager(self._port_handler)
+        # Add BayCom Auth State 50
+        self._StateManager.add_state(self._BaycomAuth_srv.own_state_id,
+                                     self._BaycomAuth_srv.cli_state_baycom_auth_response)
+
+        # ============================================
         # ============================================
         self.init()
 
@@ -284,7 +296,7 @@ class DefaultCLI(object):
     def raw_input(self):
         return self._raw_input
 
-    def set_input(self, val):
+    def set_input(self, val: bytearray):
         self._input = val
 
     ########################################################
@@ -318,8 +330,12 @@ class DefaultCLI(object):
     ##################################
     # Rechte / CMD Update
     def get_allowed_cmds(self):
-        if hasattr(self._rights_manager, 'get_allowed_cli_commands'):
-            allowed = self._rights_manager.get_allowed_cli_commands(self._connection.to_call_str, self.cli_name)
+        if hasattr(self.rights_manager, 'get_allowed_cli_commands'):
+            allowed = self.rights_manager.get_allowed_cli_commands(
+                self._connection.to_call_str,
+                self.cli_name,
+                is_auth=self._BaycomAuth_srv.is_auth
+            )
             return [cmd for cmd in self._command_set if cmd in allowed]
 
         logger.error("CLI: PRP-Rechte Manager nicht gefunden. AttributeError")

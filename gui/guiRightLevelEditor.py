@@ -291,7 +291,7 @@ class RightLevelEditor(tk.Toplevel):
         return self._functions_tab.get(func_key, func_key)
 
     def _save_level(self, level_name: str):
-        no_login = [f for f, var in self._no_login_vars[level_name].items() if var.get()]
+        no_login   = [f for f, var in self._no_login_vars[level_name].items() if var.get()]
         with_login = [f for f, (var, _) in self._with_login_vars[level_name].items() if var.get()]
 
         self._levels[level_name] = {'no_login': no_login, 'with_login': with_login}
@@ -367,4 +367,7 @@ class RightLevelEditor(tk.Toplevel):
         self.destroy()
 
     def close(self):
+        self._save_glb_rights()
+        for level_name in self._levels.keys():
+            self._save_level(level_name)
         self.destroy_win()
