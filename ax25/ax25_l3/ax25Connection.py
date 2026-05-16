@@ -8,11 +8,10 @@ from datetime import datetime
 from ax25.ax25_l3.ax25_L3_StateTab import AX25L3_STATE_TAB, S1Frei, S2Aufbau
 from ax25.ax25_l3.ax25RTT import RTT
 from cfg.constant import TAG_QSO_PRP_STATUS_RX, TAG_QSO_PRP_STATUS_TX, CLI_TYP_PIPE, CLI_TYP_NO_CLI, CLI_TYP_TASK_FWD
-from classes.CLbuffers import ByteArrayBuffer
+from classes.CLbuffers import ByteArrayBuffer, ListBuffer
 from cli.cli_frontends.cliConv import ConverseCLI
-from cli import CLI_OPT, NoneCLI, NodeCLI
+from cli import CLI_OPT, NoneCLI
 from ax25.ax25_util.ax25UI_Pipe import AX25Pipe
-from UserDB.UserDBmain import USER_DB
 from ax25.ax25_l2.ax25dec_enc import AX25Frame
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cfg.logger_config import logger, LOG_BOOK
@@ -29,7 +28,8 @@ class AX25Conn:
         """ AX25 L3 Connection """
         """ Global Stuff """
         self.own_port           = port
-        self._port_handler      = port.port_get_PH()
+        self._popt_handler      = port.port_get_PH()
+        self._userDB            = self._popt_handler.userDB
         """ Port Config Parameter """
         self.port_id: int       = self.own_port.port_id
         self._port_cfg :dict    = POPT_CFG.get_port_CFG_fm_id(self.port_id)
@@ -91,7 +91,7 @@ class AX25Conn:
                                            not self.tx_buf_rawData.is_empty)
         # RX
         self.rx_buf_rawData    = bytearray()  # Buffer RX QSO for AutoConnTask
-        self.rx_tx_buf_guiData = []           # Buffer for GUI QSO Window ('TX', data), ('RX', data)
+        self.rx_tx_buf_guiData = ListBuffer() # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
         self.LINK_rx_buff:ByteArrayBuffer = ByteArrayBuffer()
@@ -101,7 +101,8 @@ class AX25Conn:
         self.is_digi            = False
         """ PoPT Remote Protocol (PRP) """
         # self._prp_remote = PRPremote(self._port_handler, self)
-        self._prp_remote = init_prpAX25L3(self._port_handler, self)
+        self._prp_remote        = init_prpAX25L3(self._popt_handler, self)
+
         """ Port Variablen"""
         # TODO Private / Clean Up / OPT
         self.vs  = 0   # Sendefolgenummer     / N(S) = V(R)  TX
@@ -144,7 +145,7 @@ class AX25Conn:
         self.link_holder_timer = time.time()
         self.link_holder_text: str = '\r'
         """ User DB Entry """
-        self.user_db_ent    = USER_DB.get_entry(self.to_call_str)
+        self.user_db_ent    = self._userDB.get_entry(self.to_call_str)
         self._encoding      = 'CP437'     # 'UTF-8'
         self.cli_language   = 0
         self.last_connect   = None
@@ -227,7 +228,7 @@ class AX25Conn:
         return True
 
     def _set_user_db_ent(self):
-        self.user_db_ent = USER_DB.get_entry(self.to_call_str)
+        self.user_db_ent = self._userDB.get_entry(self.to_call_str)
         if self.user_db_ent is None:
             return
         self.user_db_ent.Connects += 1
@@ -457,21 +458,22 @@ class AX25Conn:
         """ to QSO (TX-Echo)"""
         if self.ft_obj or self.pipe:
             return
-        self.rx_tx_buf_guiData.append(
+        self.rx_tx_buf_guiData.buffer_write(
             ('TX', data)
         )
+
 
     def _send_gui_QSO_rx(self, data: bytes):
         """ to QSO (RX Date to QSO)"""
         if self.ft_obj or self.pipe:
             return
-        self.rx_tx_buf_guiData.append(
+        self.rx_tx_buf_guiData.buffer_write(
             ('RX', data)
         )
 
     def _send_gui_QSO_sysMsg(self, data: str):
         """ Sys Msg to QSO with Timestamp """
-        self.rx_tx_buf_guiData.append(
+        self.rx_tx_buf_guiData.buffer_write(
             ('SYS', data)
         )
 
@@ -495,7 +497,7 @@ class AX25Conn:
 
         if no_eol:
             data = '\n' + data
-        self.rx_tx_buf_guiData.append(
+        self.rx_tx_buf_guiData.buffer_write(
             (tag, data)
         )
 
@@ -643,7 +645,7 @@ class AX25Conn:
     def bbsFwd_init(self):
         if self.bbs_connection:
             return False
-        bbs = self._port_handler.get_bbs()
+        bbs = self._popt_handler.get_bbs()
         if bbs is None:
             logger.error("PMS: bbs is None")
             return False
@@ -664,7 +666,7 @@ class AX25Conn:
             logger.error("PMS: cli.stat_identifier.e")
             logger.error(f"{self.cli.stat_identifier.typ}")
             return False
-        bbs = self._port_handler.get_bbs()
+        bbs = self._popt_handler.get_bbs()
         if bbs is None:
             logger.error("PMS: _bbs is None")
             return False
@@ -688,7 +690,7 @@ class AX25Conn:
             logger.error(f"{self.cli.stat_identifier.typ}")
             return False
         """
-        bbs = self._port_handler.get_bbs()
+        bbs = self._popt_handler.get_bbs()
         if bbs is None:
             logger.error("BBS: _bbs is None")
             return False
@@ -858,7 +860,7 @@ class AX25Conn:
     def new_link_connection(self, conn):
         if conn is None:
             return False
-        if conn.uid in self._port_handler.connection_manager.link_connections.keys():
+        if conn.uid in self._popt_handler.connection_manager.link_connections.keys():
             conn.change_l3_state(4)
             conn.zustand_exec.tx()
             return False
@@ -872,10 +874,10 @@ class AX25Conn:
             # self.ax25_out_frame.digi_call = str(conn.my_call_str)
             self.digi_call = digi_call
             print("LC 1")
-            self._port_handler.connection_manager.link_connections[str(conn.uid)] = conn, ''
+            self._popt_handler.connection_manager.link_connections[str(conn.uid)] = conn, ''
         else:
             print("LC 2")
-            self._port_handler.connection_manager.link_connections[str(conn.uid)] = conn, conn.my_call_str
+            self._popt_handler.connection_manager.link_connections[str(conn.uid)] = conn, conn.my_call_str
 
         self.LINK_Connection = conn
         self.is_link = True
@@ -889,14 +891,14 @@ class AX25Conn:
             print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
-        if self.uid in list(self._port_handler.connection_manager.link_connections.keys()):
+        if self.uid in list(self._popt_handler.connection_manager.link_connections.keys()):
             self.change_l3_state(4)
             self._l3_state_exec.tx()
             logger.error("Conn ERROR: newDIGIConn: self.uid in self._port_handler.connection_manager.link_connections")
-            logger.error(f"{self.uid} - {self._port_handler.connection_manager.link_connections.keys()}")
+            logger.error(f"{self.uid} - {self._popt_handler.connection_manager.link_connections.keys()}")
             return False
         self.digi_call = str(conn.digi_call)
-        self._port_handler.connection_manager.link_connections[str(self.uid)] = self, str(conn.digi_call)
+        self._popt_handler.connection_manager.link_connections[str(self.uid)] = self, str(conn.digi_call)
         # self._port_handler.link_connections[str(reverse_uid(self.uid))] = conn, str(conn.digi_call)
 
         self.LINK_Connection = conn
@@ -930,7 +932,7 @@ class AX25Conn:
                     self.LINK_Connection.conn_disco()
                     # self.LINK_Connection.zustand_exec.tx(None)
                 else:
-                    self._port_handler.connection_manager.del_link(self.LINK_Connection.uid)
+                    self._popt_handler.connection_manager.del_link(self.LINK_Connection.uid)
                     # print(self.l3_state_id)
                     # if self.l3_state_id not in [0, 1]:
                     # if reconnect and not self.digi_call:
@@ -967,7 +969,7 @@ class AX25Conn:
             # print(f'LINK CLEANUP link_connections K : {self._port_handler.link_connections.keys()}')
             self.LINK_Connection = None
             self.is_link = False
-        self._port_handler.connection_manager.del_link(self.uid)
+        self._popt_handler.connection_manager.del_link(self.uid)
 
     def _link_cleanup(self):
         # self.link_disco()
@@ -1012,13 +1014,13 @@ class AX25Conn:
         if self.tx_buf_ctl:
             #logger.debug(f'NO CLeanup: {self.uid}: tx_buf_ctl')
             return
-        if self.rx_tx_buf_guiData:
+        if not self.rx_tx_buf_guiData.is_empty:
             #logger.debug(f'NO CLeanup: {self.uid}: rx_tx_buf_guiData')
             return
         self._link_cleanup()
         self._bbsFwd_disc()
         self.own_port.del_connections(conn=self)
-        self._port_handler.connection_manager.end_connection(self)   # Doppelt ..
+        self._popt_handler.connection_manager.end_connection(self)   # Doppelt ..
         # TODO def is_conn_cleanup(self) -> return"
 
     def end_connection(self, reconn=True):
@@ -1153,7 +1155,7 @@ class AX25Conn:
     def handle_N2_fail(self):
         to_qso_win = f'\n*** Failed to connect to {self.to_call_str} > ' \
                      f'Port {self.own_port.port_id}\n'
-        user_db_ent = USER_DB.get_entry(self.to_call_str, add_new=False)
+        user_db_ent = self._userDB.get_entry(self.to_call_str, add_new=False)
         if user_db_ent:
             if user_db_ent.Name:
                 to_qso_win = f'*** Failed to connect to {self.to_call_str} - ' \
@@ -1346,7 +1348,7 @@ class AX25Conn:
     # New Connection Handling
     def accept_connection(self):
         self._set_user_db_ent()
-        self._port_handler.connection_manager.accept_new_connection(self)
+        self._popt_handler.connection_manager.accept_new_connection(self)
         if self.LINK_Connection:
             self.LINK_Connection.cli.change_cli_state(5)
             logger.debug(f"Conn {self.uid}: accept_digi_connection is LINK")
@@ -1378,7 +1380,7 @@ class AX25Conn:
     def insert_new_connection(self):
         """ Insert connection for handling """
         is_service = self._is_service_connection
-        self._port_handler.connection_manager.insert_new_connection_PH(new_conn=self, is_service=is_service)
+        self._popt_handler.connection_manager.insert_new_connection_PH(new_conn=self, is_service=is_service)
 
     # ======= Interconnect Lookup
     def _set_dest_call_fm_data_inp(self, raw_data: b''):
@@ -1414,7 +1416,7 @@ class AX25Conn:
             lb_msg_1 = f"CH {int(self.ch_index)} - {str(self.my_call_str)}: {str(tmp_line)}"
             LOG_BOOK.info(lb_msg)
             LOG_BOOK.info(lb_msg_1)
-            gui = self._port_handler.get_gui()
+            gui = self._popt_handler.get_gui()
 
             if hasattr(gui, 'add_LivePath_plot') and hasattr(gui, 'on_channel_status_change'):
                 # TODO

@@ -2,12 +2,12 @@
 
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from UserDB.UserDBmain import USER_DB
 from cli.cli_const import CLI_DEF_CMD_SYSOP, CLI_DEF_CMD_NODE, CLI_DEF_CMD_BOX, CLI_DEF_CMD_MCAST, CLI_DEF_CMD_CONV, \
     CLI_DEF_CMD_BASIC
 from cfg.constant import CLI_TYP_SYSOP, CLI_TYP_NODE, CLI_TYP_BOX, CLI_TYP_CONVERSE, CLI_TYP_MCAST
-from prp.prp_const import PRP_NACK, PRP_OPT_STATE_UPDATE  # Für NACK-Responses
-
+#from prp.prp_const import PRP_NACK, PRP_OPT_STATE_UPDATE  # Für NACK-Responses
+PRP_NACK                = b'F'
+PRP_OPT_STATE_UPDATE    = 26 # State Update > PRP Einstellungen/Zustände ändern
 
 class PRPRightsManager:
     """
@@ -22,10 +22,11 @@ class PRPRightsManager:
     """
 
     def __init__(self,
+                 popt_handler,
                  prp_root=None,
                  ):
         self._prp_root = prp_root
-        self._user_db  = USER_DB  # Globale Instanz – später durch Property ersetzen
+        self._user_db  = popt_handler.userDB
 
         # Vordefinierte Levels (erweiterbar)
         self._predefined_levels = POPT_CFG.right_level_tab
@@ -87,6 +88,7 @@ class PRPRightsManager:
     # == CLI CMD's
     def get_allowed_cli_commands(self, call_str: str, cli_type: str):
         """Filtert CLI-Commands pro User/Level/CLI-Typ"""
+        self._predefined_levels = POPT_CFG.right_level_tab
         level, custom = self._get_user_level(call_str)
         rights = custom or self._predefined_levels.get(level, self._predefined_levels['guest'])
 
@@ -175,3 +177,5 @@ class PRPRightsManager:
             # Oder allgemein: Sende Error-Text via CLI-ESC
             error_payload = f" # Access denied: {message}\r\n".encode('utf-8')
             self._prp_root.prp_tx_esc_cli(error_payload)
+
+

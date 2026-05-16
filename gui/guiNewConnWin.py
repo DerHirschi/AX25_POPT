@@ -373,6 +373,9 @@ class NewConnWin(tk.Toplevel):
                         return
 
                 # conn = PORT_HANDLER.get_all_ports()[self.port_index].new_connection(ax25_frame=ax_frame)
+                #msg =  f'\r*** Link Setup to {dest_call} > Port {self._port_index}\r'
+                #self._main.sysMsg_to_qso(msg, ch_id)
+
                 conn, msg = self._popt_handler.connection_manager.new_outgoing_connection(
                     dest_call=dest_call,
                     own_call=own_call,
@@ -383,7 +386,6 @@ class NewConnWin(tk.Toplevel):
                     link_conn=None,  # Linked Connection AX25Conn
                     channel=int(ch_id)  # Channel/Connection Index = Channel-ID
                 )
-                self._main.sysMsg_to_qso(msg, ch_id)
 
                 if conn:
                     if addrs_str in list(self._conn_hist.keys()):
@@ -398,6 +400,8 @@ class NewConnWin(tk.Toplevel):
                     )
                     self._main.ch_status_update()
                     self._destroy_new_conn_win()
+                else:
+                    self._main.sysMsg_to_qso(msg, ch_id)
 
     def _set_fm_conn_hist(self, event):
         ent_key  = self._call_txt_inp_var.get().upper()

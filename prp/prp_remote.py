@@ -20,7 +20,10 @@ from .prp_tx_buffer import PrpTxBuffer
 
 
 class PRPremote:
-    def __init__(self, port_handler, prp_config:dict, connection=None, transport_adapter=None):
+    def __init__(self, port_handler,
+                 prp_config:dict,
+                 connection=None,
+                 transport_adapter=None):
         # == Port Handler
         self._port_handler = port_handler
         self._get_gui      = lambda : self._port_handler.get_gui()
@@ -40,7 +43,7 @@ class PRPremote:
 
         # ===================================================================
         # == Rechte
-        self._rights = PRPRightsManager(prp_root=self)
+        self._rights         = PRPRightsManager(port_handler, prp_root=self)
 
         # ===================================================================
         # ======== PRP-Classes

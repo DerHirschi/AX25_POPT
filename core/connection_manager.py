@@ -267,9 +267,11 @@ class ConnectionManager:
                     ret_msg += f'> Port {port_id}'
                     LOG_BOOK.info(lb_msg)
                     LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: {ret_msg}')
+                    connection.send_sys_Msg_to_gui('\r' + ret_msg + '\r')
                     return connection , '\r' + ret_msg + '\r'
             LOG_BOOK.info(lb_msg)
             LOG_BOOK.info(f'CH {int(connection.ch_index)} - {str(connection.my_call_str)}: *** Link Setup to {dest_call} > Port {port_id}')
+            connection.send_sys_Msg_to_gui(f'\r*** Link Setup to {dest_call} > Port {port_id}\r')
             return connection, f'\r*** Link Setup to {dest_call} > Port {port_id}\r'
         lb_msg = f"CH {int(channel)} - {str(own_call)}: - {str(dest_call) + ' ' + '>'.join(via_calls)} - Port: {int(port_id)}"
         LOG_BOOK.info(lb_msg)

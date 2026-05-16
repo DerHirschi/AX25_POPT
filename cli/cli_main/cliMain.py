@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from UserDB.rights_manager import PRPRightsManager
 from cfg.popt_config import POPT_CFG
 from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
@@ -20,7 +21,6 @@ from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
 from fnc.str_fnc import get_time_delta, find_decoding, zeilenumbruch_lines, get_strTab, find_eol
 from fnc.ax25_fnc import validate_ax25Call
-from UserDB.UserDBmain import USER_DB
 from cfg.logger_config import logger
 from prp.prp_const import PRP_OPT_ESC_CLI
 
@@ -49,7 +49,7 @@ class DefaultCLI(object):
         self._my_call_str           = self._connection.my_call_str
         self._to_call_str           = self._connection.to_call_str
         self._to_call               = self._connection.to_call_str.split('-')[0]
-        self._user_db               = USER_DB
+        self._user_db               = self._port_handler.userDB
         self._user_db_ent           = self._connection.user_db_ent
         self._cli_lang              = self._connection.cli_language
         self._encoding              = 'UTF-8', 'ignore'
@@ -212,6 +212,9 @@ class DefaultCLI(object):
         self._StateManager.add_state(self._aprs_chat_cmds.own_state_id,
                                      self._aprs_chat_cmds.aprs_chat_state)
         # ============================================
+        # Rights Manager
+        self._rights_manager = PRPRightsManager(self._port_handler)
+        # ============================================
         self.init()
 
         if not self.can_sidestop:
@@ -315,8 +318,8 @@ class DefaultCLI(object):
     ##################################
     # Rechte / CMD Update
     def get_allowed_cmds(self):
-        if hasattr(self._prp, 'prp_rights'):
-            allowed = self._prp.prp_rights.get_allowed_cli_commands(self._connection.to_call_str, self.cli_name)
+        if hasattr(self._rights_manager, 'get_allowed_cli_commands'):
+            allowed = self._rights_manager.get_allowed_cli_commands(self._connection.to_call_str, self.cli_name)
             return [cmd for cmd in self._command_set if cmd in allowed]
 
         logger.error("CLI: PRP-Rechte Manager nicht gefunden. AttributeError")

@@ -392,6 +392,9 @@ class PoPTCore(object):
     def get_loConverse(self):
         return self._local_conv_obj
 
+    @property
+    def userDB(self):
+        return self._userDB
     ######################
     # GUI Handling
     def set_gui(self, gui=None):

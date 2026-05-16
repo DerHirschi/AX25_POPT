@@ -143,7 +143,7 @@ class QsoFrame(ttk.Frame):
         if conn.ft_obj:
             # self.ch_status_update()
             return True
-        if conn.rx_tx_buf_guiData:
+        if not conn.rx_tx_buf_guiData.is_empty:
             self._update_qso_spooler(conn)
             # self.ch_status_update()
             return True
@@ -151,8 +151,7 @@ class QsoFrame(ttk.Frame):
 
     def _update_qso_spooler(self, conn):
         ch_id   = conn.ch_index
-        gui_buf = list(conn.rx_tx_buf_guiData)
-        conn.rx_tx_buf_guiData = list(conn.rx_tx_buf_guiData[len(gui_buf):])
+        gui_buf = conn.rx_tx_buf_guiData.buffer_read_all()
         for qso_data in gui_buf:
             # Sys Msg (Link Setup, Connected to, ...)
             if qso_data[0] == 'SYS':
