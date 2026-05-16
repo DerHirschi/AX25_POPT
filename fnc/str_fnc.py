@@ -296,7 +296,7 @@ def is_byte_ascii(s: int):
 def get_weekDay_fm_dt(now_weekday):
     return ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'][now_weekday]
 
-def get_strTab(str_key: str, lang_index: int, warning=True):
+def get_strTab(str_key: str, lang_index=1, warning=True, fallback=False):
     if not str_key:
         return str_key
     if str_key not in STR_TABLE.keys():
@@ -307,11 +307,22 @@ def get_strTab(str_key: str, lang_index: int, warning=True):
         return str_key
     lang_tab = STR_TABLE.get(str_key, ())
     try:
-        return lang_tab[lang_index]
+        transl_str = lang_tab[lang_index]
     except IndexError:
         logger.error(f"get_strTab() Lang-Index: {lang_index}")
         logger.error(f"  Language not found: {lang_index}")
         return str_key
+
+    if transl_str:
+        return transl_str
+
+    # ===== Fallback if no Translation
+    if fallback:
+        logger.error(f"get_strTab() Fallback no Translation found !!")
+        logger.error(f"  Translation empty for KEY: {str_key}")
+        return str_key
+    return get_strTab(str_key, fallback=True)
+
 
 
 def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):

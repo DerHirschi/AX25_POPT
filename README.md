@@ -166,6 +166,13 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - English
 - Dutch  (Thanks to Patrick for the Dutch translation)
 - French (Thanks to ClaudeMa)
+  #### Partial translated (AI-Generated) (Fallback to English)
+  - Czech
+  - Polish
+  - Portuguese
+  - Italian
+  - Russian
+  - Ukrainian
 
 #### Keybindings:
 - ESC > New Connection

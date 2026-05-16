@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 from UserDB.UserDBmain import Client
-from cfg.constant import ENCODINGS, STATION_TYPS
+from cfg.constant import ENCODINGS, STATION_TYPS, LANG_IND
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
@@ -341,20 +341,12 @@ class UserDB(tk.Toplevel):
         x = 10
         y = 400
         ttk.Label(tab1, text=f"{self._getTabStr('language')}: ").place(x=x, y=y)
-        lang_opt = [
-            'DEUTSCH',
-            'ENGLSCH',
-            'NIEDERLÄNDISCH',
-            'FRANZÖSISCH',
-            'FINLAND',
-            'POLNISCH',
-            'PORTUGIESISCH',
-            'ITALIENISCH',
-        ]
-        self._lang_var.set('DEUTSCH')
+        lang_opt = list(LANG_IND.keys())
+        lang_key = ''
+        self._lang_var.set(lang_key)
         lang_opt = [self._lang_var.get()] + lang_opt
         lang_ent = ttk.OptionMenu(tab1, self._lang_var, *lang_opt)
-        lang_ent.configure(state='disabled')  # TODO
+        # lang_ent.configure(state='disabled')
         lang_ent.place(x=x + 80, y=y - 2)
 
         # Connection Counter
@@ -736,6 +728,14 @@ class UserDB(tk.Toplevel):
                 self._last_conn_var.set('---' if self.current_ent.last_conn is None else conv_time_DE_str(self.current_ent.last_conn))
             self._conn_count_var.set(str(self.current_ent.Connects))
 
+
+            # ==================
+            lang_keys = list(LANG_IND.keys())
+            current_lang = int(self.current_ent.Language)
+            if current_lang == -1:
+                current_lang = POPT_CFG.get_guiCFG_language()
+            self._lang_var.set(lang_keys[current_lang])
+            # ==================
             self._info_ent.delete(0.0, tk.END)
             self._info_ent.insert(tk.INSERT, self.current_ent.Info)
 
@@ -843,6 +843,7 @@ class UserDB(tk.Toplevel):
         self.current_ent.Encoding = str(self._encoding_var.get())
         self.current_ent.ZIP = str(self._zip_var.get())
         self.current_ent.Land = str(self._land_var.get())
+        self.current_ent.Language = int(LANG_IND.get(self._lang_var.get(), POPT_CFG.get_guiCFG_language()))
 
         self.current_ent.pac_len = int(self._pac_len_var.get())
         self.current_ent.max_pac = int(self._max_pac_var.get())

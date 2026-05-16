@@ -754,13 +754,15 @@ class DefaultCLI(object):
 
     def _cmd_lang(self):
         if not self._parameter:
-            return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
+            return (f'\r # {self._getTabStr_CLI("cli_no_lang_param")}'
+                    f'\r # {" ".join(list(LANG_IND.keys()))}\r\r')
         self._decode_param()
         if self._parameter[0].upper() in LANG_IND.keys():
             self._cli_lang = int(LANG_IND.get(self._parameter[0].upper(), 1))
             self._connection.set_user_db_language(self._cli_lang)
             return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
-        return f'\r # {self._getTabStr_CLI("cli_no_lang_param")}{" ".join(list(LANG_IND.keys()))}\r'
+        return (f'\r # {self._getTabStr_CLI("cli_no_lang_param")}'
+                f'\r # {" ".join(list(LANG_IND.keys()))}\r\r')
 
     def _cmd_ch(self):
         if not self._parameter:
