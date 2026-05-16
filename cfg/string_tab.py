@@ -4042,84 +4042,84 @@ STR_TABLE = {
         '# Cannot send message to own channel.',
         '# Kan geen bericht naar eigen kanaal sturen.',
         "# Impossible d'envoyer un message à sa propre chaîne.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '# Nelze poslat zprávu na vlastní kanál.',
+        '# Nie można wysłać wiadomości na własny kanał.',
+        '# Não é possível enviar mensagem para o próprio canal.',
+        '# Impossibile inviare messaggio al proprio canale.',
+        '# Невозможно отправить сообщение на собственный канал.',
+        '# Неможливо надіслати повідомлення на власний канал.'),
 
     'ch_cmd_send': (
         '# Nachricht an Kanal {} ({}) gesendet.\r',
         '# Message sent to channel {} ({}).\r',
         '# Bericht verzonden naar kanaal {} ({}).\r',
         "# Message envoyé au canal {} ({}).\r",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '# Zpráva odeslána na kanál {} ({}).\r',
+        '# Wiadomość wysłana na kanał {} ({}).\r',
+        '# Mensagem enviada para o canal {} ({}).\r',
+        '# Messaggio inviato al canale {} ({}).\r',
+        '# Сообщение отправлено в канал {} ({}).\r',
+        '# Повідомлення надіслано до каналу {} ({}).\r'),
 
     'cmd_bwstat_1': (
         'Gesamte Bandauslastung (letzte 10 Minuten, alle Ports)',
         'Total bandwidth utilization (last 10 minutes, all ports)',
         'Totaal bandbreedtegebruik (laatste 10 minuten, alle poorten)',
         'Utilisation totale de la bande passante (10 dernières minutes, tous ports)',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Celková zátěž pásma (posledních 10 minut, všechny porty)',
+        'Całkowite wykorzystanie pasma (ostatnie 10 minut, wszystkie porty)',
+        'Utilização total da largura de banda (últimos 10 minutos, todas as portas)',
+        'Utilizzo totale della banda (ultimi 10 minuti, tutte le porte)',
+        'Общая загрузка диапазона (последние 10 минут, все порты)',
+        'Загальна завантаженість діапазону (останні 10 хвилин, всі порти)'),
 
     'cmd_bwstat_2': (
         'Bandauslastung aller Ports (%) – 10-Minuten-Verlauf',
         'Band utilization of all ports (%) – 10-minute trend',
         'Bandgebruik van alle poorten (%) – 10-minutentrend',
         'Utilisation de la bande passante de tous les ports (%) – Évolution sur 10 minutes',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Vytížení všech portů (%) – 10minutový průběh',
+        'Wykorzystanie pasma wszystkich portów (%) – trend 10-minutowy',
+        'Utilização de banda de todas as portas (%) – Tendência 10 minutos',
+        'Utilizzo banda di tutte le porte (%) – Trend 10 minuti',
+        'Загрузка всех портов (%) – 10-минутный тренд',
+        'Завантаження всіх портів (%) – 10-хвилинний тренд'),
 
     'cmd_bwstat_3': (
         'Bandauslastung Port {} (%) – 10-Minuten-Verlauf',
         'Band utilization port {} (%) – 10-minute trend',
         'Bandgebruikpoort {} (%) – 10-minutentrend',
         'Utilisation de la bande passante (%) – Tendance sur 10 minutes',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Vytížení portu {} (%) – 10minutový průběh',
+        'Wykorzystanie pasma port {} (%) – trend 10-minutowy',
+        'Utilização da banda porta {} (%) – Tendência 10 minutos',
+        'Utilizzo banda porta {} (%) – Trend 10 minuti',
+        'Загрузка порта {} (%) – 10-минутный тренд',
+        'Завантаження порту {} (%) – 10-хвилинний тренд'),
 
     'last_30_days': (
         'letzte 30 Tage',
         'last 30 days',
         'laatste 30 dagen',
         '30 derniers jours',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'posledních 30 dní',
+        'ostatnie 30 dni',
+        'últimos 30 dias',
+        'ultimi 30 giorni',
+        'последние 30 дней',
+        'останні 30 днів'),
 
     'cmd_chist_tab': (
         'Datum      Zeit     Dauer   Call      Port  Locator / Distanz\r',
         'Date       Time     Dur.    Call      Port  Locator / Distance\r',
         'Datum      Tijd     Duur    Call      Port  Locator / Afstand\r',
         'Date       Temps    Durée   Call      Port  Locator / Distance\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Datum      Čas      Doba    Call      Port  Lokátor / Vzdálenost\r',
+        'Data       Czas     Czas    Call      Port  Locator / Odległość\r',
+        'Data       Hora     Duração Call      Porta Locator / Distância\r',
+        'Data       Ora      Durata  Call      Porta Locator / Distanza\r',
+        'Дата       Время    Длит.   Call      Порт  Локатор / Расстояние\r',
+        'Дата       Час      Тривал. Call      Порт  Локатор / Відстань\r'),
 
     #####################################################
     # MCast
@@ -4129,65 +4129,62 @@ STR_TABLE = {
         'Change MCast channel',
         'MCast kanaal wijzigen',
         'Changer canal MCAST',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'MCast změna kanálu',
+        'MCast zmień kanał',
+        'Mudar canal MCast',
+        'Cambia canale MCast',
+        'Сменить канал MCast',
+        'Змінити канал MCast'),
 
     'cmd_help_mcast_ch_info': (
         'MCast Kanal Info',
         'MCast channel info',
         'MCast kanaalinformatie',
         'Info canal MCAST',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'MCast info kanálu',
+        'MCast info kanału',
+        'Info canal MCast',
+        'Info canale MCast',
+        'Инфо о канале MCast',
+        'Інфо про канал MCast'),
 
     'cmd_help_mcast_channels': (
         'MCast Kanal Übersicht',
         'MCast channel overview',
         'MCast kanaaloverzicht',
         'Aperçu canal MCAST',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),  #
+        'MCast přehled kanálů',
+        'MCast przegląd kanałów',
+        'Visão geral canais MCast',
+        'Panoramica canali MCast',
+        'Обзор каналов MCast',
+        'Огляд каналів MCast'),
 
     'cmd_help_mcast_set_axip': (
         'Eigene AXIP Adresse eintragen / anzeigen lassen',
         'Enter/display your own AXIP address',
         'Voer/toon uw eigen AXIP-adres in',
         'Entrez/afficher votre adresse AXIP',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zadat/zobrazit vlastní AXIP adresu',
+        'Wpisz/pokaż swój adres AXIP',
+        'Inserir/mostrar o teu endereço AXIP',
+        'Inserisci/visualizza il tuo indirizzo AXIP',
+        'Ввести/показать свой AXIP адрес',
+        'Ввести/показати свій AXIP адрес'),
 
     'mcast_new_user_beacon': (
-        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '-= Willkommen auf dem AXIP-MCast Server. Registriere dich auf {} =-',
         '-= Welcome to the AXIP-MCast Server. Please connect {} to register =-',
         '-= Welcome to the AXIP-MCast Server. Please connect {} to register =-',
         '-= Bienvenue sur le serveur AXIP-MCast. Veuillez vous connecter {} pour vous enregistrer =-',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '-= Vítejte na AXIP-MCast serveru. Registrujte se na {} =-',
+        '-= Witaj na serwerze AXIP-MCast. Połącz się z {} aby się zarejestrować =-',
+        '-= Bem-vindo ao servidor AXIP-MCast. Conecte-se a {} para se registar =-',
+        '-= Benvenuto sul server AXIP-MCast. Connettiti a {} per registrarti =-',
+        '-= Добро пожаловать на AXIP-MCast сервер. Подключись к {} для регистрации =-',
+        '-= Ласкаво просимо на AXIP-MCast сервер. Підключись до {} для реєстрації =-'),
 
     'mcast_new_user_reg_beacon': (
-        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars) per Line
-        # Max 256
         ('-= Du wurdest erfolgreich auf dem MCast-Server registriert =-\r'
          '-= Du befindest dich auf Kanal {} ({}) =-'),
         ('-= You have been successfully registered on the MCast server =-\r'
@@ -4196,43 +4193,42 @@ STR_TABLE = {
          '-= Je bevindt je op kanaal {} ({}) =-'),
         ('-= Vous avez été enregistré avec succès sur le serveur MCast =-\r'
          '-= Vous êtes sur le canal {} ({}) =-'),
-        ('\r'
-         ''),
-        ('\r'
-         ''),
-        ('\r'
-         ''),
-        ('\r'
-         ''),
-        ('\r'
-         ''),
-        ''),
+        ('-= Byl jste úspěšně registrován na MCast serveru =-\r'
+         '-= Nacházíte se na kanálu {} ({}) =-'),
+        ('-= Zostałeś pomyślnie zarejestrowany na serwerze MCast =-\r'
+         '-= Jesteś na kanale {} ({}) =-'),
+        ('-= Foi registado com sucesso no servidor MCast =-\r'
+         '-= Encontra-se no canal {} ({}) =-'),
+        ('-= Sei stato registrato con successo sul server MCast =-\r'
+         '-= Sei sul canale {} ({}) =-'),
+        ('-= Вы успешно зарегистрированы на MCast сервере =-\r'
+         '-= Вы на канале {} ({}) =-'),
+        ('-= Ви успішно зареєстровані на MCast сервері =-\r'
+         '-= Ви на каналі {} ({}) =-')),
 
     'mcast_user_enters_channel_beacon': (
-        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '-= {} hat den Kanal betreten =-',
         '-= {} has entered the channel =-',
         '-= {} is het kanaal binnengekomen =-',
         '-= {} est arrivé sur le canal =-',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '-= {} vstoupil na kanál =-',
+        '-= {} wszedł na kanał =-',
+        '-= {} entrou no canal =-',
+        '-= {} è entrato nel canale =-',
+        '-= {} вошёл в канал =-',
+        '-= {} увійшов у канал =-'),
 
     'mcast_user_left_channel_beacon': (
-        # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '-= {} hat den Kanal verlassen =-',
         '-= {} has left the channel =-',
         '-= {} het kanaal verlaten =-',
         '-= {} a quité le canal',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '-= {} opustil kanál =-',
+        '-= {} opuścił kanał =-',
+        '-= {} saiu do canal =-',
+        '-= {} ha lasciato il canale =-',
+        '-= {} покинул канал =-',
+        '-= {} залишив канал =-'),
 
     #####################################################
     # BOX CLI
@@ -4242,12 +4238,12 @@ STR_TABLE = {
         '\r # No mails available: {}',
         '\r # Geen mails beschikbaar: {}',
         '\r # Aucun mail disponible: {}',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Žádné maily k dispozici: {}',
+        '\r # Brak maili: {}',
+        '\r # Nenhuma mensagem disponível: {}',
+        '\r # Nessuna mail disponibile: {}',
+        '\r # Нет писем: {}',
+        '\r # Немає листів: {}'),
 
     'hint_no_mail': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4255,12 +4251,12 @@ STR_TABLE = {
         '\r # No mails available',
         '\r # Geen mails beschikbaar',
         '\r # Aucun mail disponible',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Žádné maily',
+        '\r # Brak maili',
+        '\r # Nenhuma mensagem',
+        '\r # Nessuna mail',
+        '\r # Нет писем',
+        '\r # Немає листів'),
 
     'cmd_fwdinfo': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4268,12 +4264,12 @@ STR_TABLE = {
         'Shows forward statistics',
         'Toont voorwaartse statistieken',
         'Affiche les statistiques avancées',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zobrazí Forward statistiky',
+        'Pokazuje statystyki Forward',
+        'Mostra estatísticas de Forward',
+        'Mostra statistiche Forward',
+        'Показывает статистику Forward',
+        'Показує статистику Forward'),
 
     'cmd_r': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4281,12 +4277,12 @@ STR_TABLE = {
         '<MSG#>: Reads the message with the corresponding number.',
         '<MSG#>: Leest het bericht met het bijbehorende nummer.',
         '<MSG#>: lecture du message correspondant au numéro de message.',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '<MSG#>: Přečte zprávu s odpovídajícím číslem.',
+        '<MSG#>: Odczytuje wiadomość o podanym numerze.',
+        '<MSG#>: Lê a mensagem com o número correspondente.',
+        '<MSG#>: Legge il messaggio con il numero corrispondente.',
+        '<MSG#>: Читает сообщение с указанным номером.',
+        '<MSG#>: Читає повідомлення з вказаним номером.'),
 
     'cmd_sp': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4294,12 +4290,12 @@ STR_TABLE = {
         'SP <Call> @ <BBS>: Sends a personal message to call sign',
         'SP <Call> @ <BBS>: Stuurt een persoonlijk bericht naar roepnamen',
         'SP <Call> @ <BBS>: Envoie un message personnel à l\'indicatid',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'SP <Call> @ <BBS>: Pošle osobní zprávu volací značce',
+        'SP <Call> @ <BBS>: Wysyła wiadomość osobistą do znaku',
+        'SP <Call> @ <BBS>: Envia mensagem pessoal para indicativo',
+        'SP <Call> @ <BBS>: Invia messaggio personale a nominativo',
+        'SP <Call> @ <BBS>: Отправляет личное сообщение callsign',
+        'SP <Call> @ <BBS>: Надсилає особисте повідомлення callsign'),
 
     'cmd_sb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4311,12 +4307,18 @@ STR_TABLE = {
          '              voor meerdere dozen in een regio.'),
         ('SB <Catégorie> @ <Distribution>: Envoie un bulletin a la categorie \r'
          '              pour plusieurs boites dans une région.'),
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        ('SB <Rubrika> @ <Distribuce>: Pošle bulletin do rubriky \r'
+         '              pro více boxů v regionu.'),
+        ('SB <Rubryka> @ <Dystrybucja>: Wysyła biuletyn do rubryki \r'
+         '              dla wielu skrzynek w regionie.'),
+        ('SB <Categoria> @ <Distribuição>: Envia bulletin para categoria \r'
+         '              para várias caixas na região.'),
+        ('SB <Categoria> @ <Distribuzione>: Invia bulletin in categoria \r'
+         '              per multiple box nella regione.'),
+        ('SB <Рубрика> @ <Рассылка>: Отправляет бюллетень в рубрику \r'
+         '              для нескольких боксов в регионе.'),
+        ('SB <Рубрика> @ <Розсилка>: Надсилає бюлетень в рубрику \r'
+         '              для кількох боксів у регіоні.')),
 
     'cmd_sr': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4328,12 +4330,18 @@ STR_TABLE = {
          '              van <Msg#> = berichtnummer (Send Reply).'),
         ("SR <Msg#>: renvoie une réponse à l'expéditeur\r"
          "              de <Msg#> = numéro de message (Send Reply)."),
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        ('SR <Msg#>: Pošle odpověď zpět odesílateli\r'
+         '              <Msg#> = číslo zprávy (Send Reply).'),
+        ('SR <Msg#>: Wysyła odpowiedź do nadawcy\r'
+         '              <Msg#> = numer wiadomości (Send Reply).'),
+        ('SR <Msg#>: Envia resposta de volta ao remetente\r'
+         '              <Msg#> = número da mensagem (Send Reply).'),
+        ('SR <Msg#>: Invia risposta al mittente\r'
+         '              <Msg#> = numero messaggio (Send Reply).'),
+        ('SR <Msg#>: Отправляет ответ отправителю\r'
+         '              <Msg#> = номер сообщения (Send Reply).'),
+        ('SR <Msg#>: Надсилає відповідь відправнику\r'
+         '              <Msg#> = номер повідомлення (Send Reply).')),
 
     'cmd_ln': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4341,12 +4349,12 @@ STR_TABLE = {
         'Lists all of your own new messages.',
         'Geeft al uw eigen nieuwe berichten weer.',
         'Liste tous vos nouveaux messages',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zobrazí všechny vaše nové zprávy.',
+        'Listuje wszystkie twoje nowe wiadomości.',
+        'Lista todas as suas novas mensagens.',
+        'Elenca tutti i tuoi nuovi messaggi.',
+        'Показывает все ваши новые сообщения.',
+        'Показує всі ваші нові повідомлення.'),
 
     'cmd_lm': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4354,12 +4362,12 @@ STR_TABLE = {
         'Lists all of your own messages.',
         'Geeft al uw eigen berichten weer.',
         'Liste tous vos messages',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zobrazí všechny vaše zprávy.',
+        'Listuje wszystkie twoje wiadomości.',
+        'Lista todas as suas mensagens.',
+        'Elenca tutti i tuoi messaggi.',
+        'Показывает все ваши сообщения.',
+        'Показує всі ваші повідомлення.'),
 
     'cmd_ll': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4367,12 +4375,12 @@ STR_TABLE = {
         '<Number>: Lists the latest news in the specified number.',
         '<nummer>: Geeft de laatste berichten in het opgegeven nummer weer.',
         '<number>: Répertorie les derniers messages dans le numéro spécifié.',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),  #
+        '<Počet>: Zobrazí posledních N zpráv.',
+        '<Liczba>: Wyświetla najnowsze wiadomości w podanej liczbie.',
+        '<Número>: Lista as mensagens mais recentes na quantidade indicada.',
+        '<Numero>: Elenca gli ultimi messaggi nel numero specificato.',
+        '<Кол-во>: Показывает последние N сообщений.',
+        '<Кількість>: Показує останні N повідомлень.'),
 
     'cmd_l_from': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4380,12 +4388,12 @@ STR_TABLE = {
         '<CALL>: Lists bulletins FROM a callsign.',
         '<CALL>: Geeft een lijst met bulletins VAN een roepnaam.',
         "<CALL>: Répertorie les bulletins À PARTIR d'un indicatif d'appel.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),  #
+        '<CALL>: Zobrazí bulletiny OD volací značky.',
+        '<CALL>: Listuje biuletyny OD znaku.',
+        '<CALL>: Lista bulletins DE um indicativo.',
+        '<CALL>: Elenca bulletin DA un nominativo.',
+        '<CALL>: Показывает бюллетени ОТ callsign.',
+        '<CALL>: Показує бюлетені ВІД callsign.'),
 
     'cmd_l_to': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4393,12 +4401,12 @@ STR_TABLE = {
         '<CALL/RUBRIK>: Lists messages TO a call sign or heading.',
         '<CALL/RUBRIK>: Geeft een lijst weer van berichten NAAR een roepnaam of kop.',
         "<CALL/RUBRIK>: répertorie les messages VERS un indicatif d'appel ou un titre.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),  #
+        '<CALL/RUBRIK>: Zobrazí zprávy PRO značku nebo rubriku.',
+        '<CALL/RUBRIK>: Listuje wiadomości DO znaku lub rubryki.',
+        '<CALL/RUBRIK>: Lista mensagens PARA indicativo ou rubrica.',
+        '<CALL/RUBRIK>: Elenca messaggi PER nominativo o categoria.',
+        '<CALL/RUBRIK>: Показывает сообщения ДЛЯ callsign или рубрики.',
+        '<CALL/RUBRIK>: Показує повідомлення ДЛЯ callsign або рубрики.'),
 
     'cmd_l_at': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4406,12 +4414,12 @@ STR_TABLE = {
         '<CALL>: Lists bulletins VIA distribution.',
         '<CALL>: Geeft bulletins weer VIA distributielijst.',
         "<CALL>: Répertorie les bulletins VIA de distribution.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),  #
+        '<CALL>: Zobrazí bulletiny VIA distribuce.',
+        '<CALL>: Listuje biuletyny VIA dystrybucja.',
+        '<CALL>: Lista bulletins VIA distribuidor.',
+        '<CALL>: Elenca bulletin VIA distribuzione.',
+        '<CALL>: Показывает бюллетени ЧЕРЕЗ рассылку.',
+        '<CALL>: Показує бюлетені ЧЕРЕЗ розсилку.'),
 
     'cmd_lb': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4419,25 +4427,25 @@ STR_TABLE = {
         'Lists all bulletin messages.',
         'Geeft een overzicht van alle bulletinberichten.',
         'Liste tous les messages bulletins',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zobrazí všechny bulletin zprávy.',
+        'Listuje wszystkie wiadomości bulletin.',
+        'Lista todas as mensagens bulletin.',
+        'Elenca tutti i messaggi bulletin.',
+        'Показывает все бюллетени.',
+        'Показує всі бюлетені.'),
 
     'cmd_km': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         'Loescht alle pers. Nachrichten, die man bereits gelesen hat.',
         'Deletes all personal messages that you have already read.',
         'Verwijdert alle persoonlijke berichten die u al hebt gelezen.',
-        'Supprime tous les messages personnels que vous avez déjà lus »,',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Supprime tous les messages personnels que vous avez déjà lus »',
+        'Smaže všechny osobní zprávy, které jste již přečetl.',
+        'Usuwa wszystkie przeczytane wiadomości osobiste.',
+        'Elimina todas as mensagens pessoais já lidas.',
+        'Elimina tutti i messaggi personali già letti.',
+        'Удаляет все прочитанные личные сообщения.',
+        'Видаляє всі прочитані особисті повідомлення.'),
 
     'cmd_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4445,12 +4453,12 @@ STR_TABLE = {
         '<MSG#>: Deletes the message with the corresponding number.',
         '<MSG#>: Verwijdert het bericht met het bijbehorende nummer.',
         '<MSG#>: Supprime le message portant ce numéro',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '<MSG#>: Smaže zprávu s daným číslem.',
+        '<MSG#>: Usuwa wiadomość o podanym numerze.',
+        '<MSG#>: Elimina a mensagem com o número correspondente.',
+        '<MSG#>: Elimina il messaggio con il numero corrispondente.',
+        '<MSG#>: Удаляет сообщение с указанным номером.',
+        '<MSG#>: Видаляє повідомлення з вказаним номером.'),
 
     'cmd_mr': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4458,12 +4466,12 @@ STR_TABLE = {
         'Marks all personal messages as read.',
         'Markeert alle persoonlijke berichten als gelezen.',
         'Marque tous les messages personnels comme lus.',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Označí všechny osobní zprávy jako přečtené.',
+        'Oznacza wszystkie wiadomości osobiste jako przeczytane.',
+        'Marca todas as mensagens pessoais como lidas.',
+        'Marca tutti i messaggi personali come letti.',
+        'Отмечает все личные сообщения как прочитанные.',
+        'Позначає всі особисті повідомлення як прочитані.'),
 
     'box_cmd_mr_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4471,12 +4479,12 @@ STR_TABLE = {
         '\r # {} message(s) were marked as read.\r',
         '\r # {} bericht(en) zijn gemarkeerd als gelezen.\r',
         '\r # {} message(s) ont été marqués comme lus.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # {} zpráv(a/y) označeno jako přečtené.\r',
+        '\r # {} wiadomość(i) oznaczono jako przeczytane.\r',
+        '\r # {} mensagem(ns) marcada(s) como lida(s).\r',
+        '\r # {} messaggio(i) marcati come letti.\r',
+        '\r # {} сообщение(й) отмечено как прочитанное.\r',
+        '\r # {} повідомлення позначено як прочитане.\r'),
 
     'cmd_op': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4484,12 +4492,12 @@ STR_TABLE = {
         'Number of lines per page. Just OP = off.',
         'Aantal regels per pagina. OP alleen = uit',
         'Nombre de lignes par page. Juste OP = off.',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Počet řádků na stránku. OP = vypnuto.',
+        'Liczba linii na stronę. OP = wyłączone.',
+        'Número de linhas por página. OP = desligado.',
+        'Numero di righe per pagina. OP = off.',
+        'Количество строк на страницу. OP = выкл.',
+        'Кількість рядків на сторінку. OP = вимк.'),
 
     'op_prompt_0': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4497,12 +4505,12 @@ STR_TABLE = {
         '\r # (A)=Cancel, (O)=continue without stopping, (Return)=continue -->',
         '\r # (A)=Annuleren, (O)=doorgaan zonder te stoppen, (Terug)=doorgaan -->',
         '\r # (A)=Annuler, (O)=continuer sans arrêt, (Return)=continuer -->',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # (A)=Zrušit, (O)=pokračovat bez stopu, (Return)=dále -->',
+        '\r # (A)=Anuluj, (O)=kontynuuj bez zatrzymania, (Return)=dalej -->',
+        '\r # (A)=Cancelar, (O)=continuar sem parar, (Return)=continuar -->',
+        '\r # (A)=Annulla, (O)=continua senza fermarti, (Return)=avanti -->',
+        '\r # (A)=Отмена, (O)=продолжить без остановки, (Return)=далее -->',
+        '\r # (A)=Скасувати, (O)=продовжити без зупинки, (Return)=далі -->'),
 
     'op_prompt_1': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4510,12 +4518,12 @@ STR_TABLE = {
         '\r # (A)=Cancel, (R)=Read, (Return)=continue -->',
         '\r # (A)=Annuleren, (R)=Lezen, (Terug)=doorgaan -->',
         '\r # (A)=Annuler, (R)=Lire, (Return)=continuer -->',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # (A)=Zrušit, (R)=Číst, (Return)=dále -->',
+        '\r # (A)=Anuluj, (R)=Czytaj, (Return)=dalej -->',
+        '\r # (A)=Cancelar, (R)=Ler, (Return)=continuar -->',
+        '\r # (A)=Annulla, (R)=Leggi, (Return)=avanti -->',
+        '\r # (A)=Отмена, (R)=Читать, (Return)=далее -->',
+        '\r # (A)=Скасувати, (R)=Читати, (Return)=далі -->'),
 
     'aprs_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4523,12 +4531,12 @@ STR_TABLE = {
         '\r # APRS: You have {} new message(s). Reading with AMS\r',
         '\r # APRS: Je hebt {} nieuwe bericht(en). Lezen met AMS\r',
         '\r # APRS: Vous avez {} nouveau(x) message(s). Lire avec AMS\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # APRS: Máte {} novou zprávu(y). Čtěte pomocí AMS\r',
+        '\r # APRS: Masz {} nową wiadomość(i). Czytaj za pomocą AMS\r',
+        '\r # APRS: Tem {} nova(s) mensagem(ns). Ler com AMS\r',
+        '\r # APRS: Hai {} nuovo(i) messaggio(i). Leggi con AMS\r',
+        '\r # APRS: У вас {} новое(ых) сообщение(й). Читать с AMS\r',
+        '\r # APRS: У вас {} нове(их) повідомлення(ь). Читати через AMS\r'),
 
     'box_new_mail_ctext': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4536,25 +4544,25 @@ STR_TABLE = {
         '\r # BOX: You have {} new mails.\r',
         '\r # BOX: Je hebt {} nieuwe mails.\r',
         '\r # BOX: Vous avez {} nouveaux mails.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # BOX: Máte {} novou mail(y).\r',
+        '\r # BOX: Masz {} nową wiadomość(i).\r',
+        '\r # BOX: Tem {} novo(s) mail(s).\r',
+        '\r # BOX: Hai {} nuova(e) mail.\r',
+        '\r # BOX: У вас {} новое(ых) письмо(ем).\r',
+        '\r # BOX: У вас {} нове(их) лист(ів).\r'),
 
     'box_no_hbbs_address': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
         '\r # Du hast noch keine Heimat-BBS eingetragen. PR <CALL.Verteiler>\r',
-        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>>\r",
+        "\r # You haven't entered a home BBS yet. PR <CALL.Distribution>\r",
         '\r # U hebt nog geen thuis-BBS ingevoerd. PR <CALL.Distributie>\r',
         "\r # Vous n'avez pas encore entré de BBS personnel. PR <CALL.Distribution>\r",
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Nemáte ještě nastavenou domovskou BBS. PR <CALL.Distribuce>\r',
+        '\r # Nie masz jeszcze wpisanej BBS domowej. PR <CALL.Dystrybucja>\r',
+        '\r # Ainda não tens BBS de origem definida. PR <CALL.Distribuição>\r',
+        '\r # Non hai ancora impostato una Home BBS. PR <CALL.Distribuzione>\r',
+        '\r # У вас ещё не указана домашняя BBS. PR <CALL.Рассylка>\r',
+        '\r # У вас ще немає домашньої BBS. PR <CALL.Розсилка>\r'),
 
     'box_cmd_op2': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4562,12 +4570,12 @@ STR_TABLE = {
         '\r # OP : Error, Invalid Parameter.\r',
         '\r # OP: Fout, ongeldige parameter.\r',
         '\r # OP : Erreur, Paramètre Invalide.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # OP: Chyba, neplatný parametr.\r',
+        '\r # OP: Błąd, nieprawidłowy parametr.\r',
+        '\r # OP: Erro, parâmetro inválido.\r',
+        '\r # OP: Errore, parametro non valido.\r',
+        '\r # OP: Ошибка, неверный параметр.\r',
+        '\r # OP: Помилка, недійсний параметр.\r'),
 
     'box_cmd_op1': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4575,12 +4583,12 @@ STR_TABLE = {
         '\r # OP : No side stop.\r',
         '\r # OP: Geen zijstop.\r',
         '\r # OP :Pas de pagination.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # OP: Bez zastavování stránky.\r',
+        '\r # OP: Bez stopu stron.\r',
+        '\r # OP: Sem paragem de página.\r',
+        '\r # OP: Nessuna interruzione pagina.\r',
+        '\r # OP: Без остановки страниц.\r',
+        '\r # OP: Без зупинки сторінок.\r'),
 
     'box_cmd_op3': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4588,12 +4596,12 @@ STR_TABLE = {
         '\r # OP : Page stop set to {} lines.\r',
         '\r # OP: Paginastop ingesteld op {} regels.\r',
         '\r # OP : Pagination de {} lignes.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # OP: Zastavení stránky nastaveno na {} řádků.\r',
+        '\r # OP: Stop stron ustawiony na {} linii.\r',
+        '\r # OP: Paragem de página definida para {} linhas.\r',
+        '\r # OP: Interruzione pagina impostata a {} righe.\r',
+        '\r # OP: Остановка страниц установлена на {} строк.\r',
+        '\r # OP: Зупинка сторінок встановлена на {} рядків.\r'),
 
     'box_lm_header': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4601,12 +4609,12 @@ STR_TABLE = {
         'Msg#  TSLD Byte   To    @ BBS   From   Dat./Time Head\r',
         'Msg#  TSLD Byte   Naar  @ BBS   Van    Dat./Tijd Titel\r',
         'Msg#  TSLD Byte   Pour  @ BBS   De     Dat./Heure Titre\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Msg#  TSLD Byte   Komu  @ BBS   Od     Dat./Čas  Nadpis\r',
+        'Msg#  TSLD Byte   Do    @ BBS   Od     Data/Czas Tyt.\r',
+        'Msg#  TSLD Byte   Para  @ BBS   De     Data/Hora Título\r',
+        'Msg#  TSLD Byte   A     @ BBS   Da     Data/Ora  Titolo\r',
+        'Msg#  TSLD Байт   Кому  @ BBS   От     Дата/Время Тема\r',
+        'Msg#  TSLD Байт   Кому  @ BBS   Від    Дата/Час  Тема\r'),
 
     'box_r_no_msg_found': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4614,12 +4622,12 @@ STR_TABLE = {
         '\r\r # Message {} not found! \r\r',
         '\r\r # Bericht {} niet gevonden!\r\r',
         '\r\r # Message {} non trouvé! \r\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r\r # Zpráva {} nenalezena!\r\r',
+        '\r\r # Wiadomość {} nie znaleziona!\r\r',
+        '\r\r # Mensagem {} não encontrada!\r\r',
+        '\r\r # Messaggio {} non trovato!\r\r',
+        '\r\r # Сообщение {} не найдено!\r\r',
+        '\r\r # Повідомлення {} не знайдено!\r\r'),
 
     'box_parameter_error': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4627,12 +4635,12 @@ STR_TABLE = {
         '\r # Error, Invalid Parameter.\r',
         '\r # Fout, ongeldige parameter.\r',
         '\r # Erreur, Paramètre invalide.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Chyba, neplatný parametr.\r',
+        '\r # Błąd, nieprawidłowy parametr.\r',
+        '\r # Erro, parâmetro inválido.\r',
+        '\r # Errore, parametro non valido.\r',
+        '\r # Ошибка, неверный параметр.\r',
+        '\r # Помилка, недійсний параметр.\r'),
 
     'box_msg_error': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4640,12 +4648,12 @@ STR_TABLE = {
         '\r # Internal error, cannot read message.\r',
         '\r # Interne fout, kan bericht niet lezen.\r',
         '\r # Erreur interne, impossible lire message.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Interní chyba, nelze přečíst zprávu.\r',
+        '\r # Błąd wewnętrzny, nie można odczytać wiadomości.\r',
+        '\r # Erro interno, não é possível ler a mensagem.\r',
+        '\r # Errore interno, impossibile leggere il messaggio.\r',
+        '\r # Внутренняя ошибка, невозможно прочитать сообщение.\r',
+        '\r # Внутрішня помилка, неможливо прочитати повідомлення.\r'),
 
     'box_msg_foter': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4653,12 +4661,12 @@ STR_TABLE = {
         '\r\r--- End of message #{} to {} from {} BID:{} ---\r\r',
         '\r\r--- Einde van bericht #{} tot {} van {} BID:{} ---\r\r',
         '\r\r--- Fin des messages #{} por {} de {} BID:{} ---\r\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r\r--- Konec zprávy #{} pro {} od {} BID:{} ---\r\r',
+        '\r\r--- Koniec wiadomości #{} do {} od {} BID:{} ---\r\r',
+        '\r\r--- Fim da mensagem #{} para {} de {} BID:{} ---\r\r',
+        '\r\r--- Fine del messaggio #{} a {} da {} BID:{} ---\r\r',
+        '\r\r--- Конец сообщения #{} для {} от {} BID:{} ---\r\r',
+        '\r\r--- Кінець повідомлення #{} для {} від {} BID:{} ---\r\r'),
 
     'box_msg_del': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4666,12 +4674,12 @@ STR_TABLE = {
         '\r # {} messages have been deleted.\r',
         '\r # {} berichten zijn verwijderd.\r',
         '\r # {} messages ont été supprimés.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Bylo smazáno {} zpráv(y).\r',
+        '\r # Usunięto {} wiadomość(i).\r',
+        '\r # Foram eliminadas {} mensagem(ns).\r',
+        '\r # Sono stati eliminati {} messaggio(i).\r',
+        '\r # Удалено {} сообщение(й).\r',
+        '\r # Видалено {} повідомлення(ь).\r'),
 
     'box_msg_del_k': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4679,12 +4687,12 @@ STR_TABLE = {
         '\r # Message(s) {} have been deleted.\r',
         '\r # Berichte(n) {} zijn verwijderd.\r',
         '\r # {} Message(s) supprimés.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Zpráva(y) {} byla(y) smazána(y).\r',
+        '\r # Wiadomość(i) {} została(y) usunięta(y).\r',
+        '\r # Mensagem(ns) {} eliminada(s).\r',
+        '\r # Messaggio(i) {} eliminato(i).\r',
+        '\r # Сообщение(я) {} удалено(ы).\r',
+        '\r # Повідомлення {} видалено.\r'),
 
     'box_error_no_address': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4692,12 +4700,12 @@ STR_TABLE = {
         '\r # No recipient specified. SP XX0XX or SP XX0XX@XBBS0.\r',
         '\r # Geen ontvanger opgegeven. SP XX0XX of SP XX0XX@XBBS0.\r',
         '\r # Pas de recipient specifié. SP XX0XX or SP XX0XX@XBBS0.\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Není zadán příjemce. SP XX0XX nebo SP XX0XX@XBBS0\r',
+        '\r # Nie podano odbiorcy. SP XX0XX lub SP XX0XX@XBBS0\r',
+        '\r # Nenhum destinatário indicado. SP XX0XX ou SP XX0XX@XBBS0\r',
+        '\r # Nessun destinatario specificato. SP XX0XX o SP XX0XX@XBBS0\r',
+        '\r # Не указан получатель. SP XX0XX или SP XX0XX@XBBS0\r',
+        '\r # Не вказано отримувача. SP XX0XX або SP XX0XX@XBBS0\r'),
 
     'box_error_invalid_dist': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4705,12 +4713,12 @@ STR_TABLE = {
         '\r # No distribution list in BBS address {}\r',
         '\r # Geen distributeur in BBS-adres {}\r',
         '\r # Pas de liste de distribution dans l\'adresse BBS address {}\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Chybí distribuce v BBS adrese {}\r',
+        '\r # Brak dystrybucji w adresie BBS {}\r',
+        '\r # Sem distribuidor no endereço BBS {}\r',
+        '\r # Nessuna distribuzione nell\'indirizzo BBS {}\r',
+        '\r # Нет рассылки в BBS адресе {}\r',
+        '\r # Немає розсилки в BBS адресі {}\r'),
 
     'box_cmd_sp_routing_to': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4722,12 +4730,18 @@ STR_TABLE = {
          'Berichttitel aan {}:\r'),
         ('\r # Routage : {}\r'
          'Title du message pour {}:\r'),
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        ('\r # Routing: {}\r'
+         'Název zprávy pro {}:\r'),
+        ('\r # Routing: {}\r'
+         'Tytuł wiadomości do {}:\r'),
+        ('\r # Routing: {}\r'
+         'Título da mensagem para {}:\r'),
+        ('\r # Routing: {}\r'
+         'Titolo del messaggio per {}:\r'),
+        ('\r # Routing: {}\r'
+         'Заголовок сообщения для {}:\r'),
+        ('\r # Routing: {}\r'
+         'Заголовок повідомлення для {}:\r')),
 
     'box_cmd_sp_local': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4738,14 +4752,19 @@ STR_TABLE = {
         ('\r # Lokaal bericht.\r'
          'Berichttitel aan {}:\r'),
         ('\r # Message local.\r'
-         'Titre du message pour {}:\r')
-        ,
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+         'Titre du message pour {}:\r'),
+        ('\r # Lokální zpráva.\r'
+         'Název zprávy pro {}:\r'),
+        ('\r # Wiadomość lokalna.\r'
+         'Tytuł wiadomości do {}:\r'),
+        ('\r # Mensagem local.\r'
+         'Título da mensagem para {}:\r'),
+        ('\r # Messaggio locale.\r'
+         'Titolo del messaggio per {}:\r'),
+        ('\r # Локальное сообщение.\r'
+         'Заголовок сообщения для {}:\r'),
+        ('\r # Локальне повідомлення.\r'
+         'Заголовок повідомлення для {}:\r')),
 
     'box_cmd_sr_enter_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4753,12 +4772,12 @@ STR_TABLE = {
         'The answer goes to {}\r',
         'Het antwoord gaat naar {}\r',
         'La réponse va à {}\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Odpověď bude odeslána {}.\r',
+        'Odpowiedź zostanie wysłana do {}.\r',
+        'A resposta vai para {}.\r',
+        'La risposta verrà inviata a {}.\r',
+        'Ответ будет отправлен {}.\r',
+        'Відповідь буде надіслана {}.\r'),
 
     'box_cmd_sp_enter_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4766,12 +4785,12 @@ STR_TABLE = {
         'Enter text ... (End with /EX or Ctrl-Z):\r',
         'Tekst invoeren... (eindigen met /EX of Ctrl-Z):\r',
         'Entrez texte ... (Fin avec /EX ou Ctrl+z) : \r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Zadejte text ... (konec /EX nebo Ctrl-Z):\r',
+        'Wpisz tekst ... (zakończ /EX lub Ctrl-Z):\r',
+        'Introduza texto ... (Termine com /EX ou Ctrl-Z):\r',
+        'Inserisci testo ... (Fine con /EX o Ctrl-Z):\r',
+        'Введите текст ... (завершить /EX или Ctrl-Z):\r',
+        'Введіть текст ... (завершити /EX або Ctrl-Z):\r'),
 
     'box_cmd_sp_abort_msg': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4779,12 +4798,12 @@ STR_TABLE = {
         '\r # Message for {} canceled\r\r',
         '\r # Bericht voor {} geannuleerd\r\r',
         '\r # Message pour {} annulé\r\r',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        '\r # Zpráva pro {} zrušena\r\r',
+        '\r # Wiadomość dla {} anulowana\r\r',
+        '\r # Mensagem para {} cancelada\r\r',
+        '\r # Messaggio per {} annullato\r\r',
+        '\r # Сообщение для {} отменено\r\r',
+        '\r # Повідомлення для {} скасовано\r\r'),
 
     'box_cmd_sp_msg_accepted': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4795,14 +4814,19 @@ STR_TABLE = {
         ('\r # Ok. Bericht wordt doorgestuurd naar adres {} @ {}\r'
          '   via: {} MID: {} Bytes: {}\r\r'),
         ('\r # Ok. Message à l\'adresse {} @ {} est en cours de forward\r'
-         '   via: {} Mid: {} Bytes: {}\r\r')
-        ,
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+         '   via: {} Mid: {} Bytes: {}\r\r'),
+        ('\r # Ok. Zpráva na adresu {} @ {} bude forwardována.\r'
+         '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Wiadomość do {} @ {} zostanie przekazana dalej.\r'
+         '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Mensagem para {} @ {} será forwarded.\r'
+         '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Messaggio a {} @ {} verrà inoltrato.\r'
+         '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Сообщение для {} @ {} будет форвардиться.\r'
+         '   via: {} MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Повідомлення для {} @ {} буде форвардитись.\r'
+         '   via: {} MID: {} Bytes: {}\r\r')),
 
     'box_cmd_sp_msg_accepted_local': (
         # Not longer than 73 Chars (Text + Call-SSID = max. 80 Chars)
@@ -4813,14 +4837,19 @@ STR_TABLE = {
         ('\r# Oké. Bericht aan adres {} blijft lokaal.\r'
          '   Mid: {} Bytes: {}\r\r'),
         ('\r# Ok. message à l\'adresse {} reste local.\r'
-         '   Mid: {} Bytes: {}\r\r')
-        ,
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+         '   Mid: {} Bytes: {}\r\r'),
+        ('\r # Ok. Zpráva na adresu {} zůstane lokální.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Wiadomość do {} pozostaje lokalna.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Mensagem para {} permanece local.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Messaggio per {} rimane locale.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Сообщение для {} останется локальным.\r'
+         '   MID: {} Bytes: {}\r\r'),
+        ('\r # Ok. Повідомлення для {} залишиться локальним.\r'
+         '   MID: {} Bytes: {}\r\r')),
 
     #####################################################
     # BOX GUI
@@ -5403,77 +5432,72 @@ STR_TABLE = {
         'Week days',
         'Week dagen:',
         'Jour de la semaine',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Dny v týdnu',
+        'Dni tygodnia',
+        'Dias da semana',
+        'Giorni della settimana',
+        'Дни недели',
+        'Дні тижня'),
 
     'month_day': (
         'Monats Tage',
         'Month days',
         'Maand dagen:',
         'Jour du mois',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Dny v měsíci',
+        'Dni miesiąca',
+        'Dias do mês',
+        'Giorni del mese',
+        'Дни месяца',
+        'Дні місяця'),
+
     'intervall_mn': (
         'Interval (mn): ',
         'Intervall (mn): ',
         'Interval (mn): ',
         'Intervalle (mn) : ',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Interval (min): ',
+        'Interwał (min): ',
+        'Intervalo (min): ',
+        'Intervallo (min): ',
+        'Интервал (мин): ',
+        'Інтервал (хв): '),
 
     'offset_sec': (
         'Versatz (sek): ',
         'Offset (sec): ',
         'Offset (sec): ',
         'Décalage (sec) : ',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Posun (sek): ',
+        'Przesunięcie (sek): ',
+        'Desvio (seg): ',
+        'Offset (sec): ',
+        'Смещение (сек): ',
+        'Зсув (сек): '),
 
     'reset': (
         'Reset',
         'Reset',
         'Reset',
         'Reset',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Reset',
+        'Reset',
+        'Reset',
+        'Reset',
+        'Сброс',
+        'Скидання'),
 
     'scheduler_set': (
         'Scheduler-Set',
         'Scheduler set',
         'Scheduler ingesteld',
         'Planificateur',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Nastavení plánovače',
+        'Ustawienie harmonogramu',
+        'Configuração do Agendador',
+        'Impostazione Scheduler',
+        'Настройка планировщика',
+        'Налаштування планувальника'),
 
     #####################################################
     # guiRxEchoSettings.py
@@ -5483,13 +5507,12 @@ STR_TABLE = {
         'Attention! This function does not replace a digipeater!',
         'Let op! Deze functie vervangt geen digipeater!',
         'Attention ! Cette fonction ne remplace pas un digipeater !',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Pozor! Tato funkce nenahrazuje digipeater!',
+        'Uwaga! Ta funkcja nie zastępuje digipeatera!',
+        'Atenção! Esta função não substitui um digipeater!',
+        'Attenzione! Questa funzione non sostituisce un digipeater!',
+        'Внимание! Эта функция не заменяет digipeater!',
+        'Увага! Ця функція не замінює digipeater!'),
 
     #####################################################
     # guiMain.py._monitor_start_msg
@@ -5498,52 +5521,49 @@ STR_TABLE = {
         'Info: Station data {} loaded successfully.',
         'Info: Stationgegevens {} succesvol geladen.',
         'Info: Les données de la station {} ont été chargées avec succès.',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'Info: Data stanice {} úspěšně načteny.',
+        'Info: Dane stacji {} załadowane pomyślnie.',
+        'Info: Dados da estação {} carregados com sucesso.',
+        'Info: Dati stazione {} caricati con successo.',
+        'Инфо: Данные станции {} успешно загружены.',
+        'Інфо: Дані станції {} успішно завантажено.'),
 
     'mon_start_msg2': (
         'konnte nicht initialisiert werden!',
         'could not be initialized!',
         'kon niet worden geïnitialiseerd!',
         "n'a pas pu être initialisé !",
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'nelze inicializovat!',
+        'nie można zainicjować!',
+        'não pôde ser inicializado!',
+        'non può essere inizializzato!',
+        'не удалось инициализировать!',
+        'не вдалося ініціалізувати!'),
 
     'mon_start_msg3': (
         'erfolgreich initialisiert.',
         'initialized successfully.',
         'succesvol geïnitialiseerd.',
         "initialisé avec succès.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'úspěšně inicializováno.',
+        'pomyślnie zainicjowano.',
+        'inicializado com sucesso.',
+        'inizializzato con successo.',
+        'успешно инициализировано.',
+        'успішно ініціалізовано.'),
 
     'mon_end_msg1': (
         'PoPT wird beendet.',
         'Quiting PoPT.',
         'PoPT verlaten.',
         "Quitter PoPT.",
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''),
+        'PoPT se ukončuje.',
+        'Zamykanie PoPT.',
+        'A encerrar PoPT.',
+        'Chiusura di PoPT.',
+        'PoPT завершает работу.',
+        'PoPT завершується.'),
+
     # guiMain Status-Bar
     'ENDE': (
         'ENDE',
