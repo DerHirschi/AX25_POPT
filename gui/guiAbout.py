@@ -82,26 +82,27 @@ class About(tk.Toplevel):
         sep.pack(fill='x', pady=15)
 
         # ==================== Dank an die Community ====================
-        comm_frame = ttk.LabelFrame(main_f, text=" Dank an die Packet Radio Community ", padding=15)
+        comm_frame = ttk.LabelFrame(main_f, text=" Thanks to the WW Packet Radio Community ", padding=15)
         comm_frame.pack(fill='x', pady=8)
 
         text = (
-            "Ein großes Dankeschön an die gesamte Packet-Radio-Community!\n"
-            "Besonders an alle Funkamateure (HAM) und CB-Funker, die mit Rat, Tat "
-            "und Testberichten zum Erfolg von PoPT beigetragen haben."
+            "A big thank you to the entire Packet Radio community!\n"
+            "Especially to all radio operators (HAM's) and CB's who contributed to "
+            "the success of PoPT through their advice, practical assistance, and test reports."
         )
         ttk.Label(comm_frame, text=text, wraplength=580,
                   font=("Segoe UI", 10), justify="left").pack(anchor="w")
 
         # ==================== Spezielle Danksagungen ====================
-        thanks_frame = ttk.LabelFrame(main_f, text=" Besonderer Dank ", padding=15)
+        thanks_frame = ttk.LabelFrame(main_f, text=" Special Thanks to ", padding=15)
         thanks_frame.pack(fill='x', pady=8)
 
         thanks_text = (
-            "• ClaudeMa (GitHub) — Französische Übersetzung\n"
-            "• NL1NOD (CB-Call)  — Niederländische Übersetzung, Testen & Unterstützung\n"
-            "• CT1DRB (HAM-Call) — Testen & Unterstützung\n"
-            "• CB7ALM (CB-Call)  — Testen & Unterstützung"
+            "• ClaudeMa (GitHub) — French Translation\n"
+            "• NL1NOD (CB-Call)  — Dutch  Translation, Testing & Support\n"
+            "• CT1DRB (HAM-Call) — Testing & Support\n"
+            "• CB7ALM (CB-Call)  — Testing & Support\n"
+            "• EA2SPS (HAM-Call) — Spanish Translation"
         )
 
         ttk.Label(thanks_frame, text=thanks_text,
@@ -111,17 +112,17 @@ class About(tk.Toplevel):
         gh_frame = ttk.Frame(main_f)
         gh_frame.pack(fill='x', pady=15)
 
-        ttk.Label(gh_frame, text="Projekt auf GitHub:",
+        ttk.Label(gh_frame, text="Project on GitHub:",
                   font=("Segoe UI", 10, "bold")).pack(anchor="w")
 
         link = ttk.Label(gh_frame, text="https://github.com/DerHirschi/AX25_POPT",
                          font=("Segoe UI", 10), foreground="#0066cc", cursor="hand2")
-        link.pack(anchor="w")
+        link.pack(side='left', anchor="w", fill='x')
         link.bind("<Button-1>", lambda e: self.open_github())
 
         # ==================== OK Button ====================
-        btn_frame = ttk.Frame(main_f)
-        btn_frame.pack(side='bottom', fill='x', pady=(10, 0))
+        btn_frame = ttk.Frame(gh_frame)
+        btn_frame.pack(side='right', anchor='e', pady=(10, 0))
 
         ok_bt = ttk.Button(btn_frame, text="OK", width=12, command=self.destroy_win)
         ok_bt.pack(side='right')
