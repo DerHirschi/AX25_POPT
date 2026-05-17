@@ -125,13 +125,13 @@ def decode_prp_metadata(raw_ax25_payload: bytes):
             return prp_frames, rest_data
         # PRP-Flag bei i:i +2 ? > weiter
         if raw_ax25_payload[i:i + 2] != PRP_FLAG:
-            rest_data += raw_ax25_payload[i].to_bytes(1)
+            rest_data += raw_ax25_payload[i].to_bytes(1, 'big')
             i         += 1
             continue
         # Versuche Header zu dekodieren
         try:
             # Header
-            opt_byte  = int(raw_ax25_payload[2]).to_bytes(1)
+            opt_byte  = int(raw_ax25_payload[2]).to_bytes(1, 'big')
             prp_len   = int.from_bytes(raw_ax25_payload[3:5], 'little')
             total_len = 5 + prp_len + 2  # Header(5) + Payload + CRC(2)
             # Opt
@@ -140,7 +140,7 @@ def decode_prp_metadata(raw_ax25_payload: bytes):
             port_id = opt_id if opt_id < 20 else None
             # Validiere ob Opt Typ existiert
             if port_id is None and not opt_typ:
-                rest_data += raw_ax25_payload[i].to_bytes(1)
+                rest_data += raw_ax25_payload[i].to_bytes(1, 'big')
                 i += 1
                 continue
             # PRP Batch Packet ?
@@ -163,7 +163,7 @@ def decode_prp_metadata(raw_ax25_payload: bytes):
 
         except Exception as ex:
             null       = ex   # Make my IDE happy :-)
-            rest_data += raw_ax25_payload[i].to_bytes(1)
+            rest_data += raw_ax25_payload[i].to_bytes(1, 'big')
             i         += 1
             continue
 

@@ -156,11 +156,11 @@ FESC_TFESC = b''.join([FESC, TFESC])    # "FESC is sent as FESC, TFESC"  /  0xDB
 KISS_DATA_FRAME             = lambda inp, channel: FEND + KISS_CHANNEL_TAB[channel] + inp + FEND
 # KISS_DATA_FRAME_0           = lambda inp: FEND + DATA_FRAME_0 + inp + FEND
 #############################
-KISS_TXD   = lambda tnc_ch: FEND + int(tnc_ch * 16 + 1).to_bytes(1)
-KISS_PERS  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 2).to_bytes(1)
-KISS_SLOT  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 3).to_bytes(1)
-KISS_TAIL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 4).to_bytes(1)
-KISS_DUPL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 5).to_bytes(1)
+KISS_TXD   = lambda tnc_ch: FEND + int(tnc_ch * 16 + 1).to_bytes(1, 'big')
+KISS_PERS  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 2).to_bytes(1, 'big')
+KISS_SLOT  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 3).to_bytes(1, 'big')
+KISS_TAIL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 4).to_bytes(1, 'big')
+KISS_DUPL  = lambda tnc_ch: FEND + int(tnc_ch * 16 + 5).to_bytes(1, 'big')
 KISS_TXD_K  = b'\xC0\x01'
 KISS_PERS_K = b'\xC0\x02'
 KISS_SLOT_K = b'\xC0\x03'
