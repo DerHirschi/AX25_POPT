@@ -13,6 +13,8 @@
 Thanks to NL1NOD(Patrick) for the Dutch translations.
 Thanks to ClaudeMa for the France translations.
 """
+from cfg.string_tab_SP import STR_TABLE_SP
+from .logger_config import logger
 
 STR_TABLE = {
     #  GER
@@ -6381,6 +6383,21 @@ STR_TABLE = {
     ),
 # ======== END =====================
 }   # < End of dict
+
+
+logger.info("Building Sting Tab / Translation Tab")
+for k, tpl_item in dict(STR_TABLE).items():
+    new_item = list(tpl_item)
+    # Add Spanish People / Index 10
+    if k not in STR_TABLE_SP.keys():
+        logger.warning(f"String Tab no Entry found for {k} in ESP Table")
+    new_item.append(STR_TABLE_SP.get(k, ""))
+
+    # Override old item
+    STR_TABLE[k] = tuple(new_item)
+
+logger.info("Building Sting Tab / Translation Tab.. Done..")
+
 
 if __name__ == '__main__':
     # Generating new Tab for additional Languages

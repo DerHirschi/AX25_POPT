@@ -88,6 +88,7 @@ class SetupWizardAPP:
             "Italiano": 7,
             "Русский": 8,
             "Українська": 9,
+            "Español": 10,
         }
         #################################################
         self._next_btn_txt_var    = tk.StringVar(self.app_win, value=self._getTabStr('next'))

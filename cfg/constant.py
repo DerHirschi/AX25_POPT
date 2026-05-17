@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.124.2'
+VER = '2.124.3'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -61,16 +61,17 @@ CFG_gui_conn_hist_path   = 'data/image/gui_png/conn_hist'
 """ CONST Stuff """
 LANGUAGE = 1
 LANG_IND = {
-            'DE': 0,
-            'EN': 1,
-            'NL': 2,
-            'FR': 3,
-            'CZ': 4,
-            'PL': 5,
-            'PT': 6,
-            'IT': 7,
-            'RU': 8,
-            'UA': 9,
+            'DE':  0,
+            'EN':  1,
+            'NL':  2,
+            'FR':  3,
+            'CZ':  4,
+            'PL':  5,
+            'PT':  6,
+            'IT':  7,
+            'RU':  8,
+            'UA':  9,
+            'ESP': 10,
         }
 
 STATION_TYPS = [
