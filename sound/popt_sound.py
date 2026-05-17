@@ -42,11 +42,13 @@ class POPT_Sound:
             1: 'en',
             2: 'nl',
             3: 'fr',
-            4: 'cz',
+            4: 'cs',
             5: 'pl',
             6: 'pt',
             7: 'it',
-            8: 'zh',
+            8: 'ru',
+            9: 'ua',
+            10: 'es',
         }
         self._get_speech_lang = lambda : self._lang_tab.get(POPT_CFG.get_guiCFG_language(), 'en')
 
