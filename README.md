@@ -173,6 +173,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
   - Italian
   - Russian
   - Ukrainian
+  - Spanish (not translated yet)
 
 #### Keybindings:
 - ESC > New Connection

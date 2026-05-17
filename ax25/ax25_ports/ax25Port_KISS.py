@@ -8,7 +8,7 @@ from ax25.ax25_l2.ax25Kiss import Kiss
 from .ax25Port import AX25Port
 from .ax25Port_Classes import RxBuf
 from cfg.logger_config import logger
-from fnc.os_fnc import is_linux
+from fnc.os_fnc import is_linux, is_macos
 
 
 class KISSSerial(AX25Port):
@@ -38,7 +38,7 @@ class KISSSerial(AX25Port):
                                             #rtscts=self._port_cfg.get('parm_serial_rts',      True),
                                             #xonxoff= self._port_cfg.get('parm_serial_xonxoff',False)
                                             )
-                if not is_linux():
+                if is_macos():
                     self.device.dtr      = self._port_cfg.get('parm_serial_dtr',    True)
                     self.device.rts      = self._port_cfg.get('parm_serial_rts',    True)
                     self.device.xonxoff  = self._port_cfg.get('parm_serial_xonxoff',False)
