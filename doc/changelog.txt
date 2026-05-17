@@ -6,6 +6,7 @@ Fixes:
 - Probleme mit seriellen Geräte in Linux
 
 Optimierung/Änderungen:
+- CLI APRS-SMS fügt Call des Senders (PoPT-BOX/NODE) nicht in Pfad ein.
 
 Neue Implementierungen / Funktionen:
 

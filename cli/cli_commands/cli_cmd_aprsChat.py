@@ -198,17 +198,21 @@ class CliCmdAprsChat(CliModulBase):
             return "\r" + self._getTabStr_CLI('aprs_chat_no_service') + "\r\r"
 
         from_call = self._to_call_str.split('-')[0]
-        dt_now = datetime.now()
-
+        #my_call   = self._my_call_str.split('-')[0]
+        dt_now    = datetime.now()
+        path = [f"{self._my_call_str}*"] + list(self._aprs_chat_path)
         pack = {
             'addresse': self._aprs_chat_target,
             'from':     from_call,
             'port_id':  str(self._aprs_chat_port),
-            'path':     self._aprs_chat_path,
+            'path':     path,
             'tx_time':  dt_now
         }
         ack = bool(self._aprs_chat_target not in APRS_CQ_ADDRESSES)
-        success = aprs_ais.aprs_sms.send_pn_msg(pack, raw_text, with_ack=ack)
+        success = aprs_ais.aprs_sms.send_pn_msg(pack,
+                                                raw_text,
+                                                with_ack=ack,
+                                                digi=True)
 
         return "" if success else "\r" + self._getTabStr_CLI('aprs_send_error') + "\r\r"
 

@@ -190,7 +190,7 @@ class APRSsms:
             return False
         return False
 
-    def send_pn_msg(self, pack, msg, with_ack=False):
+    def send_pn_msg(self, pack, msg, with_ack=False, digi=False):
         msg = convert_umlaute_to_ascii(msg)
         msg = zeilenumbruch_lines(msg, max_zeichen=67)
         msg_list = msg.split('\n')
@@ -205,7 +205,7 @@ class APRSsms:
             else:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
-                self._aprs_main.send_it(dict(pack))
+                self._aprs_main.send_it(dict(pack), digi=digi)
             self._update_gui_aprs_msg_win(pack)
             if not pack.get('is_ack', False):
                 self.aprs_msg_pool['message'].append(dict(pack))
