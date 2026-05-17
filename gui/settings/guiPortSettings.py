@@ -57,8 +57,9 @@ class PortSetTab:
         #################
         #################
         # GUI Vars
-        self._serial_dtr_var     = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_dtr', False))
-        self._serial_rts_var     = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_rts', False))
+        self._serial_dtr_var     = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_dtr',       True))
+        self._serial_rts_var     = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_rts',       True))
+        self._serial_xonxoff_var = tk.BooleanVar(self.tab, value=self.port_setting.get('parm_serial_xonxoff',   False))
         self._port_select_var    = tk.StringVar(self.tab)
         self._p_txd_var          = tk.StringVar(self.tab)
         self._kiss_txd_var       = tk.StringVar(self.tab)
@@ -428,11 +429,13 @@ class PortSetTab:
         # Serial RTS/DTR
         serial_f = ttk.LabelFrame(self.tab,
                                   text="Serial Flow Control")
-        serial_f.place(x=820, y=115)
+        serial_f.place(x=820, y=105)
         self._serial_dtr_ent = ttk.Checkbutton(serial_f, text="DTR", variable=self._serial_dtr_var)
         self._serial_rts_ent = ttk.Checkbutton(serial_f, text="RTS", variable=self._serial_rts_var)
+        self._serial_xon_ent = ttk.Checkbutton(serial_f, text="XON/XOFF", variable=self._serial_xonxoff_var)
         self._serial_dtr_ent.pack(padx=10, pady=10, anchor="w")
         self._serial_rts_ent.pack(padx=10, pady=10, anchor="w")
+        self._serial_xon_ent.pack(padx=10, pady=10, anchor="w")
         ###########################################################
         self._update_port_parameter()
 
@@ -541,6 +544,7 @@ class PortSetTab:
         if typ in ('KISSTCP', 'AGWPE-TCP'):
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
+            self._serial_xon_ent.configure(state="disabled")
 
             self._axip_multicast_dd.configure(state="disabled")
             # self._ptxd.configure(state="normal")
@@ -631,6 +635,7 @@ class PortSetTab:
         elif typ == 'KISSSER':
             self._serial_dtr_ent.configure(state="normal")
             self._serial_rts_ent.configure(state="normal")
+            self._serial_xon_ent.configure(state="normal")
 
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
@@ -684,6 +689,7 @@ class PortSetTab:
         elif typ == 'AX25KERNEL':
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
+            self._serial_xon_ent.configure(state="disabled")
 
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
@@ -725,6 +731,7 @@ class PortSetTab:
         elif typ in ['TNC-EMU-TCP-SRV', 'TNC-EMU-TCP-CL']:
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
+            self._serial_xon_ent.configure(state="disabled")
 
             #self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
@@ -767,6 +774,7 @@ class PortSetTab:
         elif typ in self._multi_port_master_types:
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
+            self._serial_xon_ent.configure(state="disabled")
 
             # self._axip_linktest_dd.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
@@ -800,6 +808,7 @@ class PortSetTab:
 
             self._serial_dtr_ent.configure(state="disabled")
             self._serial_rts_ent.configure(state="disabled")
+            self._serial_xon_ent.configure(state="disabled")
             self._axip_multicast_dd.configure(state="disabled")
 
             self._ptxd.configure(state="normal")
@@ -888,6 +897,7 @@ class PortSetTab:
         self.port_setting['parm_MaxFrameAuto'] = bool(self._max_pac_auto_var.get())
         self.port_setting['parm_serial_dtr'] = bool(self._serial_dtr_var.get())
         self.port_setting['parm_serial_rts'] = bool(self._serial_rts_var.get())
+        self.port_setting['parm_serial_xonxoff'] = bool(self._serial_xonxoff_var.get())
 
         self.port_setting['parm_axip_Multicast'] = bool(self._axip_multicast_var.get())
 

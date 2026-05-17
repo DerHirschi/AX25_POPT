@@ -6381,3 +6381,11 @@ STR_TABLE = {
     ),
 # ======== END =====================
 }   # < End of dict
+
+if __name__ == '__main__':
+    # Generating new Tab for additional Languages
+    new_tab = {}
+    for k, ent in STR_TABLE.items():
+        new_tab[k] = ent[1]
+
+    print(new_tab)

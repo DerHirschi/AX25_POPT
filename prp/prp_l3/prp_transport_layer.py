@@ -836,9 +836,9 @@ class PRPTransportLayer:
         cl_prio_seq     = self._get_expected_client_seq(True)
         cl_no_prio_seq  = self._get_expected_client_seq(False)
         payload      = bytearray()
-        payload      += int(my_no_prio_seq).to_bytes()
-        payload      += int(cl_prio_seq).to_bytes()
-        payload      += int(cl_no_prio_seq).to_bytes()
+        payload      += int(my_no_prio_seq).to_bytes(1)
+        payload      += int(cl_prio_seq).to_bytes(1)
+        payload      += int(cl_no_prio_seq).to_bytes(1)
         prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
                                                  seq=my_prio_seq,
                                                  flag1=response,
@@ -868,7 +868,7 @@ class PRPTransportLayer:
         l3_opt_id = PRP_OPT_L3_FIN
         prio_seq     = self.get_current_seq(True)
         no_prio_seq  = self.get_current_seq(False)
-        payload      = int(no_prio_seq).to_bytes()
+        payload      = int(no_prio_seq).to_bytes(1)
         prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
                                                  seq=prio_seq,
                                                  flag1=response,
@@ -890,9 +890,9 @@ class PRPTransportLayer:
         cl_prio_seq    = self._get_expected_client_seq(True)
         cl_no_prio_seq = self._get_expected_client_seq(False)
         payload  = bytearray()
-        payload += int(my_no_prio_seq).to_bytes()
-        payload += int(cl_prio_seq).to_bytes()
-        payload += int(cl_no_prio_seq).to_bytes()
+        payload += int(my_no_prio_seq).to_bytes(1)
+        payload += int(cl_prio_seq).to_bytes(1)
+        payload += int(cl_no_prio_seq).to_bytes(1)
         prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
                                                  seq=my_prio_seq,
                                                  flag1=response,
@@ -914,9 +914,9 @@ class PRPTransportLayer:
         cl_prio_seq    = self._get_expected_client_seq(True)
         cl_no_prio_seq = self._get_expected_client_seq(False)
         payload  = bytearray()
-        payload += int(my_no_prio_seq).to_bytes()
-        payload += int(cl_prio_seq).to_bytes()
-        payload += int(cl_no_prio_seq).to_bytes()
+        payload += int(my_no_prio_seq).to_bytes(1)
+        payload += int(cl_prio_seq).to_bytes(1)
+        payload += int(cl_no_prio_seq).to_bytes(1)
         prp_l3_frame = self._build_l3_pack_w_seq(l3_opt_id=l3_opt_id,
                                                  seq=my_prio_seq,
                                                  flag1=response,
