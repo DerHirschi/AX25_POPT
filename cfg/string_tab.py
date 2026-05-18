@@ -14,7 +14,7 @@ Thanks to NL1NOD(Patrick) for the Dutch translations.
 Thanks to ClaudeMa for the France translations.
 """
 from cfg.string_tab_SP import STR_TABLE_SP
-from .logger_config import logger
+from cfg.logger_config import logger
 
 STR_TABLE = {
     #  GER
@@ -6402,7 +6402,10 @@ logger.info("Building Sting Tab / Translation Tab.. Done..")
 if __name__ == '__main__':
     # Generating new Tab for additional Languages
     new_tab = {}
+    #out_str = "{\n"
     for k, ent in STR_TABLE.items():
         new_tab[k] = ent[1]
+        #out_str += f'"{k}": "{ent[1]}",\n'
 
+    #out_str += "}"
     print(new_tab)
