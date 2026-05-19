@@ -7,8 +7,10 @@ Fixes:
 
 Optimierung/Änderungen:
 - CLI APRS-SMS fügt Call des Senders (PoPT-BOX/NODE) nicht in Pfad ein.
+- Hauptfenster Seiten-Frame "Monitor" neu designed
 
 Neue Implementierungen / Funktionen:
+- Spanische Übersetzung by Santi EA2SPS(HAM-Call). Thanks..
 
 ###########################################################################################################
 ###########################################################################################################
