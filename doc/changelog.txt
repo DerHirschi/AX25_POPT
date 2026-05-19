@@ -1,4 +1,19 @@
 ###########################################################################################################
+# 2.124.x
+Fixes:
+- Sprachen (CZ, PL, PT, IT, RU, UA) nicht auswählbar in 1'st Setup wizard
+- to_bytes Argument Problem mit, alten Python Versionen (3.6/3.8)
+- Probleme mit seriellen Geräte in Linux
+
+Optimierung/Änderungen:
+- CLI APRS-SMS fügt Call des Senders (PoPT-BOX/NODE) nicht in Pfad ein.
+- Hauptfenster Seiten-Frame "Monitor" neu designed
+
+Neue Implementierungen / Funktionen:
+- Spanische Übersetzung by Santi EA2SPS(HAM-Call). Thanks..
+
+###########################################################################################################
+###########################################################################################################
 # 2.123.x
 Fixes:
 - KISS Decoder (fehlerhaftes Escaping)

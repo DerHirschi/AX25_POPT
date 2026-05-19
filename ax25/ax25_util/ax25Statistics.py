@@ -11,6 +11,7 @@ from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT, CLI_TYP_DIGI
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
+from classes.CLbuffers import ListBuffer
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
@@ -98,7 +99,7 @@ class MH:
     def __init__(self, port_handler):
         logger.info("MH: Init")
         self._port_handler                  = port_handler
-        self._mh_inp_buffer                 = []
+        self._mh_inp_buffer                 = ListBuffer()
         self.dx_alarm_trigger               = False
         self.last_dx_alarm                  = time.time()
         self._now_10sec                     = datetime.now()
@@ -381,18 +382,18 @@ class MH:
     # MH Stuff
     def mh_task(self):  # TASKER
         """ Called fm Porthandler Tasker """
-        if not self._mh_inp_buffer:
+        if self._mh_inp_buffer.is_empty:
             return False
         if self._lock:
             logger.debug('MH: Task, waiting for Lock')
             return False
         self._lock = True
-        for el in list(self._mh_inp_buffer):
+        while not self._mh_inp_buffer.is_empty:
+            el = self._mh_inp_buffer.buffer_read
             if not el.get('tx', False):
                 self._PortStat_input(el)
                 self._input_bw_calc(el)
                 self._mh_inp(el)
-            self._mh_inp_buffer.pop(0)
         self._lock = False
         return True
 
@@ -400,7 +401,7 @@ class MH:
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
             return
-        self._mh_inp_buffer.append({
+        self._mh_inp_buffer.buffer_write({
             'ax_frame': ax25frame_conf,
             'port_id': int(port_id),
             'primary_port_id': int(primary_port_id),

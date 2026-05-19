@@ -72,6 +72,7 @@ class SideTabbedFrame:
         tab6_monitor    = ttk.Frame(self._tabControl)
         tab7_tracer     = ttk.Frame(self._tabControl)
         # self._path_plot = None
+
         ##############################################################
         self._tabControl.add(tab1_kanal, text=self._getTabStr('channel'))
         # self._tabControl.add(tab3, text='Ports')                   # TODO
@@ -88,6 +89,8 @@ class SideTabbedFrame:
 
         self._tabControl.pack(expand=1, fill="both")
         ################################################
+        #tab6_monitor.pack(expand=True, fill='both')
+        ##############################################################
         # Kanal
         parm_y = 20
         m_f_label = ttk.Label(tab1_kanal, text='Max Pac:')
@@ -374,39 +377,58 @@ class SideTabbedFrame:
         #################
         ###################################################################################
         # Monitor Frame
+        ###################################################################################
+        ui_tx_f = ttk.LabelFrame(tab6_monitor, text='TX (UI)', width=300, height=180)
+        ui_tx_f.pack(padx=10, pady=5, anchor='w')
         # Address
-        x = 10
-        y = 10
+        x = 5
+        y = 5
         # self.to_add_var = tk.StringVar(tab6_monitor)
-        ttk.Label(tab6_monitor, text=f"{self._getTabStr('to')}:").place(x=x, y=y)
-        ttk.Entry(tab6_monitor, textvariable=self._root_class.mon_to_add_var).place(x=x + 40, y=y)
+        ttk.Label(ui_tx_f, text=f"{self._getTabStr('to')}:").place(x=x, y=y)
+        ttk.Entry(ui_tx_f, textvariable=self._root_class.mon_to_add_var).place(x=x + 40, y=y)
+
+        # PID
+
+        # self.mon_pid_var = tk.StringVar(tab6_monitor)
+        ttk.Label(ui_tx_f, text='PID:').place(x=5, y=45)
+        pid = PIDByte()  # TODO CONST PIDByte().pac_types
+        pac_types = dict(pid.pac_types)
+        vals = []
+        for x in list(pac_types.keys()):
+            pid.pac_types[int(x)]()
+            vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
+        ttk.Combobox(ui_tx_f,
+                     width=20,
+                     values=vals,
+                     textvariable=self._root_class.mon_pid_var).place(x=45, y=45)
+        self._root_class.mon_pid_var.set(vals[0])
 
         # CMD/RPT
-        x = 10
+        x = 150
         y = 80
         # self.cmd_var = tk.BooleanVar(tab6_monitor)
-        ttk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(ui_tx_f,
                         variable=self._root_class.mon_cmd_var,
                         text='CMD/RPT').place(x=x, y=y)
 
         # Poll
-        x = 10
+        x = 150
         y = 105
         # self.poll_var = tk.BooleanVar(tab6_monitor)
-        ttk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(ui_tx_f,
                         variable=self._root_class.mon_poll_var,
                         text='Poll').place(x=x, y=y)
 
         # Port
-        x = 40
-        y = 140
-        ttk.Label(tab6_monitor, text=f"{self._getTabStr('port')}:").place(x=x, y=y)
+        x = 5
+        y = 80
+        ttk.Label(ui_tx_f, text=f"{self._getTabStr('port')}:").place(x=x, y=y)
         # self.mon_port_var = tk.StringVar(tab6_monitor)
         # self._main_win.mon_port_var.set('0')
         vals = ['0']
         if port_handler.get_all_ports().keys():
             vals = [str(x) for x in list(port_handler.get_all_ports().keys())]
-        mon_port_ent = ttk.Combobox(tab6_monitor,
+        mon_port_ent = ttk.Combobox(ui_tx_f,
                                     width=4,
                                     textvariable=self._root_class.mon_port_var,
                                     values=vals,
@@ -414,90 +436,80 @@ class SideTabbedFrame:
         mon_port_ent.place(x=x + 50, y=y)
         mon_port_ent.bind("<<ComboboxSelected>>", self._chk_mon_port)
         # Calls
-        x = 40
-        y = 175
+        x = 30
+        y = 115
         # self.mon_call_var = tk.StringVar(tab6_monitor)
         # vals = []
         # if self.main_win.ax25_port_handler.ax25_ports.keys():
         #     _vals = [str(x) for x in list(self.main_win.ax25_port_handler.ax25_ports.keys())]
-        self._mon_call_ent = ttk.Combobox(tab6_monitor,
+        self._mon_call_ent = ttk.Combobox(ui_tx_f,
                                           width=9,
                                           textvariable=self._root_class.mon_call_var,
                                           values=[],
                                           )
         self._mon_call_ent.place(x=x, y=y)
-
+        # =============================================
+        # Monitor Filter
+        # =============================================
         # Auto Scrolling
-        x = 10
-        y = 210
+        mon_filter_f = ttk.LabelFrame(tab6_monitor, text="Options/Filter", width=300, height=300)
+        mon_filter_f.pack(padx=10, pady=10, anchor='w')
+        x = 5
+        y = 5
         # self.mon_scroll_var = tk.BooleanVar(tab6_monitor)
-        ttk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(mon_filter_f,
                         variable=self._root_class.mon_scroll_var,
                         text=self._getTabStr('scrolling')).place(x=x, y=y)
 
         # Monitor APRS Decoding Output
-        x = 10
-        y = 235
+        x = 5
+        y = 30
         # self.mon_aprs_var = tk.BooleanVar(tab6_monitor)
         # self.mon_aprs_var.set(True)
-        ttk.Checkbutton(tab6_monitor,
+        ttk.Checkbutton(mon_filter_f,
                         variable=self._root_class.mon_dec_aprs_var,
                         text='APRS').place(x=x, y=y)
         # Monitor NetRom Decoding Output
-        x = 10
-        y = 260
-        ttk.Checkbutton(tab6_monitor,
+        x = 5
+        y = 55
+        ttk.Checkbutton(mon_filter_f,
                         variable=self._root_class.mon_dec_nr_var,
                         text='NetRom').place(x=x, y=y)
         # Monitor Distance Decoding Output
-        x = 10
-        y = 285
-        ttk.Checkbutton(tab6_monitor,
+        x = 5
+        y = 80
+        ttk.Checkbutton(mon_filter_f,
                         variable=self._root_class.mon_dec_dist_var,
                         text=self._getTabStr('distance')).place(x=x, y=y)
         # Monitor Distance Decoding Output
-        x = 10
-        y = 310
-        ttk.Checkbutton(tab6_monitor,
+        x = 5
+        y = 105
+        ttk.Checkbutton(mon_filter_f,
                         variable=self._root_class.mon_dec_hex_var,
                         text='HEX').place(x=x, y=y)
 
         # Monitor Decoding
-        ttk.Label(tab6_monitor, text='Decoding:').place(x=10, y=335)
+        ttk.Label(mon_filter_f, text='Decoding:').place(x=5, y=140)
         # self.mon_decoding_var.set(True)
         dec_val = ['Auto'] + list(ENCODINGS)
-        ttk.Combobox(tab6_monitor,
+        ttk.Combobox(mon_filter_f,
                      width=9,
                      textvariable=self._root_class.setting_mon_encoding,
                      values=dec_val,
-                     ).place(x=115, y=335)
+                     ).place(x=80, y=140)
 
         ##########################################################################
-        # PID
 
-        # self.mon_pid_var = tk.StringVar(tab6_monitor)
-        ttk.Label(tab6_monitor, text='PID:').place(x=10, y=45)
-        pid = PIDByte()  # TODO CONST PIDByte().pac_types
-        pac_types = dict(pid.pac_types)
-        vals = []
-        for x in list(pac_types.keys()):
-            pid.pac_types[int(x)]()
-            vals.append(f"{str(hex(int(x))).upper()}>{pid.flag}")
-        ttk.Combobox(tab6_monitor,
-                     width=20,
-                     values=vals,
-                     textvariable=self._root_class.mon_pid_var).place(x=50, y=45)
-        self._root_class.mon_pid_var.set(vals[0])
         # self.pac_len.bind("<<ComboboxSelected>>", self.set_pac_len)
         # Monitor RX-Filter Ports
         # self._mon_port_on_vars = {}
         all_ports = port_handler.port_manager.ax25_ports
-        i = 1
+        i = 0
         for port_id in all_ports:
             # self._mon_port_on_vars[port_id] = tk.BooleanVar(tab6_monitor)
-            x = 190
-            y = 55 + (25 * i)
-            ttk.Checkbutton(tab6_monitor,
+            x = 185
+            y = 5 + (25 * i)
+            ttk.Checkbutton(mon_filter_f,
                             text=f"Port {port_id}",
                             variable=self._root_class.mon_port_on_vars[port_id],
                             # command=self._chk_mon_port_filter

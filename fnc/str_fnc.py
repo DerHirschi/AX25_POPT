@@ -309,8 +309,8 @@ def get_strTab(str_key: str, lang_index=1, warning=True, fallback=False):
     try:
         transl_str = lang_tab[lang_index]
     except IndexError:
-        logger.error(f"get_strTab() Lang-Index: {lang_index}")
-        logger.error(f"  Language not found: {lang_index}")
+        logger.error(f"get_strTab() str_key: {str_key}")
+        logger.error(f"  Language not found- Lang-Ind: {lang_index}")
         return str_key
 
     if transl_str:
@@ -318,9 +318,13 @@ def get_strTab(str_key: str, lang_index=1, warning=True, fallback=False):
 
     # ===== Fallback if no Translation
     if fallback:
-        logger.error(f"get_strTab() Fallback no Translation found !!")
+        logger.error(f"get_strTab() Fallback Error !!!!!")
         logger.error(f"  Translation empty for KEY: {str_key}")
+        logger.error(f"  Lang-Ind: {lang_index}")
         return str_key
+    logger.warning(f"get_strTab() Fallback no Translation found !!")
+    logger.warning(f"  Translation empty for KEY: {str_key}")
+    logger.warning(f"  Lang-Ind: {lang_index}")
     return get_strTab(str_key, fallback=True)
 
 

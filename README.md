@@ -164,8 +164,9 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 #### Supported languages:
 - German
 - English
-- Dutch  (Thanks to Patrick for the Dutch translation)
-- French (Thanks to ClaudeMa)
+- Dutch   (Thanks to (NL1NOD (CB-Call)) Patrick for the Dutch translation)
+- French  (Thanks to ClaudeMa)
+- Spanish (Thanks to EA2SPS(HAM-Call) Santi for the Spanish translation)
   #### Partial translated (AI-Generated) (Fallback to English)
   - Czech
   - Polish

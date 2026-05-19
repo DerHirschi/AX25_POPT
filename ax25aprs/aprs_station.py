@@ -324,25 +324,22 @@ class APRSmain(object):
 
     ################################
     # TX
-    def send_it(self, pack):
+    def send_it(self, pack, digi=False):
         if pack['port_id'] == APRS_INET_PORT_ID:
             self._send_APRS_as_AIS(pack)
         else:
-            self.send_APRS_as_UI(pack)
+            self.send_APRS_as_UI(pack, digi=digi)
 
     def send_APRS_as_UI(self, pack, digi=False):
         port_id = pack.get('tx_port', '') or pack.get('port_id', '')
         if not port_id:
-            print(1)
             return
         try:
             port_id = int(port_id)
         except ValueError:
-            print(2)
             return
         ax_port = self._port_handler.get_all_ports().get(port_id, None)
         if not ax_port:
-            print(3)
             return
         path      = pack.get('path', [])
         msg_text  = pack.get('raw_message_text', '').encode('UTF-8', 'ignore')

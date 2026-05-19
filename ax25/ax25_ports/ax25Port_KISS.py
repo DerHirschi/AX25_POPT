@@ -8,7 +8,7 @@ from ax25.ax25_l2.ax25Kiss import Kiss
 from .ax25Port import AX25Port
 from .ax25Port_Classes import RxBuf
 from cfg.logger_config import logger
-from fnc.os_fnc import is_linux
+from fnc.os_fnc import is_linux, is_macos
 
 
 class KISSSerial(AX25Port):
@@ -34,11 +34,31 @@ class KISSSerial(AX25Port):
                                             self._port_param[1],
                                             timeout=0.4,
                                             #write_timeout=0.3
+                                            #dsrdtr=self._port_cfg.get('parm_serial_dtr',      True),
+                                            #rtscts=self._port_cfg.get('parm_serial_rts',      True),
+                                            #xonxoff= self._port_cfg.get('parm_serial_xonxoff',False)
                                             )
-                self.device.dtr      = self._port_cfg.get('parm_serial_dtr',    False)
-                self.device.rts      = self._port_cfg.get('parm_serial_rts',    False)
+                if is_macos():
+                    self.device.dtr      = self._port_cfg.get('parm_serial_dtr',    True)
+                    self.device.rts      = self._port_cfg.get('parm_serial_rts',    True)
+                    self.device.xonxoff  = self._port_cfg.get('parm_serial_xonxoff',False)
+                #self.device.dtr = True
+                #self.device.rts = True
+                #self.device.xonxoff = False
                 #self.device.parity   = self._port_cfg.get('parm_serial_parity', False)
                 #self.device.stopbits = self._port_cfg.get('parm_serial_stopBit', 1)
+                """
+                True
+                True
+                False
+                N
+                1
+                """
+                #print(self.device.dtr)
+                #print(self.device.rts)
+                #print(self.device.xonxoff)
+                #print(self.device.parity)
+                #print(self.device.stopbits)
                 """
                 PARITY_NONE, PARITY_EVEN, PARITY_ODD, PARITY_MARK, PARITY_SPACE = 'N', 'E', 'O', 'M', 'S'
                 STOPBITS_ONE, STOPBITS_ONE_POINT_FIVE, STOPBITS_TWO = (1, 1.5, 2)

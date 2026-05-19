@@ -103,7 +103,7 @@ class PRPProtocolHandler:
         data_to_send = bytearray()
         data_to_send += pack_6bit_int_and_bool(value=int(l3_opt_id), flag1=flag1, flag2=flag2)
         data_to_send += (len(data) + 1).to_bytes(2, 'little')
-        data_to_send += int(seq).to_bytes()
+        data_to_send += int(seq).to_bytes(1, 'big')
         data_to_send += data
         # CRC
         crc = crc16_ccitt(data_to_send)  # 2 Bytes - little
