@@ -94,7 +94,7 @@ class AX25Conn:
         self.rx_tx_buf_guiData = ListBuffer() # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
-        self.LINK_rx_buff:ByteArrayBuffer = ByteArrayBuffer()
+        self.LINK_rx_buff       = ByteArrayBuffer()
         self.is_link            = False
         self.is_link_remote     = False
         self.digi_call          = ''
@@ -354,11 +354,11 @@ class AX25Conn:
         self._l3_state_exec.state_rx_handle(ax25_frame=ax25_frame)
         self.set_T3()
 
-    def prozess_I_frame(self):
+    def process_I_frame(self):
         self.set_T2()
         if self._ns == self.vr:
             self.vr = (self.vr + 1) % 8     # Modulo 8
-            self._recv_data(bytearray(self._frame_payload))
+            self._process_recv_data(bytearray(self._frame_payload))
             self._frame_payload = bytearray()
             self.delUNACK()  # ACKs verarbeiten
             return True
@@ -366,8 +366,8 @@ class AX25Conn:
             # Duplikat oder außerhalb Fenster → stillschweigend ignorieren
             return False
 
-    def _recv_data(self, data: bytearray):
-        """ Called fm self.prozess_I_frame() """
+    def _process_recv_data(self, data: bytearray):
+        """ Called fm self.process_I_frame() """
         # Statistic
         self.rx_byte_count += len(data)
         self.rx_pack_count += 1

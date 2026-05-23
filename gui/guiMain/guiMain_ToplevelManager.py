@@ -19,6 +19,7 @@ from gui.guiMH.guiMH import MHWin
 from gui.guiNewConnWin import NewConnWin
 from gui.guiPriv import PrivilegWin
 from gui.guiRightLevelEditor import RightLevelEditor
+#from gui.guiRoutingTab import RoutingTableWindow
 from gui.plots.guiBBS_fwdPath_Plot import FwdGraph
 from gui.plots.guiPlotPort import PlotWindow
 from gui.prp.guiPRP_remote import PRP_remoteGUI
@@ -270,7 +271,7 @@ class ToplevelManager:
                 self.routingTab_win.close()
                 self.routingTab_win = None
                 return
-        # RoutingTableWindow(self, self._port_handler.get_RoutingTable())
+        #RoutingTableWindow(self._gui_root, self._popt_handler.routingTable)
 
     # ================================
     def destroy_win(self):

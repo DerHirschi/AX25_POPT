@@ -20,7 +20,6 @@ class LiveConnPath(ttk.Frame):
         # self._root_win = root_win
         self._gui_root     = gui_root_cl
         self._lang         = POPT_CFG.get_guiCFG_language()
-        self._channel_id   = gui_root_cl.channel_index
         # ================================
         self._pos            = None
         self._connected_path = {}
@@ -75,29 +74,29 @@ class LiveConnPath(ttk.Frame):
         for digi in path:
             self.change_node(node=digi, ch_id=ch_id)
         self.change_node(node=node, ch_id=ch_id)
-        if ch_id == self._channel_id:
+        if ch_id == self._gui_root.channel_index:
             self.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
         self.reset_last_hop(ch_id=ch_id)
-        if ch_id == self._channel_id:
+        if ch_id == self._gui_root.channel_index:
             #if not POPT_CFG.get_pacman_fix():
             self.update_plot_f_ch(ch_id=ch_id)
 
     # ======================================
     def _reset_btn(self, event=None):
-        self._path_data[self._channel_id] = ({}, 'HOME', int(random.randint(1, 10000)))
-        self._update_Graph(self._channel_id)
+        self._path_data[self._gui_root.channel_index] = ({}, 'HOME', int(random.randint(1, 10000)))
+        self._update_Graph(self._gui_root.channel_index)
 
     def _refresh_btn(self, event=None):
         self._new_seed()
-        self._update_Graph(self._channel_id)
+        self._update_Graph(self._gui_root.channel_index)
 
     def _new_seed(self):
-        path_data, last_hop, seed = self._get_ch_data(self._channel_id)
+        path_data, last_hop, seed = self._get_ch_data(self._gui_root.channel_index)
         seed = random.randint(1, 10000)
-        self._path_data[self._channel_id] = dict(path_data), str(last_hop), int(seed)
+        self._path_data[self._gui_root.channel_index] = dict(path_data), str(last_hop), int(seed)
 
     def _update_Graph(self, ch_id: int):
         # self._init_vars_fm_raw_data()
@@ -113,7 +112,7 @@ class LiveConnPath(ttk.Frame):
     def _update_node_label(self):
         if not self._pos:
             return
-        path_data, last_hop, seed = self._get_ch_data(self._channel_id)
+        path_data, last_hop, seed = self._get_ch_data(self._gui_root.channel_index)
         tmp = []
         for node_name, l_pos in self._pos.items():
             if node_name not in tmp:
@@ -229,7 +228,7 @@ class LiveConnPath(ttk.Frame):
 
     def update_plot_f_ch(self, ch_id: int or None = None):
         if ch_id is None:
-            self._update_Graph(self._channel_id)
+            self._update_Graph(self._gui_root.channel_index)
             return
         self._update_Graph(ch_id)
 

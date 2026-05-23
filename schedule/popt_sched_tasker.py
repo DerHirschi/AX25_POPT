@@ -21,8 +21,8 @@ class PoPTSchedule_Tasker:
             TASK_TYP_APRS_BEACON:   self._start_aprs_BeaconTask,
         }
         self._scheduled_tasks_q = []
-        self.auto_connections = {}      # [AutoConnTask()]
-        self._task_timer_1sec = time.time() + 1
+        self.auto_connections   = {}      # [AutoConnTask()]
+        self._task_timer_1sec   = time.time() + 1
         self._init_beacon_tasks()
         self._init_aprs_beacon_tasks()
 

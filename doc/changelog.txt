@@ -1,4 +1,15 @@
 ###########################################################################################################
+# 2.125.x
+Fixes:
+- "Pacman" Connect Pfad Plot Probleme mit Kanal Index Variable führt zu
+  fehlerhaften Verhalten (z.B. Refresh Button) und Daten.
+
+Optimierung/Änderungen:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.124.x
 Fixes:
 - Sprachen (CZ, PL, PT, IT, RU, UA) nicht auswählbar in 1'st Setup wizard

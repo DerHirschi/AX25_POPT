@@ -3,7 +3,7 @@ import threading
 
 from cli.LocalConverse import LocalConverse
 from ax25.ax25_ports.ax25Multicast import ax25Multicast
-#from ax25.ax25RoutingTable import RoutingTable
+#from ax25.ax25_netrom.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger
 from classes.CLbuffers import ListBuffer
@@ -70,8 +70,8 @@ class PoPTCore(object):
         self._local_conv_obj    = LocalConverse(self)
         #######################################################
         # Init Routing Table
-        # logger.info("PH: Routing Table Init")
-        # self._routingTable      = RoutingTable() # NetRom TODO
+        #logger.info("PH: Routing Table Init")
+        #self._routingTable      = RoutingTable() # NetRom TODO
         #######################################################
         # Init Ports/Devices with Config and running as Thread
         logger.info(f"PH: Port Init Max-Ports {MAX_PORTS}")
@@ -395,6 +395,10 @@ class PoPTCore(object):
     @property
     def userDB(self):
         return self._userDB
+
+    #@property
+    #def routingTable(self):
+    #    return self._routingTable
     ######################
     # GUI Handling
     def set_gui(self, gui=None):

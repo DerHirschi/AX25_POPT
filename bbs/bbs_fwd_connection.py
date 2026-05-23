@@ -326,7 +326,7 @@ class BBSConnection:
         # 2
         if not self._handshake:
             if 'F' not in self._feat_flag:
-                logger.error(f"Feat-Flag no mode F : {self._feat_flag}")
+                logger.error(f"Feat-Flag no mode F (F6FBB Batch forwarding protocol): {self._feat_flag}")
                 self.e      = True
                 self._state = 21
                 return
