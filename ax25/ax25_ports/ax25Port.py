@@ -667,13 +667,13 @@ class AX25Port(object):
         for uid in self.pipes.keys():
             pipe = self.pipes[uid]
             # pipe.tx_crone()
-            for frame in pipe.tx_frame_buf:
+            while not pipe.tx_frame_buf.is_empty:
+                frame = pipe.tx_frame_buf.buffer_read
                 try:
                     self.tx(frame=frame)
                     tr = True
                 except AX25DeviceFAIL as e:
                     raise e
-            pipe.tx_frame_buf = []
         return tr
 
     def _tx_UI_buf(self):

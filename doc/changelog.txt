@@ -5,6 +5,7 @@ Fixes:
   fehlerhaften Verhalten (z.B. Refresh Button) und Daten.
 
 Optimierung/Änderungen:
+- Diverse I/O Buffer Thread Lock hinzugefügt
 
 Neue Implementierungen / Funktionen:
 
