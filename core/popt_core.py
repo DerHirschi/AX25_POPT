@@ -186,6 +186,7 @@ class PoPTCore(object):
             self._mh.save_PortStat()
             self._mh.save_conn_hist()
             self._mh.save_pacman_data()
+            self._mh.save_netplan_data()
         if hasattr(self._gui, 'add_save_all_data_task'):
             self._gui.add_save_all_data_task()
 

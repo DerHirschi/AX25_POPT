@@ -727,8 +727,8 @@ class PoPT_GUI_Main:
     #######################################################################
     #######################################################################
     # Conn Path Plot
-    def add_LivePath_plot(self, node: str, ch_id: int, path=None):
-        self._GuiTasker.add_tasker_q(self.Pacman.add_LivePath_plot_task, (node, ch_id, path))
+    def add_LivePath_plot(self, node: str, ch_id: int, port_id: int, path=None):
+        self._GuiTasker.add_tasker_q(self.Pacman.add_LivePath_plot_task, (node, ch_id, port_id, path))
 
     def resetHome_LivePath_plot(self, ch_id: int):
         self._GuiTasker.add_tasker_q(self.Pacman.resetHome_LivePath_plot_task, ch_id)

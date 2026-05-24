@@ -67,19 +67,19 @@ class LiveConnPath(ttk.Frame):
 
     # ======================================
     def add_LivePath_plot_task(self, arg: tuple):
-        node, ch_id, path = arg
+        node, ch_id, port_id, path = arg
         if path is None:
             path = []
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
         for digi in path:
-            self.change_node(node=digi, ch_id=ch_id)
-        self.change_node(node=node, ch_id=ch_id)
+            self.change_node(node=digi, ch_id=ch_id, port_id=port_id)
+        self.change_node(node=node, ch_id=ch_id, port_id=port_id)
         if ch_id == self._gui_root.channel_index:
             self.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
-        self.reset_last_hop(ch_id=ch_id)
+        self._reset_last_hop(ch_id=ch_id)
         if ch_id == self._gui_root.channel_index:
             #if not POPT_CFG.get_pacman_fix():
             self.update_plot_f_ch(ch_id=ch_id)
@@ -200,7 +200,7 @@ class LiveConnPath(ttk.Frame):
 
     ###############################################
     #
-    def change_node(self, ch_id: int, node: str):
+    def change_node(self, ch_id: int, node: str, port_id: int):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
         if node == last_hop:
             return
@@ -223,11 +223,12 @@ class LiveConnPath(ttk.Frame):
         #self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
         self._mh.set_pacman_ch_data(
             ch_id=ch_id,
-            data=(dict(path_data), str(last_hop), int(seed))
+            data=(dict(path_data), str(last_hop), int(seed)),
+            port_id=port_id
         )
         self._connected_path[ch_id] = list(conn_path)
 
-    def reset_last_hop(self, ch_id: int):
+    def _reset_last_hop(self, ch_id: int):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
         last_hop = 'HOME'
         #self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)

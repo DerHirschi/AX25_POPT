@@ -1424,6 +1424,7 @@ class AX25Conn:
                 SOUND.sprech(speech)
 
                 gui.add_LivePath_plot(node=str(self.to_call_str),
+                                      port_id=int(self.port_id),
                                             ch_id=int(self.ch_index))
                 gui.on_channel_status_change()
             # Maybe it's better to look at the whole string (include last frame)?

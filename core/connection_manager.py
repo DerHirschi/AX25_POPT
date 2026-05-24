@@ -73,7 +73,10 @@ class ConnectionManager:
 
             self._gui().add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
-                                        path=path)
+                                          port_id=connection.port_id,
+                                          path=path,
+
+                                          )
             self._gui().ch_status_update()
             self._gui().conn_btn_update()
         # Conn History

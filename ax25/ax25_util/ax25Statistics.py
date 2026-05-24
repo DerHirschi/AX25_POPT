@@ -12,7 +12,7 @@ from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT, CLI_TYP_DIGI
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
-from classes.CLbuffers import ListBuffer
+from classes.CLbuffers import ListBuffer, LockedDict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
@@ -142,8 +142,8 @@ class MH:
         self._conn_hist             = POPT_CFG.get_conn_hist()  # Connection History / Logbook
         ##################
         # Pacman/Netplan Data
-        self._path_ch_data = {}
-        self._path_data    = ({}, 'HOME', int(random.randint(1, 10000)))
+        self._path_ch_data = LockedDict()
+        self._path_data    = LockedDict()
         ##################
         # Parameter
         self.parm_new_call_alarm    = False
@@ -224,8 +224,12 @@ class MH:
             self._db.PortStat_insert_data(data_struc)
 
     def save_pacman_data(self):
-        logger.info('MH: Save Pacman/Netplan Data')
+        logger.info('MH: Save Pacman Data')
         POPT_CFG.set_pacman_data(dict(self._path_ch_data))
+
+    def save_netplan_data(self):
+        logger.info('MH: Save Netplan Data')
+        POPT_CFG.set_netplan_data(dict(self._path_data))
 
     ###############################
     # Main CFG/PARAM
@@ -237,11 +241,20 @@ class MH:
         self.parm_distance_alarm = mh_cfg.get('parm_distance_alarm', 50)
         self.parm_lastseen_alarm = mh_cfg.get('parm_lastseen_alarm', 1)
         self.parm_alarm_ports = mh_cfg.get('parm_alarm_ports', [])
-        logger.info("MH: loading Pacman/Netplan Data")
+        logger.info("MH: loading Pacman Data")
         path_data = POPT_CFG.get_pacman_data()
         for ch_id, ch_data in path_data.items():
-            path_data, last_hop, seed = ch_data
-            self._path_ch_data[ch_id] = path_data, 'HOME', seed
+            try:
+                path_data, last_hop, seed = ch_data
+                self._path_ch_data[ch_id] = path_data, 'HOME', seed
+            except ValueError:
+                pass
+
+        logger.info("MH: loading Netplan Data")
+        path_data = POPT_CFG.get_netplan_data()
+        for node, path_data in path_data.items():
+            self._path_data[node] = path_data
+
 
     def _save_to_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
@@ -262,6 +275,9 @@ class MH:
 
     #########################
     # Pacman/Netplan
+    def reset_pacman_data(self):
+        self._path_data = LockedDict()
+
     def reset_pacman_ch_data(self, ch_id: int):
         self._path_ch_data[ch_id] = ({}, 'HOME', int(random.randint(1, 10000)))
 
@@ -271,10 +287,25 @@ class MH:
         self._path_ch_data[ch_id] = dict(path_data), str(last_hop), int(seed)
 
     def get_pacman_ch_data(self, ch_id: int):
+        #print(self._path_ch_data[ch_id][0])
         return tuple(self._path_ch_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000)))))
 
-    def set_pacman_ch_data(self, ch_id: int, data: tuple):
+    def set_pacman_ch_data(self, ch_id: int, data: tuple, port_id: int or None = None):
         self._path_ch_data[ch_id] = data
+        #self._path_data.
+        # ======================
+        # NetPlan Data
+        if port_id is None:
+            return
+
+        node_tab: dict = data[0]
+        for node, path in node_tab.items():
+            old_data: list = self._path_data.get(port_id, {}).get(node, [])
+            if path not in old_data:
+                old_data.append(path)
+                if port_id not in self._path_data:
+                    self._path_data[port_id] = {}
+                self._path_data[port_id][node] = old_data
 
     #########################
     # DX Alarm
