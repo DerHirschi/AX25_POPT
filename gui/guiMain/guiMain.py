@@ -358,7 +358,7 @@ class PoPT_GUI_Main:
 
     def save_all_data(self):
         self.monFrame.sysMsg_to_monitor_task('Save all Data')
-        self.Pacman.save_path_data()
+        #self.Pacman.save_path_data()
         self._save_GUIvars()
         self._save_pw_pos()
         self.guiChannels.save_Channel_Vars()
@@ -405,6 +405,7 @@ class PoPT_GUI_Main:
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
+        self.switch_channel(guiCfg.get('gui_parm_channel_index', 1))
 
     def _set_CFG(self):
         self.set_tracer()

@@ -426,7 +426,7 @@ class Main_CFG:
     def set_pacman_data(self, data: dict):
         if not data:
             return
-        self._config['gui_pacman'] = dict(data)
+        self._config['gui_pacman'] = copy.deepcopy(data)
 
     """
     def get_pacman_fix(self):

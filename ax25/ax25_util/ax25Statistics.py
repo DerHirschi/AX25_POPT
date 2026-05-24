@@ -1,4 +1,5 @@
 import copy
+import random
 import time
 from collections import deque
 from datetime import datetime
@@ -17,25 +18,24 @@ from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
 
 class MyHeard:
-    def __init__(self):
-        self.own_call = ''
-        self.to_calls = {}
-        self.last_dest = ''
-        self.route = []
-        self.all_routes = []
-        self.port = ''
-        self.port_id = 0  # Not used yet
-        self.first_seen_port = None
-        self.first_seen = datetime.now()
-        self.last_seen = datetime.now()
-        self.pac_n = 0  # N Packets
-        self.byte_n = 0  # N Bytes
-        self.h_byte_n = 0  # N Header Bytes
-        self.rej_n = 0  # N REJ
-        self.axip_add = '', 0  # IP, Port
-        self.axip_fail = 0  # Fail Counter
-        self.locator = ''
-        self.distance = -1
+    own_call   = ''
+    to_calls   = {}
+    last_dest  = ''
+    route              = []     # Last Route
+    all_routes         = []
+    port               = ''
+    port_id            = 0  # Not used yet
+    first_seen_port    = None
+    first_seen         = datetime.now()
+    last_seen          = datetime.now()
+    pac_n      = 0  # N Packets
+    byte_n     = 0  # N Bytes
+    h_byte_n   = 0  # N Header Bytes
+    rej_n      = 0  # N REJ
+    axip_add   = '', 0  # IP, Port
+    axip_fail  = 0  # Fail Counter
+    locator    = ''
+    distance   = -1
 
 
 def get_dx_tx_alarm_his_pack(
@@ -96,9 +96,9 @@ def get_port_stat_struct():
 
 
 class MH:
-    def __init__(self, port_handler):
+    def __init__(self, popt_handler):
         logger.info("MH: Init")
-        self._port_handler                  = port_handler
+        self._port_handler                  = popt_handler
         self._mh_inp_buffer                 = ListBuffer()
         self.dx_alarm_trigger               = False
         self.last_dx_alarm                  = time.time()
@@ -138,7 +138,13 @@ class MH:
         # History Data
         self._dx_alarm_hist         = []       # For GUI MH
         self.dx_alarm_perma_hist    = {}       # CLI DX List
+        logger.info("MH: loading Conn-History Data")
         self._conn_hist             = POPT_CFG.get_conn_hist()  # Connection History / Logbook
+        ##################
+        # Pacman/Netplan Data
+        self._path_ch_data = {}
+        self._path_data    = ({}, 'HOME', int(random.randint(1, 10000)))
+        ##################
         # Parameter
         self.parm_new_call_alarm    = False
         self.parm_distance_alarm    = 50
@@ -217,6 +223,10 @@ class MH:
             data_struc['port_id'] = port_id
             self._db.PortStat_insert_data(data_struc)
 
+    def save_pacman_data(self):
+        logger.info('MH: Save Pacman/Netplan Data')
+        POPT_CFG.set_pacman_data(dict(self._path_ch_data))
+
     ###############################
     # Main CFG/PARAM
     def _load_fm_cfg(self):
@@ -227,6 +237,11 @@ class MH:
         self.parm_distance_alarm = mh_cfg.get('parm_distance_alarm', 50)
         self.parm_lastseen_alarm = mh_cfg.get('parm_lastseen_alarm', 1)
         self.parm_alarm_ports = mh_cfg.get('parm_alarm_ports', [])
+        logger.info("MH: loading Pacman/Netplan Data")
+        path_data = POPT_CFG.get_pacman_data()
+        for ch_id, ch_data in path_data.items():
+            path_data, last_hop, seed = ch_data
+            self._path_ch_data[ch_id] = path_data, 'HOME', seed
 
     def _save_to_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
@@ -245,6 +260,21 @@ class MH:
         self._db = sql_db
         logger.info("MH: SQL-DB set")
 
+    #########################
+    # Pacman/Netplan
+    def reset_pacman_ch_data(self, ch_id: int):
+        self._path_ch_data[ch_id] = ({}, 'HOME', int(random.randint(1, 10000)))
+
+    def pacman_new_ch_seed_(self, ch_id: int):
+        path_data, last_hop, seed = self.get_pacman_ch_data(ch_id)
+        seed = random.randint(1, 10000)
+        self._path_ch_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+
+    def get_pacman_ch_data(self, ch_id: int):
+        return tuple(self._path_ch_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000)))))
+
+    def set_pacman_ch_data(self, ch_id: int, data: tuple):
+        self._path_ch_data[ch_id] = data
 
     #########################
     # DX Alarm
