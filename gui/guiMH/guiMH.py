@@ -14,6 +14,7 @@ from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, form
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.guiMH.guiAPRS_be_tracer import BeaconTracer
 from gui.guiMH.gui_ConnPath_plot import ConnPathsPlot
+from gui.guiMH.gui_EnhancedConnPathsPlot import EnhancedConnPathsPlot
 
 
 class MHWin(tk.Toplevel):
@@ -129,15 +130,18 @@ class MHWin(tk.Toplevel):
         hi_frame = ttk.Frame(self._tabclt)
         tr_frame = ttk.Frame(self._tabclt)
         co_frame = ttk.Frame(self._tabclt)
+        np_frame = EnhancedConnPathsPlot(self._tabclt, self)
         mh_frame.pack(fill='both', expand=True)
         hi_frame.pack(fill='both', expand=True)
         tr_frame.pack(fill='both', expand=True)
         co_frame.pack(fill='both', expand=True)
+        np_frame.pack(fill='both', expand=True)
 
         self._tabclt.add(mh_frame, text='MH')
         self._tabclt.add(hi_frame, text='DX-Alarm')
         self._tabclt.add(tr_frame, text='APRS-Tracer')
         self._tabclt.add(co_frame, text=self._getTabStr('connection_history'))
+        self._tabclt.add(np_frame, text="Netplan")
 
         # ###################### DX Alarm Settings ######################
         # ALARM

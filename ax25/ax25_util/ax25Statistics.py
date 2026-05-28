@@ -153,6 +153,11 @@ class MH:
         self._load_fm_cfg()
         logger.info("MH: Init Complete")
 
+    # ===========================
+    @property
+    def MH_db(self):
+        return dict(self._MH_db)
+    # ===========================
     def _load_MH_old(self, mh_load):
         if not mh_load:
             return
@@ -289,6 +294,9 @@ class MH:
     def get_pacman_ch_data(self, ch_id: int):
         #print(self._path_ch_data[ch_id][0])
         return tuple(self._path_ch_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000)))))
+
+    def get_netplan_data(self):
+        return copy.deepcopy(dict(self._path_data))
 
     def set_pacman_ch_data(self, ch_id: int, data: tuple, port_id: int or None = None):
         self._path_ch_data[ch_id] = data
