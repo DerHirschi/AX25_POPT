@@ -3,7 +3,7 @@ from tkinter import ttk
 
 from cfg.constant import DEF_QSO_SYSMSG_BG, DEF_QSO_SYSMSG_FG, FONT, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, \
     DEF_STAT_QSO_RX_COL, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, TAG_QSO_PRP_STATUS_RX, \
-    CLR_QSO_PRP_STATUS_RX, SERVICE_CH_START
+    CLR_QSO_PRP_STATUS_RX
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import set_new_tags, set_all_tags
@@ -184,6 +184,7 @@ class QsoFrame(ttk.Frame):
             Ch_var.last_tag_name = my_call
         else:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
+        #print("TX " + tag_name_tx)
 
         if self._gui_root.channel_index == conn.ch_index:
             self._qso_txt.configure(state="normal")
@@ -216,6 +217,7 @@ class QsoFrame(ttk.Frame):
 
         # Write RX Date to Window/Channel Buffer
         Ch_var.output_win += out
+        #Ch_var.output_win = Ch_var.output_win[-50:]
         if my_call_str in self._all_tag_calls:
             tag_name_rx = f'RX-{my_call_str}'
             Ch_var.last_tag_name = my_call_str
@@ -227,6 +229,7 @@ class QsoFrame(ttk.Frame):
             logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
             tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
+        #print("RX " + tag_name_rx)
         if self._gui_root.channel_index == conn.ch_index:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
@@ -270,17 +273,17 @@ class QsoFrame(ttk.Frame):
 
         self._qso_txt.delete('1.0', tk.END)
         self._qso_txt.insert(tk.END, ch_vars.output_win)
-        self._qso_txt.configure(state="disabled")
-        self._qso_txt.see(tk.END)
 
         set_all_tags(self._qso_txt, ch_vars.output_win_tags)
         set_new_tags(self._qso_txt, ch_vars.new_tags)
+        self._qso_txt.configure(state="disabled")
+        self._qso_txt.see(tk.END)
         ch_vars.new_tags = []
 
     # ================================
     def sysMsg_to_qso_task(self, arg: tuple):
         data, ch_index = arg
-        if not data or (1 > ch_index > SERVICE_CH_START - 1):
+        if not data or not ch_index:
             return
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
