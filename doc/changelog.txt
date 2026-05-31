@@ -5,6 +5,7 @@ Fixes:
   fehlerhaften Verhalten (z.B. Refresh Button) und Daten.
 - CLI APRS-Chat.Pakete werden nicht als gedigipeated gekennzeichnet(AX25-Call)
   beim versenden von ACK-Nachrichten
+- CLI-CMD: "PATH" zeigt falsche Daten an (Locator/Distanz)
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt

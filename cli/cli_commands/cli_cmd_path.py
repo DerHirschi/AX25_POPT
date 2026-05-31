@@ -35,14 +35,17 @@ class CliCmdPath(CliModulBase):
 
     def _build_path_output(self, ent, mode="ALL", max_paths=10):
         out = f"\rPATH to {ent.own_call}"
-        if hasattr(ent, 'locator') and ent.locator:
-            out += f" ({ent.locator})"
+        loc = self._user_db.get_locator(ent.own_call)
+        if loc:
+            out += f" ({loc})"
         out += f" — {len(ent.all_routes)} known paths\r\r"
 
         out += f"Last seen: {get_timedelta_CLIstr(ent.last_seen)}   "
         out += f"Port: {ent.port_id}   "
-        if hasattr(ent, 'distance') and ent.distance > 0:
-            out += f"Dist: {int(ent.distance)} km\r\r"
+
+        dist = self._user_db.get_distance(ent.own_call)
+        if dist > 0:
+            out += f"Dist: {int(dist)} km\r\r"
 
         # Sortiere Pfade nach Länge (kürzeste zuerst)
         sorted_routes = sorted(ent.all_routes, key=len)
@@ -63,8 +66,8 @@ class CliCmdPath(CliModulBase):
 
             out += f"{i}. {hops} Hops{marker}\r"
             #out += self._ascii_path_box(path_str, hops)
-            out += path_str + '\r'
-            out += f"   (Last seen: {get_timedelta_CLIstr(ent.last_seen)})\r\r"  # könnte man pro Route verbessern
+            out += path_str + '\r\r'
+            #out += f"   (Last seen: {get_timedelta_CLIstr(ent.last_seen)})\r\r"  # könnte man pro Route verbessern
 
         if len(ent.all_routes) > max_paths:
             out += f"... and {len(ent.all_routes) - max_paths} more Routes\r"
