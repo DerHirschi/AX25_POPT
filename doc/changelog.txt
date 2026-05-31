@@ -8,6 +8,7 @@ Fixes:
 - CLI-CMD: "PATH" zeigt falsche Daten an (Locator/Distanz)
 - Fehlerhafte Zeitformat Konvertierung für UserDB Eintrag
   "last_conn"/letzter connect.
+- QSO Fenster Tags Probleme, wenn alle QSO-Daten gelöscht werden
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
