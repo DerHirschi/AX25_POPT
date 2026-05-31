@@ -200,7 +200,7 @@ class DefaultCLI(object):
             'SYS':      (3, self._BaycomAuth_srv.cmd_baycomSrv_login,  "Sys Login (BaycomAuth)", False),
             'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout", False),
             # ==== Monitor
-            #'MONITOR':  (2, self._CliMonitor.cmd_monitor,               "Monitor [port] +/- [CALL] [CALL] ...", False),
+            'MONITOR':  (2, self._CliMonitor.cmd_monitor,               self._CliMonitor.short_help_str, False),
 
         }
 
@@ -402,13 +402,16 @@ class DefaultCLI(object):
         self.change_cli_state(7)
 
     # TX-Abort-Stuff
-    def _abort_send_out(self):
+    def clear_tx_buffer(self):
         prp = self._prp
         if hasattr(prp, 'cli_abort'):
             prp.cli_abort()
 
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
+
+    def _abort_send_out(self):
+        self.clear_tx_buffer()
         self._connection.send_data((f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
                                     + self.get_ts_prompt()).encode(self._encoding[0], 'ignore'))
 
@@ -431,7 +434,7 @@ class DefaultCLI(object):
             self._parameter = []
             cmd_parts = self._input.split(b' ')
             self._input = cmd_parts[1:] if len(cmd_parts) > 1 else b''
-            self._parameter = self._input
+            self._parameter = [x.strip() for x in cmd_parts[1:]]
             self._cmd = cmd_parts[0].upper().replace(b'\r', b'').replace(b'//', b'')
             return False
 
@@ -452,16 +455,17 @@ class DefaultCLI(object):
         if line_w_cmd.startswith(self.prefix):
             cmd_part = line_w_cmd[len(self.prefix):].split(b' ')
             self._cmd = cmd_part[0].upper().replace(b'\r', b'')
-            self._parameter = cmd_part[1:] if len(cmd_part) > 1 else []
+            self._parameter = [x.strip() for x in cmd_part[1:]]
             self._input = self._parameter
             return True
 
         # If the prefix does not match, treat as user message
         self._parameter = []
-        cmd_parts = self._input.split(b' ', 1)
-        self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
-        self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
-        self._input = self._parameter
+        self._cmd = b''
+        #cmd_parts = self._input.split(b' ', 1)
+        #self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
+        #self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
+        #self._input = self._parameter
         return False
 
     def load_fm_file(self, filename: str):
@@ -778,24 +782,25 @@ class DefaultCLI(object):
 
     def _cmd_ch(self):
         if not self._parameter:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
+
         if len(self._parameter) > 1:
             param = [self._parameter[0], b' '.join(self._parameter[1:])]
         else:
             param: b'' = self._parameter[0]
             param = param.split(b' ', maxsplit=1)
         if len(param) < 2:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
         try:
-            ch_id = int(param[0])
+            ch_id = int(param[0].strip())
         except ValueError:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
 
         all_conn = self._port_handler.get_all_connections()
         if ch_id not in all_conn:
-            return self._getTabStr_CLI('ch_cmd_empty_ch')
+            return self._getTabStr_CLI('ch_cmd_empty_ch') + '\r'
         if ch_id == self._connection.ch_index:
-            return self._getTabStr_CLI('ch_cmd_own_ch')
+            return self._getTabStr_CLI('ch_cmd_own_ch') + '\r'
 
         to_conn = all_conn[ch_id]
         to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')

@@ -1,6 +1,7 @@
-from ax25.ax25_util.ax25monitor import monitor_frame_inp
+from ax25.ax25_util.ax25monitor import cli_monitor_frame_inp
 from cfg.logger_config import logger
 from classes.CLbuffers import LockedDict, ListBuffer
+
 
 
 class CliMonitorManager:
@@ -62,12 +63,10 @@ class CliMonitorManager:
 
                 try:
                     encoding = connection.cli.cli_encoding
-                    mon_str = monitor_frame_inp(packet, dict(
-                        port_name=f'P:{port_id}', # TODO axframe_conf['port_conf']['?port_name?']
+                    flag = f"{'TX' if packet.get('tx', True) else 'RX'}:{port_id}"
+                    mon_str = cli_monitor_frame_inp(packet, dict(
+                        port_name=flag,
                         distance=True,
-                        aprs_dec=False,
-                        nr_dec=False,
-                        hex_out=False,
                         decoding=encoding[0],
                     ))
                     connection.cli.send_output(mon_str, env_vars=False)

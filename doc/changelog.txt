@@ -10,6 +10,8 @@ Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
 
 Neue Implementierungen / Funktionen:
+- CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
+  Monitor Ausgabe über CLI (NODE/SYSOP)
 
 ###########################################################################################################
 ###########################################################################################################

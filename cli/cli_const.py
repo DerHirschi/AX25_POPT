@@ -30,7 +30,9 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                                'DXLIST',
                                'LCSTATUS',
                                'CSTAT',
-                               'RTT',
+                             'CHIST',
+
+                             'RTT',
                                # APRS
                                'ATR',
                                'WX',
@@ -72,7 +74,7 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                      'SYS',
                      'LOGOUT',
                      # ==== Monitor
-                     #'MONITOR',
+                     'MONITOR',
                      ]
 
 CLI_DEF_CMD_NODE =['QUIT',
@@ -138,7 +140,7 @@ CLI_DEF_CMD_NODE =['QUIT',
                                 'SYS',
                                 'LOGOUT',
                      # ==== Monitor
-                     #'MONITOR',
+                     'MONITOR',
                    ]
 
 CLI_DEF_CMD_BOX = ['QUIT',
