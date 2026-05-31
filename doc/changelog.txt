@@ -3,6 +3,8 @@
 Fixes:
 - "Pacman" Connect Pfad Plot Probleme mit Kanal Index Variable führt zu
   fehlerhaften Verhalten (z.B. Refresh Button) und Daten.
+- CLI APRS-Chat.Pakete werden nicht als gedigipeated gekennzeichnet(AX25-Call)
+  beim versenden von ACK-Nachrichten
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt

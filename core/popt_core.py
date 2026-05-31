@@ -2,6 +2,7 @@ from datetime import datetime
 import threading
 
 from cli.LocalConverse import LocalConverse
+from cli.cliMonitorManager import CliMonitorManager
 from ax25.ax25_ports.ax25Multicast import ax25Multicast
 #from ax25.ax25_netrom.ax25RoutingTable import RoutingTable
 from cfg.popt_config import POPT_CFG
@@ -51,7 +52,7 @@ class PoPTCore(object):
         #######################################################
         self._monitor_buffer            = ListBuffer()
         self._remote_monitor_buffer_tx  = []
-        self._remote_monitor_buffer_rx  = []
+        #self._remote_monitor_buffer_rx  = []
         #######################################################
         # Init UserDB
         self._userDB        = USER_DB
@@ -68,6 +69,7 @@ class PoPTCore(object):
         self._scheduled_tasker  = PoPTSchedule_Tasker(self)
         self._mcast_server      = ax25Multicast(self)
         self._local_conv_obj    = LocalConverse(self)
+        self._cliMon_manager    = CliMonitorManager()
         #######################################################
         # Init Routing Table
         #logger.info("PH: Routing Table Init")
@@ -320,9 +322,13 @@ class PoPTCore(object):
     ######################################
     # Monitor Buffer Stuff
     def update_monitor(self, ax25frame_conf: dict):
-        """ Called from AX25Conn """
-        self._monitor_buffer.buffer_write(ax25frame_conf)
-        self._remote_monitor_buffer_tx.append(ax25frame_conf)
+        """ Called from AX25Port """
+        # GUI Monitor
+        self._monitor_buffer.buffer_write(dict(ax25frame_conf))
+        # PRP Monitor
+        #self._remote_monitor_buffer_tx.append(dict(ax25frame_conf))
+        # CLI Monitor
+        self._cliMon_manager.add_mon_to_buffer(dict(ax25frame_conf))
 
     def get_monitor_data(self):
         data = self._monitor_buffer.buffer_read_n(MON_BATCH_TO_PROCESS)
@@ -354,7 +360,8 @@ class PoPTCore(object):
 
     ######################
     # Getta
-    def get_thread_manager(self):
+    @property
+    def thread_manager(self):
         return self._thread_manager
 
     @property
@@ -397,6 +404,10 @@ class PoPTCore(object):
     @property
     def userDB(self):
         return self._userDB
+
+    @property
+    def CliMonManager(self):
+        return self._cliMon_manager
 
     #@property
     #def routingTable(self):

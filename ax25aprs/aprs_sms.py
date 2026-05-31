@@ -198,6 +198,7 @@ class APRSsms:
         for el in msg_list:
             if not el or el == '\n':
                 continue
+            pack['digi'] = digi
             if with_ack:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}" + "{" + f"{int(self._ack_counter)}"
@@ -205,7 +206,7 @@ class APRSsms:
             else:
                 pack['message_text'] = f"{el}"
                 pack['raw_message_text'] = f":{pack['addresse'].ljust(9)}:{el}"
-                self._aprs_main.send_it(dict(pack), digi=digi)
+                self._aprs_main.send_it(dict(pack))
             self._update_gui_aprs_msg_win(pack)
             if not pack.get('is_ack', False):
                 self.aprs_msg_pool['message'].append(dict(pack))

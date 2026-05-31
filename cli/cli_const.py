@@ -71,6 +71,8 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
 
                      'SYS',
                      'LOGOUT',
+                     # ==== Monitor
+                     #'MONITOR',
                      ]
 
 CLI_DEF_CMD_NODE =['QUIT',
@@ -135,6 +137,8 @@ CLI_DEF_CMD_NODE =['QUIT',
                                 # ==== AUTH
                                 'SYS',
                                 'LOGOUT',
+                     # ==== Monitor
+                     #'MONITOR',
                    ]
 
 CLI_DEF_CMD_BOX = ['QUIT',

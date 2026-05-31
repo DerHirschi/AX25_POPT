@@ -24,9 +24,9 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
 
     port_name    = mon_cfg.get('port_name', '')
     dec_distance = mon_cfg.get('distance' , True)
-    dec_aprs     = mon_cfg.get('aprs_dec' , True)
-    dec_nr       = mon_cfg.get('nr_dec'   , True)
-    hex_out      = mon_cfg.get('hex_out'  , True)
+    dec_aprs     = mon_cfg.get('aprs_dec' , False)
+    dec_nr       = mon_cfg.get('nr_dec'   , False)
+    hex_out      = mon_cfg.get('hex_out'  , False)
     decoding     = mon_cfg.get('decoding' , 'Auto')
 
     # port_name   = port_cfg.get('parm_PortName', '')

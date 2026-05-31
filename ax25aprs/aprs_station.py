@@ -263,7 +263,8 @@ class APRSmain(object):
         # === I-Gate IS → RF ===
         new_packet =  self._i_gate.should_gate_to_rf(packet)
         if new_packet is not None:
-            self.send_APRS_as_UI(new_packet, digi=True)  # oder eine eigene _send_igate_to_rf Methode
+            new_packet['digi'] = True
+            self.send_APRS_as_UI(new_packet)  # oder eine eigene _send_igate_to_rf Methode
 
         # datetime.now().strftime('%d/%m/%y %H:%M:%S'),
         self._aprs_process_rx(aprs_pack=packet)
@@ -293,7 +294,8 @@ class APRSmain(object):
         # === DIGI ===
         digi_pack = self._digi.handle_rx(dict(aprs_pack))
         if digi_pack:
-            self.send_APRS_as_UI(digi_pack, digi=True)
+            digi_pack['digi'] = True
+            self.send_APRS_as_UI(digi_pack)
 
         self._aprs_process_rx(aprs_pack=aprs_pack)
 
@@ -324,13 +326,13 @@ class APRSmain(object):
 
     ################################
     # TX
-    def send_it(self, pack, digi=False):
+    def send_it(self, pack):
         if pack['port_id'] == APRS_INET_PORT_ID:
             self._send_APRS_as_AIS(pack)
         else:
-            self.send_APRS_as_UI(pack, digi=digi)
+            self.send_APRS_as_UI(pack)
 
-    def send_APRS_as_UI(self, pack, digi=False):
+    def send_APRS_as_UI(self, pack):
         port_id = pack.get('tx_port', '') or pack.get('port_id', '')
         if not port_id:
             return
@@ -345,6 +347,7 @@ class APRSmain(object):
         msg_text  = pack.get('raw_message_text', '').encode('UTF-8', 'ignore')
         from_call = pack.get('from', '')
         add_str   = f"{APRS_SW_ID}"
+        digi      = pack.get('digi', False)
 
         for elm in path:
             #elm = elm.replace('*', '')

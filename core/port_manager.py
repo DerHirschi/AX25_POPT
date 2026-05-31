@@ -25,7 +25,7 @@ class PortManager:
         self.rx_echo_on         = False
         self._glb_port_blocking = 1
         """ Thread Garbage Collector """
-        self._thread_manager    = popt_handler.get_thread_manager()
+        self._thread_manager    = popt_handler.thread_manager
 
     # =================================
     # Init

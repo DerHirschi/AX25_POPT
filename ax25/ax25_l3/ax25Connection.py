@@ -282,7 +282,12 @@ class AX25Conn:
         #self.cli_type = str(self.cli.cli_name)
 
     # ========= TX
-    def send_data(self, data: bytes, gui_echo=True, file_trans=False, use_prp=True):
+    def send_data(self,
+                  data: bytes,
+                  gui_echo=True,
+                  file_trans=False,
+                  use_prp=False # TODO  use_prp=True / disabled
+                  ):
         """
         Normale Daten von CLI oder GUI(QSO)
         :param data:        bytes = Daten

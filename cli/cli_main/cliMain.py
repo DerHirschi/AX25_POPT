@@ -4,6 +4,7 @@ from UserDB.rights_manager import PRPRightsManager
 from cfg.popt_config import POPT_CFG
 from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
+from cli.cli_commands.cli_cmd_monitor import CliCmdMonitor
 from cli.cli_commands.cli_cmd_path import CliCmdPath
 #from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
@@ -119,6 +120,7 @@ class DefaultCLI(object):
         self._path_cmds       = CliCmdPath(self)
         #self._poker_cmds      = CliCmdPoker(self)
         self._BaycomAuth_srv  = BaycomLoginServer(self)
+        self._CliMonitor      = CliCmdMonitor(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
@@ -196,7 +198,9 @@ class DefaultCLI(object):
             #'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
             # === Baycom Auth
             'SYS':      (3, self._BaycomAuth_srv.cmd_baycomSrv_login,  "Sys Login (BaycomAuth)", False),
-            'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout)", False),
+            'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout", False),
+            # ==== Monitor
+            #'MONITOR':  (2, self._CliMonitor.cmd_monitor,               "Monitor [port] +/- [CALL] [CALL] ...", False),
 
         }
 
@@ -244,6 +248,14 @@ class DefaultCLI(object):
     def user_db_cmds(self):
         return self._user_db_cmds
 
+    @property
+    def AprsChat(self):
+        return self._aprs_chat_cmds
+
+    @property
+    def CliMonitor(self):
+        return self._CliMonitor
+
     ########################################################
     @property
     def connection(self):
@@ -253,9 +265,9 @@ class DefaultCLI(object):
     def popt_handler(self):
         return self._port_handler
 
-    @property
-    def own_port(self):
-        return self._own_port
+    #@property
+    #def own_port(self):
+    #    return self._own_port
 
     @property
     def userDB(self):
@@ -872,6 +884,8 @@ class DefaultCLI(object):
     def cli_conn_cleanup(self):
         # ====== APRS Chat
         self._aprs_chat_cmds.aprs_chat_cleanup()
+        # ====== CLI Monitor
+        self._CliMonitor.cleanup()
 
     ########################################################
     # States

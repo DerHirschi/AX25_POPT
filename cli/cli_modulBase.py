@@ -8,7 +8,7 @@ class CliModulBase:
         self._logTag = f"CLI-{cli_main.cli_name}: "
         # ================================
         self._connection    = cli_main.connection
-        self._own_port      = cli_main.own_port
+        #self._own_port      = cli_main.own_port
         self._popt_handler  = cli_main.popt_handler
         self._user_db       = cli_main.userDB
         self._user_db_ent   = cli_main.userDB_ent

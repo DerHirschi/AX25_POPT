@@ -1068,8 +1068,8 @@ class AX25Port(object):
 
     def _update_monitor(self, ax25frame, tx: bool = True):
         axframe_conf = ax25frame.get_frame_conf()
-        axframe_conf['tx'] = bool(tx)
-        axframe_conf['port'] = int(self.port_id)
+        axframe_conf['tx']        = bool(tx)
+        axframe_conf['port']      = int(self.port_id)
         axframe_conf['port_conf'] = dict(self._port_cfg)
         self._popt_handler.update_monitor(ax25frame_conf=axframe_conf)
 
