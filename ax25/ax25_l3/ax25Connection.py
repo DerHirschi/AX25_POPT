@@ -891,10 +891,10 @@ class AX25Conn:
         return True
 
     def new_digi_connection(self, conn):
-        print(f"Conn newDIGIConn: UID: {conn.uid}")
+        #print(f"Conn newDIGIConn: UID: {conn.uid}")
         logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
-            print("Conn ERROR: newDIGIConn: not conn")
+            #print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
         if self.uid in list(self._popt_handler.connection_manager.link_connections.keys()):

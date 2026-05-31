@@ -1,7 +1,7 @@
 import time
 import tkinter as tk
 from cfg.cfg_fnc import set_obj_att_fm_dict, convert_obj_to_dict
-from cfg.constant import MAX_SYSOP_CH
+from cfg.constant import MAX_SYSOP_CH, SERVICE_CH_START
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import cleanup_tags, get_all_tags
@@ -60,6 +60,8 @@ class GUIChannels:
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
         for ch_id in list(self.channel_vars.keys()):
+            if ch_id >= SERVICE_CH_START:
+                continue
             ch_vars[ch_id] = convert_obj_to_dict(self.channel_vars[ch_id])
             del ch_vars[ch_id]['t2speech_buf']
             del ch_vars[ch_id]['rx_beep_cooldown']

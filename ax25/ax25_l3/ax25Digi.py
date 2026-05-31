@@ -348,7 +348,7 @@ class AX25DigiConnection:
 
     def _check_last_SABM(self):
         if self._state != 2:
-            return False
+            return
         if time.time() - self._last_rx > self._conf_last_rx_fail:
             logger.debug(f'DIGI _check_last_SABM: ABORT')
             self._abort_digi_conn()
@@ -419,7 +419,7 @@ class AX25DigiConnection:
         )):
             return False
         if self._conf_max_n2:
-            if self._rx_conn.n2 > self._conf_max_n2:
+            if self._rx_conn.n2 >= self._conf_max_n2:
                 return True
         if not self._conf_max_buff:
             return False

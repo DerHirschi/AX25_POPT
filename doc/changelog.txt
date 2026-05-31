@@ -11,6 +11,8 @@ Fixes:
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
+- QSO History für Service Kanäle (Kanal >= 11) werden nicht mehr
+  über Programm start hinweg gespeichert. (Zu viel Datenmüll)
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
