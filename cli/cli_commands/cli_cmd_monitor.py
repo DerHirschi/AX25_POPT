@@ -93,9 +93,9 @@ class CliCmdMonitor(CliModulBase):
         call_f = self._mon_cfg['filter_calls']
         excl_f = {True: '-', False: '+'}.get(self._mon_cfg['filter_exclude'], True)
         if not call_f:
-            return f'\r  # Monitor> Port={port}\r'
+            return f'\r # Monitor> Port={port}\r'
 
-        return f"\r  # Monitor> Port={port}  {excl_f}{' '.join(call_f)}\r"
+        return f"\r # Monitor> Port={port}  {excl_f}{' '.join(call_f)}\r"
 
     def _stop_monitor(self):
         self._CliMon_manager.del_subscriber(self._connection)

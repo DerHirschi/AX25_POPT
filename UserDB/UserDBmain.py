@@ -182,8 +182,8 @@ class UserDB:
         for k, db_entry in self.db.items():
             if type(db_entry.last_edit) != str:
                 db_entry.last_edit = conv_time_DE_str(db_entry.last_edit)
-            if type(db_entry.last_conn) == str:
-                db_entry.last_conn = str_to_datetime(db_entry.last_conn)
+            #if type(db_entry.last_conn) == str:
+            #    db_entry.last_conn = str_to_datetime(db_entry.last_conn)
         logger.info("User-DB: Init complete")
 
     def get_entry(self, call_str: str, add_new=True, with_ssid=False):

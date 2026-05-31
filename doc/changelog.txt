@@ -6,6 +6,8 @@ Fixes:
 - CLI APRS-Chat.Pakete werden nicht als gedigipeated gekennzeichnet(AX25-Call)
   beim versenden von ACK-Nachrichten
 - CLI-CMD: "PATH" zeigt falsche Daten an (Locator/Distanz)
+- Fehlerhafte Zeitformat Konvertierung für UserDB Eintrag
+  "last_conn"/letzter connect.
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt

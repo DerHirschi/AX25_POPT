@@ -17,6 +17,7 @@ from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
+from fnc.str_fnc import conv_time_DE_str
 from prp import init_prpAX25L3
 from ax25.ax25_ft.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
@@ -233,7 +234,7 @@ class AX25Conn:
             return
         self.user_db_ent.Connects += 1
         self.last_connect = self.user_db_ent.last_conn
-        self.user_db_ent.last_conn = datetime.now()
+        self.user_db_ent.last_conn = conv_time_DE_str()
         self._encoding    = self.user_db_ent.Encoding
         if self.user_db_ent.Language == -1:
             self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())

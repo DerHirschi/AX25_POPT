@@ -3,7 +3,7 @@ import datetime
 from cfg.constant import VER
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.str_fnc import get_timedelta_CLIstr
+from fnc.str_fnc import get_timedelta_CLIstr, str_to_datetime
 
 """
     $ver = PoPT 2.xxx.x                         - Bake
@@ -180,7 +180,7 @@ def get_lastConnDate(port=None,
     #if type(connection.last_connect) == str:
     #    return connection.last_connect
     try:
-        dt_time = connection.last_connect.strftime('%d/%m/%Y')
+        dt_time = str_to_datetime(connection.last_connect).strftime('%d/%m/%Y')
         return str(dt_time)
     except Exception as ex:
         logger.error(ex)
@@ -193,12 +193,12 @@ def get_lastConnTime(port=None,
                      user_db=None):
     if not connection:
         return '--:--'
-    if not connection.last_connect:
+    if not hasattr(connection, "last_connect"):
         return '--:--'
     #if type(connection.last_connect) == str:
     #    return connection.last_connect
     try:
-        dt_time = connection.last_connect.strftime('%H:%M:%S')
+        dt_time = str_to_datetime(connection.last_connect).strftime('%H:%M:%S')
         return str(dt_time)
     except Exception as ex:
         logger.error(ex)

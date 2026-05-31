@@ -76,7 +76,7 @@ def conv_time_DE_str(dateti=None):
         return dateti
     try:
         if not dateti:
-            return datetime.now().strftime('%d/%m/%y %H:%M:%S')
+            return str(datetime.now().strftime('%d/%m/%y %H:%M:%S'))
         return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
     except Exception as ex:
         logger.error(f"conv_time_DE_str: {ex}")
