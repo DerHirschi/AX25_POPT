@@ -1,7 +1,8 @@
 from ax25.ax25_util.ax25monitor import cli_monitor_frame_inp
 from cfg.logger_config import logger
 from classes.CLbuffers import LockedDict, ListBuffer
-
+from fnc.ax25_fnc import reverse_uid
+from fnc.str_fnc import zeilenumbruch_lines
 
 
 class CliMonitorManager:
@@ -19,16 +20,18 @@ class CliMonitorManager:
 
         while not self._mon_buffer.is_empty:
             packet = self._mon_buffer.buffer_read
-            port_id   = packet.get('port', -1)
-            from_call = packet.get('from_call_str', "")
-            to_call   = packet.get('to_call_str', "")
-            via_calls = packet.get('via_calls_str', [])
+            port_id    = packet.get('port', -1)
+            from_call  = packet.get('from_call_str', "")
+            to_call    = packet.get('to_call_str', "")
+            via_calls  = packet.get('via_calls_str', [])
+            pack_uid   = packet.get('uid', "")
+            pack_uid_r = reverse_uid(pack_uid)
             for uid, data in dict(self._subscriber).items():
                 connection, mon_cfg = data
                 cfg_port  = mon_cfg.get('port_ids', [])
                 cfg_calls = mon_cfg.get('filter_calls', [])
                 cfg_excl  = mon_cfg.get('filter_exclude', False)
-                #cfg_own   = mon_cfg.get('filter_own', True)
+                cfg_own   = mon_cfg.get('filter_own', True)
                 if cfg_port and port_id not in cfg_port:
                     continue
                 if cfg_calls:
@@ -55,11 +58,12 @@ class CliMonitorManager:
                                 and not tr):
                             continue
                 # ==================
-                # Own Packet Filter TODO
-
+                # Own Packet Filter
+                if cfg_own:
+                    if uid == pack_uid or uid == pack_uid_r:
+                        continue
                 # ==================
                 # Send it !!
-
 
                 try:
                     encoding = connection.cli.cli_encoding
@@ -69,7 +73,8 @@ class CliMonitorManager:
                         distance=True,
                         decoding=encoding[0],
                     ))
-                    connection.cli.send_output(mon_str, env_vars=False)
+
+                    connection.cli.send_output(zeilenumbruch_lines(mon_str), env_vars=False)
                 except AttributeError:
                     logger.warning(self._log_tag + "tasker - AttributeError connection.cli.send_output")
                     if not self.del_subscriber(connection):
