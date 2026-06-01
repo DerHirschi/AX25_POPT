@@ -394,7 +394,9 @@ class DefaultCLI(object):
             ret = ret.replace(b'\n', b'\r')
         if all((
                 self.can_sidestop,
-                self._user_db_ent.cli_sidestop)):
+                self._user_db_ent.cli_sidestop,
+                self.state_index == 1
+        )):
             self._send_out_sidestop(ret)
             return
         self._connection.send_data(ret)
@@ -753,6 +755,8 @@ class DefaultCLI(object):
             via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
             vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
 
+        self.cli_conn_cleanup()
+
         conn = self._port_handler.connection_manager.new_outgoing_connection(
                 own_call=self._to_call_str,
                 dest_call=dest_call,
@@ -778,6 +782,7 @@ class DefaultCLI(object):
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
+        self.cli_conn_cleanup()
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
         ret += self.load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
@@ -823,6 +828,7 @@ class DefaultCLI(object):
         return f'\r # {self._getTabStr_CLI("cmd_bell_again")}\r'
 
     def _cmd_conv(self):
+        self.cli_conn_cleanup()
         self.skip_prompt = True
         self._connection.enter_converse_cli()
 
@@ -862,9 +868,6 @@ class DefaultCLI(object):
         ret = self._cron_state_exec[self._crone_state_index]()
         if ret:
             self.send_output(ret, env_vars=False)
-
-    def cli_update_monitor(self, ax25frame_conf:dict):
-        pass
 
     ########################################################
     # == Helper
@@ -914,7 +917,7 @@ class DefaultCLI(object):
             return ''
         self._input = self._raw_input               # TODO Cleanup this VAR mess
         self.send_output(self.exec_cmd(), self._env_var_cmd)
-        self._last_line = self.new_last_line       # TODO Cleanup this VAR mess
+        self._last_line = self.new_last_line        # TODO Cleanup this VAR mess
         return ''
 
     def _s2(self):

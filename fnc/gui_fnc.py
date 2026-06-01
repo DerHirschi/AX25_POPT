@@ -1,5 +1,6 @@
 import random
 from PIL import Image, ImageTk
+from tkinter import ttk
 
 from cfg.constant import CFG_aprs_icon_path
 from cfg.logger_config import logger
@@ -310,4 +311,10 @@ def build_aprs_icon_tab(size=(16, 16)):
         #("\\", ""): get_image(get_path("1-95"), size),
         #("\\", ""): get_image(get_path("1-96"), size),
     }
+
+#################################
+# Tree
+def delete_tree(tree: ttk.Treeview):
+    for i in tree.get_children():
+        tree.delete(i)
 

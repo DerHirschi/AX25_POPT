@@ -12,6 +12,7 @@ from cfg.constant import FONT, APRS_MAX_TREE_ITEMS
 from ax25aprs.aprs_constant import APRS_INET_PORT_ID
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
+from fnc.gui_fnc import delete_tree
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.aprs.guiAPRS_Monitor.guiAPRSmon_BL_Tab import APRSmonBLTree
@@ -237,11 +238,6 @@ class AISmonitor(tk.Toplevel):
 
 
     #############################################################
-    @staticmethod
-    def _del_tree(tree):
-        for i in tree.get_children():
-            tree.delete(i)
-
     def add_to_tree(self, tree_data: tuple, tree, add_to_end=True, auto_scroll=True, replace_ent=False, prio=True):
         self._add_tasker_q("_add_to_tree", (tree_data, tree, add_to_end, auto_scroll, replace_ent), prio=prio)
 
@@ -717,10 +713,10 @@ class AISmonitor(tk.Toplevel):
 
     def _chk_port_filter(self):
         self.text_widget.delete(0.0, tk.END)
-        self._del_tree(tree=self._pack_tree_cl.mon_tree)
-        self._del_tree(tree=self._node_tree_cl.node_tree)
-        self._del_tree(tree=self._obj_tree_cl.obj_tree)
-        self._del_tree(tree=self._wx_tree_cl.wx_tree)
+        delete_tree(tree=self._pack_tree_cl.mon_tree)
+        delete_tree(tree=self._node_tree_cl.node_tree)
+        delete_tree(tree=self._obj_tree_cl.obj_tree)
+        delete_tree(tree=self._wx_tree_cl.wx_tree)
         self.init_ais_mon()
         self._node_tree_cl.node_tree_init()
         self._obj_tree_cl.obj_tree_init()
@@ -730,12 +726,12 @@ class AISmonitor(tk.Toplevel):
         self._call_filter.set(False)
         self.call_filter_calls_var.set('')
         self.text_widget.delete(0.0, tk.END)
-        self._del_tree(tree=self._pack_tree_cl.mon_tree)
-        self._del_tree(tree=self._node_tree_cl.node_tree)
-        self._del_tree(tree=self._obj_tree_cl.obj_tree)
-        self._del_tree(tree=self._wx_tree_cl.wx_tree)
-        self._del_tree(tree=self._igate_mon_cl.own_igate_tree)
-        self._del_tree(tree=self._digi_mon_cl.digi_tree)
+        delete_tree(tree=self._pack_tree_cl.mon_tree)
+        delete_tree(tree=self._node_tree_cl.node_tree)
+        delete_tree(tree=self._obj_tree_cl.obj_tree)
+        delete_tree(tree=self._wx_tree_cl.wx_tree)
+        delete_tree(tree=self._igate_mon_cl.own_igate_tree)
+        delete_tree(tree=self._digi_mon_cl.digi_tree)
         self.init_ais_mon()
         self._node_tree_cl.node_tree_init()
         self._obj_tree_cl.obj_tree_init()
@@ -749,10 +745,10 @@ class AISmonitor(tk.Toplevel):
             if hasattr(self._ais_obj, 'del_ais_rx_buff'):
                 self._ais_obj.del_ais_rx_buff()
             self.text_widget.delete(0.0, tk.END)
-            self._del_tree(tree=self._pack_tree_cl.mon_tree)
-            self._del_tree(tree=self._node_tree_cl.node_tree)
-            self._del_tree(tree=self._obj_tree_cl.obj_tree)
-            self._del_tree(tree=self._wx_tree_cl.wx_tree)
+            delete_tree(tree=self._pack_tree_cl.mon_tree)
+            delete_tree(tree=self._node_tree_cl.node_tree)
+            delete_tree(tree=self._obj_tree_cl.obj_tree)
+            delete_tree(tree=self._wx_tree_cl.wx_tree)
 
     def _scroll_to_end(self):
         if self._autoscroll_var.get():

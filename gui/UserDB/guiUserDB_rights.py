@@ -5,7 +5,6 @@ from tkinter import ttk
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from UserDB.UserDBmain import USER_DB
 from cli.cli_const import CLI_DEF_CMD_ALL
 from fnc.str_fnc import get_strTab
 from prp.prp_const import PRP_FNC_TAB
@@ -24,13 +23,12 @@ class GUI_PRP_Rights(ttk.Frame):
     def __init__(self, frame, user_db_gui):
         super().__init__(frame)
         self._user_db_gui = user_db_gui
-        self._user_db = USER_DB
         self.style_name = user_db_gui.style_name
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
-        self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
+        self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
 
         self._functions_tab = dict(PRP_FNC_TAB)  # Kopie machen!
-        self._functions = sorted(list(set(CLI_DEF_CMD_ALL + list(PRP_FNC_TAB.keys()))))
+        self._functions     = sorted(list(set(CLI_DEF_CMD_ALL + list(PRP_FNC_TAB.keys()))))
 
         # Vordefinierte Levels aus Config
         self._levels = list(POPT_CFG.right_level_tab.keys())
@@ -43,9 +41,9 @@ class GUI_PRP_Rights(ttk.Frame):
         self._load_current()
 
     def _create_widgets(self):
-        self._level_var = tk.StringVar()
+        self._level_var   = tk.StringVar()
         self._blocked_var = tk.BooleanVar()
-        self._pw_var = tk.StringVar()
+        self._pw_var      = tk.StringVar()
         self._show_pw_var = tk.BooleanVar()
 
         main_frame = ttk.LabelFrame(self, text=self._getTabStr('remote_rights'))

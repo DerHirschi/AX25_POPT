@@ -133,6 +133,3 @@ class ConverseCLI(DefaultCLI):
             if self._connection.l3_state_id not in [0, 1, 4]:
                 self._connection.change_l3_state(4)
         return ''
-
-    def cli_update_monitor(self, ax25frame_conf: dict):
-        pass

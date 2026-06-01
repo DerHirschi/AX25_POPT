@@ -10,6 +10,7 @@ from cfg.constant import CFG_TR_DX_ALARM_BG_CLR, CLI_TYP_SYSOP, CLI_TYP_NODE, CL
     CLI_TYP_TASK_FWD
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
+from fnc.gui_fnc import delete_tree
 from fnc.str_fnc import conv_time_DE_str, get_strTab, conv_timestamp_delta, format_number
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.guiMH.guiAPRS_be_tracer import BeaconTracer
@@ -1041,19 +1042,13 @@ class MHWin(tk.Toplevel):
 
         self._map_widget.fit_bounding_box((north_lat, west_lon), (south_lat, east_lon))
     ##########################
-    @staticmethod
-    def _delete_tree(tree: ttk.Treeview):
-        for i in tree.get_children():
-            tree.delete(i)
-
-
     def _reset_mh_list(self):
         if messagebox.askokcancel(title=self._getTabStr('msg_box_mh_delete'),
                                   message=self._getTabStr('msg_box_mh_delete_msg'), parent=self):
             mh = self.get_mh()
             mh.reset_mainMH()
             self._old_mh_data = {}
-            self._delete_tree(self._tree)
+            delete_tree(self._tree)
             self._update_mh()
 
     def _reset_dx_history(self):
@@ -1062,7 +1057,7 @@ class MHWin(tk.Toplevel):
             mh = self.get_mh()
             mh.reset_dxHistory()
             self._old_alarm_his_len = 0
-            self._delete_tree(self._alarm_tree)
+            delete_tree(self._alarm_tree)
             self._update_dx_his()
 
     def _reset_conn_history(self):
@@ -1071,7 +1066,7 @@ class MHWin(tk.Toplevel):
             mh = self.get_mh()
             mh.reset_conn_hist()
             self._old_conn_hist_len = 0
-            self._delete_tree(self._conn_his_tab)
+            delete_tree(self._conn_his_tab)
             self._update_conn_his()
 
     def _reset_tracer_history(self):

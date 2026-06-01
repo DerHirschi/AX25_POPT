@@ -203,7 +203,7 @@ class UserDB(tk.Toplevel):
         tabControl.add(tab2, text=self._getTabStr('settings'))
         tabControl.add(tab3, text=self._getTabStr('passwords'))
         tabControl.add(tab4, text=self._getTabStr('stations'))
-        tabControl.add(tab5, text="PRP Rechte")
+        tabControl.add(tab5, text=self._getTabStr('remote_rights'))
 
         self._rights_tab = GUI_PRP_Rights(tab5, self)
         self._rights_tab.pack(fill="both", expand=True)
