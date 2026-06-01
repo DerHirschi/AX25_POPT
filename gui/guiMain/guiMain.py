@@ -289,6 +289,9 @@ class PoPT_GUI_Main:
         self._load_pw_pos()
 
         #################################
+        self.switch_channel(self.channel_index)
+
+        #################################
         # set GUI Var to Port Handler
         self._popt_handler.set_gui(self)
         #######################
@@ -405,7 +408,8 @@ class PoPT_GUI_Main:
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
-        self.switch_channel(guiCfg.get('gui_parm_channel_index', 1))
+        self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
+        #self.switch_channel(guiCfg.get('gui_parm_channel_index', 1))
 
     def _set_CFG(self):
         self.set_tracer()
