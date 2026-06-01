@@ -7,8 +7,6 @@ CLI_DEF_CMD_ALL = ['?', 'ATR', 'AXIP', 'BELL', 'BWSTAT', 'BYE', 'C!', 'CH', 'CHI
                    'PORT',
                    'PRMAIL', 'PSTAT', 'QTH', 'QUIT', 'R', 'RTT', 'SB', 'SETAXIP', 'SP', 'SR', 'UMLAUT', 'USER', 'VERSION', 'WEB', 'WX', 'ZIP']
 """
-CLI_DEF_CONV_CMD = ['L', 'U', 'H', 'Q']
-
 CLI_DEF_CMD_BASIC = ['QUIT', 'BYE', 'HELP', '?', 'Q']
 
 CLI_DEF_CMD_CONV  = ['L', 'H', 'Q', 'U']
@@ -60,6 +58,7 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                                'OP',
                                'LANG',
                                'UMLAUT',
+                               'ENCODER',
                                #
                                'VERSION',
                                'POPT',
@@ -124,6 +123,7 @@ CLI_DEF_CMD_NODE =['QUIT',
                                'OP',
                                'LANG',
                                'UMLAUT',
+                               'ENCODER',
                                #
                                'VERSION',
                                'POPT',
@@ -190,7 +190,8 @@ CLI_DEF_CMD_BOX = ['QUIT',
                               'OP',
                               'LANG',
                               'UMLAUT',
-                              #
+                   'ENCODER',
+                   #
                               'VERSION',
                               'POPT',
                               #'POKER',
@@ -251,7 +252,8 @@ CLI_DEF_CMD_MCAST = ['QUIT',
                               'OP',
                               'LANG',
                               'UMLAUT',
-                              #
+                     'ENCODER',
+                     #
                               'VERSION',
                               'POPT',
                               'HELP',

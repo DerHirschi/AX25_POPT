@@ -18,6 +18,7 @@ Optimierung/Änderungen:
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
   Monitor Ausgabe über CLI (NODE/SYSOP)
+- CLI-CMD: "ENCODER" Text Encoding setzen mit ENC <opt>
 
 ###########################################################################################################
 ###########################################################################################################

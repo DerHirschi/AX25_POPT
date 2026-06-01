@@ -11,7 +11,7 @@ from cli.cli_commands.cli_cmd_path import CliCmdPath
 from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, CLI_TYP_SYSOP
+from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, CLI_TYP_SYSOP
 from cli.cli_commands.cli_cmd_infos import CliCmdInfos
 from cli.cli_commands.cli_cmd_myHeard import CliCmdMyHeard
 from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
@@ -22,7 +22,7 @@ from cli.cli_main.BaycomLoginServer import BaycomLoginServer
 from cli.cli_main.cliMain_StateManager import CliStateManager
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
-from fnc.str_fnc import get_time_delta, find_decoding, zeilenumbruch_lines, get_strTab, find_eol
+from fnc.str_fnc import get_time_delta, zeilenumbruch_lines, get_strTab, find_eol
 from fnc.ax25_fnc import validate_ax25Call
 from cfg.logger_config import logger
 from prp.prp_const import PRP_OPT_ESC_CLI
@@ -54,7 +54,7 @@ class DefaultCLI(object):
         self._to_call               = self._connection.to_call_str.split('-')[0]
         self._user_db               = self._port_handler.userDB
         self._user_db_ent           = self._connection.user_db_ent
-        self._cli_lang              = self._connection.cli_language
+        #self._cli_lang              = self._connection.cli_language
         self._encoding              = 'UTF-8', 'ignore'
         self._stat_identifier_str   = ''
         if self._user_db_ent:
@@ -62,6 +62,10 @@ class DefaultCLI(object):
             self._stat_identifier_str = self._user_db_ent.software_str
             if self._user_db_ent.CText:
                 self._c_text          = str(self._user_db_ent.CText)
+
+        # ==== Set Default CLI Language
+        if self._user_db_ent.Language == -1:
+            self._user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
 
         # ==== Station Identy
         # == Gegenstation
@@ -95,9 +99,8 @@ class DefaultCLI(object):
         self.rtt_active         = False
 
         self._tx_buffer         = bytearray()   # TODO ThreadLock
-        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
+        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self.cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        # self._user_db_ent.cli_sidestop = 20
         # ============================================
         # Rights Manager
         self.rights_manager  = PRPRightsManager(self._port_handler)
@@ -190,9 +193,10 @@ class DefaultCLI(object):
             'WEB':      (3, self._user_db_cmds.cmd_set_http,        self._getTabStr_CLI('cmd_help_set_http'),   False),
 
             # CLI OPT/ CLI-CFG
-            'OP':       (2, self._cli_cfg_cmds.cmd_op,     self._getTabStr_CLI('cmd_op'),               False),
-            'LANG':     (4, self._cli_cfg_cmds.cmd_lang,   self._getTabStr_CLI('cli_change_language'),  False),
-            'UMLAUT':   (2, self._cli_cfg_cmds.cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'),   False),
+            'OP':       (2, self._cli_cfg_cmds.cmd_op,     self._getTabStr_CLI('cmd_op'),                       False),
+            'LANG':     (4, self._cli_cfg_cmds.cmd_lang,   self._getTabStr_CLI('cli_change_language'),          False),
+            'UMLAUT':   (2, self._cli_cfg_cmds.cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'),           False),
+            'ENCODER':  (3, self._cli_cfg_cmds.cmd_enc,    self._getTabStr_CLI('cli_text_encoding_cmd_help'),   False),
             #
             'HELP':     (1, self._help_cmds.cmd_help,                         self._getTabStr_CLI('help'),        False),
             '?':        (0, self._help_cmds.cmd_shelp,                        self._getTabStr_CLI('cmd_shelp'),   False),
@@ -240,7 +244,6 @@ class DefaultCLI(object):
                 del self._command_set['OP']
         self._baycom_auto_login()
 
-
     def init(self):
         pass
 
@@ -280,10 +283,6 @@ class DefaultCLI(object):
         return self._connection.user_db_ent
 
     @property
-    def cli_lang(self):
-        return self._connection.cli_language
-
-    @property
     def stat_cfg_index_call(self):
         return self._stat_cfg_index_call
 
@@ -308,15 +307,6 @@ class DefaultCLI(object):
 
     def set_input(self, val: bytearray):
         self._input = val
-
-    #######################
-    # CLI Encoding
-    @property
-    def cli_encoding(self):
-        return self._encoding
-
-    def set_cli_encoding(self, encoding_cfg: tuple):
-        self._encoding = tuple(encoding_cfg)
 
     ########################################################
     # State Tab/Index
@@ -345,6 +335,26 @@ class DefaultCLI(object):
         if hasattr(self._connection, 'prp'):
             return self._connection.prp
         return None
+
+    ########################################################
+    # CLI Cfg
+    ################
+    # CLI Encoding
+    @property
+    def cli_encoding(self):
+        return self._encoding
+
+    def set_cli_encoding(self, encoding_cfg: tuple):
+        self._encoding = tuple(encoding_cfg)
+
+    ################
+    # CLI Lang
+    @property
+    def cli_lang(self):
+        return self._user_db_ent.Language
+
+    def set_cli_lang(self, lang_id: int):
+        self._user_db_ent.Language    = int(lang_id)
 
     ##################################
     # Rechte / CMD Update

@@ -6,7 +6,7 @@ from UserDB.UserDBmain import USER_DB
 from cfg.constant import COLOR_MAP
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from cli.cli_const import CLI_DEF_CMD_ALL, CLI_DEF_CONV_CMD
+from cli.cli_const import CLI_DEF_CMD_ALL, CLI_DEF_CMD_CONV
 from fnc.str_fnc import get_strTab
 from prp.prp_const import PRP_FNC_TAB
 
@@ -50,7 +50,7 @@ class RightLevelEditor(tk.Toplevel):
         #self._functions = CLI_DEF_CMD_ALL + list(self._functions_tab.keys())
         self._functions_tab = dict(PRP_FNC_TAB)  # Kopie machen!
         self._functions     = sorted(list(CLI_DEF_CMD_ALL)) + list(PRP_FNC_TAB.keys())
-        self._conv_fncs     = sorted(list(CLI_DEF_CONV_CMD))
+        self._conv_fncs     = sorted(list(CLI_DEF_CMD_CONV))
 
         # Level und Vars
         self._levels = dict(POPT_CFG.right_level_tab)

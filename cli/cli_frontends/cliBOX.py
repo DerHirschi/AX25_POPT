@@ -122,7 +122,7 @@ class BoxCLI(DefaultCLI):
         if self._user_db_ent.bbs_newUser:
             ret += self._getTabStr_CLI('bbs_new_user_reg0')
             for lang, k in LANG_IND.items():
-                if self._cli_lang == k:
+                if self.cli_lang == k:
                     ret += f"{lang}*> {k}\r"
                 else:
                     ret += f"{lang} > {k}\r"
@@ -335,7 +335,7 @@ class BoxCLI(DefaultCLI):
                     ret += '\r'
                     ret += self._getTabStr_CLI('bbs_new_user_reg0')
                     for lang, k in LANG_IND.items():
-                        if self._cli_lang == k:
+                        if self.cli_lang == k:
                             ret += f"{lang}*> {k}\r"
                         else:
                             ret += f"{lang} > {k}\r"
@@ -347,15 +347,14 @@ class BoxCLI(DefaultCLI):
                     ret += '\r'
                     ret += self._getTabStr_CLI('bbs_new_user_reg0')
                     for lang, k in LANG_IND.items():
-                        if self._cli_lang == k:
+                        if self.cli_lang == k:
                             ret += f"{lang}*> {k}\r"
                         else:
                             ret += f"{lang} > {k}\r"
                     ret += '>'
                     self.send_output(ret)
                     return
-                self._cli_lang = lang_opt
-                self._connection.set_user_db_language(self._cli_lang)
+                self.set_cli_lang(lang_opt)
 
             ret = self._getTabStr_CLI('bbs_new_user_reg1')
             if self._user_db_ent.Name:

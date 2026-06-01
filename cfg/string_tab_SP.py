@@ -287,7 +287,13 @@ STR_TABLE_SP = {
     'cli_http_set': ' # HTTP es definida',
     'cli_text_encoding_no_param': 'Ver/Cambiar la codificación de texto actual',
     'cli_text_encoding_error_not_found': " # No se pudo detectar la codificación de texto correcta.",
-    'cli_text_encoding_set': ' # Se detectó/decodificó texto y se estableció en:',
+    'cli_text_encoding_set': ' # Decodificó texto se estableció en:',
+
+    # New - Translated by Google
+    'cli_text_encoding_current': 'Codificador utilizado actualmente',
+    'cli_text_encoding_cmd_help': 'Establecer la codificación de texto con ENC <opt>',
+    # END - Translated by Google
+
     'port_overview': 'Descripción general del puerto',
     'cmd_shelp': 'Ayuda abreviada',
     'time_connected': 'Duración de conexión',
