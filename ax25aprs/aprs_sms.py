@@ -137,7 +137,7 @@ class APRSsms:
                 aprs_pack.get('from', '') in POPT_CFG.get_stat_CFG_keys(),
                 is_cq_call(aprs_pack.get('addresse', ''))
                )):
-            if hasattr(self._port_handler, 'set_aprsMailAlarm_PH'):
+            if hasattr(self._port_handler.api, 'set_aprsMailAlarm_PH'):
                 self._port_handler.api.set_aprsMailAlarm_PH(True)
 
         self._update_gui_aprs_msg_win(aprs_pack)

@@ -11,6 +11,7 @@ Fixes:
 - QSO Fenster Tags Probleme, wenn alle QSO-Daten gelöscht werden
 - Wenn in CLI Paging(Seiten stop) aktiviert ist, funktioniert SYS-Login und
   APRS-Chat nicht korrekt
+- APRS Neue-Mail Alarm (Icons) funktioniert nicht
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
