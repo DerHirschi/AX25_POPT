@@ -10,6 +10,7 @@ from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import conv_time_DE_str, get_strTab, lob_gen
 from gui.MapView.tkMapView_override import SafeTkinterMapView
 from gui.UserDB.guiNewEntry import GUINewUserEntry
+from gui.UserDB.guiUserDB_connHistory import GuiUserDbConnHistory
 from gui.UserDB.guiUserDB_rights import GUI_PRP_Rights
 from gui.guiMsgBoxes import AskMsg
 from gui.gui_classes.guiRightClick_Menu import ContextMenu
@@ -189,7 +190,7 @@ class UserDB(tk.Toplevel):
         filter_ent.pack(side='left', anchor='w', padx=5)
         filter_ent.bind('<KeyRelease>', self._update_tree)
 
-        ##################################
+        ##################################################################
         # tabs
         tabControl = ttk.Notebook(right_f_lower)
         tabControl.pack(fill='both', expand=True)
@@ -198,16 +199,23 @@ class UserDB(tk.Toplevel):
         tab3 = ttk.Frame(tabControl)
         tab4 = ttk.Frame(tabControl)
         tab5 = ttk.Frame(tabControl)
+        tab6 = ttk.Frame(tabControl)
 
         tabControl.add(tab1, text=self._getTabStr('main_page'))
         tabControl.add(tab2, text=self._getTabStr('settings'))
         tabControl.add(tab3, text=self._getTabStr('passwords'))
         tabControl.add(tab4, text=self._getTabStr('stations'))
         tabControl.add(tab5, text=self._getTabStr('remote_rights'))
+        tabControl.add(tab6, text=self._getTabStr('connection_history'))
 
+        # ====== Rights Level Editor Tab 5
         self._rights_tab = GUI_PRP_Rights(tab5, self)
         self._rights_tab.pack(fill="both", expand=True)
         # self.tree.bind('<<TreeviewSelect>>', self.entry_selected)
+
+        # ====== Connection History Tab 6
+        self._conn_history_tab = GuiUserDbConnHistory(tab6, self)
+        self._conn_history_tab.pack(fill="both", expand=True)
         #################################################
         # Entry
         # Name
@@ -507,8 +515,15 @@ class UserDB(tk.Toplevel):
             self._select_entry_fm_key(ent_key)
         self._rights_tab.on_entry_selected()
         self._update_map()
+        self._conn_history_tab.update_conn_his()
         root.toplevel_manager.userdb_win = self
 
+    ######################################################
+    @property
+    def gui_popt_root(self):
+        return self._root_win
+
+    ######################################################
     def _init_RClick_menu(self):
         if self._tree:
             txt_men = ContextMenu(self._tree)
@@ -659,7 +674,7 @@ class UserDB(tk.Toplevel):
             self.current_ent = self._user_db.get_entry(self._selected[-1])
             self._set_var_to_ent()
             self._rights_tab.on_entry_selected()
-
+            self._conn_history_tab.update_conn_his()
             return
         self._clean_ent()
 
