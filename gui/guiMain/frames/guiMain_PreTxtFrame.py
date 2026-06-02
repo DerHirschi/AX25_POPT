@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from cfg.constant import DEF_QSO_SYSMSG_BG, DEF_QSO_SYSMSG_FG, FONT
+from cfg.constant import DEF_QSO_SYSMSG_BG, DEF_QSO_SYSMSG_FG, FONT, PARAM_MAX_PRE_LEN
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import set_all_tags
 
@@ -67,7 +67,15 @@ class PreTxtFrame(ttk.Frame):
         self._inp_txt.delete('1.0', tk.END)
         self._inp_txt.insert(tk.END, ch_vars.input_win[:-1])
         set_all_tags(self._inp_txt, ch_vars.input_win_tags)
+
+
         self._inp_txt.mark_set("insert", ch_vars.input_win_cursor_index)
+
+        # ==== Line Limit
+        self._line_limit()
+
+        ch_vars.input_win = self._inp_txt.get('1.0', 'end-1c')
+
         self._inp_txt.see(tk.END)
 
     # ================================
@@ -96,6 +104,10 @@ class PreTxtFrame(ttk.Frame):
                 self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))
 
+                # ==== Line Limit
+                self._line_limit()
+
+                #ch_vars.input_win = self._inp_txt.get('1.0', 'end-1c')
                 ch_vars.input_win_index = str(self._inp_txt.index(tk.INSERT))
 
                 if '.0' in self._inp_txt.index(tk.INSERT):
@@ -144,3 +156,10 @@ class PreTxtFrame(ttk.Frame):
     # ================================
     def get_inp_txt(self):
         return self._inp_txt
+
+    # ================================
+    def _line_limit(self):
+        # ==== Line Limit
+        lines = int(self._inp_txt.index('end-1c').split('.')[0])
+        if lines > PARAM_MAX_PRE_LEN:
+            self._inp_txt.delete('1.0', f'{lines - PARAM_MAX_PRE_LEN}.0')

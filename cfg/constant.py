@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.125.15'
+VER = '2.125.16'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -14,6 +14,12 @@ GUI_TASKER_Q_RUNTIME = 0.20     # gui._tasker_queue() Runtime until break
 GUI_TASKER_TIME_D_UNTIL_BURN = 0.20 # Max Time-Delta until loop delay   = GUI_TASKER_BURN_DELAY
 GUI_TASKER_BURN_DELAY        = 1    # GUI-loop Delay
 GUI_TASKER_NOT_BURN_DELAY    = 100  # GUI-loop Delay
+""" Zeilen Limits """
+PARAM_MAX_PRE_LEN        = 10000        # Vorschreibfenster
+PARAM_MAX_QSO_LEN        = 10000        # QSO Fenster
+PARAM_MAX_MON_LEN        = 50000        # Monitor
+PARAM_MAX_MON_TREE_ITEMS = 5000         # Monitor Tab
+PARAM_MAX_MON_WIDTH      = 100          # Max Monitor Zeilenlänge
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode
@@ -213,10 +219,7 @@ TXT_INP_CURSOR_CLR       = '#ffffff'
 STAT_BAR_CLR             = 'grey60'
 STAT_BAR_TXT_CLR         = '#000000'
 FONT_STAT_BAR            = 'Arial'
-PARAM_MAX_QSO_LEN        = 50000     # TODO
-PARAM_MAX_MON_LEN        = 100000
-PARAM_MAX_MON_WIDTH      = 100
-PARAM_MAX_MON_TREE_ITEMS = 5000
+
 MON_SYS_MSG_CLR_FG       = 'red'
 MON_SYS_MSG_CLR_BG       = DEFAULT_BG
 CFG_TR_DX_ALARM_BG_CLR   = '#55ed9f'

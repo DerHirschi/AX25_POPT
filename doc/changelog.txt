@@ -16,6 +16,8 @@ Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
 - QSO History für Service Kanäle (Kanal >= 11) werden nicht mehr
   über Programm start hinweg gespeichert. (Zu viel Datenmüll)
+- Zeilen Limit (10.000 Zeilen) für QSO und Vorschreibfenster
+  (50.000 Zeilen für Monitor)
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
