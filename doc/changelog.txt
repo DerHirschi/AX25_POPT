@@ -19,12 +19,14 @@ Optimierung/Änderungen:
   über Programm start hinweg gespeichert. (Zu viel Datenmüll)
 - Zeilen Limit (10.000 Zeilen) für QSO und Vorschreibfenster
   (50.000 Zeilen für Monitor)
+- Sounds (RX-Beep, Bell, ...) überarbeitet
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
   Monitor Ausgabe über CLI (NODE/SYSOP)
 - CLI-CMD: "ENCODER" Text Encoding setzen mit ENC <opt>
 - Verbindungsverlauf in UserDB Fenster (gefilter für jewiligen User)
+- Sounds für neue APRS-Mail(APRS-SMS) & neue Mail (BBS/PMS)
 
 ###########################################################################################################
 ###########################################################################################################

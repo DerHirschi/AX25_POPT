@@ -24,7 +24,7 @@ from gui.guiMain.guiMain_Tasker import GuiTasker
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from cfg.constant import VER, CFG_sound_RX_BEEP, SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+from cfg.constant import VER, SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import get_root_dir
 from fnc.gui_fnc import get_all_tags
@@ -573,7 +573,7 @@ class PoPT_GUI_Main:
                     if ch_vars.rx_beep_opt:
                         if ch_vars.rx_beep_tr:
                             ch_vars.rx_beep_tr = False
-                            SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP)
+                            SOUND.rx_beep_sound()
     # Sound
     ######################################################################
     ######################################################################
@@ -956,6 +956,7 @@ class PoPT_GUI_Main:
 
     def set_aprsMail_alarm_task(self):
         self.Alarm_Frame.set_aprsMail_alarm(True)
+        SOUND.new_aprs_mail_sound()
 
     def reset_aprsMail_alarm(self):
         self._GuiTasker.add_tasker_q(self.reset_aprsMail_alarm_task)
@@ -1004,6 +1005,7 @@ class PoPT_GUI_Main:
         if self.toplevel_manager.MSG_Center_win:
             return
         self.Alarm_Frame.set_pmsMailAlarm(True)
+        SOUND.new_bbs_mail_sound()
 
     def reset_pmsMail_alarm(self):
         self._GuiTasker.add_tasker_q(self.reset_pmsMail_alarm_task)
