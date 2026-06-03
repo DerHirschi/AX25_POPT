@@ -349,7 +349,10 @@ class StatSetTab:
         self._color_example_text = tk.Text(tab_colors,
                                            height=5,
                                            width=50,
-                                           font=('Courier', 11),)
+                                           font=('Courier', 11),
+                                           bg=str(self._qso_bg_tx),
+                                           fg=str(self._qso_fg_tx)
+                                           )
         self._color_example_text.place(x=200, y=10)
         self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
@@ -368,7 +371,10 @@ class StatSetTab:
         self._color_example_text_rx = tk.Text(tab_colors,
                                               height=5,
                                               width=50,
-                                              font=('Courier', 11),)
+                                              font=('Courier', 11),
+                                              bg=str(self._qso_bg_tx),
+                                              fg=str(self._qso_fg_rx)
+                                              )
         self._color_example_text_rx.place(x=200, y=130)
         self._color_example_text_rx.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
