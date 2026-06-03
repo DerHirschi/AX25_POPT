@@ -419,10 +419,7 @@ class StatSetTab:
                       self._stat_call + '/' + \
                       filename
 
-        ret = get_str_fm_file(file_n)
-        if ret is None:
-            return ''
-        return ret
+        return get_str_fm_file(file_n)
 
     def _save_to_file(self, filename: str, data: str):
         file_n = CFG_data_path + \

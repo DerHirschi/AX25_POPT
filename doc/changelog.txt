@@ -15,6 +15,7 @@ Fixes:
 - ScriptError beim Öffnen von APRS-Einstellungen
 - Voreingestellte Farben für QSO Fenster werden nicht in den
   Stations-Einstellungen angezeigt/gesetzt
+- Wenn C-Text Datei nicht vorhanden ist, wird kein Default C-Text gesetzt
 
 Optimierung/Änderungen:
 - Diverse I/O Buffer Thread Lock hinzugefügt
