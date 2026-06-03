@@ -3374,7 +3374,7 @@ STR_TABLE = {
     'connection_history': (
         'Verbindungsverlauf',
         'Connection history',
-        'Verbindingsgeschiedenis',
+        'Verbindings Geschiedenis',
         'Historique des connexions',
         '',
         '',

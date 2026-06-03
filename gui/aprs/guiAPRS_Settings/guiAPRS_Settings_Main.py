@@ -90,6 +90,10 @@ class APRSSettingsMain(tk.Toplevel):
     def popt_handler(self):
         return self._root_win.get_PH_mainGUI()
 
+    @property
+    def popt_main_gui(self):
+        return self._root_win
+
     ################################################
     def _save_cfg(self):
         try:
