@@ -92,6 +92,10 @@ class PRPRightsManager:
         level, custom = self._get_user_level(call_str)
         rights = custom or self._predefined_levels.get(level, self._predefined_levels['guest'])
 
+        # == Generell kein Remote Access
+        if not self.is_remote_access_allowed(call_str):
+            return []
+
         if self._prp_root is None:
             is_logged_in = is_auth
         else:

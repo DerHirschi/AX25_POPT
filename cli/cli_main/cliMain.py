@@ -882,12 +882,19 @@ class DefaultCLI(object):
     def _s0(self):  # C-Text
         ret = self._get_own_identy_str() + '\r'
         ret += self._c_text
+
+        self.change_cli_state(1)
+        # ====== No Remote Access = Disco ....
+        if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+            self.send_output(ret, env_vars=True)
+            self._crone_state_index = 100  # Quit State
+            return ''
+
         ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
             ret += '\r'
             ret += self.get_ts_prompt()
         self.send_output(ret, env_vars=True)
-        self.change_cli_state(1)
         return ''
 
     def _s1(self):

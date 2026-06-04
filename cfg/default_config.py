@@ -42,7 +42,7 @@ def getNew_port_cfg():
         parm_PortParm = ('', 0),    # (IP, Port) | (Serial-Device, Baud)
 
         parm_TXD = 400,  # TX Delay for RTT Calculation  !! Need to be high on AXIP for T1 calculation
-        # Srial Device Parameter
+        # Serial Device Parameter
         parm_serial_rts        = True,
         parm_serial_dtr        = True,
         parm_serial_xonxoff    = False,
@@ -54,8 +54,8 @@ def getNew_port_cfg():
         parm_kiss_init_cmd     = [(TNC_KISS_CMD,     True)],
         parm_kiss_end_cmd      = [(TNC_KISS_CMD_END, False)],
         parm_kiss_TXD          = 30,
-        parm_kiss_Pers         = 160,
-        parm_kiss_Slot         = 30,
+        parm_kiss_Pers         = 80,
+        parm_kiss_Slot         = 50,
         parm_kiss_Tail         = 15,
         parm_kiss_F_Duplex     = 0,
         parm_kiss_channel      = 0,

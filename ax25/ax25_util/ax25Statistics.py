@@ -260,7 +260,6 @@ class MH:
         for node, path_data in path_data.items():
             self._path_data[node] = path_data
 
-
     def _save_to_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
         mh_cfg['dx_alarm_hist'] = list(self._dx_alarm_hist)
@@ -346,12 +345,20 @@ class MH:
             lb_msg_2 = f"DX-ALARM: {ent.own_call} - Route: {'>'.join(ent.route)}"
             LOG_BOOK.info(lb_msg_2)
 
+    def is_dx_alarm_f_call(self, call: str):
+        return bool(call in self._dx_alarm_hist)
+
     def reset_dx_alarm_his(self):
         self._dx_alarm_hist     = []
         self.dx_alarm_trigger   = False
 
-    def is_dx_alarm_f_call(self, call: str):
-        return bool(call in self._dx_alarm_hist)
+    def reset_dxHistory(self):
+        self.dx_alarm_trigger = False
+        self._dx_alarm_hist = []  # For GUI MH
+        self.dx_alarm_perma_hist = {}  # CLI DX List
+
+    def get_dx_alarm_perma_his(self):
+        return self.dx_alarm_perma_hist
 
     #########################
     # Connection History
@@ -466,6 +473,7 @@ class MH:
         self._lock = False
         return True
 
+    #===================================================
     def mh_input(self, ax25frame_conf, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
@@ -481,6 +489,7 @@ class MH:
 
     def _mh_inp(self, data, digi=''):
         # TODO Again !
+        #  - _check_dx_alarm()
         # inp
         org_port_id = data['port_id']
         primary_port_id = data['primary_port_id']
@@ -580,6 +589,7 @@ class MH:
             USER_DB.set_typ(call_str=digi, add_new=False, typ=CLI_TYP_DIGI)
         elif last_digi:
             self._mh_inp(data, last_digi)
+    #===================================================
 
     def get_dualPort_lastRX(self, call: str, port_id: int):
         if not call:
@@ -760,12 +770,5 @@ class MH:
         self._dx_alarm_hist = []  # For GUI MH
         self.dx_alarm_perma_hist = {}  # CLI DX List
 
-    def reset_dxHistory(self):
-        self.dx_alarm_trigger = False
-        self._dx_alarm_hist = []  # For GUI MH
-        self.dx_alarm_perma_hist = {}  # CLI DX List
-
-    def get_dx_alarm_perma_his(self):
-        return self.dx_alarm_perma_hist
 # MH_LIST = MH()
 

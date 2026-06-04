@@ -85,6 +85,7 @@ class BoxCLI(DefaultCLI):
         )):
             logger.error(self._logTag + "_s0: No BBS !!")
             self.change_cli_state(2)
+            self._crone_state_index = 100  # Quit State
             return "\r\r # BBS Error !! \r\r"
 
         pms_cfg: dict = bbs.get_pms_cfg()
@@ -113,6 +114,9 @@ class BoxCLI(DefaultCLI):
             # == Senden
             ret = bbs_id_flag + '\r'
             self.send_output(ret + self.get_ts_prompt(), env_vars=True)
+            # ====== No Remote Access = Disco ....
+            if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+                self._crone_state_index = 100  # Quit State
             return ''
 
         ret += self._c_text
@@ -129,6 +133,7 @@ class BoxCLI(DefaultCLI):
             ret += '>'
             #ret += self._getTabStr('bbs_new_user_reg1')
             self._user_db_ent.bbs_newUser = False
+
             self.change_cli_state(9)
             self.can_sidestop = False
             self.send_output(ret, env_vars=True)
@@ -139,6 +144,17 @@ class BoxCLI(DefaultCLI):
                                                                             datetime.now().strftime('%d/%m/%y %H:%M:%S')
                                                                             )
             )
+            # ====== No Remote Access = Disco ....
+            if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+                self._crone_state_index = 100  # Quit State
+                self.change_cli_state(1)
+
+            return ''
+
+        # ====== No Remote Access = Disco ....
+        if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+            self.send_output(ret, env_vars=True)
+            self._crone_state_index = 100  # Quit State
             return ''
 
         # New APRS Msg Noty

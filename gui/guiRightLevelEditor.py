@@ -25,7 +25,7 @@ class RightLevelEditor(tk.Toplevel):
         parent.toplevel_manager.right_level_win = self
 
         win_width  = 1000
-        win_height = 700
+        win_height = 650
         self.style = parent.style
         self.style_name = parent.style_name
         self.title(self._getTabStr("right_level_editor_title"))
@@ -90,9 +90,10 @@ class RightLevelEditor(tk.Toplevel):
 
         # Erweiterte Rechte nur mit Login
         self._login_required_var = tk.BooleanVar(value=self._glb_rights.get('login_required_for_extended', True))
-        ttk.Checkbutton(grid, text=self._getTabStr('allow_remote_access'),
-                        variable=self._login_required_var,
-                        command=self._save_glb_rights).grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
+        #ttk.Checkbutton(grid,
+        #                text='Erweiterte Rechte nur mit Login', # TODO StringTab
+        #                variable=self._login_required_var,
+        #                command=self._save_glb_rights).grid(row=2, column=0, columnspan=2, sticky="w", pady=5)
 
         # Globale Blockliste
         #ttk.Label(grid, text="Globale Blockliste (Calls, kommagetrennt):").grid(row=3, column=0, sticky="w", pady=(15,5))

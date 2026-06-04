@@ -24,6 +24,8 @@ Optimierung/Änderungen:
 - Zeilen Limit (10.000 Zeilen) für QSO und Vorschreibfenster
   (50.000 Zeilen für Monitor)
 - Sounds (RX-Beep, Bell, ...) überarbeitet
+- Wenn Remote-Rechte gesperrt (User bezogen oder global) wird die Verbindung
+  beendet nach dem Senden des C-Textes
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)

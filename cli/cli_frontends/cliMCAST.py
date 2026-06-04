@@ -53,6 +53,11 @@ class MCastCLI(DefaultCLI):
         self._state_index = 1
         out =  self._get_own_identy_str() + '\r'
         out += self._c_text
+        # ====== No Remote Access = Disco ....
+        if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+            self.send_output(out, env_vars=True)
+            self._crone_state_index = 100  # Quit State
+            return ''
         out += f"\r{self._cmd_mcast_channels()}"
         out += f"\r # {self._register_mcast_member()}\r" # TODO Extra CMD etc.
         out += self.get_ts_prompt()
