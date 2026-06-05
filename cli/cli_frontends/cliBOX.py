@@ -145,17 +145,17 @@ class BoxCLI(DefaultCLI):
                                                                             )
             )
             # ====== No Remote Access = Disco ....
-            if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
-                self._crone_state_index = 100  # Quit State
-                self.change_cli_state(1)
+            #if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+            #    self._crone_state_index = 100  # Quit State
+            #    self.change_cli_state(1)
 
             return ''
 
         # ====== No Remote Access = Disco ....
-        if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
-            self.send_output(ret, env_vars=True)
-            self._crone_state_index = 100  # Quit State
-            return ''
+        #if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+        #    self.send_output(ret, env_vars=True)
+        #    self._crone_state_index = 100  # Quit State
+        #    return ''
 
         # New APRS Msg Noty
         ret += self._aprs_chat_cmds.aprs_cText_noty()

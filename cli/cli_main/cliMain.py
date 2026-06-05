@@ -885,10 +885,10 @@ class DefaultCLI(object):
 
         self.change_cli_state(1)
         # ====== No Remote Access = Disco ....
-        if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
-            self.send_output(ret, env_vars=True)
-            self._crone_state_index = 100  # Quit State
-            return ''
+        #if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+        #    self.send_output(ret, env_vars=True)
+        #    self._crone_state_index = 100  # Quit State
+        #    return ''
 
         ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
