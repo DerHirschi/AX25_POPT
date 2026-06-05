@@ -21,7 +21,6 @@ class AX25Port(object):
         #self.port_w_dog = time.time()   # Debuging
         self._popt_handler              = popt_handler
         self._loop_watchdog             = time.time()
-        self._loop_is_running           = self._popt_handler.is_running
         self.ende                       = False
         self.device                     = None
         self.device_is_running          = False
@@ -103,7 +102,12 @@ class AX25Port(object):
                 logger.info(f"  Master Port   : {self._port_cfg.get('parm_kiss_multi_master', 0)}")
         logger.info("═" * 60)
 
+    # ====================================
+    @property
+    def _loop_is_running(self):
+        return self._popt_handler.is_running
 
+    # ====================================
     def init(self):
         pass
 

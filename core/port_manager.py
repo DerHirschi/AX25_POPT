@@ -18,7 +18,6 @@ class PortManager:
     def __init__(self, popt_handler):
         logger.info("PortManager: Init")
         self._popt_handler  = popt_handler
-        self.is_running     = popt_handler.is_running
         """ PoPT Ports """
         self.ax25_ports         = {}
         self.rx_echo            = {}
@@ -27,6 +26,9 @@ class PortManager:
         """ Thread Garbage Collector """
         self._thread_manager    = popt_handler.thread_manager
 
+    #@property
+    #def _is_running(self):
+    #    return self._popt_handler.is_running
     # =================================
     # Init
     def init_port(self, port_id: int):

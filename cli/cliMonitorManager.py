@@ -113,7 +113,7 @@ class CliMonitorManager:
 
         uid = connection.uid
         if uid not in self._subscriber:
-            logger.warning(self._log_tag + f"del_subscriber - uid({uid}) not in self._subscriber")
+            # logger.warning(self._log_tag + f"del_subscriber - uid({uid}) not in self._subscriber")
             return False
 
         del self._subscriber[uid]

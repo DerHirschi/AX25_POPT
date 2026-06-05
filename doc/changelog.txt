@@ -26,6 +26,8 @@ Optimierung/Änderungen:
 - Sounds (RX-Beep, Bell, ...) überarbeitet
 - Wenn Remote-Rechte gesperrt (User bezogen oder global) wird die Verbindung
   beendet nach dem Senden des C-Textes
+- Portugisische Übersetzung bearbeitet/vervollständigt von
+  CT1DRB(HAM) David.
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
