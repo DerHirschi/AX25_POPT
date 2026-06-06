@@ -3,7 +3,7 @@ from tkinter import ttk
 
 from cfg.constant import DEF_QSO_SYSMSG_BG, DEF_QSO_SYSMSG_FG, FONT, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, \
     DEF_STAT_QSO_RX_COL, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, TAG_QSO_PRP_STATUS_RX, \
-    CLR_QSO_PRP_STATUS_RX, SERVICE_CH_START
+    CLR_QSO_PRP_STATUS_RX, PARAM_MAX_QSO_LEN
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import set_new_tags, set_all_tags
@@ -175,7 +175,7 @@ class QsoFrame(ttk.Frame):
         inp = tk_filter_bad_chars(inp)
 
         Ch_var = self._gui_root.get_ch_var(ch_index=conn.ch_index)
-        Ch_var.output_win += inp
+        # Ch_var.output_win += inp
         if my_call_str in self._all_tag_calls:
             tag_name_tx = f'TX-{my_call_str}'
             Ch_var.last_tag_name = my_call_str
@@ -184,21 +184,29 @@ class QsoFrame(ttk.Frame):
             Ch_var.last_tag_name = my_call
         else:
             tag_name_tx = f'TX-{Ch_var.last_tag_name}'
+        #print("TX " + tag_name_tx)
 
         if self._gui_root.channel_index == conn.ch_index:
             self._qso_txt.configure(state="normal")
+
             ind = self._qso_txt.index('end-1c')
             self._qso_txt.insert('end', inp)
             ind2 = self._qso_txt.index('end-1c')
             if tag_name_tx:
                 self._qso_txt.tag_add(tag_name_tx, ind, ind2)
+
+            # ==== Line Limit
+            self._qso_line_limit()
+
             self._qso_txt.configure(state="disabled",
                                    exportselection=True
                                    )
+            Ch_var.output_win = self._qso_txt.get('1.0', 'end-1c')
             # TODO Autoscroll
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
         else:
+            Ch_var.output_win += inp
             if tag_name_tx:
                 Ch_var.new_tags.append(
                     (tag_name_tx, len(inp))
@@ -215,7 +223,8 @@ class QsoFrame(ttk.Frame):
         out = tk_filter_bad_chars(out)
 
         # Write RX Date to Window/Channel Buffer
-        Ch_var.output_win += out
+        # Ch_var.output_win += out
+        #Ch_var.output_win = Ch_var.output_win[-50:]
         if my_call_str in self._all_tag_calls:
             tag_name_rx = f'RX-{my_call_str}'
             Ch_var.last_tag_name = my_call_str
@@ -227,11 +236,13 @@ class QsoFrame(ttk.Frame):
             logger.error(f"Conn: last Tag: {Ch_var.last_tag_name}")
             tag_name_rx = f'RX-{Ch_var.last_tag_name}'
 
+        #print("RX " + tag_name_rx)
         if self._gui_root.channel_index == conn.ch_index:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
 
             self._qso_txt.configure(state="normal")
+
             # configuring a tag called start
             ind = self._qso_txt.index('end-1c')
             self._qso_txt.insert('end', out)
@@ -239,9 +250,13 @@ class QsoFrame(ttk.Frame):
             if tag_name_rx:
                 self._qso_txt.tag_add(tag_name_rx, ind, ind2)
 
+            # ==== Line Limit
+            self._qso_line_limit()
+
             self._qso_txt.configure(state="disabled",
                                    exportselection=True
                                    )
+            Ch_var.output_win = self._qso_txt.get('1.0', 'end-1c')
             # TODO Autoscroll
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index(tk.INSERT)) < 15 or Ch_var.autoscroll:
                 self.see_end_qso_win()
@@ -255,6 +270,8 @@ class QsoFrame(ttk.Frame):
                     conn.to_call_str,
                     out.replace('\n', '')
                 )
+
+            Ch_var.output_win += out
             if tag_name_rx:
                 Ch_var.new_tags.append(
                     (tag_name_rx, len(out))
@@ -270,24 +287,29 @@ class QsoFrame(ttk.Frame):
 
         self._qso_txt.delete('1.0', tk.END)
         self._qso_txt.insert(tk.END, ch_vars.output_win)
-        self._qso_txt.configure(state="disabled")
-        self._qso_txt.see(tk.END)
 
         set_all_tags(self._qso_txt, ch_vars.output_win_tags)
         set_new_tags(self._qso_txt, ch_vars.new_tags)
+        # ==== Line Limit
+        self._qso_line_limit()
+        ch_vars.output_win = self._qso_txt.get('1.0', 'end-1c')
+
+
+        self._qso_txt.configure(state="disabled")
+        self._qso_txt.see(tk.END)
         ch_vars.new_tags = []
 
     # ================================
     def sysMsg_to_qso_task(self, arg: tuple):
         data, ch_index = arg
-        if not data or (1 > ch_index > SERVICE_CH_START - 1):
+        if not data or not ch_index:
             return
         data = data.replace('\r', '')
         data = f"\n    <{conv_time_DE_str()}>\n" + data + '\n'
         data = tk_filter_bad_chars(data)
         ch_vars = self._gui_root.get_ch_var(ch_index=ch_index)
         tag_name = 'SYS-MSG'
-        ch_vars.output_win += data
+        # ch_vars.output_win += data
         if self._gui_root.channel_index == ch_index:
             tr = False
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
@@ -298,13 +320,20 @@ class QsoFrame(ttk.Frame):
             self._qso_txt.insert('end', data)
             ind2 = self._qso_txt.index(tk.INSERT)
             self._qso_txt.tag_add(tag_name, ind, ind2)
+
+            # ==== Line Limit
+            self._qso_line_limit()
+
             self._qso_txt.configure(state="disabled",
                                    exportselection=True
                                    )
+            ch_vars.output_win = self._qso_txt.get('1.0', 'end-1c')
+
             if tr or self._gui_root.get_ch_var().autoscroll:
                 self.see_end_qso_win()
 
         else:
+            ch_vars.output_win += data
             ch_vars.new_tags.append(
                 (tag_name, len(data))
             )
@@ -351,3 +380,10 @@ class QsoFrame(ttk.Frame):
     # ================================
     def get_qso_txt(self):
         return self._qso_txt
+
+    # ================================
+    def _qso_line_limit(self):
+        # ==== Line Limit
+        lines = int(self._qso_txt.index('end-1c').split('.')[0])
+        if lines > PARAM_MAX_QSO_LEN:
+            self._qso_txt.delete('1.0', f'{lines - PARAM_MAX_QSO_LEN}.0')

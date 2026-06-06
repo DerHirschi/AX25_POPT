@@ -24,7 +24,7 @@ Currently under development, tested on Python 3.11, it runs on Windows, Linux, M
 Raspberry Pi.
 
 ### Requirements
-- Python 3.6 or higher (other versions such as 3.11 see below)
+- Python 3.8 or higher (other versions such as 3.11 see below)
 - Supported Platforms: Windows, Linux, Raspberry Pi, MacOS
 
 ## Install on Linux (including Raspberry Pi)
@@ -167,10 +167,10 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 - Dutch   (Thanks to (NL1NOD (CB-Call)) Patrick for the Dutch translation)
 - French  (Thanks to ClaudeMa)
 - Spanish (Thanks to EA2SPS(HAM-Call) Santi for the Spanish translation)
+- Portuguese (Thanks to CT1DRB(HAM-Call) David for the Portuguese translation)
   #### Partial translated (AI-Generated) (Fallback to English)
   - Czech
   - Polish
-  - Portuguese
   - Italian
   - Russian
   - Ukrainian

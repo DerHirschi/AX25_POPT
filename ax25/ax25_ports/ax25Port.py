@@ -10,6 +10,7 @@ from ax25.ax25_l3.ax25Connection import AX25Conn
 from ax25.ax25_l2.ax25dec_enc import AX25Frame, bytearray2hexstr
 from cfg.popt_config import POPT_CFG
 from cfg.logger_config import logger, LOG_BOOK
+from classes.CLbuffers import ListBuffer
 from fnc.ax25_fnc import reverse_uid, is_digipeated_pre_digi
 from ax25.ax25Error import AX25EncodingERROR, AX25DecodingERROR, AX25DeviceERROR, AX25DeviceFAIL
 
@@ -20,7 +21,7 @@ class AX25Port(object):
         #self.port_w_dog = time.time()   # Debuging
         self._popt_handler              = popt_handler
         self._loop_watchdog             = time.time()
-        self._loop_is_running           = self._popt_handler.is_running
+        self._loop_is_running           = bool(self._popt_handler.is_running)
         self.ende                       = False
         self.device                     = None
         self.device_is_running          = False
@@ -49,10 +50,10 @@ class AX25Port(object):
         # self.digi_calls = self._port_cfg.parm_Digi_calls
         self._parm_digi_TXD = self._port_cfg.get('parm_TXD', 400) * 4  # TODO add to Settings GUI
         self._digi_TXD      = time.time()
-        self._digi_buf      = []         # RX/TX
+        self._digi_buf      = ListBuffer()     # RX/TX
         """ """
         self._digi_connections  = {}
-        self._unProto_buf       = []           # TX
+        self._unProto_buf       = ListBuffer() # TX
         self.pipes              = {}
         self.connections        = {}
         #############
@@ -102,7 +103,7 @@ class AX25Port(object):
                 logger.info(f"  Master Port   : {self._port_cfg.get('parm_kiss_multi_master', 0)}")
         logger.info("═" * 60)
 
-
+    # ====================================
     def init(self):
         pass
 
@@ -334,7 +335,7 @@ class AX25Port(object):
             # if call.call_str in self.digi_calls:
             if POPT_CFG.get_digi_is_enabled(call.call_str):
                 if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
-                    self._digi_buf.append(ax25_frame)
+                    self._digi_buf.buffer_write(ax25_frame)
                     logger.debug(f"Simple DIGI: {ax25_frame.get_frame_conf()}")
                     # self.set_digi_TXD()
                     return True
@@ -488,7 +489,7 @@ class AX25Port(object):
 
     def add_frame_to_digiBuff(self, ax25frame):
         # print(f"Add DIGI-BUFF: {ax25frame}")
-        self._digi_buf.append(ax25frame)
+        self._digi_buf.buffer_write(ax25frame)
 
     #################################################
     # Multi Channel TNC/KISS
@@ -666,41 +667,43 @@ class AX25Port(object):
         for uid in self.pipes.keys():
             pipe = self.pipes[uid]
             # pipe.tx_crone()
-            for frame in pipe.tx_frame_buf:
+            while not pipe.tx_frame_buf.is_empty:
+                frame = pipe.tx_frame_buf.buffer_read
                 try:
                     self.tx(frame=frame)
                     tr = True
                 except AX25DeviceFAIL as e:
                     raise e
-            pipe.tx_frame_buf = []
         return tr
 
     def _tx_UI_buf(self):
-        tr = False
-        for fr in self._unProto_buf:
+        if self._unProto_buf.is_empty:
+            return False
+
+        n = 0
+        max_frame = self._port_cfg.get('parm_MaxFrame', 2)
+        while not self._unProto_buf.is_empty and n < max_frame:
+            fr = self._unProto_buf.buffer_read
             try:
                 self.tx(frame=fr)
-                tr = True
             except AX25DeviceFAIL as e:
                 raise e
-            # Monitor
-            # self._gui_monitor(ax25frame=fr, tx=True)
-        self._unProto_buf = []
-        return tr
+        return True
 
     def _tx_digi_buf(self):
-        tr = False
-        if time.time() > self._digi_TXD:
-            for fr in self._digi_buf:
-                try:
-                    self.tx(frame=fr)
-                    tr = True
-                except AX25DeviceFAIL as e:
-                    raise e
-                # Monitor
-                # self._gui_monitor(ax25frame=fr, tx=True)
-            self._digi_buf = []
-        return tr
+        if self._digi_buf.is_empty or time.time() < self._digi_TXD:
+            return False
+
+        n = 0
+        max_frame = self._port_cfg.get('parm_MaxFrame', 2)
+        while not self._digi_buf.is_empty and n < max_frame:
+            fr = self._digi_buf.buffer_read
+            try:
+                self.tx(frame=fr)
+            except AX25DeviceFAIL as e:
+                raise e
+            n += 1
+        return True
 
     def _tx_rxecho_buf(self):
         tr = False
@@ -1029,7 +1032,7 @@ class AX25Port(object):
         except AX25EncodingERROR:
             return False
         else:
-            self._unProto_buf.append(frame)
+            self._unProto_buf.buffer_write(frame)
             return True
 
     def send_DM_frame(self, ax25_frame_cfg: dict):
@@ -1053,7 +1056,7 @@ class AX25Port(object):
         except AX25EncodingERROR:
             return False
         else:
-            self._unProto_buf.append(frame)
+            self._unProto_buf.buffer_write(frame)
             return True
 
     #################################################
@@ -1065,8 +1068,8 @@ class AX25Port(object):
 
     def _update_monitor(self, ax25frame, tx: bool = True):
         axframe_conf = ax25frame.get_frame_conf()
-        axframe_conf['tx'] = bool(tx)
-        axframe_conf['port'] = int(self.port_id)
+        axframe_conf['tx']        = bool(tx)
+        axframe_conf['port']      = int(self.port_id)
         axframe_conf['port_conf'] = dict(self._port_cfg)
         self._popt_handler.update_monitor(ax25frame_conf=axframe_conf)
 

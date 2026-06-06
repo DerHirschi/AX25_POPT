@@ -20,7 +20,8 @@ class APRSbeaconSettings(ttk.Frame):
         self.style_name     = root_win.style_name
         self._root_win      = root_win
         self._getTabStr     = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        self._aprs_icon_tab = root_win.guiIcon.get_aprs_icon_tab_32()
+
+        self._aprs_icon_tab = root_win.popt_main_gui.guiIcon.get_aprs_icon_tab_32()
         ###################################
         # CFG
         ais_cfg:          dict  = self._root_win.get_aprs_cfg()

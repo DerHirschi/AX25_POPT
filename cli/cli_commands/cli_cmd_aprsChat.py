@@ -26,6 +26,7 @@ class CliCmdAprsChat(CliModulBase):
 
     # ===========================================
     def cmd_aprs_chat(self):
+        self._cliMain.CliMonitor.cleanup()
         self._decode_param(defaults=['ALL', 0])
         target = self._parameter[0].upper()
         try:
@@ -169,8 +170,7 @@ class CliCmdAprsChat(CliModulBase):
 
         # Exit
         if text in ('//EXIT', '//Q', '//QUIT', 'EXIT', 'QUIT'):
-            self.aprs_chat_cleanup()
-            self._cliMain.change_cli_state(1)
+            self.aprs_chat_quit()
             return "\r" + self._getTabStr_CLI('aprs_chat_exit') + "\r" + self._get_ts_prompt()
 
         # Hilfe
@@ -292,6 +292,10 @@ class CliCmdAprsChat(CliModulBase):
         self._cliMain.send_output(output, env_vars=False)
 
     # ===========================================
+    def aprs_chat_quit(self):
+        self.aprs_chat_cleanup()
+        self._cliMain.change_cli_state(1)
+
     def aprs_chat_cleanup(self):
         """ Callback aufräumen """
         aprs_ais = self._popt_handler.get_aprs_ais()

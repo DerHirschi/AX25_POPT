@@ -5,7 +5,7 @@ from tkinter import ttk
 
 from ax25.ax25_util.ax25monitor import monitor_frame_inp
 from cfg.constant import MON_SYS_MSG_CLR_BG, MON_SYS_MSG_CLR_FG, FONT, DEF_PORT_MON_TX_COL, DEF_PORT_MON_BG_COL, \
-    DEF_PORT_MON_RX_COL, PARAM_MAX_MON_LEN, POPT_BANNER, VER, WELCOME_SPEECH
+    DEF_PORT_MON_RX_COL, PARAM_MAX_MON_LEN, POPT_BANNER, VER
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import tk_filter_bad_chars, get_strTab
 

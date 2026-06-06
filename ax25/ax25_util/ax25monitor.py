@@ -24,9 +24,9 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
 
     port_name    = mon_cfg.get('port_name', '')
     dec_distance = mon_cfg.get('distance' , True)
-    dec_aprs     = mon_cfg.get('aprs_dec' , True)
-    dec_nr       = mon_cfg.get('nr_dec'   , True)
-    hex_out      = mon_cfg.get('hex_out'  , True)
+    dec_aprs     = mon_cfg.get('aprs_dec' , False)
+    dec_nr       = mon_cfg.get('nr_dec'   , False)
+    hex_out      = mon_cfg.get('hex_out'  , False)
     decoding     = mon_cfg.get('decoding' , 'Auto')
 
     # port_name   = port_cfg.get('parm_PortName', '')
@@ -215,6 +215,142 @@ def monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
         out_str += aprs_data
         if not out_str.endswith('\n'):
             out_str += '\n'
+    return out_str
+
+def cli_monitor_frame_inp(ax25_frame_conf: dict, mon_cfg: dict):
+    """
+    mon_cfg     = {
+        "port_name": '',
+        "distance" : False,
+        "decoding" : 'Auto',
+    }
+    """
+
+    port_name    = mon_cfg.get('port_name', '')
+    dec_distance = mon_cfg.get('distance' , True)
+
+    decoding     = mon_cfg.get('decoding' , 'Auto')
+
+    #ctl_flag    = ax25_frame_conf.get('ctl_flag', '')
+    ctl_cmd     = ax25_frame_conf.get('ctl_cmd', '')
+    ctl_hex     = ax25_frame_conf.get('ctl_hex', '')
+    ctl_mon_str = ax25_frame_conf.get('ctl_mon_str', '')
+    pid_flag    = ax25_frame_conf.get('pid_flag', '')
+    pid_hex     = ax25_frame_conf.get('pid_hex', '')
+    from_call   = ax25_frame_conf.get('from_call_str', '')
+    to_call     = ax25_frame_conf.get('to_call_str', '')
+    rx_time     = ax25_frame_conf.get('rx_time')
+    payload_len = ax25_frame_conf.get('payload_len', 0)
+    payload     = ax25_frame_conf.get('payload', b'')
+    netrom_cfg  = ax25_frame_conf.get('netrom_cfg', {})
+    # Distance
+    if dec_distance:
+        from_call_d = round(USER_DB.get_distance(from_call))
+        if from_call_d > 0:
+            from_call += f"({from_call_d} km)"
+        to_call_d = round(USER_DB.get_distance(to_call))
+        if to_call_d > 0:
+            to_call += f"({to_call_d} km)"
+
+    via_calls = []
+    for call_str, c_bit in ax25_frame_conf.get('via_calls_str_c_bit', []):
+        if dec_distance:
+            dist = round(USER_DB.get_distance(call_str))
+            dist = f"({dist} km)" if dist > 0 else ''
+        else:
+            dist = ''
+        via_calls.append(call_str + '*' + dist) if c_bit else via_calls.append(call_str + dist)
+
+    ############################
+    out_str = (f"{port_name} {rx_time.strftime('%H:%M:%S')}:\n"
+               f"{from_call} > {to_call}")
+    out_str += ' via ' + ' '.join(via_calls) if via_calls else ''
+    out_str += ' cmd' if ctl_cmd else ' rpt'
+    # out_str += f' ({ax25_frame.ctl_byte.hex}) {ax25_frame.ctl_byte.mon_str}'
+    out_str += f' {ctl_mon_str}'
+    out_str += f'\n   ├─▶ ctl={ctl_hex} pid={pid_hex}({pid_flag})'\
+        if int(pid_hex, 16) else ''
+    out_str += ' len={}\n'.format(payload_len) if payload_len else '\n'
+
+    # ==============================
+    # PRP Erkennung & Metadaten
+    # ==============================
+    prp_packets, rest_data = decode_prp_metadata(payload)
+    if prp_packets:
+        n = 0
+        for prp_meta in prp_packets:
+            # >>> PRP-spezifische Zeile <<<
+            n += 1
+            if n < len(prp_packets) or rest_data:
+                out_str += f"   ├─▶ "
+            else:
+                out_str += f"   └─▶ "
+
+            if prp_meta['is_batch']:
+                out_str += f"[PRP-Batch] opt={prp_meta['opt_id']} tx={int(prp_meta['tx'])} len={prp_meta['payload_len']}"
+            elif prp_meta['port_id'] is not None:
+                out_str += f"[PRP-Monitor] port={prp_meta['port_id']} ({'TX' if prp_meta['tx'] else 'RX'}) len={prp_meta['payload_len']}"
+            else:
+
+                ctl_typ  = prp_meta['opt_typ']
+                ctl_typ  = f"({ctl_typ})" if ctl_typ else ""
+                out_str += f"[PRP-CTL]{ctl_typ} opt={prp_meta['opt_id']} tx={int(prp_meta['tx'])} len={prp_meta['payload_len']}"
+            if prp_meta['compressed']:
+                out_str += " (compressed)\n"
+            else:
+                out_str += "\n"
+
+
+
+        if not out_str.endswith('\n'):
+            out_str += '\n'
+        if not rest_data:
+            return out_str
+        payload = rest_data
+
+
+    # ==============================
+    # Payload, load
+    # ==============================
+    if payload:
+        if netrom_cfg:
+            payload = f'NET/ROM: <BIN> {payload_len} Bytes'
+            decoding = ''
+        elif decoding == 'Auto' and isinstance(payload, (bytes, bytearray)):
+            payload, decoding = try_decode(payload)
+        else:
+            if decoding in ENCODINGS:
+                try:
+                    payload = payload.decode(decoding)
+                except UnicodeDecodeError:
+                    decoding = 'UnicodeDecodeError'
+                    payload = f'<BIN> {payload_len} Bytes'
+                except Exception as ex:
+                    logger.warning(f"Decoding Error: {ex}")
+                    logger.warning(f"       payload: {payload}")
+                    decoding = 'DecodeError'
+                    payload = f'<BIN> {payload_len} Bytes'
+        out_str += f"┌──┴─▶ Payload▽ ({decoding})\n" if decoding else "┌──┴─▶ Payload▽\n"
+
+        payload       = payload.replace('\r', '\n')
+        payload_lines = payload.split('\n')
+        while '' in payload_lines:
+            payload_lines.remove('')
+        l_i = len(payload_lines)
+        for line in payload_lines:
+            while len(line) > PARAM_MAX_MON_WIDTH:
+                out_str += f"├►{str(line[:PARAM_MAX_MON_WIDTH])}\n"
+                line = line[PARAM_MAX_MON_WIDTH:]
+            l_i -= 1
+            if line:
+                if not l_i:
+                    out_str += f"└►{str(line)}\n"
+                else:
+                    out_str += f"├►{str(line)}\n"
+
+    if not out_str.endswith('\n'):
+        out_str += '\n'
+
     return out_str
 
 

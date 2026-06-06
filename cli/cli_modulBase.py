@@ -8,18 +8,18 @@ class CliModulBase:
         self._logTag = f"CLI-{cli_main.cli_name}: "
         # ================================
         self._connection    = cli_main.connection
-        self._own_port      = cli_main.own_port
+        #self._own_port      = cli_main.own_port
         self._popt_handler  = cli_main.popt_handler
         self._user_db       = cli_main.userDB
         self._user_db_ent   = cli_main.userDB_ent
-        self._cli_lang      = cli_main.cli_lang
+        #self._cli_lang      = cli_main.cli_lang
         # ================================
         self._my_call_str   = self._connection.my_call_str
         self._to_call_str   = self._connection.to_call_str
         self._to_call       = self._connection.to_call_str.split('-')[0]
         # ================================
-        self._get_encoding  = lambda : cli_main.cli_encoding
-        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
+        self._get_encoding  = lambda : self._cliMain.cli_encoding
+        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cliMain.cli_lang)
         # ================================
         self._stat_identifier_str = ''
         # ====================

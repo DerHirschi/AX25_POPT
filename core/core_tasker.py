@@ -18,7 +18,8 @@ class PoPTCoreTasker:
         self._aprs_ais         = lambda : popt_handler.get_aprs_ais()
         self._sound            = lambda : popt_handler.get_sound_modul()
         self._scheduled_tasker = lambda : popt_handler.get_scheduled_tasker()
-        self._thread_manager   = lambda : popt_handler.get_thread_manager()
+        self._thread_manager   = lambda : popt_handler.thread_manager
+        self._cliMon_manager   = lambda : popt_handler.CliMonManager
         """"""
         self._is_running       = lambda : popt_handler.is_running
         """"""
@@ -113,6 +114,7 @@ class PoPTCoreTasker:
             self._add_task_to_q(self._mh_task)
             self._add_task_to_q(self._tasker_1wire)
             self._add_task_to_q(self._popt_handler.update_remote_monitor_task)
+            self._add_task_to_q(self._CliMon_manager_task)
             """"""
             self._task_timer_1sec = time.time() + 1
             return True
@@ -182,14 +184,16 @@ class PoPTCoreTasker:
     #######################################################################
     # Scheduled Tasks
     def _Sched_task(self):
-        if hasattr(self._scheduled_tasker(), 'tasker'):
+        scheduled_tasker = self._scheduled_tasker()
+        if hasattr(scheduled_tasker, 'tasker'):
             # Scheduler & AutoConn Tasker
-            self._scheduled_tasker().tasker()
+            scheduled_tasker.tasker()
     #######################################################################
     # APRS
     def _aprs_task(self):
-        if hasattr(self._aprs_ais(), 'task'):
-            return self._aprs_ais().task()
+        aprs_ais = self._aprs_ais()
+        if hasattr(aprs_ais, 'task'):
+            return aprs_ais.task()
         return False
     #######################################################################
     # MH
@@ -198,15 +202,23 @@ class PoPTCoreTasker:
     #######################################################################
     # GPIO
     def _gpio_task(self):
-        if hasattr(self._gpio(), 'gpio_tasker'):
-            self._gpio().gpio_tasker()
+        gpio = self._gpio()
+        if hasattr(gpio, 'gpio_tasker'):
+            gpio.gpio_tasker()
             return
         return
 
     def _gpio_tasker_q(self):
-        if hasattr(self._gpio(), 'gpio_tasker_q'):
-            return self._gpio().gpio_tasker_q()
+        gpio = self._gpio()
+        if hasattr(gpio, 'gpio_tasker_q'):
+            return gpio.gpio_tasker_q()
         return False
+    ##############################################################
+    def _CliMon_manager_task(self):
+        cliMon_manager = self._cliMon_manager()
+        if hasattr(cliMon_manager, 'tasker'):
+            cliMon_manager.tasker()
+
     ##############################################################
     # 1Wire TextVars
     def _tasker_1wire(self):

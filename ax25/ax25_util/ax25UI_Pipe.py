@@ -6,6 +6,7 @@ import serial
 
 from cfg.default_config import getNew_pipe_cfg
 from cfg.logger_config import logger
+from classes.CLbuffers import ListBuffer
 from fnc.file_fnc import check_file
 from fnc.ax25_fnc import validate_ax25Call, build_ax25uid
 
@@ -87,7 +88,7 @@ class AX25Pipe(object):
         """ I/O buffers. """
         self._tx_data       = bytearray()   # TX to AX25
         self._rx_data       = bytearray()   # RX fm AX25
-        self.tx_frame_buf   = []
+        self.tx_frame_buf   = ListBuffer()
         """ Backend: 'serial', 'tcp-server', 'tcp-client', 'file' """
         #self._backend_typ        = 'tcp-server' # FIXME: DeleteME
         self._backend_typ        = pipe_cfg.get('pipe_parm_backend', 'file')
@@ -175,7 +176,7 @@ class AX25Pipe(object):
         self._connection.send_data(data)
 
     def _tx_unProto(self):
-        while len(self.tx_frame_buf) < self._parm_max_pac and self._tx_data:
+        while self.tx_frame_buf.length < self._parm_max_pac and self._tx_data:
             new_frame = AX25Frame()
             new_frame.from_call.call_str = self._own_call
             new_frame.to_call.call_str   = self._dest_call
@@ -187,7 +188,7 @@ class AX25Pipe(object):
             new_frame.payload       = self._tx_data[:min(len(self._tx_data), self._parm_pac_len)]
             self._tx_data           = self._tx_data[min(len(self._tx_data), self._parm_pac_len):]
             new_frame.encode_ax25frame()
-            self.tx_frame_buf.append(new_frame)
+            self.tx_frame_buf.buffer_write(new_frame)
 
     ################################################
     # TX - Helper

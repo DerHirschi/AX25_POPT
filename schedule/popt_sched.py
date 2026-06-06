@@ -54,28 +54,28 @@ def getNew_schedule_config(intervall: float = 0,
 
 class PoPTSchedule:
     def __init__(self, conf):
-        self.conf = conf
-        self._dt_now = datetime.now()
-        self._cooldown = time.time()
-        self._next_run = 0
-        self._month_day_en = False
-        self._month_en = False
-        self._weekDay_en = False
-        self._hour_en = False
-        self._min_en = False
-        self._rep_min_en = False
+        self.conf       = conf
+        self._dt_now    = datetime.now()
+        self._cooldown  = time.time()
+        self._next_run  = 0
+        self._month_day_en  = False
+        self._month_en      = False
+        self._weekDay_en    = False
+        self._hour_en       = False
+        self._min_en        = False
+        self._rep_min_en    = False
         self.re_init()
         if self.conf.get('set_interval', True):
             self._set_intervall()
 
     def re_init(self):
         self._next_run = 0
-        self._month_day_en = self._is_enabled('month_day')
-        self._month_en = self._is_enabled('month')
-        self._weekDay_en = self._is_enabled('week_days')
-        self._hour_en = self._is_enabled('hours')
-        self._min_en = self._is_enabled('minutes')
-        self._rep_min_en = bool(self.conf.get('repeat_min'))
+        self._month_day_en  = self._is_enabled('month_day')
+        self._month_en      = self._is_enabled('month')
+        self._weekDay_en    = self._is_enabled('week_days')
+        self._hour_en       = self._is_enabled('hours')
+        self._min_en        = self._is_enabled('minutes')
+        self._rep_min_en    = bool(self.conf.get('repeat_min'))
         self._set_cooldown()
 
     def _set_cooldown(self):
@@ -89,6 +89,7 @@ class PoPTSchedule:
         self._set_cooldown()
         self._set_intervall()
 
+    # =============================================
     def _is_enabled(self, conf_k):
         if not self.conf.get(conf_k):
             return False

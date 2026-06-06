@@ -6,7 +6,6 @@ from tkinter import ttk
 
 from gui import FigureCanvasTkAgg as FIGc
 import networkx as nx
-import random
 
 from cfg.popt_config import POPT_CFG
 from fnc.str_fnc import get_strTab
@@ -20,16 +19,16 @@ class LiveConnPath(ttk.Frame):
         # self._root_win = root_win
         self._gui_root     = gui_root_cl
         self._lang         = POPT_CFG.get_guiCFG_language()
-        self._channel_id   = gui_root_cl.channel_index
+        self._mh           = gui_root_cl.get_MH()
         # ================================
         self._pos            = None
         self._connected_path = {}
         # ================================
-        self._path_data      = {}
-        path_data       = POPT_CFG.get_pacman_data()
-        for ch_id, ch_data in path_data.items():
-            path_data, last_hop, seed = ch_data
-            self._path_data[ch_id] = path_data, 'HOME', seed
+        #self._path_data      = {}
+        #path_data       = POPT_CFG.get_pacman_data()
+        #for ch_id, ch_data in path_data.items():
+        #    path_data, last_hop, seed = ch_data
+        #    self._path_data[ch_id] = path_data, 'HOME', seed
         # self._path_data = POPT_CFG.get_pacman_data()
         """
         test_data = {
@@ -68,36 +67,38 @@ class LiveConnPath(ttk.Frame):
 
     # ======================================
     def add_LivePath_plot_task(self, arg: tuple):
-        node, ch_id, path = arg
+        node, ch_id, port_id, path = arg
         if path is None:
             path = []
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - Node: {node} - Path: {path}")
         for digi in path:
-            self.change_node(node=digi, ch_id=ch_id)
-        self.change_node(node=node, ch_id=ch_id)
-        if ch_id == self._channel_id:
+            self.change_node(node=digi, ch_id=ch_id, port_id=port_id)
+        self.change_node(node=node, ch_id=ch_id, port_id=port_id)
+        if ch_id == self._gui_root.channel_index:
             self.update_plot_f_ch(ch_id=ch_id)
 
     def resetHome_LivePath_plot_task(self, ch_id: int):
         # print(f"CH: {ch_id} self.CH_ID: {self.channel_index} - RESET")
-        self.reset_last_hop(ch_id=ch_id)
-        if ch_id == self._channel_id:
+        self._reset_last_hop(ch_id=ch_id)
+        if ch_id == self._gui_root.channel_index:
             #if not POPT_CFG.get_pacman_fix():
             self.update_plot_f_ch(ch_id=ch_id)
 
     # ======================================
     def _reset_btn(self, event=None):
-        self._path_data[self._channel_id] = ({}, 'HOME', int(random.randint(1, 10000)))
-        self._update_Graph(self._channel_id)
+        #self._path_data[self._gui_root.channel_index] = ({}, 'HOME', int(random.randint(1, 10000)))
+        self._mh.reset_pacman_ch_data(self._gui_root.channel_index)
+        self._update_Graph(self._gui_root.channel_index)
 
     def _refresh_btn(self, event=None):
         self._new_seed()
-        self._update_Graph(self._channel_id)
+        self._update_Graph(self._gui_root.channel_index)
 
     def _new_seed(self):
-        path_data, last_hop, seed = self._get_ch_data(self._channel_id)
-        seed = random.randint(1, 10000)
-        self._path_data[self._channel_id] = dict(path_data), str(last_hop), int(seed)
+        #path_data, last_hop, seed = self._get_ch_data(self._gui_root.channel_index)
+        #seed = random.randint(1, 10000)
+        #self._path_data[self._gui_root.channel_index] = dict(path_data), str(last_hop), int(seed)
+        self._mh.pacman_new_ch_seed_(self._gui_root.channel_index)
 
     def _update_Graph(self, ch_id: int):
         # self._init_vars_fm_raw_data()
@@ -113,7 +114,7 @@ class LiveConnPath(ttk.Frame):
     def _update_node_label(self):
         if not self._pos:
             return
-        path_data, last_hop, seed = self._get_ch_data(self._channel_id)
+        path_data, last_hop, seed = self._get_ch_data(self._gui_root.channel_index)
         tmp = []
         for node_name, l_pos in self._pos.items():
             if node_name not in tmp:
@@ -138,7 +139,7 @@ class LiveConnPath(ttk.Frame):
         self._plot1.clear()
         self._g.clear()
         self._pos = None
-        path_data, last_hop, seed = self._path_data.get(ch_id, self._get_ch_data(ch_id))
+        path_data, last_hop, seed = self._get_ch_data(ch_id)
         if not path_data:
             return
         # self._pos = None
@@ -182,7 +183,8 @@ class LiveConnPath(ttk.Frame):
         self._g.add_edge(e1, e2, color=col, weight=weight)
 
     def _get_ch_data(self, ch_id: int):
-        return self._path_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000))))
+        # return self._path_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000))))
+        return self._mh.get_pacman_ch_data(ch_id)
 
     def _is_conn_path(self, ch_id: int, nodes: tuple):
         conn_path = list(self._connected_path.get(ch_id, ['HOME']))
@@ -198,7 +200,7 @@ class LiveConnPath(ttk.Frame):
 
     ###############################################
     #
-    def change_node(self, ch_id: int, node: str):
+    def change_node(self, ch_id: int, node: str, port_id: int):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
         if node == last_hop:
             return
@@ -218,20 +220,27 @@ class LiveConnPath(ttk.Frame):
         path_data[last_hop] = list(node_path)
         last_hop = str(node)
 
-        self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        #self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        self._mh.set_pacman_ch_data(
+            ch_id=ch_id,
+            data=(dict(path_data), str(last_hop), int(seed)),
+            port_id=port_id
+        )
         self._connected_path[ch_id] = list(conn_path)
 
-    def reset_last_hop(self, ch_id: int):
+    def _reset_last_hop(self, ch_id: int):
         path_data, last_hop, seed = self._get_ch_data(ch_id)
         last_hop = 'HOME'
-        self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        #self._path_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+        self._mh.set_pacman_ch_data(
+            ch_id=ch_id,
+            data=(dict(path_data), str(last_hop), int(seed))
+        )
         self._connected_path[ch_id] = ['HOME']
 
     def update_plot_f_ch(self, ch_id: int or None = None):
         if ch_id is None:
-            self._update_Graph(self._channel_id)
+            self._update_Graph(self._gui_root.channel_index)
             return
         self._update_Graph(ch_id)
 
-    def save_path_data(self):
-        POPT_CFG.set_pacman_data(dict(self._path_data))

@@ -99,8 +99,8 @@ class About(tk.Toplevel):
 
         thanks_text = (
             "• ClaudeMa (GitHub) — French Translation\n"
-            "• NL1NOD (CB-Call)  — Dutch  Translation, Testing & Support\n"
-            "• CT1DRB (HAM-Call) — Testing & Support\n"
+            "• NL1NOD (CB-Call)  — Dutch Translation, Testing & Support\n"
+            "• CT1DRB (HAM-Call) — Portuguese Translation,Testing & Support\n"
             "• CB7ALM (CB-Call)  — Testing & Support\n"
             "• EA2SPS (HAM-Call) — Spanish Translation"
         )
@@ -127,7 +127,8 @@ class About(tk.Toplevel):
         ok_bt = ttk.Button(btn_frame, text="OK", width=12, command=self.destroy_win)
         ok_bt.pack(side='right')
 
-    def open_github(self):
+    @staticmethod
+    def open_github():
         import webbrowser
         webbrowser.open("https://github.com/DerHirschi/AX25_POPT")
 

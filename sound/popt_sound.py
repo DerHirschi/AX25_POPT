@@ -1,6 +1,7 @@
 import threading
 
-from cfg.constant import CFG_sound_CONN, CFG_sound_DICO, CFG_sound_BELL
+from sound.sound_const import CFG_sound_DICO, CFG_sound_CONN, CFG_sound_RX_BEEP, CFG_sound_BELL, CFG_sound_APRS_MAIL, \
+    CFG_sound_BBS_MAIL
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.os_fnc import get_root_dir, is_linux, is_macos
@@ -201,6 +202,16 @@ class POPT_Sound:
         """ fm mainGUI """
         self.sound_play(self._root_dir + CFG_sound_BELL)
 
+    def rx_beep_sound(self):
+        self.sound_play(self._root_dir + CFG_sound_RX_BEEP)
+
+    def new_aprs_mail_sound(self):
+        self.sound_play(self._root_dir + CFG_sound_APRS_MAIL)
+
+    def new_bbs_mail_sound(self):
+        self.sound_play(self._root_dir + CFG_sound_BBS_MAIL)
+
+    # =======================================
     def _stop_all_sound(self):
         for sound in self.get_sound_thread():
             if hasattr(sound, 'stop'):

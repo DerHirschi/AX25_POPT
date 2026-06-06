@@ -1,16 +1,16 @@
 import time
 import tkinter as tk
 from cfg.cfg_fnc import set_obj_att_fm_dict, convert_obj_to_dict
-from cfg.constant import MAX_SYSOP_CH
+from cfg.constant import MAX_SYSOP_CH, SERVICE_CH_START
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.gui_fnc import cleanup_tags, get_all_tags
 
 
 class ChVars(object):
-    output_win          = ''
+    output_win          = ''        # QSO
     input_win           = ''
-    output_win_tags     = {}
+    output_win_tags     = {}        # QSO
     input_win_tags      = {}
     new_tags            = []
     last_tag_name       = 'NOCALL'
@@ -47,8 +47,8 @@ class GUIChannels:
     # ================================
     def _init_Channel_Vars(self):
         cfg_ch_vars = POPT_CFG.load_guiCH_VARS()
-        for ch_id in list(cfg_ch_vars.keys()):
-            self.channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), cfg_ch_vars[ch_id])
+        for ch_id, ch_var_save in cfg_ch_vars.items():
+            self.channel_vars[ch_id] = set_obj_att_fm_dict(ChVars(), ch_var_save)
 
     # ================================
     def save_Channel_Vars(self):
@@ -59,8 +59,10 @@ class GUIChannels:
         current_ch_vars.input_win_cursor_index = self._inp_txt.index(tk.INSERT)
         # guiCfg = POPT_CFG.load_guiCH_VARS()
         ch_vars = {}
-        for ch_id in list(self.channel_vars.keys()):
-            ch_vars[ch_id] = convert_obj_to_dict(self.channel_vars[ch_id])
+        for ch_id, ch_var in self.channel_vars.items():
+            if not ch_id or ch_id >= SERVICE_CH_START:
+                continue
+            ch_vars[ch_id] = convert_obj_to_dict(ch_var)
             del ch_vars[ch_id]['t2speech_buf']
             del ch_vars[ch_id]['rx_beep_cooldown']
             del ch_vars[ch_id]['rx_beep_tr']
@@ -97,8 +99,9 @@ class GUIChannels:
         self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
+        self._clear_chVar(self.channel_vars[self._gui_root.channel_index])
 
-        self.channel_vars[self._gui_root.channel_index] = ChVars()
+        #self.channel_vars[self._gui_root.channel_index] = ChVars()
         self._gui_root.update_qso_Vars()
 
     def clear_all_Channel_vars(self):
@@ -107,9 +110,21 @@ class GUIChannels:
         self._qso_txt.configure(state='disabled')
         self._inp_txt.delete('1.0', tk.END)
         # del self._channel_vars[self.channel_index]
-        for ch_id in self.channel_vars.keys():
-            self.channel_vars[ch_id] = ChVars()
+        for ch_id, ch_var in self.channel_vars.items():
+            self._clear_chVar(ch_var)
+            # self.channel_vars[ch_id] = ChVars()
         self._gui_root.update_qso_Vars()
+
+    @staticmethod
+    def _clear_chVar(ch_var: ChVars):
+        ch_var.output_win = ''
+        ch_var.output_win_tags = {}
+        ch_var.t2speech_buf = ''
+        ch_var.input_win = ''
+        ch_var.input_win_tags = {}
+        ch_var.input_win_index = '1.0'
+        ch_var.input_win_cursor_index = tk.INSERT
+    # ==================================
 
     def get_free_channel(self, start_channel=1):
         if not start_channel:

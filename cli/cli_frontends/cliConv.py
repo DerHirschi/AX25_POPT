@@ -102,6 +102,9 @@ class ConverseCLI(DefaultCLI):
         ret = "\r*** Looking up Converse-Mode\r"
 
         self.send_output(ret, env_vars=True)
+        # ====== No Remote Access = Disco ....
+        #if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+        #    self._crone_state_index = 100  # Quit State
         return ''
 
     def _s1(self):
@@ -133,6 +136,3 @@ class ConverseCLI(DefaultCLI):
             if self._connection.l3_state_id not in [0, 1, 4]:
                 self._connection.change_l3_state(4)
         return ''
-
-    def cli_update_monitor(self, ax25frame_conf: dict):
-        pass

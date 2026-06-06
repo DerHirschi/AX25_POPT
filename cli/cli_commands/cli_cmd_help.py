@@ -8,13 +8,15 @@ class CliCmdHelp(CliModulBase):
     # ===========================================
     def cmd_help(self):
         # ret = f"\r   < {self._getTabStr('help')} >\r"
-        ret = "\r"
+        ret = ("\r"
+              f"=== {self._getTabStr_CLI('help')} ===\r"
+               "--------------------------------------------------\r")
         for k in sorted(list(self._cliMain.get_allowed_cmds())):
             if self._cliMain.command_set[k][2]:
-                ret += '\r {}{:10} = {}'.format(self._cliMain.prefix.decode('UTF-8', 'ignore'),
+                ret += ' {}{:10} = {}\r'.format(self._cliMain.prefix.decode('UTF-8', 'ignore'),
                                                 k,
                                                 self._cliMain.command_set[k][2])
-        ret += '\r\r'
+        ret += '\r'
         return ret
 
     def cmd_shelp(self):

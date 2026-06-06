@@ -3,13 +3,15 @@ from datetime import datetime
 from UserDB.rights_manager import PRPRightsManager
 from cfg.popt_config import POPT_CFG
 from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
+from cli.cli_commands.cli_cmd_cliCfg import CliCmdCliCFG
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
+from cli.cli_commands.cli_cmd_monitor import CliCmdMonitor
 from cli.cli_commands.cli_cmd_path import CliCmdPath
 #from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
-from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, LANG_IND, CLI_TYP_SYSOP
+from cfg.constant import STATION_ID_ENCODING_REV, VER, CFG_data_path, CFG_usertxt_path, CLI_TYP_SYSOP
 from cli.cli_commands.cli_cmd_infos import CliCmdInfos
 from cli.cli_commands.cli_cmd_myHeard import CliCmdMyHeard
 from cli.cli_commands.cli_cmd_statistics import CliCmdStatistics
@@ -20,7 +22,7 @@ from cli.cli_main.BaycomLoginServer import BaycomLoginServer
 from cli.cli_main.cliMain_StateManager import CliStateManager
 from cli.cli_main.cliMain_StrCmds import CliStrCommands
 from fnc.file_fnc import get_str_fm_file
-from fnc.str_fnc import get_time_delta, find_decoding, zeilenumbruch_lines, get_strTab, find_eol
+from fnc.str_fnc import get_time_delta, zeilenumbruch_lines, get_strTab, find_eol
 from fnc.ax25_fnc import validate_ax25Call
 from cfg.logger_config import logger
 from prp.prp_const import PRP_OPT_ESC_CLI
@@ -52,7 +54,7 @@ class DefaultCLI(object):
         self._to_call               = self._connection.to_call_str.split('-')[0]
         self._user_db               = self._port_handler.userDB
         self._user_db_ent           = self._connection.user_db_ent
-        self._cli_lang              = self._connection.cli_language
+        #self._cli_lang              = self._connection.cli_language
         self._encoding              = 'UTF-8', 'ignore'
         self._stat_identifier_str   = ''
         if self._user_db_ent:
@@ -60,6 +62,10 @@ class DefaultCLI(object):
             self._stat_identifier_str = self._user_db_ent.software_str
             if self._user_db_ent.CText:
                 self._c_text          = str(self._user_db_ent.CText)
+
+        # ==== Set Default CLI Language
+        if self._user_db_ent.Language == -1:
+            self._user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
 
         # ==== Station Identy
         # == Gegenstation
@@ -88,14 +94,13 @@ class DefaultCLI(object):
         self.skip_prompt        = False
 
         self._sys_login         = None
-        self.sysop_priv         = False
+        self.sysop_priv         = False     # Priv an Gegenstation
 
         self.rtt_active         = False
 
-        self._tx_buffer         = bytearray()
-        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self._cli_lang)
+        self._tx_buffer         = bytearray()   # TODO ThreadLock
+        self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self.cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
-        # self._user_db_ent.cli_sidestop = 20
         # ============================================
         # Rights Manager
         self.rights_manager  = PRPRightsManager(self._port_handler)
@@ -117,8 +122,10 @@ class DefaultCLI(object):
         self._help_cmds       = CliCmdHelp(self)
         self._aprs_chat_cmds  = CliCmdAprsChat(self)
         self._path_cmds       = CliCmdPath(self)
+        self._cli_cfg_cmds    = CliCmdCliCFG(self)
         #self._poker_cmds      = CliCmdPoker(self)
         self._BaycomAuth_srv  = BaycomLoginServer(self)
+        self._CliMonitor      = CliCmdMonitor(self)
 
         # Standard Commands ( GLOBAL )
         self._command_set = {
@@ -185,10 +192,11 @@ class DefaultCLI(object):
             'EMAIL':    (0, self._user_db_cmds.cmd_set_e_mail,      self._getTabStr_CLI('cmd_help_set_email'),  False),
             'WEB':      (3, self._user_db_cmds.cmd_set_http,        self._getTabStr_CLI('cmd_help_set_http'),   False),
 
-            # CLI OPT
-            'OP':       (2, self._cmd_op, self._getTabStr_CLI('cmd_op'), False),
-            'LANG':     (4, self._cmd_lang, self._getTabStr_CLI('cli_change_language'), False),
-            'UMLAUT':   (2, self._cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'), False),
+            # CLI OPT/ CLI-CFG
+            'OP':       (2, self._cli_cfg_cmds.cmd_op,     self._getTabStr_CLI('cmd_op'),                       False),
+            'LANG':     (4, self._cli_cfg_cmds.cmd_lang,   self._getTabStr_CLI('cli_change_language'),          False),
+            'UMLAUT':   (2, self._cli_cfg_cmds.cmd_umlaut, self._getTabStr_CLI('auto_text_encoding'),           False),
+            'ENCODER':  (3, self._cli_cfg_cmds.cmd_enc,    self._getTabStr_CLI('cli_text_encoding_cmd_help'),   False),
             #
             'HELP':     (1, self._help_cmds.cmd_help,                         self._getTabStr_CLI('help'),        False),
             '?':        (0, self._help_cmds.cmd_shelp,                        self._getTabStr_CLI('cmd_shelp'),   False),
@@ -196,7 +204,9 @@ class DefaultCLI(object):
             #'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
             # === Baycom Auth
             'SYS':      (3, self._BaycomAuth_srv.cmd_baycomSrv_login,  "Sys Login (BaycomAuth)", False),
-            'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout)", False),
+            'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout", False),
+            # ==== Monitor
+            'MONITOR':  (2, self._CliMonitor.cmd_monitor,               self._CliMonitor.short_help_str, False),
 
         }
 
@@ -234,7 +244,6 @@ class DefaultCLI(object):
                 del self._command_set['OP']
         self._baycom_auto_login()
 
-
     def init(self):
         pass
 
@@ -243,6 +252,14 @@ class DefaultCLI(object):
     @property
     def user_db_cmds(self):
         return self._user_db_cmds
+
+    @property
+    def AprsChat(self):
+        return self._aprs_chat_cmds
+
+    @property
+    def CliMonitor(self):
+        return self._CliMonitor
 
     ########################################################
     @property
@@ -253,9 +270,9 @@ class DefaultCLI(object):
     def popt_handler(self):
         return self._port_handler
 
-    @property
-    def own_port(self):
-        return self._own_port
+    #@property
+    #def own_port(self):
+    #    return self._own_port
 
     @property
     def userDB(self):
@@ -264,14 +281,6 @@ class DefaultCLI(object):
     @property
     def userDB_ent(self):
         return self._connection.user_db_ent
-
-    @property
-    def cli_lang(self):
-        return self._connection.cli_language
-
-    @property
-    def cli_encoding(self):
-        return self._encoding
 
     @property
     def stat_cfg_index_call(self):
@@ -327,6 +336,26 @@ class DefaultCLI(object):
             return self._connection.prp
         return None
 
+    ########################################################
+    # CLI Cfg
+    ################
+    # CLI Encoding
+    @property
+    def cli_encoding(self):
+        return self._encoding
+
+    def set_cli_encoding(self, encoding_cfg: tuple):
+        self._encoding = tuple(encoding_cfg)
+
+    ################
+    # CLI Lang
+    @property
+    def cli_lang(self):
+        return self._user_db_ent.Language
+
+    def set_cli_lang(self, lang_id: int):
+        self._user_db_ent.Language    = int(lang_id)
+
     ##################################
     # Rechte / CMD Update
     def get_allowed_cmds(self):
@@ -365,7 +394,9 @@ class DefaultCLI(object):
             ret = ret.replace(b'\n', b'\r')
         if all((
                 self.can_sidestop,
-                self._user_db_ent.cli_sidestop)):
+                self._user_db_ent.cli_sidestop,
+                self.state_index == 1
+        )):
             self._send_out_sidestop(ret)
             return
         self._connection.send_data(ret)
@@ -390,13 +421,16 @@ class DefaultCLI(object):
         self.change_cli_state(7)
 
     # TX-Abort-Stuff
-    def _abort_send_out(self):
+    def clear_tx_buffer(self):
         prp = self._prp
         if hasattr(prp, 'cli_abort'):
             prp.cli_abort()
 
         self._connection.clear_tx_buff()
         self._tx_buffer = b''
+
+    def _abort_send_out(self):
+        self.clear_tx_buffer()
         self._connection.send_data((f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
                                     + self.get_ts_prompt()).encode(self._encoding[0], 'ignore'))
 
@@ -419,7 +453,7 @@ class DefaultCLI(object):
             self._parameter = []
             cmd_parts = self._input.split(b' ')
             self._input = cmd_parts[1:] if len(cmd_parts) > 1 else b''
-            self._parameter = self._input
+            self._parameter = [x.strip() for x in cmd_parts[1:]]
             self._cmd = cmd_parts[0].upper().replace(b'\r', b'').replace(b'//', b'')
             return False
 
@@ -440,16 +474,17 @@ class DefaultCLI(object):
         if line_w_cmd.startswith(self.prefix):
             cmd_part = line_w_cmd[len(self.prefix):].split(b' ')
             self._cmd = cmd_part[0].upper().replace(b'\r', b'')
-            self._parameter = cmd_part[1:] if len(cmd_part) > 1 else []
+            self._parameter = [x.strip() for x in cmd_part[1:]]
             self._input = self._parameter
             return True
 
         # If the prefix does not match, treat as user message
         self._parameter = []
-        cmd_parts = self._input.split(b' ', 1)
-        self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
-        self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
-        self._input = self._parameter
+        self._cmd = b''
+        #cmd_parts = self._input.split(b' ', 1)
+        #self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
+        #self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
+        #self._input = self._parameter
         return False
 
     def load_fm_file(self, filename: str):
@@ -720,6 +755,8 @@ class DefaultCLI(object):
             via_params = self._parameter[1:-1] if port_tr else self._parameter[1:]
             vias = [call.upper() for call in via_params if validate_ax25Call(call.upper())]
 
+        self.cli_conn_cleanup()
+
         conn = self._port_handler.connection_manager.new_outgoing_connection(
                 own_call=self._to_call_str,
                 dest_call=dest_call,
@@ -745,6 +782,7 @@ class DefaultCLI(object):
         return ret[:-1] + '\r'
 
     def _cmd_q(self):  # Quit
+        self.cli_conn_cleanup()
         conn_dauer = get_time_delta(self.time_start)
         ret = f"\r # {self._getTabStr_CLI('time_connected')}: {conn_dauer}\r\r"
         ret += self.load_fm_file(self._stat_cfg_index_call + '.btx') + '\r'
@@ -752,56 +790,33 @@ class DefaultCLI(object):
         self._crone_state_index = 100  # Quit State
         return ''
 
-    def _cmd_lang(self):
-        if not self._parameter:
-            return (f'\r # {self._getTabStr_CLI("cli_no_lang_param")}'
-                    f'\r # {" ".join(list(LANG_IND.keys()))}\r\r')
-        self._decode_param()
-        if self._parameter[0].upper() in LANG_IND.keys():
-            self._cli_lang = int(LANG_IND.get(self._parameter[0].upper(), 1))
-            self._connection.set_user_db_language(self._cli_lang)
-            return f'\r # {self._getTabStr_CLI("cli_lang_set")}\r'
-        return (f'\r # {self._getTabStr_CLI("cli_no_lang_param")}'
-                f'\r # {" ".join(list(LANG_IND.keys()))}\r\r')
-
     def _cmd_ch(self):
         if not self._parameter:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
+
         if len(self._parameter) > 1:
             param = [self._parameter[0], b' '.join(self._parameter[1:])]
         else:
             param: b'' = self._parameter[0]
             param = param.split(b' ', maxsplit=1)
         if len(param) < 2:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
         try:
-            ch_id = int(param[0])
+            ch_id = int(param[0].strip())
         except ValueError:
-            return self._getTabStr_CLI('ch_cmd_param_error')
+            return self._getTabStr_CLI('ch_cmd_param_error') + '\r'
 
         all_conn = self._port_handler.get_all_connections()
         if ch_id not in all_conn:
-            return self._getTabStr_CLI('ch_cmd_empty_ch')
+            return self._getTabStr_CLI('ch_cmd_empty_ch') + '\r'
         if ch_id == self._connection.ch_index:
-            return self._getTabStr_CLI('ch_cmd_own_ch')
+            return self._getTabStr_CLI('ch_cmd_own_ch') + '\r'
 
         to_conn = all_conn[ch_id]
         to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')
         to_send += param[1] + b'\r'
         to_conn.send_data(to_send)
         return self._getTabStr_CLI('ch_cmd_send').format(ch_id, to_conn.to_call_str)
-
-    def _cmd_umlaut(self):
-        # print(self.parameter)
-        if not self._parameter:
-            return f"\r{self._getTabStr_CLI('cli_text_encoding_no_param')}: {self._encoding[0]}\r"
-        res = find_decoding(self._parameter[0].replace(b'\r', b''))
-        if not res:
-            return f"\r{self._getTabStr_CLI('cli_text_encoding_error_not_found')}\r"
-        self._encoding = res, self._encoding[1]
-        if self._user_db_ent:
-            self._user_db_ent.Encoding = str(res)
-        return f"\r{self._getTabStr_CLI('cli_text_encoding_set')} {res}\r"
 
     def _cmd_bell(self):
         if not self._connection.noty_bell:
@@ -812,18 +827,8 @@ class DefaultCLI(object):
             return f'\r # {self._getTabStr_CLI("cmd_bell")}\r'
         return f'\r # {self._getTabStr_CLI("cmd_bell_again")}\r'
 
-    def _cmd_op(self):
-        if not self._parameter:
-            self._user_db_ent.cli_sidestop = 0
-            ""
-            return self._getTabStr_CLI('box_cmd_op1')
-        try:
-            self._user_db_ent.cli_sidestop = int(self._parameter[0])
-        except ValueError:
-            return self._getTabStr_CLI('box_cmd_op2')
-        return self._getTabStr_CLI('box_cmd_op3').format(self._user_db_ent.cli_sidestop)
-
     def _cmd_conv(self):
+        self.cli_conn_cleanup()
         self.skip_prompt = True
         self._connection.enter_converse_cli()
 
@@ -864,26 +869,32 @@ class DefaultCLI(object):
         if ret:
             self.send_output(ret, env_vars=False)
 
-    def cli_update_monitor(self, ax25frame_conf:dict):
-        pass
-
     ########################################################
     # == Helper
     def cli_conn_cleanup(self):
         # ====== APRS Chat
         self._aprs_chat_cmds.aprs_chat_cleanup()
+        # ====== CLI Monitor
+        self._CliMonitor.cleanup()
 
     ########################################################
     # States
     def _s0(self):  # C-Text
         ret = self._get_own_identy_str() + '\r'
         ret += self._c_text
+
+        self.change_cli_state(1)
+        # ====== No Remote Access = Disco ....
+        #if not self.rights_manager.is_remote_access_allowed(self._connection.to_call_str):
+        #    self.send_output(ret, env_vars=True)
+        #    self._crone_state_index = 100  # Quit State
+        #    return ''
+
         ret += self._aprs_chat_cmds.aprs_cText_noty()
         if self.cli_name != CLI_TYP_SYSOP:
             ret += '\r'
             ret += self.get_ts_prompt()
         self.send_output(ret, env_vars=True)
-        self.change_cli_state(1)
         return ''
 
     def _s1(self):
@@ -913,7 +924,7 @@ class DefaultCLI(object):
             return ''
         self._input = self._raw_input               # TODO Cleanup this VAR mess
         self.send_output(self.exec_cmd(), self._env_var_cmd)
-        self._last_line = self.new_last_line       # TODO Cleanup this VAR mess
+        self._last_line = self.new_last_line        # TODO Cleanup this VAR mess
         return ''
 
     def _s2(self):

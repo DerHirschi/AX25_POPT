@@ -17,6 +17,7 @@ from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
+from fnc.str_fnc import conv_time_DE_str
 from prp import init_prpAX25L3
 from ax25.ax25_ft.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
@@ -94,7 +95,7 @@ class AX25Conn:
         self.rx_tx_buf_guiData = ListBuffer() # Buffer for GUI QSO Window ('TX', data), ('RX', data)
         """ DIGI / Link to other Connection for Auto processing """
         self.LINK_Connection    = None
-        self.LINK_rx_buff:ByteArrayBuffer = ByteArrayBuffer()
+        self.LINK_rx_buff       = ByteArrayBuffer()
         self.is_link            = False
         self.is_link_remote     = False
         self.digi_call          = ''
@@ -146,17 +147,10 @@ class AX25Conn:
         self.link_holder_text: str = '\r'
         """ User DB Entry """
         self.user_db_ent    = self._userDB.get_entry(self.to_call_str)
-        self._encoding      = 'CP437'     # 'UTF-8'
-        self.cli_language   = 0
         self.last_connect   = None
-        if hasattr(self.user_db_ent, 'Language'):
-            if self.user_db_ent.Language == -1:
-                self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
-            self.cli_language = self.user_db_ent.Language
         if hasattr(self.user_db_ent, 'last_conn'):
             self.last_connect = self.user_db_ent.last_conn
-        if hasattr(self.user_db_ent, 'Encoding'):
-            self._encoding = self.user_db_ent.Encoding
+
         self.set_distance()
         #self._set_user_db_ent()
         self.set_station_cfg()  # Station Individual Parameter
@@ -233,11 +227,8 @@ class AX25Conn:
             return
         self.user_db_ent.Connects += 1
         self.last_connect = self.user_db_ent.last_conn
-        self.user_db_ent.last_conn = datetime.now()
-        self._encoding    = self.user_db_ent.Encoding
-        if self.user_db_ent.Language == -1:
-            self.user_db_ent.Language = int(POPT_CFG.get_guiCFG_language())
-        self.cli_language = self.user_db_ent.Language
+        self.user_db_ent.last_conn = conv_time_DE_str()
+
         self.set_distance()
         # TODO disable CLI for node ect.
         """
@@ -246,10 +237,6 @@ class AX25Conn:
         else:
             self.cli_remote = True
         """
-
-    def set_user_db_language(self, lang_ind: int):
-        self.user_db_ent.Language = int(lang_ind)
-        self.cli_language = int(lang_ind)
 
     def set_distance(self):
         if self.user_db_ent:
@@ -282,7 +269,12 @@ class AX25Conn:
         #self.cli_type = str(self.cli.cli_name)
 
     # ========= TX
-    def send_data(self, data: bytes, gui_echo=True, file_trans=False, use_prp=True):
+    def send_data(self,
+                  data: bytes,
+                  gui_echo=True,
+                  file_trans=False,
+                  use_prp=False # TODO  use_prp=True / disabled
+                  ):
         """
         Normale Daten von CLI oder GUI(QSO)
         :param data:        bytes = Daten
@@ -354,11 +346,11 @@ class AX25Conn:
         self._l3_state_exec.state_rx_handle(ax25_frame=ax25_frame)
         self.set_T3()
 
-    def prozess_I_frame(self):
+    def process_I_frame(self):
         self.set_T2()
         if self._ns == self.vr:
             self.vr = (self.vr + 1) % 8     # Modulo 8
-            self._recv_data(bytearray(self._frame_payload))
+            self._process_recv_data(bytearray(self._frame_payload))
             self._frame_payload = bytearray()
             self.delUNACK()  # ACKs verarbeiten
             return True
@@ -366,8 +358,8 @@ class AX25Conn:
             # Duplikat oder außerhalb Fenster → stillschweigend ignorieren
             return False
 
-    def _recv_data(self, data: bytearray):
-        """ Called fm self.prozess_I_frame() """
+    def _process_recv_data(self, data: bytearray):
+        """ Called fm self.process_I_frame() """
         # Statistic
         self.rx_byte_count += len(data)
         self.rx_pack_count += 1
@@ -846,7 +838,11 @@ class AX25Conn:
         if self.link_holder_on:
             if self.link_holder_timer < time.time():
                 self.link_holder_timer = time.time() + (self.link_holder_interval * 60)
-                self.tx_buf_rawData.buffer_write(self.link_holder_text.encode(self._encoding, 'ignore'))
+                if hasattr(self.user_db_ent, 'Encoding'):
+                    encoding = self.user_db_ent.Encoding
+                else:
+                    encoding = 'UTF-8'
+                self.tx_buf_rawData.buffer_write(self.link_holder_text.encode(encoding, 'ignore'))
 
     ###############################
     # LINKS Linked/DIGI Connections
@@ -885,10 +881,10 @@ class AX25Conn:
         return True
 
     def new_digi_connection(self, conn):
-        print(f"Conn newDIGIConn: UID: {conn.uid}")
+        #print(f"Conn newDIGIConn: UID: {conn.uid}")
         logger.debug(f"Conn newDIGIConn: UID: {conn.uid}")
         if conn is None:
-            print("Conn ERROR: newDIGIConn: not conn")
+            #print("Conn ERROR: newDIGIConn: not conn")
             logger.error("Conn ERROR: newDIGIConn: not conn")
             return False
         if self.uid in list(self._popt_handler.connection_manager.link_connections.keys()):
@@ -1424,6 +1420,7 @@ class AX25Conn:
                 SOUND.sprech(speech)
 
                 gui.add_LivePath_plot(node=str(self.to_call_str),
+                                      port_id=int(self.port_id),
                                             ch_id=int(self.ch_index))
                 gui.on_channel_status_change()
             # Maybe it's better to look at the whole string (include last frame)?

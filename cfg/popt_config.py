@@ -41,7 +41,8 @@ class Main_CFG:
             # GUI Main
             'gui_main_parm': getNew_maniGUI_parm,
             'gui_channel_vars': {},
-            'gui_pacman':       {},
+            'gui_pacman':       {},     # Netplan per Channel
+            'netplan':          {},     # Netplan all Data
             'conn_history':     [],
             ##########################
             # -- Beacon
@@ -419,14 +420,23 @@ class Main_CFG:
         self._config['gui_main_parm']['gui_f_text_tab'] = ftext_dict
         return True
 
-    # Pacman
+    # Pacman / Channel
     def get_pacman_data(self):
         return dict(self._config.get('gui_pacman', {}))
 
     def set_pacman_data(self, data: dict):
         if not data:
             return
-        self._config['gui_pacman'] = dict(data)
+        self._config['gui_pacman'] = copy.deepcopy(data)
+
+    # Pacman / NetPlan
+    def get_netplan_data(self):
+        return dict(self._config.get('netplan', {}))
+
+    def set_netplan_data(self, data: dict):
+        if not data:
+            return
+        self._config['netplan'] = copy.deepcopy(data)
 
     """
     def get_pacman_fix(self):

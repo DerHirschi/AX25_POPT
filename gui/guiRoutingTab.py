@@ -59,10 +59,11 @@ class RoutingTableWindow:
             ('protocol', 'Protocol', 80),
             ('ports', 'Ports', 60),
             ('quality', 'Quality', 80),
-            ('rtt', 'RTT'), 60,
+            ('rtt', 'RTT', 60),
             ('hop_count', 'Hops', 60),
             ('timestamp', 'Timestamp', 150)
         ]
+
         self._tree['columns'] = [col[0] for col in self._columns]
         for col_id, col_name, width in self._columns:
             self._tree.heading(col_id, text=col_name, command=lambda c=col_id: self.sort_column(c))

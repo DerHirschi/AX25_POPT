@@ -976,7 +976,7 @@ class BBS_fwd_Q(tk.Toplevel):
         tmp = [(convert_value(tree.set(k, col)), k) for k in tree.get_children('')]
         tmp.sort(reverse=self._rev_ent)
         self._rev_ent = not self._rev_ent
-        for index, (val, k) in enumerate(tmp):
+        for index, (value, k) in enumerate(tmp):
             tree.move(k, '', int(index))
 
     def _entry_selected(self, event=None):

@@ -284,7 +284,9 @@ STR_TABLE_SP = {
     'cli_http_set': ' # HTTP is set',
     'cli_text_encoding_no_param': ' # Please send an ä. Example: UM ä.\r # Current setting:',
     'cli_text_encoding_error_not_found': " # Couldn't detect right text encoding",
-    'cli_text_encoding_set': ' # Text de/encoding detected and set to:',
+    'cli_text_encoding_set': ' # Text de/encoding set to:',
+    'cli_text_encoding_current': 'Currently used encoder',
+    'cli_text_encoding_cmd_help': 'Set text encoding with ENC <opt>',
     'port_overview': 'Port Overview',
     'cmd_shelp': 'Short help',
     'time_connected': 'Connect duration',
@@ -488,5 +490,6 @@ STR_TABLE_SP = {
     'aprs_chat_help_aclear':        '  //ACLEAR             - Delete / Clear APRS Messages',
     'aprs_chat_help_achange':       'Change target (without leaving chat):',
     'aprs_chat_help_achat':         '  //ACHAT <Call> [Port]  - Chat with station',
-    'aprs_send_error':              ' # Error sending APRS message.'
+    'aprs_send_error':              ' # Error sending APRS message.',
+    'default_text':                 'Default Text',
 }

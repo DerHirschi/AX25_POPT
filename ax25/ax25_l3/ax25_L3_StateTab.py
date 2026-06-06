@@ -154,7 +154,7 @@ class DefaultStat(object):
         self.S1_end_connection()
 
     def _prozess_I_frame(self):
-        return self._ax25conn.prozess_I_frame()
+        return self._ax25conn.process_I_frame()
 
     def _delUNACK(self):
         return self._ax25conn.delUNACK()

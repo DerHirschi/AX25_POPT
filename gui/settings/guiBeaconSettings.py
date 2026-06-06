@@ -4,9 +4,12 @@ from tkinter import ttk as ttk
 from tkinter import scrolledtext
 from cfg.constant import GUI_DISABLED_CLR
 from cfg.default_config import getNew_BEACON_cfg
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from fnc.file_fnc import get_bin_fm_file
-from fnc.str_fnc import tk_filter_bad_chars, zeilenumbruch, get_strTab
+from fnc.gui_fnc import text_widget_select_all
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab, zeilenumbruch_lines
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 from schedule.guiPoPT_Scheduler import PoPT_Set_Scheduler
 from schedule.popt_sched import getNew_schedule_config
 
@@ -199,26 +202,68 @@ class BeaconTab:
         be_txt_openfile_btn.place(x=call_x + 710, y=call_y - 2)
         #################
         # Byte Zähler
-        call_x = 885
-        call_y = self._root_win.win_height - 185
+        call_x = 10
+        call_y = self._root_win.win_height - 220
         self._byte_count_var = tk.StringVar(self.own_tab, '')
         ttk.Label(self.own_tab,
                  textvariable=self._byte_count_var,
-                 font=(None, 9),
+                 #font=(None, 9),
                  ).place(x=call_x, y=call_y)
         self._update_byte_c_var_fm_text()
         self._cmd_be_change_typ()
+        self._init_r_click_menu()
+
+    # =============================================
+    def _init_r_click_menu(self):
+        txt_men = ContextMenu(self.b_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda: text_widget_select_all(self.b_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), self._copy_select)
+        txt_men.add_item(self._getTabStr('past'), self._clipboard_past)
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), self._cut_select)
+        # Clipboard Stuff
+
+    def _copy_select(self):
+        if not self.b_text_ent.tag_ranges("sel"):
+            return
+        self._root_win.clear_clipboard()
+        self._root_win.append_clipboard(self.b_text_ent.selection_get())
+        self.b_text_ent.tag_remove(tk.SEL, "1.0", tk.END)
+
+    def _clipboard_past(self):
+        clp_brd = self._root_win.get_clipboard()
+        if clp_brd:
+            #clp_brd = zeilenumbruch(clp_brd)
+            self.b_text_ent.insert(tk.INSERT, clp_brd)
+            self._update_byte_c_var_bind()
+            self.b_text_ent.see(tk.INSERT)
+            # self._update_bytes_counter(byte_c_var, text_ent.get(0.0, tk.END)[:-1])
+
+    def _cut_select(self):
+        if self.b_text_ent.tag_ranges("sel"):
+            self._root_win.clear_clipboard()
+            self._root_win.append_clipboard(self.b_text_ent.selection_get())
+            self.b_text_ent.delete('sel.first', 'sel.last')
+            self.b_text_ent.tag_remove(tk.SEL, "1.0", tk.END)
+            self.b_text_ent.see(tk.INSERT)
+            #self._update_byte_c_var_bind()
+            t_len = len(self.b_text_ent.get(0.0, tk.END))
+            new_text = f"{t_len}/256 Bytes"
+            self._byte_count_var.set(new_text)
+            #self._need_reinit = True
+
+        # =============================================
 
     def _update_byte_c_var_fm_text(self):
         new_text = f"{len(self.beacon.get('text', ''))}/256 Bytes"
         self._byte_count_var.set(new_text)
 
     def _update_byte_c_var_bind(self, event=None):
-        ind2 = str(int(float(self.b_text_ent.index(tk.INSERT)))) + '.0'
-        text = zeilenumbruch(self.b_text_ent.get(ind2, self.b_text_ent.index(tk.INSERT)))
-        self.b_text_ent.delete(ind2, self.b_text_ent.index(tk.INSERT))
+        #ind2 = str(int(float(self.b_text_ent.index(tk.INSERT)))) + '.0'
+        text = zeilenumbruch_lines(self.b_text_ent.get(0.0, tk.END)[:-1])
+        self.b_text_ent.delete(0.0, tk.END)
         self.b_text_ent.insert(tk.INSERT, text)
-        text = self.b_text_ent.get(0.0, tk.END)[:-1]
+        #text = self.b_text_ent.get(0.0, tk.END)[:-1]
         t_len = len(text)
         if t_len > 256:
             ind = t_len - 256
@@ -448,7 +493,21 @@ class BeaconSettings(ttk.Frame):
         else:
             del self.tab_list[ind]
             self.tabControl.forget(ind)
+    # ====================================
+    def clear_clipboard(self):
+        self.clipboard_clear()
 
+    def append_clipboard(self, text: str):
+        self.clipboard_append(text)
+
+    def get_clipboard(self):
+        try:
+            return self.clipboard_get()
+        except tk.TclError:
+            logger.warning("guiStationSettings: TclError Clipboard no STR")
+            return ''
+
+    # ====================================
     def get_popt_handler(self):
         return self._popt_handler
 

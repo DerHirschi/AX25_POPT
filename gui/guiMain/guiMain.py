@@ -24,7 +24,7 @@ from gui.guiMain.guiMain_Tasker import GuiTasker
 from gui.guiMain.guiMain_Utilities import GuiUtilities
 from gui.guiMain.guiMain_ToplevelManager import ToplevelManager
 
-from cfg.constant import VER, CFG_sound_RX_BEEP, SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
+from cfg.constant import VER, SERVICE_CH_START, COLOR_MAP, STYLES_AWTHEMES_PATH, STYLES_AWTHEMES, \
     GUI_TASKER_NOT_BURN_DELAY
 from fnc.os_fnc import get_root_dir
 from fnc.gui_fnc import get_all_tags
@@ -289,6 +289,9 @@ class PoPT_GUI_Main:
         self._load_pw_pos()
 
         #################################
+        self.switch_channel(self.channel_index)
+
+        #################################
         # set GUI Var to Port Handler
         self._popt_handler.set_gui(self)
         #######################
@@ -358,7 +361,7 @@ class PoPT_GUI_Main:
 
     def save_all_data(self):
         self.monFrame.sysMsg_to_monitor_task('Save all Data')
-        self.Pacman.save_path_data()
+        #self.Pacman.save_path_data()
         self._save_GUIvars()
         self._save_pw_pos()
         self.guiChannels.save_Channel_Vars()
@@ -405,6 +408,8 @@ class PoPT_GUI_Main:
         tab1_index, tab2_index = guiCfg.get('gui_cfg_rtab_index', (None, None))
         self.tabbed_sideFrame.set_tab_index(tab1_index)
         self.tabbed_sideFrame2.set_tab_index(tab2_index)
+        self.channel_index = guiCfg.get('gui_parm_channel_index', 1)
+        #self.switch_channel(guiCfg.get('gui_parm_channel_index', 1))
 
     def _set_CFG(self):
         self.set_tracer()
@@ -568,7 +573,7 @@ class PoPT_GUI_Main:
                     if ch_vars.rx_beep_opt:
                         if ch_vars.rx_beep_tr:
                             ch_vars.rx_beep_tr = False
-                            SOUND.sound_play(self._root_dir + CFG_sound_RX_BEEP)
+                            SOUND.rx_beep_sound()
     # Sound
     ######################################################################
     ######################################################################
@@ -726,8 +731,8 @@ class PoPT_GUI_Main:
     #######################################################################
     #######################################################################
     # Conn Path Plot
-    def add_LivePath_plot(self, node: str, ch_id: int, path=None):
-        self._GuiTasker.add_tasker_q(self.Pacman.add_LivePath_plot_task, (node, ch_id, path))
+    def add_LivePath_plot(self, node: str, ch_id: int, port_id: int, path=None):
+        self._GuiTasker.add_tasker_q(self.Pacman.add_LivePath_plot_task, (node, ch_id, port_id, path))
 
     def resetHome_LivePath_plot(self, ch_id: int):
         self._GuiTasker.add_tasker_q(self.Pacman.resetHome_LivePath_plot_task, ch_id)
@@ -951,6 +956,7 @@ class PoPT_GUI_Main:
 
     def set_aprsMail_alarm_task(self):
         self.Alarm_Frame.set_aprsMail_alarm(True)
+        SOUND.new_aprs_mail_sound()
 
     def reset_aprsMail_alarm(self):
         self._GuiTasker.add_tasker_q(self.reset_aprsMail_alarm_task)
@@ -999,6 +1005,7 @@ class PoPT_GUI_Main:
         if self.toplevel_manager.MSG_Center_win:
             return
         self.Alarm_Frame.set_pmsMailAlarm(True)
+        SOUND.new_bbs_mail_sound()
 
     def reset_pmsMail_alarm(self):
         self._GuiTasker.add_tasker_q(self.reset_pmsMail_alarm_task)
@@ -1148,3 +1155,5 @@ class PoPT_GUI_Main:
 
     def get_MH(self):
         return self._mh
+
+

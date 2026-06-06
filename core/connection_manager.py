@@ -73,7 +73,10 @@ class ConnectionManager:
 
             self._gui().add_LivePath_plot(node=call_str,
                                         ch_id=ch_id,
-                                        path=path)
+                                          port_id=connection.port_id,
+                                          path=path,
+
+                                          )
             self._gui().ch_status_update()
             self._gui().conn_btn_update()
         # Conn History
@@ -300,9 +303,9 @@ class ConnectionManager:
                 if conn and (conn.ch_index or with_null):  # Not Channel 0 unless with_null is True
                     while conn.ch_index in ret:
                         # print(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
-                        logger.warning(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
+                        logger.error(f"!! Connection {conn_key} on Port {port_id} has same CH-ID: {conn.ch_index}")
                         conn.ch_index += 1  # FIXME
-                    ret[conn.ch_index] = conn
+                    ret[int(conn.ch_index)] = conn
                     """
                     if conn.ch_index not in ret:
                         ret[conn.ch_index] = conn

@@ -1,4 +1,46 @@
 ###########################################################################################################
+# 2.125.x
+Fixes:
+- "Pacman" Connect Pfad Plot Probleme mit Kanal Index Variable führt zu
+  fehlerhaften Verhalten (z.B. Refresh Button) und Daten.
+- CLI APRS-Chat.Pakete werden nicht als gedigipeated gekennzeichnet(AX25-Call)
+  beim versenden von ACK-Nachrichten
+- CLI-CMD: "PATH" zeigt falsche Daten an (Locator/Distanz)
+- Fehlerhafte Zeitformat Konvertierung für UserDB Eintrag
+  "last_conn"/letzter connect.
+- QSO Fenster Tags Probleme, wenn alle QSO-Daten gelöscht werden
+- Wenn in CLI Paging(Seiten stop) aktiviert ist, funktioniert SYS-Login und
+  APRS-Chat nicht korrekt
+- APRS Neue-Mail Alarm (Icons) funktioniert nicht
+- ScriptError beim Öffnen von APRS-Einstellungen
+- Voreingestellte Farben für QSO Fenster werden nicht in den
+  Stations-Einstellungen angezeigt/gesetzt
+- Wenn C-Text Datei nicht vorhanden ist, wird kein Default C-Text gesetzt
+
+Optimierung/Änderungen:
+- Diverse I/O Buffer Thread Lock hinzugefügt
+- QSO History für Service Kanäle (Kanal >= 11) werden nicht mehr
+  über Programm start hinweg gespeichert. (Zu viel Datenmüll)
+- Zeilen Limit (10.000 Zeilen) für QSO und Vorschreibfenster
+  (50.000 Zeilen für Monitor)
+- Sounds (RX-Beep, Bell, ...) überarbeitet
+- Wenn Remote-Rechte gesperrt (User bezogen oder global) wird die Verbindung
+  beendet nach dem Senden des C-Textes
+- Portugiesische Übersetzung bearbeitet/vervollständigt von
+  CT1DRB(HAM) David.
+- Station Einstellungen, Byte Zähler und Rechtsklick Menü für Text-Fenster
+  (C-Text, Disco-Text, Info Text, ...)
+- Baken Einstellungen, Rechtsklick Menü für Text-Fenster
+
+Neue Implementierungen / Funktionen:
+- CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
+  Monitor Ausgabe über CLI (NODE/SYSOP)
+- CLI-CMD: "ENCODER" Text Encoding setzen mit ENC <opt>
+- Verbindungsverlauf in UserDB Fenster (gefiltert für jeweiligen User)
+- Sounds für neue APRS-Mail(APRS-SMS) & neue Mail (BBS/PMS)
+
+###########################################################################################################
+###########################################################################################################
 # 2.124.x
 Fixes:
 - Sprachen (CZ, PL, PT, IT, RU, UA) nicht auswählbar in 1'st Setup wizard

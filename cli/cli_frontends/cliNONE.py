@@ -33,5 +33,3 @@ class NoneCLI(DefaultCLI):
     def _baycom_auto_login(self):
         return False
 
-    def cli_update_monitor(self, ax25frame_conf: dict):
-        pass

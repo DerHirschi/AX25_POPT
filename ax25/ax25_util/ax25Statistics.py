@@ -1,4 +1,5 @@
 import copy
+import random
 import time
 from collections import deque
 from datetime import datetime
@@ -11,31 +12,30 @@ from cfg.constant import CFG_mh_data_file, SQL_TIME_FORMAT, CLI_TYP_DIGI
 from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from cfg.cfg_fnc import cleanup_obj_dict, set_obj_att, set_obj_att_fm_dict
-from classes.CLbuffers import ListBuffer
+from classes.CLbuffers import ListBuffer, LockedDict
 from fnc.socket_fnc import check_ip_add_format
 from fnc.str_fnc import conv_time_for_sorting, conv_time_for_key
 
 
 class MyHeard:
-    def __init__(self):
-        self.own_call = ''
-        self.to_calls = {}
-        self.last_dest = ''
-        self.route = []
-        self.all_routes = []
-        self.port = ''
-        self.port_id = 0  # Not used yet
-        self.first_seen_port = None
-        self.first_seen = datetime.now()
-        self.last_seen = datetime.now()
-        self.pac_n = 0  # N Packets
-        self.byte_n = 0  # N Bytes
-        self.h_byte_n = 0  # N Header Bytes
-        self.rej_n = 0  # N REJ
-        self.axip_add = '', 0  # IP, Port
-        self.axip_fail = 0  # Fail Counter
-        self.locator = ''
-        self.distance = -1
+    own_call   = ''
+    to_calls   = {}
+    last_dest  = ''
+    route              = []     # Last Route
+    all_routes         = []
+    port               = ''
+    port_id            = 0  # Not used yet
+    first_seen_port    = None
+    first_seen         = datetime.now()
+    last_seen          = datetime.now()
+    pac_n      = 0  # N Packets
+    byte_n     = 0  # N Bytes
+    h_byte_n   = 0  # N Header Bytes
+    rej_n      = 0  # N REJ
+    axip_add   = '', 0  # IP, Port
+    axip_fail  = 0  # Fail Counter
+    locator    = ''
+    distance   = -1
 
 
 def get_dx_tx_alarm_his_pack(
@@ -96,9 +96,9 @@ def get_port_stat_struct():
 
 
 class MH:
-    def __init__(self, port_handler):
+    def __init__(self, popt_handler):
         logger.info("MH: Init")
-        self._port_handler                  = port_handler
+        self._port_handler                  = popt_handler
         self._mh_inp_buffer                 = ListBuffer()
         self.dx_alarm_trigger               = False
         self.last_dx_alarm                  = time.time()
@@ -138,7 +138,13 @@ class MH:
         # History Data
         self._dx_alarm_hist         = []       # For GUI MH
         self.dx_alarm_perma_hist    = {}       # CLI DX List
+        logger.info("MH: loading Conn-History Data")
         self._conn_hist             = POPT_CFG.get_conn_hist()  # Connection History / Logbook
+        ##################
+        # Pacman/Netplan Data
+        self._path_ch_data = LockedDict()
+        self._path_data    = LockedDict()
+        ##################
         # Parameter
         self.parm_new_call_alarm    = False
         self.parm_distance_alarm    = 50
@@ -147,6 +153,11 @@ class MH:
         self._load_fm_cfg()
         logger.info("MH: Init Complete")
 
+    # ===========================
+    @property
+    def MH_db(self):
+        return dict(self._MH_db)
+    # ===========================
     def _load_MH_old(self, mh_load):
         if not mh_load:
             return
@@ -217,6 +228,14 @@ class MH:
             data_struc['port_id'] = port_id
             self._db.PortStat_insert_data(data_struc)
 
+    def save_pacman_data(self):
+        logger.info('MH: Save Pacman Data')
+        POPT_CFG.set_pacman_data(dict(self._path_ch_data))
+
+    def save_netplan_data(self):
+        logger.info('MH: Save Netplan Data')
+        POPT_CFG.set_netplan_data(dict(self._path_data))
+
     ###############################
     # Main CFG/PARAM
     def _load_fm_cfg(self):
@@ -227,6 +246,19 @@ class MH:
         self.parm_distance_alarm = mh_cfg.get('parm_distance_alarm', 50)
         self.parm_lastseen_alarm = mh_cfg.get('parm_lastseen_alarm', 1)
         self.parm_alarm_ports = mh_cfg.get('parm_alarm_ports', [])
+        logger.info("MH: loading Pacman Data")
+        path_data = POPT_CFG.get_pacman_data()
+        for ch_id, ch_data in path_data.items():
+            try:
+                path_data, last_hop, seed = ch_data
+                self._path_ch_data[ch_id] = path_data, 'HOME', seed
+            except ValueError:
+                pass
+
+        logger.info("MH: loading Netplan Data")
+        path_data = POPT_CFG.get_netplan_data()
+        for node, path_data in path_data.items():
+            self._path_data[node] = path_data
 
     def _save_to_cfg(self):
         mh_cfg = POPT_CFG.get_CFG_MH()
@@ -245,6 +277,42 @@ class MH:
         self._db = sql_db
         logger.info("MH: SQL-DB set")
 
+    #########################
+    # Pacman/Netplan
+    def reset_pacman_data(self):
+        self._path_data = LockedDict()
+
+    def reset_pacman_ch_data(self, ch_id: int):
+        self._path_ch_data[ch_id] = ({}, 'HOME', int(random.randint(1, 10000)))
+
+    def pacman_new_ch_seed_(self, ch_id: int):
+        path_data, last_hop, seed = self.get_pacman_ch_data(ch_id)
+        seed = random.randint(1, 10000)
+        self._path_ch_data[ch_id] = dict(path_data), str(last_hop), int(seed)
+
+    def get_pacman_ch_data(self, ch_id: int):
+        #print(self._path_ch_data[ch_id][0])
+        return tuple(self._path_ch_data.get(ch_id, ({}, 'HOME', int(random.randint(1, 10000)))))
+
+    def get_netplan_data(self):
+        return copy.deepcopy(dict(self._path_data))
+
+    def set_pacman_ch_data(self, ch_id: int, data: tuple, port_id: int or None = None):
+        self._path_ch_data[ch_id] = data
+        #self._path_data.
+        # ======================
+        # NetPlan Data
+        if port_id is None:
+            return
+
+        node_tab: dict = data[0]
+        for node, path in node_tab.items():
+            old_data: list = self._path_data.get(port_id, {}).get(node, [])
+            if path not in old_data:
+                old_data.append(path)
+                if port_id not in self._path_data:
+                    self._path_data[port_id] = {}
+                self._path_data[port_id][node] = old_data
 
     #########################
     # DX Alarm
@@ -277,12 +345,20 @@ class MH:
             lb_msg_2 = f"DX-ALARM: {ent.own_call} - Route: {'>'.join(ent.route)}"
             LOG_BOOK.info(lb_msg_2)
 
+    def is_dx_alarm_f_call(self, call: str):
+        return bool(call in self._dx_alarm_hist)
+
     def reset_dx_alarm_his(self):
         self._dx_alarm_hist     = []
         self.dx_alarm_trigger   = False
 
-    def is_dx_alarm_f_call(self, call: str):
-        return bool(call in self._dx_alarm_hist)
+    def reset_dxHistory(self):
+        self.dx_alarm_trigger = False
+        self._dx_alarm_hist = []  # For GUI MH
+        self.dx_alarm_perma_hist = {}  # CLI DX List
+
+    def get_dx_alarm_perma_his(self):
+        return self.dx_alarm_perma_hist
 
     #########################
     # Connection History
@@ -397,6 +473,7 @@ class MH:
         self._lock = False
         return True
 
+    #===================================================
     def mh_input(self, ax25frame_conf, port_id: int, tx: bool, primary_port_id=-1):
         """ Main Input from ax25Port.gui_monitor()"""
         if tx:
@@ -412,6 +489,7 @@ class MH:
 
     def _mh_inp(self, data, digi=''):
         # TODO Again !
+        #  - _check_dx_alarm()
         # inp
         org_port_id = data['port_id']
         primary_port_id = data['primary_port_id']
@@ -511,6 +589,7 @@ class MH:
             USER_DB.set_typ(call_str=digi, add_new=False, typ=CLI_TYP_DIGI)
         elif last_digi:
             self._mh_inp(data, last_digi)
+    #===================================================
 
     def get_dualPort_lastRX(self, call: str, port_id: int):
         if not call:
@@ -691,12 +770,5 @@ class MH:
         self._dx_alarm_hist = []  # For GUI MH
         self.dx_alarm_perma_hist = {}  # CLI DX List
 
-    def reset_dxHistory(self):
-        self.dx_alarm_trigger = False
-        self._dx_alarm_hist = []  # For GUI MH
-        self.dx_alarm_perma_hist = {}  # CLI DX List
-
-    def get_dx_alarm_perma_his(self):
-        return self.dx_alarm_perma_hist
 # MH_LIST = MH()
 

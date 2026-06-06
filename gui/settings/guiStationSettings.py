@@ -8,12 +8,15 @@ import serial.tools.list_ports
 
 from cfg.constant import CFG_data_path, CFG_usertxt_path, COLOR_MAP, CLI_TYP_PIPE, CLI_TYP_NO_CLI
 from cfg.default_config import getNew_pipe_cfg, getNew_station_cfg
+from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
 from cli import CLI_OPT
 from fnc.ax25_fnc import validate_ax25Call
 from fnc.file_fnc import get_str_fm_file, save_str_to_file
-from fnc.str_fnc import zeilenumbruch_lines, zeilenumbruch, get_strTab
+from fnc.gui_fnc import text_widget_select_all
+from fnc.str_fnc import zeilenumbruch_lines, get_strTab, format_number
 from gui.guiMsgBoxes import AskMsg, call_vali_warning
+from gui.gui_classes.guiRightClick_Menu import ContextMenu
 
 
 class StatSetTab:
@@ -58,11 +61,18 @@ class StatSetTab:
         self._qso_fg_rx = self._new_station_setting.get('stat_parm_qso_col_text_rx', '#25db04')
         #########################################################################
         # Gui-Vars
-        self.call_var         = tk.StringVar(self.own_tab, value=stat_call)
-        self._cli_select_var  = tk.StringVar(self.own_tab, value=stat_cli_typ)
-        self._name_var        = tk.StringVar(self.own_tab, value=stat_name)
-        self._max_pac_var     = tk.StringVar(self.own_tab, value=str(stat_maxframe))
-        self._len_pac_var     = tk.StringVar(self.own_tab, value=str(stat_paclen))
+        self.call_var          = tk.StringVar(self.own_tab, value=stat_call)
+        self._cli_select_var   = tk.StringVar(self.own_tab, value=stat_cli_typ)
+        self._name_var         = tk.StringVar(self.own_tab, value=stat_name)
+        self._max_pac_var      = tk.StringVar(self.own_tab, value=str(stat_maxframe))
+        self._len_pac_var      = tk.StringVar(self.own_tab, value=str(stat_paclen))
+        # Bytes Counter
+        self._c_text_count_var  = tk.StringVar(self.own_tab, value="--- Bytes")
+        self._b_text_count_var  = tk.StringVar(self.own_tab, value="--- Bytes")
+        self._i_text_count_var  = tk.StringVar(self.own_tab, value="--- Bytes")
+        self._li_text_count_var = tk.StringVar(self.own_tab, value="--- Bytes")
+        self._a_text_count_var  = tk.StringVar(self.own_tab, value="--- Bytes")
+
         # Pipe
         self._backend_var       = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_backend', 'file'))
         self._tx_filename_var   = tk.StringVar(self.own_tab, value=pipe_cfg.get('pipe_parm_pipe_tx', ''))
@@ -162,10 +172,15 @@ class StatSetTab:
         tab_ctext = ttk.Frame(self._textTab)
         tab_ctext.pack(expand=True, fill='both')
 
-        self._c_text_ent = tk.Text(tab_ctext, font=("Courier", 12))
-        self._c_text_ent.configure(width=80)
-        self._c_text_ent.pack(fill='y', padx=50, pady=40)
+        c_text_frame = ttk.Frame(tab_ctext)
+        c_text_frame.pack(padx=50, pady=10)
+        self._c_text_ent = tk.Text(c_text_frame, font=("Courier", 12))
+        self._c_text_ent.configure(width=80, height=17)
+        self._c_text_ent.pack()
         self._c_text_ent.insert(tk.END, c_text)
+        # Byte Counter
+        ttk.Label(c_text_frame, textvariable=self._c_text_count_var).pack(anchor='w', )
+        self._update_bytes_counter(self._c_text_count_var, c_text)
 
         # ########################################################################################
         # ========================================================================================
@@ -173,44 +188,60 @@ class StatSetTab:
         tab_byetext = ttk.Frame(self._textTab)
         tab_byetext.pack(expand=True, fill='both')
 
-        self._bye_text_ent = tk.Text(tab_byetext, font=("Courier", 12))
-        self._bye_text_ent.configure(width=80)
-        self._bye_text_ent.pack(fill='y', padx=50, pady=40)
+        b_text_frame = ttk.Frame(tab_byetext)
+        b_text_frame.pack(padx=50, pady=10)
+        self._bye_text_ent = tk.Text(b_text_frame, font=("Courier", 12))
+        self._bye_text_ent.configure(width=80, height=17)
+        self._bye_text_ent.pack()
         self._bye_text_ent.insert(tk.END, b_text)
-
+        # Byte Counter
+        ttk.Label(b_text_frame, textvariable=self._b_text_count_var).pack(anchor='w', )
+        self._update_bytes_counter(self._b_text_count_var, b_text)
         # ########################################################################################
         # ========================================================================================
         # Info Text Tab
         tab_infotext = ttk.Frame(self._textTab)
         tab_infotext.pack(expand=True, fill='both')
 
-        self._info_text_ent = tk.scrolledtext.ScrolledText(tab_infotext, font=("Courier", 12))
-        self._info_text_ent.configure(width=80)
-        self._info_text_ent.pack(fill='y', padx=50, pady=20)
+        i_text_frame = ttk.Frame(tab_infotext)
+        i_text_frame.pack(padx=50, pady=10)
+        self._info_text_ent = tk.scrolledtext.ScrolledText(i_text_frame, font=("Courier", 12))
+        self._info_text_ent.configure(width=80 , height=17)
+        self._info_text_ent.pack()
         self._info_text_ent.insert(tk.END, i_text)
-
+        # Byte Counter
+        ttk.Label(i_text_frame, textvariable=self._i_text_count_var).pack(anchor='w', )
+        self._update_bytes_counter(self._i_text_count_var, i_text)
         # ########################################################################################
         # ========================================================================================
         # Long Info Text Tab
         tab_loinfotext = ttk.Frame(self._textTab)
         tab_loinfotext.pack(expand=True, fill='both')
 
-        self._long_info_text_ent = tk.scrolledtext.ScrolledText(tab_loinfotext, font=("Courier", 12))
-        self._long_info_text_ent.configure(width=80)
-        self._long_info_text_ent.pack(fill='y', padx=50, pady=20)
+        li_text_frame = ttk.Frame(tab_loinfotext)
+        li_text_frame.pack(padx=50, pady=10)
+        self._long_info_text_ent = tk.scrolledtext.ScrolledText(li_text_frame, font=("Courier", 12))
+        self._long_info_text_ent.configure(width=80, height=17)
+        self._long_info_text_ent.pack()
         self._long_info_text_ent.insert(tk.END, li_text)
-
+        # Byte Counter
+        ttk.Label(li_text_frame, textvariable=self._li_text_count_var).pack(anchor='w', )
+        self._update_bytes_counter(self._li_text_count_var, li_text)
         # ########################################################################################
         # ========================================================================================
         # Status Text Tab
         tab_akttext = ttk.Frame(self._textTab)
         tab_akttext.pack(expand=True, fill='both')
 
-        self._akt_info_text_ent = tk.scrolledtext.ScrolledText(tab_akttext, font=("Courier", 12))
-        self._akt_info_text_ent.configure(width=80)
-        self._akt_info_text_ent.pack(fill='y', padx=50, pady=20)
+        a_text_frame = ttk.Frame(tab_akttext)
+        a_text_frame.pack(padx=50, pady=10)
+        self._akt_info_text_ent = tk.scrolledtext.ScrolledText(a_text_frame, font=("Courier", 12))
+        self._akt_info_text_ent.configure(width=80, height=17)
+        self._akt_info_text_ent.pack()
         self._akt_info_text_ent.insert(tk.END, a_text)
-
+        # Byte Counter
+        ttk.Label(a_text_frame, textvariable=self._a_text_count_var).pack(anchor='w', )
+        self._update_bytes_counter(self._a_text_count_var, a_text)
         # ########################################################################################
         # ========================================================================================
         # Pipe Tab
@@ -349,7 +380,10 @@ class StatSetTab:
         self._color_example_text = tk.Text(tab_colors,
                                            height=5,
                                            width=50,
-                                           font=('Courier', 11),)
+                                           font=('Courier', 11),
+                                           bg=str(self._qso_bg_tx),
+                                           fg=str(self._qso_fg_tx)
+                                           )
         self._color_example_text.place(x=200, y=10)
         self._color_example_text.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
@@ -368,7 +402,10 @@ class StatSetTab:
         self._color_example_text_rx = tk.Text(tab_colors,
                                               height=5,
                                               width=50,
-                                              font=('Courier', 11),)
+                                              font=('Courier', 11),
+                                              bg=str(self._qso_bg_tx),
+                                              fg=str(self._qso_fg_rx)
+                                              )
         self._color_example_text_rx.place(x=200, y=130)
         self._color_example_text_rx.insert(tk.END, 'TEST TEXT Test. 1234. 73... ')
         # FG
@@ -387,36 +424,123 @@ class StatSetTab:
         self._textTab.add(tab_pipe,         text='Pipe')
         self._textTab.add(tab_colors,       text=self._getTabStr('qso_win_color'))
 
-        self._c_text_ent.bind(          "<KeyRelease>", lambda e:self._chk_umbruch(self._c_text_ent))
-        self._info_text_ent.bind(       "<KeyRelease>", lambda e:self._chk_umbruch(self._info_text_ent))
-        self._long_info_text_ent.bind(  "<KeyRelease>", lambda e:self._chk_umbruch(self._long_info_text_ent))
-        self._akt_info_text_ent.bind(   "<KeyRelease>", lambda e:self._chk_umbruch(self._akt_info_text_ent))
-        self._bye_text_ent.bind(        "<KeyRelease>", lambda e:self._chk_umbruch(self._bye_text_ent))
+        self._c_text_ent.bind(          "<KeyRelease>", lambda e:self._chk_umbruch(self._c_text_ent, self._c_text_count_var))
+        self._info_text_ent.bind(       "<KeyRelease>", lambda e:self._chk_umbruch(self._info_text_ent, self._i_text_count_var))
+        self._long_info_text_ent.bind(  "<KeyRelease>", lambda e:self._chk_umbruch(self._long_info_text_ent, self._li_text_count_var))
+        self._akt_info_text_ent.bind(   "<KeyRelease>", lambda e:self._chk_umbruch(self._akt_info_text_ent, self._a_text_count_var))
+        self._bye_text_ent.bind(        "<KeyRelease>", lambda e:self._chk_umbruch(self._bye_text_ent, self._b_text_count_var))
         self._update_backend_fields()
         if pipe_cfg:
             self._textTab.select(5)
 
+        self._init_r_click_menu()
+
+    #=============================================
+    def _init_r_click_menu(self):
+
+        txt_men = ContextMenu(self._c_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda : text_widget_select_all(self._c_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), lambda : self._copy_select(self._c_text_ent))
+        txt_men.add_item(self._getTabStr('past'), lambda :self._clipboard_past(self._c_text_ent,
+                                                                               self._c_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), lambda :self._cut_select(self._c_text_ent,
+                                                                          self._c_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('default_text'), self._set_default_c_text)
+        # B Text
+        txt_men = ContextMenu(self._bye_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda: text_widget_select_all(self._bye_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), lambda: self._copy_select(self._bye_text_ent))
+        txt_men.add_item(self._getTabStr('past'), lambda: self._clipboard_past(self._bye_text_ent,
+                                                                               self._b_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), lambda: self._cut_select(self._bye_text_ent,
+                                                                          self._b_text_count_var))
+        # I Text
+        txt_men = ContextMenu(self._info_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda: text_widget_select_all(self._info_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), lambda: self._copy_select(self._info_text_ent))
+        txt_men.add_item(self._getTabStr('past'), lambda: self._clipboard_past(self._info_text_ent,
+                                                                               self._i_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), lambda: self._cut_select(self._info_text_ent,
+                                                                          self._i_text_count_var))
+        # LI Text
+        txt_men = ContextMenu(self._long_info_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda: text_widget_select_all(self._long_info_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), lambda: self._copy_select(self._long_info_text_ent))
+        txt_men.add_item(self._getTabStr('past'), lambda: self._clipboard_past(self._long_info_text_ent,
+                                                                               self._li_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), lambda: self._cut_select(self._long_info_text_ent,
+                                                                          self._li_text_count_var))
+        # A Text
+        txt_men = ContextMenu(self._akt_info_text_ent)
+        txt_men.add_item(self._getTabStr('select_all'), lambda: text_widget_select_all(self._akt_info_text_ent))
+        txt_men.add_item(self._getTabStr('copy'), lambda: self._copy_select(self._akt_info_text_ent))
+        txt_men.add_item(self._getTabStr('past'), lambda: self._clipboard_past(self._akt_info_text_ent,
+                                                                               self._a_text_count_var))
+        txt_men.add_separator()
+        txt_men.add_item(self._getTabStr('cut'), lambda: self._cut_select(self._akt_info_text_ent,
+                                                                          self._a_text_count_var))
+
+    # Clipboard Stuff
+    def _copy_select(self, text_ent: tk.Text or tk.scrolledtext):
+        if not text_ent.tag_ranges("sel"):
+            return
+        self._root_win.clear_clipboard()
+        self._root_win.append_clipboard(text_ent.selection_get())
+        text_ent.tag_remove(tk.SEL, "1.0", tk.END)
+
+    def _clipboard_past(self, text_ent: tk.Text or tk.scrolledtext, byte_c_var: tk.StringVar):
+        clp_brd = self._root_win.get_clipboard()
+        if clp_brd:
+            text_ent.insert(tk.INSERT, clp_brd)
+            self._chk_umbruch(text_ent, byte_c_var)
+            #text_ent.see(tk.INSERT)
+            #self._update_bytes_counter(byte_c_var, text_ent.get(0.0, tk.END)[:-1])
+
+    def _cut_select(self, text_ent: tk.Text or tk.scrolledtext, byte_c_var: tk.StringVar):
+        if text_ent.tag_ranges("sel"):
+            self._root_win.clear_clipboard()
+            self._root_win.append_clipboard(text_ent.selection_get())
+            text_ent.delete('sel.first', 'sel.last')
+            text_ent.tag_remove(tk.SEL, "1.0", tk.END)
+            text_ent.see(tk.INSERT)
+            self._update_bytes_counter(byte_c_var, text_ent.get(0.0, tk.END)[:-1])
+
+    #=============================================
+    def _set_default_c_text(self):
+        self._c_text_ent.delete(0.0, tk.END)
+        self._c_text_ent.insert(tk.INSERT, self._getTabStr('default_ctext'))
+        self._chk_umbruch(self._c_text_ent, self._c_text_count_var)
+
+    #=============================================
     @staticmethod
-    def _chk_umbruch(tx_widget: tk.Text):
-        ind2 = str(int(float(tx_widget.index(tk.INSERT)))) + '.0'
-        old_text = tx_widget.get(ind2, tx_widget.index(tk.INSERT))
-        text = zeilenumbruch(old_text)
+    def _update_bytes_counter(text_var: tk.StringVar, text: str):
+        text_var.set(f"{format_number(len(text))} Bytes")
+
+    def _chk_umbruch(self, tx_widget: tk.Text, bytecounter_var: None or tk.StringVar = None):
+        #ind2 = str(int(float(tx_widget.index(tk.INSERT)))) + '.0'
+        old_text = tx_widget.get(0.0, tk.END)[:-1]
+        text = zeilenumbruch_lines(old_text)
+        if hasattr(bytecounter_var, 'set'):
+            self._update_bytes_counter(bytecounter_var, text)
         if old_text == text:
             return
-        tx_widget.delete(ind2, tx_widget.index(tk.INSERT))
-        tx_widget.insert(tk.INSERT, text)
+        tx_widget.delete("0.0", tx_widget.index(tk.END))
+        tx_widget.insert(tk.END, text)
+        tx_widget.see(tk.INSERT)
 
-
+    #=============================================
     def _load_fm_file(self, filename: str):
         file_n = CFG_data_path + \
                       CFG_usertxt_path + \
                       self._stat_call + '/' + \
                       filename
 
-        ret = get_str_fm_file(file_n)
-        if ret is None:
-            return ''
-        return ret
+        return get_str_fm_file(file_n)
 
     def _save_to_file(self, filename: str, data: str):
         file_n = CFG_data_path + \
@@ -428,6 +552,7 @@ class StatSetTab:
             return out
         return ''
 
+    #=============================================
     def _choose_color(self, fg_bg: str):
         if fg_bg == 'tx_fg':
             col = askcolor(self._qso_fg_tx,
@@ -741,6 +866,19 @@ class StationSettingsWin(ttk.Frame):
         else:
             messagebox.showinfo(self._getTabStr('aborted'), self._getTabStr('lob3'), parent=self)
             #self._root_win.sysMsg_to_monitor(STR_TABLE['hin2'][self._lang])
+
+    def clear_clipboard(self):
+        self.clipboard_clear()
+
+    def append_clipboard(self, text: str):
+        self.clipboard_append(text)
+
+    def get_clipboard(self):
+        try:
+            return self.clipboard_get()
+        except tk.TclError:
+            logger.warning("guiStationSettings: TclError Clipboard no STR")
+            return ''
 
     @staticmethod
     def _get_config():
