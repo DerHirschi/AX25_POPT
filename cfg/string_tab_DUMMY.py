@@ -490,5 +490,6 @@ STR_TABLE_SP = {
     'aprs_chat_help_aclear':        '  //ACLEAR             - Delete / Clear APRS Messages',
     'aprs_chat_help_achange':       'Change target (without leaving chat):',
     'aprs_chat_help_achat':         '  //ACHAT <Call> [Port]  - Chat with station',
-    'aprs_send_error':              ' # Error sending APRS message.'
+    'aprs_send_error':              ' # Error sending APRS message.',
+    'default_text':                 'Default Text',
 }

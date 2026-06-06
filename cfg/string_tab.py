@@ -6406,6 +6406,19 @@ STR_TABLE = {
         " # Ошибка при отправке APRS-сообщения.",  # RU
         " # Помилка при відправці APRS-повідомлення.",  # UA
     ),
+    # =======================================
+    'default_text': (
+        'Standard Text',
+        'Default Text',
+        'Standaard tekst',
+        'Texte standard',
+        'Standardní text',
+        'Tekst domyślny',
+        'Texto padrão',
+        'Testo predefinito',
+        'Текст по умолчанию',
+        'Текст за замовчуванням'
+    ),
 # ======== END =====================
 }   # < End of dict
 

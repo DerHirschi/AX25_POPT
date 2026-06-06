@@ -497,7 +497,10 @@ STR_TABLE_SP = {
     'aprs_chat_help_aclear':        '  //ACLEAR             - Borrar / Limpiar Mensajes APRS',
     'aprs_chat_help_achange':       'Cambiar objetivo (sin dejar ell chat):',
     'aprs_chat_help_achat':         '  //ACHAT <Call> [Puerto]  - Chat con la estación',
-    'aprs_send_error':              ' # Error enviando mensaje APRS.'
+    'aprs_send_error':              ' # Error enviando mensaje APRS.',
+    # By Google Translater
+    'default_text':                 'Texto predeterminado',
+
 }
 
 

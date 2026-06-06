@@ -1,6 +1,7 @@
 import random
 from PIL import Image, ImageTk
-from tkinter import ttk
+import tkinter as tk
+from tkinter import ttk, scrolledtext
 
 from cfg.constant import CFG_aprs_icon_path
 from cfg.logger_config import logger
@@ -317,4 +318,13 @@ def build_aprs_icon_tab(size=(16, 16)):
 def delete_tree(tree: ttk.Treeview):
     for i in tree.get_children():
         tree.delete(i)
+
+#################################
+# Text Widgets
+def text_widget_select_all(text_ent: tk.Text or tk.scrolledtext):
+    text_ent.tag_remove("send", "1.0", tk.END)
+    text_ent.tag_add(tk.SEL, "1.0", tk.END)
+    text_ent.mark_set(tk.INSERT, "1.0")  # Setzt den Cursor an den Anfang
+    text_ent.see(tk.INSERT)  #
+
 

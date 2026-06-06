@@ -26,14 +26,17 @@ Optimierung/Änderungen:
 - Sounds (RX-Beep, Bell, ...) überarbeitet
 - Wenn Remote-Rechte gesperrt (User bezogen oder global) wird die Verbindung
   beendet nach dem Senden des C-Textes
-- Portugisische Übersetzung bearbeitet/vervollständigt von
+- Portugiesische Übersetzung bearbeitet/vervollständigt von
   CT1DRB(HAM) David.
+- Station Einstellungen, Byte Zähler und Rechtsklick Menü für Text-Fenster
+  (C-Text, Disco-Text, Info Text, ...)
+- Baken Einstellungen, Rechtsklick Menü für Text-Fenster
 
 Neue Implementierungen / Funktionen:
 - CLI-CMD: "MONITOR" (Monitor [port] +/- [CALL] [CALL] ...)
   Monitor Ausgabe über CLI (NODE/SYSOP)
 - CLI-CMD: "ENCODER" Text Encoding setzen mit ENC <opt>
-- Verbindungsverlauf in UserDB Fenster (gefilter für jewiligen User)
+- Verbindungsverlauf in UserDB Fenster (gefiltert für jeweiligen User)
 - Sounds für neue APRS-Mail(APRS-SMS) & neue Mail (BBS/PMS)
 
 ###########################################################################################################
