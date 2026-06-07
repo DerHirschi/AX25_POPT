@@ -76,8 +76,8 @@ def conv_time_DE_str(dateti=None):
         return dateti
     try:
         if not dateti:
-            return str(datetime.now().strftime('%d/%m/%y %H:%M:%S'))
-        return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
+            return str(datetime.now().strftime('%d.%m.%y %H:%M:%S'))
+        return str(dateti.strftime('%d.%m.%y %H:%M:%S'))
     except Exception as ex:
         logger.error(f"conv_time_DE_str: {ex}")
         logger.error(f"conv_time_DE_str: {dateti}")
@@ -87,7 +87,7 @@ def str_to_datetime(date_str=None):
     if not date_str:
         return datetime.now()
     try:
-        return datetime.strptime(date_str, '%d/%m/%y %H:%M:%S')
+        return datetime.strptime(date_str, '%d.%m.%y %H:%M:%S')
     except ValueError:
         return datetime.now()
 
@@ -226,7 +226,7 @@ def format_number(number):
     return formatted_number
 
 
-def is_plausible_text(text: str) -> bool:
+def is_plausible_text(text: str):
     """By Grok3-AI"""
     """Prüft, ob der Text sinnvoll aussieht (überwiegend druckbare Zeichen)."""
     if not text:
@@ -237,7 +237,7 @@ def is_plausible_text(text: str) -> bool:
     control_chars = sum(1 for c in text if c < '\x20' and c not in '\n\r\täöpÄÖÜßéÉ<>-_#*+-/=|.,:' or c in 'Σⁿ▀▄Θ─α') / len(text)
     return printable_ratio > 0.7 and control_chars < 0.05  # 90 % druckbar, wenige Steuerzeichen
 
-def try_decode(data: bytes, ignore: bool = False) -> (str, str):
+def try_decode(data: bytes, ignore: bool = False):
     """By Grok3-AI"""
     # Schritt 1: Prüfe, ob Daten wahrscheinlich binär sind
     if not data:

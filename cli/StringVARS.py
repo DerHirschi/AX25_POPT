@@ -8,7 +8,7 @@ from fnc.str_fnc import get_timedelta_CLIstr, str_to_datetime
 """
     $ver = PoPT 2.xxx.x                         - Bake
     $time = 20:39:00                            - Bake
-    $date = 03/03/2024                          - Bake
+    $date = 03.03.2024                          - Bake
     $uptime = Zeit seit Programmstart           - Bake
     $channel = Kanal NR
     $portNr = Port NR                           - Bake
@@ -73,7 +73,7 @@ def get_date_str(port=None,
                  port_handler=None,
                  connection=None,
                  user_db=None):
-    return str(datetime.datetime.now().strftime('%d/%m/%Y'))
+    return str(datetime.datetime.now().strftime('%d.%m.%Y'))
 
 
 def get_destName(port=None,
@@ -180,7 +180,7 @@ def get_lastConnDate(port=None,
     #if type(connection.last_connect) == str:
     #    return connection.last_connect
     try:
-        dt_time = str_to_datetime(connection.last_connect).strftime('%d/%m/%Y')
+        dt_time = str_to_datetime(connection.last_connect).strftime('%d.%m.%Y')
         return str(dt_time)
     except Exception as ex:
         logger.error(ex)

@@ -139,7 +139,7 @@ Performance/Opt:
   ? Pfad von MH-Liste.
   ? Pfad von Link-Liste.
   ✓ UI-Frames weiterleiten auf Port (DIGI SSID)
-  - UI-Frames digipeten, wenn DIGI im Pfad vorhanden aber Frame von vorherigen Stationen
+  ? UI-Frames digipeten, wenn DIGI im Pfad vorhanden aber Frame von vorherigen Stationen
     noch nicht weitergeleitet wurde
   - RNR Funktionalität auch für Node "Weiterconnect"
 
@@ -150,7 +150,7 @@ Performance/Opt:
 ✓ UserDB
   - Sync mit https://info.packetradio-freital.de/calldb/json
   - Sync mit FBB WP via FBB WP-Request Server
-  - UserDB auf SQL-DB umstellen?
+  ? UserDB auf SQL-DB umstellen?
   ✓ Suchfunktion in UserDB GUI
   - Infos / Ctext usw. in User-DB automatisch abfragen und speichern
   - User-DB Sync System (Manuell zu triggern bei connect zu anderer PoPT Station)

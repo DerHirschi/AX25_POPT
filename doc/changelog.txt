@@ -3,8 +3,10 @@
 Fixes:
 - Programm Crash beim Erstellen/Zuweisen eines Dual-Ports
 - Programm Crash wenn Dual-Port Monitor Pakete dekodiert
+- GUI MH-Liste: MH-Einträge lassen sich nicht sortieren
 
 Optimierung/Änderungen:
+- Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
 
 Neue Implementierungen / Funktionen:
 

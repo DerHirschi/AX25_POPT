@@ -939,7 +939,7 @@ class BBS_fwd_Q(tk.Toplevel):
             elif flag == 'time':
                 # Deutsches Format parsen: DD.MM.YYYY HH:MM:SS
                 try:
-                    return datetime.strptime(value, '%d/%m/%y %H:%M:%S')
+                    return datetime.strptime(value, '%d.%m.%y %H:%M:%S')
                 except ValueError:
                     return datetime.min  # Ungültige Zeiten ans Ende sortieren
             else:

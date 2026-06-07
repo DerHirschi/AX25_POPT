@@ -367,14 +367,14 @@ class MHWin(tk.Toplevel):
         self._alarm_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='left', fill='y', expand=False)
 
-        self._alarm_tree.heading('mh_call',       text='Call',          command=lambda: self._sort_entry('call'))
-        self._alarm_tree.heading('mh_port',       text='Port',          command=lambda: self._sort_entry('port'))
-        self._alarm_tree.heading('mh_loc',        text='LOC',           command=lambda: self._sort_entry('loc'))
-        self._alarm_tree.heading('mh_dist',       text='km',            command=lambda: self._sort_entry('dist'))
-        self._alarm_tree.heading('mh_nPackets',   text='Packets',       command=lambda: self._sort_entry('pack'))
-        self._alarm_tree.heading('mh_route',      text='Route',         command=lambda: self._sort_entry('route'))
-        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   command=lambda: self._sort_entry('first'))
-        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  command=lambda: self._sort_entry('last'))
+        self._alarm_tree.heading('mh_call',       text='Call',          )
+        self._alarm_tree.heading('mh_port',       text='Port',          )
+        self._alarm_tree.heading('mh_loc',        text='LOC',           )
+        self._alarm_tree.heading('mh_dist',       text='km',            )
+        self._alarm_tree.heading('mh_nPackets',   text='Packets',       )
+        self._alarm_tree.heading('mh_route',      text='Route',         )
+        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   )
+        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  )
         #self._tree.heading('mh_ip_fail', text='Fail', command=lambda: self._sort_entry('axipfail'))
         self._alarm_tree.column("mh_call",        anchor='w', stretch=tk.NO,  width=90)
         self._alarm_tree.column("mh_port",        anchor='w', stretch=tk.NO,  width=60)
@@ -489,6 +489,7 @@ class MHWin(tk.Toplevel):
         }
         #################################
         self._root_win.toplevel_manager.mh_window = self
+        self._sort_entry('last')
         self._update_mh()
         self._update_dx_his()
         self._update_conn_his()
@@ -694,7 +695,7 @@ class MHWin(tk.Toplevel):
             elif flag == 'time':
                 # Deutsches Format parsen: DD.MM.YYYY HH:MM:SS
                 try:
-                    return datetime.strptime(value, '%d/%m/%y %H:%M:%S')
+                    return datetime.strptime(value, '%d.%m.%y %H:%M:%S')
                 except ValueError:
                     return datetime.min  # Ungültige Zeiten ans Ende sortieren
             else:
@@ -805,7 +806,7 @@ class MHWin(tk.Toplevel):
             self._close_me()
     """
     def _update_mh(self):
-        self._sort_entry('last')
+        #self._sort_entry('last')
         if self._tree_data == self._old_mh_data:
             return
         self._old_mh_data = dict(self._tree_data)
@@ -836,14 +837,14 @@ class MHWin(tk.Toplevel):
         else:
             self._rev_ent = True
         self._format_tree_ent(sort_date)
+        self._update_mh()
 
-    def _format_tree_ent(self, mh_list):
+    def _format_tree_ent(self, mh_list: dict):
         self._tree_data = []
         mh      = self.get_mh()
         user_db = self._get_userDB()
-        for k in mh_list:
-            ent: MyHeard
-            ent = mh_list[k]
+        for k, ent in mh_list.items():
+
             if self._port_filter_var.get() != str(ent.port_id) and self._port_filter_var.get():
                 continue
             if ent.axip_add[1]:
