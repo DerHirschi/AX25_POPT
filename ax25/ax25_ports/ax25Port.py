@@ -72,7 +72,7 @@ class AX25Port(object):
         self.dualPort_lastRX        = b''  # Prim
         self.dualPort_echoFilter    = []   # Prim
         self.dualPort_cfg           = {}
-        self.dualPort_monitor_buf   = []
+        self.dualPort_monitor_buf   = []   # TODO: Threadlock
         """ MCast Server """
         self._mcast_server          = None
         """ Block incoming Connections """
@@ -810,7 +810,7 @@ class AX25Port(object):
             return
         data = dict(
             tx=bool(tx),
-            ax25frame=ax25frame.get_frame_conf(),
+            ax25frame=dict(ax25frame.get_frame_conf()),
             frame_rawData=bytes(ax25frame.data_bytes)
         )
         if not double:

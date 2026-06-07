@@ -2,6 +2,7 @@
 # 2.126.x
 Fixes:
 - Programm Crash beim Erstellen/Zuweisen eines Dual-Ports
+- Programm Crash wenn Dual-Port Monitor Pakete dekodiert
 
 Optimierung/Änderungen:
 
