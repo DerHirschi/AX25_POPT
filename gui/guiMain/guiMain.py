@@ -360,7 +360,7 @@ class PoPT_GUI_Main:
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     def save_all_data(self):
-        self.monFrame.sysMsg_to_monitor_task('Save all Data')
+        self.monFrame.sysMsg_to_monitor_task('Autosave')
         #self.Pacman.save_path_data()
         self._save_GUIvars()
         self._save_pw_pos()

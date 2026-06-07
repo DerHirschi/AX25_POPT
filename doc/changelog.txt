@@ -1,4 +1,14 @@
 ###########################################################################################################
+# 2.126.x
+Fixes:
+- Programm Crash beim Erstellen/Zuweisen eines Dual-Ports
+
+Optimierung/Änderungen:
+
+Neue Implementierungen / Funktionen:
+
+###########################################################################################################
+###########################################################################################################
 # 2.125.x
 Fixes:
 - "Pacman" Connect Pfad Plot Probleme mit Kanal Index Variable führt zu
@@ -24,8 +34,6 @@ Optimierung/Änderungen:
 - Zeilen Limit (10.000 Zeilen) für QSO und Vorschreibfenster
   (50.000 Zeilen für Monitor)
 - Sounds (RX-Beep, Bell, ...) überarbeitet
-- Wenn Remote-Rechte gesperrt (User bezogen oder global) wird die Verbindung
-  beendet nach dem Senden des C-Textes
 - Portugiesische Übersetzung bearbeitet/vervollständigt von
   CT1DRB(HAM) David.
 - Station Einstellungen, Byte Zähler und Rechtsklick Menü für Text-Fenster

@@ -9,10 +9,10 @@ from fnc.str_fnc import get_strTab
 
 class DP_cfg_Tab(ttk.Frame):
     def __init__(self, root_win, dp_settings: dict):
-        ttk.Frame.__init__(self, root_win)
+        ttk.Frame.__init__(self, root_win.tabControl)
         self.pack()
         ##################
-        self._popt_handler = root_win.get_popt_handler()
+        self._popt_handler = root_win.popt_handler
         ##################
         # Port
         port_frame = ttk.Frame(self)
@@ -132,7 +132,7 @@ class DualPortSettingsWin(tk.Toplevel):
 
         all_dualPorts = POPT_CFG.get_dualPort_CFG()
         for port_id, dp_cfg in all_dualPorts.items():
-            tab = DP_cfg_Tab(self.tabControl, dp_cfg, )
+            tab = DP_cfg_Tab(self, dp_cfg, )
             self.tab_list[port_id] = tab
             port_lable_text = 'Port {}'.format(port_id)
             self.tabControl.add(tab, text=port_lable_text)
@@ -152,6 +152,10 @@ class DualPortSettingsWin(tk.Toplevel):
 
         self._init_menubar()
 
+    @property
+    def popt_handler(self):
+        return self._popt_handler
+
     def _init_menubar(self):
         menubar = Menu(self, tearoff=False)
         self.config(menu=menubar)
@@ -164,7 +168,7 @@ class DualPortSettingsWin(tk.Toplevel):
 
     def _new_dualPort_cfg(self):
         new_cfg = getNew_dualPort_cfg()
-        tab = DP_cfg_Tab(self.tabControl, new_cfg, )
+        tab = DP_cfg_Tab(self, new_cfg, )
         self.tab_list[-1] = tab
         port_lable_text = self._getTabStr('new')
         self.tabControl.add(tab, text=port_lable_text)
@@ -244,9 +248,6 @@ class DualPortSettingsWin(tk.Toplevel):
     def _abort_btn(self):
         # self._set_cfg_to_port()
         self.destroy_win()
-
-    def get_popt_handler(self):
-        return self._popt_handler
 
     def destroy_win(self):
         self._root_win.toplevel_manager.dualPort_settings_win = None
