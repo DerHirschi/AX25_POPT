@@ -6419,6 +6419,657 @@ STR_TABLE = {
         'Текст по умолчанию',
         'Текст за замовчуванням'
     ),
+    # ===== POKER =====================================================
+    'poker_title': (
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+        '\r=== Texas Hold\'em Poker ===\r',
+    ),
+    'poker_table_header': (
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'You: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Tu: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Tu: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+        'Du: {0:>4} Chips   Dealer: {1:>4}   Pot: {2:>4}\r\r',
+    ),
+    'poker_your_cards': (
+        'Deine Karten:  ',
+        'Your Cards:    ',
+        'Uw Kaarten:    ',
+        'Tes cartes:    ',
+        'Tvé karty:     ',
+        'Twoje karty:   ',
+        'Suas Cartas:   ',
+        'Le tue carte:  ',
+        'Твои карты:    ',
+        'Твої карти:    ',
+    ),
+    'poker_dealer': (
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+        'Dealer:        ',
+    ),
+    'poker_community': (
+        'Community:     ',
+        'Community:     ',
+        'Community:     ',
+        'Community:     ',
+        'Community:     ',
+        'Community:     ',
+        'Comunidade:    ',
+        'Community:     ',
+        'Community:     ',
+        'Community:     ',
+    ),
+    'poker_your_hand': (
+        'Deine Hand:    ',
+        'Your Hand:     ',
+        'Uw Hand:       ',
+        'Ta main:       ',
+        'Tvá ruka:      ',
+        'Twój układ:    ',
+        'Sua Mão:       ',
+        'La tua mano:   ',
+        'Твоя рука:     ',
+        'Твоя рука:     ',
+    ),
+    'poker_prompt': (
+        '\rBET <anz> | CHECK | CALL | FOLD\r',
+        '\rBET <amt> | CHECK | CALL | FOLD\r',
+        '\rBET <anz> | CHECK | CALL | FOLD\r',
+        '\rBET <mont>| CHECK | CALL | FOLD\r',
+        '\rBET <cást>| CHECK | CALL | FOLD\r',
+        '\rBET <ile> | CHECK | CALL | FOLD\r',
+        '\rBET <val> | CHECK | CALL | FOLD\r',
+        '\rBET <imp> | CHECK | CALL | FOLD\r',
+        '\rBET <сум> | CHECK | CALL | FOLD\r',
+        '\rBET <сум> | CHECK | CALL | FOLD\r',
+    ),
+    'poker_cant_check': (
+        '\r # Du kannst nicht CHECKen, Dealer hat gesetzt. CALL oder FOLD.\r',
+        '\r # You cannot CHECK, dealer has bet. CALL or FOLD.\r',
+        '\r # CHECK niet mogelijk, dealer heeft gezet. CALL of FOLD.\r',
+        '\r # Vous ne pouvez pas CHECKER, le dealer a misé. CALL ou FOLD.\r',
+        '\r # Nemůžete CHECKovat, dealer vsadil. CALL nebo FOLD.\r',
+        '\r # Nie możesz SPRAWDZIĆ, dealer postawił. CALL lub FOLD.\r',
+        '\r # Não pode CHECK, o dealer apostou. CALL ou FOLD.\r',
+        '\r # Non puoi CHECK, il dealer ha puntato. CALL o FOLD.\r',
+        '\r # Вы не можете CHECK, дилер сделал ставку. CALL или FOLD.\r',
+        '\r # Ви не можете CHECK, дилер зробив ставку. CALL або FOLD.\r',
+    ),
+    'poker_invalid_bet': (
+        '\r # Ungültiger Betrag!\r',
+        '\r # Invalid amount!\r',
+        '\r # Ongeldig bedrag!\r',
+        '\r # Montant invalide!\r',
+        '\r # Neplatná částka!\r',
+        '\r # Nieprawidłowa kwota!\r',
+        '\r # Quantia inválida!\r',
+        '\r # Importo non valido!\r',
+        '\r # Неверная сумма!\r',
+        '\r # Невірна сума!\r',
+    ),
+    'poker_quit': (
+        '\r # Poker beendet.\r',
+        '\r # Poker ended.\r',
+        '\r # Poker beëindigd.\r',
+        '\r # Poker terminé.\r',
+        '\r # Poker ukončen.\r',
+        '\r # Poker zakończony.\r',
+        '\r # Poker terminado.\r',
+        '\r # Poker terminato.\r',
+        '\r # Покер завершен.\r',
+        '\r # Покер завершено.\r',
+    ),
+    'poker_unknown_cmd': (
+        '\r # Unbekannter Befehl. BET <anz> | CHECK | CALL | FOLD\r',
+        '\r # Unknown command. BET <amt> | CHECK | CALL | FOLD\r',
+        '\r # Onbekend commando. BET <bedrag> | CHECK | CALL | FOLD\r',
+        '\r # Commande inconnue. BET <montant> | CHECK | CALL | FOLD\r',
+        '\r # Neznámý příkaz. BET <částka> | CHECK | CALL | FOLD\r',
+        '\r # Nieznane polecenie. BET <kwota> | CHECK | CALL | FOLD\r',
+        '\r # Comando desconhecido. BET <quantia> | CHECK | CALL | FOLD\r',
+        '\r # Comando sconosciuto. BET <importo> | CHECK | CALL | FOLD\r',
+        '\r # Неизвестная команда. BET <сумма> | CHECK | CALL | FOLD\r',
+        '\r # Невідома команда. BET <сума> | CHECK | CALL | FOLD\r',
+    ),
+    'poker_player_folded': (
+        'Du hast gefoldet.',
+        'You folded.',
+        'Je hebt gefold.',
+        'Vous vous êtes couché.',
+        'Složil jsi karty.',
+        'Spasowałeś.',
+        'Você desistiu.',
+        'Ti sei ritirato.',
+        'Ты сбросил карты.',
+        'Ти скинув карти.',
+    ),
+    'poker_dealer_wins_pot': (
+        'Dealer gewinnt mit {:d} Chips.',
+        'Dealer wins {:d} Chips.',
+        'Dealer wint {:d} Chips.',
+        'Le dealer gagne {:d} jetons.',
+        'Dealer vyhrává {:d} žetonů.',
+        'Dealer wygrywa {:d} żetonów.',
+        'O dealer ganha {:d} fichas.',
+        'Il dealer vince {:d} gettoni.',
+        'Дилер выигрывает {:d} фишек.',
+        'Дилер виграє {:d} фішок.',
+    ),
+    'poker_new_round': (
+        '\rNeue Runde mit //POKER\r',
+        '\rNew round with //POKER\r',
+        '\rNieuwe ronde met //POKER\r',
+        '\rNouveau tour avec //POKER\r',
+        '\rNové kolo s //POKER\r',
+        '\rNowa runda przez //POKER\r',
+        '\rNova ronda com //POKER\r',
+        '\rNuovo round con //POKER\r',
+        '\rНовый раунд с //POKER\r',
+        '\rНовий раунд з //POKER\r',
+    ),
+    'poker_no_chips_new_game': (
+        '\rKeine Chips mehr! Neues Spiel mit //POKER\r',
+        '\rNo chips left! New game with //POKER\r',
+        '\rGeen chips meer! Nieuw spel met //POKER\r',
+        '\rPlus de jetons! Nouvelle partie avec //POKER\r',
+        '\rDošly žetony! Nová hra s //POKER\r',
+        '\rBrak żetonów! Nowa gra przez //POKER\r',
+        '\rSem fichas! Novo jogo com //POKER\r',
+        '\rFinito i gettoni! Nuova partita con //POKER\r',
+        '\rКончились фишки! Новая игра с //POKER\r',
+        '\rЗакінчилися фішки! Нова гра з //POKER\r',
+    ),
+    'poker_must_call': (
+        '\r # Du musst mindestens CALLen (aktueller Einsatz: {}) oder FOLDen.\r',
+        '\r # You must at least CALL (current bet: {}) or FOLD.\r',
+        '\r # Je moet minstens CALLen (huidige inzet: {}) of FOLD.\r',
+        '\r # Vous devez au moins CALLER (mise actuelle: {}) ou FOLD.\r',
+        '\r # Musíte alespoň CALLovat (aktuální sázka: {}) nebo FOLD.\r',
+        '\r # Musisz przynajmniej CALLować (obecny zakład: {}) lub FOLD.\r',
+        '\r # Deve no mínimo CALL (aposta atual: {}) ou FOLD.\r',
+        '\r # Devi almeno CALLare (puntata attuale: {}) o FOLD.\r',
+        '\r # Вы должны хотя бы CALL (текущая ставка: {}) или FOLD.\r',
+        '\r # Ви повинні хоча б CALL (поточна ставка: {}) або FOLD.\r',
+    ),
+    'poker_both_check': (
+        'Beide checken.',
+        'Both check.',
+        'Beide checken.',
+        'Les deux checkent.',
+        'Oba checkují.',
+        'Obaj checkują.',
+        'Ambos dão check.',
+        'Entrambi checkano.',
+        'Оба чекнули.',
+        'Обидва чекнули.',
+    ),
+    'poker_dealer_folds': (
+        'Dealer foldet.',
+        'Dealer folds.',
+        'Dealer foldet.',
+        'Le dealer se couche.',
+        'Dealer skládá.',
+        'Dealer spasował.',
+        'O dealer desiste.',
+        'Il dealer si ritira.',
+        'Дилер сбрасывает.',
+        'Дилер скидає.',
+    ),
+    'poker_dealer_raised': (
+        'Dealer raised um {}.',
+        'Dealer raised by {}.',
+        'Dealer raiset met {}.',
+        'Le dealer relance de {}.',
+        'Dealer navýšil o {}.',
+        'Dealer podbił o {}.',
+        'O dealer aumentou {}.',
+        'Il dealer rilancia di {}.',
+        'Дилер поднял на {}.',
+        'Дилер підняв на {}.',
+    ),
+    'poker_dealer_raises_to': (
+        'Dealer erhöht auf {}. Dein Einsatz: {}',
+        'Dealer raises to {}. Your bet: {}',
+        'Dealer verhoogt naar {}. Uw inzet: {}',
+        'Le dealer relance à {}. Votre mise: {}',
+        'Dealer zvyšuje na {}. Tvá sázka: {}',
+        'Dealer podbija do {}. Twój zakład: {}',
+        'O dealer aumenta para {}. Sua aposta: {}',
+        'Il dealer rilancio a {}. La tua puntata: {}',
+        'Дилер повышает до {}. Твоя ставка: {}',
+        'Дилер підвищує до {}. Твоя ставка: {}',
+    ),
+    'poker_dealer_called': (
+        'Dealer called ({}).',
+        'Dealer called ({}).',
+        'Dealer callde ({}).',
+        'Le dealer a callé ({}).',
+        'Dealer calloval ({}).',
+        'Dealer sprawdził ({}).',
+        'O dealer pagou ({}).',
+        'Il dealer ha chiamato ({}).',
+        'Дилер коллировал ({}).',
+        'Дилер колірував ({}).',
+    ),
+    'poker_player_calls': (
+        'Du callst.',
+        'You call.',
+        'Je callt.',
+        'Vous callez.',
+        'Calluješ.',
+        'Sprawdzasz.',
+        'Você paga.',
+        'Chiami.',
+        'Ты коллируешь.',
+        'Ти коліруєш.',
+    ),
+    'poker_dealer_bets': (
+        'Dealer setzt {}.',
+        'Dealer bets {}.',
+        'Dealer zet {}.',
+        'Le dealer mise {}.',
+        'Dealer sází {}.',
+        'Dealer stawia {}.',
+        'O dealer aposta {}.',
+        'Il dealer punta {}.',
+        'Дилер ставит {}.',
+        'Дилер ставить {}.',
+    ),
+    'poker_dealer_bets_line': (
+        'Dealer setzt {} Chips.',
+        'Dealer bets {} Chips.',
+        'Dealer zet {} Chips.',
+        'Le dealer mise {} jetons.',
+        'Dealer sází {} žetonů.',
+        'Dealer stawia {} żetonów.',
+        'O dealer aposta {} fichas.',
+        'Il dealer punta {} gettoni.',
+        'Дилер ставит {} фишек.',
+        'Дилер ставить {} фішок.',
+    ),
+    'poker_player_hand_label': (
+        'Du ({}): {}',
+        'You ({}): {}',
+        'Jij ({}): {}',
+        'Vous ({}): {}',
+        'Ty ({}): {}',
+        'Ty ({}): {}',
+        'Você ({}): {}',
+        'Tu ({}): {}',
+        'Ты ({}): {}',
+        'Ти ({}): {}',
+    ),
+    'poker_dealer_hand_label': (
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Dealer ({}): {}',
+        'Дилер ({}): {}',
+        'Дилер ({}): {}',
+    ),
+    'poker_win': (
+        '★★★ GEWONNEN! ★★★   +{} Chips',
+        '★★★ YOU WIN! ★★★   +{} Chips',
+        '★★★ GEWONNEN! ★★★   +{} Chips',
+        '★★★ VOUS GAGNEZ! ★★★   +{} jetons',
+        '★★★ VYHRÁL! ★★★   +{} žetonů',
+        '★★★ WYGRANA! ★★★   +{} żetonów',
+        '★★★ VOCÊ GANHOU! ★★★   +{} fichas',
+        '★★★ VINTO! ★★★   +{} gettoni',
+        '★★★ ВЫ ВЫИГРАЛИ! ★★★   +{} фишек',
+        '★★★ ВИ ВИГРАЛИ! ★★★   +{} фішок',
+    ),
+    'poker_tie': (
+        'Unentschieden! Pot geteilt. +{} Chips',
+        'Tie! Pot split. +{} Chips',
+        'Gelijkspel! Pot gedeeld. +{} Chips',
+        'Égalité! Pot partagé. +{} jetons',
+        'Remíza! Pot rozdělen. +{} žetonů',
+        'Remis! Podział puli. +{} żetonów',
+        'Empate! Pote dividido. +{} fichas',
+        'Pareggio! Piatto diviso. +{} gettoni',
+        'Ничья! Банк разделен. +{} фишек',
+        'Нічия! Банк розділено. +{} фішок',
+    ),
+    'poker_dealer_wins_showdown': (
+        'Dealer gewinnt mit {}.',
+        'Dealer wins with {}.',
+        'Dealer wint met {}.',
+        'Le dealer gagne avec {}.',
+        'Dealer vyhrává s {}.',
+        'Dealer wygrywa z {}.',
+        'O dealer ganha com {}.',
+        'Il dealer vince con {}.',
+        'Дилер выигрывает с {}.',
+        'Дилер виграє з {}.',
+    ),
+    'poker_your_balance': (
+        'Dein Kontostand: {} Chips',
+        'Your balance: {} Chips',
+        'Uw saldo: {} Chips',
+        'Votre solde: {} jetons',
+        'Tvůj zůstatek: {} žetonů',
+        'Twoje saldo: {} żetonów',
+        'Seu saldo: {} fichas',
+        'Il tuo saldo: {} gettoni',
+        'Твой баланс: {} фишек',
+        'Твій баланс: {} фішок',
+    ),
+    'poker_no_chips': (
+        '\r # Du hast keine Chips mehr! Spiel vorbei.\r\rEin neues Spiel starten mit //POKER\r',
+        '\r # You have no chips left! Game over.\r\rStart a new game with //POKER\r',
+        '\r # Geen chips meer! Spel voorbij.\r\rStart een nieuw spel met //POKER\r',
+        '\r # Vous navez plus de jetons! Partie terminée.\r\rCommencez une nouvelle partie avec //POKER\r',
+        '\r # Nemáš žádné žetony! Konec hry.\r\rZačni novou hru s //POKER\r',
+        '\r # Nie masz żetonów! Koniec gry.\r\rRozpocznij nową grę przez //POKER\r',
+        '\r # Não tem mais fichas! Fim de jogo.\r\rInicie um novo jogo com //POKER\r',
+        '\r # Non hai più gettoni! Partita finita.\r\rInizia una nuova partita con //POKER\r',
+        '\r # У вас нет фишек! Игра окончена.\r\rНачните новую игру с //POKER\r',
+        '\r # У вас немає фішок! Гру завершено.\r\rПочніть нову гру з //POKER\r',
+    ),
+    'poker_game_over': (
+        '\rSpiel vorbei! Neues Spiel mit //POKER\r',
+        '\rGame over! New game with //POKER\r',
+        '\rSpel voorbij! Nieuw spel met //POKER\r',
+        '\rPartie terminée! Nouvelle partie avec //POKER\r',
+        '\rKonec hry! Nová hra s //POKER\r',
+        '\rKoniec gry! Nowa gra przez //POKER\r',
+        '\rFim de jogo! Novo jogo com //POKER\r',
+        '\rPartita finita! Nuova partita con //POKER\r',
+        '\rИгра окончена! Новая игра с //POKER\r',
+        '\rГру завершено! Нова гра з //POKER\r',
+    ),
+    'poker_help': (
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Befehle:\r'
+         '  //POKER          Neues Spiel starten\r'
+         '  //POKER HANDS    Hand-Rangliste anzeigen\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'Im Spiel:\r'
+         '  BET <anz>  Einsatz erhöhen\r'
+         '  CHECK      Keinen Einsatz (nur wenn keine offenen Bets)\r'
+         '  CALL       Gleichen Einsatz wie Dealer\r'
+         '  RAISE <anz> Erhöhen\r'
+         '  FOLD       Aufgeben\r'
+         '  QUIT       Spiel beenden\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Commands:\r'
+         '  //POKER          Start new game\r'
+         '  //POKER HANDS    Show hand rankings\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'In game:\r'
+         '  BET <amt>  Place bet\r'
+         '  CHECK      Check (only if no outstanding bets)\r'
+         '  CALL       Match dealer\'s bet\r'
+         '  RAISE <amt> Raise\r'
+         '  FOLD       Fold\r'
+         '  QUIT       End game\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Commando\'s:\r'
+         '  //POKER          Nieuw spel starten\r'
+         '  //POKER HANDS    Hand ranglijst tonen\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'In het spel:\r'
+         '  BET <bedrag> Inzet plaatsen\r'
+         '  CHECK        Geen inzet (alleen als geen openstaande bets)\r'
+         '  CALL         Zelfde inzet als dealer\r'
+         '  RAISE <bedrag> Verhogen\r'
+         '  FOLD         Opgeven\r'
+         '  QUIT         Spel beëindigen\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Commandes:\r'
+         '  //POKER          Nouvelle partie\r'
+         '  //POKER HANDS    Voir le classement des mains\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'En jeu:\r'
+         '  BET <montant> Miser\r'
+         '  CHECK         Vérifier (seulement si aucune mise ouverte)\r'
+         '  CALL          Suivre la mise du dealer\r'
+         '  RAISE <montant> Relancer\r'
+         '  FOLD          Se coucher\r'
+         '  QUIT          Quitter la partie\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Příkazy:\r'
+         '  //POKER          Nová hra\r'
+         '  //POKER HANDS    Zobrazit žebříček hand\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'Ve hře:\r'
+         '  BET <částka> Vsadit\r'
+         '  CHECK        Zkontrolovat (jen bez otevřených sázek)\r'
+         '  CALL         Dorovnat sázku dealer\r'
+         '  RAISE <částka> Zvýšit\r'
+         '  FOLD         Složit\r'
+         '  QUIT         Ukončit hru\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Polecenia:\r'
+         '  //POKER          Nowa gra\r'
+         '  //POKER HANDS    Pokaż ranking układów\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'W grze:\r'
+         '  BET <kwota>  Postaw\r'
+         '  CHECK        Sprawdź (tylko bez otwartych zakładów)\r'
+         '  CALL        Wyrównaj zakład dealera\r'
+         '  RAISE <kwota> Podbij\r'
+         '  FOLD        Pasuj\r'
+         '  QUIT        Zakończ grę\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Comandos:\r'
+         '  //POKER          Novo jogo\r'
+         '  //POKER HANDS    Mostrar ranking de mãos\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'No jogo:\r'
+         '  BET <quantia> Apostar\r'
+         '  CHECK         Passar (apenas se sem apostas abertas)\r'
+         '  CALL          Igualar aposta do dealer\r'
+         '  RAISE <quantia> Aumentar\r'
+         '  FOLD          Desistir\r'
+         '  QUIT          Sair do jogo\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Comandi:\r'
+         '  //POKER          Nuova partita\r'
+         '  //POKER HANDS    Mostra classifica mani\r'
+         '  //POKER HIGH     Highscore\r'
+         '\r'
+         'In gioco:\r'
+         '  BET <importo> Puntare\r'
+         '  CHECK         Controllare (solo senza puntate aperte)\r'
+         '  CALL          Pareggiare la puntata del dealer\r'
+         '  RAISE <importo> Rilanciare\r'
+         '  FOLD          Ritirarsi\r'
+         '  QUIT          Terminare partita\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Команды:\r'
+         '  //POKER          Новая игра\r'
+         '  //POKER HANDS    Показать рейтинг комбинаций\r'
+         '  //POKER HIGH     Рекорды\r'
+         '\r'
+         'В игре:\r'
+         '  BET <сумма> Сделать ставку\r'
+         '  CHECK       Чекнуть (только если нет открытых ставок)\r'
+         '  CALL        Уравнять ставку дилера\r'
+         '  RAISE <сумма> Поднять\r'
+         '  FOLD        Сбросить\r'
+         '  QUIT        Закончить игру\r'),
+        ('\r'
+         '=== Texas Hold\'em Poker ===\r'
+         'Команди:\r'
+         '  //POKER          Нова гра\r'
+         '  //POKER HANDS    Показати рейтинг комбінацій\r'
+         '  //POKER HIGH     Рекорди\r'
+         '\r'
+         'У грі:\r'
+         '  BET <сума>  Зробити ставку\r'
+         '  CHECK       Чекнути (тільки якщо немає відкритих ставок)\r'
+         '  CALL        Зрівняти ставку дилера\r'
+         '  RAISE <сума> Підняти\r'
+         '  FOLD        Скинути\r'
+         '  QUIT        Завершити гру\r'),
+    ),
+    'poker_hand_ranking_title': (
+        '\rPoker Hand Rangliste (absteigend):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rPoker Hand Ranking (descending):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rPoker Hand Rangliste (absteigend):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rClassement des mains au poker (décroissant):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rPoker Hand Rangliste (absteigend):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rPoker Hand Rangliste (absteigend):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rRanking de Mãos de Poker (decrescente):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rPoker Hand Rangliste (absteigend):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rРейтинг комбинаций в покере (по убыванию):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+        '\rРейтинг комбінацій у покері (за спаданням):\r'
+        '  9  Royal Flush\r'
+        '  8  Straight Flush\r'
+        '  7  Four of a Kind\r'
+        '  6  Full House\r'
+        '  5  Flush\r'
+        '  4  Straight\r'
+        '  3  Three of a Kind\r'
+        '  2  Two Pair\r'
+        '  1  One Pair\r'
+        '  0  High Card\r',
+    ),
+    'poker_highscore_not_impl': (
+        '\r # Highscore noch nicht implementiert.\r',
+        '\r # Highscore not implemented yet.\r',
+        '\r # Highscore nog niet geïmplementeerd.\r',
+        '\r # Highscore pas encore implémenté.\r',
+        '\r # Highscore zatím není implementován.\r',
+        '\r # Highscore jeszcze nie zaimplementowany.\r',
+        '\r # Highscore ainda não implementado.\r',
+        '\r # Highscore non ancora implementato.\r',
+        '\r # Рекорды еще не реализованы.\r',
+        '\r # Рекорди ще не реалізовано.\r',
+    ),
 # ======== END =====================
 }   # < End of dict
 

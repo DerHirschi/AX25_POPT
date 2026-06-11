@@ -7,7 +7,7 @@ from cli.cli_commands.cli_cmd_cliCfg import CliCmdCliCFG
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
 from cli.cli_commands.cli_cmd_monitor import CliCmdMonitor
 from cli.cli_commands.cli_cmd_path import CliCmdPath
-#from cli.cli_commands.cli_cmd_poker import CliCmdPoker
+from cli.cli_commands.cli_cmd_poker import CliCmdPoker
 from cli.cli_main.BaycomLogin import BaycomLogin
 from cli.StringVARS import replace_StringVARS
 from cli.cliStationIdent import get_station_id_obj
@@ -123,7 +123,7 @@ class DefaultCLI(object):
         self._aprs_chat_cmds  = CliCmdAprsChat(self)
         self._path_cmds       = CliCmdPath(self)
         self._cli_cfg_cmds    = CliCmdCliCFG(self)
-        #self._poker_cmds      = CliCmdPoker(self)
+        self._poker_cmds      = CliCmdPoker(self)
         self._BaycomAuth_srv  = BaycomLoginServer(self)
         self._CliMonitor      = CliCmdMonitor(self)
 
@@ -201,7 +201,7 @@ class DefaultCLI(object):
             'HELP':     (1, self._help_cmds.cmd_help,                         self._getTabStr_CLI('help'),        False),
             '?':        (0, self._help_cmds.cmd_shelp,                        self._getTabStr_CLI('cmd_shelp'),   False),
             # Poker
-            #'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
+            'POKER':    (3, self._poker_cmds.cmd_poker,             "Poker (Texas Hold'em)",            False),
             # === Baycom Auth
             'SYS':      (3, self._BaycomAuth_srv.cmd_baycomSrv_login,  "Sys Login (BaycomAuth)", False),
             'LOGOUT':   (4, self._BaycomAuth_srv.cmd_baycomSrv_logout, "Sys Logout", False),

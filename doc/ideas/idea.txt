@@ -34,6 +34,10 @@ Ideas/TODO's :
   - Raspberry GPIO Zustand                      - Bake
   - CPU-Temp/System-Daten                       - Bake
 
+- Freedom Units
+  - Distanzen (k-Gunter's Chain oder k-Tablespoons/ 5/8Zoll Schlauch)
+  - Datum
+
 - 79 Zeichen Zeilenumbruch (Dos-PRG kompatibilität)
   ✓ PMS
   ✓ QSO

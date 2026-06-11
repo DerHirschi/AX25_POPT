@@ -127,7 +127,9 @@ CLI_DEF_CMD_NODE =['QUIT',
                                #
                                'VERSION',
                                'POPT',
-                               #'POKER',
+
+                               'POKER',
+
                                'HELP',
                                '?',
                                 # ==== APRS Chat

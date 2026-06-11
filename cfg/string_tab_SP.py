@@ -501,6 +501,65 @@ STR_TABLE_SP = {
     # By Google Translater
     'default_text':                 'Texto predeterminado',
 
+    # ===== POKER =====================================================
+    'poker_title':                  '\r=== Texas Hold\'em Poker ===\r',
+    'poker_table_header':           'Tu: {0:>4} Chips   Dealer: {1:>4}   Pote: {2:>4}\r\r',
+    'poker_your_cards':             'Tus Cartas:   ',
+    'poker_dealer':                 'Dealer:        ',
+    'poker_community':              'Comunidad:     ',
+    'poker_your_hand':              'Tu Mano:       ',
+    'poker_prompt':                 '\rBET <cant> | CHECK | CALL | FOLD\r',
+    'poker_cant_check':             '\r # No puedes CHECKear, el dealer apostó. CALL o FOLD.\r',
+    'poker_invalid_bet':            '\r # Cantidad no válida!\r',
+    'poker_quit':                   '\r # Poker terminado.\r',
+    'poker_unknown_cmd':            '\r # Comando desconocido. BET <cant> | CHECK | CALL | FOLD\r',
+    'poker_player_folded':          'Te has retirado.',
+    'poker_dealer_wins_pot':        'Dealer gana {:d} fichas.',
+    'poker_new_round':              '\rNueva ronda con //POKER\r',
+    'poker_no_chips_new_game':      '\rNo quedan fichas! Nuevo juego con //POKER\r',
+    'poker_must_call':              '\r # Debes al menos CALLear (apuesta actual: {}) o FOLDear.\r',
+    'poker_both_check':             'Ambos checkean.',
+    'poker_dealer_folds':           'Dealer se retira.',
+    'poker_dealer_raised':          'Dealer subió {}.',
+    'poker_dealer_raises_to':       'Dealer sube a {}. Tu apuesta: {}',
+    'poker_dealer_called':          'Dealer pagó ({}).',
+    'poker_player_calls':           'Pagas.',
+    'poker_dealer_bets':            'Dealer apuesta {}.',
+    'poker_dealer_bets_line':       'Dealer apuesta {} fichas.',
+    'poker_player_hand_label':      'Tú ({}): {}',
+    'poker_dealer_hand_label':      'Dealer ({}): {}',
+    'poker_win':                    '★★★ GANASTE! ★★★   +{} fichas',
+    'poker_tie':                    'Empate! Pote dividido. +{} fichas',
+    'poker_dealer_wins_showdown':   'Dealer gana con {}.',
+    'poker_your_balance':           'Tu saldo: {} fichas',
+    'poker_no_chips':               '\r # No te quedan fichas! Juego terminado.\r\rInicia un nuevo juego con //POKER\r',
+    'poker_game_over':              '\rJuego terminado! Nuevo juego con //POKER\r',
+    'poker_help':                   ('\r'
+                                     '=== Texas Hold\'em Poker ===\r'
+                                     'Comandos:\r'
+                                     '  //POKER          Nuevo juego\r'
+                                     '  //POKER HANDS    Mostrar ranking de manos\r'
+                                     '  //POKER HIGH     Highscore\r'
+                                     '\r'
+                                     'En juego:\r'
+                                     '  BET <cant>  Apostar\r'
+                                     '  CHECK       Pasar (solo si no hay apuestas abiertas)\r'
+                                     '  CALL        Igualar apuesta del dealer\r'
+                                     '  RAISE <cant> Subir\r'
+                                     '  FOLD        Retirarse\r'
+                                     '  QUIT        Terminar juego\r'),
+    'poker_hand_ranking_title':     ('\rRanking de Manos de Poker (descendente):\r'
+                                     '  9  Royal Flush\r'
+                                     '  8  Straight Flush\r'
+                                     '  7  Four of a Kind\r'
+                                     '  6  Full House\r'
+                                     '  5  Flush\r'
+                                     '  4  Straight\r'
+                                     '  3  Three of a Kind\r'
+                                     '  2  Two Pair\r'
+                                     '  1  One Pair\r'
+                                     '  0  High Card\r'),
+    'poker_highscore_not_impl':     '\r # Highscore aún no implementado.\r',
 }
 
 
