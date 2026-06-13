@@ -3,7 +3,7 @@ Mach mit,
 mach nach,
 mach besser.
 """
-VER = '2.126.8'
+VER = '2.126.9'
 
 CONSOLE_LOG     = True
 DEBUG_LOG       = True
@@ -19,7 +19,7 @@ PARAM_MAX_PRE_LEN        = 1000        # Vorschreibfenster
 PARAM_MAX_QSO_LEN        = 8000        # QSO Fenster
 PARAM_MAX_MON_LEN        = 10000       # Monitor
 PARAM_MAX_MON_TREE_ITEMS = 5000        # Monitor Tab
-PARAM_MAX_MON_WIDTH      = 100         # Max Monitor Zeilenlänge
+PARAM_MAX_MON_WIDTH      = 100         # Max Monitor & QSO Zeilenlänge
 """ Custom TNC KISSMODE INIT """
 TNC_KISS_CMD        = b'\x1b@K\r'         # Custom Command for setting TNC to Kiss Mode
 TNC_KISS_CMD_END    = b'\xc0\xff\xc0'     # Custom Command for stop TNC Kiss Mode

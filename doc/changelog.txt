@@ -12,6 +12,7 @@ Fixes:
 
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
+- Port-Statistik Fenster komplett überarbeitget (by opencode)
 
 Neue Implementierungen / Funktionen:
 

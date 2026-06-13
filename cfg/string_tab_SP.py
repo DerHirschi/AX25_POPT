@@ -560,6 +560,29 @@ STR_TABLE_SP = {
                                      '  1  One Pair\r'
                                      '  0  High Card\r'),
     'poker_highscore_not_impl':     '\r # Highscore aún no implementado.\r',
+
+    'port_stat_title':              'Estadísticas del Puerto',
+    'port_stat_from':               'Desde:',
+    'port_stat_to':                 'Hasta:',
+    'port_stat_no_data':            'Sin Datos',
+    'port_stat_hours_ago':          'Horas atrás',
+    'port_stat_tbl_frame':          'Trama',
+    'port_stat_tbl_count':          'Cantidad',
+    'port_stat_tbl_bytes':          'Bytes',
+    'port_stat_tbl_pct_cnt':        '%Cantidad',
+    'port_stat_tbl_pct_byt':        '%Bytes',
+    'port_stat_tbl_avg':            'Ø/Trama',
+    'port_stat_tbl_rate':           'Tasa/h',
+    'port_stat_tbl_total':          'TOTAL',
+    'port_stat_port':               'Puerto:',
+    'port_plot_line':               'Línea',
+    'port_plot_stacked_area':       'Área Apilada',
+    'port_plot_grouped_bar':        'Barra Agrupada',
+    'port_plot_stacked_bar':        'Barra Apilada',
+    'port_plot_pie':                'Pastel',
+    'port_plot_horizontal_bar':     'Barra Horizontal',
+    'port_data_bytes':              'Bytes',
+    'port_data_count':              'Cantidad',
 }
 
 

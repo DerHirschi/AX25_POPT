@@ -415,6 +415,14 @@ class MH:
             return data
         return []
 
+    def PortStat_get_data_by_port_range(self, port_id: int, since_dt: datetime, to_dt: datetime = None):
+        if not self._db:
+            return []
+        data = self._db.PortStat_get_data_f_port_range(port_id, since_dt, to_dt)
+        if data:
+            return data
+        return []
+
     def PortStat_reset(self):
         if not self._db:
             return

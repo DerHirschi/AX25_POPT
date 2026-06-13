@@ -392,6 +392,7 @@ def getNew_maniGUI_parm():
         gui_parm_side_pan_pos       = 300,
         gui_parm_text_pan_pos       = (300, 300),
         gui_parm_mon_pw_pos         = 200,
+        port_stat_pw_ratio          = 0.7,
         gui_aprs_text_pan_pos       = (300, 300),
         #################
         # MAin GUI width and height

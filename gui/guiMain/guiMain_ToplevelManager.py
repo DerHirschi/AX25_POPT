@@ -280,6 +280,7 @@ class ToplevelManager:
             self.settings_win,
             self.mh_window,
             self.wx_window,
+            self.port_stat_win,
             self.userdb_win,
             self.userDB_tree_win,
             self.aprs_mon_win,
