@@ -382,7 +382,12 @@ def getNew_maniGUI_parm():
         # F-Texte
         gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)},
         #################
-        # Pan Pos
+        # Pan Pos (ratio = sashpos / widget_size, 0.0-1.0)
+        gui_parm_main_pan_ratio     = 0.286,
+        gui_parm_side_pan_ratio     = 0.353,
+        gui_parm_text_pan_ratio     = (0.353, 0.706),
+        gui_parm_mon_pw_ratio       = 0.235,
+        # old absolute keys (fallback for migration)
         gui_parm_main_pan_pos       = 400,
         gui_parm_side_pan_pos       = 300,
         gui_parm_text_pan_pos       = (300, 300),

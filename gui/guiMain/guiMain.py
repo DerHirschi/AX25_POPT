@@ -422,38 +422,94 @@ class PoPT_GUI_Main:
     ###############################################################
     # Panned Win size load/save
     def _load_pw_pos(self):
-        # self._main_pw     # Main Pan l/r
-        # self._pw          # Text Pan 0/1/2
-        # self._side_pw     # Side Frame Pan u/l
-        guiCfg      = POPT_CFG.load_guiPARM_main()
-        main_hight  = self.main_win.winfo_height()
-        self._main_pw.sashpos(0, guiCfg.get('gui_parm_main_pan_pos', 100))
-        self._side_pw.sashpos(0, guiCfg.get('gui_parm_side_pan_pos', int(main_hight/ 2)))
+        guiCfg = POPT_CFG.load_guiPARM_main()
 
-        text_pan_pos_cfg = guiCfg.get('gui_parm_text_pan_pos', [300, 300])
-        i = 0
-        for pan_pos in text_pan_pos_cfg:
-            self._pw.sashpos(i, pan_pos)
-            i += 1
+        # Hierarchie: main_pw → side_pw → pw → mon_pw.
+        # Nach jeder sashpos-Änderung update_idletasks() damit die
+        # nächste Ebene die neue Geometrie messen kann.
+        main_w = self.main_win.winfo_width()
+        main_h = self.main_win.winfo_height()
 
+        # _main_pw (horizontal)
+        if main_w > 1:
+            ratio = guiCfg.get('gui_parm_main_pan_ratio')
+            if ratio is not None:
+                self._main_pw.sashpos(0, int(ratio * main_w))
+            else:
+                old_w = guiCfg.get('gui_parm_main_width', main_w)
+                old = guiCfg.get('gui_parm_main_pan_pos', 100)
+                self._main_pw.sashpos(0, int(old * main_w / old_w) if old_w > 0 else 100)
+            self.main_win.update_idletasks()
+
+        # _side_pw (vertical) – Höhe nach _main_pw-Layout messen
+        side_h = self._side_pw.winfo_height()
+        if side_h > 1:
+            ratio = guiCfg.get('gui_parm_side_pan_ratio')
+            if ratio is not None:
+                self._side_pw.sashpos(0, int(ratio * side_h))
+            else:
+                old_h = guiCfg.get('gui_parm_main_height', main_h)
+                old = guiCfg.get('gui_parm_side_pan_pos', int(main_h / 2))
+                self._side_pw.sashpos(0, int(old * side_h / old_h) if old_h > 0 else int(side_h / 2))
+            self.main_win.update_idletasks()
+
+        # _pw (vertical) – Höhe nach _side_pw-Layout messen
+        pw_h = self._pw.winfo_height()
+        if pw_h > 1:
+            text_ratios = guiCfg.get('gui_parm_text_pan_ratio')
+            if text_ratios is not None:
+                for i in range(2):
+                    if i < len(text_ratios):
+                        self._pw.sashpos(i, int(text_ratios[i] * pw_h))
+            else:
+                text_pos = guiCfg.get('gui_parm_text_pan_pos', [300, 300])
+                old_h = guiCfg.get('gui_parm_main_height', main_h)
+                for i, pan_pos in enumerate(text_pos):
+                    if i < 2:
+                        self._pw.sashpos(i, int(pan_pos * pw_h / old_h) if old_h > 0 else 300)
+            self.main_win.update_idletasks()
+
+        # _mon_pw (vertical) – Höhe NACH _pw-Layout messen (kritisch!)
         if hasattr(self._mon_pw, 'sashpos'):
-            self._mon_pw.sashpos(0, guiCfg.get('gui_parm_mon_pw_pos', 200))  # Default: 200 Pixel
+            mon_h = self._mon_pw.winfo_height()
+            if mon_h > 1:
+                ratio = guiCfg.get('gui_parm_mon_pw_ratio')
+                if ratio is not None:
+                    self._mon_pw.sashpos(0, int(ratio * mon_h))
+                else:
+                    old = guiCfg.get('gui_parm_mon_pw_pos', 200)
+                    old_h = guiCfg.get('gui_parm_main_height', max(mon_h, 850))
+                    self._mon_pw.sashpos(0, int(old * mon_h / old_h) if old_h > 0 else 200)
 
     def _save_pw_pos(self):
-        if self._mon_mode:
-            return
-        text_pan_pos_cfg = []
-        for pan_id in range(2):
-            text_pan_pos_cfg.append(int(self._pw.sashpos(pan_id)))
-
         guiCfg = POPT_CFG.load_guiPARM_main()
-        guiCfg['gui_parm_main_pan_pos'] = int(self._main_pw.sashpos(0))
-        guiCfg['gui_parm_side_pan_pos'] = int(self._side_pw.sashpos(0))
-        guiCfg['gui_parm_text_pan_pos'] = tuple(text_pan_pos_cfg)
-        guiCfg['gui_parm_main_height']  = int(self.main_win.winfo_height())
-        guiCfg['gui_parm_main_width']   = int(self.main_win.winfo_width())
+        main_w = self.main_win.winfo_width()
+        main_h = self.main_win.winfo_height()
+
+        if main_w > 0:
+            guiCfg['gui_parm_main_pan_ratio'] = self._main_pw.sashpos(0) / main_w
+
+        side_h = self._side_pw.winfo_height()
+        if side_h > 0:
+            guiCfg['gui_parm_side_pan_ratio'] = self._side_pw.sashpos(0) / side_h
+
+        if not self._mon_mode:
+            pw_h = self._pw.winfo_height()
+            if pw_h > 0:
+                text_ratios = []
+                for pan_id in range(2):
+                    text_ratios.append(self._pw.sashpos(pan_id) / pw_h)
+                guiCfg['gui_parm_text_pan_ratio'] = tuple(text_ratios)
+
+        guiCfg['gui_parm_main_height'] = main_h
+        guiCfg['gui_parm_main_width']  = main_w
+
         if hasattr(self._mon_pw, 'sashpos'):
+            mon_h = self._mon_pw.winfo_height()
+            if mon_h > 0:
+                guiCfg['gui_parm_mon_pw_ratio'] = self._mon_pw.sashpos(0) / mon_h
             guiCfg['gui_parm_mon_pw_pos'] = int(self._mon_pw.sashpos(0))
+
         POPT_CFG.save_guiPARM_main(guiCfg)
 
     ###############################################################
@@ -488,7 +544,7 @@ class PoPT_GUI_Main:
         self.qso_txt    = self.qso_frame.get_qso_txt()
 
     def _init_monitor_frame(self, parent_frame: ttk.Frame):
-        self._mon_pw = ttk.Panedwindow(parent_frame, orient='vertical')
+        self._mon_pw = ttk.PanedWindow(parent_frame, orient='vertical')
         self._mon_pw.pack(fill='both', expand=True)
 
         self.monFrame       = MonitorFrame(self, self._mon_pw)
@@ -777,6 +833,7 @@ class PoPT_GUI_Main:
             self._pw.add(self._TXT_upper_frame, weight=1)
             self._pw.add(self._TXT_mid_frame,   weight=1)
             self._pw.add(self._TXT_lower_frame, weight=1)
+            self.main_win.update_idletasks()
             self._load_pw_pos()
 
         else:
@@ -792,12 +849,10 @@ class PoPT_GUI_Main:
     def _switch_monitor_mode(self):
         self._switch_mon_mode()
         if self._mon_mode:
-            # self.channel_index = int(self.mon_mode)
             self._ch_btn_clk(int(self._mon_mode))
             self._mon_mode = 0
             self._mon_btn.configure(bg='yellow')
             self.ch_status_update()
-            self._load_pw_pos()
             return
 
         self._mon_mode = int(self.channel_index)
@@ -1155,5 +1210,4 @@ class PoPT_GUI_Main:
 
     def get_MH(self):
         return self._mh
-
 

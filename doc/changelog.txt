@@ -6,6 +6,9 @@ Fixes:
 - GUI MH-Liste: MH-Einträge lassen sich nicht sortieren
 - QSO Buffer Limit für nicht aktive Kanäle. (GUI friert zeitweise ein,
   beim Auswählen eines Kanals mit zu vielen neuen Daten)
+- GUI Hauptfenster, Seitenverhältnisse der einzelnen Fenster, ins besonderen
+  des tabellarischen Monitorfensters, verschieben sich beim Wechseln in den
+  Monitor-Modus und zurück.
 
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.

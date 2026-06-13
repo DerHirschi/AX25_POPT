@@ -43,7 +43,7 @@ class MonitorTreeFrame(ttk.Frame):
             'size',
             'data',
         )
-        mon_tree_pw = ttk.Panedwindow(self, orient='horizontal')
+        mon_tree_pw = ttk.PanedWindow(self, orient='horizontal')
         mon_tree_pw.pack(fill='both', expand=True)
         #
         mon_f_main = ttk.Frame(mon_tree_pw)
