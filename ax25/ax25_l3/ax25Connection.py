@@ -29,7 +29,7 @@ class AX25Conn:
         """ AX25 L3 Connection """
         """ Global Stuff """
         self.own_port           = port
-        self._popt_handler      = port.port_get_PH()
+        self._popt_handler      = port.popt_handler
         self._userDB            = self._popt_handler.userDB
         """ Port Config Parameter """
         self.port_id: int       = self.own_port.port_id

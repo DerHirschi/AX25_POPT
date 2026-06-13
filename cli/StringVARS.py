@@ -245,7 +245,7 @@ def replace_StringVARS(input_string: str,
     if connection:
         port = connection.own_port
     if port and not port_handler:
-        port_handler = port.port_get_PH()
+        port_handler = port.popt_handler
     if port_handler and not user_db:
         user_db = port_handler.get_userDB()
 

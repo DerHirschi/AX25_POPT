@@ -2,6 +2,7 @@ from datetime import datetime
 
 from UserDB.rights_manager import PRPRightsManager
 from cfg.popt_config import POPT_CFG
+from classes.CLbuffers import ByteArrayBuffer
 from cli.cli_commands.cli_cmd_aprsChat import CliCmdAprsChat
 from cli.cli_commands.cli_cmd_cliCfg import CliCmdCliCFG
 from cli.cli_commands.cli_cmd_help import CliCmdHelp
@@ -45,7 +46,7 @@ class DefaultCLI(object):
         self._c_text                = self.load_fm_file(self._stat_cfg_index_call + '.ctx')
         self._connection            = connection
         self._own_port              = connection.own_port
-        self._port_handler          = connection.own_port.port_get_PH()
+        self._port_handler          = connection.own_port.popt_handler
         # self.channel_index = self._connection.ch_index
         # self._gui                   = self._port_handler.get_gui()
 
@@ -98,7 +99,7 @@ class DefaultCLI(object):
 
         self.rtt_active         = False
 
-        self._tx_buffer         = bytearray()   # TODO ThreadLock
+        self._tx_buffer         = ByteArrayBuffer()
         self._getTabStr_CLI = lambda str_k: get_strTab(str_k, self.cli_lang)
         self._getTabStr_GUI = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # ============================================
@@ -408,8 +409,8 @@ class DefaultCLI(object):
             return
         tmp = cli_out.split(b'\r')
         out_lines = b'\r'.join(tmp[:self._user_db_ent.cli_sidestop])
-        self._tx_buffer = b'\r'.join(tmp[self._user_db_ent.cli_sidestop:])
-        if not self._tx_buffer:
+        self._tx_buffer.buffer_set(b'\r'.join(tmp[self._user_db_ent.cli_sidestop:]))
+        if self._tx_buffer.is_empty:
             self._connection.send_data(cli_out)
             self.change_cli_state(1)
             return
@@ -427,7 +428,7 @@ class DefaultCLI(object):
             prp.cli_abort()
 
         self._connection.clear_tx_buff()
-        self._tx_buffer = b''
+        self._tx_buffer.buffer_clear()
 
     def _abort_send_out(self):
         self.clear_tx_buffer()
@@ -437,8 +438,10 @@ class DefaultCLI(object):
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
         if (self._raw_input.upper() == b'A' + eol and
-            (self._connection.get_tx_buff_len
-            or self._tx_buffer or self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI))
+                (self._connection.get_tx_buff_len or
+                 not self._tx_buffer.is_empty or
+                 self._connection.is_prp_opt_id_in_tx_buff(PRP_OPT_ESC_CLI)
+                )
         ):
             self._abort_send_out()
             self._last_line = b''
@@ -1031,7 +1034,7 @@ class DefaultCLI(object):
         if self._check_abort_cmd():
             self.change_cli_state(1)
             return
-        if not self._tx_buffer:
+        if self._tx_buffer.is_empty:
             logger.warning(self._logTag + f"CLI: _s7: No tx_buffer but in S7 !!")
             self.change_cli_state(1)
             return
@@ -1041,28 +1044,28 @@ class DefaultCLI(object):
             return
         eol = find_eol(self._raw_input)
         if self._raw_input in eol:
-            self._send_out_sidestop(self._tx_buffer)
+            self._send_out_sidestop(self._tx_buffer.buffer_get)
             return
         if self._ss_state == 0:
             if self._raw_input.upper() == b'A' + eol:
-                self._tx_buffer = bytearray()
+                self._tx_buffer.buffer_clear()
                 self.send_prompt()
                 self.change_cli_state(1)
                 return
             if self._raw_input.upper() == b'O' + eol:
-                self._connection.send_data(bytearray(self._tx_buffer))
-                self._tx_buffer = bytearray()
+                self._connection.send_data(self._tx_buffer.buffer_get)
+                self._tx_buffer.buffer_clear()
                 self.change_cli_state(1)
                 return
         if self._ss_state == 1:
             if self._raw_input.upper() == b'A' + eol:
-                self._tx_buffer = bytearray()
+                self._tx_buffer.buffer_clear()
                 self.send_prompt()
                 self.change_cli_state(1)
                 return
 
             if self._raw_input.upper().startswith(b'R'):
-                self._tx_buffer = bytearray()
+                self._tx_buffer.buffer_clear()
                 self.change_cli_state(1)
                 self._last_line = b''
                 self._input = self._raw_input
