@@ -3,8 +3,9 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
-from cfg.constant import CFG_aprs_icon_path
+from cfg.constant import CFG_aprs_icon_path, PARAM_MAX_MON_WIDTH
 from cfg.logger_config import logger
+from fnc.str_fnc import find_eol_in_str, zeilenumbruch_lines
 
 
 def get_all_tags(text_wig):
@@ -321,6 +322,85 @@ def delete_tree(tree: ttk.Treeview):
 
 #################################
 # Text Widgets
+def limit_ch_vars_output(ch_vars, max_lines=5000):
+    text = ch_vars.output_win
+    if not text:
+        return
+
+    eol  = find_eol_in_str(text, default='\n')
+    text = zeilenumbruch_lines(text, PARAM_MAX_MON_WIDTH, eol)
+
+    newlines = text.count(eol)
+    if text.endswith(eol):
+        tk_lines = newlines
+    else:
+        tk_lines = newlines + 1
+
+    if tk_lines <= max_lines:
+        return
+
+    remove_count = tk_lines - max_lines
+
+    count = 0
+    trim_pos = 0
+    for i, c in enumerate(text):
+        if c == eol:
+            count += 1
+            if count == remove_count:
+                trim_pos = i + 1
+                break
+
+    if trim_pos == 0:
+        return
+
+    removed_chars = trim_pos
+    old_len = len(text)
+
+    ch_vars.output_win = text[trim_pos:]
+
+    old_text_len = old_len - sum(l for _, l in ch_vars.new_tags)
+
+    if removed_chars > old_text_len:
+        removed_from_new = removed_chars - old_text_len
+        cum_len = 0
+        tags_to_keep = []
+        for tag_name, tag_len in ch_vars.new_tags:
+            if cum_len + tag_len <= removed_from_new:
+                cum_len += tag_len
+                continue
+            elif cum_len < removed_from_new:
+                new_len = cum_len + tag_len - removed_from_new
+                tags_to_keep.append((tag_name, new_len))
+                cum_len += tag_len
+            else:
+                tags_to_keep.append((tag_name, tag_len))
+                cum_len += tag_len
+        ch_vars.new_tags = tags_to_keep
+
+    if ch_vars.output_win_tags:
+        result = {}
+        for tag_name, ranges in ch_vars.output_win_tags.items():
+            new_ranges = []
+            for i in range(0, len(ranges), 2):
+                start = str(ranges[i])
+                end = str(ranges[i + 1])
+                start_line = int(start.split('.')[0])
+                end_line = int(end.split('.')[0])
+                if start_line > remove_count:
+                    start_char = start.split('.')[1]
+                    end_char = end.split('.')[1]
+                    new_start = f"{start_line - remove_count}.{start_char}"
+                    new_end = f"{end_line - remove_count}.{end_char}"
+                    new_ranges.extend([new_start, new_end])
+                elif end_line > remove_count:
+                    end_char = end.split('.')[1]
+                    new_start = "1.0"
+                    new_end = f"{end_line - remove_count}.{end_char}"
+                    new_ranges.extend([new_start, new_end])
+            if new_ranges:
+                result[tag_name] = new_ranges
+        ch_vars.output_win_tags = result
+
 def text_widget_select_all(text_ent: tk.Text or tk.scrolledtext):
     text_ent.tag_remove("send", "1.0", tk.END)
     text_ent.tag_add(tk.SEL, "1.0", tk.END)

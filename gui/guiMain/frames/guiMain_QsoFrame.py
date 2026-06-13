@@ -3,11 +3,11 @@ from tkinter import ttk
 
 from cfg.constant import DEF_QSO_SYSMSG_BG, DEF_QSO_SYSMSG_FG, FONT, DEF_STAT_QSO_TX_COL, DEF_STAT_QSO_BG_COL, \
     DEF_STAT_QSO_RX_COL, TAG_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_TX, CLR_QSO_PRP_STATUS_BG, TAG_QSO_PRP_STATUS_RX, \
-    CLR_QSO_PRP_STATUS_RX, PARAM_MAX_QSO_LEN
+    CLR_QSO_PRP_STATUS_RX, PARAM_MAX_QSO_LEN, PARAM_MAX_MON_WIDTH
 from cfg.logger_config import logger
 from cfg.popt_config import POPT_CFG
-from fnc.gui_fnc import set_new_tags, set_all_tags
-from fnc.str_fnc import tk_filter_bad_chars, get_strTab, conv_time_DE_str
+from fnc.gui_fnc import set_new_tags, set_all_tags, limit_ch_vars_output
+from fnc.str_fnc import tk_filter_bad_chars, get_strTab, conv_time_DE_str, zeilenumbruch_lines, find_eol_in_str
 
 
 class QsoFrame(ttk.Frame):
@@ -153,11 +153,12 @@ class QsoFrame(ttk.Frame):
         ch_id   = conn.ch_index
         gui_buf = conn.rx_tx_buf_guiData.buffer_read_all()
         for qso_data in gui_buf:
-            # Sys Msg (Link Setup, Connected to, ...)
+
             if qso_data[0] == 'SYS':
+                # Sys Msg (Link Setup, Connected to, ...)
                 self.sysMsg_to_qso_task(arg=(qso_data[1], ch_id))
-            # PRP Msg (CLI-ESC Status)
             elif qso_data[0] in [TAG_QSO_PRP_STATUS_TX, TAG_QSO_PRP_STATUS_RX]:
+                # PRP Msg (CLI-ESC Status)
                 self._PRPstatus_to_qso_task(qso_data[1], ch_id, qso_data[0])
             # QSO Data
             elif qso_data[0] == 'RX':
@@ -187,6 +188,9 @@ class QsoFrame(ttk.Frame):
         #print("TX " + tag_name_tx)
 
         if self._gui_root.channel_index == conn.ch_index:
+            # Max wide
+            eol = find_eol_in_str(inp, default='\n')
+            inp = zeilenumbruch_lines(inp, PARAM_MAX_MON_WIDTH, eol)
             self._qso_txt.configure(state="normal")
 
             ind = self._qso_txt.index('end-1c')
@@ -211,6 +215,7 @@ class QsoFrame(ttk.Frame):
                 Ch_var.new_tags.append(
                     (tag_name_tx, len(inp))
                 )
+            limit_ch_vars_output(Ch_var, PARAM_MAX_QSO_LEN)
 
     def _update_qso_rx(self, conn, data):
         txt_enc = 'UTF-8'
@@ -224,7 +229,6 @@ class QsoFrame(ttk.Frame):
 
         # Write RX Date to Window/Channel Buffer
         # Ch_var.output_win += out
-        #Ch_var.output_win = Ch_var.output_win[-50:]
         if my_call_str in self._all_tag_calls:
             tag_name_rx = f'RX-{my_call_str}'
             Ch_var.last_tag_name = my_call_str
@@ -240,6 +244,10 @@ class QsoFrame(ttk.Frame):
         if self._gui_root.channel_index == conn.ch_index:
             if Ch_var.t2speech:
                 Ch_var.t2speech_buf += out.replace('\n', '')
+
+            # Max wide
+            eol = find_eol_in_str(out, default='\n')
+            out = zeilenumbruch_lines(out, PARAM_MAX_MON_WIDTH, eol)
 
             self._qso_txt.configure(state="normal")
 
@@ -276,6 +284,7 @@ class QsoFrame(ttk.Frame):
                 Ch_var.new_tags.append(
                     (tag_name_rx, len(out))
                 )
+            limit_ch_vars_output(Ch_var, PARAM_MAX_QSO_LEN)
         Ch_var.rx_beep_tr = True
 
     # ================================
@@ -283,8 +292,9 @@ class QsoFrame(ttk.Frame):
         #print(f"QSO-Frame ChID: {self._channel_index} - Main ChID: {self._gui_root.channel_index}")
         ch_vars = self._gui_root.get_ch_var(ch_index=self._gui_root.channel_index)
 
-        self._qso_txt.configure(state="normal")
+        #limit_ch_vars_output(ch_vars, PARAM_MAX_QSO_LEN)
 
+        self._qso_txt.configure(state="normal")
         self._qso_txt.delete('1.0', tk.END)
         self._qso_txt.insert(tk.END, ch_vars.output_win)
 
@@ -293,7 +303,6 @@ class QsoFrame(ttk.Frame):
         # ==== Line Limit
         self._qso_line_limit()
         ch_vars.output_win = self._qso_txt.get('1.0', 'end-1c')
-
 
         self._qso_txt.configure(state="disabled")
         self._qso_txt.see(tk.END)
@@ -311,6 +320,7 @@ class QsoFrame(ttk.Frame):
         tag_name = 'SYS-MSG'
         # ch_vars.output_win += data
         if self._gui_root.channel_index == ch_index:
+
             tr = False
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True
@@ -337,6 +347,7 @@ class QsoFrame(ttk.Frame):
             ch_vars.new_tags.append(
                 (tag_name, len(data))
             )
+            limit_ch_vars_output(ch_vars, PARAM_MAX_QSO_LEN)
             ch_vars.new_data_tr = True
         ch_vars.rx_beep_tr = True
         self._gui_root.ch_status_update()
@@ -348,8 +359,11 @@ class QsoFrame(ttk.Frame):
         data = tk_filter_bad_chars(data)
         data += '\n'
         ch_vars = self._gui_root.get_ch_var(ch_index=ch_index)
-        ch_vars.output_win += data
         if self._gui_root.channel_index == ch_index:
+            # Max wide
+            eol = find_eol_in_str(data, default='\n')
+            data = zeilenumbruch_lines(data, PARAM_MAX_MON_WIDTH, eol)
+
             tr = False
             if float(self._qso_txt.index(tk.END)) - float(self._qso_txt.index("@0,0")) < 22:
                 tr = True
@@ -364,12 +378,13 @@ class QsoFrame(ttk.Frame):
                                    )
             if tr or self._gui_root.get_ch_var().autoscroll:
                 self.see_end_qso_win()
-
         else:
             ch_vars.new_tags.append(
                 (tag_name, len(data))
             )
             ch_vars.new_data_tr = True
+        ch_vars.output_win += data
+        limit_ch_vars_output(ch_vars, PARAM_MAX_QSO_LEN)
         ch_vars.rx_beep_tr = True
         self._gui_root.ch_status_update()
 

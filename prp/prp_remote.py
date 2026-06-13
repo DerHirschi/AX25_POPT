@@ -280,7 +280,10 @@ class PRPremote:
         Eingehende Daten vom AX25-Layer.
         Leitet einfach an den RX-Processor weiter.
         """
-        return self._rx_processor.process(data)
+        try:
+            return self._rx_processor.process(data)
+        except EncodingWarning:
+            return b''
 
     # ====== Processing PRP-Frame
     def prp_rx_process(self, frame: bytes):

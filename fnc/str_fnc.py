@@ -9,6 +9,8 @@ from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
 from cfg.string_tab import STR_TABLE
 
 
+STR_EOL = tuple(x.decode('UTF-8') for x in EOL)
+
 def get_kb_str_fm_bytes(len_: int):
     return f"{len_/1024:.2f} kb"
 
@@ -330,19 +332,21 @@ def get_strTab(str_key: str, lang_index=1, warning=True, fallback=False):
 
 
 def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):
-    # by GROK (x.com)
     if len(text) <= max_zeichen:
         return text
-    letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
-
-    if letztes_leerzeichen == -1:
-        return text[:max_zeichen] + umbruch + zeilenumbruch(text[max_zeichen:],
-                                                            max_zeichen=max_zeichen,
-                                                            umbruch=umbruch)
-    else:
-        return text[:letztes_leerzeichen] + umbruch + zeilenumbruch(text[letztes_leerzeichen + 1:],
-                                                                    max_zeichen=max_zeichen,
-                                                                    umbruch=umbruch)
+    lines = []
+    while True:
+        letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
+        if letztes_leerzeichen <= 0:
+            lines.append(text[:max_zeichen])
+            text = text[max_zeichen:]
+        else:
+            lines.append(text[:letztes_leerzeichen])
+            text = text[letztes_leerzeichen + 1:]
+        if len(text) <= max_zeichen:
+            lines.append(text)
+            break
+    return umbruch.join(lines)
 
 def zeilenumbruch_lines(text: str, max_zeichen=79, umbruch='\n'):
     line_list = text.split(umbruch)
@@ -363,6 +367,14 @@ def find_eol(msg: bytes):
         if tmp_eol in msg:
             return tmp_eol
     return CR
+
+
+def find_eol_in_str(msg: str, default='\r'):
+    # Find EOL Syntax
+    for tmp_eol in STR_EOL:
+        if tmp_eol in msg:
+            return tmp_eol
+    return default
 
 def version_tuple(v: str):
     return tuple(int(x) for x in v.split('.'))
