@@ -1,5 +1,4 @@
 import datetime
-import gc
 import time
 import random
 import tkinter as tk
@@ -807,6 +806,7 @@ class AISmonitor(tk.Toplevel):
 
         self._root_cl.toplevel_manager.aprs_mon_win = None
         self._root_cl.add_win_gc(self)
+        #super().destroy()
 
     def destroy(self):
         self.destroy_win()

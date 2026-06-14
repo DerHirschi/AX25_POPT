@@ -1143,6 +1143,9 @@ class MHWin(tk.Toplevel):
         super().lift()
 
     def destroy_win(self):
+        self._on_close()
+    """
+    def destroy_win(self):
         if self._quit:
             return
         self._quit = True
@@ -1158,10 +1161,14 @@ class MHWin(tk.Toplevel):
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
         self._root_win.toplevel_manager.mh_window = None
-        self._root_win.add_win_gc(self)
-
+        #self._root_win.add_win_gc(self)
+        super().destroy()
+    """
+    """
     def destroy(self):
         self.destroy_win()
+        pass
+    """
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()

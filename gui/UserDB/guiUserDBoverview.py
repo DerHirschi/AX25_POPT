@@ -1,4 +1,3 @@
-import gc
 import random
 import tkinter as tk
 from tkinter import ttk
@@ -438,6 +437,7 @@ class UserDBtreeview(tk.Toplevel):
             self._add_thread_gc(thread)
         self._root_win.toplevel_manager.userDB_tree_win = None
         self._root_win.add_win_gc(self)
+        #super().destroy()
 
     def destroy(self):
         self.destroy_win()

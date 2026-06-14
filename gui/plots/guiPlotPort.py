@@ -1,3 +1,4 @@
+import gc
 import tkinter as tk
 from tkinter import ttk, Menu, messagebox
 from datetime import datetime, timedelta
@@ -47,15 +48,15 @@ class _PlotPanel:
     # UI-Aufbau
     # -----------------------------------------------------------------
     def _build_ui(self, master):
-        self._outer = ttk.LabelFrame(master)
-        ctrl = tk.Frame(self._outer)
+        self._outer = ttk.Frame(master)
+        ctrl = ttk.Frame(self._outer)
         ctrl.pack(fill=tk.X, padx=2, pady=(2, 0))
 
-        tk.Label(ctrl, text=self._getTabStr('port_stat_port')).pack(side=tk.LEFT)
+        ttk.Label(ctrl, text=self._getTabStr('port_stat_port')).pack(side=tk.LEFT)
         ttk.Spinbox(ctrl, textvariable=self._port_var, width=2, from_=0, to=10,
                     command=self._on_change).pack(side=tk.LEFT, padx=(0, 4))
 
-        tk.Label(ctrl, text=self._getTabStr('port_stat_from')).pack(side=tk.LEFT)
+        ttk.Label(ctrl, text=self._getTabStr('port_stat_from')).pack(side=tk.LEFT)
         vcmd = (master.register(self._validate_date), '%P')
         from_entry = ttk.Entry(ctrl, textvariable=self._from_date_var, width=10,
                                validate='focusout', validatecommand=vcmd)
@@ -63,7 +64,7 @@ class _PlotPanel:
         from_entry.bind('<FocusOut>', self._on_date_change)
         from_entry.bind('<Return>', self._on_date_change)
 
-        tk.Label(ctrl, text=self._getTabStr('port_stat_to')).pack(side=tk.LEFT)
+        ttk.Label(ctrl, text=self._getTabStr('port_stat_to')).pack(side=tk.LEFT)
         to_entry = ttk.Entry(ctrl, textvariable=self._to_date_var, width=10,
                              validate='focusout', validatecommand=vcmd)
         to_entry.pack(side=tk.LEFT, padx=(0, 4))
@@ -75,15 +76,14 @@ class _PlotPanel:
         self._make_menubtn(ctrl, self._data_type_var, self.DATA_TYPES,
                            self._on_render).pack(side=tk.LEFT)
 
-        chk = tk.Frame(self._outer)
+        chk = ttk.Frame(self._outer)
         chk.pack(fill=tk.X, padx=2, pady=(0, 0))
         for ft in self.FRAME_TYPES:
-            tk.Checkbutton(chk, variable=self._chk_vars[ft], text=ft,
+            ttk.Checkbutton(chk, variable=self._chk_vars[ft], text=ft,
                            command=self._on_render).pack(side=tk.LEFT, padx=1)
 
     def _make_menubtn(self, parent, variable, keys, callback=None):
-        btn = tk.Menubutton(parent, text=self._getTabStr(variable.get()),
-                            relief=tk.RAISED)
+        btn = ttk.Menubutton(parent, text=self._getTabStr(variable.get()))
         menu = tk.Menu(btn, tearoff=False)
         btn.configure(menu=menu)
         for key in keys:
@@ -101,13 +101,14 @@ class _PlotPanel:
 
     def _setup_figure(self):
         self._fig, self._plot1 = plt.subplots()
-        self._fig.set_facecolor('xkcd:light grey')
-        self._plot1.set_facecolor('#000000')
         self._fig.subplots_adjust(top=0.95, bottom=0.10, left=0.10, right=0.98)
+        self._fig.set_facecolor('#000000')
+        self._fig.set_edgecolor('#000000')
+        self._plot1.set_facecolor('#000000')
 
         self._canvas = FigureCanvasTkAgg(self._fig, master=self._outer)
         self._canvas.draw()
-        self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH, padx=2, pady=(0, 2))
+        self._canvas.get_tk_widget().pack(expand=True, fill=tk.BOTH)
 
         toolbar = NavigationToolbar2Tk(self._canvas, self._outer)
         toolbar.update()
@@ -442,7 +443,7 @@ class PlotWindow(tk.Toplevel):
     def _build_ui(self):
         # Vertikales PanedWindow (Plots + Tabelle)
         self._pw = ttk.PanedWindow(self, orient=tk.VERTICAL)
-        self._pw.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self._pw.pack(fill=tk.BOTH, expand=True)
 
         # Horizontales PanedWindow für 2 Plot-Panels
         self._hpw = ttk.PanedWindow(self._pw, orient=tk.HORIZONTAL)
@@ -590,14 +591,13 @@ class PlotWindow(tk.Toplevel):
         super().lift()
 
     def destroy_win(self):
-        #self.destroy_plot()
-        pass
+        self.destroy_plot()
 
-    """
     def destroy_plot(self):
-        for p in self._panels:
-            p.destroy()
+        #for p in self._panels:
+        #    p.destroy()
         self._panels = []
         self._icon_img = None
         self._root_win.toplevel_manager.port_stat_win = None
-    """
+        gc.collect()
+
