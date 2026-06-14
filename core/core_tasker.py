@@ -13,7 +13,7 @@ class PoPTCoreTasker:
         logger.info("Core-Tasker: Init")
         self._popt_handler     = popt_handler
         self._gpio             = lambda : popt_handler.get_GPIO()
-        self._mh               = lambda : popt_handler.get_MH()
+        self._mh               = lambda : popt_handler.get_MH
         self._bbs              = lambda : popt_handler.get_bbs()
         self._aprs_ais         = lambda : popt_handler.get_aprs_ais()
         self._sound            = lambda : popt_handler.get_sound_modul()

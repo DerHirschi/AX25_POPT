@@ -983,7 +983,7 @@ class UserDB(tk.Toplevel):
     def _get_mh(self):
         try:
             port_handler = self._root_win.get_PH_mainGUI()
-            return port_handler.get_MH()
+            return port_handler.get_MH
         except Exception as ex:
             logger.error(ex)
             return None

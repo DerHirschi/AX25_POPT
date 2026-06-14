@@ -58,7 +58,7 @@ class AX25Port(object):
         self.connections        = {}
         #############
         # VARS
-        self._mh                = self._popt_handler.get_MH()
+        self._mh                = self._popt_handler.get_MH
         #############
         """ Multi Channel TNC/KISS """
         self.multi_ch_tnc = MultiChannelTNC(self, self._popt_handler)

@@ -91,7 +91,7 @@ class BeaconTask:
         self._text = ''
 
     def _set_text_fm_mh(self):
-        mh = self._port_handler.get_MH()
+        mh = self._port_handler.get_MH
         if not mh:
             self._text = ''
             return

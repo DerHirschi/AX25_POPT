@@ -93,7 +93,7 @@ class PoPT_GUI_Main:
         self._get_colorMap = lambda : COLOR_MAP.get(self.style_name, ('#000000',  '#d9d9d9'))
         ######################################
         # Init Vars
-        self._mh        = self._popt_handler.get_MH()
+        self._mh        = self._popt_handler.get_MH
         self.text_size  = POPT_CFG.load_guiPARM_main().get('gui_parm_text_size', 13)
         ###############################
         self._root_dir  = get_root_dir()

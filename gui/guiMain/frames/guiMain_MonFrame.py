@@ -17,7 +17,7 @@ class MonitorFrame(ttk.Frame):
         # ================================
         self._gui_root     = gui_root_cl
         self._popt_handler = gui_root_cl.get_PH_mainGUI()
-        self._mh           = gui_root_cl.get_MH()
+        self._mh           = gui_root_cl.get_MH
         # ================================
         self._text_size    = gui_root_cl.text_size
         # ================================

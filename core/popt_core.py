@@ -374,6 +374,7 @@ class PoPTCore(object):
     def get_aprs_ais(self):
         return self._aprs_ais
 
+    @property
     def get_MH(self):
         return self._mh
 

@@ -234,7 +234,7 @@ class _PlotPanel:
             to_dt = datetime.strptime(self._to_date_var.get(), '%d.%m.%Y') + timedelta(days=1)
             span_s = (to_dt - from_dt).total_seconds()
             return from_dt, to_dt, span_s / 3600, span_s / 86400
-        except Exception:
+        except (ValueError, AttributeError):
             now = datetime.now()
             return now - timedelta(days=1), now, 24.0, 1.0
 
@@ -253,7 +253,7 @@ class _PlotPanel:
         for row in self._cache_rows:
             try:
                 ts = convert_str_to_datetime(row[1])
-            except Exception:
+            except ValueError:
                 continue
             if last_ts is not None:
                 gap = int((ts - last_ts).total_seconds() / 60) - 1
@@ -287,7 +287,7 @@ class _PlotPanel:
         for row in self._cache_rows:
             try:
                 ts = convert_str_to_datetime(row[1])
-            except Exception:
+            except ValueError:
                 continue
             if ts < from_dt or ts >= to_dt:
                 continue
@@ -394,7 +394,7 @@ class _PlotPanel:
             from_dt = datetime.strptime(self._from_date_var.get(), '%d.%m.%Y')
             to_dt = datetime.strptime(self._to_date_var.get(), '%d.%m.%Y') + timedelta(days=1)
             return max((to_dt - from_dt).total_seconds() / 3600, 1.0)
-        except Exception:
+        except (ValueError, AttributeError):
             return 1.0
 
     def get_cache_key(self):
@@ -407,6 +407,11 @@ class _PlotPanel:
         self._plot1.clear()
         plt.close(self._fig)
         self._canvas.get_tk_widget().destroy()
+        for var in (self._port_var, self._from_date_var, self._to_date_var,
+                    self._plot_type_var, self._data_type_var):
+            var._tk = None
+        for var in self._chk_vars.values():
+            var._tk = None
 
 
 class PlotWindow(tk.Toplevel):
@@ -419,16 +424,17 @@ class PlotWindow(tk.Toplevel):
         self._getTabStr = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         self.wm_title(self._getTabStr('port_stat_title'))
         self.geometry(f"1000x650+{root_cl.main_win.winfo_x()}+{root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_plot)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             try:
-                self.iconphoto(False, tk.PhotoImage(file='popt.png'))
-            except Exception as ex:
+                self._icon_img = tk.PhotoImage(file='popt.png')
+                self.iconphoto(False, self._icon_img)
+            except (tk.TclError, FileNotFoundError) as ex:
                 logger.warning(ex)
 
-        self._mh = self._popt_handler.get_MH()
+        self._mh = self._popt_handler.get_MH
         self._panels = []
         self._active_panel = None
 
@@ -488,7 +494,8 @@ class PlotWindow(tk.Toplevel):
         # PW-Ratio wiederherstellen
         gui_cfg = POPT_CFG.load_guiPARM_main()
         ratio = gui_cfg.get('port_stat_pw_ratio', 0.7)
-        self.after(100, lambda: self._restore_pw_ratio(ratio))
+        #self.after(100, lambda: self._restore_pw_ratio(ratio))
+        self._restore_pw_ratio(ratio)
         self._pw.bind('<ButtonRelease-1>', self._on_sash_release)
 
     def _restore_pw_ratio(self, ratio):
@@ -497,7 +504,7 @@ class PlotWindow(tk.Toplevel):
             if total > 10:
                 top = int(total * ratio)
                 self._pw.sashpos(0, top)
-        except Exception:
+        except tk.TclError:
             pass
 
     def _on_sash_release(self, event):
@@ -508,7 +515,7 @@ class PlotWindow(tk.Toplevel):
                 gui_cfg = POPT_CFG.load_guiPARM_main()
                 gui_cfg['port_stat_pw_ratio'] = pos / total
                 POPT_CFG.save_guiPARM_main(gui_cfg)
-        except Exception:
+        except tk.TclError:
             pass
 
     # -----------------------------------------------------------------
@@ -584,8 +591,23 @@ class PlotWindow(tk.Toplevel):
                 p.reload()
             self._update_table()
 
+    def _on_close(self):
+        self.withdraw()
+
+    def lift(self):
+        for p in self._panels:
+            p.reload()
+        self._update_table()
+        self.deiconify()
+        super().lift()
+
+    def destroy_win(self):
+        #self.destroy_plot()
+        pass
+
     def destroy_plot(self):
         for p in self._panels:
             p.destroy()
+        self._panels = []
+        self._icon_img = None
         self._root_win.toplevel_manager.port_stat_win = None
-        self.destroy()

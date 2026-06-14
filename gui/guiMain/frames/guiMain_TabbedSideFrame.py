@@ -1189,7 +1189,7 @@ class SideTabbedFrame:
     def _get_mh(self):
         try:
             port_handler = self._root_class.get_PH_mainGUI()
-            return port_handler.get_MH()
+            return port_handler.get_MH
         except Exception as ex:
             logger.error(ex)
             return None

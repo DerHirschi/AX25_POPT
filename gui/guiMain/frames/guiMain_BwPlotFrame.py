@@ -17,7 +17,7 @@ class BwPlotFrame(ttk.Frame):
         # ================================
         self._gui_root     = gui_root_cl
         self._popt_handler = gui_root_cl.get_PH_mainGUI()
-        self._mh           = self._popt_handler.get_MH()
+        self._mh           = self._popt_handler.get_MH
         self._style_name   = gui_root_cl.style_name
         # ================================
         self._get_colorMap = lambda : COLOR_MAP.get(self._style_name, ('#000000',  '#d9d9d9'))

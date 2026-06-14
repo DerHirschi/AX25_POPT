@@ -16,7 +16,7 @@ class CliCmdStatistics(CliModulBase):
     # ==============================
     # BWSTAT
     def cmd_bwstat(self):
-        mh = self._popt_handler.get_MH()
+        mh = self._popt_handler.get_MH
         if not mh:
             return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
 
@@ -78,7 +78,7 @@ class CliCmdStatistics(CliModulBase):
     # PSTAT
     def cmd_pstat(self):
         """ Port Statistiken (wie WX) """
-        mh = self._popt_handler.get_MH()
+        mh = self._popt_handler.get_MH
         if not mh:
             return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
 
@@ -98,7 +98,7 @@ class CliCmdStatistics(CliModulBase):
         return ret + '\r'
 
     def _get_pstat_cli_out(self, hours=168):
-        mh = self._popt_handler.get_MH()
+        mh = self._popt_handler.get_MH
         if not mh:
             return f'\r # {self._getTabStr_CLI("cli_no_data")}\r\r'
 
@@ -267,7 +267,7 @@ class CliCmdStatistics(CliModulBase):
                 avg_bytes = hourly[hk] // max(hourly_count[hk], 1)
                 graph_data.append({f"P{port_id}": avg_bytes})
 
-            port_name = self._popt_handler.port_manager.ax25_ports[port_id].portname
+            port_name = str(self._popt_handler.port_manager.ax25_ports[port_id].portname)
             graph = generate_ascii_graph(
                 graph_data,
                 f"Port {port_id} – {port_name} – Bytes/min – {hours}h",
@@ -475,7 +475,7 @@ class CliCmdStatistics(CliModulBase):
         start_date = end_date - timedelta(days=7)
 
         # Verbindungshistorie abrufen (kompletter Datensatz)
-        mh = self._popt_handler.get_MH()
+        mh = self._popt_handler.get_MH
         if not hasattr(mh, 'get_conn_hist'):
             return "\r # Error: Connection history not available !\r\r"
 
