@@ -426,17 +426,22 @@ class UserDBtreeview(tk.Toplevel):
         self._check_threads_and_destroy()
 
     def _check_threads_and_destroy(self):
+        if self.is_destroyed:
+            return
         map_threads = self._map_widget.get_threads()
         all_dead    = all(not thread.is_alive() for thread in map_threads)
 
         if all_dead:
             # Alle Threads sind tot – jetzt safe zerstören
             self._map_widget.clean_cache()
-            gc.collect()
+            self._map_widget.destroy()
             self._main_pw.destroy()
 
-            self.destroy()
+            gc.collect()
+
+            #self.destroy()
             self.is_destroyed = True
+            tk.Toplevel.destroy(self)
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
@@ -447,4 +452,6 @@ class UserDBtreeview(tk.Toplevel):
 
     def destroy(self):
         self.destroy_win()
-
+        #if not self.is_destroyed:
+        #    self.is_destroyed = True
+        #    tk.Toplevel.destroy(self)

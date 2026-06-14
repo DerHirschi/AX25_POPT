@@ -400,18 +400,6 @@ class _PlotPanel:
     def get_cache_key(self):
         return self._cache_key
 
-    # -----------------------------------------------------------------
-    # Cleanup
-    # -----------------------------------------------------------------
-    def destroy(self):
-        self._plot1.clear()
-        plt.close(self._fig)
-        self._canvas.get_tk_widget().destroy()
-        for var in (self._port_var, self._from_date_var, self._to_date_var,
-                    self._plot_type_var, self._data_type_var):
-            var._tk = None
-        for var in self._chk_vars.values():
-            var._tk = None
 
 
 class PlotWindow(tk.Toplevel):
@@ -605,9 +593,11 @@ class PlotWindow(tk.Toplevel):
         #self.destroy_plot()
         pass
 
+    """
     def destroy_plot(self):
         for p in self._panels:
             p.destroy()
         self._panels = []
         self._icon_img = None
         self._root_win.toplevel_manager.port_stat_win = None
+    """

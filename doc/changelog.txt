@@ -9,12 +9,15 @@ Fixes:
 - GUI Hauptfenster, Seitenverhältnisse der einzelnen Fenster, ins besonderen
   des tabellarischen Monitorfensters, verschieben sich beim Wechseln in den
   Monitor-Modus und zurück.
+- Memory Leaks in diversen Toplevel Fenstern. (APRS-Monitor, UserDB,
+  UserDB-Tree, MH-Liste)
 
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
-- Port-Statistik Fenster komplett überarbeitget (by opencode)
+- Port-Statistik Fenster komplett überarbeitet (by opencode)
 
 Neue Implementierungen / Funktionen:
+- CLI CMD "POKER" - Texas Holde'm Poker (by opencode) (complete Vibecoded)
 
 ###########################################################################################################
 ###########################################################################################################

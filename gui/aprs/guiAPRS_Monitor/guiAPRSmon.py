@@ -764,6 +764,9 @@ class AISmonitor(tk.Toplevel):
 
     def destroy(self):
         self.destroy_win()
+        #if not self.is_destroyed:
+        #    self.is_destroyed = True
+        #    tk.Toplevel.destroy(self)
 
     def _close_me(self):
         if self._quit:
@@ -784,16 +787,28 @@ class AISmonitor(tk.Toplevel):
         self._check_threads_and_destroy()
 
     def _check_threads_and_destroy(self):
+        if self.is_destroyed:
+            return
         map_threads = self._map_widget.get_threads()
         all_dead = all(not thread.is_alive() for thread in map_threads)
 
         if all_dead:
             # Alle Threads sind tot – jetzt safe zerstören
             self._map_widget.clean_cache()
+
+            self._pack_tree_cl.destroy()
+            self._node_tree_cl.destroy()
+            self._obj_tree_cl.destroy()
+            self._wx_tree_cl.destroy()
+            self._msg_tree_cl.destroy()
+            self._bl_tree_cl.destroy()
+            self._igate_mon_cl.destroy()
+            self._digi_mon_cl.destroy()
             gc.collect()
 
-            self.destroy()
+            #self.destroy()
             self.is_destroyed = True
+            tk.Toplevel.destroy(self)
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
