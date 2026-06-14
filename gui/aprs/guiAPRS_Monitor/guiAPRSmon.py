@@ -780,6 +780,13 @@ class AISmonitor(tk.Toplevel):
             self._add_thread_gc(thread)
         self._root_cl.toplevel_manager.aprs_mon_win = None
         self._root_cl.add_win_gc(self)
+        # APRS Chat Frame unregister
+        for arps_chat_f in list(self._root_cl.toplevel_manager.aprs_pn_msg_frame):
+            try:
+                self._root_cl.toplevel_manager.aprs_pn_msg_frame.remove(arps_chat_f)
+            except ValueError:
+                pass
+
         # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
         self._quit = True
         self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
