@@ -15,6 +15,11 @@ Fixes:
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
 - Port-Statistik Fenster komplett überarbeitet (by opencode)
+- Folgende GUI-Fenster werden beim Schließen nicht mehr zerstört und komplett
+  neu aufgebaut, sondern im Speicher (unsichtbar im Hintergund) gehalten:
+  APRS-Monitor, User-DB, UserDB-Treeview, MH-Liste, Port-Statistik.
+  Spart Rechenzeit und Fenster-Einstellungen(Größe, Position, usw.)
+  bleiben erhalten.
 
 Neue Implementierungen / Funktionen:
 - CLI CMD "POKER" - Texas Holde'm Poker (by opencode) (complete Vibecoded)

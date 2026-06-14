@@ -30,7 +30,7 @@ class MHWin(tk.Toplevel):
                       f"650+"
                       f"{root_win.main_win.winfo_x()}+"
                       f"{root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._close_me)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -38,7 +38,7 @@ class MHWin(tk.Toplevel):
                 self.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except (tk.TclError, FileNotFoundError) as ex:
                 logger.warning(ex)
-        self.lift()
+        super().lift()
         ###################################
         self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
         self._conn_typ_icon_tab     = root_win.guiIcon.get_conn_typ_icon_16()
@@ -61,6 +61,7 @@ class MHWin(tk.Toplevel):
         self._tab_task_timer         = time.time() + 2
         # MapView Thread Ctrl.
         self._quit                   = False
+        self._withdrawn              = False
         self.is_destroyed            = False
         ###################################
         # GUI Vars
@@ -531,8 +532,15 @@ class MHWin(tk.Toplevel):
     ##########################
     def tasker(self):
         if self._quit:
-            self._check_threads_and_destroy()
+            if self.is_destroyed:
+                return True
+            map_threads = self._map_widget.get_threads()
+            if all(not t.is_alive() for t in map_threads):
+                self.is_destroyed = True
+                tk.Toplevel.destroy(self)
             return True
+        if self._withdrawn:
+            return False
         ret = False
         if hasattr(self._map_widget, 'tasker'):
             ret = self._map_widget.tasker()
@@ -1119,15 +1127,31 @@ class MHWin(tk.Toplevel):
         if hasattr(self._root_win, 'add_thread_gc'):
             self._root_win.add_thread_gc(thread)
 
-    def _close_me(self):
+    def _on_close(self):
+        if self._withdrawn:
+            return
+        self._withdrawn = True
+        self.withdraw()
+
+    def lift(self):
+        self._withdrawn = False
+        self._update_mh()
+        self._update_conn_his()
+        self._update_dx_his(force_update=True)
+        self._update_alarm_tree()
+        self.deiconify()
+        super().lift()
+
+    def destroy_win(self):
         if self._quit:
             return
+        self._quit = True
+        self._on_close()
         mh = self.get_mh()
         mh.reset_dx_alarm_his()
         self._mh_graph.destroy_plot()
         self._clear_map()
 
-        # Threads stoppen signalisieren
         self._map_widget.running = False
         self._map_widget.image_load_queue_tasks = []
         self._map_widget.image_load_queue_results = []
@@ -1135,37 +1159,10 @@ class MHWin(tk.Toplevel):
             self._add_thread_gc(thread)
         self._root_win.toplevel_manager.mh_window = None
         self._root_win.add_win_gc(self)
-        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
-        self._quit = True
-        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
-        # Starte asynchrones Polling, um auf Threads zu warten
-        self._check_threads_and_destroy()
 
-    def _check_threads_and_destroy(self):
-        if self.is_destroyed:
-            return
-        map_threads = self._map_widget.get_threads()
-        all_dead = all(not thread.is_alive() for thread in map_threads)
-
-        if all_dead:
-            # Alle Threads sind tot – jetzt safe zerstören
-            self._map_widget.clean_cache()
-            self._map_widget.destroy()
-            self._map_pw.destroy()
-            self._main_pw.destroy()
-            gc.collect()
-            self.is_destroyed = True
-            tk.Toplevel.destroy(self)
+    def destroy(self):
+        self.destroy_win()
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
         return all(not thread.is_alive() for thread in map_threads)
-
-    def destroy_win(self):
-        self._close_me()
-
-    def destroy(self):
-        self.destroy_win()
-        #if not self.is_destroyed:
-        #    self.is_destroyed = True
-        #    tk.Toplevel.destroy(self)

@@ -228,6 +228,8 @@ class ToplevelManager:
     # UserDB
     def open_user_db_win(self, event=None, ent_key=''):
         if self.userdb_win is not None:
+            if hasattr(self.userdb_win, 'lift'):
+                self.userdb_win.lift(ent_key)
             return
         if not ent_key:
             conn = self._gui_root.get_conn()

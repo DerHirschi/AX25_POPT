@@ -41,7 +41,7 @@ class AISmonitor(tk.Toplevel):
                       f"{self._win_height}+"
                       f"{self._root_cl.main_win.winfo_x()}+"
                       f"{self._root_cl.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
@@ -50,7 +50,7 @@ class AISmonitor(tk.Toplevel):
             except Exception as ex:
                 logger.warning(ex)
         # self.resizable(False, False)
-        self.lift()
+        super().lift()
         ##############################################
         ais_cfg = POPT_CFG.get_CFG_aprs_ais()
         self._own_lat, self._own_lon = ais_cfg.get('ais_lat', 0.0), ais_cfg.get('ais_lon', 0.0)
@@ -70,6 +70,7 @@ class AISmonitor(tk.Toplevel):
         self._current_path           = None
         # Map View Thread Ctrl.
         self._quit                   = False
+        self._withdrawn              = False
         self.is_destroyed            = False
         ##############################################
         self._autoscroll_var        = tk.BooleanVar(self, value=True)
@@ -392,8 +393,15 @@ class AISmonitor(tk.Toplevel):
     ###########################################################
     def tasker(self):
         if self._quit:
-            self._check_threads_and_destroy()
+            if self.is_destroyed:
+                return True
+            map_threads = self._map_widget.get_threads()
+            if all(not t.is_alive() for t in map_threads):
+                self.is_destroyed = True
+                tk.Toplevel.destroy(self)
             return True
+        if self._withdrawn:
+            return False
         ret = False
         if time.time() > self._10_sec_task_timer:
             self._10_sec_task_timer = time.time() + 10
@@ -759,27 +767,28 @@ class AISmonitor(tk.Toplevel):
         if hasattr(self._root_cl, 'add_thread_gc'):
             self._root_cl.add_thread_gc(thread)
 
+    def _on_close(self):
+        if self._withdrawn:
+            return
+        self._withdrawn = True
+        self.withdraw()
+
+    def lift(self):
+        self._withdrawn = False
+        self.deiconify()
+        super().lift()
+
     def destroy_win(self):
-        self._close_me()
-
-    def destroy(self):
-        self.destroy_win()
-        #if not self.is_destroyed:
-        #    self.is_destroyed = True
-        #    tk.Toplevel.destroy(self)
-
-    def _close_me(self):
         if self._quit:
             return
+        self._quit = True
+        self._on_close()
 
-        # Threads stoppen signalisieren
         self._map_widget.running = False
         self._map_widget.image_load_queue_tasks = []
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
-        self._root_cl.toplevel_manager.aprs_mon_win = None
-        self._root_cl.add_win_gc(self)
         # APRS Chat Frame unregister
         for arps_chat_f in list(self._root_cl.toplevel_manager.aprs_pn_msg_frame):
             try:
@@ -787,35 +796,20 @@ class AISmonitor(tk.Toplevel):
             except ValueError:
                 pass
 
-        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
-        self._quit = True
-        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
-        # Starte asynchrones Polling, um auf Threads zu warten
-        self._check_threads_and_destroy()
+        self._pack_tree_cl.destroy()
+        self._node_tree_cl.destroy()
+        self._obj_tree_cl.destroy()
+        self._wx_tree_cl.destroy()
+        self._msg_tree_cl.destroy()
+        self._bl_tree_cl.destroy()
+        self._igate_mon_cl.destroy()
+        self._digi_mon_cl.destroy()
 
-    def _check_threads_and_destroy(self):
-        if self.is_destroyed:
-            return
-        map_threads = self._map_widget.get_threads()
-        all_dead = all(not thread.is_alive() for thread in map_threads)
+        self._root_cl.toplevel_manager.aprs_mon_win = None
+        self._root_cl.add_win_gc(self)
 
-        if all_dead:
-            # Alle Threads sind tot – jetzt safe zerstören
-            self._map_widget.clean_cache()
-
-            self._pack_tree_cl.destroy()
-            self._node_tree_cl.destroy()
-            self._obj_tree_cl.destroy()
-            self._wx_tree_cl.destroy()
-            self._msg_tree_cl.destroy()
-            self._bl_tree_cl.destroy()
-            self._igate_mon_cl.destroy()
-            self._digi_mon_cl.destroy()
-            gc.collect()
-
-            #self.destroy()
-            self.is_destroyed = True
-            tk.Toplevel.destroy(self)
+    def destroy(self):
+        self.destroy_win()
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
