@@ -59,7 +59,7 @@ class PoPTCoreTasker:
     # Main Tasker
     def popt_core_task(self):
         if not self._is_running():
-            self._tasker_q = []
+            self._tasker_q = ListBuffer()
             return
         if self._tasker_q.length > 15:
             logger.warning("Core-Tasker: self._tasker_q > 15 !!")

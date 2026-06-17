@@ -97,7 +97,8 @@ class ConverseCLI(DefaultCLI):
 
     ######################################
     def _s0(self):  # C-Text
-        self._state_index = 1
+        #self._state_index = 1
+        self.change_cli_state(1)
         #ret = self._send_sw_id()
         ret = "\r*** Looking up Converse-Mode\r"
 

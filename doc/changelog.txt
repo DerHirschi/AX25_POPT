@@ -13,6 +13,7 @@ Fixes:
   UserDB-Tree, MH-Liste)
 - LZHUF-Komprimierung
 - Message-Center (BBS/PMS) Sortierung der MSG-ID Spalte in BBS Tab
+- Converse-Mode C-Text Loop
 
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
