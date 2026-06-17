@@ -12,6 +12,7 @@ Fixes:
 - Memory Leaks in diversen Toplevel Fenstern. (APRS-Monitor, UserDB,
   UserDB-Tree, MH-Liste)
 - LZHUF-Komprimierung
+- Message-Center (BBS/PMS) Sortierung der MSG-ID Spalte in BBS Tab
 
 Optimierung/Änderungen:
 - Sämtliche Datumsangaben von T/M/J zu T.M.Y(DIN) geändert.
