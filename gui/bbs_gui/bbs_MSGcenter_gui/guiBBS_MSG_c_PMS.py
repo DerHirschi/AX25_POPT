@@ -131,9 +131,13 @@ class MSG_Center_PMS(MSG_Center_base):
         for item in self._pn_tree.selection():
             tag_name, bid = self._pn_tree.item(item)['tags']
             self._PN_selected.append(bid)
+            if tag_name == 'neu':
+                self._pn_tree.item(item, tags=('alt', bid))
+                v = list(self._pn_tree.item(item)['values'])
+                v[0] = ''
+                self._pn_tree.item(item, values=v)
         if bid:
             self._PN_show_msg_fm_BID(bid)
-            # will refresh via _set_PN_MSG_notNew inside show_msg
 
     def _update_PN_msg(self, event=None):
         self._update_msg_by_encoding('P', self._pn_text)
@@ -237,9 +241,13 @@ class MSG_Center_PMS(MSG_Center_base):
         for item in self._bl_tree.selection():
             tag_name, bid = self._bl_tree.item(item)['tags']
             self._BL_selected.append(bid)
+            if tag_name == 'neu':
+                self._bl_tree.item(item, tags=('alt', bid))
+                v = list(self._bl_tree.item(item)['values'])
+                v[0] = ''
+                self._bl_tree.item(item, values=v)
         if bid:
             self._BL_show_msg_fm_BID(bid)
-            # refresh handled inside show_msg via _set_BL_MSG_notNew
 
     def _update_BL_msg(self, event=None):
         self._update_msg_by_encoding('B', self._bl_text)
