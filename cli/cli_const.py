@@ -62,7 +62,7 @@ CLI_DEF_CMD_SYSOP = ['QUIT',
                                #
                                'VERSION',
                                'POPT',
-                               #'POKER',
+                               'POKER',
                                'HELP',
                                '?',
                                 'L', 'U', 'H', 'Q', # Converse,
@@ -127,7 +127,9 @@ CLI_DEF_CMD_NODE =['QUIT',
                                #
                                'VERSION',
                                'POPT',
-                               #'POKER',
+
+                               'POKER',
+
                                'HELP',
                                '?',
                                 # ==== APRS Chat
@@ -194,7 +196,7 @@ CLI_DEF_CMD_BOX = ['QUIT',
                    #
                               'VERSION',
                               'POPT',
-                              #'POKER',
+                              'POKER',
                               'HELP',
                               '?',
                    # ==== APRS Chat

@@ -13,7 +13,7 @@ class PoPTCoreTasker:
         logger.info("Core-Tasker: Init")
         self._popt_handler     = popt_handler
         self._gpio             = lambda : popt_handler.get_GPIO()
-        self._mh               = lambda : popt_handler.get_MH()
+        self._mh               = lambda : popt_handler.get_MH
         self._bbs              = lambda : popt_handler.get_bbs()
         self._aprs_ais         = lambda : popt_handler.get_aprs_ais()
         self._sound            = lambda : popt_handler.get_sound_modul()
@@ -59,7 +59,7 @@ class PoPTCoreTasker:
     # Main Tasker
     def popt_core_task(self):
         if not self._is_running():
-            self._tasker_q = []
+            self._tasker_q = ListBuffer()
             return
         if self._tasker_q.length > 15:
             logger.warning("Core-Tasker: self._tasker_q > 15 !!")

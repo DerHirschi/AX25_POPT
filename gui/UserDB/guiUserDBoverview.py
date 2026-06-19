@@ -1,4 +1,3 @@
-import gc
 import random
 import tkinter as tk
 from tkinter import ttk
@@ -28,7 +27,7 @@ class UserDBtreeview(tk.Toplevel):
                       f"700+"
                       f"{self._root_win.main_win.winfo_x()}+"
                       f"{self._root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self.destroy_win)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.attributes("-topmost", True)
         self.attributes("-topmost", False)
         try:
@@ -38,7 +37,7 @@ class UserDBtreeview(tk.Toplevel):
                 self.iconphoto(False, tk.PhotoImage(file='popt.png'))
             except Exception as ex:
                 logger.warning(ex)
-        self.lift()
+        super().lift()
         ############################################################
         self._sort_flag         = ''
         self._rev_ent           = False
@@ -54,6 +53,7 @@ class UserDBtreeview(tk.Toplevel):
         self._current_path  = None
         # MapView Thread Ctrl.
         self._quit        = False
+        self._withdrawn   = False
         self.is_destroyed = False
         ############################################################
         main_f = ttk.Frame(self)
@@ -141,8 +141,15 @@ class UserDBtreeview(tk.Toplevel):
     #####################################################
     def tasker(self):
         if self._quit:
-            self._check_threads_and_destroy()
+            if self.is_destroyed:
+                return True
+            map_threads = self._map_widget.get_threads()
+            if all(not t.is_alive() for t in map_threads):
+                self.is_destroyed = True
+                tk.Toplevel.destroy(self)
             return True
+        if self._withdrawn:
+            return False
         if hasattr(self._map_widget, 'tasker'):
             return self._map_widget.tasker()
         return False
@@ -380,7 +387,7 @@ class UserDBtreeview(tk.Toplevel):
     def _get_mh(self):
         try:
             port_handler = self._root_win.get_PH_mainGUI()
-            return port_handler.get_MH()
+            return port_handler.get_MH
         except Exception as ex:
             logger.error(ex)
             return None
@@ -406,12 +413,23 @@ class UserDBtreeview(tk.Toplevel):
         if hasattr(self._root_win, 'add_thread_gc'):
             self._root_win.add_thread_gc(thread)
 
-    def _close_me(self):
+    def _on_close(self):
+        if self._withdrawn:
+            return
+        self._withdrawn = True
+        self.withdraw()
+
+    def lift(self):
+        self._withdrawn = False
+        self.deiconify()
+        super().lift()
+
+    def destroy_win(self):
         if self._quit:
             return
+        self._quit = True
+        self._on_close()
         self._clear_map()
-
-        # Threads stoppen signalisieren
         self._map_widget.running = False
         self._map_widget.image_load_queue_tasks = []
         self._map_widget.image_load_queue_results = []
@@ -419,32 +437,11 @@ class UserDBtreeview(tk.Toplevel):
             self._add_thread_gc(thread)
         self._root_win.toplevel_manager.userDB_tree_win = None
         self._root_win.add_win_gc(self)
-        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
-        self._quit = True
-        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
-        # Starte asynchrones Polling, um auf Threads zu warten
-        self._check_threads_and_destroy()
-
-    def _check_threads_and_destroy(self):
-        map_threads = self._map_widget.get_threads()
-        all_dead    = all(not thread.is_alive() for thread in map_threads)
-
-        if all_dead:
-            # Alle Threads sind tot – jetzt safe zerstören
-            self._map_widget.clean_cache()
-            gc.collect()
-            self._main_pw.destroy()
-
-            self.destroy()
-            self.is_destroyed = True
-
-    def all_dead(self):
-        map_threads = self._map_widget.get_threads()
-        return all(not thread.is_alive() for thread in map_threads)
-
-    def destroy_win(self):
-        self._close_me()
+        #super().destroy()
 
     def destroy(self):
         self.destroy_win()
 
+    def all_dead(self):
+        map_threads = self._map_widget.get_threads()
+        return all(not thread.is_alive() for thread in map_threads)

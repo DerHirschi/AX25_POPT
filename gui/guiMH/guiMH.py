@@ -30,15 +30,15 @@ class MHWin(tk.Toplevel):
                       f"650+"
                       f"{root_win.main_win.winfo_x()}+"
                       f"{root_win.main_win.winfo_y()}")
-        self.protocol("WM_DELETE_WINDOW", self._close_me)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
         try:
             self.iconbitmap("favicon.ico")
         except tk.TclError:
             try:
                 self.iconphoto(False, tk.PhotoImage(file='popt.png'))
-            except Exception as ex:
+            except (tk.TclError, FileNotFoundError) as ex:
                 logger.warning(ex)
-        self.lift()
+        super().lift()
         ###################################
         self._aprs_icon_tab_24      = root_win.guiIcon.get_aprs_icon_tab_24()
         self._conn_typ_icon_tab     = root_win.guiIcon.get_conn_typ_icon_16()
@@ -61,6 +61,7 @@ class MHWin(tk.Toplevel):
         self._tab_task_timer         = time.time() + 2
         # MapView Thread Ctrl.
         self._quit                   = False
+        self._withdrawn              = False
         self.is_destroyed            = False
         ###################################
         # GUI Vars
@@ -68,7 +69,6 @@ class MHWin(tk.Toplevel):
         self._port_filter_var           = tk.StringVar(self, value='')
         self._typ_filter_var            = tk.StringVar(self, value='')
         # self._call_filter_var           = tk.StringVar(self, value='')
-        self._alarm_newCall_var         = tk.BooleanVar(self)
         self._alarm_newCall_var         = tk.BooleanVar(self)
         self._alarm_seenSince_var       = tk.StringVar(self)
         self._alarm_distance_var        = tk.StringVar(self)
@@ -367,14 +367,14 @@ class MHWin(tk.Toplevel):
         self._alarm_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='left', fill='y', expand=False)
 
-        self._alarm_tree.heading('mh_call',       text='Call',          command=lambda: self._sort_entry('call'))
-        self._alarm_tree.heading('mh_port',       text='Port',          command=lambda: self._sort_entry('port'))
-        self._alarm_tree.heading('mh_loc',        text='LOC',           command=lambda: self._sort_entry('loc'))
-        self._alarm_tree.heading('mh_dist',       text='km',            command=lambda: self._sort_entry('dist'))
-        self._alarm_tree.heading('mh_nPackets',   text='Packets',       command=lambda: self._sort_entry('pack'))
-        self._alarm_tree.heading('mh_route',      text='Route',         command=lambda: self._sort_entry('route'))
-        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   command=lambda: self._sort_entry('first'))
-        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  command=lambda: self._sort_entry('last'))
+        self._alarm_tree.heading('mh_call',       text='Call',          )
+        self._alarm_tree.heading('mh_port',       text='Port',          )
+        self._alarm_tree.heading('mh_loc',        text='LOC',           )
+        self._alarm_tree.heading('mh_dist',       text='km',            )
+        self._alarm_tree.heading('mh_nPackets',   text='Packets',       )
+        self._alarm_tree.heading('mh_route',      text='Route',         )
+        self._alarm_tree.heading('mh_first_seen', text='Erste Paket',   )
+        self._alarm_tree.heading('mh_last_seen',  text='Letzte Paket',  )
         #self._tree.heading('mh_ip_fail', text='Fail', command=lambda: self._sort_entry('axipfail'))
         self._alarm_tree.column("mh_call",        anchor='w', stretch=tk.NO,  width=90)
         self._alarm_tree.column("mh_port",        anchor='w', stretch=tk.NO,  width=60)
@@ -489,6 +489,7 @@ class MHWin(tk.Toplevel):
         }
         #################################
         self._root_win.toplevel_manager.mh_window = self
+        self._sort_entry('last')
         self._update_mh()
         self._update_dx_his()
         self._update_conn_his()
@@ -531,8 +532,15 @@ class MHWin(tk.Toplevel):
     ##########################
     def tasker(self):
         if self._quit:
-            self._check_threads_and_destroy()
+            if self.is_destroyed:
+                return True
+            map_threads = self._map_widget.get_threads()
+            if all(not t.is_alive() for t in map_threads):
+                self.is_destroyed = True
+                tk.Toplevel.destroy(self)
             return True
+        if self._withdrawn:
+            return False
         ret = False
         if hasattr(self._map_widget, 'tasker'):
             ret = self._map_widget.tasker()
@@ -694,7 +702,7 @@ class MHWin(tk.Toplevel):
             elif flag == 'time':
                 # Deutsches Format parsen: DD.MM.YYYY HH:MM:SS
                 try:
-                    return datetime.strptime(value, '%d/%m/%y %H:%M:%S')
+                    return datetime.strptime(value, '%d.%m.%y %H:%M:%S')
                 except ValueError:
                     return datetime.min  # Ungültige Zeiten ans Ende sortieren
             else:
@@ -805,7 +813,7 @@ class MHWin(tk.Toplevel):
             self._close_me()
     """
     def _update_mh(self):
-        self._sort_entry('last')
+        #self._sort_entry('last')
         if self._tree_data == self._old_mh_data:
             return
         self._old_mh_data = dict(self._tree_data)
@@ -836,14 +844,14 @@ class MHWin(tk.Toplevel):
         else:
             self._rev_ent = True
         self._format_tree_ent(sort_date)
+        self._update_mh()
 
-    def _format_tree_ent(self, mh_list):
+    def _format_tree_ent(self, mh_list: dict):
         self._tree_data = []
         mh      = self.get_mh()
         user_db = self._get_userDB()
-        for k in mh_list:
-            ent: MyHeard
-            ent = mh_list[k]
+        for k, ent in mh_list.items():
+
             if self._port_filter_var.get() != str(ent.port_id) and self._port_filter_var.get():
                 continue
             if ent.axip_add[1]:
@@ -1094,7 +1102,7 @@ class MHWin(tk.Toplevel):
     def get_mh(self):
         try:
             port_handler = self._root_win.get_PH_mainGUI()
-            return port_handler.get_MH()
+            return port_handler.get_MH
         except Exception as ex:
             logger.error(ex)
             return None
@@ -1119,48 +1127,49 @@ class MHWin(tk.Toplevel):
         if hasattr(self._root_win, 'add_thread_gc'):
             self._root_win.add_thread_gc(thread)
 
-    def _close_me(self):
+    def _on_close(self):
+        if self._withdrawn:
+            return
+        self._withdrawn = True
+        self.withdraw()
+
+    def lift(self):
+        self._withdrawn = False
+        self._update_mh()
+        self._update_conn_his()
+        self._update_dx_his(force_update=True)
+        self._update_alarm_tree()
+        self.deiconify()
+        super().lift()
+
+    def destroy_win(self):
+        self._on_close()
+    """
+    def destroy_win(self):
         if self._quit:
             return
+        self._quit = True
+        self._on_close()
         mh = self.get_mh()
         mh.reset_dx_alarm_his()
         self._mh_graph.destroy_plot()
         self._clear_map()
 
-        # Threads stoppen signalisieren
         self._map_widget.running = False
         self._map_widget.image_load_queue_tasks = []
         self._map_widget.image_load_queue_results = []
         for thread in self._map_widget.get_threads():
             self._add_thread_gc(thread)
         self._root_win.toplevel_manager.mh_window = None
-        self._root_win.add_win_gc(self)
-        # Fenster/Frame unsichtbar machen, statt direkt zu zerstören
-        self._quit = True
-        self.withdraw()  # Macht das gesamte Toplevel unsichtbar (alternativ: self._map_pw.pack_forget() für nur den Map-Bereich)
-        # Starte asynchrones Polling, um auf Threads zu warten
-        self._check_threads_and_destroy()
-
-    def _check_threads_and_destroy(self):
-        map_threads = self._map_widget.get_threads()
-        all_dead = all(not thread.is_alive() for thread in map_threads)
-
-        if all_dead:
-            # Alle Threads sind tot – jetzt safe zerstören
-            self._map_widget.clean_cache()
-            gc.collect()
-            self._map_pw.destroy()
-            self._main_pw.destroy()
-
-            self.destroy()
-            self.is_destroyed = True
+        #self._root_win.add_win_gc(self)
+        super().destroy()
+    """
+    """
+    def destroy(self):
+        self.destroy_win()
+        pass
+    """
 
     def all_dead(self):
         map_threads = self._map_widget.get_threads()
         return all(not thread.is_alive() for thread in map_threads)
-
-    def destroy_win(self):
-        self._close_me()
-
-    def destroy(self):
-        self.destroy_win()

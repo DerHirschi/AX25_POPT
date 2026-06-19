@@ -7,7 +7,7 @@ class CoreAPI:
         self._popt_handler = popt_handler
         """"""
         self._gui               = lambda : popt_handler.get_gui()
-        self._mh                = lambda : popt_handler.get_MH()
+        self._mh                = lambda : popt_handler.get_MH
         self._aprs              = lambda : popt_handler.get_aprs_ais()
         self._gpio              = lambda : popt_handler.get_GPIO()
         self._port_manager      = popt_handler.port_manager

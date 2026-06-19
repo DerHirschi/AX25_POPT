@@ -1,25 +1,22 @@
 """
-Ported from
-https://github.com/ARSFI/Winlink-Compression
-by Grok 3-beta (AI by x.com)
+LZHUF - LZSS + Adaptive Huffman Coding
+Based on original C version (LZHUF.C 1.0) by Haruyasu YOSHIZAKI / Haruhiko OKUMURA
 """
+
 import array
 
 
 class LZHUF_Comp:
-    # Öffentliche Konstanten
-    N = 2048  # Puffergröße
-    F = 60  # Vorausschaupuffer
+    N = 4096
+    F = 60
     THRESHOLD = 2
     NODE_NIL = N
     N_CHAR = (256 - THRESHOLD) + F
     T = (N_CHAR * 2) - 1
     R = T - 1
     MAX_FREQ = 0x8000
-    #TB_SIZE = N + F - 2
     TB_SIZE = N + F - 1
 
-    # Öffentliche Tabellen für Positionscodierung/Dekodierung
     P_LEN = bytearray([0x03, 0x04, 0x04, 0x04, 0x05, 0x05, 0x05, 0x05,
                         0x05, 0x05, 0x05, 0x05, 0x06, 0x06, 0x06, 0x06,
                         0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
@@ -29,12 +26,14 @@ class LZHUF_Comp:
                         0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
                         0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08])
 
-    P_CODE = bytearray([0x00, 0x20, 0x30, 0x40, 0x50, 0x58, 0x60, 0x68, 0x70, 0x78, 0x80, 0x88,
-                        0x90, 0x94, 0x98, 0x9C, 0xA0, 0xA4, 0xA8, 0xAC, 0xB0, 0xB4, 0xB8, 0xBC,
-                        0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE, 0xD0, 0xD2, 0xD4, 0xD6,
-                        0xD8, 0xDA, 0xDC, 0xDE, 0xE0, 0xE2, 0xE4, 0xE6, 0xE8, 0xEA, 0xEC, 0xEE,
-                        0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB,
-                        0xFC, 0xFD, 0xFE, 0xFF])
+    P_CODE = bytearray([0x00, 0x20, 0x30, 0x40, 0x50, 0x58, 0x60, 0x68,
+                        0x70, 0x78, 0x80, 0x88, 0x90, 0x94, 0x98, 0x9C,
+                        0xA0, 0xA4, 0xA8, 0xAC, 0xB0, 0xB4, 0xB8, 0xBC,
+                        0xC0, 0xC2, 0xC4, 0xC6, 0xC8, 0xCA, 0xCC, 0xCE,
+                        0xD0, 0xD2, 0xD4, 0xD6, 0xD8, 0xDA, 0xDC, 0xDE,
+                        0xE0, 0xE2, 0xE4, 0xE6, 0xE8, 0xEA, 0xEC, 0xEE,
+                        0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7,
+                        0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF])
 
     D_CODE = bytearray([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -67,8 +66,7 @@ class LZHUF_Comp:
                         0x28, 0x28, 0x29, 0x29, 0x2A, 0x2A, 0x2B, 0x2B,
                         0x2C, 0x2C, 0x2D, 0x2D, 0x2E, 0x2E, 0x2F, 0x2F,
                         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-                        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,])
-
+                        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F])
 
     D_LEN = bytearray([0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
                         0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03,
@@ -101,11 +99,9 @@ class LZHUF_Comp:
                         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
                         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
                         0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
-                        0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,])
-
+                        0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08])
 
     def __init__(self):
-        # Private Variablen mit Unterstrich
         self._text_buf = bytearray(self.TB_SIZE + 2)
         self._l_son = array.array('i', [0] * (self.N + 2))
         self._r_son = array.array('i', [0] * (self.N + 257))
@@ -119,7 +115,6 @@ class LZHUF_Comp:
         self._in_ptr = 0
         self._in_end = 0
         self._out_ptr = 0
-        self._enc_dec = False  # True für Encode, False für Decode
         self._get_buf = 0
         self._get_len = 0
         self._put_buf = 0
@@ -130,7 +125,6 @@ class LZHUF_Comp:
         self._match_length = 0
 
     def _init(self):
-        """Initialisiert alle Strukturen und Zähler."""
         self._in_ptr = 0
         self._in_end = 0
         self._out_ptr = 0
@@ -153,7 +147,6 @@ class LZHUF_Comp:
         self._parent[:] = array.array('i', [0] * (self.T + self.N_CHAR))
 
     def _getc(self):
-        """Liest ein Zeichen aus dem Eingabepuffer."""
         if self._in_ptr < self._in_end:
             c = self._in_buf[self._in_ptr] & 0xFF
             self._in_ptr += 1
@@ -161,13 +154,11 @@ class LZHUF_Comp:
         return 0
 
     def _putc(self, c):
-        """Schreibt ein Zeichen in den Ausgabepuffer."""
         self._out_buf[self._out_ptr] = c & 0xFF
         self._out_ptr += 1
 
     def encode(self, i_buf):
         self._init()
-        self._enc_dec = True
         self._in_buf = bytearray(i_buf + b'\x00' * 100)
         self._out_buf = bytearray(len(i_buf) * 2 + 10000)
         self._in_end = len(i_buf)
@@ -179,7 +170,7 @@ class LZHUF_Comp:
         self._code_size += 4
 
         if self._in_end == 0:
-            return bytearray()
+            return self._out_buf[:self._code_size]
 
         self._text_size = 0
         self._start_huff()
@@ -199,15 +190,7 @@ class LZHUF_Comp:
             self._insert_node(r - i)
         self._insert_node(r)
 
-        iteration_count = 0
-        max_iterations = 1000000
         while len_ > 0:
-            iteration_count += 1
-            if iteration_count > max_iterations:
-                #print(f"Breaking encode loop due to max iterations: len_={len_}, r={r}")
-                break
-            #print(
-            #    f"encode: r={r}, len_={len_}, match_length={self._match_length}, text_buf[r:r+F]={self._text_buf[r:r + self.F]}")
             if self._match_length > len_:
                 self._match_length = len_
             if self._match_length <= self.THRESHOLD:
@@ -244,14 +227,10 @@ class LZHUF_Comp:
         return self._out_buf[:self._code_size]
 
     def decode(self, i_buf):
-        """Dekodierung/Dekomprimierung."""
         self._init()
-        self._enc_dec = False
         self._in_buf = bytearray(i_buf + b'\x00' * 100)
-        # self._out_buf = bytearray((expected_size or 0) + 10000)
         self._in_end = len(i_buf)
 
-        # Größe lesen
         self._text_size = self._getc()
         self._text_size |= self._getc() << 8
         self._text_size |= self._getc() << 16
@@ -260,10 +239,7 @@ class LZHUF_Comp:
         if self._text_size == 0:
             return bytearray()
 
-        # Wenn expected_size nicht gegeben, nutze self._text_size für Ausgabegröße
-        # if expected_size is None:
         self._out_buf = bytearray(self._text_size + 10000)
-        # print(self._text_size)
         self._start_huff()
         for i in range(self.N - self.F):
             self._text_buf[i] = 0x20
@@ -278,10 +254,7 @@ class LZHUF_Comp:
                 r = (r + 1) & (self.N - 1)
                 count += 1
             else:
-                try:
-                    i = ((r - self._decode_position()) - 1) & (self.N - 1)
-                except ValueError:
-                    raise ValueError()
+                i = ((r - self._decode_position()) - 1) & (self.N - 1)
                 j = (c - 255) + self.THRESHOLD
                 for k in range(j):
                     c = self._text_buf[(i + k) & (self.N - 1)]
@@ -293,28 +266,19 @@ class LZHUF_Comp:
         return self._out_buf[:count]
 
     def _init_tree(self):
-        """Initialisiert den Baum."""
         for i in range(self.N + 1, self.N + 257):
             self._r_son[i] = self.NODE_NIL
         for i in range(self.N):
             self._dad[i] = self.NODE_NIL
 
     def _insert_node(self, r):
-        geq = True
-        p = self.N + 1 + self._text_buf[r]
+        key0 = self._text_buf[r]
+        p = self.N + 1 + key0
         self._r_son[r] = self._l_son[r] = self.NODE_NIL
         self._match_length = 0
 
-        iteration_count = 0
-        max_iterations = 1000
+        geq = True
         while True:
-            iteration_count += 1
-            if iteration_count > max_iterations:
-                #print(f"Breaking due to max iterations: r={r}, p={p}")
-                break
-            if p == r:
-                #print("Breaking due to p == r")
-                break
             if geq:
                 if self._r_son[p] == self.NODE_NIL:
                     self._r_son[p] = r
@@ -329,49 +293,34 @@ class LZHUF_Comp:
                 p = self._l_son[p]
 
             i = 1
-            while (i < self.F and
-                   r + i < len(self._text_buf) and
-                   p + i < len(self._text_buf) and
-                   self._text_buf[r + i] == self._text_buf[p + i]):
+            while i < self.F and self._text_buf[r + i] == self._text_buf[p + i]:
                 i += 1
-            #print(f"Comparison ended at i={i}")
 
-            # Nur aktualisieren, wenn Übereinstimmung größer als THRESHOLD
             if i > self.THRESHOLD:
                 if i > self._match_length:
                     self._match_position = ((r - p) & (self.N - 1)) - 1
                     self._match_length = i
                     if self._match_length >= self.F:
-                        return  # Frühzeitige Rückkehr bei voller Übereinstimmung
-                if i == self._match_length:
+                        break
+                elif i == self._match_length:
                     c = ((r - p) & (self.N - 1)) - 1
                     if c < self._match_position:
                         self._match_position = c
 
-            # Nächste Richtung bestimmen
-            if i >= self.F:
-                geq = True
-            elif r + i >= len(self._text_buf) or p + i >= len(self._text_buf):
-                geq = True  # Wenn Puffergrenze erreicht, als "größer" behandeln
-            else:
-                geq = self._text_buf[r + i] >= self._text_buf[p + i]
+            geq = (i >= self.F) or (self._text_buf[r + i] >= self._text_buf[p + i])
 
-            # Baumaktualisierung nur bei komplexer Operation
-            if self._dad[p] != self.NODE_NIL:  # Sicherstellen, dass p nicht bereits freigegeben ist
-                self._dad[r] = self._dad[p]
-                self._l_son[r] = self._l_son[p]
-                self._r_son[r] = self._r_son[p]
-                self._dad[self._l_son[p]] = r
-                self._dad[self._r_son[p]] = r
-                if self._r_son[self._dad[p]] == p:
-                    self._r_son[self._dad[p]] = r
-                else:
-                    self._l_son[self._dad[p]] = r
-                self._dad[p] = self.NODE_NIL
-                return  # Nach Aktualisierung zurückkehren
+        self._dad[r] = self._dad[p]
+        self._l_son[r] = self._l_son[p]
+        self._r_son[r] = self._r_son[p]
+        self._dad[self._l_son[p]] = r
+        self._dad[self._r_son[p]] = r
+        if self._r_son[self._dad[p]] == p:
+            self._r_son[self._dad[p]] = r
+        else:
+            self._l_son[self._dad[p]] = r
+        self._dad[p] = self.NODE_NIL
 
     def _delete_node(self, p):
-        """Löscht einen Knoten aus dem Baum."""
         if self._dad[p] == self.NODE_NIL:
             return
 
@@ -381,12 +330,13 @@ class LZHUF_Comp:
             q = self._r_son[p]
         else:
             q = self._l_son[p]
-            while self._r_son[q] != self.NODE_NIL:
-                q = self._r_son[q]
-            self._r_son[self._dad[q]] = self._l_son[q]
-            self._dad[self._l_son[q]] = self._dad[q]
-            self._l_son[q] = self._l_son[p]
-            self._dad[self._l_son[p]] = q
+            if self._r_son[q] != self.NODE_NIL:
+                while self._r_son[q] != self.NODE_NIL:
+                    q = self._r_son[q]
+                self._r_son[self._dad[q]] = self._l_son[q]
+                self._dad[self._l_son[q]] = self._dad[q]
+                self._l_son[q] = self._l_son[p]
+                self._dad[self._l_son[p]] = q
             self._r_son[q] = self._r_son[p]
             self._dad[self._r_son[p]] = q
 
@@ -398,7 +348,6 @@ class LZHUF_Comp:
         self._dad[p] = self.NODE_NIL
 
     def _get_bit(self):
-        """Liest ein Bit."""
         while self._get_len <= 8:
             self._get_buf = (self._get_buf | (self._getc() << (8 - self._get_len))) & 0xFFFF
             self._get_len += 8
@@ -408,7 +357,6 @@ class LZHUF_Comp:
         return ret_val
 
     def _get_byte(self):
-        """Liest ein Byte."""
         while self._get_len <= 8:
             self._get_buf = (self._get_buf | (self._getc() << (8 - self._get_len))) & 0xFFFF
             self._get_len += 8
@@ -418,7 +366,6 @@ class LZHUF_Comp:
         return ret_val
 
     def _put_code(self, n, c):
-        """Schreibt n Bits."""
         self._put_buf = (self._put_buf | (c >> self._put_len)) & 0xFFFF
         self._put_len += n
         if self._put_len >= 8:
@@ -434,7 +381,6 @@ class LZHUF_Comp:
                 self._code_size += 1
 
     def _start_huff(self):
-        """Initialisiert den Huffman-Baum."""
         for i in range(self.N_CHAR):
             self._freq[i] = 1
             self._son[i] = i + self.T
@@ -450,7 +396,6 @@ class LZHUF_Comp:
         self._parent[self.R] = 0
 
     def _reconst(self):
-        """Rekonstruiert den Huffman-Baum."""
         j = 0
         for i in range(self.T):
             if self._son[i] >= self.T:
@@ -482,11 +427,10 @@ class LZHUF_Comp:
                 self._parent[k + 1] = i
 
     def _update(self, c):
-        """Aktualisiert den Huffman-Baum."""
         if self._freq[self.R] == self.MAX_FREQ:
             self._reconst()
         c = self._parent[c + self.T]
-        while c != 0:
+        while True:
             self._freq[c] += 1
             k = self._freq[c]
             n = c + 1
@@ -507,9 +451,10 @@ class LZHUF_Comp:
                 self._son[c] = j
                 c = n
             c = self._parent[c]
+            if c == 0:
+                break
 
     def _encode_char(self, c):
-        """Kodierung eines Zeichens."""
         code, len_ = 0, 0
         k = self._parent[c + self.T]
         while k != self.R:
@@ -522,19 +467,16 @@ class LZHUF_Comp:
         self._update(c)
 
     def _encode_position(self, c):
-        """Kodierung einer Position."""
         i = c >> 6
         self._put_code(self.P_LEN[i], self.P_CODE[i] << 8)
         self._put_code(6, (c & 0x3F) << 10)
 
     def _encode_end(self):
-        """Beendet die Kodierung."""
         if self._put_len > 0:
             self._putc(self._put_buf >> 8)
             self._code_size += 1
 
     def _decode_char(self):
-        """Dekodiert ein Zeichen."""
         c = self._son[self.R]
         while c < self.T:
             c = self._son[c + self._get_bit()]
@@ -543,7 +485,6 @@ class LZHUF_Comp:
         return c & 0xFFFF
 
     def _decode_position(self):
-        """Dekodiert eine Position."""
         i = self._get_byte()
         if i >= len(self.D_LEN):
             raise ValueError(f"Invalid position index {i}, max {len(self.D_LEN) - 1}")
@@ -553,16 +494,3 @@ class LZHUF_Comp:
             i = ((i << 1) | self._get_bit()) & 0xFFFF
             j -= 1
         return c | (i & 0x3F)
-
-
-if __name__ == '__main__':
-    test_str = (b"12345  bla bla ===== fg fg fg " * 10)
-    huff_com         = LZHUF_Comp()
-    compressed_msg   = huff_com.encode(test_str)
-    decompressed_msg = huff_com.decode(compressed_msg)
-    print(f"Len Org     : {len(test_str)}")
-    print(f"Len Comp    : {len(compressed_msg)}")
-    print(f"Comp Ratio  : {len(test_str) / len(compressed_msg)}")
-    print(f"Uncompressed: {decompressed_msg}")
-    print(f"")
-

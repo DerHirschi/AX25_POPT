@@ -9,6 +9,8 @@ from cfg.constant import ENCODINGS, SQL_TIME_FORMAT
 from cfg.string_tab import STR_TABLE
 
 
+STR_EOL = tuple(x.decode('UTF-8') for x in EOL)
+
 def get_kb_str_fm_bytes(len_: int):
     return f"{len_/1024:.2f} kb"
 
@@ -76,8 +78,8 @@ def conv_time_DE_str(dateti=None):
         return dateti
     try:
         if not dateti:
-            return str(datetime.now().strftime('%d/%m/%y %H:%M:%S'))
-        return str(dateti.strftime('%d/%m/%y %H:%M:%S'))
+            return str(datetime.now().strftime('%d.%m.%y %H:%M:%S'))
+        return str(dateti.strftime('%d.%m.%y %H:%M:%S'))
     except Exception as ex:
         logger.error(f"conv_time_DE_str: {ex}")
         logger.error(f"conv_time_DE_str: {dateti}")
@@ -87,7 +89,7 @@ def str_to_datetime(date_str=None):
     if not date_str:
         return datetime.now()
     try:
-        return datetime.strptime(date_str, '%d/%m/%y %H:%M:%S')
+        return datetime.strptime(date_str, '%d.%m.%y %H:%M:%S')
     except ValueError:
         return datetime.now()
 
@@ -226,7 +228,7 @@ def format_number(number):
     return formatted_number
 
 
-def is_plausible_text(text: str) -> bool:
+def is_plausible_text(text: str):
     """By Grok3-AI"""
     """Prüft, ob der Text sinnvoll aussieht (überwiegend druckbare Zeichen)."""
     if not text:
@@ -237,7 +239,7 @@ def is_plausible_text(text: str) -> bool:
     control_chars = sum(1 for c in text if c < '\x20' and c not in '\n\r\täöpÄÖÜßéÉ<>-_#*+-/=|.,:' or c in 'Σⁿ▀▄Θ─α') / len(text)
     return printable_ratio > 0.7 and control_chars < 0.05  # 90 % druckbar, wenige Steuerzeichen
 
-def try_decode(data: bytes, ignore: bool = False) -> (str, str):
+def try_decode(data: bytes, ignore: bool = False):
     """By Grok3-AI"""
     # Schritt 1: Prüfe, ob Daten wahrscheinlich binär sind
     if not data:
@@ -330,19 +332,21 @@ def get_strTab(str_key: str, lang_index=1, warning=True, fallback=False):
 
 
 def zeilenumbruch(text: str, max_zeichen=79, umbruch='\n'):
-    # by GROK (x.com)
     if len(text) <= max_zeichen:
         return text
-    letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
-
-    if letztes_leerzeichen == -1:
-        return text[:max_zeichen] + umbruch + zeilenumbruch(text[max_zeichen:],
-                                                            max_zeichen=max_zeichen,
-                                                            umbruch=umbruch)
-    else:
-        return text[:letztes_leerzeichen] + umbruch + zeilenumbruch(text[letztes_leerzeichen + 1:],
-                                                                    max_zeichen=max_zeichen,
-                                                                    umbruch=umbruch)
+    lines = []
+    while True:
+        letztes_leerzeichen = text.rfind(' ', 0, max_zeichen + 1)
+        if letztes_leerzeichen <= 0:
+            lines.append(text[:max_zeichen])
+            text = text[max_zeichen:]
+        else:
+            lines.append(text[:letztes_leerzeichen])
+            text = text[letztes_leerzeichen + 1:]
+        if len(text) <= max_zeichen:
+            lines.append(text)
+            break
+    return umbruch.join(lines)
 
 def zeilenumbruch_lines(text: str, max_zeichen=79, umbruch='\n'):
     line_list = text.split(umbruch)
@@ -363,6 +367,14 @@ def find_eol(msg: bytes):
         if tmp_eol in msg:
             return tmp_eol
     return CR
+
+
+def find_eol_in_str(msg: str, default='\r'):
+    # Find EOL Syntax
+    for tmp_eol in STR_EOL:
+        if tmp_eol in msg:
+            return tmp_eol
+    return default
 
 def version_tuple(v: str):
     return tuple(int(x) for x in v.split('.'))

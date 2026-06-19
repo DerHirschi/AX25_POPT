@@ -4,8 +4,6 @@ from aprslib.parsing import chardet, ParseError, UnknownFormat, parse_header, pa
     parse_invalid, parse_user_defined, parse_status, parse_mice, parse_message, parse_weather, parse_position
 import aprslib
 
-from cfg.logger_config import logger
-
 unsupported_formats = {
         '#':'raw weather report',
         '$':'raw gps',
@@ -66,7 +64,7 @@ def parse(packet):
     # split into head and body
     try:
         (head, body) = packet.split(':', 1)
-    except:
+    except ValueError:
         raise ParseError("packet has no body", packet)
 
     if len(body) == 0:

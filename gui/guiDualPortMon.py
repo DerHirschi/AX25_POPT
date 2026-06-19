@@ -134,21 +134,21 @@ class DP_MonitorTab(ttk.Frame):
             "aprs_dec" : bool(self._aprs_dec_var.get()),
             "nr_dec"   : False, # TODO
             "hex_out"  : False, # TODO
-            "decoding" : 'AUTO',# TODO
+            "decoding" : 'Auto',# TODO
         }
         if mon_buf:
             self._primPort_text.configure(state='normal')
             self._secPort_text.configure(state='normal')
         for data in mon_buf:
-            prim_frame = data[0].get('ax25frame', None)
-            sec_frame = data[1].get('ax25frame', None)
+            prim_frame = data[0].get('ax25frame', {})
+            sec_frame  = data[1].get('ax25frame', {})
             prim_data = ''
             sec_data = ''
             prim_ind1 = self._primPort_text.index('end-1c')
             sec_ind1 = self._secPort_text.index('end-1c')
 
-            if any((prim_frame, sec_frame)):
-                if all((prim_frame, sec_frame)):
+            if prim_frame or sec_frame:
+                if prim_frame and sec_frame:
                     mon_conf['port_name'] = prim_port_cfg.get('parm_PortName', '')
                     prim_data = monitor_frame_inp(prim_frame, mon_conf)
                     mon_conf['port_name'] = sec_port_cfg.get('parm_PortName', '')
@@ -177,10 +177,7 @@ class DP_MonitorTab(ttk.Frame):
             self._secPort_text.insert(tk.END, sec_data)
             prim_ind2 = self._primPort_text.index('end-1c')
             sec_ind2 = self._secPort_text.index('end-1c')
-            if any((
-                    data[0].get('tx', False),
-                    data[1].get('tx', False),
-            )):
+            if data[0].get('tx', False) or data[1].get('tx', False):
                 self._primPort_text.tag_add('TX', prim_ind1, prim_ind2)
                 self._secPort_text.tag_add('TX', sec_ind1, sec_ind2)
 

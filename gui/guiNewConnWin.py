@@ -248,7 +248,7 @@ class NewConnWin(tk.Toplevel):
                     call_str = call_str.split(' ')[0]
                 self._ax_ip_ip[1].configure(state='normal')
                 self._ax_ip_port[1].configure(state='normal')
-                mh_ent = self._popt_handler.get_MH().get_AXIP_fm_DB_MH(call_str, 0)
+                mh_ent = self._popt_handler.get_MH.get_AXIP_fm_DB_MH(call_str, 0)
                 # Just if u switch after enter in call
                 if mh_ent[1]:
                     ip  = mh_ent[0]
@@ -349,7 +349,7 @@ class NewConnWin(tk.Toplevel):
                     axip_port   = self._ax_ip_port[1].get()
                     axip_ip     = get_ip_by_hostname(axip_ip_inp)
                     if not axip_ip and not check_ip_add_format(axip_ip_inp):
-                        mh_ent = self._popt_handler.get_MH().get_AXIP_fm_DB_MH(dest_call)
+                        mh_ent = self._popt_handler.get_MH.get_AXIP_fm_DB_MH(dest_call)
                         if mh_ent[0]:
                             ip = mh_ent[0]
                             prt = str(mh_ent[1])

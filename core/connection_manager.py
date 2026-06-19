@@ -12,7 +12,7 @@ class ConnectionManager:
         logger.info("Connection-Manager: Init")
         self._popt_handler = popt_handler
         self._gui          = lambda :popt_handler.get_gui()
-        self._mh           = lambda :popt_handler.get_MH()
+        self._mh           = lambda :popt_handler.get_MH
         self._userDB       = lambda :popt_handler.get_userDB()
         self._sound        = lambda :popt_handler.get_sound_modul()
         """"""

@@ -397,6 +397,20 @@ class PortSetTab:
                   ).place(x=bg_sel_x, y=bg_sel_y)
 
         #####################################
+
+        ###########################################################
+        # Serial RTS/DTR
+        serial_f = ttk.LabelFrame(self.tab,
+                                  text="Serial Flow Control")
+        serial_f.place(x=820, y=105)
+        self._serial_dtr_ent = ttk.Checkbutton(serial_f, text="DTR", variable=self._serial_dtr_var)
+        self._serial_rts_ent = ttk.Checkbutton(serial_f, text="RTS", variable=self._serial_rts_var)
+        self._serial_xon_ent = ttk.Checkbutton(serial_f, text="XON/XOFF", variable=self._serial_xonxoff_var)
+        self._serial_dtr_ent.pack(padx=10, pady=10, anchor="w")
+        self._serial_rts_ent.pack(padx=10, pady=10, anchor="w")
+        self._serial_xon_ent.pack(padx=10, pady=10, anchor="w")
+        ###########################################################
+
         #################
         # Station CFGs
 
@@ -425,18 +439,7 @@ class PortSetTab:
                 self._update_port_parameter()
                 return
 
-        ###########################################################
-        # Serial RTS/DTR
-        serial_f = ttk.LabelFrame(self.tab,
-                                  text="Serial Flow Control")
-        serial_f.place(x=820, y=105)
-        self._serial_dtr_ent = ttk.Checkbutton(serial_f, text="DTR", variable=self._serial_dtr_var)
-        self._serial_rts_ent = ttk.Checkbutton(serial_f, text="RTS", variable=self._serial_rts_var)
-        self._serial_xon_ent = ttk.Checkbutton(serial_f, text="XON/XOFF", variable=self._serial_xonxoff_var)
-        self._serial_dtr_ent.pack(padx=10, pady=10, anchor="w")
-        self._serial_rts_ent.pack(padx=10, pady=10, anchor="w")
-        self._serial_xon_ent.pack(padx=10, pady=10, anchor="w")
-        ###########################################################
+
         self._update_port_parameter()
 
         ###########################################################

@@ -231,7 +231,7 @@ class BeaconTracer(ttk.Frame):
             pack = traces[k][-1]
             rx_time = pack.get('rx_time', '')
             if rx_time:
-                rx_time = rx_time.strftime('%d/%m/%y %H:%M:%S')
+                rx_time = rx_time.strftime('%d.%m.%y %H:%M:%S')
             path = pack.get('path', [])
             call = pack.get('call', '')
             if call:

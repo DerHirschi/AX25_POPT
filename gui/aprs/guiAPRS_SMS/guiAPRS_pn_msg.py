@@ -368,7 +368,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
                 tag = 'not_own'
 
             tree_data = (
-                     f"{from_msg.get('rx_time', datetime.datetime.now()).strftime('%d/%m/%y %H:%M:%S')}",
+                     f"{from_msg.get('rx_time', datetime.datetime.now()).strftime('%d.%m.%y %H:%M:%S')}",
                      f"{from_msg.get('port_id', '-')}",
                      f"{from_msg.get('from', '')}",
                      f"{from_msg.get('addresse', '')}",
@@ -398,7 +398,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
 
             tree_data.append(
                 ((
-                     f"{form_msg['rx_time'].strftime('%d/%m/%y %H:%M:%S')}",
+                     f"{form_msg['rx_time'].strftime('%d.%m.%y %H:%M:%S')}",
                      f"{form_msg.get('port_id', '-')}",
                      f"{form_msg['from']}",
                      f"{form_msg['to']}",
@@ -535,7 +535,7 @@ class APRS_msg_SYS_PN(tk.Toplevel):
         self._dbl_pack.append(aprs_pack)
         if msg_nr:
             self._dbl_pack.append((msg_nr, msg_id))
-        msg += f"Time: {aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%d/%m/%y %H:%M:%S')}".ljust(28)
+        msg += f"Time: {aprs_pack.get('rx_time', datetime.datetime.now()).strftime('%d.%m.%y %H:%M:%S')}".ljust(28)
         if msg_nr != '':
             msg += f"Msg#: {msg_nr}\n"
         else:

@@ -9,7 +9,7 @@ from fnc.str_fnc import get_timedelta_CLIstr, get_timedelta_str_fm_sec
 class CliCmdMyHeard(CliModulBase):
     def __init__(self, cli_main):
         super().__init__(cli_main=cli_main)
-        self._mh = self._popt_handler.get_MH()
+        self._mh = self._popt_handler.get_MH
 
     # ==============================
     # MH

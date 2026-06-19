@@ -74,6 +74,11 @@ class EnhancedConnPathsPlot(ttk.Frame):
         toolbar.update()
         toolbar.pack(side=tk.TOP, fill=tk.X)
 
+    def destroy(self):
+        plt.close(self._fig)
+        self._g.clear()
+        super().destroy()
+
     def _refresh(self):
         self._seed = random.randint(1, 10000)
         self._pos = None

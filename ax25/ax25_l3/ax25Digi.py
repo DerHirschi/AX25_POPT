@@ -23,7 +23,7 @@ class AX25DigiConnection:
         self._tx_conn = None
         self._port_handler = None
         if self._rx_port:
-            self._port_handler = self._rx_port.port_get_PH()
+            self._port_handler = self._rx_port.popt_handler
 
         self._state = 1             # 1 INIT, 2 Aufbau, ..., 5 Bereit
         self._state_tab = {

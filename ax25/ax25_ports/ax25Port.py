@@ -58,7 +58,7 @@ class AX25Port(object):
         self.connections        = {}
         #############
         # VARS
-        self._mh                = self._popt_handler.get_MH()
+        self._mh                = self._popt_handler.get_MH
         #############
         """ Multi Channel TNC/KISS """
         self.multi_ch_tnc = MultiChannelTNC(self, self._popt_handler)
@@ -72,7 +72,7 @@ class AX25Port(object):
         self.dualPort_lastRX        = b''  # Prim
         self.dualPort_echoFilter    = []   # Prim
         self.dualPort_cfg           = {}
-        self.dualPort_monitor_buf   = []
+        self.dualPort_monitor_buf   = []   # TODO: Threadlock
         """ MCast Server """
         self._mcast_server          = None
         """ Block incoming Connections """
@@ -102,6 +102,11 @@ class AX25Port(object):
             if self.is_multi_ch_slave():
                 logger.info(f"  Master Port   : {self._port_cfg.get('parm_kiss_multi_master', 0)}")
         logger.info("═" * 60)
+
+    # ====================================
+    @property
+    def popt_handler(self):
+        return self._popt_handler
 
     # ====================================
     def init(self):
@@ -261,7 +266,7 @@ class AX25Port(object):
         """
         netrom_cfg = ax25_frame_conf.get('netrom_cfg', {})
         if netrom_cfg:     # Net-Rom
-            rTable = self.port_get_PH().get_RoutingTable()
+            rTable = self._popt_handler.get_RoutingTable()
             if rTable is None:
                 return True
             ax25_frame_conf['port_id'] = int(self.port_id)
@@ -810,7 +815,7 @@ class AX25Port(object):
             return
         data = dict(
             tx=bool(tx),
-            ax25frame=ax25frame.get_frame_conf(),
+            ax25frame=dict(ax25frame.get_frame_conf()),
             frame_rawData=bytes(ax25frame.data_bytes)
         )
         if not double:
@@ -1122,9 +1127,6 @@ class AX25Port(object):
                 conn.exec_cron()
     #########################################
     #
-    def port_get_PH(self):
-        return self._popt_handler
-
     def port_get_port_cfg(self):
         return dict(self._port_cfg)
 

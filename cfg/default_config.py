@@ -55,7 +55,7 @@ def getNew_port_cfg():
         parm_kiss_end_cmd      = [(TNC_KISS_CMD_END, False)],
         parm_kiss_TXD          = 30,
         parm_kiss_Pers         = 80,
-        parm_kiss_Slot         = 50,
+        parm_kiss_Slot         = 40,
         parm_kiss_Tail         = 15,
         parm_kiss_F_Duplex     = 0,
         parm_kiss_channel      = 0,
@@ -382,11 +382,17 @@ def getNew_maniGUI_parm():
         # F-Texte
         gui_f_text_tab              = {k: (b'', 'UTF-8') for k in range(1, 13)},
         #################
-        # Pan Pos
+        # Pan Pos (ratio = sashpos / widget_size, 0.0-1.0)
+        gui_parm_main_pan_ratio     = 0.286,
+        gui_parm_side_pan_ratio     = 0.353,
+        gui_parm_text_pan_ratio     = (0.353, 0.706),
+        gui_parm_mon_pw_ratio       = 0.235,
+        # old absolute keys (fallback for migration)
         gui_parm_main_pan_pos       = 400,
         gui_parm_side_pan_pos       = 300,
         gui_parm_text_pan_pos       = (300, 300),
         gui_parm_mon_pw_pos         = 200,
+        port_stat_pw_ratio          = 0.7,
         gui_aprs_text_pan_pos       = (300, 300),
         #################
         # MAin GUI width and height

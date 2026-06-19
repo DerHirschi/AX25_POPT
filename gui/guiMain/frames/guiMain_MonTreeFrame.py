@@ -16,7 +16,7 @@ class MonitorTreeFrame(ttk.Frame):
         # ================================
         self._gui_root     = gui_root_cl
         self._popt_handler = gui_root_cl.get_PH_mainGUI()
-        self._mh           = gui_root_cl.get_MH()
+        self._mh           = self._popt_handler.get_MH
         # ================================
         self._getTabStr    = lambda str_k: get_strTab(str_k, POPT_CFG.get_guiCFG_language())
         # ================================
@@ -43,7 +43,7 @@ class MonitorTreeFrame(ttk.Frame):
             'size',
             'data',
         )
-        mon_tree_pw = ttk.Panedwindow(self, orient='horizontal')
+        mon_tree_pw = ttk.PanedWindow(self, orient='horizontal')
         mon_tree_pw.pack(fill='both', expand=True)
         #
         mon_f_main = ttk.Frame(mon_tree_pw)

@@ -141,7 +141,7 @@ class BoxCLI(DefaultCLI):
                 topic=self._getTabStr_GUI('bbs_new_user_sysopMsg_top'),
                 msg=self._getTabStr_GUI('bbs_new_user_sysopMsg_msg').format(self._to_call,
                                                                             bbs.get_pms_cfg().get('user', ''),
-                                                                            datetime.now().strftime('%d/%m/%y %H:%M:%S')
+                                                                            datetime.now().strftime('%d.%m.%y %H:%M:%S')
                                                                             )
             )
             # ====== No Remote Access = Disco ....
