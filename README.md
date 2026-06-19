@@ -98,6 +98,7 @@ Note: Ensure the extracted files are placed directly in the data/ directory to b
 #### Supported AX.25 connection options:
 - KISS via TCP (e.g. Direwolf)
 - KISS via Serial (e.g. TNC, Linux AX.25 Device (kissattach))
+- AGWPE Client
 - AXIP via UDP
 - AX25KERNEL (Linux AX.25 Device) (root rights needed)
 - TNC-EMU-TCP-SERVER (Pseudo TNC-Emulator Device to connect e.g. DOS-BOX (TFPCX).)
