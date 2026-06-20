@@ -310,7 +310,10 @@ class AX25Port(object):
             uid = str(ax25_frame.addr_uid)
             if uid not in self.connections.keys():
                 if not self._block_incoming_conn:
-                    self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                    try:
+                        self.connections[uid] = AX25Conn(ax25_frame, port=self)
+                    except ConnectionError:
+                        return False
                     return True
                 elif self._block_incoming_conn == 1:    # Ignore incoming Conn
                     LOG_BOOK.info(
@@ -381,7 +384,12 @@ class AX25Port(object):
                         ))
                         if ax25_frame.ctl_byte.flag == 'UI':
                             logger.debug(self._logTag + "_rx_managed_digi NewUI")
-                            AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
+                            try:
+                                AX25DigiConnection(tmp_cfg).digi_rx_handle(ax25_frame)
+                            except ConnectionError:
+                                logger.error(self._logTag + " NewUI: ConnectionError")
+                                return False
+
                             return True
                         # New Digi Conn
                         if ax25_frame.digi_check_and_encode(call=call.call_str, h_bit_enc=True):
@@ -389,10 +397,14 @@ class AX25Port(object):
                             logger.debug(self._logTag + f" NewDigiConn: digi_conn {self._digi_connections.keys()}")
                             logger.debug(self._logTag + f" NewDigiConn: conn {self.connections.keys()}")
                             logger.debug(self._logTag + f" NewDigiConn: ax25_conf {ax25_conf}")
-                            digi_conn = AX25DigiConnection(dict(tmp_cfg))
+                            try:
+                                digi_conn = AX25DigiConnection(dict(tmp_cfg))
+                            except ConnectionError:
+                                logger.error(self._logTag + " NewDigiConn: ConnectionError")
+                                return False
+
                             digi_conn.digi_rx_handle(ax25_frame)
                             self._digi_connections[uid] = digi_conn
-
                             return True
                         logger.error(self._logTag + f" NewDigiConn: not ax25_frame.digi_check_and_encode")
                         logger.error(self._logTag + f" NewDigiConn: tmp_cfg {tmp_cfg}")

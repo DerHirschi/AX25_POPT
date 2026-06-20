@@ -74,7 +74,7 @@ class AX25Conn:
             self.via_calls          = list(ax25_conf.get('via_calls_str', []))
         """ GUI Stuff """
         self.ch_index: int = 0
-        self._my_locator = POPT_CFG.get_guiCFG_locator()
+        self._my_locator   = POPT_CFG.get_guiCFG_locator()
         """ Station CFG Parameter """
         self._stat_cfg      = {}
         self._my_call_alias = ''
@@ -141,10 +141,10 @@ class AX25Conn:
         """ BBS Control """
         self.bbs_connection = None
         """ Link Holder / Not related to Link Connection Stuff """
-        self.link_holder_on: bool = False
+        self.link_holder_on: bool      = False
         self.link_holder_interval: int = 30  # Minutes
-        self.link_holder_timer = time.time()
-        self.link_holder_text: str = '\r'
+        self.link_holder_timer         = time.time()
+        self.link_holder_text: str     = '\r'
         """ User DB Entry """
         self.user_db_ent    = self._userDB.get_entry(self.to_call_str)
         self.last_connect   = None
@@ -152,7 +152,6 @@ class AX25Conn:
             self.last_connect = self.user_db_ent.last_conn
 
         self.set_distance()
-        #self._set_user_db_ent()
         self.set_station_cfg()  # Station Individual Parameter
         """ CLI CFG """
         self.cli_remote     = True
@@ -204,21 +203,13 @@ class AX25Conn:
         stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call_str)
         if not stat_cfg:
             stat_cfg = POPT_CFG.get_stat_CFG_fm_call(self.my_call)
+            if not stat_cfg:
+                logger.error(f"No Station Config for {self.my_call_str}")
+                raise ConnectionError
 
         self._stat_cfg = stat_cfg
         self._set_packet_param()
 
-        """
-        if self.my_call_str in self._port_handler.ax25_stations_settings.keys():
-            self._stat_cfg = self._port_handler.ax25_stations_settings[self.my_call_str]
-        else:
-            for call in list(self._port_handler.ax25_stations_settings.keys()):
-                if self.my_call in call:
-                    if self.my_call in self._port_handler.ax25_stations_settings.keys():
-                        self._stat_cfg = self._port_handler.ax25_stations_settings[self.my_call]
-                        break
-        self._set_packet_param()
-        """
         return True
 
     def _set_user_db_ent(self):

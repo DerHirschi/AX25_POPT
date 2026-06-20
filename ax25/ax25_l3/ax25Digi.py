@@ -73,14 +73,14 @@ class AX25DigiConnection:
         self._rx_conn.my_call_str = str(self._digi_call)
         self._rx_conn.digi_call = str(self._digi_call)
         self._rx_conn_uid = str(self._rx_conn.uid)
-        self._rx_conn.set_station_cfg()
-        """
+        #self._rx_conn.set_station_cfg()
+
         try:
             self._rx_conn.set_station_cfg()
-        except AX25ConnectionERROR:
+        except ConnectionError as e:
             self._state_0_error()
-            return
-        """
+            raise e
+
         if self._rx_conn_uid in self._rx_port.connections.keys():
             logger.warning("ERROR DIGI - Connection -  self._rx_conn_uid in self._rx_port.connections ")
             self._state_0_error()
