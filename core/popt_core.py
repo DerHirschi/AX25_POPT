@@ -52,7 +52,6 @@ class PoPTCore(object):
         #######################################################
         self._monitor_buffer            = ListBuffer()
         self._remote_monitor_buffer_tx  = ListBuffer()
-        #self._remote_monitor_buffer_rx  = []
         #######################################################
         # Init UserDB
         self._userDB        = USER_DB
@@ -339,7 +338,8 @@ class PoPTCore(object):
     def update_remote_monitor_task(self):
         """ Remote Monitor over ax25 | 1 Sec Task"""
         data = self._remote_monitor_buffer_tx.buffer_read_n(30)  # 22 Pi4
-        # self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
+        if not data:
+            return
         for conn_id, conn in self.get_all_connections().items():
             for ax25frame_conf in data:
                 conn.remote_monitor_update_tx(ax25frame_conf)
