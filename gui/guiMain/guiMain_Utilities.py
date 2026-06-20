@@ -110,9 +110,9 @@ class GuiUtilities:
                               underline=0)
         MenuTools.add_separator()
         # FIXME: PRP-Remote Disabled
-        #MenuTools.add_command(label='Remote Monitor',
-        #                      command=lambda: self.open_window('remote_monitor'),
-        #                      underline=0)
+        MenuTools.add_command(label='Remote Monitor',
+                              command=lambda: self._toplevelMng.open_window('remote_monitor'),
+                              underline=0)
         MenuTools.add_command(label='Dual-Port Monitor',
                               command=lambda: self._toplevelMng.open_window('dualPort_monitor'),
                               underline=0)

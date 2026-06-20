@@ -18,7 +18,7 @@ from cfg.logger_config import logger, LOG_BOOK
 from cfg.popt_config import POPT_CFG
 from fnc.ax25_fnc import reverse_uid
 from fnc.str_fnc import conv_time_DE_str
-from prp import init_prpAX25L3
+from prp import PRPremote
 from ax25.ax25_ft.ax25FileTransfer import FileTransport, ft_rx_header_lookup
 from fnc.loc_fnc import locator_distance
 from sound.popt_sound import SOUND
@@ -100,10 +100,6 @@ class AX25Conn:
         self.is_link_remote     = False
         self.digi_call          = ''
         self.is_digi            = False
-        """ PoPT Remote Protocol (PRP) """
-        # self._prp_remote = PRPremote(self._port_handler, self)
-        self._prp_remote        = init_prpAX25L3(self._popt_handler, self)
-
         """ Port Variablen"""
         # TODO Private / Clean Up / OPT
         self.vs  = 0   # Sendefolgenummer     / N(S) = V(R)  TX
@@ -158,7 +154,24 @@ class AX25Conn:
         self.noty_bell      = False
         self.cli = NoneCLI(self)
         self.cli_type = ''
-        """ Pipe CFG """
+        """ Pipe CFG """""" PoPT Remote Protocol (PRP) """
+        if self.is_incoming_conn:
+            uid = str(reverse_uid(self.uid))
+            remote_uid = str(self.uid)
+        else:
+            uid = str(self.uid)
+            remote_uid = str(reverse_uid(self.uid))
+
+        to_call_str = str(self.to_call_str)
+        prp_config = dict(
+            uid=uid,
+            remote_uid=remote_uid,
+            to_call_str=to_call_str,
+            conn_typ='ax25_l3'
+        )
+        self._prp_remote = PRPremote(self._popt_handler, prp_config, self)
+        #self._prp_remote        = init_prpAX25L3(self._popt_handler, self)
+        """"""
         pipe_cfg = POPT_CFG.get_pipe_CFG_fm_UID(call=str(self.my_call_str),
                                                 port_id=-1)
         if not all((pipe_cfg,
@@ -264,7 +277,7 @@ class AX25Conn:
                   data: bytes,
                   gui_echo=True,
                   file_trans=False,
-                  use_prp=False # TODO  use_prp=True / disabled
+                  use_prp=False
                   ):
         """
         Normale Daten von CLI oder GUI(QSO)

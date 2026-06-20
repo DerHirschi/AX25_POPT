@@ -99,7 +99,7 @@ class PreTxtFrame(ttk.Frame):
                 tmp_txt = self._inp_txt.get(ind, tk.INSERT)
 
                 tmp_txt = (tmp_txt.replace('\n', '\r')).encode(txt_enc, 'ignore')
-                station.send_data(tmp_txt)
+                station.send_data(tmp_txt, use_prp=True)
                 # self._update_qso_tx(station, tmp_txt)
                 self._inp_txt.tag_remove('send', ind, str(self._inp_txt.index(tk.INSERT)))
                 self._inp_txt.tag_add('send', ind, str(self._inp_txt.index(tk.INSERT)))

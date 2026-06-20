@@ -326,7 +326,7 @@ class PoPTCore(object):
         # GUI Monitor
         self._monitor_buffer.buffer_write(dict(ax25frame_conf))
         # PRP Monitor
-        #self._remote_monitor_buffer_tx.append(dict(ax25frame_conf))
+        self._remote_monitor_buffer_tx.append(dict(ax25frame_conf))
         # CLI Monitor
         self._cliMon_manager.add_mon_to_buffer(dict(ax25frame_conf))
 

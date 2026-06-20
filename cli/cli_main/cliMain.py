@@ -400,25 +400,25 @@ class DefaultCLI(object):
         )):
             self._send_out_sidestop(ret)
             return
-        self._connection.send_data(ret)
+        self._connection.send_data(ret, use_prp=True)
 
     def _send_out_sidestop(self, cli_out: bytes):
         if not self._user_db_ent.cli_sidestop:
-            self._connection.send_data(cli_out)
+            self._connection.send_data(cli_out, use_prp=True)
             self.change_cli_state(1)
             return
         tmp = cli_out.split(b'\r')
         out_lines = b'\r'.join(tmp[:self._user_db_ent.cli_sidestop])
         self._tx_buffer.buffer_set(b'\r'.join(tmp[self._user_db_ent.cli_sidestop:]))
         if self._tx_buffer.is_empty:
-            self._connection.send_data(cli_out)
+            self._connection.send_data(cli_out, use_prp=True)
             self.change_cli_state(1)
             return
         if self._ss_state == 0:
             out_lines += self._getTabStr_CLI('op_prompt_0').encode(self._encoding[0], self._encoding[1])
         elif self._ss_state == 1:
             out_lines += self._getTabStr_CLI('op_prompt_1').encode(self._encoding[0], self._encoding[1])
-        self._connection.send_data(out_lines)
+        self._connection.send_data(out_lines, use_prp=True)
         self.change_cli_state(7)
 
     # TX-Abort-Stuff
@@ -433,7 +433,7 @@ class DefaultCLI(object):
     def _abort_send_out(self):
         self.clear_tx_buffer()
         self._connection.send_data((f"\r\r # {self._getTabStr_CLI('aborted')} !\r"
-                                    + self.get_ts_prompt()).encode(self._encoding[0], 'ignore'))
+                                    + self.get_ts_prompt()).encode(self._encoding[0], 'ignore'), use_prp=True)
 
     def _check_abort_cmd(self):
         eol = find_eol(self._raw_input)
@@ -484,10 +484,6 @@ class DefaultCLI(object):
         # If the prefix does not match, treat as user message
         self._parameter = []
         self._cmd = b''
-        #cmd_parts = self._input.split(b' ', 1)
-        #self._cmd = cmd_parts[0].upper().replace(b'\r', b'')
-        #self._parameter = cmd_parts[1:] if len(cmd_parts) > 1 else []
-        #self._input = self._parameter
         return False
 
     def load_fm_file(self, filename: str):
@@ -575,8 +571,8 @@ class DefaultCLI(object):
                 if self._user_db_ent:
                     self._user_db_ent.Encoding = self.stat_identifier.txt_encoding
 
-            # FIXME: PRP-Remote Disabled
-            #   self._init_popt_remote()
+            # PRP-Remote
+            self._init_popt_remote()
             return True
 
         return False
@@ -818,7 +814,7 @@ class DefaultCLI(object):
         to_conn = all_conn[ch_id]
         to_send = f'\rCH {self._connection.ch_index} ({self._connection.to_call_str}): '.encode('UTF-8', 'ignore')
         to_send += param[1] + b'\r'
-        to_conn.send_data(to_send)
+        to_conn.send_data(to_send, use_prp=True)
         return self._getTabStr_CLI('ch_cmd_send').format(ch_id, to_conn.to_call_str)
 
     def _cmd_bell(self):
@@ -1053,7 +1049,7 @@ class DefaultCLI(object):
                 self.change_cli_state(1)
                 return
             if self._raw_input.upper() == b'O' + eol:
-                self._connection.send_data(self._tx_buffer.buffer_get)
+                self._connection.send_data(self._tx_buffer.buffer_get, use_prp=True)
                 self._tx_buffer.buffer_clear()
                 self.change_cli_state(1)
                 return

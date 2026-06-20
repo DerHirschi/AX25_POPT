@@ -307,8 +307,6 @@ class PRPremote:
             not self._state_manager.get_own('gui_rem_mon')):
             return
 
-
-
         self._remote_monitor.update(ax25frame_conf)
 
     # ===================================================================

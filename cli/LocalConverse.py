@@ -35,7 +35,7 @@ class ConverseChannel:
         for conn_id, conn in self._members.items():
             if conn_id == own_conn_id:
                 continue
-            conn.send_data(message)
+            conn.send_data(message, use_prp=True)
 
     #######################################
     def get_channel_members(self):

@@ -43,7 +43,7 @@ class PRPTransportLayer:
         }
 
         # Dynamische Anpassung pro Verbindungstyp
-        self._conn_type = 'ax25_l2'  # Default – später setzen, z. B. 'pr_mail', 'aprs'
+        self._conn_type = 'ax25_l3'  # Default – später setzen, z. B. 'pr_mail', 'aprs'
         self._config_per_type = {
             'ax25_l2': {
                 'use_transport': True,

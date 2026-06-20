@@ -82,7 +82,7 @@ class PRPStateManager:
             if value not in ('auto', 'on', 'off'):
                 logger.error(f"PRPStateManager: Ungültiger batch_mode '{value}'")
                 return False
-        elif not isinstance(value, current_type):
+        elif current is not None and not isinstance(value, current_type):
             logger.error(f"PRPStateManager: Key '{key}' erwartet {current_type}, bekam {type(value)}")
             return False
 
