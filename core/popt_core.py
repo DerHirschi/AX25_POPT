@@ -51,7 +51,7 @@ class PoPTCore(object):
         self._gpio          = None
         #######################################################
         self._monitor_buffer            = ListBuffer()
-        self._remote_monitor_buffer_tx  = []
+        self._remote_monitor_buffer_tx  = ListBuffer()
         #self._remote_monitor_buffer_rx  = []
         #######################################################
         # Init UserDB
@@ -326,7 +326,7 @@ class PoPTCore(object):
         # GUI Monitor
         self._monitor_buffer.buffer_write(dict(ax25frame_conf))
         # PRP Monitor
-        self._remote_monitor_buffer_tx.append(dict(ax25frame_conf))
+        self._remote_monitor_buffer_tx.buffer_write(dict(ax25frame_conf))
         # CLI Monitor
         self._cliMon_manager.add_mon_to_buffer(dict(ax25frame_conf))
 
@@ -338,8 +338,8 @@ class PoPTCore(object):
     # Remote Monitor Stuff
     def update_remote_monitor_task(self):
         """ Remote Monitor over ax25 | 1 Sec Task"""
-        data = list(self._remote_monitor_buffer_tx[:30])  # 22 Pi4
-        self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
+        data = self._remote_monitor_buffer_tx.buffer_read_n(30)  # 22 Pi4
+        # self._remote_monitor_buffer_tx = self._remote_monitor_buffer_tx[30:]
         for conn_id, conn in self.get_all_connections().items():
             for ax25frame_conf in data:
                 conn.remote_monitor_update_tx(ax25frame_conf)
