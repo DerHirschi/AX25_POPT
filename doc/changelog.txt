@@ -1,6 +1,7 @@
 ###########################################################################################################
 # 2.127.x
 Fixes:
+- Falsche Locator/Positions Berechnungen
 
 Optimierung/Änderungen:
 

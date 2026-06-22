@@ -8,18 +8,34 @@ from cfg.logger_config import logger
 
 def decimal_degrees_to_aprs(latitude, longitude):
     """ By ChatGPT """
-    lat_degrees = abs(int(latitude))
-    lat_minutes = abs(int((latitude - lat_degrees) * 60))
-    lat_seconds = abs(round(((latitude - lat_degrees) * 60 - lat_minutes) * 60))
+    lat_int = int(latitude)
+    lat_degrees = abs(lat_int)
+    abs_lat_minutes = abs(latitude - lat_int) * 60
+    lat_minutes = int(abs_lat_minutes)
+    lat_hundredths = round((abs_lat_minutes - lat_minutes) * 100)
+    if lat_hundredths == 100:
+        lat_hundredths = 0
+        lat_minutes += 1
+        if lat_minutes == 60:
+            lat_minutes = 0
+            lat_degrees += 1
     lat_direction = 'N' if latitude >= 0 else 'S'
 
-    lon_degrees = abs(int(longitude))
-    lon_minutes = abs(int((longitude - lon_degrees) * 60))
-    lon_seconds = abs(round(((longitude - lon_degrees) * 60 - lon_minutes) * 60))
+    lon_int = int(longitude)
+    lon_degrees = abs(lon_int)
+    abs_lon_minutes = abs(longitude - lon_int) * 60
+    lon_minutes = int(abs_lon_minutes)
+    lon_hundredths = round((abs_lon_minutes - lon_minutes) * 100)
+    if lon_hundredths == 100:
+        lon_hundredths = 0
+        lon_minutes += 1
+        if lon_minutes == 60:
+            lon_minutes = 0
+            lon_degrees += 1
     lon_direction = 'E' if longitude >= 0 else 'W'
 
-    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_seconds:02d}{lat_direction}"
-    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_seconds:02d}{lon_direction}"
+    aprs_latitude = f"{lat_degrees:02d}{lat_minutes:02d}.{lat_hundredths:02d}{lat_direction}"
+    aprs_longitude = f"{lon_degrees:03d}{lon_minutes:02d}.{lon_hundredths:02d}{lon_direction}"
 
     return aprs_latitude, aprs_longitude
 
@@ -49,7 +65,6 @@ def locator_distance(locator1, locator2):
 
 def clean_locator(loc: str):
     """Entfernt alles außer A–Z, 0–9 und macht alles uppercase"""
-    import re
     return re.sub(r'[^A-Z0-9]', '', loc.upper())[:10]
 
 """
@@ -86,13 +101,21 @@ def locator_to_coordinates(locator):
     Converts QTH locator to latitude and longitude (CENTER OF CELL).
     Returns (lat, lon) as floats.
     '''
-    # --- BEREINIGE Locator ---
     try:
         qth = re.sub(r'[^A-Z0-9]', '', locator.upper())
         if len(qth) not in (4, 6, 8, 10):
             return 0, 0
 
-        qth = locator.upper()
+        if not ('A' <= qth[0] <= 'R' and 'A' <= qth[1] <= 'R'):
+            return 0, 0
+        if not all('0' <= c <= '9' for c in qth[2:4]):
+            return 0, 0
+        if len(qth) >= 6 and not all('A' <= c <= 'X' for c in qth[4:6]):
+            return 0, 0
+        if len(qth) >= 8 and not all('0' <= c <= '9' for c in qth[6:8]):
+            return 0, 0
+        if len(qth) == 10 and not all('A' <= c <= 'X' for c in qth[8:10]):
+            return 0, 0
 
         lon = -180.0
         lat = -90.0
@@ -116,7 +139,10 @@ def locator_to_coordinates(locator):
             lat += (ord(qth[9]) - 65) * (1 / 5760)
 
         # Zentriere im Raster
-        if len(qth) == 6:
+        if len(qth) == 4:
+            lon += 1.0
+            lat += 0.5
+        elif len(qth) == 6:
             lon += 1 / 24
             lat += 1 / 48
         elif len(qth) == 8:
@@ -230,30 +256,32 @@ def coordinates_to_locator(latitude, longitude):
     longitude += 180
     latitude += 90
 
-    # Fields
-    lon_field = int(floor(longitude / 20))
-    lat_field = int(floor(latitude / 10))
+    EPS = 1e-9
+
+    # Fields (cap at max 17 = 'R')
+    lon_field = min(int(floor(longitude / 20)), 17)
+    lat_field = min(int(floor(latitude / 10)), 17)
 
     longitude -= lon_field * 20
     latitude -= lat_field * 10
 
-    # Squares
-    lon_sq = int(floor(longitude / 2))
-    lat_sq = int(floor(latitude / 1))
+    # Squares (cap at max 9)
+    lon_sq = min(int(floor(longitude / 2 + EPS)), 9)
+    lat_sq = min(int(floor(latitude / 1 + EPS)), 9)
 
     longitude -= lon_sq * 2
     latitude -= lat_sq * 1
 
-    # Subsquares
-    lon_sub_sq = int(floor(longitude / (5.0 / 60)))
-    lat_sub_sq = int(floor(latitude / (2.5 / 60)))
+    # Subsquares (a-x = 0-23)
+    lon_sub_sq = min(int(floor(longitude / (5.0 / 60) + EPS)), 23)
+    lat_sub_sq = min(int(floor(latitude / (2.5 / 60) + EPS)), 23)
 
     longitude -= lon_sub_sq * (5.0 / 60)
     latitude -= lat_sub_sq * (2.5 / 60)
 
-    # Extended squares
-    lon_ext_sq = int(round(longitude * 10 / (0.5 / 60)) / 10)
-    lat_ext_sq = int(round(latitude * 10 / (0.25 / 60)) / 10)
+    # Extended squares (cap at 9)
+    lon_ext_sq = min(int(round(longitude / (0.5 / 60))), 9)
+    lat_ext_sq = min(int(round(latitude / (0.25 / 60))), 9)
 
     # Generate QTH locator
     qth_locator = ''

@@ -874,6 +874,7 @@ class BBS:
             BBS_LOG.debug(log_tag + "No Msg in BBS-FWD-Q")
             return []
         bbs_fwd_next_q  = bbs_fwd_q_cfg.get('bbs_fwd_next_q', [])
+        # FIXME: Single Batch FWD (Non Feat-Flag "F" F6FBB Batch)
         if len(bbs_fwd_next_q) >= 5:
             if len(bbs_fwd_next_q) == 5:
                 # Good Girl
@@ -924,7 +925,7 @@ class BBS:
                     BBS_LOG.debug(log_tag + f"PN-Prio Block limit")
                     # Block Limit
                     break
-                if len(bbs_fwd_next_q) == 5:
+                if len(bbs_fwd_next_q) == 5: # FIXME: Single Batch FWD (Non Feat-Flag "F" F6FBB Batch)
                     # Next-Q full
                     BBS_LOG.debug(log_tag + f"PN-Prio next-q full")
                     break
@@ -948,7 +949,7 @@ class BBS:
                 BBS_LOG.debug(log_tag + f"Block limit")
                 # Block Limit
                 break
-            if len(bbs_fwd_next_q) == 5:
+            if len(bbs_fwd_next_q) == 5: # FIXME: Single Batch FWD (Non Feat-Flag "F" F6FBB Batch)
                 # Next-Q full
                 BBS_LOG.debug(log_tag + f"next-q full")
                 break
