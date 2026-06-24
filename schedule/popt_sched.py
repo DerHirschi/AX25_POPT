@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fnc.str_fnc import get_weekDay_fm_dt
 
@@ -13,18 +13,6 @@ def getNew_schedule_config(intervall: float = 0,
                            month_day=None,
                            set_interval=True,
                            ):
-    """
-    for minutes_r in range(60):
-        minutes[minutes_r] = False
-    for hours_r in range(24):
-        hours[hours_r] = False
-    for week_days_r in ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']:
-        week_days[week_days_r] = False
-    for month_r in range(12):
-        month[month_r] = False
-    for month_day_r in range(31):
-        month_day[month_day_r] = False
-    """
     if month_day is None:
         month_day = {}
     if month is None:
@@ -35,61 +23,54 @@ def getNew_schedule_config(intervall: float = 0,
         hours = {}
     if minutes is None:
         minutes = {}
-    """
-    for week_days_r in ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']:
-        if week_days_r not in week_days.keys():
-            week_days[week_days_r] = False
-    """
     return {
-        "repeat_min": int(intervall),  # Float: Minutes. Also needed when 'minutes' not set.
-        "move": int(move_time),  # 0-59 sec
-        "minutes": dict(minutes),  # {10: True, 33: True, 57: True}
-        "hours": dict(hours),  # {3: True, 4: True, 12: True}
-        "week_days": dict(week_days),  # {'MO': True, 'DO': True}
-        "month": dict(month),  # {1: True, 11: True}
-        "month_day": dict(month_day),  # {18: True, 22: True}
-        "set_interval": bool(set_interval),  # False = Trigger after Init + move_time
+        "repeat_min": int(intervall),
+        "move": int(move_time),
+        "minutes": dict(minutes),
+        "hours": dict(hours),
+        "week_days": dict(week_days),
+        "month": dict(month),
+        "month_day": dict(month_day),
+        "set_interval": bool(set_interval),
     }
 
 
 class PoPTSchedule:
     def __init__(self, conf):
-        self.conf       = conf
-        self._dt_now    = datetime.now()
-        self._cooldown  = time.time()
-        self._next_run  = 0
-        self._month_day_en  = False
-        self._month_en      = False
-        self._weekDay_en    = False
-        self._hour_en       = False
-        self._min_en        = False
-        self._rep_min_en    = False
+        self.conf = conf
+        self._next_run = 0.0
+        self._last_trigger = 0.0
+        self._month_day_en = False
+        self._month_en = False
+        self._weekDay_en = False
+        self._hour_en = False
+        self._min_en = False
+        self._has_date_cond = False
+        self._rep_min_en = False
         self.re_init()
-        if self.conf.get('set_interval', True):
-            self._set_intervall()
+        self._calc_next_run(initial=self.conf.get('set_interval', True))
 
     def re_init(self):
-        self._next_run = 0
-        self._month_day_en  = self._is_enabled('month_day')
-        self._month_en      = self._is_enabled('month')
-        self._weekDay_en    = self._is_enabled('week_days')
-        self._hour_en       = self._is_enabled('hours')
-        self._min_en        = self._is_enabled('minutes')
-        self._rep_min_en    = bool(self.conf.get('repeat_min'))
-        self._set_cooldown()
-
-    def _set_cooldown(self):
-        self._cooldown = time.time() + 55
-
-    def _set_intervall(self):
-        self._next_run = time.time() + (self.conf.get('repeat_min', 1) * 60)
+        self._next_run = 0.0
+        self._last_trigger = 0.0
+        self._month_day_en = self._is_enabled('month_day')
+        self._month_en = self._is_enabled('month')
+        self._weekDay_en = self._is_enabled('week_days')
+        self._hour_en = self._is_enabled('hours')
+        self._min_en = self._is_enabled('minutes')
+        self._rep_min_en = bool(self.conf.get('repeat_min'))
+        self._has_date_cond = any([
+            self._month_day_en,
+            self._month_en,
+            self._weekDay_en,
+            self._hour_en,
+            self._min_en,
+        ])
 
     def manual_trigger(self):
-        """ Reset Timers when Task is triggered manual """
-        self._set_cooldown()
-        self._set_intervall()
+        self._last_trigger = time.time()
+        self._calc_next_run()
 
-    # =============================================
     def _is_enabled(self, conf_k):
         if not self.conf.get(conf_k):
             return False
@@ -98,131 +79,80 @@ class PoPTSchedule:
                 return True
         return False
 
-    def _is_month(self):
-        return self.conf['month'].get(self._dt_now.month, False)
+    def _target_second(self, move):
+        if move >= 59:
+            return 60
+        return move + 1
 
-    def _is_month_day(self):
-        return self.conf['month_day'].get(self._dt_now.day, False)
+    def _calc_next_run(self, initial=True):
+        now_t = time.time()
+        rep_min = self.conf.get('repeat_min', 0)
+        move = self.conf.get('move', 0)
+        target_sec = self._target_second(move)
 
-    def _is_weekDay(self):
-        return self.conf['week_days'].get(get_weekDay_fm_dt(self._dt_now.weekday()), False)
+        if target_sec >= 60:
+            self._next_run = float('inf')
+            return
 
-    def _is_hour(self):
-        return self.conf.get('hours').get(self._dt_now.hour, False)
+        if not self._has_date_cond:
+            if not self._rep_min_en:
+                self._next_run = float('inf')
+                return
+            base = now_t + (rep_min * 60)
+            base_dt = datetime.fromtimestamp(base)
+            if base_dt.second < target_sec:
+                base += target_sec - base_dt.second
+            self._next_run = base
+            return
 
-    def _is_minute(self):
-        return self.conf.get('minutes').get(self._dt_now.minute, False)
+        if self._last_trigger > 0.0:
+            earliest = max(now_t, self._last_trigger + rep_min * 60)
+            next_min_ts = (datetime.fromtimestamp(self._last_trigger)
+                           .replace(second=0, microsecond=0)
+                           + timedelta(minutes=1)).timestamp()
+            if next_min_ts > earliest:
+                earliest = next_min_ts
+        elif initial:
+            earliest = now_t + max(rep_min * 60, 0)
+        else:
+            earliest = now_t
 
-    def _is_sec(self):
-        return bool(self.conf.get('move', 0) < self._dt_now.second)
+        dt = datetime.fromtimestamp(earliest).replace(second=0, microsecond=0)
 
-    def _check_month(self):
-        if not self._month_en:
-            return True
-        return self._is_month()
+        for _ in range(1051200):
+            if self._month_en and not self.conf['month'].get(dt.month, False):
+                dt += timedelta(minutes=1)
+                continue
+            if self._month_day_en and not self.conf['month_day'].get(dt.day, False):
+                dt += timedelta(minutes=1)
+                continue
+            if self._weekDay_en:
+                wd = get_weekDay_fm_dt(dt.weekday())
+                if not self.conf['week_days'].get(wd, False):
+                    dt += timedelta(minutes=1)
+                    continue
+            if self._hour_en and not self.conf['hours'].get(dt.hour, False):
+                dt += timedelta(minutes=1)
+                continue
+            if self._min_en and not self.conf['minutes'].get(dt.minute, False):
+                dt += timedelta(minutes=1)
+                continue
 
-    def _check_month_day(self):
-        if not self._month_day_en:
-            return True
-        return self._is_month_day()
+            cand = dt.replace(second=target_sec)
+            if cand.timestamp() >= earliest:
+                self._next_run = cand.timestamp()
+                return
+            dt += timedelta(minutes=1)
 
-    def _check_weekDays(self):
-        if not self._weekDay_en:
-            return True
-        return self._is_weekDay()
-
-    def _check_hours(self):
-        if not self._hour_en:
-            return True
-        return self._is_hour()
-
-    def _check_minutes(self):
-        if not self._min_en:
-            return True
-        if self._is_minute():
-            return self._is_sec()
-        return False
-
-    def _check_date(self):
-        if any([
-            self._month_day_en,
-            self._month_en,
-            self._weekDay_en,
-            self._hour_en,
-            self._min_en,
-        ]):
-            if not self._check_month():
-                return False
-            if not self._check_month_day():
-                return False
-            if not self._check_weekDays():
-                return False
-            if not self._check_hours():
-                return False
-            if not self._check_minutes():
-                return False
-            return True
-        return False
-
-    def _check_next_run(self):
-        if time.time() > self._next_run:
-            # print("Next Run Intervall")
-            if self._is_sec():
-                self._set_intervall()
-                return True
-        return False
-
-    def _check_intervall(self):
-        if any((
-                self._month_day_en,
-                self._month_en,
-                self._weekDay_en,
-                self._hour_en,
-                self._min_en,
-        )):
-            return False
-        if not self._rep_min_en:
-            return False
-        if self._check_next_run():
-            return True
-        return False
-
-    def _check_schedule(self):
-        if time.time() < self._cooldown:
-            return False
-        self._dt_now = datetime.now()
-        if self._check_date():
-            if self._check_next_run():
-                return True
-            return False
-        if self._check_intervall():
-            return True
-        return False
+        self._next_run = float('inf')
 
     def is_schedule(self):
-        if self._check_schedule():
-            self._set_cooldown()
+        if self._next_run <= 0:
+            return False
+        if self._next_run == float('inf'):
+            return False
+        if time.time() >= self._next_run:
+            self._last_trigger = self._next_run
+            self._calc_next_run()
             return True
         return False
-
-
-"""
-if __name__ == '__main__':
-    confi = getNew_schedule_config()
-    confi['repeat_min'] = 0
-    confi['hours'][1] = True
-    confi['hours'][0] = True
-    confi['hours'][23] = True
-    #confi['minutes'][20] = True
-    #confi['minutes'][40] = True
-    #confi['minutes'][48] = True
-    #confi['minutes'][50] = True
-    confi['week_days']['DI'] = True
-    confi['move'] = 20
-    sched = PoPTSchedule(confi)
-    while True:
-        if sched.is_schedule():
-            print(f"Trigger {datetime.now()}")
-        # print(f"Rem: {sched.time_until_next_trigger()}")
-        time.sleep(1)
-"""

@@ -4,6 +4,7 @@ Fixes:
 - Falsche Locator/Positions Berechnungen
 
 Optimierung/Änderungen:
+- Scheduler Performance optimiert (CPU Last).
 
 Neue Implementierungen / Funktionen:
 
