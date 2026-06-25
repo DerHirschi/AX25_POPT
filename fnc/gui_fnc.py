@@ -207,7 +207,7 @@ def build_aprs_icon_tab(size=(16, 16)):
         ("/", "{"): get_image(get_path("0-91"), size),
         #("/", ""): get_image(get_path("0-92"), size),
         ("/", "}"): get_image(get_path("0-93"), size),
-        #("/", ""): get_image(get_path("0-94"), size),
+        ("/", "~"): get_image(get_path("0-94"), size),
         #("/", ""): get_image(get_path("0-95"), size),
         #("/", ""): get_image(get_path("0-96"), size),
         # Table 1 ( \ )
@@ -309,7 +309,7 @@ def build_aprs_icon_tab(size=(16, 16)):
         ("\\", "{"): get_image(get_path("1-91"), size),
         #("\\", ""): get_image(get_path("1-92"), size),
         ("\\", "}"): get_image(get_path("1-93"), size),
-        #("\\", ""): get_image(get_path("1-94"), size),
+        ("\\", "~"): get_image(get_path("1-94"), size),
         #("\\", ""): get_image(get_path("1-95"), size),
         #("\\", ""): get_image(get_path("1-96"), size),
     }
