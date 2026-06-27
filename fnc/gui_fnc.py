@@ -313,9 +313,24 @@ def build_aprs_icon_tab(size=(16, 16)):
         #("\\", ""): get_image(get_path("1-95"), size),
         #("\\", ""): get_image(get_path("1-96"), size),
 
-        # Lora ??
-        ("L", "&"): get_image(get_path("l-0"), size),
-        ("D", "&"): get_image(get_path("l-0"), size),
+        # Lora ?? -- by CT1DRB
+        ("L", "&"): get_image(get_path("1-97"), size),
+        ("D", "&"): get_image(get_path("1-98"), size),
+
+        ("3", "#"): get_image(get_path("1-99"), size),
+        ("S", "#"): get_image(get_path("2-01"), size),
+        ("I", "#"): get_image(get_path("2-02"), size),
+        ("4", "#"): get_image(get_path("2-03"), size),
+        ("5", "#"): get_image(get_path("2-04"), size),
+        ("L", "#"): get_image(get_path("2-05"), size),
+        ("1", "#"): get_image(get_path("2-06"), size),
+        ("T", "#"): get_image(get_path("2-07"), size),
+        ("2", "#"): get_image(get_path("2-08"), size),
+        ("I", "&"): get_image(get_path("2-09"), size),
+        ("G", "&"): get_image(get_path("2-10"), size),
+        ("D", "#"): get_image(get_path("2-11"), size),
+        ("D", "a"): get_image(get_path("1-98"), size),
+        ("R", "&"): get_image(get_path("2-12"), size),
     }
 
 #################################
