@@ -6,6 +6,7 @@ Fixes:
 
 Optimierung/Änderungen:
 - Scheduler Performance optimiert (CPU Last).
+- Custom APRS-Symbole "L&" & "D&" hinzugefügt
 
 Neue Implementierungen / Funktionen:
 
