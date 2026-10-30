@@ -3,6 +3,10 @@
 Fixes:
 - Falsche Locator/Positions Berechnungen
 - Fehlendes APRS Symbol "/~" & "\~"
+- OSM-Tiles werden wieder geladen
+  Ursache war ein zu generischer User-Agent ("TkinterMapView"),
+  der von den OpenStreetMap-Servern blockiert wurde.
+  In SafeTkinterMapView wirdView wird jetzt ein korrekter User-Agent gesetzt.
 
 Optimierung/Änderungen:
 - Scheduler Performance optimiert (CPU Last).

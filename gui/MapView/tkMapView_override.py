@@ -1,6 +1,9 @@
 import threading
 import time
 from tkintermapview import TkinterMapView
+import requests
+from PIL import Image, ImageTk
+from io import BytesIO
 
 from cfg.logger_config import logger
 
@@ -42,6 +45,63 @@ class SafeTkinterMapView(TkinterMapView):
         self._img_loader_task()
         self._clean_cache()  # Cache-Cleanup im Hauptthread
         return True
+
+    def request_image(self, zoom: int, x: int, y: int, db_cursor=None):
+        """
+        Überschrieben wegen OSM Tile Usage Policy.
+        Setzt einen identifizierbaren User-Agent.
+        """
+        # Optional: Offline-DB zuerst prüfen (Original-Logik beibehalten)
+        if db_cursor is not None:
+            try:
+                db_cursor.execute(
+                    "SELECT t.tile_image FROM tiles t WHERE t.zoom=? AND t.x=? AND t.y=? AND t.server=?;",
+                    (zoom, x, y, self.tile_server)
+                )
+                result = db_cursor.fetchone()
+                if result:
+                    image = Image.open(BytesIO(result[0]))
+                    image_tk = ImageTk.PhotoImage(image)
+                    self.tile_image_cache[f"{zoom}{x}{y}"] = image_tk
+                    return image_tk
+            except Exception as e:
+                logger.warning(e)
+
+        # Online-Request mit korrektem User-Agent
+        try:
+            url = self.tile_server.replace("{x}", str(x)).replace("{y}", str(y)).replace("{z}", str(zoom))
+
+            headers = {
+                "User-Agent": "PoPT/2.x (AX25 Packet Terminal; https://github.com/DerHirschi/AX25_POPT; contact: cb0saw@e-mail.de)"
+            }
+
+            response = requests.get(url, stream=True, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            image = Image.open(response.raw)
+
+            # Overlay falls gesetzt
+            if self.overlay_tile_server is not None:
+                overlay_url = self.overlay_tile_server.replace("{x}", str(x)).replace("{y}", str(y)).replace("{z}",
+                                                                                                             str(zoom))
+                overlay_resp = requests.get(overlay_url, stream=True, headers=headers, timeout=10)
+                if overlay_resp.status_code == 200:
+                    image_overlay = Image.open(overlay_resp.raw).convert("RGBA")
+                    image = image.convert("RGBA")
+                    if image_overlay.size != (self.tile_size, self.tile_size):
+                        image_overlay = image_overlay.resize((self.tile_size, self.tile_size), Image.LANCZOS)
+                    image.paste(image_overlay, (0, 0), image_overlay)
+
+            if self.running:
+                image_tk = ImageTk.PhotoImage(image)
+                self.tile_image_cache[f"{zoom}{x}{y}"] = image_tk
+                return image_tk
+
+        except Exception as e:
+            logger.error(f"Tile request failed: {e}")  # falls Logger verfügbar
+            pass
+
+        return self.empty_tile_image
 
     def _img_loader_task(self):
         for thr in list(self._image_load_thread_pool):

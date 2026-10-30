@@ -8,3 +8,4 @@ networkx~=3.1
 pillow>=12.1.1
 tkintermapview~=1.29
 playsound3>=3.2.8
+requests~=2.32.3
