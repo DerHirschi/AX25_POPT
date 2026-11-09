@@ -115,8 +115,8 @@ class SQL_Database:
                     idx_sql = PORT_STATISTIK_IDX if self.MYSQL else SQLITE_PORT_STATISTIK_IDX
                     try:
                         self._send_query(idx_sql)
-                    except Exception:
-                        logger.warning(self._logTag + "Konnte Index nicht erstellen (existiert evtl. schon)")
+                    except Exception as ex:
+                        logger.warning(self._logTag + f"Konnte Index nicht erstellen (existiert evtl. schon)>{ex} ")
                 # self.create_db_var()
 
     def create_db_tables(self, query):
@@ -216,7 +216,7 @@ class SQL_Database:
     def _send_query(self, query):
         # print(f"Query: {query}")
         while self._access:
-            time.sleep(0.1)
+            time.sleep(0.03)
         if self.db:
             self._access = True
             try:
@@ -234,7 +234,7 @@ class SQL_Database:
         # print("Query <<BIN>>")
         # print(query)
         while self._access:
-            time.sleep(0.1)
+            time.sleep(0.03)
         if self.db:
             self._access = True
             try:
@@ -251,7 +251,7 @@ class SQL_Database:
     def _commit_query(self, query):
         # print(f"Query commit: {query}")
         while self._access:
-            time.sleep(0.1)
+            time.sleep(0.03)
         if self.db:
             self._access = True
             try:
@@ -273,7 +273,7 @@ class SQL_Database:
         # print("Query <<BIN>>")
         # print(query)
         while self._access:
-            time.sleep(0.1)
+            time.sleep(0.03)
         if self.db:
             self._access = True
             try:

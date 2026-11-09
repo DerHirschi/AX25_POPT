@@ -12,7 +12,7 @@ FLUSH PRIVILEGES;
 """
 import time
 
-from cfg.constant import DEBUG_LOG
+#from cfg.constant import DEBUG_LOG
 from cfg.logger_config import logger
 import mysql.connector
 from mysql.connector.errors import ProgrammingError

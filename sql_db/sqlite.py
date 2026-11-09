@@ -13,9 +13,16 @@ class SQL_DB:
             logger.error("SQLITE: No Database in Config")
             raise SQLConnectionError("SQLITE: No Database in Config")
         try:
-            self.conn = sqlite3.connect(CFG_data_path + self.database_name, check_same_thread=False)
+            self.conn = sqlite3.connect(
+                CFG_data_path + self.database_name,
+                check_same_thread=False,
+                timeout=10.0)
         except sqlite3.OperationalError as e:
             raise SQLConnectionError(f"SQLITE: {e}")
+
+        self.conn.execute("PRAGMA journal_mode=WAL;")
+        self.conn.execute("PRAGMA busy_timeout=10000;")
+        self.conn.execute("PRAGMA synchronous=NORMAL;")
 
     def close(self):
         if self.conn:

@@ -11,6 +11,7 @@ Fixes:
 Optimierung/Änderungen:
 - Scheduler Performance optimiert (CPU Last).
 - Custom APRS-Symbole "L&" & "D&" und weitere (LoRa ?) hinzugefügt, by CT1DRB
+- SQLite Performance Konfiguration
 
 Neue Implementierungen / Funktionen:
 
