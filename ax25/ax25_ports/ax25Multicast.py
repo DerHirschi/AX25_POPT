@@ -270,7 +270,7 @@ class ax25Multicast:
             return False
         if member_call == self._mcast_conf.get('mcast_server_call', ''):
             logger.warning(f'MCast: Loop detected - _update_member_ip_list ! {member_call} - {axip_add}')
-            return
+            return False
         if not member_call in self._mcast_member_add_list:
             self._mcast_member_add_list[member_call] = tuple(axip_add)
             logger.debug(f"MCast: setAXIP for {member_call} - {axip_add} - 1")
@@ -347,9 +347,9 @@ class ax25Multicast:
                 hasattr(self._mcast_port, 'tx_multicast')
         )):
             return
-        logger.debug(f'MCast: TX mem: {member_list}')
+        #logger.debug(f'MCast: TX mem: {member_list}')
         ip = tuple(frame.axip_add)
-        logger.debug(f'MCast: TX sender IP: {ip}')
+        #logger.debug(f'MCast: TX sender IP: {ip}')
         ip_list = []
         for member in member_list:
             member_ip = self._get_member_ip(member)
@@ -363,7 +363,7 @@ class ax25Multicast:
             ip_list.append(member_ip)
             try:
                 self._mcast_port.tx_multicast(frame_copy)
-                logger.debug(f"MCast: Gesendet an {member} - {member_ip}")
+                #logger.debug(f"MCast: Gesendet an {member} - {member_ip}")
             except AX25DeviceERROR:
                 logger.error(f"MCast: Fehler beim Senden an {member_ip}")
                 self._mcast_port = None
