@@ -519,7 +519,7 @@ class BoxCLI(DefaultCLI):
                 if type(ret) is str:
                     ret = ret.encode(self._encoding[0], self._encoding[1])
                     ret = ret.replace(b'\n', b'\r')
-                self._connection.send_data(ret)
+                self._connection.send_data(ret, use_prp=True)
                 return
 
             if type(ret) is str:
@@ -538,7 +538,7 @@ class BoxCLI(DefaultCLI):
             )):
                 self._send_out_sidestop(ret)
                 return
-            self._connection.send_data(ret)
+            self._connection.send_data(ret, use_prp=True)
     ##############################################
     # BOX
     def _cmd_box_l_from(self):
@@ -1155,8 +1155,8 @@ class BoxCLI(DefaultCLI):
 
     ########################################################################
     # Overrides
-    def _get_own_identy_str(self):
-        return None
+    #def _get_own_identy_str(self):
+    #    return None
 
     def _baycom_auto_login(self):
         return False

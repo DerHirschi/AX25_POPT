@@ -7,6 +7,8 @@ Fixes:
   Ursache war ein zu generischer User-Agent ("TkinterMapView"),
   der von den OpenStreetMap-Servern blockiert wurde.
   In SafeTkinterMapView wirdView wird jetzt ein korrekter User-Agent gesetzt.
+- PRP-Handshake von PoPT-BBS wurde nicht akzeptiert
+- PRP CLI-ESC Modus (Daten Komprimierung) für PoPT-BBS
 
 Optimierung/Änderungen:
 - Scheduler Performance optimiert (CPU Last).

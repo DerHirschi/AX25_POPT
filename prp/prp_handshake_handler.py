@@ -105,6 +105,7 @@ class PRPHandshakeHandler:
         own_identy = self.get_own_stat_identy()
         if not own_identy or not hasattr(own_identy, 'id_str'):
             self._prp_root.prp_tx(opt_id=PRP_OPT_20, tx_flag=False, data=PRP_NACK, prio=True)
+            logger.warning(f"PRP: keine eigene ID {self._prp_root.uid}")
             return
 
         identy_bytes = str(own_identy.id_str).encode('ASCII', 'ignore')
@@ -190,7 +191,7 @@ class PRPHandshakeHandler:
     def get_own_stat_identy(self):
         """ Holt eigens Stat Identy Obj von CLI """
         if not hasattr(self._prp_root.cli, 'get_own_stat_identy'):
-            logger.error(f"PRP: Attribute Error: _get_own_stat_identy")
+            logger.error(f"PRP: Attribute Error: get_own_stat_identy")
             return None
         return self._prp_root.cli.get_own_stat_identy()
 
